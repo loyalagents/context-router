@@ -22,3 +22,22 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+.nyc_output
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
