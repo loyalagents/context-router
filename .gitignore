@@ -41,3 +41,6 @@ coverage/
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+
+# TypeScript
+.nvmrc
