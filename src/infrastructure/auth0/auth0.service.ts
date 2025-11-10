@@ -33,7 +33,7 @@ export class Auth0Service {
   async getUserInfo(auth0UserId: string) {
     try {
       this.logger.debug(`Fetching user info for: ${auth0UserId}`);
-      return await this.managementClient.users.get({ id: auth0UserId });
+      return await this.managementClient.users.get(auth0UserId);
     } catch (error) {
       this.logger.error(`Failed to get user info for ${auth0UserId}`, error);
       throw error;
@@ -44,7 +44,7 @@ export class Auth0Service {
     try {
       this.logger.debug(`Updating metadata for: ${auth0UserId}`);
       return await this.managementClient.users.update(
-        { id: auth0UserId },
+        auth0UserId,
         { user_metadata: metadata },
       );
     } catch (error) {

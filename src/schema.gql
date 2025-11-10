@@ -25,6 +25,9 @@ type Mutation {
 }
 
 type Query {
+  """Get current authenticated user"""
+  me: User!
+
   """Get a user by ID"""
   user(id: ID!): User!
 
