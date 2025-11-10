@@ -36,6 +36,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     this.logger.debug(`Validating JWT for user: ${payload.sub}`);
 
+    // TODO: TEMPORARY - Remove this when proper user login flow is implemented
+    // This allows M2M tokens to work for testing without requiring real users
+    // See docs/AUTHORIZATION_TODO.md for the proper implementation plan
+    if (payload.sub && payload.sub.endsWith('@clients')) {
+      this.logger.log('M2M token detected, creating/finding mock user (TEMPORARY)');
+
+      // Create or find the M2M mock user in database
+      const user = await this.authService.findOrCreateM2MUser(payload.sub);
+      return user;
+    }
+
     try {
       // Sync/retrieve user from local database
       const user = await this.authService.validateAndSyncUser(payload);

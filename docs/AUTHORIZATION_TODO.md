@@ -13,6 +13,36 @@
 - **Resource Ownership**: Users can modify any other user's data
 - **Role-Based Access Control (RBAC)**: No admin/user role distinction
 - **Field-Level Security**: No restrictions on sensitive fields
+- **Real User Login Flow**: Currently using M2M tokens for testing
+
+## TEMPORARY: M2M Token Workaround
+
+**Location**: [src/modules/auth/strategies/jwt.strategy.ts](../src/modules/auth/strategies/jwt.strategy.ts:39-53)
+
+**Issue**: M2M tokens (client credentials) have `sub` like `EAf4MNS7Rw2HV45g7ALsKlTbFm6WqDy9@clients` which don't represent real users. These tokens lack email addresses needed for user creation.
+
+**Temporary Fix**: JWT strategy detects M2M tokens (`sub.endsWith('@clients')`) and returns a mock user object:
+```typescript
+{
+  userId: payload.sub,
+  email: 'm2m@client.local',
+  firstName: 'M2M',
+  lastName: 'Client',
+  // ...
+}
+```
+
+**Why This is OK for Now**:
+- Allows testing the API without creating real users
+- M2M tokens still require valid Auth0 authentication
+- Will be removed when implementing proper user login flow
+
+**MUST BE REMOVED WHEN**:
+1. Implementing frontend login (user authentication flow)
+2. Adding real user registration/signup
+3. Moving to production
+
+**Search for**: `TODO: TEMPORARY` in codebase to find all related code
 
 ## Current Security Gap
 

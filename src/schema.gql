@@ -2,6 +2,19 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CreateLocationInput {
+  address: String!
+  label: String!
+  type: LocationType!
+}
+
+input CreatePreferenceInput {
+  category: String!
+  key: String!
+  locationId: String
+  value: JSONObject!
+}
+
 input CreateUserInput {
   email: String!
   firstName: String!
@@ -13,26 +26,88 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
+
+type Location {
+  address: String!
+  createdAt: DateTime!
+  label: String!
+  locationId: ID!
+  type: LocationType!
+  updatedAt: DateTime!
+  userId: String!
+}
+
+"""Type of location"""
+enum LocationType {
+  HOME
+  OTHER
+  WORK
+}
+
 type Mutation {
+  createLocation(data: CreateLocationInput!): Location!
+  createPreference(data: CreatePreferenceInput!): Preference!
+
   """Create a new user"""
   createUser(createUserInput: CreateUserInput!): User!
+  deleteLocation(locationId: String!): Location!
+  deletePreference(preferenceId: String!): Preference!
 
   """Delete a user"""
   removeUser(id: ID!): User!
+  updateLocation(data: UpdateLocationInput!, locationId: String!): Location!
+  updatePreference(data: UpdatePreferenceInput!, preferenceId: String!): Preference!
 
   """Update an existing user"""
   updateUser(updateUserInput: UpdateUserInput!): User!
 }
 
+type Preference {
+  category: String!
+  createdAt: DateTime!
+  key: String!
+  locationId: String
+  preferenceId: ID!
+  updatedAt: DateTime!
+  userId: String!
+  value: JSONObject!
+}
+
 type Query {
+  globalPreferences: [Preference!]!
+  location(locationId: String!): Location!
+  locations: [Location!]!
+  locationsByType(type: LocationType!): [Location!]!
+
   """Get current authenticated user"""
   me: User!
+  preference(preferenceId: String!): Preference!
+  preferences: [Preference!]!
+  preferencesByCategory(category: String!): [Preference!]!
+  preferencesByLocation(locationId: String!): [Preference!]!
 
   """Get a user by ID"""
   user(id: ID!): User!
 
   """Get all users"""
   users: [User!]!
+}
+
+input UpdateLocationInput {
+  address: String
+  label: String
+  type: LocationType
+}
+
+input UpdatePreferenceInput {
+  category: String
+  key: String
+  locationId: String
+  value: JSONObject
 }
 
 input UpdateUserInput {

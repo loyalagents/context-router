@@ -18,6 +18,8 @@ model User {
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   externalIdentities ExternalIdentity[]
+  locations          Location[]
+  preferences        Preference[]
 
   @@map("users")
 }
@@ -37,4 +39,47 @@ model ExternalIdentity {
   @@index([userId])
   @@index([provider, providerUserId])
   @@map("external_identities")
+}
+
+enum LocationType {
+  HOME
+  WORK
+  OTHER
+}
+
+model Location {
+  locationId  String       @id @default(uuid()) @map("location_id")
+  userId      String       @map("user_id")
+  type        LocationType
+  label       String
+  address     String
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  preferences Preference[]
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("locations")
+}
+
+model Preference {
+  preferenceId String    @id @default(uuid()) @map("preference_id")
+  userId       String    @map("user_id")
+  locationId   String?   @map("location_id")
+  category     String
+  key          String
+  value        Json
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+
+  @@unique([userId, locationId, category, key])
+  @@index([userId])
+  @@index([locationId])
+  @@index([userId, category])
+  @@map("preferences")
 }

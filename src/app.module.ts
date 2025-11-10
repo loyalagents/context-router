@@ -18,6 +18,7 @@ import { Auth0Module } from './infrastructure/auth0/auth0.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { HealthModule } from './modules/health/health.module';
+import { PreferencesModule } from './modules/preferences/preferences.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { HealthModule } from './modules/health/health.module';
     AuthModule,
     UserModule,
     HealthModule,
+    PreferencesModule,
   ],
 })
 export class AppModule {}

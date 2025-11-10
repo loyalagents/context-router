@@ -113,4 +113,26 @@ export class AuthService {
   async getCurrentUser(userId: string) {
     return this.userService.findOne(userId);
   }
+
+  // TODO: TEMPORARY - Remove this when proper user login flow is implemented
+  // This creates a mock user for M2M tokens so they can be used for testing
+  // See docs/AUTHORIZATION_TODO.md for details
+  async findOrCreateM2MUser(clientId: string) {
+    this.logger.log(`Finding or creating M2M mock user for: ${clientId}`);
+
+    // Try to find existing user by this client ID
+    let user = await this.userService.findByEmail(`${clientId}@m2m.local`);
+
+    if (!user) {
+      // Create a mock user for this M2M client
+      this.logger.log(`Creating M2M mock user: ${clientId}`);
+      user = await this.userService.create({
+        email: `${clientId}@m2m.local`,
+        firstName: 'M2M',
+        lastName: 'Client',
+      });
+    }
+
+    return user;
+  }
 }
