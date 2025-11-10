@@ -8,11 +8,14 @@ import { join } from 'path';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import graphqlConfig from './config/graphql.config';
+import authConfig from './config/auth.config';
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
+import { Auth0Module } from './infrastructure/auth0/auth0.module';
 
 // Modules
+import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { HealthModule } from './modules/health/health.module';
 
@@ -21,7 +24,7 @@ import { HealthModule } from './modules/health/health.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, graphqlConfig],
+      load: [appConfig, databaseConfig, graphqlConfig, authConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 
@@ -32,6 +35,7 @@ import { HealthModule } from './modules/health/health.module';
       sortSchema: true,
       playground: process.env.GRAPHQL_PLAYGROUND === 'true',
       introspection: process.env.NODE_ENV !== 'production',
+      context: ({ req }) => ({ req }),
       formatError: (error) => {
         return {
           message: error.message,
@@ -48,8 +52,10 @@ import { HealthModule } from './modules/health/health.module';
 
     // Infrastructure
     PrismaModule,
+    Auth0Module,
 
     // Feature Modules
+    AuthModule,
     UserModule,
     HealthModule,
   ],

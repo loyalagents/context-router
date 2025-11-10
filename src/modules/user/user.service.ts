@@ -85,4 +85,9 @@ export class UserService {
   async count(): Promise<number> {
     return this.userRepository.count();
   }
+
+  async findByEmail(email: string): Promise<User | null> {
+    this.logger.log(`Fetching user by email: ${email}`);
+    return this.userRepository.findByEmail(email);
+  }
 }

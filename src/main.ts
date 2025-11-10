@@ -19,10 +19,23 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS
+  // Enable CORS with proper configuration
+  const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',')
+    : ['http://localhost:3000'];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: corsOrigins,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+      'apollographql-client-name',
+      'apollographql-client-version',
+    ],
   });
 
   const port = process.env.PORT || 3000;

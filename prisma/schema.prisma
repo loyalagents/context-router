@@ -11,12 +11,30 @@ datasource db {
 }
 
 model User {
-  userId    String   @id @default(uuid()) @map("user_id")
-  email     String   @unique
-  firstName String   @map("first_name")
-  lastName  String   @map("last_name")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  userId             String             @id @default(uuid()) @map("user_id")
+  email              String             @unique
+  firstName          String             @map("first_name")
+  lastName           String             @map("last_name")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  externalIdentities ExternalIdentity[]
 
   @@map("users")
+}
+
+model ExternalIdentity {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  provider       String   // 'auth0', 'google', 'github', etc.
+  providerUserId String   @map("provider_user_id") // The ID from the provider
+  metadata       Json?    // Optional: store provider-specific data
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@index([provider, providerUserId])
+  @@map("external_identities")
 }
