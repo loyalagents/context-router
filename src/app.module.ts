@@ -9,6 +9,7 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import graphqlConfig from './config/graphql.config';
 import authConfig from './config/auth.config';
+import mcpConfig from './config/mcp.config';
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -19,13 +20,14 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { HealthModule } from './modules/health/health.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { McpModule } from './mcp/mcp.module';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, graphqlConfig, authConfig],
+      load: [appConfig, databaseConfig, graphqlConfig, authConfig, mcpConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 
@@ -60,6 +62,7 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
     UserModule,
     HealthModule,
     PreferencesModule,
+    McpModule,
   ],
 })
 export class AppModule {}

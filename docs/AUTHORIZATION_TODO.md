@@ -324,9 +324,85 @@ AUTH0_CUSTOM_CLAIMS_NAMESPACE=https://context-router-api  # For roles in JWT
    - Select user → Roles tab
    - Assign appropriate role
 
+## MCP-Specific Authorization Concerns
+
+### TODO: MCP User Context Isolation
+
+**Location**: To be implemented in `src/mcp/` module
+
+**Issue**: MCP tools will expose preference operations to AI assistants. We need to ensure:
+1. Each MCP request extracts userId from JWT token
+2. All tool calls are scoped to that user's data only
+3. AI cannot access or modify other users' preferences
+
+**Current Gap**:
+- No user-scoped filtering in MCP tool layer
+- Risk: AI could potentially request data for any userId if we pass userId as a tool parameter
+
+**Required Implementation**:
+```typescript
+// src/mcp/tools/preference.tools.ts
+class PreferenceTools {
+  async searchPreferences(params: SearchParams, context: McpContext) {
+    // Extract userId from JWT in context, NOT from params
+    const userId = context.user.userId;
+
+    // Use extracted userId (safe) instead of params.userId (unsafe)
+    return this.preferenceService.findByCategory(userId, params.category);
+  }
+}
+```
+
+**Dependencies**:
+- Must implement resource ownership validation (Priority #1 above) BEFORE exposing MCP tools
+- MCP authentication middleware must validate JWT and attach user to context
+- All MCP tools must receive authenticated user context
+
+**Priority**: HIGH - Must be implemented during MCP development, not after
+
+**Search for**: `TODO: MCP_USER_CONTEXT` in codebase when implementing
+
+### TODO: MCP Search Authorization
+
+**Location**: To be implemented in `src/mcp/tools/search.tools.ts`
+
+**Issue**: MCP search tool will initially expose all GraphQL query capabilities. We need to restrict search to only return results the authenticated user can access.
+
+**Current Plan**:
+- Start with basic GraphQL filtering (search across all preferences)
+- Future: Add user-scoped filtering automatically
+
+**Security Concern**:
+- If search doesn't filter by userId, AI could discover other users' data
+- Even read-only access is a privacy violation
+
+**Required Implementation**:
+```typescript
+// Phase 1 (MVP): Explicitly filter by userId from JWT
+async searchPreferences(params: SearchParams, context: McpContext) {
+  const userId = context.user.userId;
+
+  // ALWAYS include userId filter
+  return this.preferenceService.findByCategory(userId, params.category);
+}
+
+// Phase 2 (Future): Auto-inject userId filter into all GraphQL queries
+// - Add middleware that rewrites queries to include userId filter
+// - Prevent AI from specifying userId in search parameters
+```
+
+**Priority**: HIGH - Phase 1 must be part of MVP
+
+**Timeline**:
+- Phase 1: Implement with MCP MVP (explicit userId filtering)
+- Phase 2: After basic RBAC is in place (automatic query rewriting)
+
+**Search for**: `TODO: MCP_SEARCH_AUTH` in codebase when implementing
+
 ## References
 
 - [NestJS Guards Documentation](https://docs.nestjs.com/guards)
 - [NestJS GraphQL Authorization](https://docs.nestjs.com/graphql/other-features#execute-enhancers-at-the-field-resolver-level)
 - [Auth0 Roles Documentation](https://auth0.com/docs/manage-users/access-control/rbac)
 - [Auth0 Custom Claims](https://auth0.com/docs/secure/tokens/json-web-tokens/create-custom-claims)
+- [Model Context Protocol Spec](https://spec.modelcontextprotocol.io/)

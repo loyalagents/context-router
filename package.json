@@ -37,6 +37,7 @@
   "homepage": "https://github.com/loyalagents/context-router#readme",
   "dependencies": {
     "@apollo/server": "^4.11.2",
+    "@modelcontextprotocol/sdk": "^1.21.1",
     "@nestjs/apollo": "^12.2.1",
     "@nestjs/common": "^10.4.15",
     "@nestjs/config": "^3.3.0",
