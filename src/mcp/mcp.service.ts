@@ -16,6 +16,7 @@ import { McpContext } from './types/mcp-context.type';
 export class McpService implements OnModuleInit {
   private readonly logger = new Logger(McpService.name);
   private server: Server;
+  private currentContext: McpContext | null = null;
 
   constructor(
     private configService: ConfigService,
@@ -166,9 +167,23 @@ export class McpService implements OnModuleInit {
     // Register tool call handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-        const context = (request as any).context as McpContext;
+        // Get context from the service (set by the controller for this request)
+        const context = this.getContext();
 
         this.logger.log(`Tool called: ${name} by user: ${context?.user?.userId || 'unknown'}`);
+
+        if (!context) {
+          this.logger.error(`Tool called without context: ${name}`);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ error: 'Authentication context not available' }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
 
         try {
           let result;
@@ -275,5 +290,28 @@ export class McpService implements OnModuleInit {
    */
   getServer(): Server {
     return this.server;
+  }
+
+  /**
+   * Set the context for the current request
+   * This context will be used by tool handlers to access the authenticated user
+   */
+  setContext(context: McpContext): void {
+    this.currentContext = context;
+  }
+
+  /**
+   * Get the context for the current request
+   * Returns the context set by the controller for this request
+   */
+  getContext(): McpContext | null {
+    return this.currentContext;
+  }
+
+  /**
+   * Clear the context after request completion
+   */
+  clearContext(): void {
+    this.currentContext = null;
   }
 }
