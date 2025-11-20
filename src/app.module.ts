@@ -6,7 +6,6 @@ import { join } from 'path';
 
 // Config
 import appConfig from './config/app.config';
-import databaseConfig from './config/database.config';
 import graphqlConfig from './config/graphql.config';
 import authConfig from './config/auth.config';
 import mcpConfig from './config/mcp.config';
@@ -27,7 +26,7 @@ import { McpModule } from './mcp/mcp.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, graphqlConfig, authConfig, mcpConfig],
+      load: [appConfig, graphqlConfig, authConfig, mcpConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 

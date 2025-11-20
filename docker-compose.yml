@@ -29,7 +29,7 @@ services:
       - '${APP_PORT:-3000}:3000'
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-context_router}?schema=public
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/context_router?schema=public}
       PORT: 3000
       GRAPHQL_PLAYGROUND: ${GRAPHQL_PLAYGROUND:-true}
       GRAPHQL_DEBUG: ${GRAPHQL_DEBUG:-true}
