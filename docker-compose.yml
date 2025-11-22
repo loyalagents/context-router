@@ -22,7 +22,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: apps/backend/Dockerfile
     container_name: context-router-app
     restart: unless-stopped
     ports:
@@ -42,7 +42,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       AUTH0_SYNC_STRATEGY: ${AUTH0_SYNC_STRATEGY:-ON_LOGIN}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3002}
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,7 +50,7 @@ services:
       - app-network
     volumes:
       # Mount source code for development (comment out for production)
-      - .:/app
+      - ./apps/backend:/app
       - /app/node_modules
     command: npm run start:dev
 

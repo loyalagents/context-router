@@ -3,15 +3,17 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy package files from apps/backend
+COPY apps/backend/package.json ./package.json
+# Note: We use the root package-lock.json since this is a monorepo
+COPY package-lock.json ./package-lock.json
+COPY apps/backend/prisma ./prisma/
 
 # Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY . .
+# Copy source code from apps/backend
+COPY apps/backend/ .
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -24,12 +26,13 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy package files from apps/backend
+COPY apps/backend/package.json ./package.json
+COPY package-lock.json ./package-lock.json
+COPY apps/backend/prisma ./prisma/
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy Prisma generated client from builder
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma

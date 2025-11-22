@@ -1,8 +1,18 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+# Dependencies (monorepo)
+node_modules/
+**/node_modules/
+
+# Build outputs (monorepo)
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+out/
+**/out/
+tmp/
+**/tmp/
 
 # Logs
 logs
@@ -13,12 +23,16 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# dotenv environment variable files
+# dotenv environment variable files (monorepo)
 .env
 .env.development
 .env.test
 .env.production
 .env.*
+!.env.example
+**/.env
+**/.env.local
+**/.env.*.local
 
 # temp directory
 .temp
