@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import { auth0 } from '@/lib/auth0';
+import { UpdateUserResponse } from '@/lib/types/graphql';
 
 const UPDATE_USER_MUTATION = gql`
   mutation UpdateUser($updateUserInput: UpdateUserInput!) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call GraphQL mutation
-    const { data } = await getClient().mutate({
+    const { data } = await getClient().mutate<UpdateUserResponse>({
       mutation: UPDATE_USER_MUTATION,
       variables: {
         updateUserInput: {
@@ -53,6 +54,10 @@ export async function POST(request: NextRequest) {
         headers: { Authorization: `Bearer ${accessToken}` }
       }
     });
+
+    if (!data) {
+      return NextResponse.json({ error: 'No data returned from mutation' }, { status: 500 });
+    }
 
     return NextResponse.json({ user: data.updateUser });
   } catch (error) {

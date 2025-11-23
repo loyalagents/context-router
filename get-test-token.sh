@@ -3,7 +3,7 @@
 # Get a JWT token for testing
 # This uses your M2M credentials to get a token
 
-source .env
+source apps/backend/.env
 
 echo "Getting test token from Auth0..."
 echo ""

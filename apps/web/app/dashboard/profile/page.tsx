@@ -3,6 +3,7 @@ import { auth0 } from '@/lib/auth0';
 import ProfileForm from './ProfileForm';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
+import { MeQueryResponse } from '@/lib/types/graphql';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ export default async function ProfilePage() {
 
   let userData = null;
   try {
-    const { data } = await getClient().query({
+    const { data } = await getClient().query<MeQueryResponse>({
       query: ME_QUERY,
       context: {
         headers: { Authorization: `Bearer ${accessToken}` }

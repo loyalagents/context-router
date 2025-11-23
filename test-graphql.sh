@@ -4,7 +4,7 @@ echo "Testing GraphQL API..."
 echo ""
 
 # Get auth token first
-source .env
+source apps/backend/.env
 
 echo "Getting auth token..."
 RESPONSE=$(curl -s --request POST \
