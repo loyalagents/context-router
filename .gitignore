@@ -60,6 +60,9 @@ prisma/*.db-journal
 # TypeScript
 .nvmrc
 
+# GraphQL Code Generation
+apps/web/lib/generated/
+
 .git
 
 # cloud

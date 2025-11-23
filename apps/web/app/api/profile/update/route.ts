@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import { auth0 } from '@/lib/auth0';
-import { UpdateUserResponse } from '@/lib/types/graphql';
+import { UpdateUserMutation } from '@/lib/generated/graphql';
 
 const UPDATE_USER_MUTATION = gql`
   mutation UpdateUser($updateUserInput: UpdateUserInput!) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call GraphQL mutation
-    const { data } = await getClient().mutate<UpdateUserResponse>({
+    const { data } = await getClient().mutate<UpdateUserMutation>({
       mutation: UPDATE_USER_MUTATION,
       variables: {
         updateUserInput: {

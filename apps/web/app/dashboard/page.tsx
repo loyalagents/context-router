@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import { auth0 } from '@/lib/auth0';
-import { MeQueryResponse } from '@/lib/types/graphql';
+import { MeQuery } from '@/lib/generated/graphql';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export default async function Dashboard() {
   let error = null;
 
   try {
-    const { data } = await getClient().query<MeQueryResponse>({
+    const { data } = await getClient().query<MeQuery>({
       query: ME_QUERY,
       context: {
         headers: { Authorization: `Bearer ${accessToken}` }
