@@ -31,17 +31,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
     });
 
-    this.logger.log('JWT Strategy Configuration:');
-    this.logger.log(`  Domain: ${auth0Domain}`);
-    this.logger.log(`  Audience: ${audience}`);
-    this.logger.log(`  Issuer: ${issuer}`);
-    this.logger.log(`  JWKS URI: https://${auth0Domain}/.well-known/jwks.json`);
     this.logger.log('JWT Strategy initialized');
   }
 
   async validate(payload: any) {
-    this.logger.debug(`Validating JWT for user: ${payload.sub}`);
-
     // Validate audience manually (supports both string and array)
     const expectedAudience = this.configService.get<string>('auth.auth0.audience');
     const tokenAudience = payload.aud;
