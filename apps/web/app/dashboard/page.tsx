@@ -21,22 +21,43 @@ export default async function Dashboard() {
   if (!session?.user) redirect('/auth/login');
 
   // 2. Get Token for Backend
-  const accessToken = await auth0.getAccessToken();
+  console.log('[DASHBOARD] Session user:', session.user);
+  console.log('[DASHBOARD] Session keys:', Object.keys(session));
+
+  let accessToken;
+  try {
+    const tokenResult = await auth0.getAccessToken();
+    console.log('[DASHBOARD] getAccessToken() returned:', typeof tokenResult, tokenResult ? 'PRESENT' : 'MISSING');
+    console.log('[DASHBOARD] Token result structure:', JSON.stringify(tokenResult, null, 2));
+
+    // In Auth0 v4, getAccessToken() returns an object with a 'token' property
+    accessToken = tokenResult?.token;
+    console.log('[DASHBOARD] Extracted access token:', typeof accessToken, accessToken ? 'PRESENT' : 'MISSING');
+    if (accessToken && typeof accessToken === 'string') {
+      console.log('[DASHBOARD] Token length:', accessToken.length);
+      console.log('[DASHBOARD] Token prefix:', accessToken.substring(0, 20) + '...');
+    }
+  } catch (e) {
+    console.error('[DASHBOARD] getAccessToken() error:', e);
+  }
 
   // 3. Call Backend
   let userData = null;
   let error = null;
 
   try {
+    console.log('[DASHBOARD] Making GraphQL request to backend...');
     const { data } = await getClient().query({
       query: ME_QUERY,
       context: {
         headers: { Authorization: `Bearer ${accessToken}` }
       }
     });
+    console.log('[DASHBOARD] GraphQL response received:', data);
     userData = data?.me;
   } catch (e) {
-    console.error("Backend Error:", e);
+    console.error("[DASHBOARD] Backend Error:", e);
+    console.error("[DASHBOARD] Error details:", JSON.stringify(e, null, 2));
     error = "Failed to connect to backend.";
   }
 

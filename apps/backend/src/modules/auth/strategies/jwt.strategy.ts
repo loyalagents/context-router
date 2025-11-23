@@ -25,16 +25,32 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         jwksUri: `https://${auth0Domain}/.well-known/jwks.json`,
       }),
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      audience: audience,
       issuer: issuer,
       algorithms: ['RS256'],
+      // Don't validate audience here - we'll do it manually in validate() to support arrays
+      ignoreExpiration: false,
     });
 
+    this.logger.log('JWT Strategy Configuration:');
+    this.logger.log(`  Domain: ${auth0Domain}`);
+    this.logger.log(`  Audience: ${audience}`);
+    this.logger.log(`  Issuer: ${issuer}`);
+    this.logger.log(`  JWKS URI: https://${auth0Domain}/.well-known/jwks.json`);
     this.logger.log('JWT Strategy initialized');
   }
 
   async validate(payload: any) {
     this.logger.debug(`Validating JWT for user: ${payload.sub}`);
+
+    // Validate audience manually (supports both string and array)
+    const expectedAudience = this.configService.get<string>('auth.auth0.audience');
+    const tokenAudience = payload.aud;
+    const audienceArray = Array.isArray(tokenAudience) ? tokenAudience : [tokenAudience];
+
+    if (!audienceArray.includes(expectedAudience)) {
+      this.logger.error(`Invalid audience. Expected: ${expectedAudience}, Got: ${JSON.stringify(tokenAudience)}`);
+      throw new UnauthorizedException('Invalid audience');
+    }
 
     // TODO: TEMPORARY - Remove this when proper user login flow is implemented
     // This allows M2M tokens to work for testing without requiring real users

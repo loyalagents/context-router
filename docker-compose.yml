@@ -30,31 +30,15 @@ services:
     ports:
       - '${APP_PORT:-3000}:3000'
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/context_router?schema=public}
+      NODE_ENV: development
       PORT: 3000
-      GRAPHQL_PLAYGROUND: ${GRAPHQL_PLAYGROUND:-true}
-      GRAPHQL_DEBUG: ${GRAPHQL_DEBUG:-true}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
-      AUTH0_ISSUER: ${AUTH0_ISSUER}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
-      AUTH0_MANAGEMENT_API_AUDIENCE: ${AUTH0_MANAGEMENT_API_AUDIENCE}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
-      AUTH0_SYNC_STRATEGY: ${AUTH0_SYNC_STRATEGY:-ON_LOGIN}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:3002}
+      # All other env vars loaded from apps/backend/.env via env_file
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - app-network
-    volumes:
-      # Mount source code for development (comment out for production)
-      - ./apps/backend:/app
-      - /app/node_modules
-    command: npm run start:dev
+    # Removed volume mounts and dev command - using production build
 
 volumes:
   postgres_data:
