@@ -1,23 +1,20 @@
-export default function Home() {
+import { redirect } from 'next/navigation';
+import { auth0 } from '@/lib/auth0';
+
+export default async function Home() {
+  const session = await auth0.getSession();
+
+  if (session?.user) {
+    redirect('/dashboard');
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-2xl mx-auto p-8 text-center">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900">
-          Context Router
-        </h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Welcome to the Context Router monorepo application
-        </p>
-        <div className="space-y-4">
-          <div className="p-4 bg-white rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2 text-gray-900">Frontend</h2>
-            <p className="text-gray-600">Next.js 14 with TypeScript and Tailwind CSS</p>
-          </div>
-          <div className="p-4 bg-white rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2 text-gray-900">Backend</h2>
-            <p className="text-gray-600">NestJS GraphQL API running on port 3000</p>
-          </div>
-        </div>
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-6">Context Router</h1>
+        <a href="/auth/login" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+          Log In / Sign Up
+        </a>
       </div>
     </div>
   );

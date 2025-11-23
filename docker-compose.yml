@@ -25,6 +25,8 @@ services:
       dockerfile: apps/backend/Dockerfile
     container_name: context-router-app
     restart: unless-stopped
+    env_file:
+      - apps/backend/.env
     ports:
       - '${APP_PORT:-3000}:3000'
     environment:
