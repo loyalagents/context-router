@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",
+    "prebuild": "pnpm run codegen",
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "next lint",
