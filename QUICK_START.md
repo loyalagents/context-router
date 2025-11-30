@@ -30,7 +30,7 @@ docker compose exec app npx prisma migrate dev --name init
 ### 3. Seed Database (Optional)
 
 ```bash
-docker compose exec app npm run prisma:seed
+docker compose exec app pnpm run prisma:seed
 ```
 
 ## Access Points

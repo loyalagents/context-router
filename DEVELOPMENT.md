@@ -10,7 +10,7 @@ This guide explains how to run the Context Router monorepo in development mode.
 ┌─────────────────────────────────────────────────────┐
 │  Frontend (Next.js)                                 │
 │  http://localhost:3002                              │
-│  Running locally via: npm run dev:web               │
+│  Running locally via: pnpm dev:web                  │
 └────────────────┬────────────────────────────────────┘
                  │ GraphQL queries
                  ▼
@@ -42,7 +42,7 @@ This guide explains how to run the Context Router monorepo in development mode.
 
 ```bash
 # Install all dependencies
-npm install
+pnpm install
 
 # Copy environment template
 cp .env.example .env
@@ -70,7 +70,7 @@ docker compose logs -f app
 **Terminal 2 - Frontend:**
 ```bash
 # Start Next.js development server
-npm run dev:web
+pnpm dev:web
 ```
 
 ---
@@ -79,7 +79,7 @@ npm run dev:web
 
 | Service | URL | Port | How to Run |
 |---------|-----|------|------------|
-| **Frontend** | http://localhost:3002 | 3002 | `npm run dev:web` |
+| **Frontend** | http://localhost:3002 | 3002 | `pnpm dev:web` |
 | **Backend (GraphQL)** | http://localhost:3000/graphql | 3000 | `docker compose up` |
 | **PostgreSQL** | localhost:5432 | 5432 | `docker compose up` |
 
@@ -95,12 +95,12 @@ npm run dev:web
 docker compose up
 
 # Terminal 2:
-npm run dev:web
+pnpm dev:web
 
 # OR run backend locally
-npm run dev:backend  # Backend only
-npm run dev:web      # Frontend only
-npm run dev          # Both (uses concurrently - may not work with Docker)
+pnpm dev:backend  # Backend only
+pnpm dev:web      # Frontend only
+pnpm dev          # Both (uses concurrently - may not work with Docker)
 ```
 
 ### Database Management
@@ -149,24 +149,24 @@ docker compose up --build
 
 ```bash
 # Build everything
-npm run build
+pnpm build
 
 # Build individually
-npm run build:backend
-npm run build:web
+pnpm build:backend
+pnpm build:web
 ```
 
 ### Testing
 
 ```bash
 # Run all tests
-npm run test
+pnpm test
 
 # Backend tests
 cd apps/backend
-npm run test
-npm run test:e2e
-npm run test:cov  # With coverage
+pnpm test
+pnpm test:e2e
+pnpm test:cov  # With coverage
 ```
 
 ---
@@ -262,8 +262,8 @@ docker compose up
 ```bash
 # Reinstall dependencies with correct Node version
 node -v  # Should be 20+
-rm -rf node_modules apps/*/node_modules package-lock.json
-npm install
+rm -rf node_modules apps/*/node_modules pnpm-lock.yaml
+pnpm install
 ```
 
 ### CORS Errors
@@ -282,7 +282,7 @@ npm install
 ### Making Backend Changes
 
 1. Edit files in `apps/backend/src/`
-2. Docker watches for changes and auto-reloads (via `npm run start:dev`)
+2. Docker watches for changes and auto-reloads (via `pnpm start:dev`)
 3. Check logs: `docker compose logs -f app`
 
 ### Making Frontend Changes
@@ -296,14 +296,14 @@ npm install
 **Backend:**
 ```bash
 cd apps/backend
-npm install <package>
+pnpm add <package>
 docker compose restart app  # Restart to pick up new dependencies
 ```
 
 **Frontend:**
 ```bash
 cd apps/web
-npm install <package>
+pnpm add <package>
 # Frontend auto-reloads
 ```
 
@@ -326,7 +326,7 @@ docker compose restart app
 
 See deployment-specific guides:
 - **Render/Railway:** Use docker-compose.yml, set root directory to `apps/backend`
-- **Vercel (Frontend):** Deploy `apps/web`, set build command to `npm run build`
+- **Vercel (Frontend):** Deploy `apps/web`, set build command to `pnpm run build`
 - **Separate Hosting:** Build and deploy each app independently
 
 ---
@@ -366,8 +366,8 @@ docker compose exec -T postgres psql -U postgres context_router < backup.sql
 ```bash
 # When things get weird, nuclear option:
 docker compose down -v    # Deletes database!
-rm -rf node_modules apps/*/node_modules
-npm install
+rm -rf node_modules apps/*/node_modules pnpm-lock.yaml
+pnpm install
 docker compose up
 ```
 

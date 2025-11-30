@@ -17,11 +17,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "npm run prisma:generate && docker compose exec app npx prisma migrate dev",
+    "prisma:migrate": "pnpm prisma:generate && docker compose exec app npx prisma migrate dev",
     "prisma:migrate:deploy": "docker compose exec app npx prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "docker compose exec app npx ts-node prisma/seed.ts",
-    "db:push": "npm run prisma:generate && docker compose exec app npx prisma db push",
+    "db:push": "pnpm prisma:generate && docker compose exec app npx prisma db push",
     "db:reset": "docker compose exec app npx prisma migrate reset"
   },
   "repository": {

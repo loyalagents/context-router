@@ -84,7 +84,7 @@ src/
 
 5. **Seed the database (optional)**
    ```bash
-   docker-compose exec app npm run prisma:seed
+   docker-compose exec app pnpm run prisma:seed
    ```
 
 6. **Access the application**
@@ -96,7 +96,7 @@ src/
 
 1. **Install dependencies**
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. **Start PostgreSQL** (via Docker)
@@ -106,25 +106,25 @@ src/
 
 3. **Run migrations**
    ```bash
-   npm run prisma:migrate
+   pnpm run prisma:migrate
    ```
 
 4. **Start development server**
    ```bash
-   npm run start:dev
+   pnpm run start:dev
    ```
 
 ## Available Scripts
 
 ### Backend (apps/backend)
-- `npm run build` - Build the application
-- `npm run start` - Start the application
-- `npm run start:dev` - Start in development mode with watch
-- `npm run start:prod` - Start in production mode
-- `npm run prisma:generate` - Generate Prisma Client
-- `npm run prisma:migrate` - Run database migrations
-- `npm run prisma:studio` - Open Prisma Studio
-- `npm run prisma:seed` - Seed the database
+- `pnpm --filter backend build` - Build the application
+- `pnpm --filter backend start` - Start the application
+- `pnpm --filter backend start:dev` - Start in development mode with watch
+- `pnpm --filter backend start:prod` - Start in production mode
+- `pnpm --filter backend prisma:generate` - Generate Prisma Client
+- `pnpm --filter backend prisma:migrate` - Run database migrations
+- `pnpm --filter backend prisma:studio` - Open Prisma Studio
+- `pnpm --filter backend prisma:seed` - Seed the database
 
 ### Frontend (apps/web)
 - `pnpm --filter web run dev` - Start Next.js dev server (port 3002)

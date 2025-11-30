@@ -6,17 +6,17 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run start:dev --workspace=backend\" \"npm run dev --workspace=web\"",
-    "dev:backend": "npm run start:dev --workspace=backend",
-    "dev:web": "npm run dev --workspace=web",
-    "build": "npm run build --workspaces",
-    "build:backend": "npm run build --workspace=backend",
-    "build:web": "npm run build --workspace=web",
-    "test": "npm run test --workspaces",
-    "test:backend": "npm run test --workspace=backend",
-    "test:web": "npm run test --workspace=web",
-    "lint": "npm run lint --workspaces",
-    "format": "npm run format --workspaces"
+    "dev": "concurrently \"pnpm --filter backend start:dev\" \"pnpm --filter web dev\"",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "build:backend": "pnpm --filter backend build",
+    "build:web": "pnpm --filter web build",
+    "test": "pnpm -r test",
+    "test:backend": "pnpm --filter backend test",
+    "test:web": "pnpm --filter web test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format"
   },
   "devDependencies": {
     "concurrently": "^8.0.0"

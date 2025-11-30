@@ -270,7 +270,7 @@ test/e2e/
 Run the e2e test suite:
 
 ```bash
-npm run test:e2e
+pnpm test:e2e
 ```
 
 ### Manual Testing with MCP Inspector
@@ -279,7 +279,7 @@ The official MCP Inspector is the best way to test your MCP server:
 
 ```bash
 # Install globally
-npm install -g @modelcontextprotocol/inspector
+pnpm add -g @modelcontextprotocol/inspector
 
 # Run against your server
 npx @modelcontextprotocol/inspector http://localhost:3000/mcp \
@@ -296,7 +296,7 @@ This provides a UI to:
 
 1. Start your server:
    ```bash
-   npm run start:dev
+   pnpm start:dev
    ```
 
 2. Get a valid JWT token (use your existing auth flow)
