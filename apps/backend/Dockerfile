@@ -36,11 +36,14 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
 COPY apps/backend/prisma ./apps/backend/prisma/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install all dependencies temporarily to generate Prisma
+RUN pnpm install --frozen-lockfile
 
-# Copy Prisma generated client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Generate Prisma Client
+RUN pnpm --filter backend exec prisma generate
+
+# Remove dev dependencies (keep only production)
+RUN CI=true pnpm install --frozen-lockfile --prod
 
 # Copy built application from builder
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist

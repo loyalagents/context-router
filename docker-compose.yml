@@ -32,13 +32,18 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      # Point to mounted GCP credentials for Vertex AI
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/gcp-credentials.json
       # All other env vars loaded from apps/backend/.env via env_file
+    volumes:
+      # Mount GCP application default credentials for local development
+      # Run 'gcloud auth application-default login' on host before using Vertex AI
+      - ~/.config/gcloud/application_default_credentials.json:/tmp/keys/gcp-credentials.json:ro
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - app-network
-    # Removed volume mounts and dev command - using production build
 
 volumes:
   postgres_data:

@@ -20,6 +20,7 @@ import { UserModule } from './modules/user/user.module';
 import { HealthModule } from './modules/health/health.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { McpModule } from './mcp/mcp.module';
+import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { McpModule } from './mcp/mcp.module';
     HealthModule,
     PreferencesModule,
     McpModule,
+    VertexAiModule,
   ],
 })
 export class AppModule {}

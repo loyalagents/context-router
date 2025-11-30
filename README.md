@@ -10,6 +10,7 @@ A NestJS GraphQL monolith built with Prisma and PostgreSQL, designed with clean 
 - **ORM**: Prisma
 - **Language**: TypeScript
 - **Containerization**: Docker & Docker Compose
+- **AI**: Google Vertex AI (Gemini 1.5 Flash)
 
 ## Project Structure
 
@@ -297,6 +298,55 @@ Database and external dependencies are isolated in the infrastructure layer, mak
 ## Environment Variables
 
 See `.env.example` for all available configuration options.
+
+### Vertex AI Configuration
+
+The application integrates with Google Vertex AI for text generation capabilities. The following environment variables are required:
+
+```bash
+GCP_PROJECT_ID=your-gcp-project-id
+VERTEX_REGION=us-central1          # or your chosen region
+VERTEX_MODEL_ID=gemini-2.5-flash-lite   # default model
+```
+
+**For local development:**
+```bash
+gcloud auth application-default login
+```
+
+**For Cloud Run deployment:**
+- Ensure the Cloud Run service account has the `roles/aiplatform.user` role (Vertex AI User)
+- Set the environment variables in Cloud Run configuration
+
+**TODO: Rate Limiting**
+⚠️ The Vertex AI endpoint currently only requires authentication (Auth0) for access control. Consider implementing additional rate limiting to:
+- Prevent excessive API usage and costs
+- Protect against abuse
+- Set per-user or per-organization quotas
+
+## Vertex AI Integration
+
+### GraphQL Query
+
+The `askVertexAI` query allows authenticated users to send prompts to Vertex AI:
+
+```graphql
+query {
+  askVertexAI(message: "What is the capital of France?")
+}
+```
+
+**Authentication Required:** This endpoint is protected by Auth0. You must be logged in to use it.
+
+### Architecture
+
+The Vertex AI integration follows clean architecture principles:
+- **Port Interface** (`AiTextGeneratorPort`): Provider-agnostic interface for text generation
+- **Infrastructure Adapter** (`VertexAiService`): Vertex AI-specific implementation
+- **GraphQL Resolver** (`VertexAiResolver`): API layer with Auth0 guard
+- **Module** (`VertexAiModule`): Encapsulates the feature for easy swapping/extension
+
+This design allows for easy migration to other AI providers (OpenAI, Anthropic, etc.) by implementing the same port interface.
 
 ## License
 
