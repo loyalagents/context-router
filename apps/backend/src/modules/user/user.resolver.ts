@@ -1,8 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, ForbiddenException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './models/user.model';
-import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
@@ -11,24 +10,17 @@ import { CurrentUser } from '@common/decorators/current-user.decorator';
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
-  @Mutation(() => User, { description: 'Create a new user' })
-  @UseGuards(GqlAuthGuard)
-  async createUser(
-    @Args('createUserInput') createUserInput: CreateUserInput,
-    @CurrentUser() currentUser: User,
-  ): Promise<User> {
-    return this.userService.create(createUserInput);
-  }
-
-  @Query(() => [User], { name: 'users', description: 'Get all users' })
-  @UseGuards(GqlAuthGuard)
-  async findAll(): Promise<User[]> {
-    return this.userService.findAll();
-  }
-
   @Query(() => User, { name: 'user', description: 'Get a user by ID' })
   @UseGuards(GqlAuthGuard)
-  async findOne(@Args('id', { type: () => ID }) id: string): Promise<User> {
+  async findOne(
+    @Args('id', { type: () => ID }) id: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<User> {
+    // Users can only view their own profile
+    if (currentUser.userId !== id) {
+      throw new ForbiddenException('You can only view your own profile');
+    }
+
     return this.userService.findOne(id);
   }
 
@@ -38,15 +30,17 @@ export class UserResolver {
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
+    // Users can only update their own profile
+    if (currentUser.userId !== updateUserInput.userId) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
     return this.userService.update(updateUserInput);
   }
 
-  @Mutation(() => User, { description: 'Delete a user' })
-  @UseGuards(GqlAuthGuard)
-  async removeUser(
-    @Args('id', { type: () => ID }) id: string,
-    @CurrentUser() currentUser: User,
-  ): Promise<User> {
-    return this.userService.remove(id);
-  }
+  // TODO: Add admin role support to enable the following operations:
+  // - findAll() query for admins to list all users
+  // - removeUser() mutation for admins to delete users
+  // - createUser() mutation for admins to manually create users (users are auto-created via Auth0 by default)
+  // See docs/AUTHORIZATION_TODO.md for implementation plan
 }
