@@ -9,6 +9,10 @@ const ASK_VERTEX_AI = gql`
   }
 `;
 
+interface AskVertexAIResponse {
+  askVertexAI: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Call GraphQL API with authorization
     const client = await getClient();
-    const { data } = await client.query({
+    const { data } = await client.query<AskVertexAIResponse>({
       query: ASK_VERTEX_AI,
       variables: { message },
       context: {
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ response: data.askVertexAI });
+    return NextResponse.json({ response: data?.askVertexAI || '' });
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
