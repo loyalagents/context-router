@@ -15,12 +15,6 @@ input CreatePreferenceInput {
   value: JSONObject!
 }
 
-input CreateUserInput {
-  email: String!
-  firstName: String!
-  lastName: String!
-}
-
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -51,14 +45,8 @@ enum LocationType {
 type Mutation {
   createLocation(data: CreateLocationInput!): Location!
   createPreference(data: CreatePreferenceInput!): Preference!
-
-  """Create a new user"""
-  createUser(createUserInput: CreateUserInput!): User!
   deleteLocation(locationId: String!): Location!
   deletePreference(preferenceId: String!): Preference!
-
-  """Delete a user"""
-  removeUser(id: ID!): User!
   updateLocation(data: UpdateLocationInput!, locationId: String!): Location!
   updatePreference(data: UpdatePreferenceInput!, preferenceId: String!): Preference!
 
@@ -78,6 +66,8 @@ type Preference {
 }
 
 type Query {
+  """Send a text prompt to Vertex AI and receive a generated response"""
+  askVertexAI(message: String!): String!
   globalPreferences: [Preference!]!
   location(locationId: String!): Location!
   locations: [Location!]!
@@ -92,9 +82,6 @@ type Query {
 
   """Get a user by ID"""
   user(id: ID!): User!
-
-  """Get all users"""
-  users: [User!]!
 }
 
 input UpdateLocationInput {

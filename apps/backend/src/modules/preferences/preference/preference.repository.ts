@@ -28,6 +28,40 @@ export class PreferenceRepository {
     });
   }
 
+  /**
+   * Upsert preference - creates if doesn't exist, updates if it does.
+   * This prevents race conditions when multiple requests try to create the same preference.
+   * Uses the unique constraint: @@unique([userId, locationId, category, key])
+   */
+  async upsert(
+    userId: string,
+    data: CreatePreferenceInput,
+  ): Promise<Preference> {
+    this.logger.log(
+      `Upserting preference for user: ${userId}, category: ${data.category}, key: ${data.key}`,
+    );
+    return this.prisma.preference.upsert({
+      where: {
+        userId_locationId_category_key: {
+          userId,
+          locationId: data.locationId || null,
+          category: data.category,
+          key: data.key,
+        },
+      },
+      update: {
+        value: data.value,
+      },
+      create: {
+        userId,
+        locationId: data.locationId,
+        category: data.category,
+        key: data.key,
+        value: data.value,
+      },
+    });
+  }
+
   async findAll(userId: string): Promise<Preference[]> {
     this.logger.log(`Fetching all preferences for user: ${userId}`);
     return this.prisma.preference.findMany({

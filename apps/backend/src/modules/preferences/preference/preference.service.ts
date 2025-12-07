@@ -20,6 +20,11 @@ export class PreferenceService {
     private locationService: LocationService,
   ) {}
 
+  /**
+   * Create or update a preference.
+   * Uses upsert to prevent race conditions when the same preference is saved simultaneously.
+   * This is safe for concurrent requests and idempotent.
+   */
   async create(
     userId: string,
     data: CreatePreferenceInput,
@@ -30,9 +35,9 @@ export class PreferenceService {
     }
 
     this.logger.log(
-      `Creating preference for user ${userId}: ${data.category}/${data.key}`,
+      `Creating/updating preference for user ${userId}: ${data.category}/${data.key}`,
     );
-    return this.preferenceRepository.create(userId, data);
+    return this.preferenceRepository.upsert(userId, data);
   }
 
   async findAll(userId: string): Promise<Preference[]> {

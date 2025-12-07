@@ -15,9 +15,28 @@ export class LocationService {
 
   constructor(private locationRepository: LocationRepository) {}
 
+  /**
+   * Create a new location.
+   * Note: Consider using upsert if you want to update existing locations with same type+label.
+   */
   async create(userId: string, data: CreateLocationInput): Promise<Location> {
     this.logger.log(`Creating location for user ${userId}: ${data.type}`);
     return this.locationRepository.create(userId, data);
+  }
+
+  /**
+   * Create or update a location.
+   * If a location with the same type and label exists, update it.
+   * Otherwise, create a new one.
+   *
+   * This is useful for scenarios like "save my HOME address" where you want to
+   * update the existing HOME location rather than creating duplicates.
+   */
+  async upsert(userId: string, data: CreateLocationInput): Promise<Location> {
+    this.logger.log(
+      `Upserting location for user ${userId}: ${data.type} - ${data.label}`,
+    );
+    return this.locationRepository.upsert(userId, data);
   }
 
   async findAll(userId: string): Promise<Location[]> {

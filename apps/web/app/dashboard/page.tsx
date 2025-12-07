@@ -69,12 +69,20 @@ export default async function Dashboard() {
             </div>
           </div>
 
-          <a
-            href="/dashboard/profile"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
-            Edit Profile
-          </a>
+          <div className="flex gap-4">
+            <a
+              href="/dashboard/profile"
+              className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              Edit Profile
+            </a>
+            <a
+              href="/dashboard/chat"
+              className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            >
+              Test AI Chat
+            </a>
+          </div>
         </div>
       )}
 

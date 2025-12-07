@@ -25,6 +25,46 @@ export class LocationRepository {
     });
   }
 
+  /**
+   * Upsert location by userId + type + label.
+   * If a location with the same type and label exists, update it.
+   * Otherwise, create a new one.
+   *
+   * This prevents duplicate locations and handles race conditions gracefully.
+   * Useful for "update my HOME address" type operations.
+   */
+  async upsert(
+    userId: string,
+    data: CreateLocationInput,
+  ): Promise<Location> {
+    this.logger.log(
+      `Upserting location for user: ${userId}, type: ${data.type}, label: ${data.label}`,
+    );
+
+    // Find existing location with same type and label
+    const existing = await this.prisma.location.findFirst({
+      where: {
+        userId,
+        type: data.type as any,
+        label: data.label,
+      },
+    });
+
+    if (existing) {
+      // Update existing location
+      return this.prisma.location.update({
+        where: { locationId: existing.locationId },
+        data: {
+          address: data.address,
+          // Type and label stay the same since we matched on them
+        },
+      });
+    }
+
+    // Create new location
+    return this.create(userId, data);
+  }
+
   async findAll(userId: string): Promise<Location[]> {
     this.logger.log(`Fetching all locations for user: ${userId}`);
     return this.prisma.location.findMany({
