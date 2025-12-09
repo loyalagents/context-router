@@ -104,6 +104,7 @@ interface DocumentAnalysisResult {
   documentSummary: string | null;
   status: AnalysisStatus;
   statusReason: string | null;           // Human-readable explanation
+  filteredCount: number;                 // Number of suggestions filtered during validation
 }
 
 interface PreferenceSuggestion {
@@ -111,7 +112,7 @@ interface PreferenceSuggestion {
   category: string;
   key: string;
   operation: 'CREATE' | 'UPDATE' | 'DELETE';
-  oldValue: any | null;                  // Current value if exists
+  oldValue: any | null;                  // Current value if exists (corrected from DB)
   newValue: any;                         // Suggested value
   confidence: number;                    // 0.0 - 1.0
   sourceSnippet: string;                 // Excerpt from document
@@ -120,6 +121,7 @@ interface PreferenceSuggestion {
     line?: number;
     filename?: string;
   };
+  wasCorrected: boolean;                 // True if operation or oldValue was corrected
 }
 ```
 
@@ -129,10 +131,11 @@ Success with suggestions:
 ```json
 {
   "analysisId": "abc-123",
-  "suggestions": [{ "id": "abc-123:0", "category": "dietary", ... }],
+  "suggestions": [{ "id": "abc-123:0", "category": "dietary", "wasCorrected": false, ... }],
   "documentSummary": "Medical form with dietary restrictions",
   "status": "success",
-  "statusReason": null
+  "statusReason": null,
+  "filteredCount": 1
 }
 ```
 
@@ -143,7 +146,8 @@ No matches found:
   "suggestions": [],
   "documentSummary": "Restaurant menu for Italian bistro",
   "status": "no_matches",
-  "statusReason": "No preference-related information found in document"
+  "statusReason": "No preference-related information found in document",
+  "filteredCount": 0
 }
 ```
 
@@ -154,7 +158,8 @@ AI returned malformed JSON:
   "suggestions": [],
   "documentSummary": null,
   "status": "parse_error",
-  "statusReason": "AI response could not be parsed - please try again"
+  "statusReason": "AI response could not be parsed - please try again",
+  "filteredCount": 0
 }
 ```
 
@@ -165,7 +170,8 @@ AI service error:
   "suggestions": [],
   "documentSummary": null,
   "status": "ai_error",
-  "statusReason": "AI service unavailable - please try again later"
+  "statusReason": "AI service unavailable - please try again later",
+  "filteredCount": 0
 }
 ```
 
@@ -348,6 +354,56 @@ If no suggestions, return:
 - AI returns malformed JSON → return empty suggestions with error message
 - File parsing fails → clear error to user
 - Timeout → suggest retrying or using smaller document
+
+### Response Sanitization
+
+Since AI responses can be inconsistent, we apply server-side validation and correction before returning suggestions to the user. This ensures data integrity while being flexible enough to accept valid but imperfect AI output.
+
+**Validation Rules:**
+
+| Rule | Action | Example |
+|------|--------|---------|
+| Missing required field (`category`, `key`, or `newValue`) | **Filter out** | Suggestion with no `key` is discarded |
+| Duplicate `category/key` | **Filter out** (keep first) | Two suggestions for `dietary/allergies` → keep first |
+| Wrong operation type | **Correct** | AI says `CREATE` but preference exists → change to `UPDATE` |
+| Wrong `oldValue` | **Correct** | AI says `oldValue: "nuts"` but DB has `["nuts", "shellfish"]` → use DB value |
+| `oldValue` on CREATE | **Correct** | Remove `oldValue` since preference doesn't exist |
+| `newValue` equals existing value | **Filter out** | UPDATE with no actual change is pointless |
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `wasCorrected` | `boolean` | Per-suggestion flag: `true` if operation or oldValue was corrected |
+| `filteredCount` | `number` | Total suggestions removed (missing fields, duplicates, no-change updates) |
+
+**Logging:**
+
+All corrections and filtered suggestions are logged at `WARN` level for debugging:
+```
+[PreferenceExtractionService] Corrected operation for dietary/allergies: AI said CREATE, but DB says UPDATE
+[PreferenceExtractionService] Filtered suggestion: duplicate key travel/seat_preference
+[PreferenceExtractionService] Validation complete: 5 valid suggestions, 2 filtered
+```
+
+**Frontend Indicators:**
+
+- "Corrected" badge (orange) shown on suggestions where `wasCorrected: true`
+- Header shows filtered count: "5 Suggestions Found (2 filtered)"
+- Tooltip explains what "Corrected" and "filtered" mean
+
+**Rationale:**
+
+This "flexible validation" approach balances data integrity with AI flexibility:
+- We **trust AI** for category/key discovery (allows unknown categories)
+- We **verify AI** against actual DB state (corrects operation/oldValue)
+- We **filter garbage** (missing required fields, exact duplicates)
+- We **inform users** when corrections were made (transparency)
+
+**TODOs:**
+- [ ] Consider adding schema validation (only allow known categories) as optional strict mode
+- [ ] Add confidence threshold filtering (e.g., filter suggestions below 0.3 confidence)
+- [ ] Track correction rates for AI prompt improvement
 
 ### Timeouts
 - Set reasonable timeout for Vertex AI calls

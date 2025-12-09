@@ -2,6 +2,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ApplyPreferenceSuggestionInput {
+  category: String!
+  key: String!
+  newValue: JSONObject
+  operation: PreferenceOperation!
+  suggestionId: ID!
+}
+
 input CreateLocationInput {
   address: String!
   label: String!
@@ -43,6 +51,7 @@ enum LocationType {
 }
 
 type Mutation {
+  applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
   createLocation(data: CreateLocationInput!): Location!
   createPreference(data: CreatePreferenceInput!): Preference!
   deleteLocation(locationId: String!): Location!
@@ -65,6 +74,25 @@ type Preference {
   value: JSONObject!
 }
 
+"""The type of operation to perform on a preference"""
+enum PreferenceOperation {
+  CREATE
+  UPDATE
+}
+
+type PreferenceSuggestion {
+  category: String!
+  confidence: Float!
+  id: ID!
+  key: String!
+  newValue: JSONObject!
+  oldValue: JSONObject
+  operation: PreferenceOperation!
+  sourceMeta: SourceMeta
+  sourceSnippet: String!
+  wasCorrected: Boolean!
+}
+
 type Query {
   """Send a text prompt to Vertex AI and receive a generated response"""
   askVertexAI(message: String!): String!
@@ -82,6 +110,12 @@ type Query {
 
   """Get a user by ID"""
   user(id: ID!): User!
+}
+
+type SourceMeta {
+  filename: String
+  line: Float
+  page: Float
 }
 
 input UpdateLocationInput {
