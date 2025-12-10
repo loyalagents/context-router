@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, Float, registerEnumType } from '@nestjs/graphql';
-import { GraphQLJSONObject } from 'graphql-type-json';
+import { GraphQLJSON } from 'graphql-type-json';
 
 export enum PreferenceOperation {
   CREATE = 'CREATE',
@@ -39,10 +39,10 @@ export class PreferenceSuggestion {
   @Field(() => PreferenceOperation)
   operation: PreferenceOperation;
 
-  @Field(() => GraphQLJSONObject, { nullable: true })
+  @Field(() => GraphQLJSON, { nullable: true })
   oldValue?: any;
 
-  @Field(() => GraphQLJSONObject)
+  @Field(() => GraphQLJSON)
   newValue: any;
 
   @Field(() => Float)

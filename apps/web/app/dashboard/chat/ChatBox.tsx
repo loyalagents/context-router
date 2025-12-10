@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function ChatBox() {
   const [message, setMessage] = useState('');
@@ -41,7 +42,15 @@ export default function ChatBox() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">LLM Chat Test</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">LLM Chat Test</h1>
+        <Link
+          href="/dashboard"
+          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+        >
+          ← Back to Dashboard
+        </Link>
+      </div>
 
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="flex gap-2">

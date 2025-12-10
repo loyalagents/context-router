@@ -5,7 +5,7 @@
 input ApplyPreferenceSuggestionInput {
   category: String!
   key: String!
-  newValue: JSONObject
+  newValue: JSON
   operation: PreferenceOperation!
   suggestionId: ID!
 }
@@ -20,7 +20,7 @@ input CreatePreferenceInput {
   category: String!
   key: String!
   locationId: String
-  value: JSONObject!
+  value: JSON!
 }
 
 """
@@ -29,9 +29,9 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 """
-The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
-scalar JSONObject
+scalar JSON
 
 type Location {
   address: String!
@@ -71,7 +71,7 @@ type Preference {
   preferenceId: ID!
   updatedAt: DateTime!
   userId: String!
-  value: JSONObject!
+  value: JSON!
 }
 
 """The type of operation to perform on a preference"""
@@ -85,8 +85,8 @@ type PreferenceSuggestion {
   confidence: Float!
   id: ID!
   key: String!
-  newValue: JSONObject!
-  oldValue: JSONObject
+  newValue: JSON!
+  oldValue: JSON
   operation: PreferenceOperation!
   sourceMeta: SourceMeta
   sourceSnippet: String!
@@ -128,7 +128,7 @@ input UpdatePreferenceInput {
   category: String
   key: String
   locationId: String
-  value: JSONObject
+  value: JSON
 }
 
 input UpdateUserInput {

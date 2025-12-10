@@ -1,6 +1,6 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validator';
-import { GraphQLJSONObject } from 'graphql-type-json';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @InputType()
 export class CreatePreferenceInput {
@@ -19,7 +19,6 @@ export class CreatePreferenceInput {
   @IsNotEmpty()
   key: string;
 
-  @Field(() => GraphQLJSONObject)
-  @IsObject()
+  @Field(() => GraphQLJSON)
   value: any;
 }

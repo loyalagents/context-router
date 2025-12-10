@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { gql } from '@apollo/client';
-import { useMutation } from '@apollo/client/react';
+import { gql, useMutation } from '@apollo/client';
 import SuggestionItem from './SuggestionItem';
 
 const APPLY_SUGGESTIONS_MUTATION = gql`
@@ -101,16 +100,27 @@ export default function SuggestionsList({
       return;
     }
 
+    console.log('Applying suggestions with input:', JSON.stringify(input, null, 2));
+
     try {
-      await applyMutation({
+      const response = await applyMutation({
         variables: {
           analysisId: result.analysisId,
           input,
         },
       });
+      console.log('Mutation response:', response);
       onApplied();
     } catch (error) {
       console.error('Failed to apply suggestions:', error);
+      // Log more details about the error
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+        });
+      }
     }
   };
 
