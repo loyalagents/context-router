@@ -17,6 +17,8 @@ const APPLY_SUGGESTIONS_MUTATION = `
   }
 `;
 
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
+
 interface PreferenceSuggestion {
   id: string;
   category: string;
@@ -33,14 +35,26 @@ interface PreferenceSuggestion {
   wasCorrected?: boolean;
 }
 
+interface FilteredSuggestion extends PreferenceSuggestion {
+  filterReason: FilterReason;
+  filterDetails?: string;
+}
+
 interface DocumentAnalysisResult {
   analysisId: string;
   suggestions: PreferenceSuggestion[];
+  filteredSuggestions: FilteredSuggestion[];
   documentSummary: string | null;
   status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
   statusReason: string | null;
   filteredCount?: number;
 }
+
+const FILTER_REASON_LABELS: Record<FilterReason, string> = {
+  MISSING_FIELDS: 'Missing required fields',
+  DUPLICATE_KEY: 'Duplicate',
+  NO_CHANGE: 'Already set',
+};
 
 interface SuggestionsListProps {
   result: DocumentAnalysisResult;
@@ -214,6 +228,47 @@ export default function SuggestionsList({
             onValueChange={(value) => handleValueChange(suggestion.id, value)}
           />
         ))}
+
+        {/* Filtered Suggestions Section */}
+        {result.filteredSuggestions && result.filteredSuggestions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-500 mb-3">
+              Filtered Suggestions ({result.filteredSuggestions.length})
+            </h4>
+            <div className="space-y-2">
+              {result.filteredSuggestions.map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="border border-gray-200 rounded-lg p-3 bg-gray-50 opacity-60"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">
+                          {suggestion.category}/{suggestion.key}
+                        </span>
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-600">
+                          {FILTER_REASON_LABELS[suggestion.filterReason]}
+                        </span>
+                      </div>
+                      {suggestion.filterDetails && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {suggestion.filterDetails}
+                        </p>
+                      )}
+                      <div className="mt-2 text-xs text-gray-500">
+                        <span className="font-medium">Value:</span>{' '}
+                        <code className="bg-gray-100 px-1 rounded">
+                          {JSON.stringify(suggestion.newValue)}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-4 border-t bg-gray-50 flex items-center justify-between">

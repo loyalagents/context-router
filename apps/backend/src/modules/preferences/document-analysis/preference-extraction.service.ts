@@ -4,6 +4,8 @@ import { PreferenceService } from '../preference/preference.service';
 import {
   PreferenceSuggestion,
   PreferenceOperation,
+  FilteredSuggestion,
+  FilterReason,
 } from './dto/preference-suggestion.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
 
@@ -89,6 +91,7 @@ export class PreferenceExtractionService {
     filename: string,
   ): Promise<{
     suggestions: PreferenceSuggestion[];
+    filteredSuggestions: FilteredSuggestion[];
     documentSummary: string;
     filteredCount: number;
   }> {
@@ -236,15 +239,32 @@ If no preferences can be extracted, return:
    * - Deduplicates by category/key (keeps first occurrence)
    * - Sets wasCorrected flag when corrections are made
    * - Logs all corrections and filtered items
+   * - Returns filtered suggestions with reasons for UI display
    */
   private validateAndSanitizeSuggestions(
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
     currentPreferences: Array<{ category: string; key: string; value: any }>,
   ): {
     suggestions: PreferenceSuggestion[];
+    filteredSuggestions: FilteredSuggestion[];
     documentSummary: string;
     filteredCount: number;
   } {
+    // DEBUG: Log all suggestions found by AI
+    this.logger.debug(
+      `AI found ${parsed.suggestions.length} raw suggestions: ${JSON.stringify(
+        parsed.suggestions.map((s) => ({
+          category: s.category,
+          key: s.key,
+          operation: s.operation,
+          newValue: s.newValue,
+          confidence: s.confidence,
+        })),
+        null,
+        2,
+      )}`,
+    );
+
     // Build a lookup map for current preferences
     const preferenceMap = new Map<string, any>();
     for (const pref of currentPreferences) {
@@ -252,25 +272,32 @@ If no preferences can be extracted, return:
     }
 
     const validatedSuggestions: PreferenceSuggestion[] = [];
+    const filteredSuggestions: FilteredSuggestion[] = [];
     const seenKeys = new Set<string>();
-    let filteredCount = 0;
 
     for (const suggestion of parsed.suggestions) {
       const prefKey = `${suggestion.category}/${suggestion.key}`;
 
       // Filter: missing required fields
       if (!suggestion.category || !suggestion.key || suggestion.newValue === undefined) {
-        this.logger.warn(
-          `Filtered suggestion: missing required field(s) - category: ${suggestion.category}, key: ${suggestion.key}, newValue: ${suggestion.newValue}`,
-        );
-        filteredCount++;
+        const details = `category: ${suggestion.category}, key: ${suggestion.key}, newValue: ${suggestion.newValue}`;
+        this.logger.warn(`Filtered suggestion: missing required field(s) - ${details}`);
+        filteredSuggestions.push({
+          ...suggestion,
+          filterReason: FilterReason.MISSING_FIELDS,
+          filterDetails: details,
+        });
         continue;
       }
 
       // Filter: duplicate category/key (keep first)
       if (seenKeys.has(prefKey)) {
         this.logger.warn(`Filtered suggestion: duplicate key ${prefKey}`);
-        filteredCount++;
+        filteredSuggestions.push({
+          ...suggestion,
+          filterReason: FilterReason.DUPLICATE_KEY,
+          filterDetails: `First occurrence of ${prefKey} was already added`,
+        });
         continue;
       }
       seenKeys.add(prefKey);
@@ -326,7 +353,11 @@ If no preferences can be extracted, return:
         this.logger.warn(
           `Filtered suggestion: ${prefKey} newValue matches existing value (no change)`,
         );
-        filteredCount++;
+        filteredSuggestions.push({
+          ...suggestion,
+          filterReason: FilterReason.NO_CHANGE,
+          filterDetails: `Value "${JSON.stringify(suggestion.newValue)}" already exists`,
+        });
         continue;
       }
 
@@ -335,13 +366,14 @@ If no preferences can be extracted, return:
     }
 
     this.logger.log(
-      `Validation complete: ${validatedSuggestions.length} valid suggestions, ${filteredCount} filtered`,
+      `Validation complete: ${validatedSuggestions.length} valid suggestions, ${filteredSuggestions.length} filtered`,
     );
 
     return {
       suggestions: validatedSuggestions,
+      filteredSuggestions,
       documentSummary: parsed.documentSummary,
-      filteredCount,
+      filteredCount: filteredSuggestions.length,
     };
   }
 }

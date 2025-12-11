@@ -28,6 +28,28 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""The reason a suggestion was filtered out"""
+enum FilterReason {
+  DUPLICATE_KEY
+  MISSING_FIELDS
+  NO_CHANGE
+}
+
+type FilteredSuggestion {
+  category: String!
+  confidence: Float!
+  filterDetails: String
+  filterReason: FilterReason!
+  id: ID!
+  key: String!
+  newValue: JSON!
+  oldValue: JSON
+  operation: PreferenceOperation!
+  sourceMeta: SourceMeta
+  sourceSnippet: String!
+  wasCorrected: Boolean!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """

@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
-import { PreferenceSuggestion } from './preference-suggestion.dto';
+import { PreferenceSuggestion, FilteredSuggestion } from './preference-suggestion.dto';
 
 export enum AnalysisStatus {
   SUCCESS = 'success',
@@ -20,6 +20,9 @@ export class DocumentAnalysisResult {
 
   @Field(() => [PreferenceSuggestion])
   suggestions: PreferenceSuggestion[];
+
+  @Field(() => [FilteredSuggestion], { defaultValue: [] })
+  filteredSuggestions: FilteredSuggestion[];
 
   @Field({ nullable: true })
   documentSummary?: string;

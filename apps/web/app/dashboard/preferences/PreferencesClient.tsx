@@ -9,6 +9,7 @@ import {
 } from '@apollo/experimental-nextjs-app-support';
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
+import PreferenceItem from './components/PreferenceItem';
 
 interface Preference {
   preferenceId: string;
@@ -19,13 +20,7 @@ interface Preference {
   updatedAt: string;
 }
 
-interface DocumentAnalysisResult {
-  analysisId: string;
-  suggestions: PreferenceSuggestion[];
-  documentSummary: string | null;
-  status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
-  statusReason: string | null;
-}
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
 
 interface PreferenceSuggestion {
   id: string;
@@ -40,6 +35,22 @@ interface PreferenceSuggestion {
     page?: number;
     line?: number;
   };
+  wasCorrected?: boolean;
+}
+
+interface FilteredSuggestion extends PreferenceSuggestion {
+  filterReason: FilterReason;
+  filterDetails?: string;
+}
+
+interface DocumentAnalysisResult {
+  analysisId: string;
+  suggestions: PreferenceSuggestion[];
+  filteredSuggestions: FilteredSuggestion[];
+  documentSummary: string | null;
+  status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
+  statusReason: string | null;
+  filteredCount?: number;
 }
 
 interface PreferencesClientProps {
@@ -80,6 +91,16 @@ function PreferencesContent({
     setAnalysisResult(null);
     // Refresh the page to get updated preferences
     window.location.reload();
+  };
+
+  const handlePreferenceUpdate = (updated: Preference) => {
+    setPreferences((prev) =>
+      prev.map((p) => (p.preferenceId === updated.preferenceId ? updated : p))
+    );
+  };
+
+  const handlePreferenceDelete = (preferenceId: string) => {
+    setPreferences((prev) => prev.filter((p) => p.preferenceId !== preferenceId));
   };
 
   // Group preferences by category
@@ -145,20 +166,13 @@ function PreferencesContent({
                   </h3>
                   <div className="space-y-2">
                     {prefs.map((pref) => (
-                      <div
+                      <PreferenceItem
                         key={pref.preferenceId}
-                        className="border rounded-lg p-3 flex justify-between items-start"
-                      >
-                        <div>
-                          <span className="font-medium text-gray-900">{pref.key}</span>
-                          <pre className="text-sm text-gray-600 mt-1 bg-gray-50 px-2 py-1 rounded">
-                            {JSON.stringify(pref.value, null, 2)}
-                          </pre>
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {new Date(pref.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
+                        preference={pref}
+                        accessToken={accessToken}
+                        onUpdate={handlePreferenceUpdate}
+                        onDelete={handlePreferenceDelete}
+                      />
                     ))}
                   </div>
                 </div>

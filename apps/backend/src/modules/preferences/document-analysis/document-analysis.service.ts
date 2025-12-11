@@ -27,7 +27,7 @@ export class DocumentAnalysisService {
     );
 
     try {
-      const { suggestions, documentSummary, filteredCount } =
+      const { suggestions, filteredSuggestions, documentSummary, filteredCount } =
         await this.preferenceExtractionService.extractPreferences(
           userId,
           fileBuffer,
@@ -41,6 +41,12 @@ export class DocumentAnalysisService {
         id: `${analysisId}:${index}`,
       }));
 
+      // Update filtered suggestion IDs as well
+      const filteredWithIds = filteredSuggestions.map((s, index) => ({
+        ...s,
+        id: `${analysisId}:filtered:${index}`,
+      }));
+
       if (suggestionsWithIds.length === 0) {
         this.logger.log(
           `Analysis ${analysisId} completed with no matches found (filtered: ${filteredCount})`,
@@ -48,6 +54,7 @@ export class DocumentAnalysisService {
         return {
           analysisId,
           suggestions: [],
+          filteredSuggestions: filteredWithIds,
           documentSummary,
           status: AnalysisStatus.NO_MATCHES,
           statusReason: 'No preference-related information found in document',
@@ -62,6 +69,7 @@ export class DocumentAnalysisService {
       return {
         analysisId,
         suggestions: suggestionsWithIds,
+        filteredSuggestions: filteredWithIds,
         documentSummary,
         status: AnalysisStatus.SUCCESS,
         statusReason: undefined,
@@ -76,6 +84,7 @@ export class DocumentAnalysisService {
           return {
             analysisId,
             suggestions: [],
+            filteredSuggestions: [],
             documentSummary: undefined,
             status: AnalysisStatus.PARSE_ERROR,
             statusReason: 'AI response could not be parsed - please try again',
@@ -87,6 +96,7 @@ export class DocumentAnalysisService {
       return {
         analysisId,
         suggestions: [],
+        filteredSuggestions: [],
         documentSummary: undefined,
         status: AnalysisStatus.AI_ERROR,
         statusReason: 'AI service unavailable - please try again later',

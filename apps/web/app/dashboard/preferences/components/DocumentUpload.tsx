@@ -2,14 +2,6 @@
 
 import { useState, useCallback, useRef } from 'react';
 
-interface DocumentAnalysisResult {
-  analysisId: string;
-  suggestions: PreferenceSuggestion[];
-  documentSummary: string | null;
-  status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
-  statusReason: string | null;
-}
-
 interface PreferenceSuggestion {
   id: string;
   category: string;
@@ -23,6 +15,23 @@ interface PreferenceSuggestion {
     page?: number;
     line?: number;
   };
+}
+
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
+
+interface FilteredSuggestion extends PreferenceSuggestion {
+  filterReason: FilterReason;
+  filterDetails?: string;
+}
+
+interface DocumentAnalysisResult {
+  analysisId: string;
+  suggestions: PreferenceSuggestion[];
+  filteredSuggestions: FilteredSuggestion[];
+  documentSummary: string | null;
+  status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
+  statusReason: string | null;
+  filteredCount?: number;
 }
 
 interface DocumentUploadProps {

@@ -13,6 +13,17 @@ registerEnumType(PreferenceOperation, {
   description: 'The type of operation to perform on a preference',
 });
 
+export enum FilterReason {
+  MISSING_FIELDS = 'MISSING_FIELDS',
+  DUPLICATE_KEY = 'DUPLICATE_KEY',
+  NO_CHANGE = 'NO_CHANGE',
+}
+
+registerEnumType(FilterReason, {
+  name: 'FilterReason',
+  description: 'The reason a suggestion was filtered out',
+});
+
 @ObjectType()
 export class SourceMeta {
   @Field(() => Number, { nullable: true })
@@ -56,4 +67,13 @@ export class PreferenceSuggestion {
 
   @Field({ defaultValue: false })
   wasCorrected: boolean;
+}
+
+@ObjectType()
+export class FilteredSuggestion extends PreferenceSuggestion {
+  @Field(() => FilterReason)
+  filterReason: FilterReason;
+
+  @Field({ nullable: true })
+  filterDetails?: string;
 }
