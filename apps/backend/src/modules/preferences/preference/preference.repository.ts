@@ -32,6 +32,10 @@ export class PreferenceRepository {
    * Upsert preference - creates if doesn't exist, updates if it does.
    * This prevents race conditions when multiple requests try to create the same preference.
    * Uses the unique constraint: @@unique([userId, locationId, category, key])
+   *
+   * Note: For nullable locationId in the composite unique constraint,
+   * we need to use findFirst + create/update pattern since Prisma upsert
+   * doesn't handle nullable fields in composite keys well.
    */
   async upsert(
     userId: string,
@@ -40,26 +44,38 @@ export class PreferenceRepository {
     this.logger.log(
       `Upserting preference for user: ${userId}, category: ${data.category}, key: ${data.key}`,
     );
-    return this.prisma.preference.upsert({
+
+    // Normalize locationId to null if undefined
+    const locationId = data.locationId ?? null;
+
+    // Find existing preference with the same composite key
+    const existing = await this.prisma.preference.findFirst({
       where: {
-        userId_locationId_category_key: {
-          userId,
-          locationId: data.locationId || null,
-          category: data.category,
-          key: data.key,
-        },
-      },
-      update: {
-        value: data.value,
-      },
-      create: {
         userId,
-        locationId: data.locationId,
+        locationId,
         category: data.category,
         key: data.key,
-        value: data.value,
       },
     });
+
+    if (existing) {
+      // Update existing preference
+      return this.prisma.preference.update({
+        where: { preferenceId: existing.preferenceId },
+        data: { value: data.value },
+      });
+    } else {
+      // Create new preference
+      return this.prisma.preference.create({
+        data: {
+          userId,
+          locationId,
+          category: data.category,
+          key: data.key,
+          value: data.value,
+        },
+      });
+    }
   }
 
   async findAll(userId: string): Promise<Preference[]> {

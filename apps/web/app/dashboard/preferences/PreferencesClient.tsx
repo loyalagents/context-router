@@ -48,7 +48,6 @@ interface PreferencesClientProps {
 }
 
 function createApolloClient(accessToken: string) {
-  console.log('Creating Apollo client with token:', accessToken ? `${accessToken.substring(0, 20)}...` : 'NO TOKEN');
   return new ApolloClient({
     link: new HttpLink({
       uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql',
@@ -120,6 +119,7 @@ function PreferencesContent({
               result={analysisResult}
               onClose={handleClose}
               onApplied={handleApplied}
+              accessToken={accessToken}
             />
           ) : (
             <DocumentUpload

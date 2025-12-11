@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { gql, useMutation } from '@apollo/client';
 import SuggestionItem from './SuggestionItem';
 
-const APPLY_SUGGESTIONS_MUTATION = gql`
+const APPLY_SUGGESTIONS_MUTATION = `
   mutation ApplyPreferenceSuggestions(
     $analysisId: ID!
     $input: [ApplyPreferenceSuggestionInput!]!
@@ -47,21 +46,20 @@ interface SuggestionsListProps {
   result: DocumentAnalysisResult;
   onClose: () => void;
   onApplied: () => void;
+  accessToken: string;
 }
 
 export default function SuggestionsList({
   result,
   onClose,
   onApplied,
+  accessToken,
 }: SuggestionsListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set(result.suggestions.map((s) => s.id))
   );
   const [editedValues, setEditedValues] = useState<Record<string, any>>({});
-
-  const [applyMutation, { loading: applying }] = useMutation(
-    APPLY_SUGGESTIONS_MUTATION
-  );
+  const [applying, setApplying] = useState(false);
 
   const handleToggle = (id: string) => {
     const newSelected = new Set(selectedIds);
@@ -100,27 +98,36 @@ export default function SuggestionsList({
       return;
     }
 
-    console.log('Applying suggestions with input:', JSON.stringify(input, null, 2));
+    setApplying(true);
 
     try {
-      const response = await applyMutation({
-        variables: {
-          analysisId: result.analysisId,
-          input,
+      const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+      const response = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
         },
+        body: JSON.stringify({
+          query: APPLY_SUGGESTIONS_MUTATION,
+          variables: {
+            analysisId: result.analysisId,
+            input,
+          },
+        }),
       });
-      console.log('Mutation response:', response);
+
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'GraphQL error');
+      }
+
       onApplied();
     } catch (error) {
       console.error('Failed to apply suggestions:', error);
-      // Log more details about the error
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack,
-        });
-      }
+    } finally {
+      setApplying(false);
     }
   };
 
