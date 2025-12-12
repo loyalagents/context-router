@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { z } from 'zod';
 import { AiTextGeneratorPort } from '../../../domains/shared/ports/ai-text-generator.port';
 import { PreferenceService } from '../preference/preference.service';
 import {
@@ -8,6 +9,35 @@ import {
   FilterReason,
 } from './dto/preference-suggestion.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
+
+/**
+ * Zod schema for validating AI response structure.
+ * This ensures type safety at runtime, catching malformed AI responses.
+ */
+const AiSuggestionSchema = z.object({
+  key: z.string(),
+  category: z.string(),
+  operation: z.enum(['CREATE', 'UPDATE']),
+  oldValue: z.any().optional(),
+  newValue: z.any(),
+  confidence: z.number().min(0).max(1),
+  sourceSnippet: z.string(),
+  sourceMeta: z
+    .object({
+      page: z.number().optional().nullable(),
+      line: z.number().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+});
+
+const AiResponseSchema = z.object({
+  suggestions: z.array(AiSuggestionSchema),
+  documentSummary: z.string(),
+});
+
+type AiSuggestionSchemaType = z.infer<typeof AiSuggestionSchema>;
+type AiResponseSchemaType = z.infer<typeof AiResponseSchema>;
 
 /**
  * Preference Schema Definition
@@ -56,22 +86,6 @@ const PREFERENCE_SCHEMA: Record<string, string[]> = {
   ],
 };
 
-interface AiSuggestionResponse {
-  suggestions: Array<{
-    key: string;
-    category: string;
-    operation: 'CREATE' | 'UPDATE';
-    oldValue?: any;
-    newValue: any;
-    confidence: number;
-    sourceSnippet: string;
-    sourceMeta?: {
-      page?: number;
-      line?: number;
-    };
-  }>;
-  documentSummary: string;
-}
 
 @Injectable()
 export class PreferenceExtractionService {
@@ -176,58 +190,88 @@ If no preferences can be extracted, return:
     aiResponse: string,
     analysisId: string,
   ): { suggestions: PreferenceSuggestion[]; documentSummary: string } {
-    try {
-      // Clean up the response - remove markdown code blocks if present
-      let cleanResponse = aiResponse.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.slice(7);
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.slice(3);
-      }
-      if (cleanResponse.endsWith('```')) {
-        cleanResponse = cleanResponse.slice(0, -3);
-      }
-      cleanResponse = cleanResponse.trim();
-
-      const parsed: AiSuggestionResponse = JSON.parse(cleanResponse);
-
-      if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
-        this.logger.warn('AI response missing suggestions array');
-        return { suggestions: [], documentSummary: parsed.documentSummary || '' };
-      }
-
-      const suggestions: PreferenceSuggestion[] = parsed.suggestions
-        .slice(0, this.config.maxSuggestions)
-        .map((s, index) => ({
-          id: `${analysisId}:${index}`,
-          category: s.category,
-          key: s.key,
-          operation:
-            s.operation === 'UPDATE'
-              ? PreferenceOperation.UPDATE
-              : PreferenceOperation.CREATE,
-          oldValue: s.oldValue,
-          newValue: s.newValue,
-          confidence: Math.min(1, Math.max(0, s.confidence || 0.5)),
-          sourceSnippet: s.sourceSnippet || '',
-          sourceMeta: s.sourceMeta
-            ? {
-                page: s.sourceMeta.page,
-                line: s.sourceMeta.line,
-              }
-            : undefined,
-          wasCorrected: false,
-        }));
-
-      return {
-        suggestions,
-        documentSummary: parsed.documentSummary || '',
-      };
-    } catch (error) {
-      this.logger.error('Failed to parse AI response', error);
-      this.logger.debug(`Raw AI response: ${aiResponse}`);
-      throw new Error('Failed to parse AI response');
+    // Clean up the response - remove markdown code blocks if present
+    let cleanResponse = aiResponse.trim();
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.slice(7);
+    } else if (cleanResponse.startsWith('```')) {
+      cleanResponse = cleanResponse.slice(3);
     }
+    if (cleanResponse.endsWith('```')) {
+      cleanResponse = cleanResponse.slice(0, -3);
+    }
+    cleanResponse = cleanResponse.trim();
+
+    // Step 1: Parse JSON
+    let rawParsed: unknown;
+    try {
+      rawParsed = JSON.parse(cleanResponse);
+    } catch (error) {
+      this.logger.error('[AI_PARSE_ERROR] JSON.parse failed - invalid JSON syntax');
+      this.logger.debug(`[AI_PARSE_ERROR] Raw response: ${aiResponse}`);
+      throw new Error('Failed to parse AI response: invalid JSON');
+    }
+
+    // Step 2: Validate with Zod schema
+    const validationResult = AiResponseSchema.safeParse(rawParsed);
+
+    if (!validationResult.success) {
+      // Log detailed validation errors
+      const zodIssues = validationResult.error.issues;
+      this.logger.error(
+        `[AI_VALIDATION_ERROR] Zod validation failed with ${zodIssues.length} issue(s)`,
+      );
+
+      for (const issue of zodIssues) {
+        const path = issue.path.join('.');
+        this.logger.error(
+          `[AI_VALIDATION_ERROR] Field "${path}": ${issue.message} (code: ${issue.code})`,
+        );
+      }
+
+      this.logger.debug(
+        `[AI_VALIDATION_ERROR] Raw parsed object: ${JSON.stringify(rawParsed, null, 2)}`,
+      );
+
+      throw new Error(
+        `Failed to parse AI response: validation failed at ${zodIssues.map((i) => i.path.join('.')).join(', ')}`,
+      );
+    }
+
+    const parsed: AiResponseSchemaType = validationResult.data;
+
+    // Step 3: Transform validated data to PreferenceSuggestion[]
+    const suggestions: PreferenceSuggestion[] = parsed.suggestions
+      .slice(0, this.config.maxSuggestions)
+      .map((s: AiSuggestionSchemaType, index: number) => ({
+        id: `${analysisId}:${index}`,
+        category: s.category,
+        key: s.key,
+        operation:
+          s.operation === 'UPDATE'
+            ? PreferenceOperation.UPDATE
+            : PreferenceOperation.CREATE,
+        oldValue: s.oldValue,
+        newValue: s.newValue,
+        confidence: s.confidence,
+        sourceSnippet: s.sourceSnippet,
+        sourceMeta: s.sourceMeta
+          ? {
+              page: s.sourceMeta.page ?? undefined,
+              line: s.sourceMeta.line ?? undefined,
+            }
+          : undefined,
+        wasCorrected: false,
+      }));
+
+    this.logger.log(
+      `[AI_PARSE_SUCCESS] Parsed ${suggestions.length} suggestions from AI response`,
+    );
+
+    return {
+      suggestions,
+      documentSummary: parsed.documentSummary,
+    };
   }
 
   /**
