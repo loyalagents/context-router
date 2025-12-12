@@ -250,9 +250,8 @@ If no preferences can be extracted, return:
     documentSummary: string;
     filteredCount: number;
   } {
-    // DEBUG: Log all suggestions found by AI
     this.logger.debug(
-      `AI found ${parsed.suggestions.length} raw suggestions: ${JSON.stringify(
+      `Raw AI suggestions (${parsed.suggestions.length}): ${JSON.stringify(
         parsed.suggestions.map((s) => ({
           category: s.category,
           key: s.key,
@@ -260,8 +259,6 @@ If no preferences can be extracted, return:
           newValue: s.newValue,
           confidence: s.confidence,
         })),
-        null,
-        2,
       )}`,
     );
 
