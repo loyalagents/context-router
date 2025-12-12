@@ -1,6 +1,6 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsOptional, IsString, IsObject } from 'class-validator';
-import { GraphQLJSONObject } from 'graphql-type-json';
+import { IsOptional, IsString } from 'class-validator';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @InputType()
 export class UpdatePreferenceInput {
@@ -19,8 +19,7 @@ export class UpdatePreferenceInput {
   @IsOptional()
   key?: string;
 
-  @Field(() => GraphQLJSONObject, { nullable: true })
-  @IsObject()
+  @Field(() => GraphQLJSON, { nullable: true })
   @IsOptional()
   value?: any;
 }

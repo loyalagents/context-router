@@ -9,6 +9,7 @@ import appConfig from './config/app.config';
 import graphqlConfig from './config/graphql.config';
 import authConfig from './config/auth.config';
 import mcpConfig from './config/mcp.config';
+import documentUploadConfig from './config/document-upload.config';
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -27,7 +28,7 @@ import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, graphqlConfig, authConfig, mcpConfig],
+      load: [appConfig, graphqlConfig, authConfig, mcpConfig, documentUploadConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 

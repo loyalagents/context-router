@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { GraphQLJSONObject } from 'graphql-type-json';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @ObjectType()
 export class Preference {
@@ -18,7 +18,7 @@ export class Preference {
   @Field()
   key: string;
 
-  @Field(() => GraphQLJSONObject)
+  @Field(() => GraphQLJSON)
   value: any;
 
   @Field()

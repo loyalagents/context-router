@@ -2,6 +2,14 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ApplyPreferenceSuggestionInput {
+  category: String!
+  key: String!
+  newValue: JSON
+  operation: PreferenceOperation!
+  suggestionId: ID!
+}
+
 input CreateLocationInput {
   address: String!
   label: String!
@@ -12,7 +20,7 @@ input CreatePreferenceInput {
   category: String!
   key: String!
   locationId: String
-  value: JSONObject!
+  value: JSON!
 }
 
 """
@@ -20,10 +28,32 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""The reason a suggestion was filtered out"""
+enum FilterReason {
+  DUPLICATE_KEY
+  MISSING_FIELDS
+  NO_CHANGE
+}
+
+type FilteredSuggestion {
+  category: String!
+  confidence: Float!
+  filterDetails: String
+  filterReason: FilterReason!
+  id: ID!
+  key: String!
+  newValue: JSON!
+  oldValue: JSON
+  operation: PreferenceOperation!
+  sourceMeta: SourceMeta
+  sourceSnippet: String!
+  wasCorrected: Boolean!
+}
+
 """
-The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
-scalar JSONObject
+scalar JSON
 
 type Location {
   address: String!
@@ -43,6 +73,7 @@ enum LocationType {
 }
 
 type Mutation {
+  applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
   createLocation(data: CreateLocationInput!): Location!
   createPreference(data: CreatePreferenceInput!): Preference!
   deleteLocation(locationId: String!): Location!
@@ -62,7 +93,26 @@ type Preference {
   preferenceId: ID!
   updatedAt: DateTime!
   userId: String!
-  value: JSONObject!
+  value: JSON!
+}
+
+"""The type of operation to perform on a preference"""
+enum PreferenceOperation {
+  CREATE
+  UPDATE
+}
+
+type PreferenceSuggestion {
+  category: String!
+  confidence: Float!
+  id: ID!
+  key: String!
+  newValue: JSON!
+  oldValue: JSON
+  operation: PreferenceOperation!
+  sourceMeta: SourceMeta
+  sourceSnippet: String!
+  wasCorrected: Boolean!
 }
 
 type Query {
@@ -84,6 +134,12 @@ type Query {
   user(id: ID!): User!
 }
 
+type SourceMeta {
+  filename: String
+  line: Float
+  page: Float
+}
+
 input UpdateLocationInput {
   address: String
   label: String
@@ -94,7 +150,7 @@ input UpdatePreferenceInput {
   category: String
   key: String
   locationId: String
-  value: JSONObject
+  value: JSON
 }
 
 input UpdateUserInput {

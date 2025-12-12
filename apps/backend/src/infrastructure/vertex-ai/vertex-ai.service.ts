@@ -3,8 +3,12 @@ import {
   VertexAI,
   GenerativeModel,
   GenerateContentResult,
+  Part,
 } from '@google-cloud/vertexai';
-import { AiTextGeneratorPort } from '../../domains/shared/ports/ai-text-generator.port';
+import {
+  AiTextGeneratorPort,
+  FileInput,
+} from '../../domains/shared/ports/ai-text-generator.port';
 import { getVertexAiConfig } from '../../config/vertex-ai.config';
 
 @Injectable()
@@ -61,6 +65,54 @@ export class VertexAiService implements AiTextGeneratorPort {
       return text;
     } catch (error) {
       this.logger.error('Error calling Vertex AI', error);
+      throw error;
+    }
+  }
+
+  async generateTextWithFile(prompt: string, file: FileInput): Promise<string> {
+    try {
+      this.logger.log(
+        `Generating text with file (${file.mimeType}, ${file.buffer.length} bytes)`,
+      );
+
+      // Build parts array with file data and text prompt
+      const parts: Part[] = [
+        {
+          inlineData: {
+            mimeType: file.mimeType,
+            data: file.buffer.toString('base64'),
+          },
+        },
+        { text: prompt },
+      ];
+
+      const request = {
+        contents: [
+          {
+            role: 'user' as const,
+            parts,
+          },
+        ],
+      };
+
+      const response: GenerateContentResult =
+        await this.model.generateContent(request);
+      const candidates = response.response.candidates ?? [];
+      const firstCandidate = candidates[0];
+
+      if (!firstCandidate?.content?.parts?.length) {
+        this.logger.warn('No candidates returned from Vertex AI');
+        return '';
+      }
+
+      const text = firstCandidate.content.parts
+        .map((part) => part.text ?? '')
+        .join('');
+
+      this.logger.log(`Generated ${text.length} characters of text from file`);
+      return text;
+    } catch (error) {
+      this.logger.error('Error calling Vertex AI with file', error);
       throw error;
     }
   }
