@@ -11,7 +11,7 @@ import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpService } from './mcp.service';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { McpAuthGuard } from './auth/mcp-auth.guard';
 import { McpContext } from './types/mcp-context.type';
 
 @Controller()
@@ -24,7 +24,7 @@ export class McpController {
   ) {}
 
   @Post('/mcp')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(McpAuthGuard)
   async handleMcpRequest(
     @Req() req: Request,
     @Res() res: Response,
@@ -37,12 +37,11 @@ export class McpController {
       return;
     }
 
-    // Extract user from JWT (set by JwtAuthGuard)
+    // Extract user from JWT (set by McpAuthGuard)
     const user = (req as any).user;
 
+    // If no user, the guard already sent a 401 response with proper WWW-Authenticate header
     if (!user) {
-      this.logger.error('MCP request without authenticated user');
-      res.status(401).json({ error: 'Authentication required' });
       return;
     }
 

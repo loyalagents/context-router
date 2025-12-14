@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { PreferenceExtractionService } from './preference-extraction.service';
 import {
   DocumentAnalysisResult,
@@ -20,7 +20,7 @@ export class DocumentAnalysisService {
     mimeType: string,
     filename: string,
   ): Promise<DocumentAnalysisResult> {
-    const analysisId = uuidv4();
+    const analysisId = randomUUID();
 
     this.logger.log(
       `Starting document analysis ${analysisId} for user ${userId}`,
