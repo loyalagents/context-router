@@ -12,6 +12,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { DcrRateLimitGuard } from './dcr-rate-limit.guard';
+import { RegisterClientDto } from './dto/register-client.dto';
 
 /**
  * DCR Shim Controller
@@ -40,7 +41,7 @@ export class DcrShimController {
   @Header('Access-Control-Allow-Methods', 'POST, OPTIONS')
   @Header('Access-Control-Allow-Headers', 'Content-Type')
   @Header('Cache-Control', 'no-store')
-  registerClient(@Body() body: any, @Req() req: Request) {
+  registerClient(@Body() body: RegisterClientDto, @Req() req: Request) {
     const clientIp = this.getClientIp(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
 

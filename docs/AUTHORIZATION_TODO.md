@@ -279,3 +279,7 @@ gcloud logging read "resource.type=cloud_run_revision AND textPayload:\"Token pa
 
 - **3 parts** = JWT (correct)
 - **5 parts** = JWE/opaque token (wrong - check audience config)
+
+### Future: MCP Scope-Based Access Control
+
+Not implemented yet. When needed, add scope checking in the MCP controller using `request.tokenScopes` (already extracted by `McpAuthGuard`). Map tool names to required scopes (e.g., `create_preference` → `preferences:write`).
