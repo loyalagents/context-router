@@ -46,7 +46,15 @@ export default registerAs('mcp', () => {
     // OAuth Configuration for MCP clients (Claude, ChatGPT)
     oauth: {
       // The resource identifier - must match Auth0 API identifier and token audience
-      resource: process.env.MCP_RESOURCE || process.env.AUTH0_AUDIENCE,
+      // TODO: Consider separating MCP_RESOURCE from AUTH0_AUDIENCE in the future if:
+      // - We move to a custom domain (MCP_RESOURCE = custom domain, AUTH0_AUDIENCE = API identifier)
+      // - We want to hide Auth0 internals from OAuth metadata
+      // For now, using AUTH0_AUDIENCE directly is simpler and avoids mismatch issues.
+      resource: process.env.AUTH0_AUDIENCE,
+
+      // The public-facing server URL (used for registration_endpoint in OAuth metadata)
+      // This must be the actual URL where the server is accessible, not the Auth0 audience
+      serverUrl: process.env.MCP_SERVER_URL,
 
       // Auth0 endpoints (derived from AUTH0_DOMAIN)
       auth0: {
@@ -69,10 +77,20 @@ export default registerAs('mcp', () => {
       scopes: ['preferences:read', 'preferences:write', 'offline_access'],
 
       // Allowed redirect URIs for DCR shim (strict allowlist)
+      // Note: Claude Desktop uses http://localhost or http://127.0.0.1 with dynamic ports
       allowedRedirectUris: [
+        // ChatGPT web
         'https://chatgpt.com/connector_platform_oauth_redirect',
+        // Claude web and desktop (various possible patterns)
         'https://claude.ai/api/mcp/auth_callback',
         'https://claude.com/api/mcp/auth_callback',
+        'https://claude.ai/oauth/callback',
+        'https://claude.com/oauth/callback',
+        'https://claude.ai/api/oauth/callback',
+        'https://claude.com/api/oauth/callback',
+        // Claude Desktop (uses localhost with various ports)
+        'http://localhost/callback',
+        'http://127.0.0.1/callback',
       ],
 
       // Rate limiting for /oauth/register

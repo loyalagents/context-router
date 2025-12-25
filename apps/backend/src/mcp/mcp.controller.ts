@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Req,
   Res,
   Body,
@@ -23,13 +24,33 @@ export class McpController {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Handle MCP POST requests (JSON-RPC)
+   */
   @Post('/mcp')
   @UseGuards(McpAuthGuard)
-  async handleMcpRequest(
+  async handleMcpPost(
     @Req() req: Request,
     @Res() res: Response,
     @Body() body: any,
   ) {
+    return this.handleMcpRequest(req, res, body);
+  }
+
+  /**
+   * Handle MCP GET requests (SSE streaming)
+   */
+  @Get('/mcp')
+  @UseGuards(McpAuthGuard)
+  async handleMcpGet(@Req() req: Request, @Res() res: Response) {
+    return this.handleMcpRequest(req, res, undefined);
+  }
+
+  /**
+   * Common handler for all MCP HTTP methods.
+   * Streamable HTTP transport handles POST for JSON-RPC and GET for SSE.
+   */
+  private async handleMcpRequest(req: Request, res: Response, body: any) {
     const httpEnabled = this.configService.get('mcp.httpTransport.enabled');
 
     if (!httpEnabled) {

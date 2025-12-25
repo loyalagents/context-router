@@ -30,6 +30,24 @@ export class OAuthMetadataController {
   @Header('Access-Control-Allow-Origin', '*')
   @Header('Cache-Control', 'public, max-age=3600')
   getProtectedResourceMetadata() {
+    return this.buildProtectedResourceMetadata();
+  }
+
+  /**
+   * Path-specific Protected Resource Metadata
+   * RFC 9728 Section 3: Clients may request path-specific metadata
+   *
+   * When the resource is at /mcp, clients look for /.well-known/oauth-protected-resource/mcp
+   */
+  @Get('oauth-protected-resource/mcp')
+  @Header('Content-Type', 'application/json')
+  @Header('Access-Control-Allow-Origin', '*')
+  @Header('Cache-Control', 'public, max-age=3600')
+  getProtectedResourceMetadataForMcp() {
+    return this.buildProtectedResourceMetadata();
+  }
+
+  private buildProtectedResourceMetadata() {
     const resource = this.configService.get<string>('mcp.oauth.resource');
 
     if (!resource) {
@@ -67,7 +85,24 @@ export class OAuthMetadataController {
   @Header('Access-Control-Allow-Origin', '*')
   @Header('Cache-Control', 'public, max-age=3600')
   getAuthorizationServerMetadata() {
+    return this.buildAuthorizationServerMetadata();
+  }
+
+  /**
+   * Path-specific Authorization Server Metadata
+   * Some clients look for /.well-known/oauth-authorization-server/mcp
+   */
+  @Get('oauth-authorization-server/mcp')
+  @Header('Content-Type', 'application/json')
+  @Header('Access-Control-Allow-Origin', '*')
+  @Header('Cache-Control', 'public, max-age=3600')
+  getAuthorizationServerMetadataForMcp() {
+    return this.buildAuthorizationServerMetadata();
+  }
+
+  private buildAuthorizationServerMetadata() {
     const resource = this.configService.get<string>('mcp.oauth.resource');
+    const serverUrl = this.configService.get<string>('mcp.oauth.serverUrl');
     const authorizationEndpoint = this.configService.get<string>(
       'mcp.oauth.auth0.authorizationEndpoint',
     );
@@ -82,6 +117,12 @@ export class OAuthMetadataController {
       );
     }
 
+    if (!serverUrl) {
+      this.logger.error(
+        'MCP_SERVER_URL not configured - registration_endpoint will be invalid',
+      );
+    }
+
     const metadata = {
       // Discovery issuer = our domain (not Auth0)
       issuer: resource,
@@ -91,8 +132,8 @@ export class OAuthMetadataController {
       token_endpoint: tokenEndpoint,
       jwks_uri: jwksUri,
 
-      // Our DCR shim handles client registration
-      registration_endpoint: `${resource}/oauth/register`,
+      // Our DCR shim handles client registration (must be actual server URL, not Auth0 audience)
+      registration_endpoint: `${serverUrl}/oauth/register`,
 
       // OAuth capabilities
       response_types_supported: ['code'],
