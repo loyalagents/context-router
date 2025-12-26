@@ -96,6 +96,10 @@ export class McpService implements OnModuleInit {
                   },
                 },
               },
+              annotations: {
+                readOnlyHint: true,
+                openWorldHint: false,
+              },
             },
             {
               name: 'createPreference',
@@ -120,10 +124,15 @@ export class McpService implements OnModuleInit {
                   locationId: {
                     type: 'string',
                     description:
-                      'Optional location ID to create location-specific preference',
+                      'Optional location handle for location-specific preference',
                   },
                 },
                 required: ['category', 'key', 'value'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                idempotentHint: false,
+                openWorldHint: false,
               },
             },
             {
@@ -135,7 +144,7 @@ export class McpService implements OnModuleInit {
                 properties: {
                   preferenceId: {
                     type: 'string',
-                    description: 'ID of the preference to update',
+                    description: 'Preference handle (returned by searchPreferences)',
                   },
                   value: {
                     type: 'object',
@@ -143,6 +152,11 @@ export class McpService implements OnModuleInit {
                   },
                 },
                 required: ['preferenceId', 'value'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                idempotentHint: true,
+                openWorldHint: false,
               },
             },
             {
@@ -154,10 +168,16 @@ export class McpService implements OnModuleInit {
                 properties: {
                   preferenceId: {
                     type: 'string',
-                    description: 'ID of the preference to delete',
+                    description: 'Preference handle (returned by searchPreferences)',
                   },
                 },
                 required: ['preferenceId'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                destructiveHint: true,
+                idempotentHint: true,
+                openWorldHint: false,
               },
             },
           ],
