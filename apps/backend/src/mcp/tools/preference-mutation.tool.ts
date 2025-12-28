@@ -5,13 +5,29 @@ import { McpContext } from '../types/mcp-context.type';
 interface CreatePreferenceParams {
   category: string;
   key: string;
-  value: any;
+  value: string; // JSON string that will be parsed
   locationId?: string;
 }
 
 interface UpdatePreferenceParams {
   preferenceId: string;
-  value: any;
+  value: string; // JSON string that will be parsed
+}
+
+/**
+ * Parse a JSON string value from MCP tool input.
+ * Returns the parsed value or throws a descriptive error.
+ */
+function parseJsonValue(value: string, context: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new Error(
+      `Invalid JSON in ${context}: "${value}". ` +
+        `Expected a valid JSON string like '["item1", "item2"]' for arrays, ` +
+        `'{"key": "value"}' for objects, or '"text"' for strings.`,
+    );
+  }
 }
 
 interface DeletePreferenceParams {
@@ -34,10 +50,13 @@ export class PreferenceMutationTool {
     );
 
     try {
+      // Parse the JSON string value from MCP input
+      const parsedValue = parseJsonValue(params.value, 'value');
+
       const preference = await this.preferenceService.create(userId, {
         category: params.category,
         key: params.key,
-        value: params.value,
+        value: parsedValue,
         locationId: params.locationId,
       });
 
@@ -72,11 +91,14 @@ export class PreferenceMutationTool {
     );
 
     try {
+      // Parse the JSON string value from MCP input
+      const parsedValue = parseJsonValue(params.value, 'value');
+
       const preference = await this.preferenceService.update(
         params.preferenceId,
         userId,
         {
-          value: params.value,
+          value: parsedValue,
         },
       );
 

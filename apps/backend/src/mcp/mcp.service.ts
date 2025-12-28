@@ -117,9 +117,9 @@ export class McpService implements OnModuleInit {
                     description: 'Preference key/name',
                   },
                   value: {
-                    type: 'object',
+                    type: 'string',
                     description:
-                      'Preference value (JSON object). Can be any valid JSON structure.',
+                      'Preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
                   },
                   locationId: {
                     type: 'string',
@@ -147,8 +147,9 @@ export class McpService implements OnModuleInit {
                     description: 'Preference handle (returned by searchPreferences)',
                   },
                   value: {
-                    type: 'object',
-                    description: 'New preference value (JSON object)',
+                    type: 'string',
+                    description:
+                      'Updated preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
                   },
                 },
                 required: ['preferenceId', 'value'],
