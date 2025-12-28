@@ -96,6 +96,10 @@ export class McpService implements OnModuleInit {
                   },
                 },
               },
+              annotations: {
+                readOnlyHint: true,
+                openWorldHint: false,
+              },
             },
             {
               name: 'createPreference',
@@ -113,17 +117,22 @@ export class McpService implements OnModuleInit {
                     description: 'Preference key/name',
                   },
                   value: {
-                    type: 'object',
+                    type: 'string',
                     description:
-                      'Preference value (JSON object). Can be any valid JSON structure.',
+                      'Preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
                   },
                   locationId: {
                     type: 'string',
                     description:
-                      'Optional location ID to create location-specific preference',
+                      'Optional location handle for location-specific preference',
                   },
                 },
                 required: ['category', 'key', 'value'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                idempotentHint: false,
+                openWorldHint: false,
               },
             },
             {
@@ -135,14 +144,20 @@ export class McpService implements OnModuleInit {
                 properties: {
                   preferenceId: {
                     type: 'string',
-                    description: 'ID of the preference to update',
+                    description: 'Preference handle (returned by searchPreferences)',
                   },
                   value: {
-                    type: 'object',
-                    description: 'New preference value (JSON object)',
+                    type: 'string',
+                    description:
+                      'Updated preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
                   },
                 },
                 required: ['preferenceId', 'value'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                idempotentHint: true,
+                openWorldHint: false,
               },
             },
             {
@@ -154,10 +169,16 @@ export class McpService implements OnModuleInit {
                 properties: {
                   preferenceId: {
                     type: 'string',
-                    description: 'ID of the preference to delete',
+                    description: 'Preference handle (returned by searchPreferences)',
                   },
                 },
                 required: ['preferenceId'],
+              },
+              annotations: {
+                readOnlyHint: false,
+                destructiveHint: true,
+                idempotentHint: true,
+                openWorldHint: false,
               },
             },
           ],

@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Req,
   Res,
   Body,
@@ -11,7 +12,7 @@ import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpService } from './mcp.service';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { McpAuthGuard } from './auth/mcp-auth.guard';
 import { McpContext } from './types/mcp-context.type';
 
 @Controller()
@@ -23,13 +24,33 @@ export class McpController {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Handle MCP POST requests (JSON-RPC)
+   */
   @Post('/mcp')
-  @UseGuards(JwtAuthGuard)
-  async handleMcpRequest(
+  @UseGuards(McpAuthGuard)
+  async handleMcpPost(
     @Req() req: Request,
     @Res() res: Response,
     @Body() body: any,
   ) {
+    return this.handleMcpRequest(req, res, body);
+  }
+
+  /**
+   * Handle MCP GET requests (SSE streaming)
+   */
+  @Get('/mcp')
+  @UseGuards(McpAuthGuard)
+  async handleMcpGet(@Req() req: Request, @Res() res: Response) {
+    return this.handleMcpRequest(req, res, undefined);
+  }
+
+  /**
+   * Common handler for all MCP HTTP methods.
+   * Streamable HTTP transport handles POST for JSON-RPC and GET for SSE.
+   */
+  private async handleMcpRequest(req: Request, res: Response, body: any) {
     const httpEnabled = this.configService.get('mcp.httpTransport.enabled');
 
     if (!httpEnabled) {
@@ -37,12 +58,11 @@ export class McpController {
       return;
     }
 
-    // Extract user from JWT (set by JwtAuthGuard)
+    // Extract user from JWT (set by McpAuthGuard)
     const user = (req as any).user;
 
+    // If no user, the guard already sent a 401 response with proper WWW-Authenticate header
     if (!user) {
-      this.logger.error('MCP request without authenticated user');
-      res.status(401).json({ error: 'Authentication required' });
       return;
     }
 
