@@ -133,6 +133,94 @@ src/
 - `pnpm --filter web run codegen` - Generate TypeScript types from GraphQL schema
 - `pnpm --filter web run codegen:watch` - Watch mode for type generation
 
+## Testing
+
+The backend uses Jest with a three-layer test architecture: unit, integration, and e2e tests.
+
+### Running Tests
+
+From `apps/backend`:
+
+```bash
+# Run all tests (unit + integration + e2e)
+npm test
+
+# Run only unit tests (fast, no DB required)
+npm run test:unit
+
+# Run only integration tests (requires test DB)
+npm run test:integration
+
+# Run e2e tests (starts DB container, runs migrations, executes tests)
+npm run test:e2e
+
+# Run e2e tests only (when test DB is already running)
+npm run test:e2e:tests-only
+```
+
+### Test Database Management
+
+```bash
+# Start the test database container (PostgreSQL on port 5433)
+npm run test:db:up
+
+# Stop the test database container
+npm run test:db:down
+
+# Run migrations on the test database
+npm run test:db:migrate
+```
+
+### Test Structure
+
+| Layer       | Location                         | Description                              |
+|-------------|----------------------------------|------------------------------------------|
+| Unit        | `src/**/*.spec.ts`               | Fast, isolated tests (no DB, no app)     |
+| Integration | `test/integration/**/*.spec.ts`  | Repository tests with real DB            |
+| E2E         | `test/e2e/**/*.e2e-spec.ts`      | Full HTTP/GraphQL API tests with real DB |
+
+### Test Harness Features
+
+- **Database isolation**: Each test runs with a fresh database (tables truncated before each test)
+- **Auth bypass**: Auth guards are mocked to inject test users
+- **External service mocks**: Vertex AI and Auth0 services are mocked
+- **Shared test app factory**: `createTestApp()` provides a consistent test setup
+
+### Writing New Tests
+
+**E2E Test Example:**
+```typescript
+import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+
+describe('MyFeature (e2e)', () => {
+  let app: INestApplication;
+  let testUser: TestUser;
+  let setTestUser: (user: TestUser) => void;
+
+  beforeAll(async () => {
+    const testApp = await createTestApp();
+    app = testApp.app;
+    setTestUser = testApp.setTestUser;
+  });
+
+  beforeEach(async () => {
+    testUser = await createTestUser();
+    setTestUser(testUser);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('should work', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: '{ ... }' });
+    expect(response.body.data).toBeDefined();
+  });
+});
+```
+
 ## GraphQL Code Generation
 
 The frontend uses [GraphQL Code Generator](https://the-guild.dev/graphql/codegen) to automatically generate TypeScript types from the backend GraphQL schema. This ensures type safety and keeps frontend types in sync with the backend.
