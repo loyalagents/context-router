@@ -14,6 +14,9 @@
     "build:web": "pnpm --filter web build",
     "test": "pnpm -r test",
     "test:backend": "pnpm --filter backend test",
+    "test:backend:unit": "pnpm --filter backend test:unit",
+    "test:backend:integration": "pnpm --filter backend test:integration",
+    "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"

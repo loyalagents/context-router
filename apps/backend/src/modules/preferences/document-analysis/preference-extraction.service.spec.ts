@@ -79,8 +79,8 @@ describe('PreferenceExtractionService', () => {
       return JSON.stringify({ suggestions, documentSummary });
     };
 
-    describe('filtering suggestions with missing required fields', () => {
-      it('should filter out suggestions missing category', async () => {
+    describe('rejecting malformed AI responses', () => {
+      it('should throw error when suggestion is missing category', async () => {
         mockPreferenceService.findAll.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
@@ -95,18 +95,17 @@ describe('PreferenceExtractionService', () => {
           ]),
         );
 
-        const result = await service.extractPreferences(
-          'user-1',
-          mockFileBuffer,
-          mockMimeType,
-          mockFilename,
-        );
-
-        expect(result.suggestions).toHaveLength(0);
-        expect(result.filteredCount).toBe(1);
+        await expect(
+          service.extractPreferences(
+            'user-1',
+            mockFileBuffer,
+            mockMimeType,
+            mockFilename,
+          ),
+        ).rejects.toThrow('Failed to parse AI response: validation failed at suggestions.0.category');
       });
 
-      it('should filter out suggestions missing key', async () => {
+      it('should throw error when suggestion is missing key', async () => {
         mockPreferenceService.findAll.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
@@ -121,15 +120,14 @@ describe('PreferenceExtractionService', () => {
           ]),
         );
 
-        const result = await service.extractPreferences(
-          'user-1',
-          mockFileBuffer,
-          mockMimeType,
-          mockFilename,
-        );
-
-        expect(result.suggestions).toHaveLength(0);
-        expect(result.filteredCount).toBe(1);
+        await expect(
+          service.extractPreferences(
+            'user-1',
+            mockFileBuffer,
+            mockMimeType,
+            mockFilename,
+          ),
+        ).rejects.toThrow('Failed to parse AI response: validation failed at suggestions.0.key');
       });
 
       it('should filter out suggestions missing newValue', async () => {
@@ -154,8 +152,11 @@ describe('PreferenceExtractionService', () => {
           mockFilename,
         );
 
+        // newValue is optional in Zod schema, so it passes validation
+        // but gets filtered out due to missing required fields
         expect(result.suggestions).toHaveLength(0);
         expect(result.filteredCount).toBe(1);
+        expect(result.filteredSuggestions[0].filterReason).toBe('MISSING_FIELDS');
       });
     });
 
@@ -448,15 +449,7 @@ describe('PreferenceExtractionService', () => {
               confidence: 0.9,
               sourceSnippet: 'allergic to peanuts',
             },
-            // 2. Missing category - should be filtered
-            {
-              key: 'something',
-              operation: 'CREATE',
-              newValue: 'value',
-              confidence: 0.9,
-              sourceSnippet: 'something',
-            },
-            // 3. Duplicate key - should be filtered
+            // 2. Duplicate key - should be filtered
             {
               category: 'dietary',
               key: 'allergies',
@@ -465,7 +458,7 @@ describe('PreferenceExtractionService', () => {
               confidence: 0.8,
               sourceSnippet: 'duplicate',
             },
-            // 4. No-change update - should be filtered
+            // 3. No-change update - should be filtered
             {
               category: 'dietary',
               key: 'existing',
@@ -486,7 +479,7 @@ describe('PreferenceExtractionService', () => {
         );
 
         expect(result.suggestions).toHaveLength(1);
-        expect(result.filteredCount).toBe(3); // 3 filtered: missing category, duplicate, no-change
+        expect(result.filteredCount).toBe(2); // 2 filtered: duplicate, no-change
       });
     });
 

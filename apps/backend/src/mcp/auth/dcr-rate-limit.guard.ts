@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
@@ -22,13 +23,18 @@ interface RateLimitEntry {
  * Cloud Run's built-in rate limiting.
  */
 @Injectable()
-export class DcrRateLimitGuard implements CanActivate {
+export class DcrRateLimitGuard implements CanActivate, OnModuleDestroy {
   private readonly logger = new Logger(DcrRateLimitGuard.name);
   private readonly requests = new Map<string, RateLimitEntry>();
+  private readonly cleanupInterval: NodeJS.Timeout;
 
   constructor(private readonly configService: ConfigService) {
     // Clean up expired entries every 5 minutes
-    setInterval(() => this.cleanup(), 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.cleanupInterval);
   }
 
   canActivate(context: ExecutionContext): boolean {
