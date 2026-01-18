@@ -6,6 +6,7 @@ import { PreferencesModule } from '@/modules/preferences/preferences.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PreferenceSearchTool } from './tools/preference-search.tool';
 import { PreferenceMutationTool } from './tools/preference-mutation.tool';
+import { PreferenceListTool } from './tools/preference-list.tool';
 import { SchemaResource } from './resources/schema.resource';
 import { OAuthMetadataController } from './auth/oauth-metadata.controller';
 import { DcrShimController } from './auth/dcr-shim.controller';
@@ -19,6 +20,7 @@ import { McpAuthGuard } from './auth/mcp-auth.guard';
     McpService,
     PreferenceSearchTool,
     PreferenceMutationTool,
+    PreferenceListTool,
     SchemaResource,
     DcrRateLimitGuard,
     McpAuthGuard,

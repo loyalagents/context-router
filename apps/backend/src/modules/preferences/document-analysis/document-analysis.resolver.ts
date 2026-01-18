@@ -7,8 +7,6 @@ import { Preference } from '../preference/models/preference.model';
 import { ApplyPreferenceSuggestionInput } from './dto/apply-suggestion.input';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
 
-// TODO: Add DELETE operation support in v2
-
 @Resolver()
 @UseGuards(GqlAuthGuard)
 export class DocumentAnalysisResolver {
@@ -35,32 +33,20 @@ export class DocumentAnalysisResolver {
 
         switch (suggestion.operation) {
           case PreferenceOperation.CREATE:
-            preference = await this.preferenceService.create(user.userId, {
-              category: suggestion.category,
-              key: suggestion.key,
-              value: suggestion.newValue,
-            });
-            this.logger.log(
-              `Created preference ${suggestion.category}/${suggestion.key}`,
-            );
-            break;
-
           case PreferenceOperation.UPDATE:
-            // For UPDATE, we use create which does an upsert
-            preference = await this.preferenceService.create(user.userId, {
-              category: suggestion.category,
-              key: suggestion.key,
-              value: suggestion.newValue,
-            });
+            // Both CREATE and UPDATE use setPreference (upsert)
+            const result = await this.preferenceService.setPreference(
+              user.userId,
+              {
+                slug: suggestion.slug,
+                value: suggestion.newValue,
+              },
+            );
+            preference = result as unknown as Preference;
             this.logger.log(
-              `Updated preference ${suggestion.category}/${suggestion.key}`,
+              `${suggestion.operation === PreferenceOperation.CREATE ? 'Created' : 'Updated'} preference ${suggestion.slug}`,
             );
             break;
-
-          // TODO: Add DELETE case in v2
-          // case PreferenceOperation.DELETE:
-          //   preference = await this.preferenceService.delete(preferenceId, user.userId);
-          //   break;
 
           default:
             this.logger.warn(
@@ -72,8 +58,8 @@ export class DocumentAnalysisResolver {
         results.push(preference);
       } catch (error) {
         this.logger.error(
-          `Failed to apply suggestion ${suggestion.suggestionId}`,
-          error,
+          `Failed to apply suggestion ${suggestion.suggestionId}: ${error.message}`,
+          error.stack,
         );
         // Continue with other suggestions even if one fails
       }

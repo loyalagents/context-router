@@ -31,10 +31,11 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
-                category
-                key
+                id
+                slug
                 value
+                status
+                category
               }
             }
           `,
@@ -43,8 +44,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'suggestion-1',
-                key: 'allergies',
-                category: 'dietary',
+                slug: 'food.dietary_restrictions',
                 operation: 'CREATE',
                 newValue: ['peanuts', 'shellfish'],
               },
@@ -53,11 +53,13 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toHaveLength(1);
       expect(response.body.data.applyPreferenceSuggestions[0]).toMatchObject({
-        category: 'dietary',
-        key: 'allergies',
+        slug: 'food.dietary_restrictions',
         value: ['peanuts', 'shellfish'],
+        status: 'ACTIVE',
+        category: 'food',
       });
     });
 
@@ -68,10 +70,10 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
-                category
-                key
+                id
+                slug
                 value
+                category
               }
             }
           `,
@@ -80,57 +82,54 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'suggestion-1',
-                key: 'theme',
-                category: 'appearance',
+                slug: 'system.response_tone',
                 operation: 'CREATE',
-                newValue: 'dark',
+                newValue: 'casual',
               },
               {
                 suggestionId: 'suggestion-2',
-                key: 'fontSize',
-                category: 'appearance',
+                slug: 'system.response_length',
                 operation: 'CREATE',
-                newValue: 16,
+                newValue: 'brief',
               },
               {
                 suggestionId: 'suggestion-3',
-                key: 'currency',
-                category: 'finance',
+                slug: 'food.spice_tolerance',
                 operation: 'CREATE',
-                newValue: 'USD',
+                newValue: 'medium',
               },
             ],
           },
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toHaveLength(3);
 
       const categories = response.body.data.applyPreferenceSuggestions.map(
         (p: any) => p.category,
       );
-      expect(categories).toContain('appearance');
-      expect(categories).toContain('finance');
+      expect(categories).toContain('system');
+      expect(categories).toContain('food');
     });
 
     it('should update preferences with UPDATE operation', async () => {
-      // First create a preference
+      // First create a preference using setPreference
       await request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `
-            mutation CreatePreference($data: CreatePreferenceInput!) {
-              createPreference(data: $data) {
-                preferenceId
+            mutation SetPreference($input: SetPreferenceInput!) {
+              setPreference(input: $input) {
+                id
                 value
               }
             }
           `,
           variables: {
-            data: {
-              category: 'appearance',
-              key: 'theme',
-              value: 'light',
+            input: {
+              slug: 'system.response_tone',
+              value: 'casual',
             },
           },
         });
@@ -142,9 +141,8 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
-                category
-                key
+                id
+                slug
                 value
               }
             }
@@ -154,19 +152,19 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'suggestion-update',
-                key: 'theme',
-                category: 'appearance',
+                slug: 'system.response_tone',
                 operation: 'UPDATE',
-                newValue: 'dark',
+                newValue: 'professional',
               },
             ],
           },
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toHaveLength(1);
       expect(response.body.data.applyPreferenceSuggestions[0].value).toBe(
-        'dark',
+        'professional',
       );
 
       // Verify the preference was updated by querying for it
@@ -175,10 +173,9 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         .send({
           query: `
             query GetPreferences {
-              preferences {
-                preferenceId
-                category
-                key
+              activePreferences {
+                id
+                slug
                 value
               }
             }
@@ -186,10 +183,10 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         })
         .expect(200);
 
-      const themePreference = getResponse.body.data.preferences.find(
-        (p: any) => p.key === 'theme',
+      const tonePref = getResponse.body.data.activePreferences.find(
+        (p: any) => p.slug === 'system.response_tone',
       );
-      expect(themePreference.value).toBe('dark');
+      expect(tonePref.value).toBe('professional');
     });
 
     it('should handle mixed CREATE and UPDATE operations', async () => {
@@ -198,17 +195,16 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         .post('/graphql')
         .send({
           query: `
-            mutation CreatePreference($data: CreatePreferenceInput!) {
-              createPreference(data: $data) {
-                preferenceId
+            mutation SetPreference($input: SetPreferenceInput!) {
+              setPreference(input: $input) {
+                id
               }
             }
           `,
           variables: {
-            data: {
-              category: 'notifications',
-              key: 'email',
-              value: false,
+            input: {
+              slug: 'travel.seat_preference',
+              value: 'middle',
             },
           },
         });
@@ -220,9 +216,8 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
-                category
-                key
+                id
+                slug
                 value
               }
             }
@@ -232,45 +227,37 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'new-pref',
-                key: 'sms',
-                category: 'notifications',
+                slug: 'travel.meal_preference',
                 operation: 'CREATE',
-                newValue: true,
+                newValue: 'vegetarian',
               },
               {
                 suggestionId: 'update-pref',
-                key: 'email',
-                category: 'notifications',
+                slug: 'travel.seat_preference',
                 operation: 'UPDATE',
-                newValue: true,
+                newValue: 'aisle',
               },
             ],
           },
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toHaveLength(2);
 
-      const sms = response.body.data.applyPreferenceSuggestions.find(
-        (p: any) => p.key === 'sms',
+      const meal = response.body.data.applyPreferenceSuggestions.find(
+        (p: any) => p.slug === 'travel.meal_preference',
       );
-      const email = response.body.data.applyPreferenceSuggestions.find(
-        (p: any) => p.key === 'email',
+      const seat = response.body.data.applyPreferenceSuggestions.find(
+        (p: any) => p.slug === 'travel.seat_preference',
       );
 
-      expect(sms.value).toBe(true);
-      expect(email.value).toBe(true);
+      expect(meal.value).toBe('vegetarian');
+      expect(seat.value).toBe('aisle');
     });
 
-    it('should handle complex JSON values', async () => {
-      const complexValue = {
-        schedule: {
-          monday: ['09:00', '17:00'],
-          tuesday: ['10:00', '18:00'],
-        },
-        timezone: 'America/New_York',
-        enabled: true,
-      };
+    it('should handle array values', async () => {
+      const arrayValue = ['TypeScript', 'Node.js', 'React'];
 
       const response = await request(app.getHttpServer())
         .post('/graphql')
@@ -278,31 +265,30 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
-                category
-                key
+                id
+                slug
                 value
               }
             }
           `,
           variables: {
-            analysisId: 'analysis-complex',
+            analysisId: 'analysis-array',
             input: [
               {
-                suggestionId: 'complex-suggestion',
-                key: 'workHours',
-                category: 'schedule',
+                suggestionId: 'array-suggestion',
+                slug: 'dev.tech_stack',
                 operation: 'CREATE',
-                newValue: complexValue,
+                newValue: arrayValue,
               },
             ],
           },
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toHaveLength(1);
       expect(response.body.data.applyPreferenceSuggestions[0].value).toEqual(
-        complexValue,
+        arrayValue,
       );
     });
 
@@ -313,7 +299,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
+                id
               }
             }
           `,
@@ -324,6 +310,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         })
         .expect(200);
 
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.applyPreferenceSuggestions).toEqual([]);
     });
 
@@ -334,7 +321,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
+                id
               }
             }
           `,
@@ -343,7 +330,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'invalid',
-                // Missing key, category, operation
+                // Missing slug, operation
               },
             ],
           },
@@ -360,7 +347,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
           query: `
             mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
               applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-                preferenceId
+                id
               }
             }
           `,
@@ -369,10 +356,9 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'invalid-op',
-                key: 'test',
-                category: 'test',
+                slug: 'food.dietary_restrictions',
                 operation: 'INVALID_OPERATION',
-                newValue: 'test',
+                newValue: ['test'],
               },
             ],
           },
@@ -381,6 +367,42 @@ describe('Document Analysis GraphQL API (e2e)', () => {
 
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors[0].message).toContain('PreferenceOperation');
+    });
+
+    it('should reject unknown slug', async () => {
+      // The applyPreferenceSuggestions mutation catches errors internally and continues
+      // processing other suggestions. When an unknown slug is encountered, it's logged
+      // as an error but doesn't return a GraphQL error - instead, the invalid suggestion
+      // is simply not included in the results.
+      const response = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
+              applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
+                id
+                slug
+              }
+            }
+          `,
+          variables: {
+            analysisId: 'analysis-unknown-slug',
+            input: [
+              {
+                suggestionId: 'unknown-slug',
+                slug: 'unknown.invalid_category',
+                operation: 'CREATE',
+                newValue: 'test',
+              },
+            ],
+          },
+        })
+        .expect(200);
+
+      // No GraphQL errors - the resolver catches and logs errors internally
+      expect(response.body.errors).toBeUndefined();
+      // The unknown slug should not appear in results (it was rejected internally)
+      expect(response.body.data.applyPreferenceSuggestions).toEqual([]);
     });
   });
 });

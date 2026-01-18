@@ -47,6 +47,19 @@ enum LocationType {
   OTHER
 }
 
+enum PreferenceStatus {
+  ACTIVE
+  SUGGESTED
+  REJECTED
+}
+
+enum SourceType {
+  USER
+  INFERRED
+  IMPORTED
+  SYSTEM
+}
+
 model Location {
   locationId  String       @id @default(uuid()) @map("location_id")
   userId      String       @map("user_id")
@@ -65,21 +78,26 @@ model Location {
 }
 
 model Preference {
-  preferenceId String    @id @default(uuid()) @map("preference_id")
-  userId       String    @map("user_id")
-  locationId   String?   @map("location_id")
-  category     String
-  key          String
-  value        Json
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id          String           @id @default(uuid())
+  userId      String           @map("user_id")
+  locationId  String?          @map("location_id")
 
-  user     User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  location Location? @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+  slug        String
+  value       Json
 
-  @@unique([userId, locationId, category, key])
-  @@index([userId])
-  @@index([locationId])
-  @@index([userId, category])
-  @@map("preferences")
+  status      PreferenceStatus @default(ACTIVE)
+  sourceType  SourceType       @default(USER)
+  confidence  Float?
+  evidence    Json?
+
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  user        User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  location    Location?        @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+
+  @@unique([userId, locationId, slug, status])
+  @@index([userId, locationId])
+  @@index([slug])
+  @@map("user_preferences")
 }

@@ -1,11 +1,15 @@
-import { ObjectType, Field, ID, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
 export enum PreferenceOperation {
   CREATE = 'CREATE',
   UPDATE = 'UPDATE',
-  // TODO: Add DELETE operation in v2
-  // DELETE = 'DELETE',
 }
 
 registerEnumType(PreferenceOperation, {
@@ -17,6 +21,7 @@ export enum FilterReason {
   MISSING_FIELDS = 'MISSING_FIELDS',
   DUPLICATE_KEY = 'DUPLICATE_KEY',
   NO_CHANGE = 'NO_CHANGE',
+  UNKNOWN_SLUG = 'UNKNOWN_SLUG',
 }
 
 registerEnumType(FilterReason, {
@@ -41,11 +46,10 @@ export class PreferenceSuggestion {
   @Field(() => ID)
   id: string;
 
-  @Field()
-  category: string;
-
-  @Field()
-  key: string;
+  @Field({
+    description: 'The preference slug (e.g., "food.dietary_restrictions")',
+  })
+  slug: string;
 
   @Field(() => PreferenceOperation)
   operation: PreferenceOperation;
@@ -67,6 +71,19 @@ export class PreferenceSuggestion {
 
   @Field({ defaultValue: false })
   wasCorrected: boolean;
+
+  // Convenience fields from catalog
+  @Field({
+    nullable: true,
+    description: 'Category from the preference catalog',
+  })
+  category?: string;
+
+  @Field({
+    nullable: true,
+    description: 'Description from the preference catalog',
+  })
+  description?: string;
 }
 
 @ObjectType()

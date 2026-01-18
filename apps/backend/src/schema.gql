@@ -3,10 +3,11 @@
 # ------------------------------------------------------
 
 input ApplyPreferenceSuggestionInput {
-  category: String!
-  key: String!
   newValue: JSON
   operation: PreferenceOperation!
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
   suggestionId: ID!
 }
 
@@ -14,13 +15,6 @@ input CreateLocationInput {
   address: String!
   label: String!
   type: LocationType!
-}
-
-input CreatePreferenceInput {
-  category: String!
-  key: String!
-  locationId: String
-  value: JSON!
 }
 
 """
@@ -33,18 +27,25 @@ enum FilterReason {
   DUPLICATE_KEY
   MISSING_FIELDS
   NO_CHANGE
+  UNKNOWN_SLUG
 }
 
 type FilteredSuggestion {
-  category: String!
+  """Category from the preference catalog"""
+  category: String
   confidence: Float!
+
+  """Description from the preference catalog"""
+  description: String
   filterDetails: String
   filterReason: FilterReason!
   id: ID!
-  key: String!
   newValue: JSON!
   oldValue: JSON
   operation: PreferenceOperation!
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
   sourceMeta: SourceMeta
   sourceSnippet: String!
   wasCorrected: Boolean!
@@ -73,26 +74,59 @@ enum LocationType {
 }
 
 type Mutation {
+  """Accept a suggestion, promoting it to ACTIVE"""
+  acceptSuggestedPreference(id: ID!): Preference!
   applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
   createLocation(data: CreateLocationInput!): Location!
-  createPreference(data: CreatePreferenceInput!): Preference!
   deleteLocation(locationId: String!): Location!
-  deletePreference(preferenceId: String!): Preference!
+
+  """Delete a preference"""
+  deletePreference(id: ID!): Preference!
+
+  """Reject a suggestion (prevents future suggestions for this slug)"""
+  rejectSuggestedPreference(id: ID!): Boolean!
+
+  """Set an active preference (creates or updates)"""
+  setPreference(input: SetPreferenceInput!): Preference!
+
+  """
+  Suggest a preference (creates SUGGESTED status). Returns null if skipped.
+  """
+  suggestPreference(input: SuggestPreferenceInput!): Preference
   updateLocation(data: UpdateLocationInput!, locationId: String!): Location!
-  updatePreference(data: UpdatePreferenceInput!, preferenceId: String!): Preference!
 
   """Update an existing user"""
   updateUser(updateUserInput: UpdateUserInput!): User!
 }
 
 type Preference {
-  category: String!
+  """Category from the preference catalog"""
+  category: String
+
+  """Confidence score for inferred preferences (0.0 to 1.0)"""
+  confidence: Float
   createdAt: DateTime!
-  key: String!
+
+  """Description from the preference catalog"""
+  description: String
+
+  """Evidence/provenance metadata"""
+  evidence: JSON
+  id: ID!
   locationId: String
-  preferenceId: ID!
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
+
+  """Source: USER, INFERRED, IMPORTED, or SYSTEM"""
+  sourceType: SourceType!
+
+  """Status: ACTIVE, SUGGESTED, or REJECTED"""
+  status: PreferenceStatus!
   updatedAt: DateTime!
   userId: String!
+
+  """The preference value"""
   value: JSON!
 }
 
@@ -102,36 +136,68 @@ enum PreferenceOperation {
   UPDATE
 }
 
+"""The status of a preference"""
+enum PreferenceStatus {
+  ACTIVE
+  REJECTED
+  SUGGESTED
+}
+
 type PreferenceSuggestion {
-  category: String!
+  """Category from the preference catalog"""
+  category: String
   confidence: Float!
+
+  """Description from the preference catalog"""
+  description: String
   id: ID!
-  key: String!
   newValue: JSON!
   oldValue: JSON
   operation: PreferenceOperation!
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
   sourceMeta: SourceMeta
   sourceSnippet: String!
   wasCorrected: Boolean!
 }
 
 type Query {
+  """
+  Get active preferences. With locationId: merged global + location. Without: global only.
+  """
+  activePreferences(locationId: ID): [Preference!]!
+
   """Send a text prompt to Vertex AI and receive a generated response"""
   askVertexAI(message: String!): String!
-  globalPreferences: [Preference!]!
   location(locationId: String!): Location!
   locations: [Location!]!
   locationsByType(type: LocationType!): [Location!]!
 
   """Get current authenticated user"""
   me: User!
-  preference(preferenceId: String!): Preference!
-  preferences: [Preference!]!
-  preferencesByCategory(category: String!): [Preference!]!
-  preferencesByLocation(locationId: String!): [Preference!]!
+
+  """Get a single preference by ID"""
+  preference(id: ID!): Preference!
+
+  """
+  Get suggested preferences (inbox). With locationId: union of global + location. Without: global only.
+  """
+  suggestedPreferences(locationId: ID): [Preference!]!
 
   """Get a user by ID"""
   user(id: ID!): User!
+}
+
+input SetPreferenceInput {
+  """Optional location ID for location-scoped preferences"""
+  locationId: String
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
+
+  """The preference value (type depends on slug definition)"""
+  value: JSON!
 }
 
 type SourceMeta {
@@ -140,17 +206,35 @@ type SourceMeta {
   page: Float
 }
 
+"""The source/origin of a preference"""
+enum SourceType {
+  IMPORTED
+  INFERRED
+  SYSTEM
+  USER
+}
+
+input SuggestPreferenceInput {
+  """Confidence score for the suggestion (0.0 to 1.0)"""
+  confidence: Float!
+
+  """Evidence/provenance for the suggestion (messageIds, snippets, etc.)"""
+  evidence: JSON
+
+  """Optional location ID for location-scoped preferences"""
+  locationId: String
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
+
+  """The suggested preference value"""
+  value: JSON!
+}
+
 input UpdateLocationInput {
   address: String
   label: String
   type: LocationType
-}
-
-input UpdatePreferenceInput {
-  category: String
-  key: String
-  locationId: String
-  value: JSON
 }
 
 input UpdateUserInput {

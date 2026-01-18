@@ -10,22 +10,27 @@ import {
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
+import SuggestionInbox from './components/SuggestionInbox';
 
 interface Preference {
-  preferenceId: string;
-  category: string;
-  key: string;
+  id: string;
+  slug: string;
   value: any;
+  status: string;
+  sourceType: string;
+  confidence: number | null;
+  locationId: string | null;
+  category?: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE' | 'UNKNOWN_SLUG';
 
 interface PreferenceSuggestion {
   id: string;
-  category: string;
-  key: string;
+  slug: string;
   operation: 'CREATE' | 'UPDATE';
   oldValue: any;
   newValue: any;
@@ -36,6 +41,8 @@ interface PreferenceSuggestion {
     line?: number;
   };
   wasCorrected?: boolean;
+  category?: string;
+  description?: string;
 }
 
 interface FilteredSuggestion extends PreferenceSuggestion {
@@ -54,7 +61,8 @@ interface DocumentAnalysisResult {
 }
 
 interface PreferencesClientProps {
-  initialPreferences: Preference[];
+  initialActivePreferences: Preference[];
+  initialSuggestedPreferences: Preference[];
   accessToken: string;
 }
 
@@ -71,13 +79,13 @@ function createApolloClient(accessToken: string) {
 }
 
 function PreferencesContent({
-  initialPreferences,
+  initialActivePreferences,
+  initialSuggestedPreferences,
   accessToken,
 }: PreferencesClientProps) {
-  const [preferences, setPreferences] = useState<Preference[]>(initialPreferences);
-  const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(
-    null
-  );
+  const [activePreferences, setActivePreferences] = useState<Preference[]>(initialActivePreferences);
+  const [suggestedPreferences, setSuggestedPreferences] = useState<Preference[]>(initialSuggestedPreferences);
+  const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
 
   const handleAnalysisComplete = (result: DocumentAnalysisResult) => {
     setAnalysisResult(result);
@@ -94,22 +102,42 @@ function PreferencesContent({
   };
 
   const handlePreferenceUpdate = (updated: Preference) => {
-    setPreferences((prev) =>
-      prev.map((p) => (p.preferenceId === updated.preferenceId ? updated : p))
+    setActivePreferences((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p))
     );
   };
 
-  const handlePreferenceDelete = (preferenceId: string) => {
-    setPreferences((prev) => prev.filter((p) => p.preferenceId !== preferenceId));
+  const handlePreferenceDelete = (id: string) => {
+    setActivePreferences((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const handleSuggestionAccept = (acceptedPref: Preference) => {
+    // Add to active preferences and remove from suggestions
+    setActivePreferences((prev) => {
+      const existingIdx = prev.findIndex((p) => p.slug === acceptedPref.slug);
+      if (existingIdx >= 0) {
+        // Update existing
+        const updated = [...prev];
+        updated[existingIdx] = acceptedPref;
+        return updated;
+      }
+      return [...prev, acceptedPref];
+    });
+    setSuggestedPreferences((prev) => prev.filter((p) => p.id !== acceptedPref.id));
+  };
+
+  const handleSuggestionReject = (id: string) => {
+    setSuggestedPreferences((prev) => prev.filter((p) => p.id !== id));
   };
 
   // Group preferences by category
-  const groupedPreferences = preferences.reduce(
+  const groupedPreferences = activePreferences.reduce(
     (acc, pref) => {
-      if (!acc[pref.category]) {
-        acc[pref.category] = [];
+      const category = pref.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = [];
       }
-      acc[pref.category].push(pref);
+      acc[category].push(pref);
       return acc;
     },
     {} as Record<string, Preference[]>
@@ -127,6 +155,16 @@ function PreferencesContent({
             Back to Dashboard
           </a>
         </div>
+
+        {/* Suggestion Inbox - Show if there are pending suggestions */}
+        {suggestedPreferences.length > 0 && (
+          <SuggestionInbox
+            suggestions={suggestedPreferences}
+            accessToken={accessToken}
+            onAccept={handleSuggestionAccept}
+            onReject={handleSuggestionReject}
+          />
+        )}
 
         {/* Document Upload Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -152,8 +190,8 @@ function PreferencesContent({
 
         {/* Current Preferences Section */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Current Preferences</h2>
-          {preferences.length === 0 ? (
+          <h2 className="text-lg font-semibold mb-4">Active Preferences</h2>
+          {activePreferences.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
               No preferences yet. Upload a document to get started!
             </p>
@@ -167,7 +205,7 @@ function PreferencesContent({
                   <div className="space-y-2">
                     {prefs.map((pref) => (
                       <PreferenceItem
-                        key={pref.preferenceId}
+                        key={pref.id}
                         preference={pref}
                         accessToken={accessToken}
                         onUpdate={handlePreferenceUpdate}

@@ -2,11 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
+import {
+  PREFERENCE_CATALOG,
+  getDefinition,
+  getAllSlugs,
+  getSlugsByCategory,
+} from '@config/preferences.catalog';
 
 interface SearchPreferencesParams {
-  category?: string;
+  query?: string; // Search by slug prefix, category, or description keyword
   locationId?: string;
-  globalOnly?: boolean;
+  includeSuggestions?: boolean; // Whether to include SUGGESTED preferences
 }
 
 @Injectable()
@@ -18,10 +24,29 @@ export class PreferenceSearchTool {
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Search the catalog for matching slugs based on query.
+   */
+  private searchCatalog(query: string): string[] {
+    const normalized = query.toLowerCase();
+    const allSlugs = getAllSlugs();
+
+    return allSlugs.filter((slug) => {
+      // Match by slug prefix
+      if (slug.startsWith(normalized)) return true;
+
+      // Match by category
+      const def = getDefinition(slug);
+      if (def?.category.includes(normalized)) return true;
+
+      // Match by description keyword
+      if (def?.description.toLowerCase().includes(normalized)) return true;
+
+      return false;
+    });
+  }
+
   async search(params: SearchPreferencesParams, context: McpContext) {
-    // TODO: MCP_SEARCH_AUTH - Phase 1 implementation
-    // Extract userId from JWT context, NOT from params
-    // This ensures users can only search their own preferences
     const userId = context.user.userId;
 
     const maxResults = this.configService.get(
@@ -33,43 +58,87 @@ export class PreferenceSearchTool {
     );
 
     try {
-      let results;
+      // Get active preferences
+      const activePrefs = await this.preferenceService.getActivePreferences(
+        userId,
+        params.locationId,
+      );
 
-      // Determine search strategy based on parameters
-      if (params.globalOnly) {
-        // Search only global preferences (not tied to a location)
-        results = await this.preferenceService.findGlobalPreferences(userId);
-      } else if (params.locationId) {
-        // Search preferences for a specific location
-        results = await this.preferenceService.findByLocation(
-          userId,
-          params.locationId,
-        );
-      } else if (params.category) {
-        // Search preferences by category
-        results = await this.preferenceService.findByCategory(
-          userId,
-          params.category,
-        );
-      } else {
-        // No filters - return all user preferences
-        results = await this.preferenceService.findAll(userId);
+      // If query is provided, filter by matching slugs
+      let filteredActive = activePrefs;
+      if (params.query) {
+        const matchingSlugs = new Set(this.searchCatalog(params.query));
+        filteredActive = activePrefs.filter((p) => matchingSlugs.has(p.slug));
       }
 
-      // Apply max results limit if configured
-      if (maxResults && results.length > maxResults) {
-        this.logger.warn(
-          `Limiting results from ${results.length} to ${maxResults}`,
-        );
-        results = results.slice(0, maxResults);
+      // Optionally include suggestions
+      let suggestions: typeof activePrefs = [];
+      if (params.includeSuggestions) {
+        const suggestedPrefs =
+          await this.preferenceService.getSuggestedPreferences(
+            userId,
+            params.locationId,
+          );
+
+        if (params.query) {
+          const matchingSlugs = new Set(this.searchCatalog(params.query));
+          suggestions = suggestedPrefs.filter((p) =>
+            matchingSlugs.has(p.slug),
+          );
+        } else {
+          suggestions = suggestedPrefs;
+        }
       }
 
-      this.logger.log(`Found ${results.length} preferences for user ${userId}`);
+      // Apply max results limit
+      if (maxResults) {
+        if (filteredActive.length > maxResults) {
+          this.logger.warn(
+            `Limiting active results from ${filteredActive.length} to ${maxResults}`,
+          );
+          filteredActive = filteredActive.slice(0, maxResults);
+        }
+        if (suggestions.length > maxResults) {
+          this.logger.warn(
+            `Limiting suggestion results from ${suggestions.length} to ${maxResults}`,
+          );
+          suggestions = suggestions.slice(0, maxResults);
+        }
+      }
+
+      // Format results with catalog metadata
+      const formatPreference = (pref: (typeof activePrefs)[0]) => {
+        const def = getDefinition(pref.slug);
+        return {
+          id: pref.id,
+          slug: pref.slug,
+          value: pref.value,
+          status: pref.status,
+          sourceType: pref.sourceType,
+          confidence: pref.confidence,
+          locationId: pref.locationId,
+          updatedAt: pref.updatedAt,
+          category: def?.category,
+          description: def?.description,
+        };
+      };
+
+      this.logger.log(
+        `Found ${filteredActive.length} active, ${suggestions.length} suggested for user ${userId}`,
+      );
 
       return {
         success: true,
-        count: results.length,
-        preferences: results,
+        active: {
+          count: filteredActive.length,
+          preferences: filteredActive.map(formatPreference),
+        },
+        ...(params.includeSuggestions && {
+          suggested: {
+            count: suggestions.length,
+            preferences: suggestions.map(formatPreference),
+          },
+        }),
       };
     } catch (error) {
       this.logger.error(

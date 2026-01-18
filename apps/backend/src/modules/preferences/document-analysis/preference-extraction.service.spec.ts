@@ -4,19 +4,20 @@ import { PreferenceExtractionService } from './preference-extraction.service';
 import { PreferenceService } from '../preference/preference.service';
 import { AiTextGeneratorPort } from '../../../domains/shared/ports/ai-text-generator.port';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
-import { Preference } from '../preference/models/preference.model';
+import { EnrichedPreference } from '../preference/preference.repository';
+import { PreferenceStatus, SourceType } from '@prisma/client';
 
-// Helper to create mock Preference objects
-const createMockPreference = (
-  category: string,
-  key: string,
-  value: any,
-): Preference => ({
-  preferenceId: `pref-${category}-${key}`,
+// Helper to create mock Preference objects using the new slug-based model
+const createMockPreference = (slug: string, value: any): EnrichedPreference => ({
+  id: `pref-${slug.replace('.', '-')}`,
   userId: 'user-1',
-  category,
-  key,
+  slug,
   value,
+  status: PreferenceStatus.ACTIVE,
+  sourceType: SourceType.USER,
+  locationId: null,
+  confidence: null,
+  evidence: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 });
@@ -33,11 +34,13 @@ describe('PreferenceExtractionService', () => {
     };
 
     mockPreferenceService = {
-      findAll: jest.fn(),
-      findOne: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      getActivePreferences: jest.fn(),
+      getSuggestedPreferences: jest.fn(),
+      setPreference: jest.fn(),
+      suggestPreference: jest.fn(),
+      acceptSuggestion: jest.fn(),
+      rejectSuggestion: jest.fn(),
+      deletePreference: jest.fn(),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -74,19 +77,21 @@ describe('PreferenceExtractionService', () => {
     const mockMimeType = 'text/plain';
     const mockFilename = 'test.txt';
 
-    // Helper to create AI response JSON
-    const createAiResponse = (suggestions: any[], documentSummary = 'Test document') => {
+    // Helper to create AI response JSON using slug-based schema
+    const createAiResponse = (
+      suggestions: any[],
+      documentSummary = 'Test document',
+    ) => {
       return JSON.stringify({ suggestions, documentSummary });
     };
 
     describe('rejecting malformed AI responses', () => {
-      it('should throw error when suggestion is missing category', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+      it('should throw error when suggestion is missing slug', async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              key: 'allergies',
-              // category is missing
+              // slug is missing
               operation: 'CREATE',
               newValue: ['peanuts'],
               confidence: 0.9,
@@ -102,16 +107,17 @@ describe('PreferenceExtractionService', () => {
             mockMimeType,
             mockFilename,
           ),
-        ).rejects.toThrow('Failed to parse AI response: validation failed at suggestions.0.category');
+        ).rejects.toThrow(
+          'Failed to parse AI response: validation failed at suggestions.0.slug',
+        );
       });
 
-      it('should throw error when suggestion is missing key', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+      it('should filter out suggestions with unknown slugs', async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              // key is missing
+              slug: 'unknown.invalid_slug',
               operation: 'CREATE',
               newValue: ['peanuts'],
               confidence: 0.9,
@@ -120,23 +126,24 @@ describe('PreferenceExtractionService', () => {
           ]),
         );
 
-        await expect(
-          service.extractPreferences(
-            'user-1',
-            mockFileBuffer,
-            mockMimeType,
-            mockFilename,
-          ),
-        ).rejects.toThrow('Failed to parse AI response: validation failed at suggestions.0.key');
+        const result = await service.extractPreferences(
+          'user-1',
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(0);
+        expect(result.filteredCount).toBe(1);
+        expect(result.filteredSuggestions[0].filterReason).toBe('UNKNOWN_SLUG');
       });
 
       it('should filter out suggestions missing newValue', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               // newValue is missing
               confidence: 0.9,
@@ -156,28 +163,28 @@ describe('PreferenceExtractionService', () => {
         // but gets filtered out due to missing required fields
         expect(result.suggestions).toHaveLength(0);
         expect(result.filteredCount).toBe(1);
-        expect(result.filteredSuggestions[0].filterReason).toBe('MISSING_FIELDS');
+        expect(result.filteredSuggestions[0].filterReason).toBe(
+          'MISSING_FIELDS',
+        );
       });
     });
 
-    describe('filtering duplicate category/key', () => {
-      it('should filter duplicate category/key and keep first', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+    describe('filtering duplicate slug', () => {
+      it('should filter duplicate slug and keep first', async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               newValue: ['peanuts'],
               confidence: 0.9,
               sourceSnippet: 'allergic to peanuts',
             },
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
-              newValue: ['shellfish'], // duplicate key, different value
+              newValue: ['shellfish'], // duplicate slug, different value
               confidence: 0.8,
               sourceSnippet: 'allergic to shellfish',
             },
@@ -199,14 +206,13 @@ describe('PreferenceExtractionService', () => {
 
     describe('correcting operation type based on DB state', () => {
       it('should correct CREATE to UPDATE when preference exists', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'allergies', ['nuts']),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.dietary_restrictions', ['nuts']),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE', // AI says CREATE but should be UPDATE
               newValue: ['peanuts', 'shellfish'],
               confidence: 0.9,
@@ -228,12 +234,11 @@ describe('PreferenceExtractionService', () => {
       });
 
       it('should correct UPDATE to CREATE when preference does not exist', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'UPDATE', // AI says UPDATE but should be CREATE
               oldValue: ['something'],
               newValue: ['peanuts'],
@@ -259,14 +264,13 @@ describe('PreferenceExtractionService', () => {
     describe('correcting oldValue based on DB state', () => {
       it('should correct oldValue to match actual DB value', async () => {
         const actualDbValue = ['nuts', 'shellfish'];
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'allergies', actualDbValue),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.dietary_restrictions', actualDbValue),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'UPDATE',
               oldValue: ['nuts'], // AI says wrong oldValue
               newValue: ['peanuts', 'shellfish', 'dairy'],
@@ -289,12 +293,11 @@ describe('PreferenceExtractionService', () => {
       });
 
       it('should remove oldValue for CREATE operations', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               oldValue: ['something'], // should not have oldValue for CREATE
               newValue: ['peanuts'],
@@ -320,14 +323,13 @@ describe('PreferenceExtractionService', () => {
     describe('filtering no-change updates', () => {
       it('should filter out updates where newValue equals existing value', async () => {
         const existingValue = ['peanuts', 'shellfish'];
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'allergies', existingValue),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.dietary_restrictions', existingValue),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'UPDATE',
               oldValue: existingValue,
               newValue: existingValue, // same as existing - no change
@@ -351,12 +353,11 @@ describe('PreferenceExtractionService', () => {
 
     describe('wasCorrected flag', () => {
       it('should set wasCorrected=false when no corrections needed', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               newValue: ['peanuts'],
               confidence: 0.9,
@@ -377,14 +378,13 @@ describe('PreferenceExtractionService', () => {
       });
 
       it('should set wasCorrected=true when operation is corrected', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'allergies', ['nuts']),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.dietary_restrictions', ['nuts']),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE', // wrong, should be UPDATE
               newValue: ['peanuts'],
               confidence: 0.9,
@@ -404,14 +404,13 @@ describe('PreferenceExtractionService', () => {
       });
 
       it('should set wasCorrected=true when oldValue is corrected', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'allergies', ['actual-value']),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.dietary_restrictions', ['actual-value']),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'UPDATE',
               oldValue: ['wrong-value'], // wrong oldValue
               newValue: ['new-value'],
@@ -435,24 +434,22 @@ describe('PreferenceExtractionService', () => {
 
     describe('filteredCount accuracy', () => {
       it('should return correct filteredCount with multiple filtered items', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([
-          createMockPreference('dietary', 'existing', 'same-value'),
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference('food.cuisine_preferences', 'same-value'),
         ]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             // 1. Valid suggestion - should pass
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               newValue: ['peanuts'],
               confidence: 0.9,
               sourceSnippet: 'allergic to peanuts',
             },
-            // 2. Duplicate key - should be filtered
+            // 2. Duplicate slug - should be filtered
             {
-              category: 'dietary',
-              key: 'allergies',
+              slug: 'food.dietary_restrictions',
               operation: 'CREATE',
               newValue: ['duplicate'],
               confidence: 0.8,
@@ -460,8 +457,7 @@ describe('PreferenceExtractionService', () => {
             },
             // 3. No-change update - should be filtered
             {
-              category: 'dietary',
-              key: 'existing',
+              slug: 'food.cuisine_preferences',
               operation: 'UPDATE',
               oldValue: 'same-value',
               newValue: 'same-value',
@@ -485,7 +481,7 @@ describe('PreferenceExtractionService', () => {
 
     describe('edge cases', () => {
       it('should handle empty suggestions array from AI', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([]),
         );
@@ -502,14 +498,13 @@ describe('PreferenceExtractionService', () => {
       });
 
       it('should handle AI response with markdown code blocks', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           '```json\n' +
             JSON.stringify({
               suggestions: [
                 {
-                  category: 'dietary',
-                  key: 'allergies',
+                  slug: 'food.dietary_restrictions',
                   operation: 'CREATE',
                   newValue: ['peanuts'],
                   confidence: 0.9,
@@ -531,21 +526,16 @@ describe('PreferenceExtractionService', () => {
         expect(result.suggestions).toHaveLength(1);
       });
 
-      it('should handle complex nested newValue objects', async () => {
-        mockPreferenceService.findAll.mockResolvedValue([]);
+      it('should handle array newValue with multiple items', async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(
           createAiResponse([
             {
-              category: 'travel',
-              key: 'hotel_amenities',
+              slug: 'food.cuisine_preferences',
               operation: 'CREATE',
-              newValue: {
-                required: ['wifi', 'gym'],
-                preferred: ['pool', 'spa'],
-                notes: 'Near downtown',
-              },
+              newValue: ['Italian', 'Japanese', 'Mexican', 'Thai'],
               confidence: 0.85,
-              sourceSnippet: 'hotel preferences from document',
+              sourceSnippet: 'cuisine preferences from document',
             },
           ]),
         );
@@ -558,11 +548,12 @@ describe('PreferenceExtractionService', () => {
         );
 
         expect(result.suggestions).toHaveLength(1);
-        expect(result.suggestions[0].newValue).toEqual({
-          required: ['wifi', 'gym'],
-          preferred: ['pool', 'spa'],
-          notes: 'Near downtown',
-        });
+        expect(result.suggestions[0].newValue).toEqual([
+          'Italian',
+          'Japanese',
+          'Mexican',
+          'Thai',
+        ]);
       });
     });
   });

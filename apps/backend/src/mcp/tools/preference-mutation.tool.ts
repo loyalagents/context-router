@@ -1,17 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
+import {
+  isKnownSlug,
+  findSimilarSlugs,
+  getDefinition,
+  PREFERENCE_CATALOG,
+} from '@config/preferences.catalog';
 
-interface CreatePreferenceParams {
-  category: string;
-  key: string;
+/**
+ * Parameters for suggesting a preference via MCP.
+ * Note: MCP writes are ALWAYS suggestions - they never write ACTIVE directly.
+ */
+interface SuggestPreferenceParams {
+  slug: string;
   value: string; // JSON string that will be parsed
   locationId?: string;
+  confidence: number;
+  evidence?: string; // JSON string for evidence metadata
 }
 
-interface UpdatePreferenceParams {
-  preferenceId: string;
-  value: string; // JSON string that will be parsed
+interface DeletePreferenceParams {
+  id: string;
 }
 
 /**
@@ -30,8 +40,20 @@ function parseJsonValue(value: string, context: string): unknown {
   }
 }
 
-interface DeletePreferenceParams {
-  preferenceId: string;
+/**
+ * Validates a slug and returns an error message if invalid.
+ */
+function validateSlug(slug: string): string | null {
+  if (!isKnownSlug(slug)) {
+    const similar = findSimilarSlugs(slug);
+    const allSlugs = Object.keys(PREFERENCE_CATALOG);
+
+    if (similar.length > 0) {
+      return `Unknown slug "${slug}". Did you mean: ${similar.join(', ')}? Valid slugs are: ${allSlugs.join(', ')}`;
+    }
+    return `Unknown slug "${slug}". Valid slugs are: ${allSlugs.join(', ')}`;
+  }
+  return null;
 }
 
 @Injectable()
@@ -40,79 +62,88 @@ export class PreferenceMutationTool {
 
   constructor(private preferenceService: PreferenceService) {}
 
-  async create(params: CreatePreferenceParams, context: McpContext) {
-    // TODO: MCP_USER_CONTEXT - Extract userId from JWT context
-    // Users can only create preferences for themselves
+  /**
+   * Suggest a preference. MCP writes are ALWAYS suggestions.
+   * They never write ACTIVE directly - only humans can confirm preferences.
+   */
+  async suggest(params: SuggestPreferenceParams, context: McpContext) {
     const userId = context.user.userId;
 
     this.logger.log(
-      `Creating preference for user ${userId}: ${params.category}/${params.key}`,
+      `Suggesting preference for user ${userId}: ${params.slug}`,
     );
 
     try {
+      // Validate slug
+      const slugError = validateSlug(params.slug);
+      if (slugError) {
+        return {
+          success: false,
+          error: slugError,
+        };
+      }
+
       // Parse the JSON string value from MCP input
       const parsedValue = parseJsonValue(params.value, 'value');
 
-      const preference = await this.preferenceService.create(userId, {
-        category: params.category,
-        key: params.key,
-        value: parsedValue,
-        locationId: params.locationId,
-      });
+      // Parse evidence if provided
+      let parsedEvidence: unknown = undefined;
+      if (params.evidence) {
+        parsedEvidence = parseJsonValue(params.evidence, 'evidence');
+      }
 
-      this.logger.log(
-        `Preference created successfully: ${preference.preferenceId}`,
-      );
+      // Validate confidence
+      if (
+        typeof params.confidence !== 'number' ||
+        params.confidence < 0 ||
+        params.confidence > 1
+      ) {
+        return {
+          success: false,
+          error: 'Confidence must be a number between 0 and 1',
+        };
+      }
 
-      return {
-        success: true,
-        preference,
-      };
-    } catch (error) {
-      this.logger.error(
-        `Error creating preference for user ${userId}: ${error.message}`,
-        error.stack,
-      );
-
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-  }
-
-  async update(params: UpdatePreferenceParams, context: McpContext) {
-    // TODO: MCP_USER_CONTEXT - Extract userId from JWT context
-    // PreferenceService.update() will verify ownership
-    const userId = context.user.userId;
-
-    this.logger.log(
-      `Updating preference ${params.preferenceId} for user ${userId}`,
-    );
-
-    try {
-      // Parse the JSON string value from MCP input
-      const parsedValue = parseJsonValue(params.value, 'value');
-
-      const preference = await this.preferenceService.update(
-        params.preferenceId,
+      const preference = await this.preferenceService.suggestPreference(
         userId,
         {
+          slug: params.slug,
           value: parsedValue,
+          locationId: params.locationId,
+          confidence: params.confidence,
+          evidence: parsedEvidence,
         },
       );
 
-      this.logger.log(
-        `Preference updated successfully: ${preference.preferenceId}`,
-      );
+      // If preference is null, it means the user previously rejected this preference
+      if (preference === null) {
+        return {
+          success: true,
+          skipped: true,
+          message: `Suggestion skipped: user previously rejected preference "${params.slug}"`,
+        };
+      }
+
+      this.logger.log(`Preference suggested successfully: ${preference.id}`);
+
+      // Get definition for response enrichment
+      const def = getDefinition(params.slug);
 
       return {
         success: true,
-        preference,
+        preference: {
+          id: preference.id,
+          slug: preference.slug,
+          value: preference.value,
+          status: preference.status,
+          confidence: preference.confidence,
+          category: def?.category,
+          description: def?.description,
+        },
       };
     } catch (error) {
       this.logger.error(
-        `Error updating preference ${params.preferenceId} for user ${userId}: ${error.message}`,
+        `Error suggesting preference for user ${userId}: ${error.message}`,
         error.stack,
       );
 
@@ -123,32 +154,29 @@ export class PreferenceMutationTool {
     }
   }
 
+  /**
+   * Delete a preference by ID.
+   */
   async delete(params: DeletePreferenceParams, context: McpContext) {
-    // TODO: MCP_USER_CONTEXT - Extract userId from JWT context
-    // PreferenceService.delete() will verify ownership
     const userId = context.user.userId;
 
-    this.logger.log(
-      `Deleting preference ${params.preferenceId} for user ${userId}`,
-    );
+    this.logger.log(`Deleting preference ${params.id} for user ${userId}`);
 
     try {
-      const preference = await this.preferenceService.delete(
-        params.preferenceId,
+      const preference = await this.preferenceService.deletePreference(
+        params.id,
         userId,
       );
 
-      this.logger.log(
-        `Preference deleted successfully: ${preference.preferenceId}`,
-      );
+      this.logger.log(`Preference deleted successfully: ${preference.id}`);
 
       return {
         success: true,
-        preference,
+        deletedId: preference.id,
       };
     } catch (error) {
       this.logger.error(
-        `Error deleting preference ${params.preferenceId} for user ${userId}: ${error.message}`,
+        `Error deleting preference ${params.id} for user ${userId}: ${error.message}`,
         error.stack,
       );
 

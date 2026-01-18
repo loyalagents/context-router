@@ -9,14 +9,19 @@ import {
   FilterReason,
 } from './dto/preference-suggestion.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
+import {
+  PREFERENCE_CATALOG,
+  getAllSlugs,
+  getDefinition,
+  isKnownSlug,
+} from '@config/preferences.catalog';
 
 /**
  * Zod schema for validating AI response structure.
- * This ensures type safety at runtime, catching malformed AI responses.
+ * AI returns slug-based suggestions matching our catalog.
  */
 const AiSuggestionSchema = z.object({
-  key: z.string(),
-  category: z.string(),
+  slug: z.string(),
   operation: z.enum(['CREATE', 'UPDATE']),
   oldValue: z.any().optional(),
   newValue: z.any(),
@@ -38,54 +43,6 @@ const AiResponseSchema = z.object({
 
 type AiSuggestionSchemaType = z.infer<typeof AiSuggestionSchema>;
 type AiResponseSchemaType = z.infer<typeof AiResponseSchema>;
-
-/**
- * Preference Schema Definition
- *
- * This defines the categories and keys that the AI will use when extracting preferences.
- * UPDATE THIS LIST when you add new preference categories/keys to the system.
- *
- * Format: { category: [keys] }
- */
-const PREFERENCE_SCHEMA: Record<string, string[]> = {
-  // Dietary preferences and restrictions
-  dietary: [
-    'allergies', // Food allergies (e.g., nuts, shellfish, dairy)
-    'intolerances', // Food intolerances (e.g., lactose, gluten)
-    'diet_type', // Dietary lifestyle (e.g., vegetarian, vegan, keto, paleo)
-    'restrictions', // Religious/cultural restrictions (e.g., halal, kosher)
-    'dislikes', // Foods the user dislikes
-    'favorites', // Favorite foods or cuisines
-  ],
-  // Travel preferences
-  travel: [
-    'seat_preference', // Airplane seat (window, aisle, middle)
-    'class_preference', // Travel class (economy, business, first)
-    'hotel_amenities', // Must-have hotel amenities
-    'airline_loyalty', // Preferred airlines or loyalty programs
-    'hotel_loyalty', // Preferred hotel chains or loyalty programs
-  ],
-  // Communication preferences
-  communication: [
-    'preferred_language', // Preferred language for communication
-    'contact_method', // Preferred contact method (email, phone, text)
-    'notification_frequency', // How often to receive notifications
-  ],
-  // Accessibility needs
-  accessibility: [
-    'mobility', // Mobility requirements
-    'visual', // Visual accommodations
-    'auditory', // Hearing accommodations
-    'other', // Other accessibility needs
-  ],
-  // General preferences
-  general: [
-    'timezone', // Preferred timezone
-    'currency', // Preferred currency
-    'units', // Measurement units (metric, imperial)
-  ],
-};
-
 
 @Injectable()
 export class PreferenceExtractionService {
@@ -109,11 +66,18 @@ export class PreferenceExtractionService {
     documentSummary: string;
     filteredCount: number;
   }> {
-    // Fetch user's current preferences
-    const currentPreferences = await this.preferenceService.findAll(userId);
+    // Fetch user's current ACTIVE preferences
+    const currentPreferences =
+      await this.preferenceService.getActivePreferences(userId);
 
-    // Build the prompt
-    const prompt = this.buildExtractionPrompt(currentPreferences, filename);
+    // Build the prompt with catalog-based schema
+    const prompt = this.buildExtractionPrompt(
+      currentPreferences.map((p) => ({
+        slug: p.slug,
+        value: p.value,
+      })),
+      filename,
+    );
 
     this.logger.log(`Calling AI for preference extraction from ${filename}`);
 
@@ -125,27 +89,37 @@ export class PreferenceExtractionService {
 
     // Parse and validate the response
     const parsed = this.parseAiResponse(aiResponse, userId);
-    return this.validateAndSanitizeSuggestions(parsed, currentPreferences);
+    return this.validateAndSanitizeSuggestions(
+      parsed,
+      currentPreferences.map((p) => ({
+        slug: p.slug,
+        value: p.value,
+      })),
+    );
   }
 
   private buildExtractionPrompt(
-    currentPreferences: Array<{ category: string; key: string; value: any }>,
+    currentPreferences: Array<{ slug: string; value: any }>,
     filename: string,
   ): string {
-    const schemaJson = JSON.stringify(PREFERENCE_SCHEMA, null, 2);
-    const currentPreferencesJson = JSON.stringify(
-      currentPreferences.map((p) => ({
-        category: p.category,
-        key: p.key,
-        value: p.value,
-      })),
-      null,
-      2,
-    );
+    // Build schema from catalog
+    const catalogSchema = getAllSlugs().map((slug) => {
+      const def = getDefinition(slug);
+      return {
+        slug,
+        category: def?.category,
+        description: def?.description,
+        valueType: def?.valueType,
+        options: def?.options,
+      };
+    });
+
+    const schemaJson = JSON.stringify(catalogSchema, null, 2);
+    const currentPreferencesJson = JSON.stringify(currentPreferences, null, 2);
 
     return `You are a data extraction assistant that reads documents and proposes preference changes for a user.
 
-Here is the user's current preference schema (categories and keys):
+Here is the user's current preference schema (valid slugs):
 ${schemaJson}
 
 Here are the user's current preferences:
@@ -155,10 +129,10 @@ The document "${filename}" is attached above.
 
 Task:
 - Analyze the attached document for any information that indicates a new or updated preference.
-- For each item, output a suggestion object.
+- For each item, output a suggestion object using a valid slug from the schema.
 - Only suggest changes with clear evidence in the document.
 - Return at most ${this.config.maxSuggestions} suggestions, prioritizing higher-confidence items.
-- Use existing categories and keys from the schema when possible.
+- Use ONLY slugs from the schema above. Invalid slugs will be rejected.
 - If a preference already exists with the same value, do not include it.
 - For UPDATE operations, include the oldValue from current preferences.
 
@@ -166,8 +140,7 @@ Respond with JSON only (no markdown code blocks):
 {
   "suggestions": [
     {
-      "key": "string",
-      "category": "string",
+      "slug": "string (from schema above, e.g. 'food.dietary_restrictions')",
       "operation": "CREATE" | "UPDATE",
       "oldValue": any | null,
       "newValue": any,
@@ -206,8 +179,10 @@ If no preferences can be extracted, return:
     let rawParsed: unknown;
     try {
       rawParsed = JSON.parse(cleanResponse);
-    } catch (error) {
-      this.logger.error('[AI_PARSE_ERROR] JSON.parse failed - invalid JSON syntax');
+    } catch {
+      this.logger.error(
+        '[AI_PARSE_ERROR] JSON.parse failed - invalid JSON syntax',
+      );
       this.logger.debug(`[AI_PARSE_ERROR] Raw response: ${aiResponse}`);
       throw new Error('Failed to parse AI response: invalid JSON');
     }
@@ -243,26 +218,30 @@ If no preferences can be extracted, return:
     // Step 3: Transform validated data to PreferenceSuggestion[]
     const suggestions: PreferenceSuggestion[] = parsed.suggestions
       .slice(0, this.config.maxSuggestions)
-      .map((s: AiSuggestionSchemaType, index: number) => ({
-        id: `${analysisId}:${index}`,
-        category: s.category,
-        key: s.key,
-        operation:
-          s.operation === 'UPDATE'
-            ? PreferenceOperation.UPDATE
-            : PreferenceOperation.CREATE,
-        oldValue: s.oldValue,
-        newValue: s.newValue,
-        confidence: s.confidence,
-        sourceSnippet: s.sourceSnippet,
-        sourceMeta: s.sourceMeta
-          ? {
-              page: s.sourceMeta.page ?? undefined,
-              line: s.sourceMeta.line ?? undefined,
-            }
-          : undefined,
-        wasCorrected: false,
-      }));
+      .map((s: AiSuggestionSchemaType, index: number) => {
+        const def = getDefinition(s.slug);
+        return {
+          id: `${analysisId}:${index}`,
+          slug: s.slug,
+          operation:
+            s.operation === 'UPDATE'
+              ? PreferenceOperation.UPDATE
+              : PreferenceOperation.CREATE,
+          oldValue: s.oldValue,
+          newValue: s.newValue,
+          confidence: s.confidence,
+          sourceSnippet: s.sourceSnippet,
+          sourceMeta: s.sourceMeta
+            ? {
+                page: s.sourceMeta.page ?? undefined,
+                line: s.sourceMeta.line ?? undefined,
+              }
+            : undefined,
+          wasCorrected: false,
+          category: def?.category,
+          description: def?.description,
+        };
+      });
 
     this.logger.log(
       `[AI_PARSE_SUCCESS] Parsed ${suggestions.length} suggestions from AI response`,
@@ -277,17 +256,18 @@ If no preferences can be extracted, return:
   /**
    * Validates and sanitizes AI-generated suggestions against actual DB state.
    *
-   * - Filters out suggestions missing required fields (category, key, newValue)
+   * - Filters out suggestions with invalid/unknown slugs
+   * - Filters out suggestions missing required fields (slug, newValue)
    * - Corrects operation type (CREATE vs UPDATE) based on DB state
    * - Corrects oldValue with actual DB value if exists
-   * - Deduplicates by category/key (keeps first occurrence)
+   * - Deduplicates by slug (keeps first occurrence)
    * - Sets wasCorrected flag when corrections are made
    * - Logs all corrections and filtered items
    * - Returns filtered suggestions with reasons for UI display
    */
   private validateAndSanitizeSuggestions(
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
-    currentPreferences: Array<{ category: string; key: string; value: any }>,
+    currentPreferences: Array<{ slug: string; value: any }>,
   ): {
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
@@ -297,8 +277,7 @@ If no preferences can be extracted, return:
     this.logger.debug(
       `Raw AI suggestions (${parsed.suggestions.length}): ${JSON.stringify(
         parsed.suggestions.map((s) => ({
-          category: s.category,
-          key: s.key,
+          slug: s.slug,
           operation: s.operation,
           newValue: s.newValue,
           confidence: s.confidence,
@@ -309,20 +288,33 @@ If no preferences can be extracted, return:
     // Build a lookup map for current preferences
     const preferenceMap = new Map<string, any>();
     for (const pref of currentPreferences) {
-      preferenceMap.set(`${pref.category}/${pref.key}`, pref.value);
+      preferenceMap.set(pref.slug, pref.value);
     }
 
     const validatedSuggestions: PreferenceSuggestion[] = [];
     const filteredSuggestions: FilteredSuggestion[] = [];
-    const seenKeys = new Set<string>();
+    const seenSlugs = new Set<string>();
 
     for (const suggestion of parsed.suggestions) {
-      const prefKey = `${suggestion.category}/${suggestion.key}`;
+      // Filter: unknown slug
+      if (!isKnownSlug(suggestion.slug)) {
+        this.logger.warn(
+          `Filtered suggestion: unknown slug "${suggestion.slug}"`,
+        );
+        filteredSuggestions.push({
+          ...suggestion,
+          filterReason: FilterReason.UNKNOWN_SLUG,
+          filterDetails: `Slug "${suggestion.slug}" is not in the catalog`,
+        });
+        continue;
+      }
 
       // Filter: missing required fields
-      if (!suggestion.category || !suggestion.key || suggestion.newValue === undefined) {
-        const details = `category: ${suggestion.category}, key: ${suggestion.key}, newValue: ${suggestion.newValue}`;
-        this.logger.warn(`Filtered suggestion: missing required field(s) - ${details}`);
+      if (!suggestion.slug || suggestion.newValue === undefined) {
+        const details = `slug: ${suggestion.slug}, newValue: ${suggestion.newValue}`;
+        this.logger.warn(
+          `Filtered suggestion: missing required field(s) - ${details}`,
+        );
         filteredSuggestions.push({
           ...suggestion,
           filterReason: FilterReason.MISSING_FIELDS,
@@ -331,21 +323,23 @@ If no preferences can be extracted, return:
         continue;
       }
 
-      // Filter: duplicate category/key (keep first)
-      if (seenKeys.has(prefKey)) {
-        this.logger.warn(`Filtered suggestion: duplicate key ${prefKey}`);
+      // Filter: duplicate slug (keep first)
+      if (seenSlugs.has(suggestion.slug)) {
+        this.logger.warn(
+          `Filtered suggestion: duplicate slug ${suggestion.slug}`,
+        );
         filteredSuggestions.push({
           ...suggestion,
           filterReason: FilterReason.DUPLICATE_KEY,
-          filterDetails: `First occurrence of ${prefKey} was already added`,
+          filterDetails: `First occurrence of ${suggestion.slug} was already added`,
         });
         continue;
       }
-      seenKeys.add(prefKey);
+      seenSlugs.add(suggestion.slug);
 
       // Check if preference exists in DB
-      const existingValue = preferenceMap.get(prefKey);
-      const existsInDb = preferenceMap.has(prefKey);
+      const existingValue = preferenceMap.get(suggestion.slug);
+      const existsInDb = preferenceMap.has(suggestion.slug);
       let wasCorrected = false;
 
       // Correct operation type based on DB state
@@ -355,7 +349,7 @@ If no preferences can be extracted, return:
 
       if (suggestion.operation !== expectedOperation) {
         this.logger.warn(
-          `Corrected operation for ${prefKey}: AI said ${suggestion.operation}, but DB says ${expectedOperation}`,
+          `Corrected operation for ${suggestion.slug}: AI said ${suggestion.operation}, but DB says ${expectedOperation}`,
         );
         suggestion.operation = expectedOperation;
         wasCorrected = true;
@@ -372,15 +366,18 @@ If no preferences can be extracted, return:
 
         if (!oldValueMatches) {
           this.logger.warn(
-            `Corrected oldValue for ${prefKey}: AI said ${JSON.stringify(aiOldValue)}, actual is ${JSON.stringify(actualOldValue)}`,
+            `Corrected oldValue for ${suggestion.slug}: AI said ${JSON.stringify(aiOldValue)}, actual is ${JSON.stringify(actualOldValue)}`,
           );
           suggestion.oldValue = actualOldValue;
           wasCorrected = true;
         }
-      } else if (suggestion.oldValue !== undefined && suggestion.oldValue !== null) {
+      } else if (
+        suggestion.oldValue !== undefined &&
+        suggestion.oldValue !== null
+      ) {
         // CREATE operation shouldn't have oldValue
         this.logger.warn(
-          `Corrected oldValue for ${prefKey}: removed oldValue for CREATE operation`,
+          `Corrected oldValue for ${suggestion.slug}: removed oldValue for CREATE operation`,
         );
         suggestion.oldValue = undefined;
         wasCorrected = true;
@@ -392,7 +389,7 @@ If no preferences can be extracted, return:
         JSON.stringify(existingValue) === JSON.stringify(suggestion.newValue)
       ) {
         this.logger.warn(
-          `Filtered suggestion: ${prefKey} newValue matches existing value (no change)`,
+          `Filtered suggestion: ${suggestion.slug} newValue matches existing value (no change)`,
         );
         filteredSuggestions.push({
           ...suggestion,
