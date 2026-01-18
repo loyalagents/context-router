@@ -9,6 +9,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceSearchTool } from './tools/preference-search.tool';
 import { PreferenceMutationTool } from './tools/preference-mutation.tool';
+import { PreferenceListTool } from './tools/preference-list.tool';
 import { SchemaResource } from './resources/schema.resource';
 import { McpContext } from './types/mcp-context.type';
 
@@ -22,6 +23,7 @@ export class McpService implements OnModuleInit {
     private configService: ConfigService,
     private preferenceSearchTool: PreferenceSearchTool,
     private preferenceMutationTool: PreferenceMutationTool,
+    private preferenceListTool: PreferenceListTool,
     private schemaResource: SchemaResource,
   ) {}
 
@@ -71,161 +73,135 @@ export class McpService implements OnModuleInit {
     // Register tools list handler
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
-          tools: [
-            {
-              name: 'searchPreferences',
-              description:
-                'Search user preferences by category, location, or retrieve all preferences. Returns preferences scoped to the authenticated user.',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  category: {
-                    type: 'string',
-                    description:
-                      'Filter preferences by category (e.g., "appearance", "notifications")',
-                  },
-                  locationId: {
-                    type: 'string',
-                    description:
-                      'Filter preferences by location ID (returns location-specific preferences)',
-                  },
-                  globalOnly: {
-                    type: 'boolean',
-                    description:
-                      'If true, only return global preferences (not tied to a location)',
-                  },
+        tools: [
+          {
+            name: 'listPreferenceSlugs',
+            description:
+              'List all valid preference slugs from the catalog. Use this to discover what preferences exist before suggesting new values. Returns slug, category, description, valueType, and scope for each preference.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                category: {
+                  type: 'string',
+                  description:
+                    'Optional: filter by category (e.g., "food", "system", "dev")',
                 },
               },
-              annotations: {
-                readOnlyHint: true,
-                openWorldHint: false,
-              },
             },
-            {
-              name: 'createPreference',
-              description:
-                'Create a new preference for the authenticated user. Preferences can be global or location-specific.',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  category: {
-                    type: 'string',
-                    description: 'Preference category',
-                  },
-                  key: {
-                    type: 'string',
-                    description: 'Preference key/name',
-                  },
-                  value: {
-                    type: 'string',
-                    description:
-                      'Preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
-                  },
-                  locationId: {
-                    type: 'string',
-                    description:
-                      'Optional location handle for location-specific preference',
-                  },
+            annotations: {
+              readOnlyHint: true,
+              openWorldHint: false,
+            },
+          },
+          {
+            name: 'searchPreferences',
+            description:
+              'Search user preferences by query, location, or retrieve all active preferences. Returns preferences scoped to the authenticated user.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: {
+                  type: 'string',
+                  description:
+                    'Search by slug prefix, category, or description keyword',
                 },
-                required: ['category', 'key', 'value'],
-              },
-              annotations: {
-                readOnlyHint: false,
-                idempotentHint: false,
-                openWorldHint: false,
-              },
-            },
-            {
-              name: 'updatePreference',
-              description:
-                'Update an existing preference value. Only the authenticated user can update their own preferences.',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  preferenceId: {
-                    type: 'string',
-                    description: 'Preference handle (returned by searchPreferences)',
-                  },
-                  value: {
-                    type: 'string',
-                    description:
-                      'Updated preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'{"theme": "dark"}\' for objects, \'"USD"\' for strings',
-                  },
+                locationId: {
+                  type: 'string',
+                  description:
+                    'Include preferences for this location (merged with global)',
                 },
-                required: ['preferenceId', 'value'],
-              },
-              annotations: {
-                readOnlyHint: false,
-                idempotentHint: true,
-                openWorldHint: false,
-              },
-            },
-            {
-              name: 'deletePreference',
-              description:
-                'Delete a preference. Only the authenticated user can delete their own preferences.',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  preferenceId: {
-                    type: 'string',
-                    description: 'Preference handle (returned by searchPreferences)',
-                  },
+                includeSuggestions: {
+                  type: 'boolean',
+                  description:
+                    'If true, also return SUGGESTED preferences (inbox)',
                 },
-                required: ['preferenceId'],
-              },
-              annotations: {
-                readOnlyHint: false,
-                destructiveHint: true,
-                idempotentHint: true,
-                openWorldHint: false,
               },
             },
-          ],
+            annotations: {
+              readOnlyHint: true,
+              openWorldHint: false,
+            },
+          },
+          {
+            name: 'suggestPreference',
+            description:
+              'Suggest a preference value for the user. This creates a SUGGESTED preference that the user must approve in the UI. Use listPreferenceSlugs first to find valid slugs. If the user previously rejected this preference, the suggestion will be skipped.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                slug: {
+                  type: 'string',
+                  description:
+                    'Preference slug from the catalog (e.g., "food.dietary_restrictions")',
+                },
+                value: {
+                  type: 'string',
+                  description:
+                    'Preference value as JSON string. Examples: \'["peanuts", "shellfish"]\' for arrays, \'"casual"\' for enum strings',
+                },
+                confidence: {
+                  type: 'number',
+                  description:
+                    'Confidence score between 0 and 1 (e.g., 0.85 for high confidence)',
+                },
+                locationId: {
+                  type: 'string',
+                  description:
+                    'Optional location ID for location-scoped preferences',
+                },
+                evidence: {
+                  type: 'string',
+                  description:
+                    'Optional JSON string with evidence metadata (messageIds, snippets, reason)',
+                },
+              },
+              required: ['slug', 'value', 'confidence'],
+            },
+            annotations: {
+              readOnlyHint: false,
+              idempotentHint: true,
+              openWorldHint: false,
+            },
+          },
+          {
+            name: 'deletePreference',
+            description:
+              'Delete a preference. Only the authenticated user can delete their own preferences.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Preference ID (returned by searchPreferences)',
+                },
+              },
+              required: ['id'],
+            },
+            annotations: {
+              readOnlyHint: false,
+              destructiveHint: true,
+              idempotentHint: true,
+              openWorldHint: false,
+            },
+          },
+        ],
       };
     });
 
     // Register tool call handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-        // Get context from the service (set by the controller for this request)
-        const context = this.getContext();
+      // Get context from the service (set by the controller for this request)
+      const context = this.getContext();
 
-        this.logger.log(`Tool called: ${name} by user: ${context?.user?.userId || 'unknown'}`);
+      this.logger.log(
+        `Tool called: ${name} by user: ${context?.user?.userId || 'unknown'}`,
+      );
 
-        if (!context) {
-          this.logger.error(`Tool called without context: ${name}`);
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({ error: 'Authentication context not available' }, null, 2),
-              },
-            ],
-            isError: true,
-          };
-        }
-
+      // listPreferenceSlugs doesn't require auth
+      if (name === 'listPreferenceSlugs') {
         try {
-          let result;
-
-          switch (name) {
-            case 'searchPreferences':
-              result = await this.preferenceSearchTool.search(args as any, context);
-              break;
-            case 'createPreference':
-              result = await this.preferenceMutationTool.create(args as any, context);
-              break;
-            case 'updatePreference':
-              result = await this.preferenceMutationTool.update(args as any, context);
-              break;
-            case 'deletePreference':
-              result = await this.preferenceMutationTool.delete(args as any, context);
-              break;
-            default:
-              throw new Error(`Unknown tool: ${name}`);
-          }
-
+          const result = await this.preferenceListTool.list(args as any);
           return {
             content: [
               {
@@ -235,7 +211,10 @@ export class McpService implements OnModuleInit {
             ],
           };
         } catch (error) {
-          this.logger.error(`Tool execution error: ${error.message}`, error.stack);
+          this.logger.error(
+            `Tool execution error: ${error.message}`,
+            error.stack,
+          );
           return {
             content: [
               {
@@ -246,8 +225,72 @@ export class McpService implements OnModuleInit {
             isError: true,
           };
         }
-      },
-    );
+      }
+
+      if (!context) {
+        this.logger.error(`Tool called without context: ${name}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                { error: 'Authentication context not available' },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      try {
+        let result;
+
+        switch (name) {
+          case 'searchPreferences':
+            result = await this.preferenceSearchTool.search(
+              args as any,
+              context,
+            );
+            break;
+          case 'suggestPreference':
+            result = await this.preferenceMutationTool.suggest(
+              args as any,
+              context,
+            );
+            break;
+          case 'deletePreference':
+            result = await this.preferenceMutationTool.delete(
+              args as any,
+              context,
+            );
+            break;
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        this.logger.error(`Tool execution error: ${error.message}`, error.stack);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ error: error.message }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    });
 
     this.logger.log('Preference tools registered');
   }
@@ -267,15 +310,15 @@ export class McpService implements OnModuleInit {
     // Register resource list handler
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
-          resources: [
-            {
-              uri: 'schema://graphql',
-              name: 'GraphQL Schema',
-              description:
-                'The GraphQL schema for the Context Router API, showing available types, queries, and mutations.',
-              mimeType: 'text/plain',
-            },
-          ],
+        resources: [
+          {
+            uri: 'schema://graphql',
+            name: 'GraphQL Schema',
+            description:
+              'The GraphQL schema for the Context Router API, showing available types, queries, and mutations.',
+            mimeType: 'text/plain',
+          },
+        ],
       };
     });
 
@@ -283,24 +326,23 @@ export class McpService implements OnModuleInit {
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
 
-        this.logger.log(`Resource requested: ${uri}`);
+      this.logger.log(`Resource requested: ${uri}`);
 
-        if (uri === 'schema://graphql') {
-          const schemaContent = await this.schemaResource.getGraphQLSchema();
-          return {
-            contents: [
-              {
-                uri,
-                mimeType: 'text/plain',
-                text: schemaContent,
-              },
-            ],
-          };
-        }
+      if (uri === 'schema://graphql') {
+        const schemaContent = await this.schemaResource.getGraphQLSchema();
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'text/plain',
+              text: schemaContent,
+            },
+          ],
+        };
+      }
 
-        throw new Error(`Unknown resource: ${uri}`);
-      },
-    );
+      throw new Error(`Unknown resource: ${uri}`);
+    });
 
     this.logger.log('Schema resources registered');
   }

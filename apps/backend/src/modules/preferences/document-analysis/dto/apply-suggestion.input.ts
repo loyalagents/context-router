@@ -10,15 +10,12 @@ export class ApplyPreferenceSuggestionInput {
   @IsNotEmpty()
   suggestionId: string;
 
-  @Field()
+  @Field({
+    description: 'The preference slug (e.g., "food.dietary_restrictions")',
+  })
   @IsString()
   @IsNotEmpty()
-  key: string;
-
-  @Field()
-  @IsString()
-  @IsNotEmpty()
-  category: string;
+  slug: string;
 
   @Field(() => PreferenceOperation)
   @IsEnum(PreferenceOperation)

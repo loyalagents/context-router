@@ -4,8 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 
 interface PreferenceSuggestion {
   id: string;
-  category: string;
-  key: string;
+  slug: string;
   operation: 'CREATE' | 'UPDATE';
   oldValue: any;
   newValue: any;
@@ -15,9 +14,12 @@ interface PreferenceSuggestion {
     page?: number;
     line?: number;
   };
+  wasCorrected?: boolean;
+  category?: string;
+  description?: string;
 }
 
-type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE' | 'UNKNOWN_SLUG';
 
 interface FilteredSuggestion extends PreferenceSuggestion {
   filterReason: FilterReason;

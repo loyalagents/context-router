@@ -4,8 +4,7 @@ import { useState } from 'react';
 
 interface PreferenceSuggestion {
   id: string;
-  category: string;
-  key: string;
+  slug: string;
   operation: 'CREATE' | 'UPDATE';
   oldValue: any;
   newValue: any;
@@ -16,6 +15,8 @@ interface PreferenceSuggestion {
     line?: number;
   };
   wasCorrected?: boolean;
+  category?: string;
+  description?: string;
 }
 
 interface SuggestionItemProps {
@@ -76,7 +77,7 @@ export default function SuggestionItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-gray-900">
-              {suggestion.category}/{suggestion.key}
+              {suggestion.slug}
             </span>
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${
@@ -101,6 +102,10 @@ export default function SuggestionItem({
               </span>
             )}
           </div>
+
+          {suggestion.description && (
+            <p className="text-xs text-gray-500 mt-1">{suggestion.description}</p>
+          )}
 
           {/* Value diff */}
           <div className="mt-2 space-y-1">

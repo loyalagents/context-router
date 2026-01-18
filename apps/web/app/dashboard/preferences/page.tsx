@@ -3,22 +3,67 @@ import { auth0 } from '@/lib/auth0';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import PreferencesClient from './PreferencesClient';
-import { PreferencesQuery } from '@/lib/generated/graphql';
 
 export const dynamic = 'force-dynamic';
 
-const PREFERENCES_QUERY = gql`
-  query Preferences {
-    preferences {
-      preferenceId
-      category
-      key
+const ACTIVE_PREFERENCES_QUERY = gql`
+  query ActivePreferences {
+    activePreferences {
+      id
+      slug
       value
+      status
+      sourceType
+      confidence
+      locationId
+      category
+      description
       createdAt
       updatedAt
     }
   }
 `;
+
+const SUGGESTED_PREFERENCES_QUERY = gql`
+  query SuggestedPreferences {
+    suggestedPreferences {
+      id
+      slug
+      value
+      status
+      sourceType
+      confidence
+      evidence
+      locationId
+      category
+      description
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+interface Preference {
+  id: string;
+  slug: string;
+  value: any;
+  status: string;
+  sourceType: string;
+  confidence: number | null;
+  locationId: string | null;
+  category?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ActivePreferencesQuery {
+  activePreferences: Preference[];
+}
+
+interface SuggestedPreferencesQuery {
+  suggestedPreferences: Preference[];
+}
 
 export default async function PreferencesPage() {
   const session = await auth0.getSession();
@@ -33,22 +78,34 @@ export default async function PreferencesPage() {
     redirect('/auth/login');
   }
 
-  let preferences: PreferencesQuery['preferences'] = [];
+  let activePreferences: Preference[] = [];
+  let suggestedPreferences: Preference[] = [];
+
   try {
-    const { data } = await getClient().query<PreferencesQuery>({
-      query: PREFERENCES_QUERY,
-      context: {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    });
-    preferences = data?.preferences || [];
+    const [activeResult, suggestedResult] = await Promise.all([
+      getClient().query<ActivePreferencesQuery>({
+        query: ACTIVE_PREFERENCES_QUERY,
+        context: {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      }),
+      getClient().query<SuggestedPreferencesQuery>({
+        query: SUGGESTED_PREFERENCES_QUERY,
+        context: {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      }),
+    ]);
+    activePreferences = activeResult.data?.activePreferences || [];
+    suggestedPreferences = suggestedResult.data?.suggestedPreferences || [];
   } catch (e) {
     console.error('Failed to fetch preferences:', e);
   }
 
   return (
     <PreferencesClient
-      initialPreferences={preferences}
+      initialActivePreferences={activePreferences}
+      initialSuggestedPreferences={suggestedPreferences}
       accessToken={accessToken || ''}
     />
   );

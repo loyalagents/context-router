@@ -9,20 +9,20 @@ const APPLY_SUGGESTIONS_MUTATION = `
     $input: [ApplyPreferenceSuggestionInput!]!
   ) {
     applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
-      preferenceId
-      category
-      key
+      id
+      slug
       value
+      status
+      sourceType
     }
   }
 `;
 
-type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE';
+type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE' | 'UNKNOWN_SLUG';
 
 interface PreferenceSuggestion {
   id: string;
-  category: string;
-  key: string;
+  slug: string;
   operation: 'CREATE' | 'UPDATE';
   oldValue: any;
   newValue: any;
@@ -33,6 +33,8 @@ interface PreferenceSuggestion {
     line?: number;
   };
   wasCorrected?: boolean;
+  category?: string;
+  description?: string;
 }
 
 interface FilteredSuggestion extends PreferenceSuggestion {
@@ -54,6 +56,7 @@ const FILTER_REASON_LABELS: Record<FilterReason, string> = {
   MISSING_FIELDS: 'Missing required fields',
   DUPLICATE_KEY: 'Duplicate',
   NO_CHANGE: 'Already set',
+  UNKNOWN_SLUG: 'Unknown preference',
 };
 
 interface SuggestionsListProps {
@@ -102,8 +105,7 @@ export default function SuggestionsList({
       .filter((s) => selectedIds.has(s.id))
       .map((s) => ({
         suggestionId: s.id,
-        key: s.key,
-        category: s.category,
+        slug: s.slug,
         operation: s.operation,
         newValue: editedValues[s.id] ?? s.newValue,
       }));
@@ -245,7 +247,7 @@ export default function SuggestionsList({
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600">
-                          {suggestion.category}/{suggestion.key}
+                          {suggestion.slug}
                         </span>
                         <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-600">
                           {FILTER_REASON_LABELS[suggestion.filterReason]}

@@ -3,10 +3,15 @@
 import { useState } from 'react';
 
 interface Preference {
-  preferenceId: string;
-  category: string;
-  key: string;
+  id: string;
+  slug: string;
   value: any;
+  status: string;
+  sourceType: string;
+  confidence: number | null;
+  locationId: string | null;
+  category?: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,16 +20,21 @@ interface PreferenceItemProps {
   preference: Preference;
   accessToken: string;
   onUpdate: (updated: Preference) => void;
-  onDelete: (preferenceId: string) => void;
+  onDelete: (id: string) => void;
 }
 
-const UPDATE_PREFERENCE_MUTATION = `
-  mutation UpdatePreference($preferenceId: String!, $data: UpdatePreferenceInput!) {
-    updatePreference(preferenceId: $preferenceId, data: $data) {
-      preferenceId
-      category
-      key
+const SET_PREFERENCE_MUTATION = `
+  mutation SetPreference($input: SetPreferenceInput!) {
+    setPreference(input: $input) {
+      id
+      slug
       value
+      status
+      sourceType
+      confidence
+      locationId
+      category
+      description
       createdAt
       updatedAt
     }
@@ -32,9 +42,9 @@ const UPDATE_PREFERENCE_MUTATION = `
 `;
 
 const DELETE_PREFERENCE_MUTATION = `
-  mutation DeletePreference($preferenceId: String!) {
-    deletePreference(preferenceId: $preferenceId) {
-      preferenceId
+  mutation DeletePreference($id: ID!) {
+    deletePreference(id: $id) {
+      id
     }
   }
 `;
@@ -74,10 +84,13 @@ export default function PreferenceItem({
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          query: UPDATE_PREFERENCE_MUTATION,
+          query: SET_PREFERENCE_MUTATION,
           variables: {
-            preferenceId: preference.preferenceId,
-            data: { value: parsedValue },
+            input: {
+              slug: preference.slug,
+              value: parsedValue,
+              locationId: preference.locationId,
+            },
           },
         }),
       });
@@ -88,7 +101,7 @@ export default function PreferenceItem({
         throw new Error(data.errors[0]?.message || 'Failed to update preference');
       }
 
-      onUpdate(data.data.updatePreference);
+      onUpdate(data.data.setPreference);
       setIsEditing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update preference');
@@ -98,7 +111,7 @@ export default function PreferenceItem({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${preference.category}/${preference.key}"?`)) {
+    if (!confirm(`Are you sure you want to delete "${preference.slug}"?`)) {
       return;
     }
 
@@ -116,7 +129,7 @@ export default function PreferenceItem({
         body: JSON.stringify({
           query: DELETE_PREFERENCE_MUTATION,
           variables: {
-            preferenceId: preference.preferenceId,
+            id: preference.id,
           },
         }),
       });
@@ -127,7 +140,7 @@ export default function PreferenceItem({
         throw new Error(data.errors[0]?.message || 'Failed to delete preference');
       }
 
-      onDelete(preference.preferenceId);
+      onDelete(preference.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete preference');
       setIsDeleting(false);
@@ -140,18 +153,29 @@ export default function PreferenceItem({
     setIsEditing(false);
   };
 
+  // Extract the key part from slug (e.g., "food.dietary_restrictions" -> "dietary_restrictions")
+  const displayName = preference.slug.split('.').pop() || preference.slug;
+
   return (
     <div className="border rounded-lg p-3">
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">{preference.key}</span>
+            <span className="font-medium text-gray-900">{displayName}</span>
             {!isEditing && (
               <span className="text-xs text-gray-400">
                 {new Date(preference.updatedAt).toLocaleDateString()}
               </span>
             )}
+            {preference.sourceType === 'INFERRED' && (
+              <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700">
+                AI
+              </span>
+            )}
           </div>
+          {preference.description && (
+            <p className="text-xs text-gray-500 mt-0.5">{preference.description}</p>
+          )}
 
           {isEditing ? (
             <div className="mt-2">
