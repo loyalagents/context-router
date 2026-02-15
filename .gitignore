@@ -67,3 +67,4 @@ apps/web/lib/generated/
 
 # cloud
 cloudrun.env
+cloudrun.prod.env
