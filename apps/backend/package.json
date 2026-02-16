@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "NestJS GraphQL monolith with Prisma and PostgreSQL",
   "main": "dist/main.js",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
