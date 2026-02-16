@@ -12,7 +12,7 @@ import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpService } from './mcp.service';
-import { McpAuthGuard } from './auth/mcp-auth.guard';
+import { ApiKeyGuard } from '@/common/guards/api-key.guard';
 import { McpContext } from './types/mcp-context.type';
 
 @Controller()
@@ -28,7 +28,7 @@ export class McpController {
    * Handle MCP POST requests (JSON-RPC)
    */
   @Post('/mcp')
-  @UseGuards(McpAuthGuard)
+  @UseGuards(ApiKeyGuard)
   async handleMcpPost(
     @Req() req: Request,
     @Res() res: Response,
@@ -41,7 +41,7 @@ export class McpController {
    * Handle MCP GET requests (SSE streaming)
    */
   @Get('/mcp')
-  @UseGuards(McpAuthGuard)
+  @UseGuards(ApiKeyGuard)
   async handleMcpGet(@Req() req: Request, @Res() res: Response) {
     return this.handleMcpRequest(req, res, undefined);
   }
@@ -58,10 +58,9 @@ export class McpController {
       return;
     }
 
-    // Extract user from JWT (set by McpAuthGuard)
+    // Extract user (set by ApiKeyGuard)
     const user = (req as any).user;
 
-    // If no user, the guard already sent a 401 response with proper WWW-Authenticate header
     if (!user) {
       return;
     }

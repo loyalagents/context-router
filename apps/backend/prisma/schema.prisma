@@ -11,34 +11,43 @@ datasource db {
 }
 
 model User {
-  userId             String             @id @default(uuid()) @map("user_id")
-  email              String             @unique
-  firstName          String             @map("first_name")
-  lastName           String             @map("last_name")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  externalIdentities ExternalIdentity[]
-  locations          Location[]
-  preferences        Preference[]
+  userId      String       @id @default(uuid()) @map("user_id")
+  email       String       @unique
+  firstName   String       @map("first_name")
+  lastName    String       @map("last_name")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  apiKeyUsers ApiKeyUser[]
+  locations   Location[]
+  preferences Preference[]
 
   @@map("users")
 }
 
-model ExternalIdentity {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  provider       String   // 'auth0', 'google', 'github', etc.
-  providerUserId String   @map("provider_user_id") // The ID from the provider
-  metadata       Json?    // Optional: store provider-specific data
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+model ApiKey {
+  id        String       @id @default(uuid())
+  keyHash   String       @unique @map("key_hash")
+  groupName String       @map("group_name")
+  isActive  Boolean      @default(true) @map("is_active")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  users     ApiKeyUser[]
 
-  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@map("api_keys")
+}
 
-  @@unique([provider, providerUserId])
+model ApiKeyUser {
+  id        String   @id @default(uuid())
+  apiKeyId  String   @map("api_key_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  apiKey    ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([apiKeyId, userId])
+  @@index([apiKeyId])
   @@index([userId])
-  @@index([provider, providerUserId])
-  @@map("external_identities")
+  @@map("api_key_users")
 }
 
 enum LocationType {

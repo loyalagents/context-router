@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { HttpLink } from '@apollo/client';
-import {
-  ApolloNextAppProvider,
-  ApolloClient,
-  InMemoryCache,
-} from '@apollo/experimental-nextjs-app-support';
+import { HttpLink, ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
+import { setContext } from '@apollo/client/link/context';
+import { getAuthHeaders } from '@/lib/auth-headers';
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
@@ -66,14 +64,15 @@ interface PreferencesClientProps {
   accessToken: string;
 }
 
-function createApolloClient(accessToken: string) {
+function createApolloClient() {
+  const httpLink = new HttpLink({
+    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql',
+  });
+  const authLink = setContext((_, { headers }) => ({
+    headers: { ...headers, ...getAuthHeaders() },
+  }));
   return new ApolloClient({
-    link: new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }),
+    link: authLink.concat(httpLink),
     cache: new InMemoryCache(),
   });
 }
@@ -224,11 +223,11 @@ function PreferencesContent({
 }
 
 export default function PreferencesClient(props: PreferencesClientProps) {
-  const makeClient = () => createApolloClient(props.accessToken);
+  const [client] = useState(() => createApolloClient());
 
   return (
-    <ApolloNextAppProvider makeClient={makeClient}>
+    <ApolloProvider client={client}>
       <PreferencesContent {...props} />
-    </ApolloNextAppProvider>
+    </ApolloProvider>
   );
 }

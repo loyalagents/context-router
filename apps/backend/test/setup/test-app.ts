@@ -4,7 +4,6 @@
  * Creates a NestJS test application with:
  * - Auth guards bypassed (injects test user into context)
  * - VertexAiService mocked
- * - Auth0Service mocked
  * - ValidationPipe applied globally
  *
  * Usage pattern (Option 5 - fixtures in beforeEach):
@@ -20,10 +19,8 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AppModule } from '../../src/app.module';
-import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
-import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../../src/common/guards/api-key.guard';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
-import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from './test-db';
 
@@ -71,29 +68,11 @@ export const createMockVertexAiService = () => ({
 });
 
 /**
- * Mock implementation of Auth0Service.
- */
-export const createMockAuth0Service = () => ({
-  getUserInfo: jest.fn().mockResolvedValue({
-    data: {
-      user_id: 'auth0|test-user-id',
-      email: 'test@example.com',
-      name: 'Test User',
-    },
-  }),
-  updateUserMetadata: jest.fn().mockResolvedValue({}),
-  getManagementClient: jest.fn(),
-  getAuthClient: jest.fn(),
-});
-
-/**
  * Options for createTestApp
  */
 export interface CreateTestAppOptions {
   /** Custom mock for VertexAiService */
   mockVertexAi?: ReturnType<typeof createMockVertexAiService>;
-  /** Custom mock for Auth0Service */
-  mockAuth0?: ReturnType<typeof createMockAuth0Service>;
 }
 
 /**
@@ -186,11 +165,9 @@ export async function createTestApp(
   setTestUser: (user: TestUser) => void;
   mocks: {
     vertexAi: ReturnType<typeof createMockVertexAiService>;
-    auth0: ReturnType<typeof createMockAuth0Service>;
   };
 }> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
-  const mockAuth0 = options.mockAuth0 || createMockAuth0Service();
 
   // Mutable reference - guard always reads current value
   const userRef: UserRef = { current: null };
@@ -200,13 +177,11 @@ export async function createTestApp(
     imports: [AppModule],
   });
 
-  // Override guards
-  moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
-  moduleBuilder.overrideGuard(JwtAuthGuard).useValue(mockAuthGuard);
+  // Override guard (single ApiKeyGuard replaces old GqlAuthGuard + JwtAuthGuard)
+  moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mockAuthGuard);
 
   // Override external services
   moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);
-  moduleBuilder.overrideProvider(Auth0Service).useValue(mockAuth0);
 
   // Use test database PrismaClient
   moduleBuilder.overrideProvider(PrismaService).useValue(getPrismaClient());
@@ -236,7 +211,6 @@ export async function createTestApp(
     },
     mocks: {
       vertexAi: mockVertexAi,
-      auth0: mockAuth0,
     },
   };
 }

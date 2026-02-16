@@ -33,6 +33,7 @@ async function bootstrap() {
       'Authorization',
       'Accept',
       'X-Requested-With',
+      'X-User-Id',
       'apollographql-client-name',
       'apollographql-client-version',
     ],

@@ -2,41 +2,31 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { gql } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client/react';
+
+const ASK_VERTEX_AI = gql`
+  query AskVertexAI($message: String!) {
+    askVertexAI(message: $message)
+  }
+`;
 
 export default function ChatBox() {
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const [askVertexAI, { loading, error }] = useLazyQuery(ASK_VERTEX_AI, {
+    fetchPolicy: 'no-cache',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
-      setResponse(data.response);
+    const result = await askVertexAI({ variables: { message } });
+    if (result.data) {
+      setResponse((result.data as { askVertexAI: string }).askVertexAI || '');
       setMessage('');
-    } catch (err) {
-      console.error('Error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -48,7 +38,7 @@ export default function ChatBox() {
           href="/dashboard"
           className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
         >
-          ← Back to Dashboard
+          &larr; Back to Dashboard
         </Link>
       </div>
 
@@ -75,7 +65,7 @@ export default function ChatBox() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 font-medium">Error</p>
-          <p className="text-red-500 text-sm">{error}</p>
+          <p className="text-red-500 text-sm">{error.message}</p>
         </div>
       )}
 

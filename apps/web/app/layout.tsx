@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WorkshopAuthProvider } from '@/lib/workshop-auth';
 import { ApolloWrapper } from '@/lib/apollo-wrapper';
 import './globals.css';
 
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ApolloWrapper>
-          {children}
-        </ApolloWrapper>
+        <WorkshopAuthProvider>
+          <ApolloWrapper>
+            {children}
+          </ApolloWrapper>
+        </WorkshopAuthProvider>
       </body>
     </html>
   );

@@ -4,12 +4,12 @@ import { PreferenceService } from './preference.service';
 import { Preference } from './models/preference.model';
 import { SetPreferenceInput } from './dto/set-preference.input';
 import { SuggestPreferenceInput } from './dto/suggest-preference.input';
-import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
+import { ApiKeyGuard } from '@common/guards/api-key.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@modules/user/models/user.model';
 
 @Resolver(() => Preference)
-@UseGuards(GqlAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class PreferenceResolver {
   constructor(private preferenceService: PreferenceService) {}
 

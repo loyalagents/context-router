@@ -1,31 +1,32 @@
 "use client";
 
-import { HttpLink } from "@apollo/client";
-import {
-  ApolloNextAppProvider,
-  NextSSRApolloClient,
-  NextSSRInMemoryCache,
-  SSRMultipartLink,
-} from "@apollo/experimental-nextjs-app-support/ssr";
+import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client/react";
+import { setContext } from "@apollo/client/link/context";
+import { useMemo } from "react";
 
 function makeClient() {
   const httpLink = new HttpLink({
     uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
   });
 
-  return new NextSSRApolloClient({
-    cache: new NextSSRInMemoryCache(),
-    link:
-      typeof window === "undefined"
-        ? new SSRMultipartLink({ stripDefer: true })
-        : httpLink,
+  const authLink = setContext((_, { headers }) => ({
+    headers: {
+      ...headers,
+      authorization: localStorage.getItem("workshopApiKey")
+        ? `Bearer ${localStorage.getItem("workshopApiKey")}`
+        : "",
+      "x-user-id": localStorage.getItem("workshopUserId") || "",
+    },
+  }));
+
+  return new ApolloClient({
+    cache: new InMemoryCache(),
+    link: authLink.concat(httpLink),
   });
 }
 
 export function ApolloWrapper({ children }: React.PropsWithChildren) {
-  return (
-    <ApolloNextAppProvider makeClient={makeClient}>
-      {children}
-    </ApolloNextAppProvider>
-  );
+  const client = useMemo(() => makeClient(), []);
+  return <ApolloProvider client={client}>{children}</ApolloProvider>;
 }

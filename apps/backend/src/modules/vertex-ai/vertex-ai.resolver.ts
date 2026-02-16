@@ -5,10 +5,10 @@ import {
 } from '@nestjs/graphql';
 import { UseGuards, Logger } from '@nestjs/common';
 import { VertexAiService } from '../../infrastructure/vertex-ai/vertex-ai.service';
-import { GqlAuthGuard } from '../../common/guards/gql-auth.guard';
+import { ApiKeyGuard } from '../../common/guards/api-key.guard';
 
 @Resolver()
-@UseGuards(GqlAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class VertexAiResolver {
   private readonly logger = new Logger(VertexAiResolver.name);
 

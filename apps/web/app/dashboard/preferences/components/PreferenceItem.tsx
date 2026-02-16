@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getAuthHeaders } from '@/lib/auth-headers';
 
 interface Preference {
   id: string;
@@ -81,7 +82,7 @@ export default function PreferenceItem({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: SET_PREFERENCE_MUTATION,
@@ -124,7 +125,7 @@ export default function PreferenceItem({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: DELETE_PREFERENCE_MUTATION,

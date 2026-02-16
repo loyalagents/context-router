@@ -7,14 +7,11 @@ import { join } from 'path';
 // Config
 import appConfig from './config/app.config';
 import graphqlConfig from './config/graphql.config';
-import authConfig from './config/auth.config';
 import mcpConfig from './config/mcp.config';
 import documentUploadConfig from './config/document-upload.config';
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
-import { Auth0Module } from './infrastructure/auth0/auth0.module';
-
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
@@ -28,7 +25,7 @@ import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, graphqlConfig, authConfig, mcpConfig, documentUploadConfig],
+      load: [appConfig, graphqlConfig, mcpConfig, documentUploadConfig],
       envFilePath: ['.env.local', '.env'],
     }),
 
@@ -56,7 +53,6 @@ import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
 
     // Infrastructure
     PrismaModule,
-    Auth0Module,
 
     // Feature Modules
     AuthModule,

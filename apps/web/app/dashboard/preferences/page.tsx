@@ -1,10 +1,25 @@
-import { redirect } from 'next/navigation';
-import { auth0 } from '@/lib/auth0';
-import { gql } from '@apollo/client';
-import { getClient } from '@/lib/apollo-client';
-import PreferencesClient from './PreferencesClient';
+"use client";
 
-export const dynamic = 'force-dynamic';
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+import { useRouter } from "next/navigation";
+import { useWorkshopAuth } from "@/lib/workshop-auth";
+import PreferencesClient from "./PreferencesClient";
+
+interface Preference {
+  id: string;
+  slug: string;
+  value: any;
+  status: string;
+  sourceType: string;
+  confidence: number | null;
+  locationId: string | null;
+  category?: string;
+  description?: string;
+  evidence?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const ACTIVE_PREFERENCES_QUERY = gql`
   query ActivePreferences {
@@ -43,70 +58,32 @@ const SUGGESTED_PREFERENCES_QUERY = gql`
   }
 `;
 
-interface Preference {
-  id: string;
-  slug: string;
-  value: any;
-  status: string;
-  sourceType: string;
-  confidence: number | null;
-  locationId: string | null;
-  category?: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export default function PreferencesPage() {
+  const router = useRouter();
+  const { isAuthenticated } = useWorkshopAuth();
 
-interface ActivePreferencesQuery {
-  activePreferences: Preference[];
-}
+  const { data: activeData, loading: activeLoading } = useQuery<{ activePreferences: Preference[] }>(ACTIVE_PREFERENCES_QUERY, {
+    skip: !isAuthenticated,
+  });
 
-interface SuggestedPreferencesQuery {
-  suggestedPreferences: Preference[];
-}
+  const { data: suggestedData, loading: suggestedLoading } = useQuery<{ suggestedPreferences: Preference[] }>(SUGGESTED_PREFERENCES_QUERY, {
+    skip: !isAuthenticated,
+  });
 
-export default async function PreferencesPage() {
-  const session = await auth0.getSession();
-  if (!session?.user) redirect('/auth/login');
-
-  let accessToken;
-  try {
-    const tokenResult = await auth0.getAccessToken();
-    accessToken = tokenResult?.token;
-  } catch (e) {
-    console.error('Failed to get access token:', e);
-    redirect('/auth/login');
+  if (!isAuthenticated) {
+    router.push("/");
+    return null;
   }
 
-  let activePreferences: Preference[] = [];
-  let suggestedPreferences: Preference[] = [];
-
-  try {
-    const [activeResult, suggestedResult] = await Promise.all([
-      getClient().query<ActivePreferencesQuery>({
-        query: ACTIVE_PREFERENCES_QUERY,
-        context: {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      }),
-      getClient().query<SuggestedPreferencesQuery>({
-        query: SUGGESTED_PREFERENCES_QUERY,
-        context: {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      }),
-    ]);
-    activePreferences = activeResult.data?.activePreferences || [];
-    suggestedPreferences = suggestedResult.data?.suggestedPreferences || [];
-  } catch (e) {
-    console.error('Failed to fetch preferences:', e);
+  if (activeLoading || suggestedLoading) {
+    return <div className="p-10"><p className="text-gray-500">Loading preferences...</p></div>;
   }
 
   return (
     <PreferencesClient
-      initialActivePreferences={activePreferences}
-      initialSuggestedPreferences={suggestedPreferences}
-      accessToken={accessToken || ''}
+      initialActivePreferences={activeData?.activePreferences || []}
+      initialSuggestedPreferences={suggestedData?.suggestedPreferences || []}
+      accessToken=""
     />
   );
 }

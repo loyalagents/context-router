@@ -1,7 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+
+const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser($updateUserInput: UpdateUserInput!) {
+    updateUser(updateUserInput: $updateUserInput) {
+      userId
+      firstName
+      lastName
+    }
+  }
+`;
 
 interface ProfileFormProps {
   userId?: string;
@@ -10,47 +21,29 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ userId, initialFirstName, initialLastName }: ProfileFormProps) {
-  const router = useRouter();
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const [updateUser, { loading, error }] = useMutation(UPDATE_USER_MUTATION, {
+    onCompleted: () => {
+      setSuccessMessage('Profile updated successfully!');
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage('');
-    setError('');
-    setLoading(true);
 
-    try {
-      const response = await fetch('/api/profile/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+    await updateUser({
+      variables: {
+        updateUserInput: {
           userId,
           firstName,
           lastName,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update profile');
-      }
-
-      setSuccessMessage('Profile updated successfully!');
-
-      // Refresh the page data
-      router.refresh();
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
+        },
+      },
+    });
   };
 
   return (
@@ -90,7 +83,7 @@ export default function ProfileForm({ userId, initialFirstName, initialLastName 
 
         {error && (
           <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-            Error updating profile: {error}
+            Error updating profile: {error.message}
           </div>
         )}
 

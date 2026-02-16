@@ -9,7 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 import { DocumentAnalysisService } from './document-analysis.service';
 import { DocumentAnalysisResult } from './dto/document-analysis-result.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
@@ -17,7 +17,7 @@ import { getDocumentUploadConfig } from '../../../config/document-upload.config'
 // TODO: Implement rate limiting per user to prevent abuse and control Vertex AI costs
 
 @Controller('api/preferences')
-@UseGuards(JwtAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class DocumentAnalysisController {
   private readonly logger = new Logger(DocumentAnalysisController.name);
   private readonly config = getDocumentUploadConfig();

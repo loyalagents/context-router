@@ -4,12 +4,12 @@ import { LocationService } from './location.service';
 import { Location, LocationType } from './models/location.model';
 import { CreateLocationInput } from './dto/create-location.input';
 import { UpdateLocationInput } from './dto/update-location.input';
-import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
+import { ApiKeyGuard } from '@common/guards/api-key.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@modules/user/models/user.model';
 
 @Resolver(() => Location)
-@UseGuards(GqlAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class LocationResolver {
   constructor(private locationService: LocationService) {}
 

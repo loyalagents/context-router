@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getAuthHeaders } from '@/lib/auth-headers';
 
 interface Preference {
   id: string;
@@ -66,7 +67,7 @@ export default function SuggestionInbox({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: ACCEPT_SUGGESTION_MUTATION,
@@ -98,7 +99,7 @@ export default function SuggestionInbox({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: REJECT_SUGGESTION_MUTATION,

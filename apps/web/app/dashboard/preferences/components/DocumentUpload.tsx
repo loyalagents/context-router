@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { getAuthHeaders } from '@/lib/auth-headers';
 
 interface PreferenceSuggestion {
   id: string;
@@ -89,7 +90,7 @@ export default function DocumentUpload({
       const response = await fetch(`${backendUrl}/api/preferences/analysis`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: formData,
       });

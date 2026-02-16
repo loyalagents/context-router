@@ -1,6 +1,6 @@
 import { Resolver, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards, Logger } from '@nestjs/common';
-import { GqlAuthGuard } from '../../../common/guards/gql-auth.guard';
+import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { PreferenceService } from '../preference/preference.service';
 import { Preference } from '../preference/models/preference.model';
@@ -8,7 +8,7 @@ import { ApplyPreferenceSuggestionInput } from './dto/apply-suggestion.input';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
 
 @Resolver()
-@UseGuards(GqlAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class DocumentAnalysisResolver {
   private readonly logger = new Logger(DocumentAnalysisResolver.name);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getAuthHeaders } from '@/lib/auth-headers';
 import SuggestionItem from './SuggestionItem';
 
 const APPLY_SUGGESTIONS_MUTATION = `
@@ -122,7 +123,7 @@ export default function SuggestionsList({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           query: APPLY_SUGGESTIONS_MUTATION,
