@@ -9,12 +9,7 @@ import {
   FilterReason,
 } from './dto/preference-suggestion.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
-import {
-  PREFERENCE_CATALOG,
-  getAllSlugs,
-  getDefinition,
-  isKnownSlug,
-} from '@config/preferences.catalog';
+import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
 
 /**
  * Zod schema for validating AI response structure.
@@ -53,6 +48,7 @@ export class PreferenceExtractionService {
     @Inject('AiTextGeneratorPort')
     private readonly aiService: AiTextGeneratorPort,
     private readonly preferenceService: PreferenceService,
+    private readonly defRepo: PreferenceDefinitionRepository,
   ) {}
 
   async extractPreferences(
@@ -103,8 +99,8 @@ export class PreferenceExtractionService {
     filename: string,
   ): string {
     // Build schema from catalog
-    const catalogSchema = getAllSlugs().map((slug) => {
-      const def = getDefinition(slug);
+    const catalogSchema = this.defRepo.getAllSlugs().map((slug) => {
+      const def = this.defRepo.getDefinition(slug);
       return {
         slug,
         category: def?.category,
@@ -219,7 +215,7 @@ If no preferences can be extracted, return:
     const suggestions: PreferenceSuggestion[] = parsed.suggestions
       .slice(0, this.config.maxSuggestions)
       .map((s: AiSuggestionSchemaType, index: number) => {
-        const def = getDefinition(s.slug);
+        const def = this.defRepo.getDefinition(s.slug);
         return {
           id: `${analysisId}:${index}`,
           slug: s.slug,
@@ -297,7 +293,7 @@ If no preferences can be extracted, return:
 
     for (const suggestion of parsed.suggestions) {
       // Filter: unknown slug
-      if (!isKnownSlug(suggestion.slug)) {
+      if (!this.defRepo.isKnownSlug(suggestion.slug)) {
         this.logger.warn(
           `Filtered suggestion: unknown slug "${suggestion.slug}"`,
         );

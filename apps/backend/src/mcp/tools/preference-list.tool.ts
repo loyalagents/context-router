@@ -1,11 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  PREFERENCE_CATALOG,
-  getAllSlugs,
-  getSlugsByCategory,
-  getAllCategories,
-  PreferenceDefinition,
-} from '@config/preferences.catalog';
+import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 
 interface ListPreferencesParams {
   category?: string; // Optional filter by category
@@ -16,13 +10,15 @@ interface CatalogEntry {
   category: string;
   description: string;
   valueType: string;
-  options?: string[];
-  scope: 'global' | 'location';
+  options?: unknown;
+  scope: string;
 }
 
 @Injectable()
 export class PreferenceListTool {
   private readonly logger = new Logger(PreferenceListTool.name);
+
+  constructor(private defRepo: PreferenceDefinitionRepository) {}
 
   /**
    * List all valid preference slugs from the catalog.
@@ -36,12 +32,12 @@ export class PreferenceListTool {
     try {
       // Get slugs (filtered by category if provided)
       const slugs = params.category
-        ? getSlugsByCategory(params.category)
-        : getAllSlugs();
+        ? this.defRepo.getSlugsByCategory(params.category)
+        : this.defRepo.getAllSlugs();
 
       // Map to full catalog entries
       const entries: CatalogEntry[] = slugs.map((slug) => {
-        const def = PREFERENCE_CATALOG[slug] as PreferenceDefinition;
+        const def = this.defRepo.getDefinition(slug)!;
         return {
           slug,
           category: def.category,
@@ -53,7 +49,7 @@ export class PreferenceListTool {
       });
 
       // Get all categories for reference
-      const categories = getAllCategories();
+      const categories = this.defRepo.getAllCategories();
 
       return {
         success: true,

@@ -56,6 +56,18 @@ enum LocationType {
   OTHER
 }
 
+enum PreferenceValueType {
+  STRING
+  BOOLEAN
+  ENUM
+  ARRAY
+}
+
+enum PreferenceScope {
+  GLOBAL
+  LOCATION
+}
+
 enum PreferenceStatus {
   ACTIVE
   SUGGESTED
@@ -86,6 +98,22 @@ model Location {
   @@map("locations")
 }
 
+model PreferenceDefinition {
+  slug        String              @id
+  description String
+  valueType   PreferenceValueType @map("value_type")
+  scope       PreferenceScope
+  options     Json?
+  isSensitive Boolean             @default(false) @map("is_sensitive")
+  isCore      Boolean             @default(false) @map("is_core")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  preferences Preference[]
+
+  @@map("preference_definitions")
+}
+
 model Preference {
   id          String           @id @default(uuid())
   userId      String           @map("user_id")
@@ -102,8 +130,9 @@ model Preference {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  user        User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  location    Location?        @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  location    Location?            @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+  definition  PreferenceDefinition @relation(fields: [slug], references: [slug])
 
   @@unique([userId, locationId, slug, status])
   @@index([userId, locationId])
