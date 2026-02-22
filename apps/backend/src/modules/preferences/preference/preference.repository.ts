@@ -5,7 +5,7 @@ import {
   PreferenceStatus,
   SourceType,
 } from '@prisma/client';
-import { getDefinition } from '@config/preferences.catalog';
+import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
 
 // Type for the enriched preference with catalog data
 export interface EnrichedPreference extends PrismaPreference {
@@ -17,13 +17,16 @@ export interface EnrichedPreference extends PrismaPreference {
 export class PreferenceRepository {
   private readonly logger = new Logger(PreferenceRepository.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private defRepo: PreferenceDefinitionRepository,
+  ) {}
 
   /**
    * Enriches a preference with category and description from the catalog.
    */
   private enrichWithCatalog(pref: PrismaPreference): EnrichedPreference {
-    const def = getDefinition(pref.slug);
+    const def = this.defRepo.getDefinition(pref.slug);
     return {
       ...pref,
       category: def?.category,

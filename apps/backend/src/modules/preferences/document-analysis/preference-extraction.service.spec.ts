@@ -5,7 +5,9 @@ import { PreferenceService } from '../preference/preference.service';
 import { AiTextGeneratorPort } from '../../../domains/shared/ports/ai-text-generator.port';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
 import { EnrichedPreference } from '../preference/preference.repository';
-import { PreferenceStatus, SourceType } from '@prisma/client';
+import { PreferenceStatus, SourceType, PreferenceValueType, PreferenceScope } from '@prisma/client';
+import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
+import { PREFERENCE_CATALOG } from '../../../config/preferences.catalog';
 
 // Helper to create mock Preference objects using the new slug-based model
 const createMockPreference = (slug: string, value: any): EnrichedPreference => ({
@@ -22,10 +24,40 @@ const createMockPreference = (slug: string, value: any): EnrichedPreference => (
   updatedAt: new Date(),
 });
 
+// Build mock definition data from catalog
+const VALUE_TYPE_MAP: Record<string, PreferenceValueType> = {
+  string: PreferenceValueType.STRING,
+  boolean: PreferenceValueType.BOOLEAN,
+  enum: PreferenceValueType.ENUM,
+  array: PreferenceValueType.ARRAY,
+};
+const SCOPE_MAP: Record<string, PreferenceScope> = {
+  global: PreferenceScope.GLOBAL,
+  location: PreferenceScope.LOCATION,
+};
+const mockDefinitions = new Map(
+  Object.entries(PREFERENCE_CATALOG).map(([slug, def]) => [
+    slug,
+    {
+      slug,
+      description: def.description,
+      valueType: VALUE_TYPE_MAP[def.valueType],
+      scope: SCOPE_MAP[def.scope],
+      options: def.options ?? null,
+      isSensitive: def.isSensitive ?? false,
+      isCore: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      category: slug.split('.')[0],
+    },
+  ]),
+);
+
 describe('PreferenceExtractionService', () => {
   let service: PreferenceExtractionService;
   let mockAiService: jest.Mocked<AiTextGeneratorPort>;
   let mockPreferenceService: jest.Mocked<PreferenceService>;
+  let mockDefRepo: jest.Mocked<PreferenceDefinitionRepository>;
 
   beforeEach(async () => {
     mockAiService = {
@@ -43,6 +75,18 @@ describe('PreferenceExtractionService', () => {
       deletePreference: jest.fn(),
     } as any;
 
+    mockDefRepo = {
+      getAllSlugs: jest.fn().mockReturnValue(Array.from(mockDefinitions.keys())),
+      getDefinition: jest.fn().mockImplementation((slug: string) => mockDefinitions.get(slug)),
+      isKnownSlug: jest.fn().mockImplementation((slug: string) => mockDefinitions.has(slug)),
+      getAll: jest.fn().mockReturnValue(Array.from(mockDefinitions.values())),
+      getSlugsByCategory: jest.fn(),
+      getAllCategories: jest.fn(),
+      findSimilarSlugs: jest.fn(),
+      refreshCache: jest.fn(),
+      onModuleInit: jest.fn(),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PreferenceExtractionService,
@@ -53,6 +97,10 @@ describe('PreferenceExtractionService', () => {
         {
           provide: PreferenceService,
           useValue: mockPreferenceService,
+        },
+        {
+          provide: PreferenceDefinitionRepository,
+          useValue: mockDefRepo,
         },
       ],
     }).compile();

@@ -1,12 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
-import {
-  isKnownSlug,
-  findSimilarSlugs,
-  getDefinition,
-  PREFERENCE_CATALOG,
-} from '@config/preferences.catalog';
+import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 
 /**
  * Parameters for suggesting a preference via MCP.
@@ -40,27 +35,30 @@ function parseJsonValue(value: string, context: string): unknown {
   }
 }
 
-/**
- * Validates a slug and returns an error message if invalid.
- */
-function validateSlug(slug: string): string | null {
-  if (!isKnownSlug(slug)) {
-    const similar = findSimilarSlugs(slug);
-    const allSlugs = Object.keys(PREFERENCE_CATALOG);
-
-    if (similar.length > 0) {
-      return `Unknown slug "${slug}". Did you mean: ${similar.join(', ')}? Valid slugs are: ${allSlugs.join(', ')}`;
-    }
-    return `Unknown slug "${slug}". Valid slugs are: ${allSlugs.join(', ')}`;
-  }
-  return null;
-}
-
 @Injectable()
 export class PreferenceMutationTool {
   private readonly logger = new Logger(PreferenceMutationTool.name);
 
-  constructor(private preferenceService: PreferenceService) {}
+  constructor(
+    private preferenceService: PreferenceService,
+    private defRepo: PreferenceDefinitionRepository,
+  ) {}
+
+  /**
+   * Validates a slug and returns an error message if invalid.
+   */
+  private validateSlug(slug: string): string | null {
+    if (!this.defRepo.isKnownSlug(slug)) {
+      const similar = this.defRepo.findSimilarSlugs(slug);
+      const allSlugs = this.defRepo.getAllSlugs();
+
+      if (similar.length > 0) {
+        return `Unknown slug "${slug}". Did you mean: ${similar.join(', ')}? Valid slugs are: ${allSlugs.join(', ')}`;
+      }
+      return `Unknown slug "${slug}". Valid slugs are: ${allSlugs.join(', ')}`;
+    }
+    return null;
+  }
 
   /**
    * Suggest a preference. MCP writes are ALWAYS suggestions.
@@ -75,7 +73,7 @@ export class PreferenceMutationTool {
 
     try {
       // Validate slug
-      const slugError = validateSlug(params.slug);
+      const slugError = this.validateSlug(params.slug);
       if (slugError) {
         return {
           success: false,
@@ -127,7 +125,7 @@ export class PreferenceMutationTool {
       this.logger.log(`Preference suggested successfully: ${preference.id}`);
 
       // Get definition for response enrichment
-      const def = getDefinition(params.slug);
+      const def = this.defRepo.getDefinition(params.slug);
 
       return {
         success: true,

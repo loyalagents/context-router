@@ -5,9 +5,10 @@ import { DocumentAnalysisResolver } from './document-analysis.resolver';
 import { PreferenceExtractionService } from './preference-extraction.service';
 import { PreferenceModule } from '../preference/preference.module';
 import { VertexAiModule } from '../../vertex-ai/vertex-ai.module';
+import { PreferenceDefinitionModule } from '../preference-definition/preference-definition.module';
 
 @Module({
-  imports: [PreferenceModule, VertexAiModule],
+  imports: [PreferenceModule, VertexAiModule, PreferenceDefinitionModule],
   controllers: [DocumentAnalysisController],
   providers: [
     DocumentAnalysisService,

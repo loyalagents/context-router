@@ -4,8 +4,17 @@
  * Provides helpers for managing the test database state:
  * - getPrismaClient(): Singleton PrismaClient for tests
  * - resetDb(): Truncates all tables (except migrations) for clean state
+ * - seedPreferenceDefinitions(): Seeds preference definitions (required by FK before any preference data)
  */
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  PreferenceValueType,
+  PreferenceScope,
+} from '@prisma/client';
+import {
+  PREFERENCE_CATALOG,
+  PreferenceDefinition,
+} from '../../src/config/preferences.catalog';
 
 let prismaClient: PrismaClient | null = null;
 
@@ -62,4 +71,45 @@ export async function resetDb(prisma?: PrismaClient): Promise<void> {
   const tableNames = tables.map((t) => `"${t.tablename}"`).join(', ');
 
   await client.$executeRawUnsafe(`TRUNCATE ${tableNames} CASCADE`);
+}
+
+const VALUE_TYPE_MAP: Record<string, PreferenceValueType> = {
+  string: PreferenceValueType.STRING,
+  boolean: PreferenceValueType.BOOLEAN,
+  enum: PreferenceValueType.ENUM,
+  array: PreferenceValueType.ARRAY,
+};
+
+const SCOPE_MAP: Record<string, PreferenceScope> = {
+  global: PreferenceScope.GLOBAL,
+  location: PreferenceScope.LOCATION,
+};
+
+/**
+ * Seeds preference definitions into the test database.
+ * Must be called after resetDb() and before any preference test data is created,
+ * because user_preferences.slug has a FK to preference_definitions.slug.
+ */
+export async function seedPreferenceDefinitions(
+  prisma?: PrismaClient,
+): Promise<void> {
+  const client = prisma || getPrismaClient();
+
+  const entries = Object.entries(PREFERENCE_CATALOG).map(([slug, def]) => {
+    const catalogDef = def as PreferenceDefinition;
+    return {
+      slug,
+      description: catalogDef.description,
+      valueType: VALUE_TYPE_MAP[catalogDef.valueType],
+      scope: SCOPE_MAP[catalogDef.scope],
+      options: catalogDef.options ?? undefined,
+      isSensitive: catalogDef.isSensitive ?? false,
+      isCore: true,
+    };
+  });
+
+  await client.preferenceDefinition.createMany({
+    data: entries,
+    skipDuplicates: true,
+  });
 }
