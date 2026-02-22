@@ -10,20 +10,24 @@
  * - Slugs must exist in the preferences catalog
  */
 import { PreferenceRepository } from '../../src/modules/preferences/preference/preference.repository';
+import { PreferenceDefinitionRepository } from '../../src/modules/preferences/preference-definition/preference-definition.repository';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from '../setup/test-db';
 import { PreferenceStatus } from '@prisma/client';
 
 describe('PreferenceRepository (integration)', () => {
   let repository: PreferenceRepository;
+  let defRepo: PreferenceDefinitionRepository;
   let prisma: PrismaService;
   let testUserId: string;
   let testLocationId: string;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     // Use the shared test Prisma client
     prisma = getPrismaClient() as unknown as PrismaService;
-    repository = new PreferenceRepository(prisma);
+    defRepo = new PreferenceDefinitionRepository(prisma);
+    await defRepo.refreshCache();
+    repository = new PreferenceRepository(prisma, defRepo);
   });
 
   beforeEach(async () => {

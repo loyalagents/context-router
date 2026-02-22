@@ -2,12 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
-import {
-  PREFERENCE_CATALOG,
-  getDefinition,
-  getAllSlugs,
-  getSlugsByCategory,
-} from '@config/preferences.catalog';
+import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 
 interface SearchPreferencesParams {
   query?: string; // Search by slug prefix, category, or description keyword
@@ -22,6 +17,7 @@ export class PreferenceSearchTool {
   constructor(
     private preferenceService: PreferenceService,
     private configService: ConfigService,
+    private defRepo: PreferenceDefinitionRepository,
   ) {}
 
   /**
@@ -29,14 +25,14 @@ export class PreferenceSearchTool {
    */
   private searchCatalog(query: string): string[] {
     const normalized = query.toLowerCase();
-    const allSlugs = getAllSlugs();
+    const allSlugs = this.defRepo.getAllSlugs();
 
     return allSlugs.filter((slug) => {
       // Match by slug prefix
       if (slug.startsWith(normalized)) return true;
 
       // Match by category
-      const def = getDefinition(slug);
+      const def = this.defRepo.getDefinition(slug);
       if (def?.category.includes(normalized)) return true;
 
       // Match by description keyword
@@ -108,7 +104,7 @@ export class PreferenceSearchTool {
 
       // Format results with catalog metadata
       const formatPreference = (pref: (typeof activePrefs)[0]) => {
-        const def = getDefinition(pref.slug);
+        const def = this.defRepo.getDefinition(pref.slug);
         return {
           id: pref.id,
           slug: pref.slug,
