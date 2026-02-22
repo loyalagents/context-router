@@ -82,6 +82,9 @@ describe('UserRepository (integration)', () => {
         lastName: 'User',
       });
 
+      // Small delay to ensure distinct createdAt timestamps
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       await repository.create({
         email: 'second@example.com',
         firstName: 'Second',

@@ -13,15 +13,13 @@ import {
 import { LocationService } from '../location/location.service';
 import { SetPreferenceInput } from './dto/set-preference.input';
 import { SuggestPreferenceInput } from './dto/suggest-preference.input';
+import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
 import {
-  isKnownSlug,
   validateSlugFormat,
-  getDefinition,
   validateValue,
   enforceScope,
   validateConfidence,
-  findSimilarSlugs,
-} from '@config/preferences.catalog';
+} from './preference.validation';
 
 @Injectable()
 export class PreferenceService {
@@ -30,6 +28,7 @@ export class PreferenceService {
   constructor(
     private preferenceRepository: PreferenceRepository,
     private locationService: LocationService,
+    private defRepo: PreferenceDefinitionRepository,
   ) {}
 
   /**
@@ -42,8 +41,8 @@ export class PreferenceService {
       );
     }
 
-    if (!isKnownSlug(slug)) {
-      const similar = findSimilarSlugs(slug);
+    if (!this.defRepo.isKnownSlug(slug)) {
+      const similar = this.defRepo.findSimilarSlugs(slug);
       const hint =
         similar.length > 0 ? ` Did you mean: ${similar.join(', ')}?` : '';
       throw new BadRequestException(
@@ -56,7 +55,7 @@ export class PreferenceService {
    * Validates the value type for a slug.
    */
   private validateValueForSlug(slug: string, value: any): void {
-    const def = getDefinition(slug);
+    const def = this.defRepo.getDefinition(slug);
     if (!def) return;
 
     const validation = validateValue(def, value);
@@ -71,7 +70,7 @@ export class PreferenceService {
    * Validates and enforces scope rules for a preference.
    */
   private validateScope(slug: string, locationId?: string): void {
-    const def = getDefinition(slug);
+    const def = this.defRepo.getDefinition(slug);
     if (!def) return;
 
     const scopeValidation = enforceScope(def, locationId);
