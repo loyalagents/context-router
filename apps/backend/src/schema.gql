@@ -130,10 +130,42 @@ type Preference {
   value: JSON!
 }
 
+type PreferenceDefinition {
+  """Category derived from slug prefix"""
+  category: String!
+
+  """Human-readable description of the preference"""
+  description: String!
+
+  """Whether this is a built-in core preference"""
+  isCore: Boolean!
+
+  """Whether this preference contains sensitive data"""
+  isSensitive: Boolean!
+
+  """Valid options for ENUM type preferences"""
+  options: JSON
+
+  """Scope: GLOBAL or LOCATION"""
+  scope: PreferenceScope!
+
+  """Unique slug identifier (e.g., "food.dietary_restrictions")"""
+  slug: String!
+
+  """Data type: STRING, BOOLEAN, ENUM, or ARRAY"""
+  valueType: PreferenceValueType!
+}
+
 """The type of operation to perform on a preference"""
 enum PreferenceOperation {
   CREATE
   UPDATE
+}
+
+"""Whether a preference is global or location-scoped"""
+enum PreferenceScope {
+  GLOBAL
+  LOCATION
 }
 
 """The status of a preference"""
@@ -162,6 +194,14 @@ type PreferenceSuggestion {
   wasCorrected: Boolean!
 }
 
+"""The data type of a preference value"""
+enum PreferenceValueType {
+  ARRAY
+  BOOLEAN
+  ENUM
+  STRING
+}
+
 type Query {
   """
   Get active preferences. With locationId: merged global + location. Without: global only.
@@ -182,6 +222,9 @@ type Query {
 
   """Get a single preference by ID"""
   preference(id: ID!): Preference!
+
+  """List available preference definitions. Optionally filter by category."""
+  preferenceCatalog(category: String): [PreferenceDefinition!]!
 
   """
   Get suggested preferences (inbox). With locationId: union of global + location. Without: global only.
