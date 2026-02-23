@@ -88,6 +88,12 @@ export default async function Dashboard() {
             >
               Test AI Chat
             </a>
+            <a
+              href="/dashboard/schema"
+              className="inline-block px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+            >
+              Preference Schema
+            </a>
           </div>
         </div>
       )}
