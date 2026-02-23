@@ -34,11 +34,10 @@ export default function GroupBrowser({ initialApiKey }: GroupBrowserProps) {
   const [apiKey, setApiKey] = useState(initialApiKey || "");
   const [error, setError] = useState("");
 
-  const [fetchUsers, { data, loading }] = useLazyQuery<{
+  const [fetchUsers, { data, loading, error: queryError }] = useLazyQuery<{
     groupUsers: GroupUser[];
   }>(GROUP_USERS_QUERY, {
     fetchPolicy: "network-only",
-    onError: (err) => setError(err.message),
   });
 
   useEffect(() => {
@@ -85,7 +84,11 @@ export default function GroupBrowser({ initialApiKey }: GroupBrowserProps) {
             />
           </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {(error || queryError) && (
+            <p className="text-red-600 text-sm">
+              {error || queryError?.message}
+            </p>
+          )}
 
           <button
             type="submit"
