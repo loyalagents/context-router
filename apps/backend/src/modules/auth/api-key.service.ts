@@ -73,6 +73,28 @@ export class ApiKeyService {
     return apiKeyUser.user;
   }
 
+  async getUsersByApiKey(
+    apiKey: string,
+  ): Promise<
+    {
+      userId: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }[]
+  > {
+    const apiKeyRecord = await this.validateApiKey(apiKey);
+
+    const apiKeyUsers = await this.prisma.apiKeyUser.findMany({
+      where: { apiKeyId: apiKeyRecord.id },
+      include: { user: true },
+    });
+
+    return apiKeyUsers.map((aku) => aku.user);
+  }
+
   async validateApiKey(apiKey: string) {
     const keyHash = this.hashKey(apiKey);
 
