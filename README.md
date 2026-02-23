@@ -381,7 +381,7 @@ Database and external dependencies are isolated in the infrastructure layer, mak
 ## Docker Services
 
 - **postgres**: PostgreSQL database (port 5432)
-- **app**: NestJS application (port 3000)
+- **app**: NestJS application (port 3000) 
 
 ## Environment Variables
 
