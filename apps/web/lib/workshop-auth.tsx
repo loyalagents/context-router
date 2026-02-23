@@ -8,6 +8,7 @@ interface WorkshopAuth {
   isAuthenticated: boolean;
   login: (apiKey: string, userId: string) => void;
   logout: () => void;
+  switchUser: () => void;
 }
 
 const WorkshopAuthContext = createContext<WorkshopAuth>({
@@ -16,6 +17,7 @@ const WorkshopAuthContext = createContext<WorkshopAuth>({
   isAuthenticated: false,
   login: () => {},
   logout: () => {},
+  switchUser: () => {},
 });
 
 export function WorkshopAuthProvider({ children }: { children: ReactNode }) {
@@ -43,6 +45,11 @@ export function WorkshopAuthProvider({ children }: { children: ReactNode }) {
     setUserId(null);
   };
 
+  const switchUser = () => {
+    localStorage.removeItem("workshopUserId");
+    setUserId(null);
+  };
+
   if (!loaded) return null;
 
   return (
@@ -53,6 +60,7 @@ export function WorkshopAuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!apiKey && !!userId,
         login,
         logout,
+        switchUser,
       }}
     >
       {children}

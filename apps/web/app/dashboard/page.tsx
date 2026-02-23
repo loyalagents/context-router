@@ -22,7 +22,7 @@ const ME_QUERY = gql`
 
 export default function Dashboard() {
   const router = useRouter();
-  const { isAuthenticated, logout } = useWorkshopAuth();
+  const { isAuthenticated, logout, switchUser } = useWorkshopAuth();
 
   const { data, loading, error } = useQuery<MeData>(ME_QUERY, {
     skip: !isAuthenticated,
@@ -72,12 +72,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      <button
-        onClick={() => { logout(); router.push("/"); }}
-        className="mt-6 inline-block px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-      >
-        Disconnect
-      </button>
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={() => { switchUser(); router.push("/"); }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Switch User
+        </button>
+        <button
+          onClick={() => { logout(); router.push("/"); }}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+        >
+          Disconnect
+        </button>
+      </div>
     </div>
   );
 }

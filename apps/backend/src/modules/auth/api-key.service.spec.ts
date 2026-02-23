@@ -16,6 +16,15 @@ const mockUser = {
   updatedAt: new Date(),
 };
 
+const mockUser2 = {
+  userId: 'user-2',
+  email: 'bob@workshop.dev',
+  firstName: 'Bob',
+  lastName: 'Brown',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 const mockApiKey = {
   id: 'key-1',
   keyHash: hashKey('grp-a-abc123'),
@@ -30,12 +39,14 @@ describe('ApiKeyService', () => {
   let prisma: {
     apiKey: { findUnique: jest.Mock };
     user: { findUnique: jest.Mock };
+    apiKeyUser: { findMany: jest.Mock };
   };
 
   beforeEach(async () => {
     prisma = {
       apiKey: { findUnique: jest.fn() },
       user: { findUnique: jest.fn() },
+      apiKeyUser: { findMany: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -143,6 +154,54 @@ describe('ApiKeyService', () => {
       await expect(
         service.validateApiKey('grp-a-abc123'),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('getUsersByApiKey', () => {
+    it('should return users associated with a valid API key', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue(mockApiKey);
+      prisma.apiKeyUser.findMany.mockResolvedValue([
+        { userId: 'user-1', user: mockUser },
+        { userId: 'user-2', user: mockUser2 },
+      ]);
+
+      const result = await service.getUsersByApiKey('grp-a-abc123');
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual(mockUser);
+      expect(result[1]).toEqual(mockUser2);
+      expect(prisma.apiKeyUser.findMany).toHaveBeenCalledWith({
+        where: { apiKeyId: mockApiKey.id },
+        include: { user: true },
+      });
+    });
+
+    it('should throw 401 for invalid API key', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.getUsersByApiKey('invalid-key'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw 401 for inactive API key', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue({
+        ...mockApiKey,
+        isActive: false,
+      });
+
+      await expect(
+        service.getUsersByApiKey('grp-a-abc123'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return empty array when key has no users', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue(mockApiKey);
+      prisma.apiKeyUser.findMany.mockResolvedValue([]);
+
+      const result = await service.getUsersByApiKey('grp-a-abc123');
+
+      expect(result).toEqual([]);
     });
   });
 });
