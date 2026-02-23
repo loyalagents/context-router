@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
-import { gql } from '@apollo/client';
-import { getClient } from '@/lib/apollo-client';
-import { auth0 } from '@/lib/auth0';
+"use client";
 
-export const dynamic = 'force-dynamic';
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
+import { useRouter } from "next/navigation";
+import { useWorkshopAuth } from "@/lib/workshop-auth";
 
 const PREFERENCE_CATALOG_QUERY = gql`
   query PreferenceCatalog {
@@ -23,8 +23,8 @@ const PREFERENCE_CATALOG_QUERY = gql`
 interface PreferenceDefinition {
   slug: string;
   description: string;
-  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
-  scope: 'GLOBAL' | 'LOCATION';
+  valueType: "STRING" | "BOOLEAN" | "ENUM" | "ARRAY";
+  scope: "GLOBAL" | "LOCATION";
   options: string[] | null;
   isSensitive: boolean;
   isCore: boolean;
@@ -37,54 +37,42 @@ interface PreferenceCatalogQuery {
 
 function ValueTypeBadge({ type }: { type: string }) {
   const colors: Record<string, string> = {
-    STRING: 'bg-blue-100 text-blue-800',
-    BOOLEAN: 'bg-green-100 text-green-800',
-    ENUM: 'bg-purple-100 text-purple-800',
-    ARRAY: 'bg-orange-100 text-orange-800',
+    STRING: "bg-blue-100 text-blue-800",
+    BOOLEAN: "bg-green-100 text-green-800",
+    ENUM: "bg-purple-100 text-purple-800",
+    ARRAY: "bg-orange-100 text-orange-800",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${colors[type] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${colors[type] || "bg-gray-100 text-gray-800"}`}>
       {type}
     </span>
   );
 }
 
 function ScopeBadge({ scope }: { scope: string }) {
-  const isLocation = scope === 'LOCATION';
+  const isLocation = scope === "LOCATION";
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${isLocation ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'}`}>
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${isLocation ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-700"}`}>
       {scope}
     </span>
   );
 }
 
-export default async function SchemaPage() {
-  const session = await auth0.getSession();
-  if (!session?.user) redirect('/auth/login');
+export default function SchemaPage() {
+  const router = useRouter();
+  const { isAuthenticated } = useWorkshopAuth();
 
-  let accessToken;
-  try {
-    const tokenResult = await auth0.getAccessToken();
-    accessToken = tokenResult?.token;
-  } catch (e) {
-    console.error('Failed to get access token:', e);
+  const { data, loading, error } = useQuery<PreferenceCatalogQuery>(
+    PREFERENCE_CATALOG_QUERY,
+    { skip: !isAuthenticated },
+  );
+
+  if (!isAuthenticated) {
+    router.push("/");
+    return null;
   }
 
-  let catalog: PreferenceDefinition[] = [];
-  let error = null;
-
-  try {
-    const { data } = await getClient().query<PreferenceCatalogQuery>({
-      query: PREFERENCE_CATALOG_QUERY,
-      context: {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    });
-    catalog = data?.preferenceCatalog || [];
-  } catch (e) {
-    console.error('Failed to fetch preference catalog:', e);
-    error = 'Failed to load preference schema.';
-  }
+  const catalog = data?.preferenceCatalog || [];
 
   // Group by category
   const grouped = catalog.reduce(
@@ -113,10 +101,12 @@ export default async function SchemaPage() {
           All available preference slugs and their definitions. These define what preferences can be set for users.
         </p>
 
-        {error ? (
+        {loading ? (
+          <p className="text-gray-500">Loading...</p>
+        ) : error ? (
           <div className="p-4 bg-red-100 text-red-700 rounded mb-6">
-            <p>{error}</p>
-            <p className="text-sm mt-2">Ensure backend is running on port 3000.</p>
+            <p>Failed to load preference schema.</p>
+            <p className="text-sm mt-2">Ensure backend is running on port 3000. Error: {error.message}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -140,7 +130,7 @@ export default async function SchemaPage() {
                         <div className="mt-2">
                           <span className="text-xs text-gray-500 font-medium">Options: </span>
                           <span className="text-xs text-gray-700">
-                            {def.options.join(', ')}
+                            {def.options.join(", ")}
                           </span>
                         </div>
                       )}
