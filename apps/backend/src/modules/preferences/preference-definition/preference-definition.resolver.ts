@@ -5,7 +5,7 @@ import { PreferenceDefinitionRepository } from './preference-definition.reposito
 import { PreferenceDefinitionService } from './preference-definition.service';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
 import { UpdatePreferenceDefinitionInput } from './dto/update-preference-definition.input';
-import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
+import { ApiKeyGuard } from '@common/guards/api-key.guard';
 
 // NOTE: Delete is intentionally not supported. The `slug` field is the primary key
 // and is referenced as a foreign key by the Preference table. Deleting a definition
@@ -13,7 +13,7 @@ import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
 // If delete is needed in the future, add a check that no Preferences reference the slug.
 
 @Resolver(() => PreferenceDefinitionModel)
-@UseGuards(GqlAuthGuard)
+@UseGuards(ApiKeyGuard)
 export class PreferenceDefinitionResolver {
   constructor(
     private defRepo: PreferenceDefinitionRepository,
