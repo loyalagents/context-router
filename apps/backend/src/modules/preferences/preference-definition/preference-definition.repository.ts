@@ -99,4 +99,61 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
   getAll(): PreferenceDefinitionData[] {
     return Array.from(this.cache.values());
   }
+
+  /**
+   * Creates a new preference definition in the database and refreshes the cache.
+   */
+  async create(data: {
+    slug: string;
+    description: string;
+    valueType: PreferenceValueType | string;
+    scope: PreferenceScope | string;
+    options?: unknown;
+    isSensitive?: boolean;
+    isCore?: boolean;
+  }): Promise<PrismaPreferenceDefinition> {
+    const created = await this.prisma.preferenceDefinition.create({
+      data: {
+        slug: data.slug,
+        description: data.description,
+        valueType: data.valueType as PreferenceValueType,
+        scope: data.scope as PreferenceScope,
+        options: data.options as any ?? undefined,
+        isSensitive: data.isSensitive ?? false,
+        isCore: data.isCore ?? false,
+      },
+    });
+    await this.refreshCache();
+    return created;
+  }
+
+  /**
+   * Updates an existing preference definition in the database and refreshes the cache.
+   */
+  async update(
+    slug: string,
+    data: {
+      description?: string;
+      valueType?: PreferenceValueType | string;
+      scope?: PreferenceScope | string;
+      options?: unknown;
+      isSensitive?: boolean;
+      isCore?: boolean;
+    },
+  ): Promise<PrismaPreferenceDefinition> {
+    const updateData: Record<string, unknown> = {};
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.valueType !== undefined) updateData.valueType = data.valueType;
+    if (data.scope !== undefined) updateData.scope = data.scope;
+    if (data.options !== undefined) updateData.options = data.options;
+    if (data.isSensitive !== undefined) updateData.isSensitive = data.isSensitive;
+    if (data.isCore !== undefined) updateData.isCore = data.isCore;
+
+    const updated = await this.prisma.preferenceDefinition.update({
+      where: { slug },
+      data: updateData,
+    });
+    await this.refreshCache();
+    return updated;
+  }
 }

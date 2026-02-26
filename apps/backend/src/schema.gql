@@ -17,6 +17,29 @@ input CreateLocationInput {
   type: LocationType!
 }
 
+input CreatePreferenceDefinitionInput {
+  """Human-readable description of the preference"""
+  description: String!
+
+  """Whether this is a built-in core preference"""
+  isCore: Boolean = false
+
+  """Whether this preference contains sensitive data"""
+  isSensitive: Boolean = false
+
+  """Valid options for ENUM type preferences"""
+  options: JSON
+
+  """Scope: GLOBAL or LOCATION"""
+  scope: PreferenceScope!
+
+  """Unique slug identifier (e.g., "food.dietary_restrictions")"""
+  slug: String!
+
+  """Data type: STRING, BOOLEAN, ENUM, or ARRAY"""
+  valueType: PreferenceValueType!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -78,6 +101,9 @@ type Mutation {
   acceptSuggestedPreference(id: ID!): Preference!
   applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
   createLocation(data: CreateLocationInput!): Location!
+
+  """Create a new preference definition."""
+  createPreferenceDefinition(input: CreatePreferenceDefinitionInput!): PreferenceDefinition!
   deleteLocation(locationId: String!): Location!
 
   """Delete a preference"""
@@ -94,6 +120,9 @@ type Mutation {
   """
   suggestPreference(input: SuggestPreferenceInput!): Preference
   updateLocation(data: UpdateLocationInput!, locationId: String!): Location!
+
+  """Update an existing preference definition."""
+  updatePreferenceDefinition(input: UpdatePreferenceDefinitionInput!, slug: String!): PreferenceDefinition!
 
   """Update an existing user"""
   updateUser(updateUserInput: UpdateUserInput!): User!
@@ -278,6 +307,26 @@ input UpdateLocationInput {
   address: String
   label: String
   type: LocationType
+}
+
+input UpdatePreferenceDefinitionInput {
+  """Human-readable description of the preference"""
+  description: String
+
+  """Whether this is a built-in core preference"""
+  isCore: Boolean
+
+  """Whether this preference contains sensitive data"""
+  isSensitive: Boolean
+
+  """Valid options for ENUM type preferences"""
+  options: JSON
+
+  """Scope: GLOBAL or LOCATION"""
+  scope: PreferenceScope
+
+  """Data type: STRING, BOOLEAN, ENUM, or ARRAY"""
+  valueType: PreferenceValueType
 }
 
 input UpdateUserInput {
