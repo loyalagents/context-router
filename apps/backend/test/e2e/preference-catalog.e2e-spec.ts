@@ -43,13 +43,13 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
   `;
 
   describe('preferenceCatalog query', () => {
-    it('should return all 12 preference definitions', async () => {
+    it('should return all 12 core preference definitions', async () => {
       const response = await graphqlRequest(CATALOG_QUERY).expect(200);
 
       expect(response.body.errors).toBeUndefined();
       const catalog = response.body.data.preferenceCatalog;
       expect(catalog).toBeInstanceOf(Array);
-      expect(catalog).toHaveLength(12);
+      expect(catalog.length).toBeGreaterThanOrEqual(12);
 
       // Every entry should have all required fields
       catalog.forEach((def: Record<string, unknown>) => {
@@ -61,6 +61,26 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         expect(typeof def.isCore).toBe('boolean');
         expect(def.category).toBeDefined();
       });
+
+      // Verify all 12 core slugs are present
+      const slugs = catalog.map((d: { slug: string }) => d.slug);
+      const coreSlugs = [
+        'system.response_tone',
+        'system.response_length',
+        'food.dietary_restrictions',
+        'food.cuisine_preferences',
+        'food.spice_tolerance',
+        'dev.tech_stack',
+        'dev.coding_style',
+        'travel.seat_preference',
+        'travel.meal_preference',
+        'communication.preferred_channels',
+        'location.default_temperature',
+        'location.quiet_hours',
+      ];
+      for (const slug of coreSlugs) {
+        expect(slugs).toContain(slug);
+      }
     });
 
     it('should filter by category', async () => {
