@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkshopAuth } from "@/lib/workshop-auth";
 import GroupBrowser from "./components/GroupBrowser";
@@ -15,8 +15,13 @@ export default function Home() {
   const [userId, setUserId] = useState("");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
   if (isAuthenticated) {
-    router.push("/dashboard");
     return null;
   }
 

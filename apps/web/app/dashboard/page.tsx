@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { useRouter } from "next/navigation";
@@ -28,8 +29,13 @@ export default function Dashboard() {
     skip: !isAuthenticated,
   });
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    router.push("/");
     return null;
   }
 
