@@ -131,4 +131,87 @@ describe('PreferenceDefinitionRepository (integration)', () => {
       }
     });
   });
+
+  describe('create', () => {
+    it('should create a new definition and update the cache', async () => {
+      const created = await repository.create({
+        slug: 'test.new_definition',
+        description: 'A new test definition',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      });
+
+      expect(created.slug).toBe('test.new_definition');
+      expect(created.description).toBe('A new test definition');
+      expect(created.valueType).toBe('STRING');
+      expect(created.scope).toBe('GLOBAL');
+      expect(created.isSensitive).toBe(false);
+      expect(created.isCore).toBe(false);
+
+      // Cache should be updated
+      expect(repository.isKnownSlug('test.new_definition')).toBe(true);
+      const cached = repository.getDefinition('test.new_definition');
+      expect(cached).toBeDefined();
+      expect(cached!.category).toBe('test');
+    });
+
+    it('should create an ENUM definition with options', async () => {
+      const created = await repository.create({
+        slug: 'test.enum_field',
+        description: 'An enum field',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        options: ['a', 'b', 'c'],
+      });
+
+      expect(created.options).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should throw on duplicate slug', async () => {
+      await expect(
+        repository.create({
+          slug: 'food.dietary_restrictions',
+          description: 'Duplicate',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('update', () => {
+    it('should update a definition and refresh the cache', async () => {
+      const updated = await repository.update('food.dietary_restrictions', {
+        description: 'Updated description',
+      });
+
+      expect(updated.slug).toBe('food.dietary_restrictions');
+      expect(updated.description).toBe('Updated description');
+
+      // Cache should reflect the update
+      const cached = repository.getDefinition('food.dietary_restrictions');
+      expect(cached!.description).toBe('Updated description');
+    });
+
+    it('should update only provided fields', async () => {
+      const before = repository.getDefinition('system.response_tone')!;
+
+      const updated = await repository.update('system.response_tone', {
+        description: 'Changed description',
+      });
+
+      expect(updated.description).toBe('Changed description');
+      expect(updated.valueType).toBe(before.valueType);
+      expect(updated.scope).toBe(before.scope);
+      expect(updated.options).toEqual(before.options);
+    });
+
+    it('should throw for non-existent slug', async () => {
+      await expect(
+        repository.update('nonexistent.slug', {
+          description: 'Will fail',
+        }),
+      ).rejects.toThrow();
+    });
+  });
 });
