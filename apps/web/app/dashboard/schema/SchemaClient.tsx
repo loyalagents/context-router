@@ -1,0 +1,501 @@
+'use client';
+
+import { useState } from 'react';
+
+interface PreferenceDefinition {
+  slug: string;
+  description: string;
+  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
+  scope: 'GLOBAL' | 'LOCATION';
+  options: string[] | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  category: string;
+}
+
+interface SchemaClientProps {
+  initialCatalog: PreferenceDefinition[];
+  accessToken: string;
+}
+
+const CREATE_MUTATION = `
+  mutation CreatePreferenceDefinition($input: CreatePreferenceDefinitionInput!) {
+    createPreferenceDefinition(input: $input) {
+      slug
+      description
+      valueType
+      scope
+      options
+      isSensitive
+      isCore
+      category
+    }
+  }
+`;
+
+const UPDATE_MUTATION = `
+  mutation UpdatePreferenceDefinition($slug: String!, $input: UpdatePreferenceDefinitionInput!) {
+    updatePreferenceDefinition(slug: $slug, input: $input) {
+      slug
+      description
+      valueType
+      scope
+      options
+      isSensitive
+      isCore
+      category
+    }
+  }
+`;
+
+const VALUE_TYPES = ['STRING', 'BOOLEAN', 'ENUM', 'ARRAY'] as const;
+const SCOPES = ['GLOBAL', 'LOCATION'] as const;
+
+function ValueTypeBadge({ type }: { type: string }) {
+  const colors: Record<string, string> = {
+    STRING: 'bg-blue-100 text-blue-800',
+    BOOLEAN: 'bg-green-100 text-green-800',
+    ENUM: 'bg-purple-100 text-purple-800',
+    ARRAY: 'bg-orange-100 text-orange-800',
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${colors[type] || 'bg-gray-100 text-gray-800'}`}>
+      {type}
+    </span>
+  );
+}
+
+function ScopeBadge({ scope }: { scope: string }) {
+  const isLocation = scope === 'LOCATION';
+  return (
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${isLocation ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'}`}>
+      {scope}
+    </span>
+  );
+}
+
+interface FormData {
+  slug: string;
+  description: string;
+  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
+  scope: 'GLOBAL' | 'LOCATION';
+  options: string;
+  isSensitive: boolean;
+  isCore: boolean;
+}
+
+const emptyForm: FormData = {
+  slug: '',
+  description: '',
+  valueType: 'STRING',
+  scope: 'GLOBAL',
+  options: '',
+  isSensitive: false,
+  isCore: false,
+};
+
+function DefinitionForm({
+  formData,
+  onChange,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+  error,
+  isCreate,
+}: {
+  formData: FormData;
+  onChange: (data: FormData) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+  error: string | null;
+  isCreate: boolean;
+}) {
+  return (
+    <div className="bg-white border-2 border-blue-200 rounded-lg p-6 mb-6">
+      <h3 className="text-lg font-semibold mb-4">
+        {isCreate ? 'Create New Definition' : `Edit: ${formData.slug}`}
+      </h3>
+
+      <div className="space-y-4">
+        {isCreate && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Slug
+            </label>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) => onChange({ ...formData, slug: e.target.value })}
+              placeholder="category.preference_name"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Lowercase with dots, e.g. &quot;food.dietary_restrictions&quot;
+            </p>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <input
+            type="text"
+            value={formData.description}
+            onChange={(e) => onChange({ ...formData, description: e.target.value })}
+            placeholder="Human-readable description"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Value Type
+            </label>
+            <select
+              value={formData.valueType}
+              onChange={(e) =>
+                onChange({ ...formData, valueType: e.target.value as FormData['valueType'] })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {VALUE_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Scope
+            </label>
+            <select
+              value={formData.scope}
+              onChange={(e) =>
+                onChange({ ...formData, scope: e.target.value as FormData['scope'] })
+              }
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {SCOPES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {formData.valueType === 'ENUM' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Options (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={formData.options}
+              onChange={(e) => onChange({ ...formData, options: e.target.value })}
+              placeholder="option1, option2, option3"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        )}
+
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={formData.isSensitive}
+              onChange={(e) => onChange({ ...formData, isSensitive: e.target.checked })}
+              className="rounded border-gray-300"
+            />
+            Sensitive
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={formData.isCore}
+              onChange={(e) => onChange({ ...formData, isCore: e.target.checked })}
+              className="rounded border-gray-300"
+            />
+            Core
+          </label>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isSubmitting ? 'Saving...' : isCreate ? 'Create' : 'Save Changes'}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function SchemaClient({ initialCatalog, accessToken }: SchemaClientProps) {
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>(emptyForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+
+  const handleCreate = () => {
+    setEditingSlug(null);
+    setFormData(emptyForm);
+    setError(null);
+    setShowCreateForm(true);
+  };
+
+  const handleEdit = (def: PreferenceDefinition) => {
+    setShowCreateForm(false);
+    setEditingSlug(def.slug);
+    setFormData({
+      slug: def.slug,
+      description: def.description,
+      valueType: def.valueType,
+      scope: def.scope,
+      options: def.options ? def.options.join(', ') : '',
+      isSensitive: def.isSensitive,
+      isCore: def.isCore,
+    });
+    setError(null);
+  };
+
+  const handleCancel = () => {
+    setShowCreateForm(false);
+    setEditingSlug(null);
+    setError(null);
+  };
+
+  const handleSubmitCreate = async () => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const input: Record<string, unknown> = {
+        slug: formData.slug,
+        description: formData.description,
+        valueType: formData.valueType,
+        scope: formData.scope,
+        isSensitive: formData.isSensitive,
+        isCore: formData.isCore,
+      };
+
+      if (formData.valueType === 'ENUM' && formData.options.trim()) {
+        input.options = formData.options.split(',').map((o) => o.trim()).filter(Boolean);
+      }
+
+      const response = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: CREATE_MUTATION,
+          variables: { input },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'Failed to create definition');
+      }
+
+      const created = data.data.createPreferenceDefinition;
+      setCatalog((prev) => [...prev, created]);
+      setShowCreateForm(false);
+      setFormData(emptyForm);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create definition');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitUpdate = async () => {
+    if (!editingSlug) return;
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const input: Record<string, unknown> = {
+        description: formData.description,
+        valueType: formData.valueType,
+        scope: formData.scope,
+        isSensitive: formData.isSensitive,
+        isCore: formData.isCore,
+      };
+
+      if (formData.valueType === 'ENUM' && formData.options.trim()) {
+        input.options = formData.options.split(',').map((o) => o.trim()).filter(Boolean);
+      } else if (formData.valueType !== 'ENUM') {
+        input.options = null;
+      }
+
+      const response = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: UPDATE_MUTATION,
+          variables: { slug: editingSlug, input },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'Failed to update definition');
+      }
+
+      const updated = data.data.updatePreferenceDefinition;
+      setCatalog((prev) =>
+        prev.map((def) => (def.slug === editingSlug ? updated : def)),
+      );
+      setEditingSlug(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update definition');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Group by category
+  const grouped = catalog.reduce(
+    (acc, def) => {
+      const cat = def.category;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(def);
+      return acc;
+    },
+    {} as Record<string, PreferenceDefinition[]>,
+  );
+
+  const sortedCategories = Object.keys(grouped).sort();
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Preference Schema</h1>
+        <div className="flex gap-3">
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            + Add Definition
+          </button>
+          <a href="/dashboard" className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+
+      <p className="text-gray-600 mb-6">
+        All available preference slugs and their definitions. These define what preferences can be set for users.
+      </p>
+
+      {showCreateForm && (
+        <DefinitionForm
+          formData={formData}
+          onChange={setFormData}
+          onSubmit={handleSubmitCreate}
+          onCancel={handleCancel}
+          isSubmitting={isSubmitting}
+          error={error}
+          isCreate={true}
+        />
+      )}
+
+      <div className="space-y-6">
+        {sortedCategories.map((category) => (
+          <div key={category} className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4 capitalize">{category}</h2>
+            <div className="space-y-4">
+              {grouped[category].map((def) =>
+                editingSlug === def.slug ? (
+                  <DefinitionForm
+                    key={def.slug}
+                    formData={formData}
+                    onChange={setFormData}
+                    onSubmit={handleSubmitUpdate}
+                    onCancel={handleCancel}
+                    isSubmitting={isSubmitting}
+                    error={error}
+                    isCreate={false}
+                  />
+                ) : (
+                  <div key={def.slug} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <code className="text-sm font-mono font-semibold text-gray-900">
+                        {def.slug}
+                      </code>
+                      <div className="flex items-center gap-2">
+                        <ValueTypeBadge type={def.valueType} />
+                        <ScopeBadge scope={def.scope} />
+                        <button
+                          onClick={() => handleEdit(def)}
+                          className="p-1 text-gray-400 hover:text-blue-600"
+                          title="Edit"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{def.description}</p>
+                    {def.options && (
+                      <div className="mt-2">
+                        <span className="text-xs text-gray-500 font-medium">Options: </span>
+                        <span className="text-xs text-gray-700">
+                          {def.options.join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    {(def.isSensitive || def.isCore) && (
+                      <div className="mt-2 flex gap-2">
+                        {def.isSensitive && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700">Sensitive</span>
+                        )}
+                        {def.isCore && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">Core</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        ))}
+
+        <div className="text-sm text-gray-500 text-center pt-2">
+          {catalog.length} preference definitions across {sortedCategories.length} categories
+        </div>
+      </div>
+    </>
+  );
+}
