@@ -1,0 +1,387 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:20:28.029609+00:00",
+  "profile": {
+    "summary": "Isabella Romano is a 55-year-old Italian winemaker from Montalcino, Tuscany, deeply rooted in her family's winemaking tradition. As the owner of Podere Romano estate, she is known for producing boutique Brunello di Montalcino and pioneering biodynamic farming methods. Isabella is married with two adult children and is expecting her first grandchild. Her passion extends beyond wine to include slow food, medieval history, and watercolour painting.",
+    "last_generated": "2026-03-01T05:20:28.029609+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Isabella Romano",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "age": {
+      "value": 55,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Montalcino, Tuscany, Italy",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "nationality": {
+      "value": "Italian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "languages": {
+      "value": [
+        "Italian",
+        "English",
+        "basic French"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Winemaker and Owner",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "current_company": {
+      "value": "Podere Romano estate",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "industry": {
+      "value": "Winery and Viticulture",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "experience_years": {
+      "value": 30,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "education": {
+      "value": "Oenology degree from University of Siena; Harvest internship in Burgundy",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "skills": {
+      "value": [
+        "Winemaking",
+        "Viticulture",
+        "Biodynamic Farming",
+        "Wine Marketing",
+        "Oenology",
+        "Estate Management"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Brunello di Montalcino production",
+        "Biodynamic agriculture",
+        "Wine tourism",
+        "Consorzio del Brunello governance",
+        "Tuscan terroir"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "work_style": {
+      "value": "Hands-on, meticulous, and innovative, with a deep respect for tradition.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Biodynamic Farming Integration",
+          "description": "Expanding and refining biodynamic practices across the entire Podere Romano vineyard to enhance soil health and wine quality.",
+          "stage": "Ongoing implementation and monitoring"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:20:28.029609+00:00",
+        "created_at": "2026-03-01T05:20:28.029609+00:00"
+      }
+    ],
+    "past": [
+      "Establishing Podere Romano as a recognized producer of boutique Brunello di Montalcino",
+      "Implementing initial organic farming methods"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Successfully manage the upcoming harvest with new biodynamic techniques.",
+        "Prepare estate for increased wine tourism bookings.",
+        "Finalize plans for the new grandchild's arrival."
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Achieve full certification for biodynamic farming.",
+        "Pass on the winemaking legacy to the next generation.",
+        "Further establish Podere Romano as a leader in sustainable luxury wine tourism."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "career": {
+      "value": "To be recognized globally for producing exceptional, sustainably-farmed Brunello di Montalcino and to foster a new generation of winemakers committed to ecological practices.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "personal": {
+      "value": "To maintain a harmonious balance between her demanding professional life and her family, while continuing to nurture her artistic interests.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Pruning shears",
+        "Wine analysis equipment",
+        "Watercolour brushes",
+        "Tractor with specialized attachments for biodynamic farming"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Soil analysis sensors",
+        "Advanced irrigation systems",
+        "Wine cellar climate control technology"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "work_environment": {
+      "value": "A blend of hands-on work in the vineyards and cellar, combined with thoughtful analysis and strategic planning in a quiet, inspiring setting.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "communication_style": {
+      "value": "Direct and knowledgeable, but also warm and appreciative, especially when discussing wine and the estate's philosophy.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Respect for nature and the land.",
+        "The importance of heritage and tradition in winemaking.",
+        "Quality over quantity.",
+        "The value of family and community."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "principles": {
+      "value": [
+        "Sustainable and ethical farming.",
+        "Authenticity in wine production.",
+        "Continuous learning and innovation."
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Maintaining the quality and integrity of Podere Romano wines.",
+        "Ensuring the long-term sustainability of the estate.",
+        "Nurturing family relationships."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Giorgio (viticulture manager); two adult children; first grandchild on the way",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Members of the Consorzio del Brunello board",
+        "Fellow winemakers in Tuscany",
+        "Wine critics and sommeliers"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Impact of climate change on grape growing.",
+        "Maintaining wine quality during expansion of biodynamic practices.",
+        "Navigating the complexities of the global wine market."
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring the legacy of Podere Romano is preserved for future generations."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:20:28.029609+00:00",
+      "created_at": "2026-03-01T05:20:28.029609+00:00"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "David Park: Co-founder & CEO of an early-stage B2B SaaS startup focused on HR-tech. He previously worked as a product manager at Salesforce and holds an MBA from Stanford. David is a key figure in his company and the Austin tech scene.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "HR-tech Startup: David's current venture, an early-stage B2B SaaS company. It focuses on an AI-driven employee engagement platform and recently raised $2.8M in seed funding. This organization represents his professional ambition and current focus.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Austin, Texas: David's current city of residence and a hub for his professional activities. He is active in the local tech community and mentors startups there. Austin is central to both his personal and professional life.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "organisation",
+      "content": "Salesforce: David's previous employer where he worked as a product manager. This experience likely shaped his understanding of enterprise software and B2B markets, influencing his current startup.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "organisation",
+      "content": "Capital Factory: A prominent technology incubator and coworking space in Austin where David serves as a mentor. This role highlights his engagement with the local startup ecosystem and his willingness to support emerging companies.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "AI-driven Employee Engagement Platform: The core product his startup is developing. This technology aims to leverage artificial intelligence to improve how companies engage with their employees, representing a key innovation area.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Golf: David's recreational activity. He is an avid golfer, suggesting a need for stress relief and a potential avenue for networking or casual social interaction.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Camping Trips: David takes monthly overnight camping trips in the Texas Hill Country. This indicates a strong connection to nature and a regular practice of disconnecting and recharging.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Learning Guitar: A personal hobby David is pursuing. This suggests a creative side and an interest in developing new skills outside of his professional life.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-27T10:08:00Z",
+      "updated_at": "2023-10-27T10:08:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "concept",
+      "content": "Golden State Warriors: David is an obsessive follower of this NBA team. This passion for basketball, specifically the Warriors, is a significant personal interest and potential topic for casual conversation.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000010"
+      ],
+      "created_at": "2023-10-27T10:09:00Z",
+      "updated_at": "2023-10-27T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

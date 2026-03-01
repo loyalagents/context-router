@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-00000001",
+      "type": "resource",
+      "content": "IRS Publication 17 (Your Federal Income Tax). This is Ravi's go-to reference for individual tax guidance, essential for staying updated on tax law changes that affect his small business clients. He often cross-references specific sections during tax season.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-ABCDEF01"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-00000002",
+      "type": "resource",
+      "content": "PwC's \"Tax Insights and Strategy\" newsletter. Ravi subscribes to this for high-level analysis of tax legislation and its impact on businesses, particularly useful for his M&A advisory work. It provides strategic perspectives beyond basic compliance.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-ABCDEF02"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-00000003",
+      "type": "resource",
+      "content": "Microsoft Excel (Advanced Features & VBA). Ravi relies heavily on Excel for complex financial modelling, tax projections, and client reporting. He frequently uses advanced functions and VBA macros for efficiency and custom analysis.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-ABCDEF03",
+        "obs-GHIJKL01"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-00000004",
+      "type": "resource",
+      "content": "Contact: Priya Sharma (Senior Tax Attorney). Priya is Ravi's trusted legal counsel for complex tax litigation and structuring advice. They collaborate frequently on high-stakes client cases requiring specialized legal expertise.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ABCDEF04"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-00000005",
+      "type": "resource",
+      "content": "Cricinfo.com (Cricket Statistics and Analysis). Ravi uses this site extensively for detailed cricket match data, player statistics, and analytical articles. It feeds his obsession with cricket analytics and helps him understand performance trends.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-ABCDEF05",
+        "obs-GHIJKL02"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-00000006",
+      "type": "resource",
+      "content": "USATF (USA Track & Field) Training Plans. As a dedicated marathon runner, Ravi consults USATF resources for structured training methodologies and performance benchmarks. He uses these plans to optimize his own running regimen.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-ABCDEF06",
+        "obs-GHIJKL03"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "resource-00000007",
+      "type": "resource",
+      "content": "Indo-American Chamber of Commerce Chicago Chapter Website. Ravi actively uses this platform for networking, staying informed about local business events, and accessing resources relevant to the Indo-American business community.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-ABCDEF07"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

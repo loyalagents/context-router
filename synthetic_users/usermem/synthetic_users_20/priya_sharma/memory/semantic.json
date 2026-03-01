@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "Hospital readmission prediction models often leverage features like patient demographics, length of stay, diagnosis codes (ICD-10), and previous admission history. Key performance metrics typically include AUC-ROC, precision, and recall, balancing the identification of high-risk patients with avoiding unnecessary interventions.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f1a2b3c4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "In Carnatic music, the concept of 'raga' defines the melodic framework, while 'tala' governs the rhythmic cycle. A 'kriti' is a common compositional form, often featuring sections like the 'pallavi', 'anupallavi', and 'charanam'.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-d5e6f7g8"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "The Western Ghats, a UNESCO World Heritage Site, are known for their biodiversity and offer numerous trekking trails. Popular destinations near Bangalore include Nandi Hills and Kudremukh, providing diverse landscapes from rolling hills to dense forests.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-h9i0j1k2"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "Yoga asanas, when practiced consistently, can improve flexibility, strength, and mental focus. Daily practice is often recommended to build discipline and reap the full benefits for both physical and mental well-being.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-l3m4n5o6"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "The Indian Statistical Institute (ISI) offers rigorous postgraduate programs in Statistics and related fields. Its alumni network is strong, particularly in academia and data science research.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-p7q8r9s0"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Mentoring programs for women in tech are crucial for addressing the gender gap in the industry. They provide guidance, networking opportunities, and support to help women advance in their careers.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-t1u2v3w4"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

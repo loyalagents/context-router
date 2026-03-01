@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To draft the weekly economics newsletter, I first identify 2-3 trending topics in African development economics relevant to my audience. Then, I research recent studies or news articles, synthesizing key findings into concise, accessible language. Finally, I structure the newsletter with an engaging introduction, distinct sections for each topic, and a clear call to action, ensuring it's sent out by Friday evening.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-e4f5g6h7"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2024-05-15T14:30:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When onboarding a new smallholder cocoa farmer to the platform, I begin with a brief introductory call to explain the benefits and gather essential farm details. Next, I guide them through the app's registration process, ensuring accurate input of their farm size, location, and yield history. I then follow up within 48 hours to confirm their profile is active and answer any further questions.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-i8j9k0l1"
+      ],
+      "created_at": "2024-01-10T09:15:00Z",
+      "updated_at": "2024-05-10T11:00:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For my weekly football practice, I always ensure my gear is packed the night before: boots, shin guards, and training kit. I arrive at the pitch 15 minutes early to warm up individually, focusing on stretching and light cardio. During practice, I actively participate in drills and communicate effectively with teammates to improve our coordination.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-m2n3o4p5"
+      ],
+      "created_at": "2023-09-01T18:00:00Z",
+      "updated_at": "2024-05-12T19:00:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "To prepare for a deacon's meeting at church, I review the agenda and gather any necessary reports or updates from my assigned ministry areas. I ensure I've prayed for guidance and wisdom regarding the discussions. During the meeting, I listen attentively, contribute thoughtfully to discussions, and take notes on action items assigned to me.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-q6r7s8t9"
+      ],
+      "created_at": "2023-11-15T20:00:00Z",
+      "updated_at": "2024-05-08T21:00:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "When developing a new feature for the agri-tech platform, I start by gathering user feedback and market research to define the core problem. I then create wireframes and mockups, iterating based on internal team reviews. Finally, I work with the development team to implement the feature, followed by rigorous testing and a phased rollout to farmers.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-u0v1w2x3"
+      ],
+      "created_at": "2024-02-20T11:00:00Z",
+      "updated_at": "2024-05-14T16:45:00Z"
+    }
+  ],
+  "summaries": []
+}

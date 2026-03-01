@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To prepare Moqueca Baiana, first sauté onions, garlic, and peppers in dendê oil. Add firm white fish or shrimp and cook briefly until they start to firm up. Stir in diced tomatoes, coconut milk, and cilantro, simmering gently until the fish is cooked through and the sauce has thickened slightly. Serve hot with rice and farofa.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6a7b8",
+      "type": "procedure",
+      "content": "When introducing a new literary concept in class, start with a relatable real-world example to capture student interest. Then, define the concept clearly and provide several examples from familiar texts or media. Finally, assign a short reading or activity that requires students to identify and apply the concept independently.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-c9d0e1f2",
+      "type": "procedure",
+      "content": "For the book club meeting, prepare a list of discussion questions in advance, focusing on character development, plot significance, and thematic elements. Arrive 15 minutes early to set up refreshments and arrange seating to encourage conversation. Facilitate the discussion by ensuring everyone has a chance to speak and gently guiding the conversation back to the book if it strays too far.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-3a4b5c6d",
+      "type": "procedure",
+      "content": "To manage evening MBA studies alongside teaching, dedicate specific blocks of time each evening and weekend for coursework. Utilize commute time for reviewing lecture notes or listening to relevant podcasts. Communicate workload expectations clearly with family and friends to manage social commitments effectively.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-5e6f7a8b"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-7e8f9a0b",
+      "type": "procedure",
+      "content": "When volunteering at the literacy project, begin by assessing the learner's current reading level and specific challenges. Tailor practice exercises to their interests and build confidence through positive reinforcement. Focus on practical application of reading skills, such as understanding bus schedules or simple recipes, to demonstrate immediate relevance.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

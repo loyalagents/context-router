@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed potential new marketing angles for the upcoming Brunello release, focusing on the estate's history and biodynamic practices.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-15T10:30:00Z",
+      "updated_at": "2023-10-15T10:35:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked for a translation of a historical document concerning land ownership in Montalcino from the 14th century.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-11-01T14:00:00Z",
+      "updated_at": "2023-11-01T14:05:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Researched comparative soil analysis data from other biodynamic wineries in different Italian regions.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-11-20T09:15:00Z",
+      "updated_at": "2023-11-20T09:20:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Planned a guided watercolour painting session for a group of wine tourists, focusing on Val d'Orcia landscapes.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-12-05T11:00:00Z",
+      "updated_at": "2023-12-05T11:05:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Received an alert about an upcoming frost warning and requested advice on protective measures for the young vines.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2024-01-10T05:00:00Z",
+      "updated_at": "2024-01-10T05:05:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Asked for information on the historical significance of Dante Alighieri's connection to the Tuscan region.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2024-02-14T16:45:00Z",
+      "updated_at": "2024-02-14T16:50:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Reviewed tasting notes and AI-generated summaries of feedback from a recent wine tasting event with sommeliers.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2024-03-01T10:00:00Z",
+      "updated_at": "2024-03-01T10:05:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Generated a draft press release announcing the estate's participation in a Slow Food event in Milan.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2024-03-22T13:00:00Z",
+      "updated_at": "2024-03-22T13:05:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Requested a list of reputable suppliers for organic corks and recycled glass bottles.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2024-04-18T09:00:00Z",
+      "updated_at": "2024-04-18T09:05:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Explored historical maps of the Val d'Orcia to identify potential sites for a new vineyard block.",
+      "confidence": 0.79,
+      "evidence_ids": [
+        "obs-00000010"
+      ],
+      "created_at": "2024-05-05T15:30:00Z",
+      "updated_at": "2024-05-05T15:35:00Z"
+    }
+  ],
+  "summaries": {}
+}

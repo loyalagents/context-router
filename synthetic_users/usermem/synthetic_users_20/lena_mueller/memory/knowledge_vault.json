@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Hanna Schmidt: A former colleague from Humboldt University during her PhD. They collaborated on early research papers concerning waste management policies. Lena values Hanna's sharp analytical skills and their shared passion for environmental justice.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Freie Universität Berlin: Lena holds a part-time lecturing position here, contributing to the environmental policy program. She enjoys mentoring students and staying connected with academic discourse. This role allows her to share her practical experience with the next generation of environmental professionals.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Kungsleden Trail, Sweden: Lena has hiked this long-distance trail multiple times and considers it a place of profound personal significance. The rugged beauty and solitude offer her a chance to recharge and reflect. She often draws inspiration from the resilience of nature observed on these hikes.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Circular Economy: This is Lena's primary professional focus. She advises government agencies and organizations on transitioning to circular economic models, emphasizing resource efficiency and waste reduction. Her PhD research laid the foundation for her expertise in this area.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "organisation",
+      "content": "Bonn Climate Change Secretariat: Lena has collaborated with this UN body on several projects related to international climate policy implementation. She respects their role in facilitating global climate action and has presented her work at their conferences.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Traditional Fermentation and Pickling: Lena maintains a keen interest in preserving these culinary techniques, viewing them as sustainable and culturally significant practices. She experiments with various recipes and shares her knowledge within her community.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "person",
+      "content": "Dr. Klaus Richter: Lena's PhD advisor at Humboldt University. He was instrumental in shaping her academic career and instilling a rigorous approach to research. Their relationship remains cordial, and they occasionally consult each other on complex policy issues.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "place",
+      "content": "Berlin, Germany: Lena's home city and the base for her professional and academic activities. She is deeply connected to Berlin's environmental initiatives and its vibrant cultural scene, particularly opera. Her long-standing commitment to cycling makes her a familiar sight.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "organisation",
+      "content": "Bündnis 90/Die Grünen (Green Party): Lena has been a dedicated member for many years, actively participating in local policy discussions and advocacy. Her political affiliation aligns strongly with her professional work in environmental policy.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "created_at": "2023-10-27T10:40:00Z",
+      "updated_at": "2023-10-27T10:40:00Z"
+    }
+  ],
+  "summaries": []
+}

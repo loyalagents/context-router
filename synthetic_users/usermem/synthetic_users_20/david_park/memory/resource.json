@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Notion: Used for company wiki, product roadmap, meeting notes, and personal task management. Essential for organizing information for the startup and tracking progress across different functions.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Stripe Dashboard: Critical for tracking revenue, managing subscriptions, and understanding customer payment trends for the HR-tech platform. Closely monitored for financial health and growth metrics.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Capital Factory Website: Reference for local tech events, startup resources, and mentor network connections in Austin. Used to stay engaged with the local ecosystem and find potential collaborators or advisors.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Salesforce Trailhead: Revisiting Salesforce best practices and product updates for competitive analysis and potential integration insights. Leveraged from previous experience to inform current product strategy.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-33445566"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "The Athletic (NBA Section): Primary source for in-depth NBA analysis, news, and Warriors updates. Used daily for following league developments and team performance.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-77889900"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Fender Play: Subscription service for learning guitar. Used for dedicated practice sessions during downtime, aiming to develop a new personal skill.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-11229988"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

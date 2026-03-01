@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Asked the AI to help refactor a complex Python data processing script, focusing on improving performance and readability for the team.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f1a2b3c4"
+      ],
+      "created_at": "2024-05-15T10:30:00Z",
+      "updated_at": "2024-05-15T10:30:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Discussed potential strategies for optimizing database queries in our new microservice architecture, considering trade-offs between latency and consistency.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-d5e6f7g8"
+      ],
+      "created_at": "2024-04-28T14:15:00Z",
+      "updated_at": "2024-04-28T14:15:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Researched recent advancements in zero-knowledge proofs for a potential integration into our platform's security features.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-h9i0j1k2"
+      ],
+      "created_at": "2024-03-10T09:00:00Z",
+      "updated_at": "2024-03-10T09:00:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Asked for a summary of the latest updates to the Django framework to stay current with best practices.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-l3m4n5p6"
+      ],
+      "created_at": "2024-02-20T11:45:00Z",
+      "updated_at": "2024-02-20T11:45:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Planned a weekend trip to visit family in Montreal, asking for recommendations on family-friendly activities and travel routes.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-p7q8r9t0"
+      ],
+      "created_at": "2024-05-05T16:00:00Z",
+      "updated_at": "2024-05-05T16:00:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Ordered groceries for the week, specifying dietary preferences and requesting a list of recipes that utilize the selected ingredients.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-t1u2v3x4"
+      ],
+      "created_at": "2024-04-18T18:30:00Z",
+      "updated_at": "2024-04-18T18:30:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Checked the status of a pull request for an open-source project I contribute to, asking for a review of the latest changes.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-x5y6z7a8"
+      ],
+      "created_at": "2024-03-25T13:00:00Z",
+      "updated_at": "2024-03-25T13:00:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Asked for the current time in Dubai to coordinate with a colleague working on a project in that timezone.",
+      "confidence": 0.99,
+      "evidence_ids": [
+        "obs-b9c0d1e2"
+      ],
+      "created_at": "2024-05-10T08:00:00Z",
+      "updated_at": "2024-05-10T08:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Set a reminder for the weekly soccer practice with the Egyptian community club.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-f3g4h5j6"
+      ],
+      "created_at": "2024-04-01T17:00:00Z",
+      "updated_at": "2024-04-01T17:00:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Asked for a quick explanation of a complex financial concept related to our company's latest product launch.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-j7k8l9m0"
+      ],
+      "created_at": "2024-05-20T11:00:00Z",
+      "updated_at": "2024-05-20T11:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

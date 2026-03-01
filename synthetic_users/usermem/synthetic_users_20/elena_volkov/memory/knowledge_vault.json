@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Elena Volkov is a 29-year-old freelance translator and interpreter based in Kyiv, Ukraine. She is proficient in Ukrainian, Russian, English, and Polish, and holds a degree in Philology from Taras Shevchenko National University. Elena's work spans literary fiction, legal documents, and interpretation for international journalists and NGOs.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Taras Shevchenko National University is where Elena Volkov obtained her Philology degree. This institution provided her with the foundational linguistic and literary knowledge essential for her career as a translator and interpreter.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Kyiv, Ukraine is Elena Volkov's current residence and the base for her freelance translation and interpretation work. As the capital city, it is a hub for international interactions, aligning with her professional activities.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Wartime anxiety is a significant aspect of Elena Volkov's current life, influencing her coping mechanisms. She actively addresses this through creative outlets like poetry writing and traditional embroidery, as well as altruistic work.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-13141516"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Ukrainian literature is a passion and professional interest for Elena Volkov. She actively promotes it through blogging in English, aiming to increase global awareness and appreciation for Ukrainian literary works.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-17181920"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Vyshyvanka is a traditional Ukrainian embroidered shirt, and Elena Volkov practices embroidery of its patterns. This activity serves as a creative outlet and a way for her to connect with her cultural heritage, especially amidst wartime anxiety.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-21222324"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "organisation",
+      "content": "A charity delivering supplies to frontline civilians is an organization Elena Volkov volunteers for. This work is a direct response to the ongoing conflict and a way for her to contribute to alleviating the suffering of those most affected.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-25262728"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Poetry writing is one of Elena Volkov's primary methods for coping with wartime anxiety. It provides an emotional outlet and a means of processing the difficult circumstances she and her country are facing.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-29303132"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

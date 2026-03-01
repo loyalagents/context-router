@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-00000001",
+      "type": "event",
+      "content": "Researched recent legislative changes regarding campaign finance in France for an upcoming article. Found a discrepancy in reporting from a prominent political party.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-26T10:30:00Z",
+      "updated_at": "2023-10-26T10:30:00Z"
+    },
+    {
+      "id": "episodic-00000002",
+      "type": "event",
+      "content": "Discussed potential interview questions for a source involved in the real-estate lobby investigation. Focused on eliciting specific details about their influence on zoning laws.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-abcdef13"
+      ],
+      "created_at": "2023-11-05T14:00:00Z",
+      "updated_at": "2023-11-05T14:00:00Z"
+    },
+    {
+      "id": "episodic-00000003",
+      "type": "event",
+      "content": "Asked for a concise summary of a lengthy financial report related to a potential corporate fraud case. Needed to quickly grasp the key figures and irregularities.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-abcdef14"
+      ],
+      "created_at": "2023-11-15T09:15:00Z",
+      "updated_at": "2023-11-15T09:15:00Z"
+    },
+    {
+      "id": "episodic-00000004",
+      "type": "event",
+      "content": "Planned a Sunday lunch menu with a focus on classic French cuisine, including a coq au vin. Checked for ingredient availability and potential substitutions.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-abcdef15"
+      ],
+      "created_at": "2023-12-02T11:00:00Z",
+      "updated_at": "2023-12-02T11:00:00Z"
+    },
+    {
+      "id": "episodic-00000005",
+      "type": "event",
+      "content": "Searched for upcoming jazz performances in Paris. Specifically looking for a small, intimate venue featuring a piano trio.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-abcdef16"
+      ],
+      "created_at": "2023-12-10T18:30:00Z",
+      "updated_at": "2023-12-10T18:30:00Z"
+    },
+    {
+      "id": "episodic-00000006",
+      "type": "event",
+      "content": "Asked for advice on managing stress during a particularly demanding work period. Considered options like meditation and increased running frequency.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-abcdef17"
+      ],
+      "created_at": "2024-01-08T16:45:00Z",
+      "updated_at": "2024-01-08T16:45:00Z"
+    },
+    {
+      "id": "episodic-00000007",
+      "type": "event",
+      "content": "Researched the history of the Winged Victory of Samothrace for an upcoming visit to the Louvre with Camille. Looked for interesting facts to share.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-abcdef18"
+      ],
+      "created_at": "2024-01-20T11:00:00Z",
+      "updated_at": "2024-01-20T11:00:00Z"
+    },
+    {
+      "id": "episodic-00000008",
+      "type": "event",
+      "content": "Investigated the public records of a politician suspected of accepting illegal donations. Focused on cross-referencing campaign finance disclosures with personal assets.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-abcdef19"
+      ],
+      "created_at": "2024-02-12T10:00:00Z",
+      "updated_at": "2024-02-12T10:00:00Z"
+    },
+    {
+      "id": "episodic-00000009",
+      "type": "event",
+      "content": "Asked for a recipe for a complex dessert, a multi-layered chocolate mousse cake, for a special occasion. Needed detailed instructions and precise measurements.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-abcdef20"
+      ],
+      "created_at": "2024-02-25T15:00:00Z",
+      "updated_at": "2024-02-25T15:00:00Z"
+    },
+    {
+      "id": "episodic-00000010",
+      "type": "event",
+      "content": "Reviewed recent articles on the impact of gentrification in Parisian neighborhoods. Looking for potential angles for a follow-up investigation.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-abcdef21"
+      ],
+      "created_at": "2024-03-10T09:30:00Z",
+      "updated_at": "2024-03-10T09:30:00Z"
+    },
+    {
+      "id": "episodic-00000011",
+      "type": "event",
+      "content": "Scheduled a therapy session to discuss feelings of burnout and strategies for maintaining work-life balance. Aimed to process the emotional toll of recent investigations.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-abcdef22"
+      ],
+      "created_at": "2024-03-18T11:00:00Z",
+      "updated_at": "2024-03-18T11:00:00Z"
+    },
+    {
+      "id": "episodic-00000012",
+      "type": "event",
+      "content": "Asked for a translation of a key document from a foreign language related to a cross-border fraud case. Ensured accuracy for investigative purposes.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-abcdef23"
+      ],
+      "created_at": "2024-04-02T14:00:00Z",
+      "updated_at": "2024-04-02T14:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

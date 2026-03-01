@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Raj Kumar is a 35-year-old full-stack software developer living in Toronto, Canada. He specializes in React and Node.js and works in the healthcare IT industry. Raj is also a new parent and is actively involved in his community.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "place",
+      "content": "Toronto, Canada is where Raj Kumar currently resides. He immigrated to Canada in 2017 and became a permanent resident in 2020. Toronto is a multicultural city where he balances his professional and personal life.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "organisation",
+      "content": "McMaster University is where Raj Kumar completed his Master of Science (MSc) degree. This academic background provided him with the foundation for his career in software development.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "React and Node.js are the primary programming technologies Raj Kumar specialises in as a full-stack developer. These skills are crucial for his role at his healthcare IT company and likely for his personal projects.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Tamil language NLP library is Raj Kumar's open-source side project. This indicates a passion for both his cultural heritage and contributions to the developer community.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "New parenthood is a significant current life stage for Raj Kumar. This likely influences his time management, priorities, and potentially his emotional state.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Tamil cultural events are important to Raj Kumar for maintaining his heritage in Canada. He actively participates in these events, suggesting a strong connection to his roots.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Cricket is a sport Raj Kumar plays in a South Asian community league. This highlights his engagement with the local community and his interest in sports.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "organisation",
+      "content": "Chelsea FC is a football club that Raj Kumar follows. This indicates a personal interest outside of his professional and family life.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "concept",
+      "content": "Sri Lankan curries are a culinary tradition Raj Kumar is learning from his mother via video call. This shows an effort to connect with family and preserve cultural practices.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    }
+  ],
+  "summaries": []
+}

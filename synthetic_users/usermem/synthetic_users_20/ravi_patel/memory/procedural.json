@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "When advising small businesses on tax strategy, I first gather all financial statements for the past three years. I then identify key areas for potential deductions and credits, cross-referencing with current IRS regulations and any relevant state-specific tax laws. Finally, I model different scenarios using Excel to illustrate the tax impact of various business decisions and present a clear, actionable plan to the client.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "For M&A accounting, my process begins with a thorough due diligence checklist, focusing on financial records, liabilities, and contingent risks. I then build a detailed pro-forma financial model to assess the target company's value and potential synergies. Post-acquisition, I ensure accurate integration of accounting systems and compliance with all reporting requirements, often involving complex purchase price allocation.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "My marathon training follows a structured weekly plan that peaks at 50-60 miles, incorporating tempo runs, interval training, and a long run. I meticulously track my progress using a Garmin watch and analyze pace, heart rate, and recovery data in Excel to adjust my training load. Nutrition and hydration are critical; I pre-plan meals and practice race-day fueling during long runs to optimize performance.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "When coaching youth cricket, I emphasize fundamental techniques like batting stance, bowling action, and fielding drills. I use simple drills and positive reinforcement to build confidence in young players. My goal is not just skill development but also fostering teamwork and sportsmanship, often illustrating strategic concepts with simplified game scenarios.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "Analyzing cricket statistics involves creating custom dashboards in Excel or Google Sheets. I focus on advanced metrics like batting average on specific grounds, strike rates against different bowling types, and fielding efficiency. Comparing these metrics across players and historical data helps identify trends and potential match-winning advantages.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

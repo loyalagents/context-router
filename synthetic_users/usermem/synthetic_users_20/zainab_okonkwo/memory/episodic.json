@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Researched sustainable fabric suppliers in Ghana for the new collection, focusing on organic cotton and recycled materials. Found a promising contact in Kumasi.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-26T10:30:00Z",
+      "updated_at": "2023-10-26T10:30:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Had a video call with the Zuri Lagos Instagram manager to discuss strategies for increasing engagement before the holiday season. Agreed to run a user-generated content campaign.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-11-15T14:00:00Z",
+      "updated_at": "2023-11-15T14:00:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Asked for a translation of a complex digital pattern-making tutorial from French to English. The AI provided a clear and accurate translation, saving me hours of manual work.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-12-01T09:15:00Z",
+      "updated_at": "2023-12-01T09:15:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Discussed potential collaborations with a popular modest fashion influencer based in Dubai. The AI helped draft talking points and research her audience demographics.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-12-10T11:45:00Z",
+      "updated_at": "2023-12-10T11:45:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Attended a Nollywood premiere with friends. Enjoyed the film immensely and discussed the costume design afterwards.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2024-01-05T20:00:00Z",
+      "updated_at": "2024-01-05T20:00:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Mentored a group of young seamstresses, teaching them basic digital pattern-making techniques. Their enthusiasm was inspiring.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2024-01-20T13:00:00Z",
+      "updated_at": "2024-01-20T13:00:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Brainstormed ideas for the next Zuri Lagos pop-up event. Explored themes around 'Modern Heritage' and incorporating traditional Nigerian motifs.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-b1c2d3e4"
+      ],
+      "created_at": "2024-02-10T16:30:00Z",
+      "updated_at": "2024-02-10T16:30:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Asked the AI for advice on managing stress during busy design periods. It suggested mindfulness exercises and time-blocking techniques.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-f5e6d7c8"
+      ],
+      "created_at": "2024-02-25T08:00:00Z",
+      "updated_at": "2024-02-25T08:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Received positive feedback from a customer in the UK who loved the modest yet expressive design of a recently purchased abaya. Their message made my day.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-1a0b9c8d"
+      ],
+      "created_at": "2024-03-10T10:00:00Z",
+      "updated_at": "2024-03-10T10:00:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Planned a trip to visit family in Abuja for Eid. Asked the AI to research flight options and potential modest accommodations.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-e2f3g4h5"
+      ],
+      "created_at": "2024-03-20T17:00:00Z",
+      "updated_at": "2024-03-20T17:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

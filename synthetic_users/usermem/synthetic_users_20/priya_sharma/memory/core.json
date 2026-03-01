@@ -1,0 +1,391 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:18:06.078968+00:00",
+  "profile": {
+    "summary": "Priya Sharma is a 31-year-old Indian woman residing in Bangalore, where she works as a Senior Data Scientist in the healthcare analytics sector. She holds advanced degrees from IIT Bombay and ISI Kolkata and leads a team focused on predictive ML models. Priya is recently engaged and balances her professional life with personal interests in yoga, Carnatic music, and hiking, while also actively participating in women-in-tech mentoring.",
+    "last_generated": "2026-03-01T05:18:06.078968+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Priya Sharma",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "age": {
+      "value": 31,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Bangalore, India",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "nationality": {
+      "value": "Indian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "languages": {
+      "value": [
+        "Hindi",
+        "English",
+        "Kannada"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Senior Data Scientist",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "current_company": {
+      "value": "Healthcare Analytics Company",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "industry": {
+      "value": "Healthcare Analytics",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "experience_years": {
+      "value": 8,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "education": {
+      "value": "BTech from IIT Bombay, MSc in Statistics from ISI Kolkata",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "skills": {
+      "value": [
+        "Machine Learning",
+        "Data Analysis",
+        "Statistical Modeling",
+        "Python",
+        "SQL",
+        "Data Visualization"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1o2p3q4r"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Predictive Modeling",
+        "Healthcare Analytics",
+        "Hospital Readmission Prediction",
+        "Team Leadership",
+        "ML Operations"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5s6t7u8v"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "work_style": {
+      "value": "Leads a team, focused on building impactful ML models, likely collaborative and driven.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-9w0x1y2z"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Hospital Readmission Prediction Models",
+          "description": "Leading a team to develop and deploy machine learning models aimed at predicting hospital readmissions.",
+          "stage": "Development and Deployment"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-3a4b5c6d"
+        ],
+        "updated_at": "2026-03-01T05:18:06.078968+00:00",
+        "created_at": "2026-03-01T05:18:06.078968+00:00"
+      }
+    ],
+    "past": [
+      "Various data science projects and roles prior to current leadership position."
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Enhance the accuracy of current ML models",
+        "Mentor junior data scientists",
+        "Publish research findings",
+        "Plan wedding details"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-7e8f9g0h"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become a recognized leader in healthcare AI",
+        "Contribute to policy decisions through data insights",
+        "Start a personal data science consultancy"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1i2j3k4l"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "career": {
+      "value": "Advance to a Director or VP level in AI/Data Science, focusing on impactful healthcare solutions.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5m6n7o8p"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance, deepen her practice of yoga and Carnatic music, and explore new hiking trails.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-9q0r1s2t"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Jupyter Notebooks",
+        "Git",
+        "Docker",
+        "AWS/GCP",
+        "Tableau"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-3u4v5w6x"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Python (scikit-learn, TensorFlow, PyTorch)",
+        "SQL",
+        "Cloud Computing Platforms",
+        "Big Data Technologies"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-7y8z9a0b"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "work_environment": {
+      "value": "Prefers a dynamic, collaborative environment with opportunities for learning and growth, but also values focused individual work time.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1c2d3e4f"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and data-driven, but also empathetic and supportive, especially when mentoring.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5g6h7i8j"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Data can drive significant positive change in healthcare.",
+        "Continuous learning is essential for professional growth.",
+        "Mentorship is crucial for empowering others.",
+        "Work-life balance is key to long-term success and well-being."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9k0l1m2n"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "principles": {
+      "value": [
+        "Ethical AI development",
+        "Evidence-based decision making",
+        "Commitment to excellence"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-3o4p5q6r"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Team success",
+        "Personal development",
+        "Family and relationships",
+        "Health and well-being"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-7s8t9u0v"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Recently engaged to Arjun (software architect)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-1w2x3y4z"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at current company",
+        "Fellow data scientists in the healthcare industry",
+        "Mentors and mentees from women-in-tech programs"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5a6b7c8d"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Ensuring data privacy and security in healthcare models",
+        "Balancing demanding work projects with personal life",
+        "Navigating the complexities of AI regulation"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-9e0f1g2h"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    },
+    "recurring": {
+      "value": [
+        "The rapid pace of technological change in AI",
+        "Promoting diversity and inclusion in STEM fields"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-3i4j5k6l"
+      ],
+      "updated_at": "2026-03-01T05:18:06.078968+00:00",
+      "created_at": "2026-03-01T05:18:06.078968+00:00"
+    }
+  }
+}

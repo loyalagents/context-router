@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Le Monde's internal archive and secure communication channels. Essential for accessing past articles, referencing previous investigations, and communicating securely with editors and trusted sources on sensitive corruption and fraud cases.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Access to specialized legal databases (e.g., Dalloz, LexisNexis). Used to research legal precedents, corporate structures, and regulatory frameworks relevant to investigations into corporate fraud and political finance.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Contact list for trusted sources within government ministries and financial institutions. These are individuals who have provided reliable information in the past, crucial for verifying leads and obtaining insider perspectives on corruption.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Online jazz piano tutorials and sheet music archives. Used for practicing and learning new pieces, providing a creative outlet and stress relief away from demanding journalistic deadlines.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Therapy session scheduler and notes. A vital tool for managing the stress and psychological toll of investigative journalism, particularly after facing harassment campaigns.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Louvre Museum website and membership details. Used for planning visits with Camille, serving as a cherished family activity and a break from work.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "resource-y5z6a7b8",
+      "type": "resource",
+      "content": "Running route planner app and track history. Helps maintain a consistent running routine for stress management and physical health, balancing demanding work schedules.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

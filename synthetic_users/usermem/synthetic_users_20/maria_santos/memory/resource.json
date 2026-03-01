@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Plataforma de Gestão Escolar (PGE): This is the school's official platform for grades, attendance, and communication with parents. Maria uses it daily to update student records and post assignments.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-aabbccdd"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Portal Educacional Domínio Público: Maria frequently accesses this site for classic Brazilian literature and historical texts to supplement her lessons. It's a valuable resource for finding public domain works.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-eeffgghh"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "WhatsApp Group - Clube do Livro Quinzenal: This group is for communication and coordination with members of her book club. They discuss upcoming reads, meeting logistics, and share book recommendations.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-iijjkkll"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Google Drive - Material de Aula: Maria stores all her lesson plans, presentations, and student handouts here. She organizes them by grade level and subject for easy access and sharing.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-mmnnoopp"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Receitas Bahianas Tradicionais (Blog): This personal blog is her go-to for authentic Bahian recipes. She uses it for cooking inspiration and to ensure accuracy when sharing dishes with friends.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-qqrrss tt"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "USP Letras Alumni Network: This online portal connects her with former classmates and professors from USP. She uses it for professional networking and to stay updated on academic trends.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-uuvvwwxx"
+      ],
+      "created_at": "2023-10-26T10:25:00Z",
+      "updated_at": "2023-10-26T10:25:00Z"
+    },
+    {
+      "id": "resource-y5z6a7b8",
+      "type": "resource",
+      "content": "Samba Dance Studio Schedule: Maria checks this schedule weekly to plan her samba classes. It helps her balance her teaching, studies, and hobbies.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-yyzzaabb"
+      ],
+      "created_at": "2023-10-26T10:30:00Z",
+      "updated_at": "2023-10-26T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

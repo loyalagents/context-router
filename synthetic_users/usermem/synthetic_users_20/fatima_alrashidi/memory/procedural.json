@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To prepare for Fajr prayer during Ramadan, set a single alarm for 3:45 AM. Immediately after the alarm, perform ablution (Wudu) to ensure readiness. Then, consume Suhoor, focusing on hydration and slow-release energy foods. Finally, pray Fajr before the alarm sounds for the next prayer to maintain the daily prayer schedule.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When reviewing a literary fiction book for the blog, first read it thoroughly, making notes on plot, character development, and themes. After finishing, allow a day for reflection. Then, draft an initial review focusing on personal emotional response and critical analysis. Finally, edit for clarity, conciseness, and engaging language before publishing.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For managing clinical placements, create a weekly schedule that balances lectures, tutorials, ward rounds, and study time. Allocate specific blocks for reviewing patient notes and preparing case presentations. Ensure all personal prayer times are accounted for within this schedule, adjusting activities as needed. Regularly review and adjust the schedule based on feedback and evolving workload.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "At the refugee health clinic, begin by reviewing the patient log for the day, noting any urgent cases or specific needs. Conduct initial patient assessments with a focus on culturally sensitive communication and active listening. Collaborate with supervising physicians for complex cases, ensuring clear documentation of findings and proposed management plans. Conclude each patient encounter by confirming understanding and next steps.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To integrate global health equity concepts into obstetrics studies, actively seek out research papers and case studies from low-resource settings. During clinical rotations, pay close attention to disparities in maternal outcomes and their underlying social determinants. Engage in discussions with faculty and peers about implementing evidence-based interventions that address these inequities. Formulate personal goals that align with improving maternal health globally.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

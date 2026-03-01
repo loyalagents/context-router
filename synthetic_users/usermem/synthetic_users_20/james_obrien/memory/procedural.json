@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To properly tie a bowline knot, form a small loop (rabbit hole) in the standing part of the rope. Bring the working end up through the loop, around the standing part (around the tree), and then back down through the loop. Pull both ends tight to secure the knot.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When checking the weather forecast on the smartphone, James always looks for wind speed and direction first, as this is most critical for any outdoor activity. He then checks the precipitation chance and temperature. He finds the local news app to be the most reliable for this information.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "To prepare the soil for planting potatoes, dig trenches about 6 inches deep, leaving 2-3 feet between rows. Place seed potatoes about 1 foot apart in the trenches, ensuring the 'eyes' are facing upwards. Cover them gently with soil.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "When attending hurling club committee meetings, James makes sure to review the minutes from the previous meeting before the new one starts. He always brings a small notebook and pen to jot down action points and decisions, ensuring he remembers his responsibilities.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To ensure a good catch when mending fishing nets, use a large needle and strong twine. Start by reinforcing any tears with a simple running stitch, then use a series of interlocking knots to create a mesh that matches the original pattern as closely as possible. Check for any loose ends before considering the repair complete.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

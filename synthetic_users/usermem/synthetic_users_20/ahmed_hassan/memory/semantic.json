@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The Python Global Interpreter Lock (GIL) is a mutex that protects access to Python objects, preventing multiple native threads from executing Python bytecode at the same time within a single process. This is a key consideration for performance in CPU-bound multithreaded Python applications.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Asynchronous programming in Python, particularly with `asyncio`, allows a single thread to manage multiple I/O-bound tasks efficiently by relinquishing control during I/O operations. This is crucial for building scalable network applications.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "The process for obtaining Canadian permanent residency often involves the Express Entry system, which ranks candidates based on factors like age, education, work experience, and language proficiency. My own journey involved securing a study permit, completing my Master's, and then transitioning to permanent residency.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "The University of Toronto's Computer Science department is highly regarded globally, particularly its research in artificial intelligence and theoretical computer science. My MSc provided a strong foundation in advanced algorithms and machine learning.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "Open-source contribution best practices often include thorough documentation, writing comprehensive unit tests, and adhering to community coding standards. Participating in code reviews is also essential for collaboration and quality.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "The five daily prayers (Salat) in Islam are Fajr (dawn), Dhuhr (noon), Asr (afternoon), Maghrib (sunset), and Isha (night). These prayers are performed facing the Kaaba in Mecca and are a fundamental pillar of the faith.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "Fintech startups often leverage microservices architecture to build scalable and resilient platforms. This involves breaking down applications into small, independent services that communicate over a network, allowing for faster development and deployment cycles.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "semantic-c9d0e1f2",
+      "type": "knowledge",
+      "content": "Soccer, or football, is a globally popular sport with a rich history. Key aspects of the game include teamwork, tactical formations, and individual skill, all contributing to a dynamic and engaging experience.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

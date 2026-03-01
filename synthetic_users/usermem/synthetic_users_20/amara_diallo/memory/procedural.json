@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To initiate a new WASH project in Casamance, first conduct a thorough community needs assessment, focusing on water access and sanitation infrastructure. Secure buy-in from local leaders and community representatives early on. Develop a detailed budget and timeline, ensuring alignment with NGO funding cycles and potential seasonal challenges like the rainy season. Finally, establish clear communication channels with all stakeholders from the outset.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-e8f7g6h5"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2024-03-15T11:30:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When preparing for a regional conference on climate justice, distill key project successes into concise talking points. Integrate personal feminist advocacy into the narrative, highlighting the disproportionate impact of climate change on women. Practice delivery to ensure a confident and engaging presentation, and prepare specific data points to support arguments. Always anticipate potential questions and have thoughtful responses ready.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-d4c3b2a1"
+      ],
+      "created_at": "2023-09-10T14:00:00Z",
+      "updated_at": "2024-01-20T09:15:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "To manage parental leave logistics, map out critical project milestones and identify key personnel who can cover responsibilities. Proactively discuss handover plans with your team and management well in advance. Schedule regular check-ins during your leave for urgent matters, but delegate day-to-day operations effectively. Ensure all necessary documentation and access permissions are transferred before your departure.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2024-02-01T08:00:00Z",
+      "updated_at": "2024-03-10T15:45:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "For effective vegetable gardening in Dakar's climate, select heat-tolerant and drought-resistant varieties suited to the region. Implement a consistent watering schedule, preferably in the early morning or late evening to minimize evaporation. Utilize organic mulching to retain soil moisture and suppress weeds. Regularly amend the soil with compost to maintain fertility and improve drainage.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-f7g6h5e8"
+      ],
+      "created_at": "2023-07-15T16:00:00Z",
+      "updated_at": "2024-03-05T10:00:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "When engaging with community members about sanitation improvements, start by listening to their existing challenges and priorities. Use simple, visual aids to explain technical concepts and potential solutions. Emphasize the long-term benefits for health and well-being, particularly for children. Foster a collaborative approach, encouraging community participation in decision-making and implementation.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-c3b2a1d4"
+      ],
+      "created_at": "2023-11-20T11:00:00Z",
+      "updated_at": "2024-02-28T13:00:00Z"
+    }
+  ],
+  "summaries": []
+}

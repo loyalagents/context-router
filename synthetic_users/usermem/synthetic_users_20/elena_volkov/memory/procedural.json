@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "When translating legal documents, first create a glossary of key terms specific to the case, cross-referencing Ukrainian and target language legal dictionaries.  Then, perform a full draft translation, paying close attention to maintaining the precise meaning and legal implications.  Finally, conduct a thorough review focusing on accuracy, consistency, and adherence to legal terminology standards in both languages.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "To manage wartime anxiety through poetry, begin by observing a specific sensory detail or emotion from the day.  Write freely for 10-15 minutes, focusing on imagery and metaphor rather than strict form.  Afterward, refine the poem by selecting the most potent words and shaping the rhythm to evoke the intended feeling, often finding solace in the act of creation.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For Ukrainian to English literary translation, prioritize capturing the author's unique voice and stylistic nuances over literal word-for-word accuracy.  Read the source text aloud to grasp its cadence and flow, then experiment with different phrasing in English until a natural and evocative equivalent is found.  Pay special attention to cultural references, ensuring they are either explained subtly or replaced with culturally resonant alternatives.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "When volunteering to deliver supplies, first confirm the exact list and quantity of items needed by the recipients via the charity's secure communication channel.  Organize the supplies efficiently in the vehicle to prevent damage during transit and ensure easy access.  Document the delivery with a photo (if appropriate and safe) and a brief confirmation message to the charity coordinator upon successful drop-off.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To create a new blog post about Ukrainian literature, select a lesser-known author or specific work that deserves broader recognition.  Outline the key themes, historical context, and personal connection to the piece.  Write the post with engaging language, incorporating relevant quotes and images, and conclude with a call to action for readers to discover or discuss the literature.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "procedural-u1v2w3x4",
+      "type": "procedure",
+      "content": "Embroidery of vyshyvanka patterns involves selecting a traditional pattern known for its symbolic meaning, such as protection or fertility.  Carefully transfer the pattern onto the fabric using a transfer pen or by stitching a temporary outline.  Stitch the design using the appropriate thread colors and stitches, maintaining consistent tension for a neat finish.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

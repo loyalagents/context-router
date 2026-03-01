@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Ravi Patel: User's profile. Certified Public Accountant and partner at an accounting firm. Specializes in small business tax strategy and M&A accounting. His parents ran a motel in Indiana, influencing his focus on small businesses.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Accounting Firm: Ravi's current employer, a mid-size accounting firm where he is a partner. He likely manages a team and is responsible for client acquisition and service delivery, particularly for small businesses.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Chicago, Illinois, USA: Ravi Patel's current residence and likely the location of his accounting firm. This is his primary base of operations.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Small-Business Tax Strategy: Ravi's area of specialization. This involves optimizing tax liabilities for small businesses, a skill likely honed by his background and professional experience.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "M&A Accounting: Another specialization of Ravi's, focusing on the accounting aspects of mergers and acquisitions. This suggests expertise in complex financial transactions and due diligence.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "organisation",
+      "content": "Indo-American Chamber of Commerce: Ravi serves on the board of this organization. This highlights his engagement with the Indian-American business community and his leadership roles.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Youth Cricket Coaching: Ravi coaches youth cricket on Sundays. This indicates a passion for the sport and a commitment to community involvement and mentoring.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Marathon Running: Ravi is an avid marathon runner and has qualified for Boston. This demonstrates his discipline, physical fitness, and goal-oriented nature.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Cricket Analytics: Ravi is obsessed with cricket analytics. This suggests a deep interest in data analysis applied to sports, likely overlapping with his Excel modelling skills.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "concept",
+      "content": "Excel Modelling: Ravi is skilled in Excel modelling. This is a crucial tool for his accounting work, particularly in M&A and tax strategy, and likely extends to his interest in cricket analytics.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    }
+  ],
+  "summaries": []
+}

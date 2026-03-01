@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-f1a2b3c4",
+      "type": "resource",
+      "content": "Jupyter Notebooks are essential for Priya's daily workflow. She uses them extensively for data exploration, model development, and visualization in Python, leveraging libraries like Pandas, Scikit-learn, and Matplotlib.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T08:00:00Z",
+      "updated_at": "2023-10-27T09:30:00Z"
+    },
+    {
+      "id": "resource-d5e6f7a8",
+      "type": "resource",
+      "content": "GitHub is critical for version control and collaboration with her data science team. Priya uses it to manage code repositories, track changes, and review pull requests for ML projects.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "created_at": "2023-10-27T08:05:00Z",
+      "updated_at": "2023-10-27T09:35:00Z"
+    },
+    {
+      "id": "resource-b9c8d7e6",
+      "type": "resource",
+      "content": "The company's internal documentation portal on Confluence serves as a primary reference. Priya uses it to access project specifications, research findings, and best practices for healthcare analytics.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-d9c8b7a6"
+      ],
+      "created_at": "2023-10-27T08:10:00Z",
+      "updated_at": "2023-10-27T09:40:00Z"
+    },
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Dr. Ananya Roy (ananya.roy@colleague.com) is a key collaborator. Priya frequently consults with her on statistical methodologies and validation approaches for predictive models.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-b1a2c3d4"
+      ],
+      "created_at": "2023-10-27T08:15:00Z",
+      "updated_at": "2023-10-27T09:45:00Z"
+    },
+    {
+      "id": "resource-e5f6a7b8",
+      "type": "resource",
+      "content": "Priya regularly consults Towards Data Science for articles and tutorials on new ML techniques and best practices. It helps her stay updated with the latest advancements in the field.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-f5e6a7b8"
+      ],
+      "created_at": "2023-10-27T08:20:00Z",
+      "updated_at": "2023-10-27T09:50:00Z"
+    },
+    {
+      "id": "resource-c9d8e7f6",
+      "type": "resource",
+      "content": "The 'Sangamam' Carnatic Music Academy website is a vital resource for her musical pursuits. Priya uses it to find concert schedules, riyaz (practice) sessions, and connect with fellow musicians.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-c9d8e7f6"
+      ],
+      "created_at": "2023-10-27T08:25:00Z",
+      "updated_at": "2023-10-27T09:55:00Z"
+    },
+    {
+      "id": "resource-b1a2c3d4",
+      "type": "resource",
+      "content": "Her yoga instructor, Meera Patel (meera.yoga@email.com), provides guidance and schedules for daily practice. Priya values this for maintaining her well-being and focus.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-b1a2c3d4"
+      ],
+      "created_at": "2023-10-27T08:30:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    }
+  ],
+  "summaries": []
+}

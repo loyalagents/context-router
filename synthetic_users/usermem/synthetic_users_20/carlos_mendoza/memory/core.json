@@ -1,0 +1,385 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:18:19.750987+00:00",
+  "profile": {
+    "summary": "Carlos Mendoza is a 39-year-old Mexican executive chef and co-owner of 'Raíz', a modern Mexican restaurant in Mexico City. He is married to Valentina, a pastry chef, and they have two children, Diego (8) and Sofia (5). Carlos is a culinary innovator, specializing in reimagining pre-Hispanic ingredients for contemporary cuisine, and has received recognition in Mexican food publications. Outside of his professional life, he coaches youth football, collects vintage mezcal, and maintains a rooftop herb garden.",
+    "last_generated": "2026-03-01T05:18:19.750987+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Carlos Mendoza",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "age": {
+      "value": 39,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Mexico City, Mexico",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "nationality": {
+      "value": "Mexican",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "languages": {
+      "value": [
+        "Spanish",
+        "English",
+        "basic French"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Executive Chef and Co-owner",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "current_company": {
+      "value": "Raíz",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "industry": {
+      "value": "Hospitality (Restaurant)",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "experience_years": {
+      "value": 15,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "education": {
+      "value": "Culinary Institute of Mexico",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "skills": {
+      "value": [
+        "Modern Mexican Cuisine",
+        "Pre-Hispanic Ingredient Utilization",
+        "Menu Development",
+        "Restaurant Management",
+        "Culinary Arts",
+        "Tasting Menu Creation"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Fusion Cuisine",
+        "Mexican Gastronomy",
+        "Farm-to-Table Concepts",
+        "Molecular Gastronomy Techniques"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "work_style": {
+      "value": "Collaborative and innovative, with a deep respect for traditional ingredients and techniques, adapted for a modern dining experience.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Raíz Menu Evolution",
+          "description": "Continuously developing and refining tasting menus that highlight seasonal, often overlooked, pre-Hispanic ingredients.",
+          "stage": "Ongoing"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:18:19.750987+00:00",
+        "created_at": "2026-03-01T05:18:19.750987+00:00"
+      }
+    ],
+    "past": [
+      "Staging at restaurants in Madrid and Paris",
+      "Featured in Mexican food magazines"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Introduce a new seasonal tasting menu at Raíz",
+        "Source a rare heirloom corn variety for a special dish",
+        "Expand the rooftop herb garden"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Gain international recognition for Raíz",
+        "Publish a cookbook on traditional Mexican ingredients"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "career": {
+      "value": "To be a leading advocate for authentic and innovative Mexican cuisine on a global scale, while mentoring the next generation of chefs.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance to spend quality time with family and continue pursuing his hobbies.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "High-quality Japanese knives",
+        "Sous vide machine",
+        "Fermentation vessels",
+        "Mortar and pestle"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Modern kitchen equipment",
+        "Digital menu platforms",
+        "Inventory management software"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "work_environment": {
+      "value": "A fast-paced, creative kitchen environment that fosters teamwork and innovation, with a strong emphasis on quality and precision.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "communication_style": {
+      "value": "Direct and clear, but also encouraging and respectful, especially when working with his team.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Preservation of culinary heritage",
+        "Importance of family",
+        "Commitment to quality",
+        "Continuous learning"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "principles": {
+      "value": [
+        "Respect for ingredients",
+        "Integrity in cooking",
+        "Passion for innovation"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Restaurant's success",
+        "Family well-being",
+        "Culinary development"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Valentina (pastry chef); son Diego (8) and daughter Sofia (5)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Fellow chefs at Raíz",
+        "Suppliers of local and heirloom ingredients",
+        "Food critics and journalists"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Maintaining high standards during busy service",
+        "Ensuring consistent quality of unique ingredients",
+        "Managing staff during peak hours"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    },
+    "recurring": {
+      "value": [
+        "The challenge of sourcing rare and sustainable ingredients consistently."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:18:19.750987+00:00",
+      "created_at": "2026-03-01T05:18:19.750987+00:00"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed the latest EU directive on single-use plastics with the AI, seeking clarification on specific exemptions for biodegradable packaging in food service.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-e9f8g7h6"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "episodic-b2c3d4e5",
+      "type": "event",
+      "content": "Asked the AI for historical weather data for the Kungsleden trail in late September over the past 10 years to prepare for my upcoming hike.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-f8g7h6i5"
+      ],
+      "created_at": "2023-11-05T14:30:00Z",
+      "updated_at": "2023-11-05T14:30:00Z"
+    },
+    {
+      "id": "episodic-c3d4e5f6",
+      "type": "event",
+      "content": "Researched potential funding sources for a pilot project on urban composting initiatives in Brandenburg, asking the AI to identify relevant foundations and government grants.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-g7h6i5j4"
+      ],
+      "created_at": "2023-11-18T09:00:00Z",
+      "updated_at": "2023-11-18T09:00:00Z"
+    },
+    {
+      "id": "episodic-d4e5f6g7",
+      "type": "event",
+      "content": "Requested a summary of recent academic papers on the economic benefits of circular economy models in the German automotive sector.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-h6i5j4k3"
+      ],
+      "created_at": "2023-12-01T11:45:00Z",
+      "updated_at": "2023-12-01T11:45:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked for a recipe for traditional German sauerkraut, specifying a preference for a longer fermentation period.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-i5j4k3l2"
+      ],
+      "created_at": "2023-12-15T16:20:00Z",
+      "updated_at": "2023-12-15T16:20:00Z"
+    },
+    {
+      "id": "episodic-f6g7h8i9",
+      "type": "event",
+      "content": "Generated a draft presentation outline for my upcoming lecture on 'Policy levers for achieving a circular economy in small and medium-sized enterprises'.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-j4k3l2m1"
+      ],
+      "created_at": "2024-01-10T13:00:00Z",
+      "updated_at": "2024-01-10T13:00:00Z"
+    },
+    {
+      "id": "episodic-g7h8i9j0",
+      "type": "event",
+      "content": "Searched for upcoming performances of Wagner's 'Der Ring des Nibelungen' at the Berlin State Opera and other major German opera houses.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-k3l2m1n0"
+      ],
+      "created_at": "2024-01-25T19:00:00Z",
+      "updated_at": "2024-01-25T19:00:00Z"
+    },
+    {
+      "id": "episodic-h8i9j0k1",
+      "type": "event",
+      "content": "Asked the AI to find cycling routes from my home in Prenzlauer Berg to the Freie Universität campus, prioritizing bike lanes and avoiding major roads.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-l2m1n0o9"
+      ],
+      "created_at": "2024-02-08T08:30:00Z",
+      "updated_at": "2024-02-08T08:30:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Investigated the feasibility of a new national recycling standard for electronic waste, requesting data on current collection rates and potential economic impacts.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-m1n0o9p8"
+      ],
+      "created_at": "2024-02-20T10:00:00Z",
+      "updated_at": "2024-02-20T10:00:00Z"
+    },
+    {
+      "id": "episodic-j0k1l2m3",
+      "type": "event",
+      "content": "Queried the AI about the history and cultural significance of traditional pickling methods in Northern Europe.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-n0o9p8q7"
+      ],
+      "created_at": "2024-03-05T17:00:00Z",
+      "updated_at": "2024-03-05T17:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

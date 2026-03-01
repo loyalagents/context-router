@@ -1,0 +1,408 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:19:43.649050+00:00",
+  "profile": {
+    "summary": "Elena Volkov is a 29-year-old Ukrainian freelance translator and interpreter based in Kyiv. She is fluent in Ukrainian, Russian, English, and Polish, with a background in philology from Taras Shevchenko National University. Elena specializes in literary fiction and legal documents, and also interprets for international journalists and NGOs. She actively uses her English blog to raise global awareness about Ukrainian literature. Facing wartime anxieties, Elena finds solace and expresses herself through poetry writing, traditional embroidery, and volunteering for a charity supporting frontline civilians.",
+    "last_generated": "2026-03-01T05:19:43.649050+00:00",
+    "confidence": 0.92,
+    "evidence_count": 12
+  },
+  "identity": {
+    "name": {
+      "value": "Elena Volkov",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "age": {
+      "value": 29,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Kyiv, Ukraine",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "nationality": {
+      "value": "Ukrainian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "languages": {
+      "value": [
+        "Ukrainian",
+        "Russian",
+        "English",
+        "Polish"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Freelance Translator and Interpreter",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "current_company": {
+      "value": "Self-Employed",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "industry": {
+      "value": "Translation, Interpretation, Publishing",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "experience_years": {
+      "value": 5,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "education": {
+      "value": "Philology degree from Taras Shevchenko National University",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "skills": {
+      "value": [
+        "Literary Translation",
+        "Legal Document Translation",
+        "Simultaneous Interpretation",
+        "Consecutive Interpretation",
+        "Cross-cultural Communication",
+        "Creative Writing",
+        "Blogging"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Ukrainian Literature",
+        "Legal Terminology",
+        "International Relations",
+        "Humanitarian Aid Communication",
+        "Cultural Diplomacy"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "work_style": {
+      "value": "Independent, detail-oriented, and adaptable to diverse project needs, with a strong commitment to accuracy and cultural nuance.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Blog on Ukrainian Literature",
+          "description": "Writing and publishing blog posts in English to promote Ukrainian literature globally and foster international understanding.",
+          "stage": "Ongoing"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:19:43.649050+00:00",
+        "created_at": "2026-03-01T05:19:43.649050+00:00"
+      },
+      {
+        "value": {
+          "name": "Charity Supply Delivery",
+          "description": "Volunteering time to organize and deliver essential supplies to civilians near the frontlines.",
+          "stage": "Active Support"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-e7f8g9h0"
+        ],
+        "updated_at": "2026-03-01T05:19:43.649050+00:00",
+        "created_at": "2026-03-01T05:19:43.649050+00:00"
+      }
+    ],
+    "past": [
+      "Translation of a contemporary Ukrainian novel into English.",
+      "Interpretation for a visiting delegation of international journalists covering the conflict."
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Secure translation contracts for at least two major literary works.",
+        "Increase blog readership by 20% in the next six months.",
+        "Develop a new embroidery pattern inspired by wartime resilience.",
+        "Attend a virtual workshop on advanced legal translation techniques."
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Publish a collection of translated Ukrainian poetry.",
+        "Become a recognized voice in promoting Ukrainian culture internationally.",
+        "Establish a small online shop for her embroidered artworks."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "career": {
+      "value": "To leverage her linguistic skills and cultural understanding to bridge communication gaps and promote Ukrainian arts and literature on a global scale.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "personal": {
+      "value": "To maintain her well-being amidst challenging circumstances, nurture her creative pursuits, and contribute positively to her community.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "CAT tools (e.g., SDL Trados)",
+        "Online dictionaries and glossaries",
+        "Text editors",
+        "Embroidery supplies",
+        "Poetry writing journals"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Cloud storage",
+        "Video conferencing software",
+        "Blogging platforms",
+        "Social media"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "work_environment": {
+      "value": "Quiet and focused, with flexibility to work from home or a co-working space as needed.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and polite, with a preference for written communication for project details and verbal for immediate clarification.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Cultural preservation is vital.",
+        "Humanitarian aid is a moral imperative.",
+        "Art and literature can foster empathy and understanding.",
+        "Resilience in the face of adversity is a strength."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "principles": {
+      "value": [
+        "Accuracy in translation.",
+        "Respect for cultural context.",
+        "Timeliness in delivery.",
+        "Authenticity in expression."
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family well-being.",
+        "Contributing to humanitarian efforts.",
+        "Professional growth and skill development.",
+        "Maintaining personal creative outlets."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Single; lives with her mother after father and brother enlisted in 2022",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Acquaintances from international journalism assignments.",
+        "Fellow translators and interpreters within Ukrainian diaspora.",
+        "Contacts within humanitarian organizations."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "The safety of her family and country.",
+        "The long-term impact of the war on Ukrainian culture.",
+        "Maintaining consistent work amidst economic instability."
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Wartime anxiety and its effect on mental well-being."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m7n8o9p0"
+      ],
+      "updated_at": "2026-03-01T05:19:43.649050+00:00",
+      "created_at": "2026-03-01T05:19:43.649050+00:00"
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Isabella Romano is the user, a 55-year-old third-generation winemaker and owner of the Podere Romano estate in Montalcino, Tuscany. She studied oenology and has a passion for winemaking, biodynamic farming, and the history of the Val d'Orcia.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "place",
+      "content": "Podere Romano is the user's family winery located in Montalcino, Tuscany, Italy. Isabella Romano is the current owner and produces boutique Brunello di Montalcino wines there, also hosting wine-tourism experiences.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "concept",
+      "content": "Brunello di Montalcino is a prestigious Italian red wine produced in Montalcino, Tuscany. Isabella Romano's estate, Podere Romano, is known for producing boutique versions of this wine, and she is involved with the Consorzio del Brunello.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Biodynamic farming is an agricultural approach that Isabella Romano experiments with at her estate. It emphasizes the interconnectedness of soil, plants, animals, and the cosmos, aiming for sustainable and holistic land management.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "organisation",
+      "content": "Consorzio del Brunello is the consortium responsible for promoting and protecting Brunello di Montalcino wine. Isabella Romano is a member of its board, indicating her significant role in the region's wine industry.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "place",
+      "content": "Montalcino, Tuscany, Italy is the home region of Isabella Romano and her winery, Podere Romano. It is globally renowned for its production of Brunello di Montalcino wine.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Oenology is the science and study of wine and winemaking. Isabella Romano studied oenology in Siena, which formed the foundation for her career as a winemaker.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Burgundy, France is a renowned wine region where Isabella Romano completed a harvest internship. This experience likely influenced her winemaking philosophy and skills.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Slow Food is a global movement advocating for local food traditions and sustainable agriculture, which Isabella Romano is passionate about. This aligns with her interest in biodynamic farming and traditional winemaking.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2023-10-27T10:08:00Z",
+      "updated_at": "2023-10-27T10:08:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "concept",
+      "content": "Val d'Orcia is a picturesque valley in Tuscany, known for its medieval history and landscapes, which Isabella Romano is interested in. Its cultural heritage likely influences her appreciation for the region.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-27T10:09:00Z",
+      "updated_at": "2023-10-27T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

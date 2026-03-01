@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "Afro-contemporary womenswear blends traditional African textiles and silhouettes with modern, global fashion trends. This fusion allows for expressive yet modest designs, appealing to a diverse clientele.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f1e2d3c4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Digital pattern-making software, like Browzwear or CLO3D, enables designers to create 3D prototypes, reducing fabric waste and speeding up the design process. This technology is crucial for modern fashion businesses aiming for efficiency.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-a9b8c7d6"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Instagram is a vital platform for fashion brands, especially those targeting younger demographics. Utilizing high-quality visuals, engaging stories, and influencer collaborations can drive significant sales and brand awareness.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-e3f4g5h6"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "Modest fashion, particularly within Islamic contexts, emphasizes clothing that covers the body without being revealing. It can still be highly fashionable and expressive through fabric choice, color, and silhouette.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-b7c8d9e0"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "New York Fashion Week is a premier global fashion event, showcasing the latest collections from top designers. Participation signifies major international recognition and market access for emerging labels.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Yaba College of Technology in Lagos is a reputable institution for art and design education in Nigeria. Its graduates often contribute significantly to the creative industries both locally and internationally.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "Pop-up shops offer a flexible and cost-effective way for fashion designers to test new markets, connect with customers directly, and create buzz around their brand. They are particularly effective for brands with a strong social media presence.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

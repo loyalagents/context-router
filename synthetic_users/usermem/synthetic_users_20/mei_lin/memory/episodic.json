@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed new Sichuan peppercorn supplier options with the AI, comparing prices and delivery times for bulk orders for Lin's Kitchen.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked the AI for a quick translation of a customer's positive review written in Mandarin, ensuring accurate nuance for social media.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-11-01T14:30:00Z",
+      "updated_at": "2023-11-01T14:30:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Researched potential scholarship opportunities for Jason's medical school applications with the AI's help, focusing on those available to Australian citizens.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-11-15T09:00:00Z",
+      "updated_at": "2023-11-15T09:00:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Planned a weekend bushwalking trip to the Blue Mountains, asking the AI for trail difficulty ratings and estimated travel times from Sydney.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-33445566"
+      ],
+      "created_at": "2023-11-20T11:45:00Z",
+      "updated_at": "2023-11-20T11:45:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Checked the weather forecast for Sunday evening, hoping for good conditions for mahjong with friends.",
+      "confidence": 0.7,
+      "evidence_ids": [
+        "obs-77889900"
+      ],
+      "created_at": "2023-11-25T18:00:00Z",
+      "updated_at": "2023-11-25T18:00:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Received a reminder from the AI about the upcoming Sydney Chinese Business Association meeting.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-12345678"
+      ],
+      "created_at": "2023-12-05T08:30:00Z",
+      "updated_at": "2023-12-05T08:30:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Asked the AI for tips on improving chilli plant growth in a Sydney climate, specifically regarding pest control for home-grown varieties.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-87654321"
+      ],
+      "created_at": "2023-12-10T16:00:00Z",
+      "updated_at": "2023-12-10T16:00:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Generated a draft social media post announcing a new limited-time meal kit special at Lin's Kitchen, with AI assistance for engaging language.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-21098765"
+      ],
+      "created_at": "2024-01-08T10:00:00Z",
+      "updated_at": "2024-01-08T10:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Searched for information on the latest swimming competition results for Amy, checking national rankings.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-65432109"
+      ],
+      "created_at": "2024-01-22T19:30:00Z",
+      "updated_at": "2024-01-22T19:30:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Asked the AI to find local venues in Newtown that offer private rooms suitable for a small mahjong gathering.",
+      "confidence": 0.81,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2024-02-03T15:00:00Z",
+      "updated_at": "2024-02-03T15:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

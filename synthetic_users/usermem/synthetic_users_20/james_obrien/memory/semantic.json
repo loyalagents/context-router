@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The North Atlantic is known for its unpredictable weather and rough seas, especially during the winter months. Experienced fishermen like James developed a keen sense for reading the signs of an approaching storm.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Trawling involves dragging a large net through the water to catch fish. Different types of trawls are used depending on the target species and the seabed conditions, requiring specialized knowledge of the marine environment.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Hurling is a traditional Irish team sport known for its speed and physicality. The game is played with a stick called a hurley and a ball called a sliotar.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "The common potato varieties grown in Ireland, such as Rooster or Kerr's Pink, thrive in the local climate and soil. Proper tending of an allotment involves understanding crop rotation and soil enrichment.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "The Irish coast has a rich history of fishing communities, with traditions passed down through generations. The lore and superstitions surrounding the sea are a significant part of this heritage.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "When using a smartphone for news, it's important to check multiple reputable sources to get a balanced perspective. Weather apps can provide forecasts, but local knowledge often supplements this information.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "The Galway hooker is a traditional type of Irish fishing boat, characterized by its distinctive red sails. These boats were once common along the west coast for fishing and transport.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

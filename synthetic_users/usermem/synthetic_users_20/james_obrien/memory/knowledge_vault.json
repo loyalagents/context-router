@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-00000001",
+      "type": "person",
+      "content": "Brigid O'Brien. James's late wife. She passed away two years ago from cancer. Her memory is a significant factor in James's current life, influencing his memoir writing and his desire to stay active.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-aabbccdd"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-00000002",
+      "type": "place",
+      "content": "North Atlantic. The primary fishing ground for James during his 35-year career as a deep-sea fisherman. He has many memories and stories associated with this ocean, which he is now documenting.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-eeffgghh"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-00000003",
+      "type": "organisation",
+      "content": "Galway Hurling Club. James is an active member of the committee for this club. This is a key social outlet for him and a way he contributes to his community in retirement.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-iijjkkll"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-00000004",
+      "type": "concept",
+      "content": "Memoir Writing. James is currently writing a memoir about his life as a deep-sea fisherman. This is a significant personal project that occupies his time and helps him process his past.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-mmnnoopp"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-00000005",
+      "type": "person",
+      "content": "James's Son. He recently provided James with a smartphone. This gift has introduced James to new technology, which he uses cautiously for news and weather updates.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-qqrrsstt"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-00000006",
+      "type": "concept",
+      "content": "Smartphone Technology. James is new to smartphones and uses his cautiously. He primarily uses it for accessing news and weather information, indicating a practical and limited engagement with technology.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-uuvvwwxx"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-00000007",
+      "type": "place",
+      "content": "Galway, Ireland. James's current place of residence. He is a long-term resident, involved in local community activities like the hurling club and tending his allotment.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-yyzz0011"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-00000008",
+      "type": "concept",
+      "content": "Allotment Gardening. James tends an allotment, suggesting an interest in gardening and a connection to the land. This is one of his current activities in retirement.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-22334455"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

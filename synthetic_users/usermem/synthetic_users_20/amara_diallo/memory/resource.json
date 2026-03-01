@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "The official website for the Senegalese Ministry of Water and Sanitation. Amara frequently checks it for policy updates, tender announcements, and regulatory changes relevant to her NGO's WASH projects in Casamance.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6a7b8",
+      "type": "resource",
+      "content": "Project management software (e.g., Asana or Trello). Amara uses this daily to track project timelines, assign tasks to her team, and monitor progress on various WASH initiatives, especially when coordinating complex logistics.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-c9d0e1f2",
+      "type": "resource",
+      "content": "Contact information for key regional WASH stakeholders. This includes government officials, community leaders in Casamance, and representatives from partner organizations. Maintaining these relationships is crucial for project success.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-1a2b3c4d",
+        "obs-5e6f7a8b"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-3a4b5c6d",
+      "type": "resource",
+      "content": "Online repository for academic papers on international development and climate justice. Amara consults this for research, to inform her advocacy work, and to prepare for speaking engagements at conferences.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-c4d5e6f7"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-7e8f9a0b",
+      "type": "resource",
+      "content": "Calendar and planning tools for parental leave. Amara is actively using these to map out her leave schedule, ensuring smooth handover of responsibilities and minimizing disruption to ongoing WASH projects.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-b8a7f6e5"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-1c2d3e4f",
+      "type": "resource",
+      "content": "Streaming service for Afrobeats music. Amara uses this for relaxation and to stay connected with cultural trends, often listening while working or commuting.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-d3c2b1a0"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

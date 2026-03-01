@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "The 'Galway Bay Weather' app on his smartphone. James uses this multiple times a day to check sea conditions and forecasts, a habit deeply ingrained from his fishing days. It's crucial for planning his allotment work and any potential trips out on his small angling boat.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1234abcd"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2024-05-15T09:30:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Contact details for 'O'Malley's Hardware' in Galway. This is his go-to supplier for tools, materials, and advice for his handyman projects. He trusts their knowledge and often pops in for a chat as well as to buy supplies.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-efgh5678"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2024-04-20T11:15:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "The 'Galway Hurling Club' website. James is actively involved in the committee and uses the site for minutes, upcoming events, and member communications. He finds it a bit clunky but appreciates it for keeping him connected to the club.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ijkl9012"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2024-05-10T14:00:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "His son, Liam O'Brien's phone number. Liam helps him with his smartphone and any tech issues. James relies on him for advice and support with new technology.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-mnop3456"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2024-05-14T16:45:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "A well-worn notebook and pen kept by his bedside. This is where James jots down ideas for his memoir, memories from his fishing days, and reminders. It's his primary tool for capturing thoughts before they fade.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-qrst7890"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2024-05-01T08:00:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "The 'Irish Times' news app. James uses this to stay informed about national and international news, often reading it with his morning tea. He prefers its more traditional journalistic approach.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-uvwx1234"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2024-05-15T07:00:00Z"
+    }
+  ],
+  "summaries": []
+}

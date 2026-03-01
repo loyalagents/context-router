@@ -1,0 +1,389 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:20:43.083317+00:00",
+  "profile": {
+    "summary": "David Park is a 38-year-old Korean-American entrepreneur and Co-founder & CEO of a B2B SaaS startup in Austin, Texas, specializing in HR-tech. With a Stanford MBA and prior experience as a product manager at Salesforce, David is focused on building an AI-driven employee engagement platform, having recently secured a $2.8M seed round. He is actively involved in the Austin tech community as a mentor at Capital Factory. Outside of work, David is a devoted family man, an avid golfer, enjoys monthly camping trips, is learning guitar, and is a dedicated follower of the NBA, particularly the Warriors.",
+    "last_generated": "2026-03-01T05:20:43.083317+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "David Park",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "age": {
+      "value": 38,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Austin, Texas, USA",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "nationality": {
+      "value": "Korean-American",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "languages": {
+      "value": [
+        "English",
+        "Korean"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Co-founder & CEO",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "current_company": {
+      "value": "Early-stage B2B SaaS startup (HR-tech)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "industry": {
+      "value": "Human Resources Technology (HR-tech)",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "experience_years": {
+      "value": 10,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "education": {
+      "value": "Stanford MBA",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "skills": {
+      "value": [
+        "Startup Leadership",
+        "Product Management",
+        "SaaS Development",
+        "AI Implementation",
+        "Fundraising",
+        "Team Building"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "B2B SaaS Strategy",
+        "AI in HR",
+        "Early-Stage Startup Growth",
+        "Product-Led Growth",
+        "Venture Capital"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "work_style": {
+      "value": "Driven, strategic, and collaborative leader with a focus on innovation and team empowerment.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "AI-driven Employee Engagement Platform",
+          "description": "Developing an innovative SaaS platform leveraging AI to enhance employee engagement and productivity for B2B clients.",
+          "stage": "Early-stage development and market validation"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:20:43.083317+00:00",
+        "created_at": "2026-03-01T05:20:43.083317+00:00"
+      }
+    ],
+    "past": [
+      "Product Manager at Salesforce"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Successfully launch the MVP of the AI-driven employee engagement platform.",
+        "Secure Series A funding within the next 18 months.",
+        "Expand the core engineering team."
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Build the company into a leading player in the HR-tech market.",
+        "Achieve significant market share and profitability.",
+        "Foster a positive and impactful company culture."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "career": {
+      "value": "To lead and scale innovative technology companies that solve meaningful problems.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance, be present for his family, and continue pursuing personal interests like golf and music.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Slack",
+        "Jira",
+        "Figma",
+        "Google Workspace",
+        "HubSpot"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Python",
+        "React",
+        "AWS",
+        "Machine Learning Frameworks",
+        "Databases (SQL/NoSQL)"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "work_environment": {
+      "value": "Dynamic, fast-paced startup environment with a focus on collaboration and innovation.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "communication_style": {
+      "value": "Direct, clear, and results-oriented, but also empathetic and encouraging.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Innovation drives progress.",
+        "Customer success is paramount.",
+        "Teamwork and collaboration are essential.",
+        "Continuous learning is key."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "principles": {
+      "value": [
+        "Act with integrity.",
+        "Be transparent.",
+        "Empower individuals."
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Startup growth and success",
+        "Family well-being",
+        "Personal development",
+        "Community involvement"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Sarah (marketing director); son Ethan (3)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Mentors and advisors within the Austin tech scene.",
+        "Former colleagues from Salesforce.",
+        "Fellow startup founders."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Market adoption of a new HR-tech solution.",
+        "Scaling the team effectively.",
+        "Competition in the AI and HR space."
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Balancing intense startup demands with personal life."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:20:43.083317+00:00",
+      "created_at": "2026-03-01T05:20:43.083317+00:00"
+    }
+  }
+}

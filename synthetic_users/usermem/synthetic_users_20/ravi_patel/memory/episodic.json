@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-00000001",
+      "type": "event",
+      "content": "Asked for a summary of recent changes to Section 179 expensing rules for small businesses, as a client was inquiring.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-15T09:30:00Z",
+      "updated_at": "2023-10-15T09:30:00Z"
+    },
+    {
+      "id": "episodic-00000002",
+      "type": "event",
+      "content": "Discussed optimal Excel formulas for projecting post-merger cash flow statements, referencing a potential acquisition target.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-11-01T14:00:00Z",
+      "updated_at": "2023-11-01T14:00:00Z"
+    },
+    {
+      "id": "episodic-00000003",
+      "type": "event",
+      "content": "Requested a quick review of the basic rules for partnership tax allocations, as I needed to explain it to a new associate.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-11-20T11:15:00Z",
+      "updated_at": "2023-11-20T11:15:00Z"
+    },
+    {
+      "id": "episodic-00000004",
+      "type": "event",
+      "content": "Asked for historical data on cricket player performance metrics to build a predictive model for a fantasy league.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-33445566"
+      ],
+      "created_at": "2023-12-05T19:00:00Z",
+      "updated_at": "2023-12-05T19:00:00Z"
+    },
+    {
+      "id": "episodic-00000005",
+      "type": "event",
+      "content": "Inquired about the best training plan to maintain Boston Marathon qualifying times during the winter months.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-77889900"
+      ],
+      "created_at": "2024-01-10T07:00:00Z",
+      "updated_at": "2024-01-10T07:00:00Z"
+    },
+    {
+      "id": "episodic-00000006",
+      "type": "event",
+      "content": "Asked for a definition of 'earn-out' in the context of M&A deals, for a client presentation.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-11223355"
+      ],
+      "created_at": "2024-01-25T10:00:00Z",
+      "updated_at": "2024-01-25T10:00:00Z"
+    },
+    {
+      "id": "episodic-00000007",
+      "type": "event",
+      "content": "Requested assistance in drafting talking points for an upcoming Indo-American Chamber of Commerce board meeting regarding a new mentorship program.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-66778899"
+      ],
+      "created_at": "2024-02-15T13:30:00Z",
+      "updated_at": "2024-02-15T13:30:00Z"
+    },
+    {
+      "id": "episodic-00000008",
+      "type": "event",
+      "content": "Asked for a quick explanation of the tax implications of selling a small business for a client who was considering it.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-22334455"
+      ],
+      "created_at": "2024-03-01T16:00:00Z",
+      "updated_at": "2024-03-01T16:00:00Z"
+    },
+    {
+      "id": "episodic-00000009",
+      "type": "event",
+      "content": "Queried about the latest rule changes in T20 cricket, as the new season was approaching.",
+      "confidence": 0.81,
+      "evidence_ids": [
+        "obs-99001133"
+      ],
+      "created_at": "2024-03-20T20:00:00Z",
+      "updated_at": "2024-03-20T20:00:00Z"
+    },
+    {
+      "id": "episodic-00000010",
+      "type": "event",
+      "content": "Asked for a comparison of different cloud accounting software options suitable for a small manufacturing client.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-44556677"
+      ],
+      "created_at": "2024-04-05T10:30:00Z",
+      "updated_at": "2024-04-05T10:30:00Z"
+    },
+    {
+      "id": "episodic-00000011",
+      "type": "event",
+      "content": "Researched potential grant opportunities for minority-owned small businesses in Illinois.",
+      "confidence": 0.79,
+      "evidence_ids": [
+        "obs-88990011"
+      ],
+      "created_at": "2024-04-18T14:00:00Z",
+      "updated_at": "2024-04-18T14:00:00Z"
+    },
+    {
+      "id": "episodic-00000012",
+      "type": "event",
+      "content": "Asked for a simple explanation of how depreciation affects taxable income for a client who was new to business ownership.",
+      "confidence": 0.7,
+      "evidence_ids": [
+        "obs-11223366"
+      ],
+      "created_at": "2024-05-01T11:00:00Z",
+      "updated_at": "2024-05-01T11:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

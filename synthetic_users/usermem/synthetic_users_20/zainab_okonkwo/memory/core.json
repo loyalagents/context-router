@@ -1,0 +1,392 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:20:57.651012+00:00",
+  "profile": {
+    "summary": "Zainab Okonkwo is a 25-year-old Nigerian fashion designer and creative director based in Lagos. She is the founder of 'Zuri Lagos', a brand specializing in fusion Afro-contemporary womenswear that balances modesty with expressive style. A self-taught digital pattern-maker, Zainab's work has gained significant traction, evidenced by her 280k Instagram followers and features in publications like Vogue Africa. She is passionate about mentoring young seamstresses and aims to showcase her designs at New York Fashion Week.",
+    "last_generated": "2026-03-01T05:20:57.651012+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Zainab Okonkwo",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "age": {
+      "value": 25,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Lagos, Nigeria",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "nationality": {
+      "value": "Nigerian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "languages": {
+      "value": [
+        "English",
+        "Yoruba",
+        "Igbo"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Fashion Designer and Creative Director",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "current_company": {
+      "value": "Zuri Lagos",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "industry": {
+      "value": "Fashion",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "experience_years": {
+      "value": 5,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "education": {
+      "value": "Graduated from Yaba College of Technology",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "skills": {
+      "value": [
+        "Fashion Design",
+        "Creative Direction",
+        "Digital Pattern Making",
+        "Brand Management",
+        "Social Media Marketing",
+        "Garment Construction"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Afro-contemporary Womenswear",
+        "Modest Fashion",
+        "Afro-fusion Style",
+        "Sustainable Fashion Practices",
+        "Entrepreneurship in Fashion"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "work_style": {
+      "value": "Creative and detail-oriented, with a strong focus on brand identity and cultural relevance. Balances entrepreneurial drive with community engagement.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Zuri Lagos New Collection",
+          "description": "Designing and producing the next line of Afro-contemporary womenswear, focusing on innovative silhouettes and culturally inspired prints. Preparing for upcoming pop-up events.",
+          "stage": "Design and Production"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:20:57.651012+00:00",
+        "created_at": "2026-03-01T05:20:57.651012+00:00"
+      }
+    ],
+    "past": [
+      "Launch of Zuri Lagos",
+      "Vogue Africa Editorial Feature",
+      "Development of digital pattern-making skills"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Successfully launch the new Zuri Lagos collection",
+        "Increase Instagram engagement by 15%",
+        "Secure partnerships for two additional pop-up shops",
+        "Expand mentorship program reach to 20 young seamstresses"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Showcase Zuri Lagos at New York Fashion Week",
+        "Establish Zuri Lagos as a globally recognized fashion brand",
+        "Create a sustainable fashion manufacturing hub in Lagos"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "career": {
+      "value": "To become a leading figure in the global fashion industry, known for innovative design, cultural representation, and positive social impact.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "personal": {
+      "value": "To maintain a strong connection with her faith and family while achieving professional fulfillment and contributing to her community.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Sewing Machines",
+        "Pattern Drafting Software",
+        "Digital Design Tablets",
+        "Fabric Scissors",
+        "Measuring Tapes"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Adobe Creative Suite",
+        "Instagram Commerce Features",
+        "Digital Pattern Making Software"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "work_environment": {
+      "value": "A creative and collaborative studio environment, with opportunities for hands-on work and community interaction.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, inspiring, and community-focused, often utilizing visual storytelling.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Cultural heritage and modern expression can coexist",
+        "Modesty is a form of empowerment",
+        "Community upliftment through skill-sharing",
+        "Authenticity in design and business"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity in craftsmanship",
+        "Respect for cultural influences",
+        "Commitment to ethical practices"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Brand growth and recognition",
+        "Mentoring and community impact",
+        "Personal creative development",
+        "Maintaining brand integrity"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Single; close to parents and three younger siblings",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Fashion industry contacts in Lagos and internationally",
+        "Collaborators for pop-up events",
+        "Suppliers of fabrics and materials"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Logistics of international pop-up events",
+        "Sourcing sustainable and ethically produced fabrics",
+        "Scaling production while maintaining quality"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Balancing commercial demands with artistic vision",
+        "Navigating the evolving trends in the global fashion market"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:20:57.651012+00:00",
+      "created_at": "2026-03-01T05:20:57.651012+00:00"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To initiate a new hospital readmission prediction model project, first gather historical patient data, ensuring it includes demographics, diagnoses, procedures, and prior readmission records. Cleanse and preprocess the data by handling missing values, standardizing formats, and performing feature engineering. Define the target variable (readmission within X days) and split the data into training, validation, and testing sets. Select appropriate ML algorithms, train the models, and tune hyperparameters using the validation set. Finally, evaluate model performance on the unseen test set using metrics like AUC, precision, and recall before deployment.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-0001a2b3"
+      ],
+      "created_at": "2023-01-15T10:30:00Z",
+      "updated_at": "2023-10-26T14:45:12Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "My daily yoga routine begins with 10 minutes of pranayama (breathing exercises) like Anulom Vilom and Kapalabhati to center myself. This is followed by a sequence of suryanamaskar (sun salutations) to warm up the body. I then move through a series of asanas, focusing on flexibility and strength, holding each for 5-8 breaths. The practice concludes with 10-15 minutes of meditation and a short savasana to integrate the benefits.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-4d5e6f7g"
+      ],
+      "created_at": "2022-08-20T07:00:00Z",
+      "updated_at": "2023-10-25T07:05:30Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "When mentoring aspiring data scientists, I start by understanding their current skill set and career aspirations. I then suggest a personalized learning path, recommending specific courses, books, and online resources. We schedule regular check-ins to discuss challenges, review their projects, and provide constructive feedback. My goal is to empower them with practical skills and confidence to navigate the tech industry.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-8h9i0j1k"
+      ],
+      "created_at": "2023-03-10T11:00:00Z",
+      "updated_at": "2023-09-18T15:20:05Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "For weekend hikes in the Western Ghats, I always pack essentials: ample water, high-energy snacks (nuts, fruits), a basic first-aid kit, and a fully charged power bank for my phone. I ensure my trekking shoes are sturdy and comfortable, and I wear moisture-wicking clothing. Before heading out, I check the weather forecast and inform a family member or friend about my intended route and expected return time.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-2l3m4n5o"
+      ],
+      "created_at": "2022-11-05T09:00:00Z",
+      "updated_at": "2023-10-21T16:30:45Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To prepare for a Carnatic vocal performance, I begin with vocal warm-ups focusing on pitch accuracy and breath control. I then practice specific kritis and ragas, paying close attention to ornamentation (gamakas) and rhythmic cycles (talas). Rehearsing with accompanying musicians, if applicable, is crucial for synchronization and understanding the nuances of ensemble performance. Finally, I visualize a successful performance to build confidence.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-6p7q8r9s"
+      ],
+      "created_at": "2023-05-20T14:00:00Z",
+      "updated_at": "2023-10-26T09:15:10Z"
+    }
+  ],
+  "summaries": []
+}

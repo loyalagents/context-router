@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To prepare the 'Smoked Chapulines with Avocado Mousse' appetizer, first toast the chapulines lightly in a dry pan to enhance their crunch. While they cool, blend ripe avocado with lime juice, a pinch of salt, and a hint of Serrano chili until smooth. Gently fold the cooled chapulines into the mousse just before plating to maintain their texture and prevent sogginess.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When developing a new tasting menu, start by identifying a core pre-Hispanic ingredient or technique. Research its historical context and flavour profile, then brainstorm modern culinary applications. Consider complementary ingredients that highlight the star element, focusing on contrasting textures and balancing intense flavours for a harmonious progression.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-a9b8c7d6"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For the rooftop herb garden, daily checks involve assessing soil moisture by touch – too dry, water; too wet, ensure drainage. Inspect leaves for pests or signs of disease, addressing issues immediately with natural remedies like neem oil or insecticidal soap. Harvest herbs in the morning after dew has dried for peak flavour and potency, using clean shears to avoid damaging the plants.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-e5d4c3b2"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "When coaching the youth football team, prioritize positive reinforcement and skill-building drills over immediate wins. Focus on teaching fundamental techniques like passing accuracy and defensive positioning through fun, engaging exercises. Conclude each practice with a brief, constructive huddle to review key takeaways and encourage teamwork, ensuring every player feels valued.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To properly taste and evaluate a vintage mezcal, start by observing its colour and viscosity in the glass. Swirl gently and inhale the aroma, noting initial notes of smoke, agave, and fruit. Take a small sip, letting it coat the palate, then swallow, paying attention to the finish – its complexity, length, and lingering flavours.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-9f8e7d6c"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

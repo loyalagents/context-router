@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To prepare the soil for Sangiovese grafting, I begin by deep plowing in late autumn after the harvest. This is followed by cover cropping with a mix of vetch and rye to enrich the soil and prevent erosion over the winter. In early spring, just before bud break, the cover crop is tilled back into the soil, providing essential nutrients and improving soil structure for the new growth.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-ef123456"
+      ],
+      "created_at": "2023-10-27T09:00:00Z",
+      "updated_at": "2023-10-27T09:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6a7b8",
+      "type": "procedure",
+      "content": "When conducting a tasting for potential wine buyers, I always start with our youngest, most fruit-forward Sangiovese Rosato, then move to the lighter-bodied Rosso di Montalcino, and finally present our flagship Brunello di Montalcino Riserva. I focus on describing the aroma profile, palate structure, and finish, while subtly highlighting the unique terroir and the aging potential of each wine.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2023-10-27T09:15:00Z",
+      "updated_at": "2023-10-27T09:15:00Z"
+    },
+    {
+      "id": "procedural-c9d0e1f2",
+      "type": "procedure",
+      "content": "My morning routine for watercolour painting begins with selecting a subject, often a landscape view from my vineyard or a still life of local produce. I then prepare my palette, ensuring a balanced range of earth tones and vibrant hues, and soak my preferred sable brushes. The process involves layering washes, allowing each to dry sufficiently before adding finer details and capturing the subtle play of light.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-abcdef01"
+      ],
+      "created_at": "2023-10-27T09:30:00Z",
+      "updated_at": "2023-10-27T09:30:00Z"
+    },
+    {
+      "id": "procedural-f3a4b5c6",
+      "type": "procedure",
+      "content": "To manage the biodynamic preparations, specifically the 500P (horn manure), I mix it with 10-15 liters of water in a wooden bucket. The crucial step is the 'dynamization' process, where I stir the mixture vigorously in a spiral motion for exactly one hour, alternating directions every 15 minutes until a vortex forms and then collapses. This energetically charged preparation is then sprayed onto the vineyard just before sunset.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-23456789"
+      ],
+      "created_at": "2023-10-27T09:45:00Z",
+      "updated_at": "2023-10-27T09:45:00Z"
+    },
+    {
+      "id": "procedural-7d8e9f01",
+      "type": "procedure",
+      "content": "When planning a tour for guests interested in the medieval history of Val d'Orcia, I typically structure the day around visiting Pienza for its Renaissance architecture and then heading to Monticchiello for its authentic medieval atmosphere. We discuss the historical significance of the fortifications, the role of the local communities, and the enduring influence of the past on the present landscape, often concluding with a tasting of local pecorino cheese.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-fedcba98"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    }
+  ],
+  "summaries": []
+}

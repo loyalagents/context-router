@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-f4b1a9e2",
+      "type": "procedure",
+      "content": "When starting a new investigation into corruption or fraud, begin by establishing a clear timeline of events and identifying key individuals or entities. Next, systematically gather all relevant public records, financial statements, and corporate filings. Cross-reference information from multiple sources to verify accuracy and identify discrepancies. Finally, conduct initial interviews with peripheral sources to build context before approaching primary subjects.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-5c8d7e6f",
+      "type": "procedure",
+      "content": "To manage intense deadlines and prevent burnout, schedule dedicated 'deep work' blocks in your calendar, free from distractions. Immediately after publishing a major piece, allocate at least one full day for recovery, which includes a long run and a simple, restorative meal. Utilize therapy sessions not just for problem-solving, but proactively to reinforce stress-management techniques and maintain emotional resilience.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-9a0b1c2d",
+      "type": "procedure",
+      "content": "For Sunday lunches, the process begins Saturday evening with a detailed menu plan and grocery list, ensuring all ingredients are fresh and available. Sunday morning is dedicated to prepping complex elements like sauces or doughs. The main cooking phase starts around 1 PM, allowing ample time for slow cooking and assembly without rushing before guests arrive at 3 PM. Always have a simple aperitif ready upon arrival.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-c9d8e7f6"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-3e4f5a6b",
+      "type": "procedure",
+      "content": "When planning a visit to the Louvre with Camille, pre-book tickets online to avoid queues, especially on weekends. Prioritize 2-3 specific wings or exhibits based on Camille's current interests to maintain engagement. Incorporate short breaks for snacks and reflection, perhaps discussing a favorite piece. Always end the visit with a stop at the museum café for a treat.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-d7e8f9a0"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-7c8d9e0f",
+      "type": "procedure",
+      "content": "To counter harassment campaigns, maintain a strict protocol for documenting all threats and attacks, forwarding them immediately to your editor and legal counsel. Avoid direct engagement with trolls online; instead, focus on factual reporting and rely on your newspaper's communications team for official responses. Ensure personal online security is robust, with strong passwords and two-factor authentication enabled across all platforms.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-b1c2d3e4"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To create a new UI component in Figma, I first duplicate an existing similar component to ensure consistency in structure and properties. Then, I isolate the elements that need modification, such as icons, text labels, or color fills. Finally, I update the element's content and styling, ensuring all constraints and auto-layout settings remain correct before publishing the changes to the team's design library.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f8a7b6c5"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6a7b8",
+      "type": "procedure",
+      "content": "When preparing for a matcha tasting tour, I always research local cafes known for high-quality matcha and unique brewing methods. I create a flexible itinerary, noting opening hours and potential travel times between locations. Before visiting, I review the typical flavor profiles of different matcha grades to better appreciate the nuances during the tasting.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-d4c3b2a1"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "procedural-9c8d7e6f",
+      "type": "procedure",
+      "content": "For my illustration Instagram, I schedule posts using a content calendar, aiming for a consistent upload frequency of 3-4 times a week. I batch create artwork and captions over the weekend, then use a scheduling tool to manage distribution throughout the week. Engagement is key, so I dedicate 15 minutes daily to respond to comments and interact with other artists.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "procedural-01234567",
+      "type": "procedure",
+      "content": "To ensure smooth operation of our retro-gaming stream, I follow a pre-stream checklist: test audio levels for all participants, verify game capture is working correctly, and check internet stability. During the stream, I monitor the chat for technical issues or audience questions, and the co-host handles the game commentary. Post-stream, we save the VOD and discuss potential improvements for the next session.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-87654321"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "procedural-abcdef01",
+      "type": "procedure",
+      "content": "When listing resin jewellery on Etsy, I optimize product titles and descriptions with relevant keywords for searchability. I take multiple high-quality photos from different angles, showcasing the piece's details and scale, often using natural light. Setting clear shipping policies and processing times is crucial for customer satisfaction and managing expectations.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-10fedcba"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

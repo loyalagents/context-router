@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-00000001",
+      "type": "knowledge",
+      "content": "Algorithmic bias can manifest in machine learning systems through biased training data, feature selection, or model design. Addressing this requires careful data curation, fairness-aware algorithms, and rigorous post-deployment monitoring.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-ABCDEF01"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-00000002",
+      "type": "knowledge",
+      "content": "The concept of 'accountability' in AI refers to the ability to assign responsibility for AI system outcomes. This is crucial for establishing trust and enabling recourse when AI systems cause harm.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-ABCDEF02"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "semantic-00000003",
+      "type": "knowledge",
+      "content": "Fairness in machine learning can be defined in multiple ways, including demographic parity, equalized odds, and predictive parity. The appropriate definition depends heavily on the specific application and societal context.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-ABCDEF03"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "semantic-00000004",
+      "type": "knowledge",
+      "content": "The cello is a string instrument played with a bow, known for its rich, deep tone. It is a versatile instrument used in solo, chamber, and orchestral music.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-ABCDEF04"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "semantic-00000005",
+      "type": "knowledge",
+      "content": "Taiwanese-style craft beer often emphasizes unique flavor profiles derived from local ingredients or traditional brewing techniques. Examples include beers incorporating tea, tropical fruits, or specific malt combinations.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ABCDEF05"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "semantic-00000006",
+      "type": "knowledge",
+      "content": "The Sierra Nevada mountain range offers diverse hiking opportunities, from gentle valley strolls to challenging alpine ascents. Key considerations for hiking include altitude acclimatization, weather preparedness, and Leave No Trace principles.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-ABCDEF06"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-00000007",
+      "type": "knowledge",
+      "content": "Teaching coding to underserved youth can significantly impact their future opportunities by equipping them with in-demand skills. Such programs often focus on project-based learning and mentorship.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-ABCDEF07"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    }
+  ],
+  "summaries": []
+}

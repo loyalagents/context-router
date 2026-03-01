@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-7b3c1a9f",
+      "type": "procedure",
+      "content": "To prepare the signature Mapo Tofu, start by blanching firm tofu cubes to firm them up and remove excess water. Next, stir-fry fermented chili bean paste (doubanjiang) and Sichuan peppercorns in hot oil until fragrant and the oil turns red. Add ground pork and cook until browned, then incorporate minced garlic and ginger. Finally, add the blanched tofu, a mixture of soy sauce, chili oil, and a touch of sugar, and simmer gently until the sauce thickens and coats the tofu.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-8d4e5f6a",
+      "type": "procedure",
+      "content": "For the Sunday Mahjong ritual, always set up the table with the dragon tiles facing upwards. Begin the game by shuffling the tiles thoroughly, ensuring a randomized distribution. The first player to roll a double six starts the game, and play proceeds clockwise. Remember to periodically offer guests tea and snacks to maintain a pleasant atmosphere throughout the evening.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-9a1b2c3d",
+      "type": "procedure",
+      "content": "When planning a bushwalk in the Blue Mountains, check the weather forecast meticulously the day before, especially for wind and rain. Pack essentials including plenty of water, high-energy snacks, a basic first-aid kit, and a map of the trails. Inform someone of your intended route and expected return time, and always stick to marked paths to avoid getting lost.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-f9g0h1i2"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-1f2e3d4c",
+      "type": "procedure",
+      "content": "To nurture home-grown chillies, start by selecting a sunny spot with at least 6 hours of direct sunlight daily. Use well-draining soil and water consistently, allowing the soil to dry slightly between waterings. Fertilize regularly with a balanced fertilizer, and monitor for pests like aphids; introduce ladybugs or use neem oil for organic pest control.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-g1h2i3j4"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-2a3b4c5d",
+      "type": "procedure",
+      "content": "When conducting a Sichuan cooking class, begin with a brief introduction to the essential ingredients like Sichuan peppercorns, chili bean paste, and star anise. Demonstrate the proper technique for stir-frying (wok hei) to achieve authentic flavors. Ensure participants understand the spice levels and offer modifications for milder palates. Conclude with a Q&A session to address any lingering questions about the cuisine.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-h3i4j5k6"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

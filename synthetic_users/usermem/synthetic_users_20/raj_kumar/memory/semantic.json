@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-f4a3b2c1",
+      "type": "knowledge",
+      "content": "React is a JavaScript library for building user interfaces, particularly single-page applications. It uses a virtual DOM for efficient updates and a component-based architecture for reusability.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5d6c7b8",
+      "type": "knowledge",
+      "content": "Node.js is a JavaScript runtime environment that allows developers to run JavaScript code on the server-side. It's often used with frameworks like Express.js for building backend APIs.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-b2c3d4e5"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "semantic-a9b8c7d6",
+      "type": "knowledge",
+      "content": "The Tamil language has a rich literary tradition dating back over two millennia, making it one of the longest-surviving classical languages in the world. Its grammar and vocabulary have evolved significantly over centuries.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-c3d4e5f6"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "semantic-f1e2d3c4",
+      "type": "knowledge",
+      "content": "Sri Lankan curries often feature a distinct blend of spices, including cinnamon, cardamom, and curry leaves, giving them a unique aroma and flavor profile compared to South Indian variations. Coconut milk is a common base.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-d4e5f6a7"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "semantic-b5a4c3d2",
+      "type": "knowledge",
+      "content": "In Canada, permanent residents have many of the same rights and responsibilities as citizens, including the right to work and live anywhere in the country, and access to social benefits. They can apply for citizenship after meeting residency requirements.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "semantic-d7c8b9a0",
+      "type": "knowledge",
+      "content": "Chelsea FC, a prominent English football club, plays in the Premier League and has a history of significant success, including multiple league titles and European trophies. Their home ground is Stamford Bridge.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-f6a7b8c9"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The Post-Graduate Work Permit (PGWP) in Canada allows international students who have graduated from eligible Canadian institutions to gain valuable Canadian work experience. It is a pathway to permanent residency for many.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-a7b8c9d0"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "semantic-c5d6e7f8",
+      "type": "knowledge",
+      "content": "Natural Language Processing (NLP) involves enabling computers to understand, interpret, and generate human language. This includes tasks like text analysis, sentiment analysis, and machine translation.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-b8c9d0e1"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

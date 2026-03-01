@@ -1,0 +1,84 @@
+// The recurring wrapper used for almost all data points
+interface MemoryNode<T> {
+  value: T;                       // The actual data (string, number, array, or object)
+  confidence: number;             // Float between 0 and 1 indicating certainty
+  persistency: 'permanent' | 'stable' | 'dynamic' | 'transient'; // How often it changes
+  evidence_ids: string[];         // References to the source data/observations
+  updated_at: string;             // ISO 8601 Datetime
+  created_at: string;             // ISO 8601 Datetime
+}
+
+// The root schema
+interface CoreMemorySchema {
+  schema_version: string;         // e.g., "2.0"
+  memory_type: string;            // e.g., "core"
+  updated_at: string;             // ISO 8601 Datetime
+  
+  profile: {
+    summary: string;
+    last_generated: string;
+    confidence: number;
+    evidence_count: number;
+  };
+
+  identity: {
+    name: MemoryNode<string>;
+    age: MemoryNode<number>;
+    date_of_birth: MemoryNode<string> | null;
+    location: MemoryNode<string>;
+    nationality: MemoryNode<string>;
+    languages: MemoryNode<string[]>;
+    visa_status: MemoryNode<string> | null;
+  };
+
+  professional: {
+    current_role: MemoryNode<string>;
+    current_company: MemoryNode<string>;
+    industry: MemoryNode<string>;
+    experience_years: MemoryNode<number>;
+    education: MemoryNode<string>;
+    skills: MemoryNode<string[]>;
+    expertise_areas: MemoryNode<string[]>;
+    work_style: MemoryNode<string>;
+  };
+
+  projects: {
+    current: MemoryNode<{
+      name: string;
+      description: string;
+      stage: string;
+    }>[];                         // Note: This is an array of MemoryNodes
+    past: string[];               // Appears to be a simple array of strings
+  };
+
+  goals: {
+    short_term: MemoryNode<string[]>;
+    long_term: MemoryNode<string[]>;
+    career: MemoryNode<string>;
+    personal: MemoryNode<string>;
+  };
+
+  preferences: {
+    tools: MemoryNode<string[]>;
+    technologies: MemoryNode<string[]>;
+    work_environment: MemoryNode<string>;
+    communication_style: MemoryNode<string>;
+  };
+
+  values: {
+    core_beliefs: MemoryNode<string[]>;
+    principles: MemoryNode<string[]>;
+    priorities: MemoryNode<string[]>;
+  };
+
+  relationships: {
+    family: MemoryNode<string>;
+    professional_network: MemoryNode<string[]>;
+    mentors: MemoryNode<string[]> | null;
+  };
+
+  concerns: {
+    current: MemoryNode<string[]>;
+    recurring: MemoryNode<string[]>;
+  };
+}

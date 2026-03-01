@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Kwame Asante: Final-year economics student at the University of Ghana and co-founder of an agri-tech startup. He is passionate about African development economics and aims to connect smallholder cocoa farmers to premium buyers.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "University of Ghana: Kwame Asante's current institution where he is pursuing his final year in economics. This is a key academic environment shaping his future career and entrepreneurial endeavors.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "concept",
+      "content": "Agri-tech Startup: Kwame Asante is a co-founder of an agri-tech startup focused on mobile platforms for cocoa farmers. This venture represents his entrepreneurial drive and commitment to improving agricultural value chains.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "place",
+      "content": "Accra, Ghana: Kwame Asante's home city and the location of the University of Ghana. It serves as the base for his studies, entrepreneurial activities, and personal life.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-33445566"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "African Development Economics: A core passion for Kwame Asante, influencing his academic pursuits and the focus of his agri-tech startup. He actively writes about this topic in his newsletter.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-77889900"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Economics Newsletter: A weekly publication authored by Kwame Asante, reaching 3,000 subscribers. This platform disseminates his thoughts on development economics and highlights his communication skills.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-11229988"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Rhodes Scholarship: A significant aspiration for Kwame Asante, aiming for postgraduate studies at Oxford University. This goal reflects his ambition and commitment to academic excellence.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-55661122"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "organisation",
+      "content": "Baptist Church: Kwame Asante serves as a deacon in his local Baptist church. This indicates his religious involvement and community commitment.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-99007788"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed potential water source contamination risks in Ziguinchor region with the AI, focusing on agricultural runoff impacts. Needed to draft a preliminary report section.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-15T10:30:00Z",
+      "updated_at": "2023-10-15T10:30:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked the AI for a summary of recent climate justice advocacy trends in West Africa for a conference presentation preparation. Found a few key points about community-led adaptation strategies.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-11-02T14:00:00Z",
+      "updated_at": "2023-11-02T14:00:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Searched for local Senegalese vegetable recipes that can be adapted for a small balcony garden. Settled on a method for growing 'njau-njau' (amaranth).",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-11-18T09:15:00Z",
+      "updated_at": "2023-11-18T09:15:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Reviewed project timelines with the AI to identify potential overlaps with the initial phase of parental leave. Needed to reallocate some fieldwork responsibilities.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-12-05T11:00:00Z",
+      "updated_at": "2023-12-05T11:00:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Asked the AI to find information on upcoming Afrobeats festivals or concerts in Dakar for the next few months. Hoping to catch a live show.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-12-20T18:30:00Z",
+      "updated_at": "2023-12-20T18:30:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Generated a list of potential talking points for a discussion on gender-responsive WASH interventions at a regional workshop. Focused on empowering women in water management.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2024-01-10T13:45:00Z",
+      "updated_at": "2024-01-10T13:45:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Queried the AI about the rules and history of Senegalese wrestling (laamb) to better understand the sport as a spectator. Learned about different fighting styles.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2024-01-25T19:00:00Z",
+      "updated_at": "2024-01-25T19:00:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Requested assistance in drafting an email to a donor organization regarding a budget revision for the Casamance project. Needed to ensure clarity and professionalism.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2024-02-12T10:00:00Z",
+      "updated_at": "2024-02-12T10:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Asked the AI for research papers on innovative sanitation technologies suitable for rural African contexts. Found a promising article on decentralized wastewater treatment.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "created_at": "2024-03-01T15:30:00Z",
+      "updated_at": "2024-03-01T15:30:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Explored potential nursery sites for seedlings for the NGO's community gardening initiative with AI's help, considering water access and soil quality.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "created_at": "2024-03-15T08:00:00Z",
+      "updated_at": "2024-03-15T08:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

@@ -1,0 +1,396 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:17:06.737184+00:00",
+  "profile": {
+    "summary": "Ahmed Hassan is a 34-year-old Egyptian-Canadian Senior Software Engineer based in Toronto, Canada. He is married with two young children and has a strong passion for open-source contributions, particularly within the Python community. Ahmed balances his professional life with his cultural and religious practices, enjoying soccer with a local community club.",
+    "last_generated": "2026-03-01T05:17:06.737184+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Ahmed Hassan",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-identity-name-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "age": {
+      "value": 34,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-identity-age-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Toronto, Canada",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-identity-location-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "nationality": {
+      "value": "Egyptian-Canadian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-identity-nationality-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "languages": {
+      "value": [
+        "Arabic",
+        "English",
+        "basic French"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-identity-languages-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "visa_status": {
+      "value": "Permanent Resident",
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-identity-visa-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  },
+  "professional": {
+    "current_role": {
+      "value": "Senior Software Engineer",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-prof-role-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "current_company": {
+      "value": "Fintech Startup",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-prof-company-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "industry": {
+      "value": "Fintech",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-prof-industry-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "experience_years": {
+      "value": 8,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-prof-exp-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "education": {
+      "value": "MSc in Computer Science from the University of Toronto",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-prof-edu-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "skills": {
+      "value": [
+        "Python",
+        "Software Engineering",
+        "Open Source Development",
+        "Fintech Technologies",
+        "Backend Development",
+        "Cloud Computing"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-prof-skills-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Open Source Software",
+        "Python Ecosystem",
+        "Distributed Systems",
+        "Financial Technology"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-prof-expertise-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "work_style": {
+      "value": "Collaborative and focused on contributing to impactful projects.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-prof-workstyle-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Open Source Contribution to X",
+          "description": "Actively contributing to a Python-based open-source project focused on data processing.",
+          "stage": "Active Development"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-projects-current-1"
+        ],
+        "updated_at": "2026-03-01T05:17:06.737184+00:00",
+        "created_at": "2026-03-01T05:17:06.737184+00:00"
+      }
+    ],
+    "past": [
+      "Senior Developer role at previous company (prior to 2021)"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Expand contributions to more open-source projects",
+        "Master a new backend framework",
+        "Achieve a specific performance metric at work"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-goals-short-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become a core maintainer of a popular open-source library",
+        "Lead a technical team",
+        "Achieve financial independence"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-goals-long-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "career": {
+      "value": "To become a recognized expert in his field and mentor upcoming engineers.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-goals-career-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "personal": {
+      "value": "Maintain a good work-life balance and spend quality time with family.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-goals-personal-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Git",
+        "Docker",
+        "Jira",
+        "VS Code",
+        "PyCharm"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-pref-tools-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Python",
+        "AWS",
+        "Kubernetes",
+        "REST APIs",
+        "SQL"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-pref-tech-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "work_environment": {
+      "value": "A dynamic and innovative environment with opportunities for learning and growth.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-pref-workenv-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and collaborative.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-pref-comm-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Integrity",
+        "Continuous Learning",
+        "Community Support",
+        "Excellence"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-values-core-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "principles": {
+      "value": [
+        "Contribute to open source",
+        "Share knowledge",
+        "Uphold ethical standards"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-values-principles-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family",
+        "Career Growth",
+        "Community Engagement"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-values-priorities-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Nadia (accountant), two children aged 4 and 7",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-rel-family-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at fintech startup",
+        "Fellow open-source contributors",
+        "University contacts"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-rel-prof-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Keeping up with rapidly evolving technologies",
+        "Balancing demanding work with family life"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-concerns-current-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring continued relevance in the tech industry"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-concerns-recurring-1"
+      ],
+      "updated_at": "2026-03-01T05:17:06.737184+00:00",
+      "created_at": "2026-03-01T05:17:06.737184+00:00"
+    }
+  }
+}

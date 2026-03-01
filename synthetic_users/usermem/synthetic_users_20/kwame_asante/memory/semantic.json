@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The cocoa supply chain in Ghana is complex, involving numerous intermediaries between farmers and international buyers. Smallholder farmers often face challenges accessing fair prices due to information asymmetry and limited bargaining power.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2024-07-15T10:00:00Z",
+      "updated_at": "2024-07-15T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Mobile technology can significantly improve agricultural logistics and market access by providing real-time price information, facilitating direct buyer connections, and enabling digital payment systems.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-a9b8c7d6"
+      ],
+      "created_at": "2024-07-15T10:05:00Z",
+      "updated_at": "2024-07-15T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Financing for smallholder farmers in developing economies is often constrained by perceived risk and lack of collateral. Agri-tech solutions can mitigate these risks through data-driven credit scoring and crop insurance.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-e5f4g3h2"
+      ],
+      "created_at": "2024-07-15T10:10:00Z",
+      "updated_at": "2024-07-15T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "The Rhodes Scholarship is a prestigious postgraduate award for exceptional students to study at the University of Oxford. Selection criteria emphasize academic achievement, leadership potential, and a commitment to public service.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-b1c2d3e4"
+      ],
+      "created_at": "2024-07-15T10:15:00Z",
+      "updated_at": "2024-07-15T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "African development economics focuses on understanding and addressing the unique challenges and opportunities for economic growth and poverty reduction on the continent. Key areas include agriculture, industrialization, and human capital development.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-f9e8d7c6"
+      ],
+      "created_at": "2024-07-15T10:20:00Z",
+      "updated_at": "2024-07-15T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Football (soccer) is the most popular sport in Ghana, with a significant cultural impact. The Black Stars, the national team, are a source of national pride and often engage in international competitions.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "created_at": "2024-07-15T10:25:00Z",
+      "updated_at": "2024-07-15T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "The Baptist church in Ghana is an established Christian denomination with a strong presence in communities, often involved in social welfare and education initiatives.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-e1f2g3h4"
+      ],
+      "created_at": "2024-07-15T10:30:00Z",
+      "updated_at": "2024-07-15T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

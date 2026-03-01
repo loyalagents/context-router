@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To initiate a new circular economy policy proposal, first gather all relevant legislative documents and recent academic research on waste reduction and resource efficiency. Then, schedule a preliminary meeting with key stakeholders from relevant federal agencies to outline the core objectives and potential impacts. Finally, draft a concise executive summary and a detailed proposal document, ensuring clear metrics for success and a phased implementation plan.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-abcdef01"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When preparing for a guest lecture on environmental policy, I always start by reviewing the course syllabus to identify the specific topics to be covered. Next, I curate 3-4 case studies relevant to the students' curriculum and current events. Finally, I create a slide deck with key takeaways and discussion prompts, leaving ample time for Q&A to foster engagement.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-23456789"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "My morning commute by bicycle involves a specific route through Tiergarten to avoid heavy traffic and enjoy the scenery. I check tire pressure and brakes before leaving, especially after rain. I always pack a small repair kit and a rain jacket, just in case.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "To make a successful batch of sauerkraut, I select fresh, firm cabbage and shred it finely. I then massage salt into the cabbage until it releases its juices, creating a brine. Finally, I pack the salted cabbage tightly into a fermentation crock, ensuring it's submerged in brine, and weigh it down before covering.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "Planning a section of the Kungsleden hike requires careful consideration of daily mileage based on terrain and available huts. I book accommodations well in advance, especially during peak season. I also meticulously plan resupply points and pack lightweight, high-energy food rations.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-abcdef34"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

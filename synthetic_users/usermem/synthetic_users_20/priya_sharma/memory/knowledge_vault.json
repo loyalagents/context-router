@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Priya Sharma. She is the user, a 31-year-old senior data scientist based in Bangalore, India. She leads a team focused on ML models for hospital readmission prediction.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Healthcare Analytics Company. This is Priya's employer where she holds the position of Senior Data Scientist. Her team works on critical ML models within this organization.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "organisation",
+      "content": "IIT Bombay. This is Priya's alma mater where she completed her BTech. It's a prestigious institution that provided her foundational engineering education.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "organisation",
+      "content": "Indian Statistical Institute (ISI) Kolkata. Priya pursued her MSc in Statistics here, further specializing her analytical and mathematical skills.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Machine Learning Models for Hospital Readmission Prediction. This is the core technical focus of Priya's team. Building these models is a primary responsibility and area of expertise for her.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Vegetarian Diet. Priya follows a vegetarian diet. This is a significant aspect of her personal lifestyle and dietary choices.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Yoga. Priya practices yoga daily as part of her routine. This indicates a focus on physical and mental well-being.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Carnatic Classical Music. Priya is passionate about this genre of music and is a vocalist. It's a significant cultural and personal interest.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Women in Tech Mentoring. Priya is actively involved in mentoring programs for women in the technology sector. This highlights her commitment to community and gender equality in her field.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-27T10:40:00Z",
+      "updated_at": "2023-10-27T10:40:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "place",
+      "content": "Western Ghats. Priya enjoys hiking in this mountain range on weekends. It's a recreational activity that connects her with nature.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000010"
+      ],
+      "created_at": "2023-10-27T10:45:00Z",
+      "updated_at": "2023-10-27T10:45:00Z"
+    }
+  ],
+  "summaries": []
+}

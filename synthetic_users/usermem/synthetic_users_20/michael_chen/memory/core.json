@@ -1,0 +1,400 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:19:57.400411+00:00",
+  "profile": {
+    "summary": "Michael Chen is a 47-year-old Taiwanese-American associate professor of Computer Science at UCSF, specializing in AI ethics and fairness in machine learning. He is married with two children and resides in San Francisco. Beyond his academic and research pursuits, Michael is actively involved in policy-making, public speaking on AI regulation, and community outreach through a non-profit focused on coding education. He also enjoys playing the cello, hiking, and home-brewing.",
+    "last_generated": "2026-03-01T05:19:57.400411+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Michael Chen",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "age": {
+      "value": 47,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "San Francisco, California, USA",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "nationality": {
+      "value": "Taiwanese-American",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "languages": {
+      "value": [
+        "English",
+        "Mandarin",
+        "basic Cantonese"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Associate Professor of Computer Science",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-p1q2r3s4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "current_company": {
+      "value": "UCSF",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-t5u6v7w8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "industry": {
+      "value": "Academia & Technology",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-x9y0z1a2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "experience_years": {
+      "value": 15,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-b3c4d5e6"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "education": {
+      "value": "PhD from MIT",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-f7g8h9i0"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "skills": {
+      "value": [
+        "Machine Learning",
+        "AI Ethics",
+        "Fairness in ML",
+        "Accountability in AI",
+        "Public Speaking",
+        "Policy Analysis"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-j1k2l3m4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Fairness and Accountability in Machine Learning Systems",
+        "AI Regulation and Policy",
+        "Ethical Implications of AI",
+        "Educational Technology"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-n5o6p7q8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "work_style": {
+      "value": "Collaborative, research-oriented, with a strong commitment to ethical considerations and public engagement.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-r9s0t1u2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "AI Ethics Research",
+          "description": "Ongoing research into developing and implementing fair and accountable ML systems, with a focus on bias detection and mitigation.",
+          "stage": "Active research and publication"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-v3w4x5y6"
+        ],
+        "updated_at": "2026-03-01T05:19:57.400411+00:00",
+        "created_at": "2026-03-01T05:19:57.400411+00:00"
+      },
+      {
+        "value": {
+          "name": "Congressional Testimony Preparation",
+          "description": "Preparing and delivering expert testimony on AI regulation and ethical guidelines to congressional sub-committees.",
+          "stage": "Regular engagement"
+        },
+        "confidence": 0.9,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-z7a8b9c0"
+        ],
+        "updated_at": "2026-03-01T05:19:57.400411+00:00",
+        "created_at": "2026-03-01T05:19:57.400411+00:00"
+      }
+    ],
+    "past": [
+      "Co-founded non-profit for coding education for underserved youth."
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Publish new research findings on AI fairness.",
+        "Secure funding for the coding education non-profit.",
+        "Prepare for upcoming legislative testimony."
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-d1e2f3g4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Influence national AI policy.",
+        "Expand the reach of coding education programs.",
+        "Achieve tenure and professorial rank."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-h5i6j7k8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "career": {
+      "value": "To become a leading voice in AI ethics and regulation, shaping responsible AI development and deployment.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-l9m0n1o2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance, nurture family relationships, and continue pursuing personal interests like music and hiking.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-p3q4r5s6"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Python",
+        "TensorFlow",
+        "PyTorch",
+        "Jupyter Notebooks",
+        "Academic Publishing Tools"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-t7u8v9w0"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Machine Learning Frameworks",
+        "Data Visualization Tools",
+        "Cloud Computing Platforms (for research)"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-x1y2z3a4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "work_environment": {
+      "value": "A dynamic academic setting with opportunities for collaboration, research, and intellectual discourse. Access to quiet spaces for focused work is also valued.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-b5c6d7e8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and evidence-based, with an ability to explain complex topics to diverse audiences.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-f9g0h1i2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "The importance of ethical considerations in technology.",
+        "The need for equitable access to education.",
+        "The power of interdisciplinary collaboration.",
+        "The value of evidence-based decision-making."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-j3k4l5m6"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity in research.",
+        "Commitment to social good.",
+        "Continuous learning."
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-n7o8p9q0"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Impactful research.",
+        "Family well-being.",
+        "Community engagement."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-r1s2t3u4"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Lin Wei (architect); daughter Mei (14), son Kevin (11)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-v5w6x7y8"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at UCSF (AI/CS department)",
+        "Members of AI ethics research communities",
+        "Contacts in government and policy-making circles"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-z9a0b1c2"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "The pace of AI development outstripping ethical guidelines.",
+        "Ensuring equitable access to AI benefits.",
+        "Balancing academic responsibilities with public service."
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-d3e4f5g6"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    },
+    "recurring": {
+      "value": [
+        "The potential for AI to exacerbate societal inequalities."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-h7i8j9k0"
+      ],
+      "updated_at": "2026-03-01T05:19:57.400411+00:00",
+      "created_at": "2026-03-01T05:19:57.400411+00:00"
+    }
+  }
+}

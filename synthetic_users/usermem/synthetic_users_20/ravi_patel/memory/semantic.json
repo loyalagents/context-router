@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "For small businesses, understanding the implications of Section 1202 qualified small business stock is crucial for tax-efficient capital gains realization upon sale. Proper documentation and holding periods are key to qualifying.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "In M&A accounting, purchase price allocation (PPA) under ASC 805 requires careful valuation of acquired tangible and intangible assets, including goodwill. This impacts future depreciation and amortization schedules.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "The Indian Premier League (IPL) uses a complex playoff system involving qualifiers and eliminators, which differs significantly from traditional knockout tournaments. Understanding these nuances is key to predicting series outcomes.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "Excel's Power Query (Get & Transform Data) is indispensable for automating data cleaning and transformation tasks, especially when dealing with large datasets for financial modeling and analytics. It significantly reduces manual effort.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "As a second-generation immigrant, I appreciate the cultural bridge my parents built. Understanding both American business norms and traditional Indian values is essential for effective cross-cultural communication in business.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Qualifying for the Boston Marathon requires achieving specific time standards based on age and gender. For men aged 35-49, the current standard is 3 hours and 30 minutes.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "In cricket analytics, metrics like True Average, Defensive Average, and Strike Rate Differential provide deeper insights into player performance beyond traditional batting and bowling averages.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

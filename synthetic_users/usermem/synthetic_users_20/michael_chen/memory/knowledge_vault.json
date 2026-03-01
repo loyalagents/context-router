@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-00000001",
+      "type": "person",
+      "content": "Michael Chen: Associate Professor of Computer Science at UCSF and a prominent AI ethics researcher. He holds a PhD from MIT and focuses on fairness and accountability in machine learning. Michael frequently advises government bodies on AI regulation and co-founded a non-profit for coding education.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-00000002",
+      "type": "organisation",
+      "content": "UCSF (University of California, San Francisco): The academic institution where Michael Chen works as an Associate Professor. This affiliation grounds his professional identity and research activities in computer science and AI ethics.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-00000003",
+      "type": "organisation",
+      "content": "MIT (Massachusetts Institute of Technology): The alma mater where Michael Chen obtained his PhD. This prestigious background significantly shapes his academic credentials and research trajectory in AI.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-00000004",
+      "type": "concept",
+      "content": "Fairness and Accountability in ML: Michael Chen's primary research focus. This area explores how machine learning algorithms can be developed and deployed in ways that are equitable and transparent, addressing potential biases and harms.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-00000005",
+      "type": "place",
+      "content": "Sierra Nevada: A mountain range in California that Michael Chen is passionate about hiking in. This indicates a strong connection to nature and outdoor activities.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-00000006",
+      "type": "concept",
+      "content": "AI Regulation: Michael Chen frequently testifies before congressional sub-committees on this topic. It highlights his role as an expert advisor in shaping policy related to artificial intelligence.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-00000007",
+      "type": "organisation",
+      "content": "Underserved High School Coding Initiative: A non-profit co-founded by Michael Chen. This venture reflects his commitment to social impact and education, specifically in technology for disadvantaged youth.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-00000008",
+      "type": "concept",
+      "content": "Taiwanese-style Craft Beer: Michael Chen home-brews beer in this style. This is a personal hobby that adds depth to his character beyond his professional and academic pursuits.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

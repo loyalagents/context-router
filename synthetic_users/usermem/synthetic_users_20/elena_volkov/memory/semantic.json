@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The Ukrainian language belongs to the East Slavic subgroup of Slavic languages. It features a distinct phonetic system, including the pronunciation of 'г' as a voiced glottal fricative /ɦ/, unlike the velar stop /ɡ/ found in Russian.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f1e2d3c4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Vyshyvanka, traditional Ukrainian embroidery, is more than just decorative. Each region and pattern historically carried symbolic meanings, often related to protection, fertility, or prosperity, and served as a form of cultural identity.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "When translating legal documents between Ukrainian and English, precision is paramount. Terminology must be exact to avoid misinterpretation, especially concerning contract law or property rights, where nuances can have significant financial or legal consequences.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "Poetry serves as a crucial emotional outlet for processing complex feelings, particularly during times of conflict. It allows for the exploration of themes like resilience, loss, and hope in a deeply personal and cathartic way.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "Interpreting for journalists requires not only linguistic fluency but also cultural context and the ability to convey tone accurately. Understanding the nuances of political discourse or social issues is vital for effective cross-cultural communication.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Taras Shevchenko, Ukraine's national poet, is a central figure in Ukrainian literature. His works often explored themes of national identity, freedom, and social justice, profoundly influencing subsequent generations of writers and thinkers.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "The Polish language, while Slavic, shares some grammatical structures and vocabulary with Ukrainian due to historical proximity and mutual influence. However, significant differences in pronunciation and specific word meanings exist.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

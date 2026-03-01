@@ -1,0 +1,404 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:21:25.884414+00:00",
+  "profile": {
+    "summary": "Mei Lin is a 44-year-old Chinese-Australian entrepreneur and head chef, successfully running 'Lin's Kitchen', a Sichuan restaurant in Newtown, Sydney, for over a decade. Having immigrated from Chongqing in 2003, she has built a strong business, adapting to challenges like COVID-19 by diversifying into meal-kits and cooking classes. Mei is married with two teenage children, Jason and Amy, and is actively involved in the local business community. She balances her professional life with personal interests like bushwalking and growing chillies, and enjoys mahjong with friends.",
+    "last_generated": "2026-03-01T05:21:25.884414+00:00",
+    "confidence": 0.95,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Mei Lin",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "age": {
+      "value": 44,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Sydney, Australia",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "nationality": {
+      "value": "Chinese-Australian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "languages": {
+      "value": [
+        "Mandarin",
+        "Cantonese",
+        "English"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Owner and Head Chef",
+      "confidence": 0.99,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "current_company": {
+      "value": "Lin's Kitchen",
+      "confidence": 0.99,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "industry": {
+      "value": "Restaurant and Hospitality",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "experience_years": {
+      "value": 12,
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "education": {
+      "value": "Culinary Arts (Chongqing)",
+      "confidence": 0.85,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "skills": {
+      "value": [
+        "Sichuan Cuisine",
+        "Restaurant Management",
+        "Menu Development",
+        "Food Safety",
+        "Customer Service",
+        "Business Acumen"
+      ],
+      "confidence": 0.92,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Authentic Sichuan Cooking",
+        "Small Business Operations",
+        "Adapting to Market Changes",
+        "Community Engagement"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "work_style": {
+      "value": "Hands-on, passionate, adaptable, and community-oriented leader.",
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Lin's Kitchen Operations",
+          "description": "Managing daily operations, menu innovation, and staff training for the Sichuan restaurant.",
+          "stage": "Ongoing operations and expansion"
+        },
+        "confidence": 0.98,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:21:25.884414+00:00",
+        "created_at": "2026-03-01T05:21:25.884414+00:00"
+      },
+      {
+        "value": {
+          "name": "COVID-19 Adaptation Strategies",
+          "description": "Continuing to develop and promote meal-kits and online cooking classes.",
+          "stage": "Sustained business model"
+        },
+        "confidence": 0.9,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-e7f8g9h0"
+        ],
+        "updated_at": "2026-03-01T05:21:25.884414+00:00",
+        "created_at": "2026-03-01T05:21:25.884414+00:00"
+      }
+    ],
+    "past": [
+      "Immigration to Australia",
+      "Securing skilled-worker visa",
+      "Gaining Australian citizenship",
+      "Establishing 'Lin's Kitchen'"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Expand delivery radius for meal-kits.",
+        "Introduce a new seasonal menu at Lin's Kitchen.",
+        "Organize a community cooking workshop."
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Ensure continued success and profitability of Lin's Kitchen.",
+        "Support Jason's medical school aspirations.",
+        "See Amy excel in her swimming career."
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "career": {
+      "value": "To maintain 'Lin's Kitchen' as a leading Sichuan restaurant in Sydney and potentially mentor upcoming chefs.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "personal": {
+      "value": "To maintain a healthy work-life balance, enjoy hobbies like bushwalking and gardening, and witness her children's success.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "High-quality wok",
+        "Sharp chef's knife",
+        "Online ordering platform",
+        "Point-of-sale system"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Social media marketing",
+        "Online delivery apps",
+        "POS software"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "work_environment": {
+      "value": "A well-organized, efficient kitchen with a positive team atmosphere.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "communication_style": {
+      "value": "Direct and clear, with a focus on practical instruction and collaboration.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Hard work leads to success.",
+        "Family is paramount.",
+        "Quality and authenticity in food.",
+        "Community support is vital."
+      ],
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity in business dealings.",
+        "Continuous learning and improvement.",
+        "Respect for customers and staff."
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family well-being",
+        "Restaurant success",
+        "Personal health",
+        "Community involvement"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Wei (accountant); children Jason (17) and Amy (13)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Members of the Sydney Chinese Business Association",
+        "Restaurant suppliers and distributors",
+        "Local food critics and bloggers"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Rising food costs.",
+        "Staffing shortages in the hospitality industry.",
+        "Maintaining work-life balance during busy periods."
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring consistent quality of dishes.",
+        "Navigating economic fluctuations affecting small businesses."
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m7n8o9p0"
+      ],
+      "updated_at": "2026-03-01T05:21:25.884414+00:00",
+      "created_at": "2026-03-01T05:21:25.884414+00:00"
+    }
+  }
+}

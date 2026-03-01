@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "When preparing testimony for congressional sub-committees, I always start by deconstructing the specific legislation or inquiry. I then identify 2-3 core principles of AI ethics that are most relevant, translating complex technical concepts into clear, accessible language. The next step is to gather recent, impactful case studies and data points that illustrate the real-world consequences of AI deployment. Finally, I rehearse the key talking points, anticipating potential counterarguments and preparing concise, evidence-based responses.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "My workflow for developing fairness metrics in ML involves defining the specific bias we aim to mitigate (e.g., demographic parity, equalized odds). I then select appropriate datasets, ensuring they are representative and annotated for sensitive attributes. The core of the process is implementing and testing various algorithmic debiasing techniques, followed by rigorous evaluation using both quantitative metrics and qualitative analysis of disparate impact. Iteration based on these results is crucial for achieving robust fairness.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-fedcba98"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For teaching coding to underserved youth, the primary approach is project-based learning with a focus on immediate, tangible results. We start with fundamental concepts using visual block-based programming before transitioning to Python. Emphasis is placed on collaborative problem-solving and demystifying technology, making it relatable to their daily lives. Regular positive reinforcement and celebrating small victories are key to building confidence and sustained engagement.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-12345678"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "My process for home-brewing Taiwanese-style beers typically begins with selecting a clean, crisp malt base and a suitable yeast strain known for producing subtle fruit esters. I then carefully manage the hop additions to achieve a balanced bitterness and aroma that complements, rather than overpowers, the malt profile. Fermentation temperature control is critical for achieving the desired flavor characteristics. Finally, a precise carbonation level and a short, cold conditioning period result in a refreshing, authentic brew.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-87654321"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "When preparing for a hike in the Sierra Nevada, I prioritize checking weather forecasts and avalanche conditions, especially during shoulder seasons. I meticulously plan the route, estimating mileage and elevation gain, and identify potential bailout points. Essential gear includes layers of technical clothing, sufficient water and high-energy food, a first-aid kit, navigation tools (map, compass, GPS), and emergency shelter. Informing someone of my itinerary before departure is a non-negotiable safety step.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-aabbccdd"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

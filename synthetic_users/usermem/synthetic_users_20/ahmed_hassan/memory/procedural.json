@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "When developing a new feature for the fintech platform, first create a detailed technical design document outlining the proposed solution, API changes, and potential risks. Then, break down the implementation into smaller, manageable tasks in Jira. Ensure thorough unit and integration tests are written before submitting a pull request for code review. Finally, deploy to staging for QA testing before production release.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "To contribute effectively to open-source Python projects, start by identifying projects aligned with your interests and expertise. Read the project's contribution guidelines carefully. Fork the repository, create a new branch for your changes, and make sure your code adheres to the project's style guide. Submit a clear pull request with a descriptive title and detailed explanation of your changes.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ijklmnop"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "For daily prayer, perform Wudu (ablution) according to Islamic guidelines, ensuring all necessary body parts are washed. Face the Qibla (direction of the Kaaba in Mecca). Perform the Rakat (units of prayer) with the prescribed recitations and movements. Aim for focus and mindfulness throughout the prayer.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-qrstuvwx"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "When preparing for the weekend soccer game with the community club, confirm the game time and location with the team captain via WhatsApp. Ensure your soccer gear is clean and ready the night before. Arrive at least 15 minutes early to warm up and socialize with teammates. Hydrate well before and after the match.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-yzabcdef"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To manage incoming emails efficiently, dedicate specific times of the day to check and respond to emails, rather than constantly monitoring the inbox. Use filters and labels to categorize emails, and archive or delete messages once actioned. Prioritize urgent emails and delegate tasks if possible.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-ghijklmn"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

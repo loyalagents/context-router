@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "Onboarding new hires for the HR-tech platform involves a structured, multi-stage process. First, the prospective client completes a detailed needs assessment. Then, our implementation team configures the platform based on their specific workflows and data integration requirements. Finally, we conduct comprehensive training sessions for administrators and end-users, followed by a 30-day post-launch support period to ensure smooth adoption and address any immediate issues.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "My monthly camping trip preparation follows a strict checklist to ensure efficiency and enjoyment. I always pack my four-season tent, sleeping bag rated for below freezing, a portable stove with fuel, and a first-aid kit. Essential for the Texas Hill Country are plenty of water, insect repellent, and a reliable navigation tool like a GPS or detailed map. I also bring a book and my acoustic guitar for downtime.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "When mentoring startups at Capital Factory, I focus on actionable advice tailored to their current stage. My process includes understanding their core problem, validating their market assumptions, and refining their go-to-market strategy. I emphasize the importance of building a strong team and managing cash flow effectively, especially in the early stages. I always follow up with resources or introductions that can directly benefit their growth.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "Learning guitar chords requires consistent, short practice sessions. I dedicate 20 minutes each evening to practicing finger placement and transitions for a few basic chords like G, C, D, and Em. I use online tutorials to learn new songs and focus on strumming patterns. The key is repetition and gradual progression to avoid frustration and build muscle memory.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "My workflow for analyzing NBA game data involves several steps. I start by gathering box scores and advanced metrics for recent games, paying close attention to player efficiency ratings and on/off court differentials. I then cross-reference this with team trends and injury reports. Finally, I synthesize this information to identify potential betting opportunities or fantasy basketball insights, often focusing on matchups where pace or defensive intensity is a key factor.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

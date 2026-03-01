@@ -1,0 +1,393 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:21:39.787150+00:00",
+  "profile": {
+    "summary": "Raj Kumar is a 35-year-old Sri Lankan-Canadian full-stack software developer living in Toronto, Canada. He is married to Nithya, a pharmacist, and they have a newborn son, Aryan. Raj specializes in React and Node.js, with a passion project in Tamil language NLP. He is dedicated to maintaining his cultural heritage while navigating new parenthood and enjoying his hobbies of cricket and cooking.",
+    "last_generated": "2026-03-01T05:21:39.787150+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Raj Kumar",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "age": {
+      "value": 35,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Toronto, Canada",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "nationality": {
+      "value": "Sri Lankan-Canadian",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "languages": {
+      "value": [
+        "Tamil",
+        "Sinhala",
+        "English"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Full-stack software developer",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "current_company": {
+      "value": "Healthcare IT Company",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "industry": {
+      "value": "Healthcare IT",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "experience_years": {
+      "value": 8,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "education": {
+      "value": "MSc from McMaster University",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "skills": {
+      "value": [
+        "React",
+        "Node.js",
+        "JavaScript",
+        "Software Development",
+        "Problem Solving",
+        "API Development"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Front-end Development",
+        "Back-end Development",
+        "Web Application Development",
+        "Natural Language Processing (NLP)",
+        "Open-source Contributions"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "work_style": {
+      "value": "Collaborative and detail-oriented, with a focus on delivering robust and efficient software solutions.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Tamil Language NLP Library",
+          "description": "Developing and maintaining an open-source library for Natural Language Processing tasks in the Tamil language.",
+          "stage": "Active Development"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:21:39.787150+00:00",
+        "created_at": "2026-03-01T05:21:39.787150+00:00"
+      }
+    ],
+    "past": [
+      "Post-Graduate Work Permit to Permanent Residency transition",
+      "MSc thesis project at McMaster University"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Successfully manage work-life balance with a newborn",
+        "Contribute regularly to the Tamil NLP library",
+        "Improve cooking skills for Sri Lankan curries",
+        "Attend local Tamil cultural events"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become a senior software engineer or tech lead",
+        "See the Tamil NLP library widely adopted",
+        "Raise a bilingual child with strong cultural connections"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "career": {
+      "value": "Advance to a leadership role in software development, potentially focusing on AI/ML or contributing to impactful healthcare technology.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "personal": {
+      "value": "Maintain a strong connection to Sri Lankan heritage while fully integrating into Canadian life, and be a present and supportive father and husband.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "VS Code",
+        "Git",
+        "Docker",
+        "Jira",
+        "Postman"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "technologies": {
+      "value": [
+        "JavaScript",
+        "Node.js",
+        "React",
+        "Express.js",
+        "MongoDB",
+        "Python (for NLP)"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "work_environment": {
+      "value": "Prefers a dynamic team environment with opportunities for both independent work and collaboration, possibly a hybrid model.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and open communication, prefers written documentation for technical details and face-to-face or video calls for discussions.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Continuous learning and self-improvement",
+        "The importance of family and cultural roots",
+        "Community support and contribution",
+        "Integrity and ethical conduct in work"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "principles": {
+      "value": [
+        "Strive for excellence in all endeavors",
+        "Be a supportive and reliable family member",
+        "Give back to the community"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family well-being",
+        "Professional growth and skill development",
+        "Maintaining cultural identity",
+        "Community engagement"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Nithya (pharmacist); newborn son Aryan (3 months)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at healthcare IT company",
+        "Contacts from MSc at McMaster",
+        "Members of South Asian community cricket league"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Balancing demanding work with new parenthood",
+        "Ensuring adequate sleep and personal time",
+        "Navigating childcare options"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Maintaining a connection to Sri Lankan culture while living abroad"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:21:39.787150+00:00",
+      "created_at": "2026-03-01T05:21:39.787150+00:00"
+    }
+  }
+}

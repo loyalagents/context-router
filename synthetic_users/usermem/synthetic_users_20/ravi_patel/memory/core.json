@@ -1,0 +1,386 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:19:32.087517+00:00",
+  "profile": {
+    "summary": "Ravi Patel is a 41-year-old Indian-American CPA and partner at a mid-size accounting firm in Chicago. He is married with nine-year-old twins and is active in his community, coaching youth cricket and serving on the Indo-American chamber of commerce board. Ravi is passionate about analytics, Excel modeling, and marathon running.",
+    "last_generated": "2026-03-01T05:19:32.087517+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Ravi Patel",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "age": {
+      "value": 41,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Chicago, Illinois, USA",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "nationality": {
+      "value": "Indian-American",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "languages": {
+      "value": [
+        "English",
+        "Gujarati",
+        "Hindi"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Partner",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "current_company": {
+      "value": "Mid-size accounting firm",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "industry": {
+      "value": "Accounting/Finance",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "experience_years": {
+      "value": 15,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "education": {
+      "value": "Certified Public Accountant",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "skills": {
+      "value": [
+        "Tax Strategy",
+        "Mergers & Acquisitions Accounting",
+        "Financial Analysis",
+        "Excel Modeling",
+        "Business Consulting",
+        "Auditing"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1o2p3q4r"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Small Business Taxation",
+        "M&A Due Diligence",
+        "Corporate Tax Planning",
+        "Client Relationship Management"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5s6t7u8v"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "work_style": {
+      "value": "Detail-oriented, analytical, and client-focused.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-9w0x1y2z"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Client Tax Strategy Optimization",
+          "description": "Developing and implementing advanced tax strategies for small business clients to minimize liabilities and maximize profitability.",
+          "stage": "Ongoing client services"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-3a4b5c6d"
+        ],
+        "updated_at": "2026-03-01T05:19:32.087517+00:00",
+        "created_at": "2026-03-01T05:19:32.087517+00:00"
+      }
+    ],
+    "past": [
+      "Led M&A accounting for several successful business acquisitions."
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Qualify for a second Boston Marathon",
+        "Expand client base by 10%",
+        "Mentor junior accountants"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-7e8f9g0h"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become managing partner",
+        "Develop a specialized niche in international tax for small businesses"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1i2j3k4l"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "career": {
+      "value": "To be a recognized leader in accounting for small to medium-sized businesses, with a focus on strategic tax planning and M&A.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5m6n7o8p"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance, actively participate in family life, and contribute to the local community.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-9q0r1s2t"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Excel",
+        "QuickBooks",
+        "Tax software",
+        "CRM software",
+        "Project management tools"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-3u4v5w6x"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Cloud accounting platforms",
+        "Data analytics software",
+        "Microsoft Office Suite"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-7y8z9a0b"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "work_environment": {
+      "value": "A collaborative and results-oriented environment with opportunities for professional growth.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-1c2d3e4f"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "communication_style": {
+      "value": "Direct, clear, and data-driven, with an emphasis on understanding client needs.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5g6h7i8j"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Integrity",
+        "Client success",
+        "Continuous learning",
+        "Community involvement"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-9k0l1m2n"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "principles": {
+      "value": [
+        "Accuracy in financial reporting",
+        "Ethical conduct",
+        "Building long-term relationships"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-3o4p5q6r"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family",
+        "Professional development",
+        "Client satisfaction",
+        "Personal health"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-7s8t9u0v"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Married to Deepa (nurse practitioner); twins Aryan and Anaya (9)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-1w2x3y4z"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Accounting firm partners",
+        "Small business owners",
+        "Chamber of Commerce members"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-5a6b7c8d"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Keeping up with tax law changes",
+        "Balancing demanding work schedule with family time"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-9e0f1g2h"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring accuracy in all financial advice",
+        "Maintaining competitive edge in a dynamic market"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-3i4j5k6l"
+      ],
+      "updated_at": "2026-03-01T05:19:32.087517+00:00",
+      "created_at": "2026-03-01T05:19:32.087517+00:00"
+    }
+  }
+}

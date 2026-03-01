@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-00000001",
+      "type": "event",
+      "content": "Asked for a summary of the latest research on gestational diabetes management in low-resource settings for a global health elective essay.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-ABCDEF01"
+      ],
+      "created_at": "2023-10-15T10:30:00Z",
+      "updated_at": "2023-10-15T10:30:00Z"
+    },
+    {
+      "id": "episodic-00000002",
+      "type": "event",
+      "content": "Searched for reputable online sources for Islamic fiqh rulings on fasting during illness, as Ramadan approached.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-ABCDEF02"
+      ],
+      "created_at": "2024-02-20T14:15:00Z",
+      "updated_at": "2024-02-20T14:15:00Z"
+    },
+    {
+      "id": "episodic-00000003",
+      "type": "event",
+      "content": "Requested a list of key terms and concepts related to maternal mortality causes for revising for upcoming obstetrics exams.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-ABCDEF03"
+      ],
+      "created_at": "2023-11-05T09:00:00Z",
+      "updated_at": "2023-11-05T09:00:00Z"
+    },
+    {
+      "id": "episodic-00000004",
+      "type": "event",
+      "content": "Asked for book recommendations similar in style to Chimamanda Ngozi Adichie for her book blog.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ABCDEF04"
+      ],
+      "created_at": "2024-01-10T18:45:00Z",
+      "updated_at": "2024-01-10T18:45:00Z"
+    },
+    {
+      "id": "episodic-00000005",
+      "type": "event",
+      "content": "Generated a study schedule for final year medical rotations, ensuring to incorporate prayer times and volunteer commitments.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-ABCDEF05"
+      ],
+      "created_at": "2023-09-01T11:00:00Z",
+      "updated_at": "2023-09-01T11:00:00Z"
+    },
+    {
+      "id": "episodic-00000006",
+      "type": "event",
+      "content": "Queried the best way to explain the concept of informed consent to patients with limited literacy at the refugee clinic.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-ABCDEF06"
+      ],
+      "created_at": "2023-12-09T13:20:00Z",
+      "updated_at": "2023-12-09T13:20:00Z"
+    },
+    {
+      "id": "episodic-00000007",
+      "type": "event",
+      "content": "Asked for assistance in drafting an email to a potential supervisor about research opportunities in maternal-fetal medicine.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-ABCDEF07"
+      ],
+      "created_at": "2024-03-01T16:00:00Z",
+      "updated_at": "2024-03-01T16:00:00Z"
+    },
+    {
+      "id": "episodic-00000008",
+      "type": "event",
+      "content": "Explored potential funding sources for a future medical mission to Kuwait focused on maternal health.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-ABCDEF08"
+      ],
+      "created_at": "2023-10-25T19:00:00Z",
+      "updated_at": "2023-10-25T19:00:00Z"
+    },
+    {
+      "id": "episodic-00000009",
+      "type": "event",
+      "content": "Received a reminder about an upcoming lecture on placental abnormalities and its relevance to her planned specialization.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-ABCDEF09"
+      ],
+      "created_at": "2024-01-22T08:00:00Z",
+      "updated_at": "2024-01-22T08:00:00Z"
+    },
+    {
+      "id": "episodic-00000010",
+      "type": "event",
+      "content": "Asked for clarification on the ethical considerations of using AI in medical diagnosis, referencing a recent article she read.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-ABCDEF10"
+      ],
+      "created_at": "2023-11-18T11:30:00Z",
+      "updated_at": "2023-11-18T11:30:00Z"
+    }
+  ],
+  "summaries": {}
+}

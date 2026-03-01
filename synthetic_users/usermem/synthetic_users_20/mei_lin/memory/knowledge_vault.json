@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Mei Lin is the owner and head chef of 'Lin's Kitchen'. She immigrated from Chongqing to Sydney in 2003 and became a citizen in 2009. Her restaurant is in its 12th year, and she successfully navigated the COVID-19 pandemic by offering meal-kits and cooking classes.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Lin's Kitchen is a Sichuan restaurant located in Newtown, Sydney, owned and operated by Mei Lin. It has been in business for 12 years and adapted to challenges like the COVID-19 pandemic through innovative services.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-0001abcd",
+        "obs-0002efgh"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Sydney, Australia is where Mei Lin resides and operates her restaurant, Lin's Kitchen. She immigrated here from Chongqing in 2003 and gained citizenship in 2009.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "organisation",
+      "content": "Sydney Chinese Business Association is an organisation Mei Lin is actively involved in. This involvement likely stems from her background as a business owner and her immigrant heritage.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "person",
+      "content": "Jason is Mei Lin's child, who aspires to study medicine. Mei Lin actively supports his ambition, indicating a significant personal investment in his future.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "person",
+      "content": "Amy is Mei Lin's child and a competitive swimmer. This suggests a focus on athletic pursuits and potentially a demanding schedule for Amy and the family.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Mahjong is a game Mei Lin enjoys playing on Sunday evenings. This is a significant leisure activity that provides a regular social or recreational outlet.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Bushwalking in the Blue Mountains is a favoured pastime of Mei Lin. This highlights her connection to nature and possibly a desire for outdoor recreation away from the city.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Growing chillies at home is a hobby of Mei Lin. This connection to agriculture, especially a key ingredient in Sichuan cuisine, likely informs her culinary expertise and personal interests.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:40:00Z",
+      "updated_at": "2023-10-27T10:40:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "place",
+      "content": "Chongqing, China is Mei Lin's place of origin. She immigrated from this city in 2003, and its culinary traditions likely influence her cooking at Lin's Kitchen.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-27T10:45:00Z",
+      "updated_at": "2023-10-27T10:45:00Z"
+    }
+  ],
+  "summaries": []
+}

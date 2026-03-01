@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The user interface (UI) design process typically involves user research, wireframing, prototyping, and visual design, followed by usability testing to refine the experience. Effective UI design prioritizes clarity, consistency, and user control.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-e7f8a9b0"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "User Experience (UX) design focuses on the overall experience a user has with a product or service. It encompasses usability, accessibility, desirability, and findability, aiming to create meaningful and relevant experiences for users.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i1j2k3l4",
+      "type": "knowledge",
+      "content": "Etsy is an online marketplace focused on handmade, vintage, and craft supplies. It is popular with small businesses and individual creators for selling unique items directly to consumers worldwide.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m5n6o7p8",
+      "type": "knowledge",
+      "content": "Studio Ghibli films are renowned for their stunning hand-drawn animation, imaginative storytelling, and recurring themes of environmentalism and childhood wonder. Hayao Miyazaki is a key figure behind many of their most iconic works.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-k1l2m3n4"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q1r2s3t4",
+      "type": "knowledge",
+      "content": "Street photography captures candid moments of public life, often focusing on everyday people and urban environments. It emphasizes spontaneity and the ability to observe and frame fleeting moments.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-o5p6q7r8"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u5v6w7x8",
+      "type": "knowledge",
+      "content": "Matcha is a finely ground powder of specially grown and processed green tea leaves, traditionally consumed in East Asia. It is known for its vibrant green color, rich umami flavour, and high antioxidant content.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-s1t2u3v4"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y1z2a3b4",
+      "type": "knowledge",
+      "content": "Tama Art University is a prestigious private university in Tokyo, Japan, known for its strong programs in fine arts and design. It fosters a creative environment and encourages interdisciplinary exploration.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-w5x6y7z8"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "semantic-c5d6e7f8",
+      "type": "knowledge",
+      "content": "The Kanban method is a visual workflow management tool used to help visualize work, limit work-in-progress, and maximize efficiency. It is often employed in agile software development and manufacturing.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

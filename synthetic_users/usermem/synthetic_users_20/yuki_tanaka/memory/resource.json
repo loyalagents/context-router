@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Figma is Yuki's primary tool for UI/UX design mockups and prototyping. She uses it daily for work projects and also for planning the visual layout of her illustration account and Etsy shop.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Etsy is the platform where Yuki sells her custom resin jewellery. She frequently logs in to manage listings, process orders, and interact with customers, making it a key part of her side hustle.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Instagram is crucial for Yuki's illustration account, which has a significant following. She uses it to share her artwork, engage with her audience, and promote her other creative ventures.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "YouTube is where Yuki co-hosts her weekly retro-gaming stream. She uses the platform for uploading VODs, interacting with her community in the chat, and analyzing stream performance.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Behance serves as Yuki's professional portfolio, showcasing her UX/UI design work. She updates it regularly with new projects from her job and personal design explorations.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "A specific Discord server is used for communication with her retro-gaming stream co-host and community. It's essential for coordinating stream schedules and discussing game choices.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-26T10:25:00Z",
+      "updated_at": "2023-10-26T10:25:00Z"
+    },
+    {
+      "id": "resource-y5z6a7b8",
+      "type": "resource",
+      "content": "Her personal library of Studio Ghibli films is a source of inspiration for her art and design. She often revisits specific scenes or soundtracks when seeking creative ideas.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-26T10:30:00Z",
+      "updated_at": "2023-10-26T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

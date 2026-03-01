@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "To deploy a new feature to production: first, ensure all unit and integration tests pass locally. Then, create a feature branch in Git and push it. After a successful code review and merge into the `main` branch, trigger the CI/CD pipeline. Monitor the deployment process closely and perform a smoke test on the live environment.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "When learning a new Sri Lankan curry recipe from mother: prepare all ingredients in advance, ensuring they are chopped and measured. Set up the video call before starting to cook. Follow her instructions precisely, asking clarifying questions if any step is unclear. Take notes or record short video clips of key techniques for future reference.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-ghijkl34"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "To contribute to the Tamil NLP library: clone the repository and set up the development environment according to the README. Create a new branch for your changes. Implement the new functionality or fix the bug, ensuring it adheres to existing coding standards. Write or update relevant unit tests and document your changes thoroughly before submitting a pull request.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-mnopqr56"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "Balancing new parenthood and work: allocate specific 'focus time' blocks for deep work, free from distractions. Schedule short breaks for quick check-ins with family or a brief walk. Delegate tasks at work where possible and communicate availability clearly with the team. Prioritize sleep whenever opportunities arise, even if it means sacrificing other activities.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-stuvwx78"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "Preparing for Tamil cultural events: review the event schedule and identify any specific roles or contributions expected. If performing, practice the relevant songs or dances beforehand. Coordinate with other participants for logistics and timing. Ensure traditional attire is clean and ready for the event. ",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-yzabcd90"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-00000001",
+      "type": "person",
+      "content": "Zainab Okonkwo is a 25-year-old fashion designer and creative director based in Lagos, Nigeria. She is the founder of her own label, 'Zuri Lagos', which specializes in Afro-contemporary womenswear. Zainab is passionate about creating fashion that is both modest and expressive, reflecting her identity as an active Muslim.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-00000002",
+      "type": "organisation",
+      "content": "Zuri Lagos is a fashion label founded by Zainab Okonkwo, based in Lagos, Nigeria. The brand focuses on Afro-contemporary womenswear, blending traditional African aesthetics with modern silhouettes. Zuri Lagos sells its designs primarily through Instagram and pop-up events, and is known for its modest yet expressive style.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-00000003",
+      "type": "place",
+      "content": "Lagos, Nigeria is the home city of Zainab Okonkwo and the base for her fashion label, Zuri Lagos. This vibrant West African city serves as a major inspiration for her designs, influencing the Afro-contemporary style of her collections. Zainab is also involved in mentoring young seamstresses within her neighbourhood in Lagos.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-00000004",
+      "type": "concept",
+      "content": "Afro-contemporary fashion is Zainab Okonkwo's signature style, as seen in her work with Zuri Lagos. This concept involves merging traditional African cultural elements and aesthetics with contemporary fashion trends and silhouettes. Zainab aims to create designs that are both culturally resonant and fashion-forward.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-00000005",
+      "type": "organisation",
+      "content": "Instagram is a primary sales and marketing channel for Zainab Okonkwo's fashion label, Zuri Lagos. With a following of 280,000 users, the platform is crucial for showcasing her designs, engaging with customers, and building her brand presence. Zainab leverages Instagram to reach a global audience for her Afro-contemporary womenswear.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-00000006",
+      "type": "concept",
+      "content": "Modest fashion is a core principle for Zainab Okonkwo and central to the identity of her brand, Zuri Lagos. She designs clothing that adheres to modest principles while remaining expressive and stylish, catering to a growing market that values both faith and fashion. This approach allows her to connect with a specific segment of her audience.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-00000007",
+      "type": "place",
+      "content": "New York Fashion Week is Zainab Okonkwo's ultimate career aspiration. Showcasing her Zuri Lagos collection on this international stage would represent a significant milestone in her journey as a fashion designer. Achieving this goal would bring her Afro-contemporary designs to a global audience and solidify her position in the fashion industry.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-00000008",
+      "type": "concept",
+      "content": "Digital pattern-making is a skill Zainab Okonkwo acquired through self-teaching. This technical expertise enhances her design process, allowing for precision and innovation in creating her garments for Zuri Lagos. It complements her creative vision and contributes to the efficiency of her production.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    },
+    {
+      "id": "kv-00000009",
+      "type": "organisation",
+      "content": "Vogue Africa is a publication that featured Zainab Okonkwo's work, marking a significant achievement in her career. This editorial recognition highlights the growing influence and aesthetic appeal of her Zuri Lagos brand within the African fashion landscape. It serves as validation of her talent and vision.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:08:00Z",
+      "updated_at": "2023-10-27T10:08:00Z"
+    },
+    {
+      "id": "kv-00000010",
+      "type": "concept",
+      "content": "Mentoring young seamstresses reflects Zainab Okonkwo's commitment to community and empowerment. She actively shares her knowledge and skills with aspiring individuals in her neighbourhood, fostering talent development within the local fashion ecosystem. This initiative aligns with her values of giving back.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:09:00Z",
+      "updated_at": "2023-10-27T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

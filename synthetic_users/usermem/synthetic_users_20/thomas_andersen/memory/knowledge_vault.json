@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Arne Jacobsen. A hugely influential Danish architect and designer whose work embodies the Scandinavian modernist ethos Thomas admires. Jacobsen's focus on functionalism, clean lines, and integration with nature resonates deeply with Thomas's own design philosophy.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Danish Architecture Center (DAC). This organization promotes Danish architecture and urban development, aligning with Thomas's interests as a design critic and podcast host. He likely engages with their exhibitions, publications, and events.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Øresund. This strait between Denmark and Sweden is where Thomas enjoys sailing. It represents a personal leisure activity and a connection to the natural environment, a contrast to his professional life.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Scandinavian Modernism. This design movement is the core of Thomas's architectural philosophy, emphasizing simplicity, functionality, and natural materials. His career was built on these principles, and he continues to champion them.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Urban Cycling Infrastructure. Thomas is passionate about improving cycling infrastructure in cities, recognizing its benefits for public health, environment, and urban livability. This interest likely informs his architectural thinking and podcast discussions.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "organisation",
+      "content": "Realdania. A philanthropic foundation supporting the built environment in Denmark. Thomas may collaborate with or draw inspiration from their projects and funding initiatives, particularly those related to heritage preservation and climate adaptation.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Climate-Adaptive Design. As an experienced architect, Thomas is concerned with designing buildings and cities that can withstand and adapt to the impacts of climate change. This is a forward-looking aspect of his professional expertise.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "person",
+      "content": "Jørn Utzon. The architect behind the Sydney Opera House, Utzon is another significant figure in Danish modern architecture. Thomas would likely hold Utzon in high regard for his innovative approach and international impact.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

@@ -1,0 +1,388 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:17:19.216995+00:00",
+  "profile": {
+    "summary": "Yuki Tanaka is a 28-year-old Japanese UX/UI designer based in Tokyo. She works at a mid-size e-commerce company and lives in Shibuya with her cat, Mochi. Yuki is passionate about design, art, and gaming, which she expresses through her popular illustration account, Etsy shop, and YouTube channel.",
+    "last_generated": "2026-03-01T05:17:19.216995+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Yuki Tanaka",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-yukitanaka-name-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "age": {
+      "value": 28,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-age-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Tokyo, Japan",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-location-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "nationality": {
+      "value": "Japanese",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-yukitanaka-nationality-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "languages": {
+      "value": [
+        "Japanese",
+        "English"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-yukitanaka-languages-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "UX/UI Designer",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-role-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "current_company": {
+      "value": "Mid-size e-commerce company",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-company-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "industry": {
+      "value": "E-commerce",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-industry-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "experience_years": {
+      "value": 5,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-experience-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "education": {
+      "value": "Graphic Design, Tama Art University",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-yukitanaka-education-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "skills": {
+      "value": [
+        "UX Research",
+        "UI Design",
+        "Prototyping",
+        "Figma",
+        "Adobe Creative Suite",
+        "User Testing"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-skills-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "E-commerce UX",
+        "Mobile App Design",
+        "Visual Design",
+        "Branding"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-expertise-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "work_style": {
+      "value": "Collaborative and user-centered, with a strong focus on visual aesthetics and intuitive interfaces.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-workstyle-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "New Mobile App Interface Redesign",
+          "description": "Leading the UX/UI redesign for a major e-commerce mobile application to improve user engagement and conversion rates.",
+          "stage": "Design and Prototyping"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-yukitanaka-project-current-001"
+        ],
+        "updated_at": "2026-03-01T05:17:19.216995+00:00",
+        "created_at": "2026-03-01T05:17:19.216995+00:00"
+      }
+    ],
+    "past": [
+      "Indie illustration account growth",
+      "Etsy custom resin jewellery sales",
+      "Retro-gaming YouTube stream co-hosting"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Launch the new mobile app interface",
+        "Expand Etsy product line",
+        "Increase Instagram engagement"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-goals-st-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become a Senior UX/UI Designer",
+        "Grow illustration brand internationally",
+        "Collaborate on a game design project"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-goals-lt-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "career": {
+      "value": "To lead innovative UX/UI projects and mentor junior designers, while continuing to explore creative side ventures.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-goals-career-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy work-life balance, continue exploring Japan through matcha tasting, and travel to new cities for street photography.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-goals-personal-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Figma",
+        "Sketch",
+        "Adobe Photoshop",
+        "Adobe Illustrator",
+        "Miro"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-yukitanaka-prefs-tools-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "technologies": {
+      "value": [
+        "React",
+        "Vue.js (for understanding frontend implementation)",
+        "AR/VR prototyping tools"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-yukitanaka-prefs-tech-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "work_environment": {
+      "value": "A balance of focused individual work and collaborative brainstorming sessions, with opportunities for creative expression.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-prefs-workenv-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, concise, and visually supported communication. Values constructive feedback.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-prefs-comm-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "User-centricity in design",
+        "The power of visual storytelling",
+        "Continuous learning and skill development",
+        "Ethical design practices"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-values-beliefs-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "principles": {
+      "value": [
+        "Simplicity and clarity",
+        "Empathy in design",
+        "Attention to detail"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-values-principles-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Meaningful user experiences",
+        "Creative fulfillment",
+        "Professional growth"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-values-priorities-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Single, lives with a cat named Mochi in a small Shibuya apartment",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-yukitanaka-relationship-family-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at e-commerce company",
+        "Fellow designers met online",
+        "YouTube stream collaborators"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-relationship-network-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Keeping up with rapidly evolving design trends",
+        "Balancing multiple creative projects",
+        "Finding time for personal artistic development"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-yukitanaka-concerns-current-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Maintaining work-life balance",
+        "Ensuring accessibility in designs"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-yukitanaka-concerns-recurring-001"
+      ],
+      "updated_at": "2026-03-01T05:17:19.216995+00:00",
+      "created_at": "2026-03-01T05:17:19.216995+00:00"
+    }
+  }
+}

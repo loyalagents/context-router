@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Amara Diallo is a 33-year-old program manager based in Dakar, Senegal. She works for an international NGO focused on water and sanitation projects, particularly in rural Casamance. Amara is also a dedicated feminist and climate justice advocate.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-0001abcd"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "International NGO (Water & Sanitation) is the employer of Amara Diallo. This organization focuses on implementing WASH projects, likely in developing regions. Amara's role involves overseeing these projects, suggesting a significant level of responsibility.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-0002bcde"
+      ],
+      "created_at": "2023-10-26T10:01:00Z",
+      "updated_at": "2023-10-26T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Casamance is a region in Senegal where Amara Diallo oversees WASH projects. It is described as rural, indicating potential challenges related to infrastructure and access. This region is a key focus of her professional work.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-0003cdef"
+      ],
+      "created_at": "2023-10-26T10:02:00Z",
+      "updated_at": "2023-10-26T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Feminism is a core value for Amara Diallo. She is described as a passionate feminist, likely influencing her approach to her work and advocacy. This passion extends to her involvement in climate justice.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-0004defg"
+      ],
+      "created_at": "2023-10-26T10:03:00Z",
+      "updated_at": "2023-10-26T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Climate Justice is an area of advocacy for Amara Diallo, alongside feminism. She likely connects environmental issues with social equity, particularly in the context of the regions where she works. This advocacy involves speaking at regional conferences.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-0005efgh"
+      ],
+      "created_at": "2023-10-26T10:04:00Z",
+      "updated_at": "2023-10-26T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Afrobeats is a musical genre that Amara Diallo enjoys. This indicates a preference for contemporary African music, likely a source of personal enjoyment and cultural connection.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-0006fghi"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Senegalese Wrestling (Laamb) is a sport Amara Diallo follows as a spectator. This suggests an interest in traditional Senegalese culture and sports. It's a form of cultural engagement for her.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-0007ghij"
+      ],
+      "created_at": "2023-10-26T10:06:00Z",
+      "updated_at": "2023-10-26T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Vegetable Gardening is a hobby of Amara Diallo. This suggests an interest in sustainable living, self-sufficiency, and perhaps a connection to nature. It's a personal pursuit outside of her professional life.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-0008hijk"
+      ],
+      "created_at": "2023-10-26T10:07:00Z",
+      "updated_at": "2023-10-26T10:07:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Parental Leave is something Amara Diallo is actively planning for. This indicates an upcoming personal life event, requiring logistical coordination with her demanding professional schedule and project deadlines.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-0009ijkl"
+      ],
+      "created_at": "2023-10-26T10:08:00Z",
+      "updated_at": "2023-10-26T10:08:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "place",
+      "content": "Dakar, Senegal is Amara Diallo's home city. It serves as her base of operations and likely the location of her NGO's main office. It's the primary urban center she resides in.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-0010jklm"
+      ],
+      "created_at": "2023-10-26T10:09:00Z",
+      "updated_at": "2023-10-26T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

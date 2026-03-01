@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-8a1b2c3d",
+      "type": "knowledge",
+      "content": "B2B SaaS startups often use a tiered pricing model based on features and user count to cater to different business sizes and needs. This allows for scalability and provides clear value propositions at each level.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-4e5f6a7b",
+      "type": "knowledge",
+      "content": "AI-driven employee engagement platforms can leverage natural language processing (NLP) to analyze employee feedback from surveys and communications. This provides deeper insights into sentiment and identifies areas for improvement.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-b2c3d4e5"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-8c9d0e1f",
+      "type": "knowledge",
+      "content": "The seed funding stage for a startup typically focuses on product development, initial market validation, and building a core team. Investors at this stage are looking for strong founding teams and a clear vision.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-c3d4e5f6"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-2a3b4c5d",
+      "type": "knowledge",
+      "content": "Capital Factory is a prominent tech incubator and venture capital firm in Austin, Texas, supporting numerous startups through mentorship and funding.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-d4e5f6a7"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-6e7f8a9b",
+      "type": "knowledge",
+      "content": "The Texas Hill Country offers diverse camping opportunities, from state parks with amenities to more primitive dispersed camping. It's known for its scenic beauty and relatively mild winter climate.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-0c1d2e3f",
+      "type": "knowledge",
+      "content": "Golf handicaps are used to measure a player's potential ability on a given course, allowing golfers of different skill levels to compete fairly.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-f6a7b8c9"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-4a5b6c7d",
+      "type": "knowledge",
+      "content": "The Golden State Warriors have been a dominant force in the NBA in the 2010s and early 2020s, known for their innovative offensive strategies and multiple championship wins.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-a7b8c9d0"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "semantic-8e9f0a1b",
+      "type": "knowledge",
+      "content": "Learning guitar often involves mastering basic chords (like G, C, D, Em, Am) and understanding strumming patterns. Finger dexterity and consistent practice are key to progress.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-b8c9d0e1"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

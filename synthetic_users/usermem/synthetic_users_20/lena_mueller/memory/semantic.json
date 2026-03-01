@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The circular economy aims to eliminate waste and pollution by keeping products and materials in use. Key principles include designing for durability, reuse, and recycling, moving away from the traditional linear 'take-make-dispose' model.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-efgh1234"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "In Germany, the federal government has set ambitious targets for increasing the share of renewable energy in the national electricity mix. This transition involves significant investments in wind and solar power infrastructure, alongside grid modernization efforts.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-ijkl5678"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Traditional German home fermentation, like making sauerkraut (fermented cabbage) or pickles, relies on lactic acid bacteria naturally present on the vegetables. The process requires salt brine and anaerobic conditions to develop flavor and preserve the food.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-mnop9012"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "The Kungsleden trail in Swedish Lapland is a famous long-distance hiking route, stretching over 400 kilometers. It passes through diverse landscapes, including alpine tundra, birch forests, and glacial valleys, requiring careful planning for accommodation and supplies.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-qrst3456"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "Freie Universität Berlin offers excellent programs in environmental policy and sustainability studies. As a part-time lecturer, I contribute to courses focusing on policy implementation and international environmental agreements.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-uvwx7890"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Cycling in Berlin is a primary mode of transport for many residents due to its extensive bike lane network and relatively flat topography. It's an effective way to reduce carbon emissions and stay active.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-yzab1234"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "Richard Wagner's Ring Cycle is a monumental cycle of four epic music dramas, performed over four consecutive evenings. It explores themes of power, greed, love, and fate, drawing heavily on Norse and Germanic mythology.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-cdef5678"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

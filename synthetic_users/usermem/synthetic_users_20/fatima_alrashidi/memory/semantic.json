@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The principles of global health equity emphasize the fair distribution of health resources and opportunities across all populations, aiming to reduce disparities in health outcomes. This involves addressing social determinants of health like poverty, education, and access to healthcare.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-87654321"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Obstetrics is the medical specialty concerned with pregnancy, childbirth, and the postpartum period. Maternal-foetal medicine is a subspecialty focusing on high-risk pregnancies and the health of both the mother and the fetus.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-12345678"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Observant Muslims adhere to the Five Pillars of Islam, including daily prayers (Salat) five times a day at prescribed times and fasting during the month of Ramadan (Sawm). These practices are central to their faith and daily life.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-23456789"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "A refugee health clinic provides essential medical services to individuals who have been forced to leave their home country due to persecution or conflict. These clinics often address the unique health challenges faced by refugees, such as trauma and infectious diseases.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-34567890"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "Literary fiction explores character development and themes in depth, often with a focus on artistic merit and prose style. It frequently delves into the human condition and societal issues.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-45678901"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "King's College London is a public research university located in London, United Kingdom. It is renowned for its strong medical and health sciences programs, including its MBBS degree.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-56789012"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "The hijab is a veil worn by many Muslim women in the presence of any males outside of their immediate family, which usually covers the head and chest. It is considered a symbol of modesty and religious devotion.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-67890123"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "semantic-c9d0e1f2",
+      "type": "knowledge",
+      "content": "Kuwait, officially the State of Kuwait, is a country in Western Asia. Its healthcare system is largely government-funded and aims to provide comprehensive services to its citizens.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-78901234"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

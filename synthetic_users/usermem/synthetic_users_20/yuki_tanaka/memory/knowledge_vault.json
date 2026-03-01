@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-00000001",
+      "type": "person",
+      "content": "Yuki Tanaka: The user. A 28-year-old UX/UI designer based in Tokyo, Japan. She has a background in graphic design and pursues several creative side projects.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "kv-00000002",
+      "type": "organisation",
+      "content": "Mid-size E-commerce Company: Yuki's current employer. She works as a UX/UI designer here, contributing to the company's online presence and user experience strategies.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-26T10:01:00Z",
+      "updated_at": "2023-10-26T10:01:00Z"
+    },
+    {
+      "id": "kv-00000003",
+      "type": "organisation",
+      "content": "Tama Art University: Yuki's alma mater. She studied graphic design here, laying the foundation for her career and creative pursuits.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-26T10:02:00Z",
+      "updated_at": "2023-10-26T10:02:00Z"
+    },
+    {
+      "id": "kv-00000004",
+      "type": "concept",
+      "content": "Illustration Account: A significant side project for Yuki. She maintains an illustration account on Instagram which has garnered a substantial following of 40,000 users. This highlights her artistic talent and online reach.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-26T10:03:00Z",
+      "updated_at": "2023-10-26T10:03:00Z"
+    },
+    {
+      "id": "kv-00000005",
+      "type": "organisation",
+      "content": "Etsy: An online marketplace where Yuki sells her custom resin jewellery. This represents another entrepreneurial venture and a platform for her craft.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-26T10:04:00Z",
+      "updated_at": "2023-10-26T10:04:00Z"
+    },
+    {
+      "id": "kv-00000006",
+      "type": "concept",
+      "content": "Retro-Gaming Stream: Yuki co-runs a weekly YouTube stream focused on retro gaming. This indicates a passion for vintage video games and collaborative content creation.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "kv-00000007",
+      "type": "concept",
+      "content": "Studio Ghibli Films: Yuki is an avid fan of these animated movies. This suggests an appreciation for art, storytelling, and Japanese animation.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-26T10:06:00Z",
+      "updated_at": "2023-10-26T10:06:00Z"
+    },
+    {
+      "id": "kv-00000008",
+      "type": "concept",
+      "content": "Street Photography: A personal interest of Yuki. This hobby reflects her observational skills and engagement with urban environments.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2023-10-26T10:07:00Z",
+      "updated_at": "2023-10-26T10:07:00Z"
+    },
+    {
+      "id": "kv-00000009",
+      "type": "concept",
+      "content": "Matcha Tasting Tours: Yuki enjoys participating in these tours. This indicates a specific culinary interest and a way she explores her local area.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-26T10:08:00Z",
+      "updated_at": "2023-10-26T10:08:00Z"
+    },
+    {
+      "id": "kv-00000010",
+      "type": "place",
+      "content": "Tokyo, Japan: Yuki's current residence. This is the primary location associated with her professional and personal life.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000001",
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-26T10:09:00Z",
+      "updated_at": "2023-10-26T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

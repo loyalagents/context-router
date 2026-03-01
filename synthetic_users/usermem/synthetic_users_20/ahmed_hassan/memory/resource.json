@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "GitHub: Primary platform for open-source contributions and managing personal projects. Ahmed frequently uses it to collaborate on Python projects and track his contributions.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1234abcd"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2024-03-15T14:30:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "University of Toronto CS Department: Although graduated, Ahmed occasionally revisits the department's website for research papers, alumni news, or to check for relevant seminars.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-5678efgh"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2024-01-20T09:15:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "PyPI (Python Package Index): Essential for discovering and managing Python libraries. Ahmed uses PyPI to find packages for his projects and to publish his own open-source libraries.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-9012jklm"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2024-03-10T11:00:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Local Egyptian Community Club (Toronto): Ahmed plays soccer here on weekends and uses their communication channels (e.g., WhatsApp group) to coordinate matches and social events.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-3456nopq"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2024-03-16T17:00:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Immigration, Refugees and Citizenship Canada (IRCC): Important for managing permanent residency and citizenship matters. Ahmed has referred to the IRCC website for official forms and information.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-7890rstu"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2024-02-01T10:00:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Stack Overflow: A go-to resource for technical problem-solving in software development. Ahmed frequently searches for answers to coding challenges and occasionally provides solutions.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-1122wxyz"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2024-03-16T15:45:00Z"
+    }
+  ],
+  "summaries": []
+}

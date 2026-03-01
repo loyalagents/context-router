@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "organisation",
+      "content": "Raíz: Carlos Mendoza's modern Mexican restaurant in Mexico City. He is an executive chef and co-owner here, focusing on contemporary interpretations of traditional Mexican cuisine. It's the central hub of his professional culinary identity.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "place",
+      "content": "Culinary Institute of Mexico: The institution where Carlos Mendoza received his formal culinary training. This foundational education shaped his professional skills and approach to cooking.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "concept",
+      "content": "Pre-Hispanic Ingredients: Carlos has a specialisation in reinventing these ancient ingredients for modern tasting menus at Raíz. This focus distinguishes his restaurant and culinary style.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-99001122"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "person",
+      "content": "Youth Football Team: Carlos coaches a weekend youth football team. This indicates a commitment to his community and potentially a passion for sports outside of his culinary career.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-33445566"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Vintage Mezcal Collection: Carlos collects vintage mezcal. This hobby suggests an interest in artisanal spirits, Mexican heritage, and potentially a connoisseur's palate.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-77889900"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "place",
+      "content": "Rooftop Herb Garden: Carlos tends a rooftop herb garden, likely supplying fresh ingredients for Raíz. This personal connection to his produce highlights his dedication to farm-to-table principles.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-12345678"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "place",
+      "content": "Madrid: Carlos staged at restaurants in Madrid as part of his culinary training. This experience likely exposed him to different European culinary techniques and influences.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-87654321"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "place",
+      "content": "Paris: Similar to Madrid, Carlos also completed a stage in Paris. This further broadened his culinary horizons with exposure to renowned French gastronomy.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-21098765"
+      ],
+      "created_at": "2023-10-27T10:35:00Z",
+      "updated_at": "2023-10-27T10:35:00Z"
+    }
+  ],
+  "summaries": []
+}

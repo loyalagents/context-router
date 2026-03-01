@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed optimal color palettes for a new e-commerce landing page focusing on spring fashion. The AI suggested a gradient of pastel blues and soft greens, referencing current UI trends.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-04-15T10:30:00Z",
+      "updated_at": "2023-04-15T10:30:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked the AI for a quick summary of recent user feedback on the checkout process. It highlighted recurring comments about a confusing button placement.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-05-01T14:00:00Z",
+      "updated_at": "2023-05-01T14:00:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Searched for 'best matcha cafes in Kyoto' for an upcoming trip. The AI provided a list with user ratings and opening hours.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-05-20T09:15:00Z",
+      "updated_at": "2023-05-20T09:15:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Brainstormed ideas for the next illustration post on Instagram. The AI suggested a theme based on 'cozy rainy day vibes', which aligned with Yuki's aesthetic.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-06-10T11:45:00Z",
+      "updated_at": "2023-06-10T11:45:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Asked for a translation of a product description into simpler Japanese for a wider audience. The AI provided a more colloquial and accessible version.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-06-25T16:00:00Z",
+      "updated_at": "2023-06-25T16:00:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Inquired about the process of applying a specific resin finishing technique for jewelry. The AI offered step-by-step instructions and safety tips.",
+      "confidence": 0.81,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-07-05T13:20:00Z",
+      "updated_at": "2023-07-05T13:20:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Requested a list of popular retro games from the 16-bit era to prepare for the next YouTube stream. The AI provided a ranked list based on engagement metrics.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-07-20T18:00:00Z",
+      "updated_at": "2023-07-20T18:00:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Asked for a brief analysis of competitor website designs in the sustainable fashion niche. The AI identified key visual elements and user flow patterns.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2023-08-01T09:00:00Z",
+      "updated_at": "2023-08-01T09:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Queried about the significance of specific animation techniques used in 'Spirited Away'. The AI explained the use of hand-drawn elements and their emotional impact.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "created_at": "2023-08-15T20:00:00Z",
+      "updated_at": "2023-08-15T20:00:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Needed inspiration for a new Etsy product description. The AI suggested focusing on the unique handcrafted nature and the story behind the design.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "created_at": "2023-09-01T10:00:00Z",
+      "updated_at": "2023-09-01T10:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

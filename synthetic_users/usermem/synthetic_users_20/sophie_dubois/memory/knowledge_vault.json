@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Camille Dubois. Sophie's daughter, likely young given the Louvre visits. Represents a significant personal relationship and a priority for Sophie outside of her demanding career.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d",
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "organisation",
+      "content": "Le Monde (equivalent newspaper). The national newspaper where Sophie works as an investigative journalist. Her employer and the platform for her investigations into corruption and fraud.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "place",
+      "content": "Paris, France. Sophie's home city and the primary location for her work and personal life. Likely the setting for many of her investigations and personal activities.",
+      "confidence": 0.99,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Corruption and Corporate Fraud. Key areas of investigation for Sophie. These topics are central to her professional identity and likely expose her to significant risks.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "concept",
+      "content": "Real-estate lobbying. A specific area of investigation that has led to harassment for Sophie. This indicates a high-stakes environment and potential adversaries.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "concept",
+      "content": "Stress Management (Therapy & Running). Sophie uses these methods to cope with the pressures of her job and life. This highlights her resilience and proactive approach to mental well-being.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5y6z7a8b"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Jazz Piano. A personal hobby indicating a creative and potentially introspective side to Sophie. It suggests a pursuit of beauty and complexity outside of her work.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9c0d1e2f"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "concept",
+      "content": "Elaborate Sunday Lunches. A cherished personal ritual, likely involving family or friends. This signifies a desire for connection and tradition, contrasting with her often adversarial professional life.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-3g4h5i6j"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "person",
+      "content": "Sciences Po Alumni Network. Sophie is a graduate of Sciences Po, suggesting a valuable professional network and a strong educational foundation in political science and public affairs.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-7k8l9m0n"
+      ],
+      "created_at": "2023-10-27T10:08:00Z",
+      "updated_at": "2023-10-27T10:08:00Z"
+    },
+    {
+      "id": "kv-k7l8m9n0",
+      "type": "place",
+      "content": "The Louvre. A specific cultural institution Sophie visits with Camille. It represents shared personal time and an appreciation for art and culture.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-1o2p3q4r"
+      ],
+      "created_at": "2023-10-27T10:09:00Z",
+      "updated_at": "2023-10-27T10:09:00Z"
+    }
+  ],
+  "summaries": []
+}

@@ -1,0 +1,384 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:18:51.495658+00:00",
+  "profile": {
+    "summary": "Lena Müller is a 52-year-old German environmental consultant and part-time lecturer based in Berlin. With a PhD in environmental policy, she advises federal agencies on circular economy transitions and is a long-time member of the Green Party. Lena is passionate about opera, long-distance hiking, and traditional food preservation.",
+    "last_generated": "2026-03-01T05:18:51.495658+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Lena Müller",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "age": {
+      "value": 52,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Berlin, Germany",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "nationality": {
+      "value": "German",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "languages": {
+      "value": [
+        "German",
+        "English",
+        "French"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Senior Environmental Consultant",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "current_company": {
+      "value": "Independent Consultant / Freie Universität Berlin",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "industry": {
+      "value": "Environmental Policy and Consulting",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "experience_years": {
+      "value": 25,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "education": {
+      "value": "PhD in Environmental Policy from Humboldt University",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "skills": {
+      "value": [
+        "Environmental Policy Analysis",
+        "Circular Economy Strategies",
+        "Sustainable Development",
+        "Stakeholder Engagement",
+        "Academic Lecturing"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Circular Economy Implementation",
+        "Climate Change Mitigation Policy",
+        "Sustainable Resource Management",
+        "Green Transition Advisory"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "work_style": {
+      "value": "Analytical, collaborative, and focused on practical, sustainable solutions.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Federal Agency Circular Economy Transition Advisory",
+          "description": "Advising federal agencies on developing and implementing policies for a transition to a circular economy.",
+          "stage": "Policy Development"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:18:51.495658+00:00",
+        "created_at": "2026-03-01T05:18:51.495658+00:00"
+      }
+    ],
+    "past": [
+      "Led policy research on waste reduction strategies for the German Ministry for the Environment."
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Secure funding for a new research project on urban resource loops",
+        "Publish findings from current advisory work",
+        "Develop new course materials for Freie Universität"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Influence national policy towards greater circularity",
+        "Mentor emerging environmental professionals",
+        "Complete a significant section of the Kungsleden trail"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "career": {
+      "value": "Become a leading voice in European environmental policy and sustainable business practices.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "personal": {
+      "value": "Maintain a healthy and active lifestyle, deepen knowledge of traditional fermentation techniques, and spend quality time with Klaus and her sons.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Life Cycle Assessment software",
+        "Policy analysis frameworks",
+        "Fermentation equipment",
+        "Cycling gear"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "technologies": {
+      "value": [
+        "GIS software",
+        "Data analysis platforms",
+        "Digital collaboration tools"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "work_environment": {
+      "value": "Prefers a mix of independent research and collaborative discussion, often in a quiet, organized setting.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "communication_style": {
+      "value": "Direct, evidence-based, and considerate of different perspectives.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Environmental stewardship is crucial for future generations",
+        "Policy must be informed by science",
+        "Community and collaboration drive progress",
+        "Preserving traditional knowledge is important"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity in research and advice",
+        "Promoting sustainability",
+        "Respect for diverse viewpoints"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Environmental protection",
+        "Sustainable economic development",
+        "Education and knowledge sharing"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Separated; two adult sons; shares a flat with a long-time partner, Klaus",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Colleagues at Freie Universität Berlin",
+        "Contacts within federal environmental agencies",
+        "Fellow Green Party members involved in policy"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Pace of climate action",
+        "Effectiveness of current circular economy policies",
+        "Balancing professional demands with personal life"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring long-term environmental sustainability beyond short-term economic gains"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:18:51.495658+00:00",
+      "created_at": "2026-03-01T05:18:51.495658+00:00"
+    }
+  }
+}

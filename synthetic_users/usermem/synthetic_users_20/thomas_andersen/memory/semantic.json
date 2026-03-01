@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-00000001",
+      "type": "knowledge",
+      "content": "Scandinavian Modernism, particularly in architecture, emphasizes functionality, clean lines, natural materials like wood, and a deep connection to nature. It prioritizes human scale and accessibility, often seen in social housing and public buildings.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2024-04-15T10:00:00Z",
+      "updated_at": "2024-04-15T10:00:00Z"
+    },
+    {
+      "id": "semantic-00000002",
+      "type": "knowledge",
+      "content": "Urban cycling infrastructure is crucial for sustainable cities. Effective design includes separated bike lanes, secure parking, clear signage, and integration with public transport to encourage cycling as a viable and safe mode of transport.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2024-04-15T10:01:00Z",
+      "updated_at": "2024-04-15T10:01:00Z"
+    },
+    {
+      "id": "semantic-00000003",
+      "type": "knowledge",
+      "content": "Climate-adaptive design in architecture involves creating buildings and urban environments that can withstand and respond to changing climatic conditions, such as increased rainfall, heatwaves, and rising sea levels. This includes green roofs, permeable surfaces, and resilient building materials.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2024-04-15T10:02:00Z",
+      "updated_at": "2024-04-15T10:02:00Z"
+    },
+    {
+      "id": "semantic-00000004",
+      "type": "knowledge",
+      "content": "The Øresund strait, separating Denmark and Sweden, is a vital waterway for shipping and recreation. Sailing conditions can be variable, influenced by weather patterns from both the Baltic Sea and the North Sea.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2024-04-15T10:03:00Z",
+      "updated_at": "2024-04-15T10:03:00Z"
+    },
+    {
+      "id": "semantic-00000005",
+      "type": "knowledge",
+      "content": "Preserving modernist heritage buildings requires a nuanced approach. It involves understanding the original design intent, using appropriate restoration techniques, and ensuring the building remains functional and relevant for contemporary use while respecting its historical integrity.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2024-04-15T10:04:00Z",
+      "updated_at": "2024-04-15T10:04:00Z"
+    },
+    {
+      "id": "semantic-00000006",
+      "type": "knowledge",
+      "content": "Danish furniture design, a core part of Scandinavian Modernism, is renowned for its craftsmanship, ergonomic considerations, and use of sustainable wood. Iconic pieces often blend simplicity with sophisticated joinery.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2024-04-15T10:05:00Z",
+      "updated_at": "2024-04-15T10:05:00Z"
+    },
+    {
+      "id": "semantic-00000007",
+      "type": "knowledge",
+      "content": "The podcast 'Arkitektur i Hverdagen' (Architecture in Everyday Life) aims to demystify architectural concepts for a broader audience, connecting design principles to the daily experiences of urban inhabitants.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2024-04-15T10:06:00Z",
+      "updated_at": "2024-04-15T10:06:00Z"
+    },
+    {
+      "id": "semantic-00000008",
+      "type": "knowledge",
+      "content": "Biographies offer valuable insights into historical context, individual decision-making, and the impact of personalities on events. Reading them regularly provides a broad understanding of human endeavors and societal evolution.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2024-04-15T10:07:00Z",
+      "updated_at": "2024-04-15T10:07:00Z"
+    }
+  ],
+  "summaries": []
+}

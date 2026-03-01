@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "ProZ.com is a vital platform for Elena's freelance translation work. She uses it to find job postings, connect with potential clients, and access glossaries and forums for specialized terminology research. It's essential for maintaining her client base and discovering new opportunities.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1234abcd"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Linguee is frequently consulted for its extensive bilingual dictionaries and context-rich examples. Elena uses it to verify the accuracy of translations, especially for nuanced phrases in literary fiction and legal documents. It helps ensure natural-sounding and contextually appropriate translations.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-efgh5678"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Her personal blog, 'Echoes of Kyiv,' serves as a platform to share her passion for Ukrainian literature with a global audience. She uses it to post essays, reviews, and translations, building awareness and fostering connections with international readers and academics.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-ijkl9012"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "The Ukrainian Embroidery Designs website is a key resource for her vyshyvanka embroidery hobby. She uses it to find authentic patterns, learn traditional techniques, and source inspiration for her intricate needlework, which is a form of mindful practice.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-mnop3456"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Contact details for the 'Help Ukraine Now' charity are critical for her volunteer work. Elena uses this contact to coordinate supply deliveries, communicate with other volunteers, and stay informed about the needs of frontline communities. It's a direct way she contributes to humanitarian efforts.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-qrst7890"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "A dedicated notebook for her poetry is a cherished resource. Elena uses it to jot down lines, ideas, and full poems that emerge during moments of reflection or inspiration. This physical notebook is a private space for processing emotions and artistic expression.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-uvwx1234"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

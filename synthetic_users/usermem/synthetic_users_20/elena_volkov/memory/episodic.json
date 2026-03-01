@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-a1b2c3d4",
+      "type": "event",
+      "content": "Discussed the nuances of translating a specific metaphor in a contemporary Ukrainian novel into English, focusing on preserving the emotional tone and cultural context.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "episodic-e5f6g7h8",
+      "type": "event",
+      "content": "Asked for synonyms for 'resilience' in Polish to use in a legal document translation, seeking terms that conveyed both strength and adaptability.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-ghijkl34"
+      ],
+      "created_at": "2023-11-15T14:00:00Z",
+      "updated_at": "2023-11-15T14:00:00Z"
+    },
+    {
+      "id": "episodic-i9j0k1l2",
+      "type": "event",
+      "content": "Recorded a short audio snippet of a traditional Ukrainian folk song melody for inspiration for a new embroidery pattern.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-mnopqr56"
+      ],
+      "created_at": "2023-12-01T19:45:00Z",
+      "updated_at": "2023-12-01T19:45:00Z"
+    },
+    {
+      "id": "episodic-m3n4o5p6",
+      "type": "event",
+      "content": "Researched historical context for a specific embroidered motif (e.g., a stylized bird) to ensure accuracy in a vyshyvanka blog post.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-qrstuv78"
+      ],
+      "created_at": "2023-12-18T09:15:00Z",
+      "updated_at": "2023-12-18T09:15:00Z"
+    },
+    {
+      "id": "episodic-q7r8s9t0",
+      "type": "event",
+      "content": "Received an update on the delivery status of medical supplies coordinated through the charity, expressing relief.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-uvwxyz90"
+      ],
+      "created_at": "2024-01-05T11:00:00Z",
+      "updated_at": "2024-01-05T11:00:00Z"
+    },
+    {
+      "id": "episodic-u1v2w3x4",
+      "type": "event",
+      "content": "Brainstormed poetic lines about the passage of time and enduring hope, inspired by recent events.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-abcdef01"
+      ],
+      "created_at": "2024-01-22T22:00:00Z",
+      "updated_at": "2024-01-22T22:00:00Z"
+    },
+    {
+      "id": "episodic-y5z6a7b8",
+      "type": "event",
+      "content": "Reviewed and corrected a draft English translation of a press release for an international NGO working in Ukraine.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-ghijkl12"
+      ],
+      "created_at": "2024-02-10T16:30:00Z",
+      "updated_at": "2024-02-10T16:30:00Z"
+    },
+    {
+      "id": "episodic-c9d0e1f2",
+      "type": "event",
+      "content": "Searched for information on upcoming literary festivals in Eastern Europe for potential networking opportunities.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-mnopqr23"
+      ],
+      "created_at": "2024-03-01T10:00:00Z",
+      "updated_at": "2024-03-01T10:00:00Z"
+    },
+    {
+      "id": "episodic-g3h4i5j6",
+      "type": "event",
+      "content": "Asked for the current exchange rate between USD and UAH for a client payment.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-uvwxyz34"
+      ],
+      "created_at": "2024-03-19T13:00:00Z",
+      "updated_at": "2024-03-19T13:00:00Z"
+    },
+    {
+      "id": "episodic-k7l8m9n0",
+      "type": "event",
+      "content": "Shared a draft of a blog post about the symbolism in traditional Ukrainian embroidery with the assistant for a quick grammar check.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-abcdef45"
+      ],
+      "created_at": "2024-04-05T17:00:00Z",
+      "updated_at": "2024-04-05T17:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

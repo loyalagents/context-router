@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Consorzio del Brunello di Montalcino official website. Isabella uses this for regulatory updates, harvest reports, and to stay informed on marketing initiatives for Brunello. It's a key reference for her role on the board.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Agroscope Viticulture Research Portal. This is a crucial resource for Isabella's biodynamic farming experiments, providing research papers and data on sustainable viticulture practices. She consults it regularly for insights into soil health and pest management.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Siena Oenology Department Alumni Network. Isabella stays connected with former classmates and professors through this network, sharing industry news and seeking advice on technical winemaking challenges. It's a valuable source of peer support and knowledge exchange.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Slow Food Italia official website. Isabella follows this for news on gastronomic events, artisan producers, and policy advocacy related to sustainable food systems. It aligns with her passion for authentic, high-quality local cuisine.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Local Val d'Orcia Tourism Board Contact. Isabella collaborates with them for promoting wine tourism at Podere Romano, coordinating events and sharing information about the estate's offerings. This contact is essential for her hospitality business.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Fabriano Artistico Watercolour Paper Supplier. Isabella frequently orders this specific brand of paper for her amateur watercolour painting. She values its quality and texture for capturing the Tuscan landscapes.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-26T10:25:00Z",
+      "updated_at": "2023-10-26T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

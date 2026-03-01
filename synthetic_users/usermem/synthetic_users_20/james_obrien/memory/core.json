@@ -1,0 +1,396 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:17:49.204269+00:00",
+  "profile": {
+    "summary": "James O'Brien is a 62-year-old Irish man from Galway, a retired deep-sea fisherman with 35 years of experience in the North Atlantic. He is a widower with three adult children and four grandchildren. Now semi-retired, he dedicates his time to his local hurling club, tending his allotment, and writing his memoirs. Despite being cautious with technology, he has recently started using a smartphone for news and weather updates.",
+    "last_generated": "2026-03-01T05:17:49.204269+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "James O'Brien",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "age": {
+      "value": 62,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Galway, Ireland",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "nationality": {
+      "value": "Irish",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "languages": {
+      "value": [
+        "English",
+        "Irish (conversational)"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Retired Deep-Sea Fisherman; Part-time Handyman",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "current_company": {
+      "value": "Self-employed (handyman work), Volunteer (hurling club committee)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "industry": {
+      "value": "Fishing (retired), General Services, Sports Administration",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "experience_years": {
+      "value": 35,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "education": {
+      "value": "High School Diploma (presumed); extensive practical training at sea",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "skills": {
+      "value": [
+        "Deep-sea navigation",
+        "Vessel maintenance",
+        "Fishing techniques",
+        "Knot tying",
+        "Basic plumbing",
+        "Basic carpentry"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "North Atlantic Marine Operations",
+        "Trawler Fishing",
+        "Maritime Safety",
+        "Coastal Community Engagement"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "work_style": {
+      "value": "Hands-on, practical, reliable, experienced in demanding environments",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Memoir of a Deep-Sea Fisherman",
+          "description": "Writing a book detailing his 35 years of experience on North Atlantic trawlers, including stories of life at sea, challenges, and the camaraderie of the crew.",
+          "stage": "Writing"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:17:49.204269+00:00",
+        "created_at": "2026-03-01T05:17:49.204269+00:00"
+      },
+      {
+        "value": {
+          "name": "Allotment Tending",
+          "description": "Maintaining his vegetable garden, focusing on seasonal produce.",
+          "stage": "Ongoing Activity"
+        },
+        "confidence": 0.8,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-e7f8g9h0"
+        ],
+        "updated_at": "2026-03-01T05:17:49.204269+00:00",
+        "created_at": "2026-03-01T05:17:49.204269+00:00"
+      }
+    ],
+    "past": [
+      "35 years as a deep-sea fisherman on North Atlantic trawlers"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Complete the first draft of his memoir",
+        "Prepare the allotment for spring planting",
+        "Attend regular hurling club meetings"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Publish his memoir",
+        "Maintain a healthy lifestyle in retirement",
+        "Spend quality time with grandchildren"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "career": {
+      "value": "Transition from active career to fulfilling retirement activities.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "personal": {
+      "value": "Honor the memory of his late wife, Brigid, by living a full and engaged life.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Hand tools (hammers, saws, wrenches)",
+        "Gardening tools",
+        "Fishing gear",
+        "Smartphone (for news/weather)"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Basic smartphone usage (news apps, weather apps)"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "work_environment": {
+      "value": "Prefers practical, hands-on tasks; values routine and familiar settings.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "communication_style": {
+      "value": "Direct and to the point, values clear communication, may be less comfortable with overly technical jargon.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Hard work and perseverance",
+        "Loyalty to family and community",
+        "Respect for the sea and its power",
+        "Importance of tradition"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "principles": {
+      "value": [
+        "Honesty",
+        "Reliability",
+        "Community involvement"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Family well-being",
+        "Completing personal projects (memoir)",
+        "Contributing to the local hurling club"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Widower; three adult children; four grandchildren",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Former fishing colleagues",
+        "Members of the local hurling club committee",
+        "Son who provided smartphone"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Maintaining health and independence",
+        "The future of local fishing traditions",
+        "Ensuring his memoir is well-received"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Loneliness after the passing of his wife, Brigid"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m7n8o9p0"
+      ],
+      "updated_at": "2026-03-01T05:17:49.204269+00:00",
+      "created_at": "2026-03-01T05:17:49.204269+00:00"
+    }
+  }
+}

@@ -1,0 +1,431 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:18:36.967259+00:00",
+  "profile": {
+    "summary": "Fatima Al-Rashidi is a 27-year-old Kuwaiti medical student in her fourth year of MBBS at King's College London. She is a practicing Muslim, fluent in Arabic and English, and passionate about global health equity and obstetrics. She volunteers at a refugee health clinic and enjoys reading literary fiction, maintaining a book-review blog. Fatima aims to specialize in maternal-foetal medicine and return to Kuwait to practice.",
+    "last_generated": "2026-03-01T05:18:36.967259+00:00",
+    "confidence": 0.95,
+    "evidence_count": 12
+  },
+  "identity": {
+    "name": {
+      "value": "Fatima Al-Rashidi",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "age": {
+      "value": 27,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "London, UK (student visa)",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "nationality": {
+      "value": "Kuwaiti",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "languages": {
+      "value": [
+        "Arabic",
+        "English"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "visa_status": {
+      "value": "student visa",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  },
+  "professional": {
+    "current_role": {
+      "value": "Medical Student",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "current_company": {
+      "value": "King's College London",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "industry": {
+      "value": "Healthcare/Education",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "experience_years": {
+      "value": 4,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "education": {
+      "value": "Fourth-year MBBS, King's College London",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "skills": {
+      "value": [
+        "Medical knowledge",
+        "Patient care",
+        "Clinical skills",
+        "Research",
+        "Communication",
+        "Cross-cultural awareness"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Global Health",
+        "Obstetrics",
+        "Maternal-Foetal Medicine",
+        "Refugee Health"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "work_style": {
+      "value": "Dedicated and compassionate, with a strong commitment to patient well-being and a passion for learning.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "MBBS Studies",
+          "description": "Fourth-year medical studies, focusing on clinical rotations and advanced medical knowledge.",
+          "stage": "Active"
+        },
+        "confidence": 0.95,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-00000006"
+        ],
+        "updated_at": "2026-03-01T05:18:36.967259+00:00",
+        "created_at": "2026-03-01T05:18:36.967259+00:00"
+      },
+      {
+        "value": {
+          "name": "Book Review Blog",
+          "description": "Maintaining and updating a blog that reviews literary fiction.",
+          "stage": "Ongoing"
+        },
+        "confidence": 0.8,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-00000009"
+        ],
+        "updated_at": "2026-03-01T05:18:36.967259+00:00",
+        "created_at": "2026-03-01T05:18:36.967259+00:00"
+      }
+    ],
+    "past": [
+      "Volunteer work at a refugee health clinic in Hackney (alternate Saturdays)"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Excel in final year of MBBS",
+        "Gain further clinical experience",
+        "Continue volunteering at the clinic",
+        "Maintain active book blog"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000008",
+        "obs-00000009"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Complete specialization in Maternal-Foetal Medicine",
+        "Return to Kuwait to practice medicine",
+        "Contribute to improving maternal healthcare in Kuwait"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000011"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "career": {
+      "value": "To become a highly skilled Maternal-Foetal Medicine specialist and leader in healthcare in Kuwait.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000011"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "personal": {
+      "value": "To maintain a balance between demanding studies, personal faith, family connections, and personal interests like reading.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000005",
+        "obs-00000010",
+        "obs-00000009"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Medical textbooks",
+        "Clinical diagnostic tools",
+        "Digital medical resources",
+        "Blogging platform"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000009"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Electronic Health Records (EHR)",
+        "Medical imaging software",
+        "Online learning platforms",
+        "Social media (for blog promotion)"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000009"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "work_environment": {
+      "value": "A structured yet collaborative environment where learning and patient care are prioritized. Access to quiet study space.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "communication_style": {
+      "value": "Clear, empathetic, and culturally sensitive communication, both verbally and in writing.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000005",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Commitment to patient care",
+        "Importance of global health equity",
+        "Dedication to continuous learning",
+        "Adherence to Islamic principles"
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000010"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity",
+        "Compassion",
+        "Professionalism",
+        "Cultural humility"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Medical education",
+        "Patient well-being",
+        "Family",
+        "Faith"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000010",
+        "obs-00000002"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Single; close-knit family back in Kuwait City",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-00000002",
+        "obs-00000012"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Medical school peers",
+        "Clinical supervisors at King's College Hospital",
+        "Fellow volunteers at the clinic"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000006",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Navigating the complexities of international student life",
+        "Balancing demanding academic schedule with personal and religious commitments"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-00000003",
+        "obs-00000010"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Ensuring equitable access to healthcare for all populations"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-00000007",
+        "obs-00000008"
+      ],
+      "updated_at": "2026-03-01T05:18:36.967259+00:00",
+      "created_at": "2026-03-01T05:18:36.967259+00:00"
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Det Kongelige Akademi - Library. This is a primary reference for architectural history and theory, especially Scandinavian modernism. Thomas frequently consults their digital archives and physical collection for research for his podcast and personal projects.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6a7b8",
+      "type": "resource",
+      "content": "Arkitektur i Hverdagen Podcast Hosting Platform (e.g., Libsyn/Anchor). Thomas uses this platform to upload, manage, and analyze listener statistics for his podcast. It's crucial for maintaining his audience engagement and understanding reach.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-9a8b7c6d"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "resource-c9d0e1f2",
+      "type": "resource",
+      "content": "Danish Cyclists' Federation (Cykel Glad). A key organization for information and advocacy on cycling infrastructure in Denmark. Thomas follows their publications and policy updates closely, often referencing them on his podcast.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-3b2a10f9"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "resource-a3b4c5d6",
+      "type": "resource",
+      "content": "Øresund Sailing Club (Online Forum/Member Area). Used for coordinating sailing trips, checking weather forecasts specific to the Øresund, and communicating with fellow club members. Essential for his hobby.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-7e6d5c4b"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-f7e8d9c0",
+      "type": "resource",
+      "content": "Woodworking Workshop Equipment (e.g., Bandsaw, Planer, Lathe). These are his primary tools for furniture making. He refers to maintenance manuals and online tutorials for advanced techniques and repairs.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "resource-b1c2d3e4",
+      "type": "resource",
+      "content": "Saxo.com (Online Bookstore). Thomas uses this platform extensively for purchasing biographies and architectural literature. He appreciates the wide selection and ease of ordering.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-5f4e3d2c"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "resource-d5e6f7a8",
+      "type": "resource",
+      "content": "Climate-Adaptive Design Resources (e.g., C40 Cities, local government reports). He actively seeks out research and case studies on climate adaptation in urban environments, crucial for his ongoing interest and potential future contributions.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-90123456"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

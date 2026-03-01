@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "JSTOR: Used extensively for accessing academic papers and research articles, particularly for literature reviews and background research on AI ethics and ML fairness. It's a primary source for scholarly work.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6a7b8",
+      "type": "resource",
+      "content": "Congressional Research Service (CRS) Reports: Michael frequently references CRS reports when preparing testimony or policy recommendations on AI regulation. These reports offer non-partisan analysis crucial for his legislative engagements.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-98765432"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "resource-c9d0e1f2",
+      "type": "resource",
+      "content": "GitHub: Essential for accessing and contributing to open-source ML fairness toolkits and code repositories. He uses it for both personal research projects and to share code with the non-profit he co-founded.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-abcdef01"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "resource-3a4b5c6d",
+      "type": "resource",
+      "content": "National Park Service (NPS) Website: Used for planning hiking trips in the Sierra Nevada, checking trail conditions, and understanding park regulations. It's a key resource for his outdoor recreation.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-fedcba98"
+      ],
+      "created_at": "2023-10-27T10:45:00Z",
+      "updated_at": "2023-10-27T10:45:00Z"
+    },
+    {
+      "id": "resource-7e8f9a0b",
+      "type": "resource",
+      "content": "Local Chamber Music Society Mailing List: Subscribed to receive updates on performances and events for his cello quartet. This helps him coordinate rehearsals and performances.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-11223344"
+      ],
+      "created_at": "2023-10-27T11:00:00Z",
+      "updated_at": "2023-10-27T11:00:00Z"
+    },
+    {
+      "id": "resource-f1e2d3c4",
+      "type": "resource",
+      "content": "Brewfather App: A popular homebrewing application used to design recipes, track fermentation, and log batches of his Taiwanese-style craft beer. It helps him manage and refine his brewing process.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-55667788"
+      ],
+      "created_at": "2023-10-27T11:15:00Z",
+      "updated_at": "2023-10-27T11:15:00Z"
+    }
+  ],
+  "summaries": []
+}

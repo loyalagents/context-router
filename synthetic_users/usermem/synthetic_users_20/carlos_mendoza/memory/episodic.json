@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-abcdef01",
+      "type": "event",
+      "content": "Discussed potential new dessert pairings for the tasting menu featuring huitlacoche and Oaxacan chocolate with the AI.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    },
+    {
+      "id": "episodic-abcdef02",
+      "type": "event",
+      "content": "Asked the AI for a concise summary of the latest trends in molecular gastronomy for inspiration.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "created_at": "2023-11-15T14:00:00Z",
+      "updated_at": "2023-11-15T14:00:00Z"
+    },
+    {
+      "id": "episodic-abcdef03",
+      "type": "event",
+      "content": "Checked the weather forecast for this weekend's youth football match in Xochimilco.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "created_at": "2023-12-01T08:15:00Z",
+      "updated_at": "2023-12-01T08:15:00Z"
+    },
+    {
+      "id": "episodic-abcdef04",
+      "type": "event",
+      "content": "Researched the optimal storage conditions for fresh epazote to extend its shelf life in the rooftop garden.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "created_at": "2024-01-10T11:45:00Z",
+      "updated_at": "2024-01-10T11:45:00Z"
+    },
+    {
+      "id": "episodic-abcdef05",
+      "type": "event",
+      "content": "Generated a draft of a social media post announcing a new seasonal menu at Raíz.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "created_at": "2024-02-05T16:20:00Z",
+      "updated_at": "2024-02-05T16:20:00Z"
+    },
+    {
+      "id": "episodic-abcdef06",
+      "type": "event",
+      "content": "Asked for recommendations on vintage mezcal distilleries in Oaxaca that are open to visitors.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "created_at": "2024-03-18T09:00:00Z",
+      "updated_at": "2024-03-18T09:00:00Z"
+    },
+    {
+      "id": "episodic-abcdef07",
+      "type": "event",
+      "content": "Reviewed historical recipes for mole poblano to find authentic variations.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "created_at": "2024-04-22T13:30:00Z",
+      "updated_at": "2024-04-22T13:30:00Z"
+    },
+    {
+      "id": "episodic-abcdef08",
+      "type": "event",
+      "content": "Set a reminder to order more avocado leaves for the kitchen next week.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "created_at": "2024-05-01T17:05:00Z",
+      "updated_at": "2024-05-01T17:05:00Z"
+    },
+    {
+      "id": "episodic-abcdef09",
+      "type": "event",
+      "content": "Explored potential guest chefs for a collaboration dinner at Raíz next year.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "created_at": "2024-05-20T10:00:00Z",
+      "updated_at": "2024-05-20T10:00:00Z"
+    },
+    {
+      "id": "episodic-abcdef10",
+      "type": "event",
+      "content": "Asked for a translation of a Latin American food critic's review from Spanish to English.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "created_at": "2024-06-15T11:10:00Z",
+      "updated_at": "2024-06-15T11:10:00Z"
+    }
+  ],
+  "summaries": {}
+}

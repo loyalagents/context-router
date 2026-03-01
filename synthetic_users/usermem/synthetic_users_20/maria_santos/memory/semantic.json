@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "The Portuguese language in Brazil has distinct phonetic and grammatical variations compared to European Portuguese. For instance, the pronunciation of 's' at the end of syllables often sounds like 'sh' in many Brazilian dialects, and the use of 'você' is far more common than 'tu' in everyday conversation.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6g7h8",
+      "type": "knowledge",
+      "content": "Machado de Assis is widely considered the greatest Brazilian writer, known for his innovative narrative techniques and psychological depth. His novels, such as 'Dom Casmurro' and 'Memórias Póstumas de Brás Cubas,' often explore themes of jealousy, madness, and social critique with a unique blend of irony and realism.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-i9j0k1l2",
+      "type": "knowledge",
+      "content": "Acarajé is a traditional Bahian street food made from mashed black-eyed peas, onions, and salt, deep-fried in dendê oil. It is typically split open and filled with vatapá, caruru, and shrimp, offering a rich and complex flavor profile.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-m3n4o5p6",
+      "type": "knowledge",
+      "content": "The literary movement known as Modernismo in Brazil, particularly the first phase (1922-1930), aimed to break from academic traditions and create a distinctly Brazilian artistic identity. Key figures like Oswald de Andrade advocated for 'anthropophagy,' the cultural assimilation of foreign influences to forge a new national art.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-q7r8s9t0",
+      "type": "knowledge",
+      "content": "Samba dancing requires a strong sense of rhythm and hip movement, often involving quick footwork and body isolations. Proper technique emphasizes grounding and a fluid connection to the music, allowing for both individual expression and coordinated partner work.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-u1v2w3x4",
+      "type": "knowledge",
+      "content": "Gardening on a small balcony requires careful selection of plants that thrive in containers and limited sunlight. Herbs like basil and mint, and compact vegetables such as cherry tomatoes and peppers, are good choices for urban spaces.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-y5z6a7b8",
+      "type": "knowledge",
+      "content": "The Brazilian education system, particularly at the secondary level, faces challenges related to funding, teacher training, and curriculum standardization. Efforts are ongoing to improve access and quality, with a focus on developing critical thinking skills.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

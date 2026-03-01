@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "When reviewing a new architectural design proposal, Thomas first assesses its contextual integration, looking for how well it respects the existing urban fabric and environmental conditions. He then evaluates the functional program and circulation, ensuring it meets user needs efficiently. Finally, he scrutinizes material choices and construction detailing for longevity, sustainability, and aesthetic alignment with modernist principles.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-1a2b3c4d",
+        "obs-5e6f7a8b"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-e5f6g7h8",
+      "type": "procedure",
+      "content": "For his podcast, 'Arkitektur i Hverdagen,' Thomas follows a structured preparation process. He researches potential topics or guests thoroughly, identifying key themes and questions. He then outlines the episode's narrative arc, ensuring a logical flow from introduction to conclusion. Finally, he practices delivering his points concisely and engagingly, aiming for clarity and accessibility for a broad audience.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9c8d7e6f",
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-i9j0k1l2",
+      "type": "procedure",
+      "content": "When planning a sailing trip in the Øresund, Thomas checks weather forecasts meticulously, paying close attention to wind speed, direction, and potential changes. He then inspects his sailboat's rigging, sails, and safety equipment, ensuring everything is in optimal condition. Finally, he plots a course considering prevailing currents and potential hazards, always having a backup plan ready.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-3d4e5f6a",
+        "obs-7b8c9d0e"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-m3n4o5p6",
+      "type": "procedure",
+      "content": "In his workshop, Thomas approaches furniture making with a focus on precision and material integrity. He starts by carefully selecting wood, considering its grain, strength, and aesthetic qualities. Measurements are double-checked before any cuts are made, using traditional joinery techniques where appropriate. Sanding and finishing are done in multiple stages to achieve a smooth, durable surface that highlights the natural beauty of the material.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-1f2e3d4c",
+        "obs-0a9b8c7d"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-q7r8s9t0",
+      "type": "procedure",
+      "content": "To maintain his knowledge of contemporary architectural trends, Thomas dedicates time each week to reading. He prioritizes architectural journals and reputable online publications, focusing on articles related to sustainable design and urban planning. He often cross-references information with his existing knowledge base, making notes on particularly insightful concepts or projects.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-2c1b0a9f",
+        "obs-5d6e7f8a"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

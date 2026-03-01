@@ -1,0 +1,389 @@
+{
+  "schema_version": "2.0",
+  "memory_type": "core",
+  "updated_at": "2026-03-01T05:19:18.996247+00:00",
+  "profile": {
+    "summary": "Sophie Dubois is a 36-year-old investigative journalist based in Paris, France, working for a national newspaper. As a single mother to her six-year-old daughter, Camille, Sophie strives to balance her demanding career, which focuses on corruption and fraud, with quality family time. She is multilingual, fluent in French, English, and Spanish, and holds a degree from Sciences Po. Sophie manages stress through therapy and running, and enjoys playing jazz piano and cooking.",
+    "last_generated": "2026-03-01T05:19:18.996247+00:00",
+    "confidence": 0.9,
+    "evidence_count": 10
+  },
+  "identity": {
+    "name": {
+      "value": "Sophie Dubois",
+      "confidence": 0.99,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "age": {
+      "value": 36,
+      "confidence": 0.97,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-e5f6g7h8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "date_of_birth": null,
+    "location": {
+      "value": "Paris, France",
+      "confidence": 0.95,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-i9j0k1l2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "nationality": {
+      "value": "French",
+      "confidence": 0.98,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-m3n4o5p6"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "languages": {
+      "value": [
+        "French",
+        "English",
+        "Spanish"
+      ],
+      "confidence": 0.97,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-q7r8s9t0"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "visa_status": null
+  },
+  "professional": {
+    "current_role": {
+      "value": "Investigative Journalist",
+      "confidence": 0.93,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-u1v2w3x4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "current_company": {
+      "value": "National Newspaper (Le Monde equivalent)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-y5z6a7b8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "industry": {
+      "value": "Journalism / Media",
+      "confidence": 0.92,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-c9d0e1f2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "experience_years": {
+      "value": 10,
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-g3h4i5j6"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "education": {
+      "value": "Sciences Po graduate",
+      "confidence": 0.95,
+      "persistency": "permanent",
+      "evidence_ids": [
+        "obs-k7l8m9n0"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "skills": {
+      "value": [
+        "Investigative Reporting",
+        "Data Analysis",
+        "Interviewing",
+        "Fact-Checking",
+        "Source Development",
+        "Public Speaking"
+      ],
+      "confidence": 0.87,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-o1p2q3r4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "expertise_areas": {
+      "value": [
+        "Corruption",
+        "Corporate Fraud",
+        "Political Finance",
+        "Real-estate Lobbying"
+      ],
+      "confidence": 0.88,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s5t6u7v8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "work_style": {
+      "value": "Dedicated and thorough, with a strong commitment to uncovering truth, even under pressure. Capable of managing complex investigations and tight deadlines.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-w9x0y1z2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    }
+  },
+  "projects": {
+    "current": [
+      {
+        "value": {
+          "name": "Investigation into Municipal Housing Corruption",
+          "description": "Currently working on a major investigation into alleged corruption within Paris's municipal housing development sector, focusing on lobbying practices and financial irregularities.",
+          "stage": "Active Investigation"
+        },
+        "confidence": 0.88,
+        "persistency": "dynamic",
+        "evidence_ids": [
+          "obs-a3b4c5d6"
+        ],
+        "updated_at": "2026-03-01T05:19:18.996247+00:00",
+        "created_at": "2026-03-01T05:19:18.996247+00:00"
+      }
+    ],
+    "past": [
+      "Exposé on corporate tax evasion schemes",
+      "Series on political campaign finance irregularities"
+    ]
+  },
+  "goals": {
+    "short_term": {
+      "value": [
+        "Complete current high-profile investigation",
+        "Secure more consistent work-life balance",
+        "Improve data visualization skills for reporting"
+      ],
+      "confidence": 0.85,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-e7f8g9h0"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "long_term": {
+      "value": [
+        "Become a recognized leader in investigative journalism",
+        "Ensure financial security for her daughter's future",
+        "Mentor young journalists"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i1j2k3l4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "career": {
+      "value": "To continue breaking significant stories that hold power accountable and to potentially lead an investigative unit.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-m5n6o7p8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "personal": {
+      "value": "Maintain a strong and nurturing relationship with her daughter while managing personal well-being.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-q9r0s1t2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    }
+  },
+  "preferences": {
+    "tools": {
+      "value": [
+        "Secure communication platforms",
+        "Data analysis software (e.g., Excel, R)",
+        "Public records databases",
+        "Transcription services",
+        "Secure document management systems"
+      ],
+      "confidence": 0.85,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-u3v4w5x6"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "technologies": {
+      "value": [
+        "Secure email",
+        "Encrypted messaging apps",
+        "Online research tools",
+        "Database querying"
+      ],
+      "confidence": 0.82,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-y7z8a9b0"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "work_environment": {
+      "value": "Prefers a focused and quiet environment for deep work, but adaptable to fast-paced newsroom settings.",
+      "confidence": 0.8,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-c1d2e3f4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "communication_style": {
+      "value": "Direct, clear, and evidence-based. Values accuracy and conciseness.",
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-g5h6i7j8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    }
+  },
+  "values": {
+    "core_beliefs": {
+      "value": [
+        "Truth and transparency are paramount.",
+        "Holding power accountable is essential for democracy.",
+        "Every individual deserves a voice.",
+        "Continuous learning and self-improvement."
+      ],
+      "confidence": 0.88,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-k9l0m1n2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "principles": {
+      "value": [
+        "Integrity in reporting",
+        "Objectivity and fairness",
+        "Persistence in pursuit of facts"
+      ],
+      "confidence": 0.85,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-o3p4q5r6"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "priorities": {
+      "value": [
+        "Daughter's well-being",
+        "Professional integrity",
+        "Personal health and stress management"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-s7t8u9v0"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    }
+  },
+  "relationships": {
+    "family": {
+      "value": "Single mother; daughter Camille (6)",
+      "confidence": 0.9,
+      "persistency": "stable",
+      "evidence_ids": [
+        "obs-w1x2y3z4"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "professional_network": {
+      "value": [
+        "Editor at national newspaper",
+        "Investigative journalism colleagues",
+        "Sources from previous investigations"
+      ],
+      "confidence": 0.82,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-a5b6c7d8"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "mentors": null
+  },
+  "concerns": {
+    "current": {
+      "value": [
+        "Potential backlash from current investigation",
+        "Meeting upcoming deadlines",
+        "Ensuring sufficient quality time with Camille"
+      ],
+      "confidence": 0.83,
+      "persistency": "transient",
+      "evidence_ids": [
+        "obs-e9f0g1h2"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    },
+    "recurring": {
+      "value": [
+        "Balancing demanding career with personal life",
+        "Maintaining personal safety due to sensitive reporting"
+      ],
+      "confidence": 0.78,
+      "persistency": "dynamic",
+      "evidence_ids": [
+        "obs-i3j4k5l6"
+      ],
+      "updated_at": "2026-03-01T05:19:18.996247+00:00",
+      "created_at": "2026-03-01T05:19:18.996247+00:00"
+    }
+  }
+}

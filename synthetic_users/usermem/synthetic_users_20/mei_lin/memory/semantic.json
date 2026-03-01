@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-a1b2c3d4",
+      "type": "knowledge",
+      "content": "Sichuan cuisine is known for its bold flavors, particularly the pungency and spiciness resulting from the liberal use of garlic and chili peppers, as well as the unique flavor of Sichuan pepper.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2024-04-10T10:00:00Z",
+      "updated_at": "2024-04-10T10:00:00Z"
+    },
+    {
+      "id": "semantic-e5f6a7b8",
+      "type": "knowledge",
+      "content": "The Dan Dan noodles are a classic Sichuan dish, traditionally featuring a spicy sauce with preserved vegetables, chili oil, Sichuan pepper, minced pork, and scallions over noodles.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-9a8b7c6d"
+      ],
+      "created_at": "2024-04-10T10:05:00Z",
+      "updated_at": "2024-04-10T10:05:00Z"
+    },
+    {
+      "id": "semantic-c9d0e1f2",
+      "type": "knowledge",
+      "content": "Chongqing, my hometown, is famous for its hot pot culture, characterized by a simmering pot of spicy broth and a wide array of ingredients for diners to cook themselves.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-3b2a1f0e"
+      ],
+      "created_at": "2024-04-10T10:10:00Z",
+      "updated_at": "2024-04-10T10:10:00Z"
+    },
+    {
+      "id": "semantic-a3b4c5d6",
+      "type": "knowledge",
+      "content": "The Sydney Chinese Business Association plays a vital role in supporting Chinese entrepreneurs and businesses in the city, fostering cultural exchange and economic growth.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-8c7d6e5f"
+      ],
+      "created_at": "2024-04-10T10:15:00Z",
+      "updated_at": "2024-04-10T10:15:00Z"
+    },
+    {
+      "id": "semantic-e7f8a9b0",
+      "type": "knowledge",
+      "content": "Growing chillies at home requires good sunlight, well-draining soil, and consistent watering, with varieties like Bird's Eye and Habanero being popular for their heat.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-2a1b0c9d"
+      ],
+      "created_at": "2024-04-10T10:20:00Z",
+      "updated_at": "2024-04-10T10:20:00Z"
+    },
+    {
+      "id": "semantic-c1d2e3f4",
+      "type": "knowledge",
+      "content": "Mahjong is a tile-based game with roots in Chinese culture, often played by four players and involving strategy, skill, and a degree of chance.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-6f5e4d3c"
+      ],
+      "created_at": "2024-04-10T10:25:00Z",
+      "updated_at": "2024-04-10T10:25:00Z"
+    },
+    {
+      "id": "semantic-a5b6c7d8",
+      "type": "knowledge",
+      "content": "The Blue Mountains National Park, west of Sydney, offers stunning natural beauty with its vast eucalyptus forests, dramatic cliffs, and waterfalls, ideal for bushwalking.",
+      "confidence": 0.89,
+      "evidence_ids": [
+        "obs-0e9d8c7b"
+      ],
+      "created_at": "2024-04-10T10:30:00Z",
+      "updated_at": "2024-04-10T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

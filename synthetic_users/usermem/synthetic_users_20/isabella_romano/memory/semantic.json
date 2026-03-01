@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "semantic",
+  "limits": {
+    "max_items": 300,
+    "max_chars": 60000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "semantic-8a1b2c3d",
+      "type": "knowledge",
+      "content": "Brunello di Montalcino is a prestigious Italian red wine made exclusively from Sangiovese grapes in the Montalcino region of Tuscany. It is known for its complex aromas, robust structure, and significant aging potential, typically requiring years of maturation before release.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-a1b2c3d4"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "semantic-4e5f6a7b",
+      "type": "knowledge",
+      "content": "Biodynamic farming is a holistic, ecological, and ethical approach to agriculture that views the farm as a self-sustaining organism. It goes beyond organic practices by incorporating astronomical calendars and specific preparations to enhance soil vitality and plant health.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-e5f6a7b8"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "semantic-9c8d7e6f",
+      "type": "knowledge",
+      "content": "The Val d'Orcia is a picturesque valley in the Tuscany region of Italy, renowned for its distinctive landscape of rolling hills, cypress trees, and Renaissance towns. Its medieval heritage is deeply ingrained in its architecture and cultural traditions.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-c8d7e6f9"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "semantic-1a2b3c4d",
+      "type": "knowledge",
+      "content": "Terroir refers to the environmental factors that affect agricultural product's characteristics, including soil, topography, and climate. In winemaking, understanding terroir is crucial for expressing the unique qualities of a grape variety and its origin in the final wine.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-a2b3c4d5"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "semantic-7e8f9a0b",
+      "type": "knowledge",
+      "content": "Slow Food is a global movement founded in Italy that advocates for preserving traditional and regional cuisine and encourages farming of plants, seeds, and livestock characteristic of the local ecosystem. It emphasizes quality, sustainability, and pleasure in food.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-e8f9a0b1"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    },
+    {
+      "id": "semantic-3d4e5f6a",
+      "type": "knowledge",
+      "content": "Oenology, the science and study of wine and winemaking, involves understanding fermentation, grape varietals, aging processes, and wine chemistry. A strong foundation in oenology is essential for producing high-quality wines.",
+      "confidence": 0.98,
+      "evidence_ids": [
+        "obs-d4e5f6a7"
+      ],
+      "created_at": "2023-10-27T10:25:00Z",
+      "updated_at": "2023-10-27T10:25:00Z"
+    },
+    {
+      "id": "semantic-6b7c8d9e",
+      "type": "knowledge",
+      "content": "Burgundian winemaking traditions often emphasize Pinot Noir and Chardonnay, with a focus on terroir expression and minimalist intervention. Many winemakers globally seek internships in Burgundy to learn these esteemed techniques.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-b7c8d9e0"
+      ],
+      "created_at": "2023-10-27T10:30:00Z",
+      "updated_at": "2023-10-27T10:30:00Z"
+    }
+  ],
+  "summaries": []
+}

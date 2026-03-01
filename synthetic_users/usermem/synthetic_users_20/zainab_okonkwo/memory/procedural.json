@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "procedural",
+  "limits": {
+    "max_items": 150,
+    "max_chars": 50000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "consolidate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "procedural-f8a7b3c1",
+      "type": "procedure",
+      "content": "Develop a new Zuri Lagos collection by first sketching mood boards inspired by Nigerian textiles and modern architecture. Translate these sketches into digital patterns using specialized software, focusing on modular pieces that can be styled modestly and expressively. Source sustainable fabrics from local Nigerian suppliers, prioritizing comfort and drape for the contemporary African woman. Conduct fittings with diverse models to ensure inclusivity and adapt patterns for a perfect fit.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a1b2c3d4",
+        "obs-e5f6g7h8"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "procedural-d9e8f7a6",
+      "type": "procedure",
+      "content": "Manage Instagram marketing for Zuri Lagos by scheduling a mix of high-quality product shots, behind-the-scenes content of the design process, and user-generated content. Engage actively with followers by responding to comments and DMs promptly, fostering a community around the brand. Utilize targeted ads to reach potential customers interested in African fashion and modest wear, optimizing campaigns based on performance metrics. Collaborate with relevant influencers who align with Zuri Lagos's aesthetic and values.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-i9j0k1l2",
+        "obs-m3n4o5p6"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "procedural-c5b4a3f2",
+      "type": "procedure",
+      "content": "Conduct mentorship sessions for young seamstresses by starting with foundational sewing techniques and progressing to pattern manipulation. Emphasize the importance of precision and quality finishing in garment construction. Share insights into building a small fashion business, covering aspects like pricing, client management, and sourcing materials affordably. Encourage them to develop their unique style while staying true to the principles of modest yet expressive fashion.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-q7r8s9t0",
+        "obs-u1v2w3x4"
+      ],
+      "created_at": "2023-10-27T10:10:00Z",
+      "updated_at": "2023-10-27T10:10:00Z"
+    },
+    {
+      "id": "procedural-a1b2c3d4",
+      "type": "procedure",
+      "content": "Prepare for a pop-up shop by selecting a curated range of best-selling and new collection pieces. Organize inventory meticulously, ensuring easy access and clear pricing for all items. Design an attractive booth layout that reflects the Zuri Lagos brand aesthetic, incorporating elements of Nigerian culture. Plan for payment processing, ensuring both cash and mobile payment options are readily available for customer convenience.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-y5z6a7b8",
+        "obs-c9d0e1f2"
+      ],
+      "created_at": "2023-10-27T10:15:00Z",
+      "updated_at": "2023-10-27T10:15:00Z"
+    },
+    {
+      "id": "procedural-e7f8g9h0",
+      "type": "procedure",
+      "content": "Maintain a personal spiritual practice by adhering to daily prayer times, even amidst a busy schedule. Incorporate reflection on Islamic principles of modesty and ethical conduct into design decisions and business practices. Seek balance between professional ambitions, like reaching New York Fashion Week, and personal values, ensuring brand integrity is upheld.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-g3h4i5j6",
+        "obs-k7l8m9n0"
+      ],
+      "created_at": "2023-10-27T10:20:00Z",
+      "updated_at": "2023-10-27T10:20:00Z"
+    }
+  ],
+  "summaries": []
+}

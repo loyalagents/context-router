@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "episodic",
+  "limits": {
+    "max_items": 500,
+    "max_chars": 100000,
+    "summarize_when_exceeds": true
+  },
+  "compaction": {
+    "strategy": "time_windowed",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "episodic-00000001",
+      "type": "event",
+      "content": "Discussed potential improvements to the hospital readmission prediction model's feature engineering pipeline with the AI assistant. Focused on incorporating more granular patient demographic data.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-abcdef12"
+      ],
+      "created_at": "2023-10-15T10:30:00Z",
+      "updated_at": "2023-10-15T10:30:00Z"
+    },
+    {
+      "id": "episodic-00000002",
+      "type": "event",
+      "content": "Asked the AI for a brief overview of recent advancements in explainable AI (XAI) techniques relevant to healthcare, specifically for model interpretability.",
+      "confidence": 0.78,
+      "evidence_ids": [
+        "obs-ghijkl34"
+      ],
+      "created_at": "2023-11-01T14:00:00Z",
+      "updated_at": "2023-11-01T14:00:00Z"
+    },
+    {
+      "id": "episodic-00000003",
+      "type": "event",
+      "content": "Received a reminder from the AI about my daily yoga session. Confirmed attendance and asked for a 15-minute guided meditation to follow.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-mnopqr56"
+      ],
+      "created_at": "2023-11-10T06:00:00Z",
+      "updated_at": "2023-11-10T06:00:00Z"
+    },
+    {
+      "id": "episodic-00000004",
+      "type": "event",
+      "content": "Researched upcoming Carnatic music concerts in Bangalore for December. The AI provided a curated list based on my preferred artists.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-stuvwx78"
+      ],
+      "created_at": "2023-11-20T19:00:00Z",
+      "updated_at": "2023-11-20T19:00:00Z"
+    },
+    {
+      "id": "episodic-00000005",
+      "type": "event",
+      "content": "Planned a weekend hiking trip to the Mullayanagiri peak. Asked the AI for weather forecasts and trail difficulty information.",
+      "confidence": 0.81,
+      "evidence_ids": [
+        "obs-yzabcd90"
+      ],
+      "created_at": "2023-12-05T09:00:00Z",
+      "updated_at": "2023-12-05T09:00:00Z"
+    },
+    {
+      "id": "episodic-00000006",
+      "type": "event",
+      "content": "Sent an email draft to a mentee in the women-in-tech program, seeking feedback on a recent project proposal. Asked the AI to proofread for clarity and tone.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-efghij12"
+      ],
+      "created_at": "2023-12-15T11:45:00Z",
+      "updated_at": "2023-12-15T11:45:00Z"
+    },
+    {
+      "id": "episodic-00000007",
+      "type": "event",
+      "content": "Asked the AI for vegetarian recipe ideas for a dinner party, focusing on South Indian cuisine and minimal prep time.",
+      "confidence": 0.83,
+      "evidence_ids": [
+        "obs-klmnop34"
+      ],
+      "created_at": "2024-01-10T18:30:00Z",
+      "updated_at": "2024-01-10T18:30:00Z"
+    },
+    {
+      "id": "episodic-00000008",
+      "type": "event",
+      "content": "Reviewed performance metrics for the readmission prediction model. Asked the AI to generate visualizations of feature importance for the latest iteration.",
+      "confidence": 0.87,
+      "evidence_ids": [
+        "obs-qrstuv56"
+      ],
+      "created_at": "2024-01-25T10:00:00Z",
+      "updated_at": "2024-01-25T10:00:00Z"
+    },
+    {
+      "id": "episodic-00000009",
+      "type": "event",
+      "content": "Searched for information on the history of Carnatic music ragas. The AI provided a concise summary and links to relevant scholarly articles.",
+      "confidence": 0.75,
+      "evidence_ids": [
+        "obs-wxyzab78"
+      ],
+      "created_at": "2024-02-05T16:00:00Z",
+      "updated_at": "2024-02-05T16:00:00Z"
+    },
+    {
+      "id": "episodic-00000010",
+      "type": "event",
+      "content": "Had a brief chat with the AI about stress management techniques, specifically focusing on breathing exercises that can be done during a busy workday.",
+      "confidence": 0.8,
+      "evidence_ids": [
+        "obs-cdefgh90"
+      ],
+      "created_at": "2024-02-15T13:00:00Z",
+      "updated_at": "2024-02-15T13:00:00Z"
+    },
+    {
+      "id": "episodic-00000011",
+      "type": "event",
+      "content": "Explored potential Kaggle competitions related to healthcare analytics. The AI suggested a few relevant challenges focusing on patient outcome prediction.",
+      "confidence": 0.79,
+      "evidence_ids": [
+        "obs-ijklmn12"
+      ],
+      "created_at": "2024-03-01T11:00:00Z",
+      "updated_at": "2024-03-01T11:00:00Z"
+    },
+    {
+      "id": "episodic-00000012",
+      "type": "event",
+      "content": "Asked the AI to find information on a specific yoga pose (Viparita Karani) and its benefits for improving circulation.",
+      "confidence": 0.86,
+      "evidence_ids": [
+        "obs-opqrst34"
+      ],
+      "created_at": "2024-03-10T07:00:00Z",
+      "updated_at": "2024-03-10T07:00:00Z"
+    }
+  ],
+  "summaries": {}
+}

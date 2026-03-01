@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Official documentation for React.js and Node.js. Raj frequently refers to these for syntax, API details, and best practices when developing full-stack applications. It's his primary reference for his work at the healthcare IT company.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-1a2b3c4d"
+      ],
+      "created_at": "2023-10-26T10:00:00Z",
+      "updated_at": "2023-10-26T10:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "GitHub repository for the Tamil NLP library. Raj actively contributes to and monitors this project. It represents his personal passion and efforts to preserve and promote Tamil language technology.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-5e6f7g8h"
+      ],
+      "created_at": "2023-10-26T10:05:00Z",
+      "updated_at": "2023-10-26T10:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Immigration, Refugees and Citizenship Canada (IRCC) website. Raj used this extensively for his permanent residency application and occasionally checks for updates related to immigration policies. It's a crucial resource for his life in Canada.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-9i0j1k2l"
+      ],
+      "created_at": "2023-10-26T10:10:00Z",
+      "updated_at": "2023-10-26T10:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Zoom account. Used for daily stand-ups at work, virtual meetings with his mother to learn Sri Lankan cooking, and sometimes for connecting with friends and family abroad.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-3m4n5o6p"
+      ],
+      "created_at": "2023-10-26T10:15:00Z",
+      "updated_at": "2023-10-26T10:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Toronto Tamil cultural association website/events calendar. Raj uses this to find and participate in cultural events, helping him stay connected to his heritage and community in Canada.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-7q8r9s0t"
+      ],
+      "created_at": "2023-10-26T10:20:00Z",
+      "updated_at": "2023-10-26T10:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Chelsea FC official website and news sites. Raj follows his favourite football club closely, checking for match updates, transfer news, and team information. It’s a key leisure interest.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-1u2v3w4x"
+      ],
+      "created_at": "2023-10-26T10:25:00Z",
+      "updated_at": "2023-10-26T10:25:00Z"
+    }
+  ],
+  "summaries": []
+}

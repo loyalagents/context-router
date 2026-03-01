@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "knowledge_vault",
+  "limits": {
+    "max_items": 200,
+    "max_chars": 40000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "kv-a1b2c3d4",
+      "type": "person",
+      "content": "Ahmed Hassan is a 34-year-old Senior Software Engineer living in Toronto, Canada. He grew up in Cairo and moved to Canada in 2014, later becoming a permanent resident. He is passionate about open-source contributions and plays soccer with a local Egyptian community club.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000001"
+      ],
+      "created_at": "2023-10-27T10:00:00Z",
+      "updated_at": "2023-10-27T10:00:00Z"
+    },
+    {
+      "id": "kv-e5f6g7h8",
+      "type": "place",
+      "content": "Toronto, Canada is where Ahmed Hassan currently resides and works as a Senior Software Engineer. He moved here in 2014 for his Master's degree at the University of Toronto and has since become a permanent resident.",
+      "confidence": 0.96,
+      "evidence_ids": [
+        "obs-00000002"
+      ],
+      "created_at": "2023-10-27T10:01:00Z",
+      "updated_at": "2023-10-27T10:01:00Z"
+    },
+    {
+      "id": "kv-i9j0k1l2",
+      "type": "organisation",
+      "content": "Fintech Startup is the current employer of Ahmed Hassan. He holds the position of Senior Software Engineer there, indicating a role with significant technical responsibility and likely involvement in developing financial technology solutions.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-00000003"
+      ],
+      "created_at": "2023-10-27T10:02:00Z",
+      "updated_at": "2023-10-27T10:02:00Z"
+    },
+    {
+      "id": "kv-m3n4o5p6",
+      "type": "concept",
+      "content": "Open-source is a key passion for Ahmed Hassan. He actively contributes to several Python projects, demonstrating his commitment to collaborative software development and the free sharing of code.",
+      "confidence": 0.94,
+      "evidence_ids": [
+        "obs-00000004"
+      ],
+      "created_at": "2023-10-27T10:03:00Z",
+      "updated_at": "2023-10-27T10:03:00Z"
+    },
+    {
+      "id": "kv-q7r8s9t0",
+      "type": "place",
+      "content": "Cairo, Egypt is Ahmed Hassan's birthplace. While he moved to Canada for his studies and career, his upbringing in Cairo forms a significant part of his background and identity.",
+      "confidence": 0.97,
+      "evidence_ids": [
+        "obs-00000005"
+      ],
+      "created_at": "2023-10-27T10:04:00Z",
+      "updated_at": "2023-10-27T10:04:00Z"
+    },
+    {
+      "id": "kv-u1v2w3x4",
+      "type": "organisation",
+      "content": "University of Toronto is where Ahmed Hassan pursued his Master's degree in Computer Science. This educational experience was a crucial step in his move to Canada and his subsequent career in the tech industry.",
+      "confidence": 0.93,
+      "evidence_ids": [
+        "obs-00000006"
+      ],
+      "created_at": "2023-10-27T10:05:00Z",
+      "updated_at": "2023-10-27T10:05:00Z"
+    },
+    {
+      "id": "kv-y5z6a7b8",
+      "type": "concept",
+      "content": "Islam is Ahmed Hassan's religious practice. This aspect of his identity is likely important in his personal life and potentially influences his community involvement.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-00000007"
+      ],
+      "created_at": "2023-10-27T10:06:00Z",
+      "updated_at": "2023-10-27T10:06:00Z"
+    },
+    {
+      "id": "kv-c9d0e1f2",
+      "type": "organisation",
+      "content": "Local Egyptian Community Club is where Ahmed Hassan plays soccer on weekends. This organization represents a social connection to his cultural heritage and provides a recreational outlet.",
+      "confidence": 0.91,
+      "evidence_ids": [
+        "obs-00000008"
+      ],
+      "created_at": "2023-10-27T10:07:00Z",
+      "updated_at": "2023-10-27T10:07:00Z"
+    },
+    {
+      "id": "kv-g3h4i5j6",
+      "type": "concept",
+      "content": "Python is a programming language Ahmed Hassan is proficient in and contributes to within the open-source community. His expertise in Python likely underpins his work as a Senior Software Engineer.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-00000009"
+      ],
+      "created_at": "2023-10-27T10:08:00Z",
+      "updated_at": "2023-10-27T10:08:00Z"
+    }
+  ],
+  "summaries": []
+}

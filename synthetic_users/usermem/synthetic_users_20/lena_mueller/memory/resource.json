@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "memory_type": "resource",
+  "limits": {
+    "max_items": 100,
+    "max_chars": 30000,
+    "summarize_when_exceeds": false
+  },
+  "compaction": {
+    "strategy": "deduplicate",
+    "generations": 0,
+    "last_compacted_at": null
+  },
+  "items": [
+    {
+      "id": "resource-a1b2c3d4",
+      "type": "resource",
+      "content": "Bundesministerium für Umwelt, Naturschutz, Bau und Reaktorsicherheit (BMUB) official website. Lena frequently consults this site for policy updates, legislative documents, and funding announcements related to circular economy initiatives in Germany. It's a primary reference for her advisory work.",
+      "confidence": 0.95,
+      "evidence_ids": [
+        "obs-f0e1d2c3"
+      ],
+      "created_at": "2023-10-27T09:00:00Z",
+      "updated_at": "2023-10-27T09:00:00Z"
+    },
+    {
+      "id": "resource-e5f6g7h8",
+      "type": "resource",
+      "content": "Freie Universität Berlin (FU Berlin) internal portal. As a part-time lecturer, Lena uses this extensively for course materials, student communication, and accessing academic resources. It's crucial for her dual role as consultant and educator.",
+      "confidence": 0.92,
+      "evidence_ids": [
+        "obs-a9b8c7d6"
+      ],
+      "created_at": "2023-10-27T09:05:00Z",
+      "updated_at": "2023-10-27T09:05:00Z"
+    },
+    {
+      "id": "resource-i9j0k1l2",
+      "type": "resource",
+      "content": "Kungsleden hiking trail official information portal. Lena has a deep appreciation for this trail and frequently revisits the site for trail conditions, maps, and accommodation booking information for her long-distance hiking trips.",
+      "confidence": 0.88,
+      "evidence_ids": [
+        "obs-e5f4d3c2"
+      ],
+      "created_at": "2023-10-27T09:10:00Z",
+      "updated_at": "2023-10-27T09:10:00Z"
+    },
+    {
+      "id": "resource-m3n4o5p6",
+      "type": "resource",
+      "content": "Dr. Anja Schmidt (Humboldt University) contact information. Dr. Schmidt was Lena's PhD supervisor and remains a key academic contact for consultations and collaborations on environmental policy research. Lena values her expertise and long-standing professional relationship.",
+      "confidence": 0.85,
+      "evidence_ids": [
+        "obs-b1a0f9e8"
+      ],
+      "created_at": "2023-10-27T09:15:00Z",
+      "updated_at": "2023-10-27T09:15:00Z"
+    },
+    {
+      "id": "resource-q7r8s9t0",
+      "type": "resource",
+      "content": "Green Party Germany (Bündnis 90/Die Grünen) official website. As a long-term member, Lena uses this for party news, policy statements, and event information. It informs her political engagement and perspectives on environmental issues.",
+      "confidence": 0.9,
+      "evidence_ids": [
+        "obs-c6d5e4f3"
+      ],
+      "created_at": "2023-10-27T09:20:00Z",
+      "updated_at": "2023-10-27T09:20:00Z"
+    },
+    {
+      "id": "resource-u1v2w3x4",
+      "type": "resource",
+      "content": "Online forum for traditional fermenting and pickling techniques. Lena actively participates in this community, sharing her own techniques and learning from others. It's a valuable resource for preserving and advancing these culinary skills.",
+      "confidence": 0.82,
+      "evidence_ids": [
+        "obs-d7e8f9a0"
+      ],
+      "created_at": "2023-10-27T09:25:00Z",
+      "updated_at": "2023-10-27T09:25:00Z"
+    }
+  ],
+  "summaries": []
+}
