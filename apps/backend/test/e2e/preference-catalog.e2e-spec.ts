@@ -62,7 +62,7 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         expect(def.category).toBeDefined();
       });
 
-      // Verify all 12 core slugs are present
+      // Verify core slugs are present
       const slugs = catalog.map((d: { slug: string }) => d.slug);
       const coreSlugs = [
         'system.response_tone',
@@ -70,13 +70,24 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         'food.dietary_restrictions',
         'food.cuisine_preferences',
         'food.spice_tolerance',
-        'dev.tech_stack',
-        'dev.coding_style',
         'travel.seat_preference',
         'travel.meal_preference',
         'communication.preferred_channels',
+        'communication.style',
         'location.default_temperature',
         'location.quiet_hours',
+        'profile.bio',
+        'identity.languages',
+        'identity.location',
+        'professional.current_role',
+        'professional.skills',
+        'professional.work_style',
+        'work.preferred_tools',
+        'work.preferred_technologies',
+        'goals.short_term',
+        'goals.long_term',
+        'values.core_beliefs',
+        'values.priorities',
       ];
       for (const slug of coreSlugs) {
         expect(slugs).toContain(slug);

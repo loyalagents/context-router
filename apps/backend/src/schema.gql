@@ -239,12 +239,12 @@ type Query {
 
   """Send a text prompt to Vertex AI and receive a generated response"""
   askVertexAI(message: String!): String!
-  location(locationId: String!): Location!
-  locations: [Location!]!
-  locationsByType(type: LocationType!): [Location!]!
 
   """Get users associated with an API key group"""
   groupUsers(apiKey: String!): [User!]!
+  location(locationId: String!): Location!
+  locations: [Location!]!
+  locationsByType(type: LocationType!): [Location!]!
 
   """Get current authenticated user"""
   me: User!

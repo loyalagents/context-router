@@ -2,14 +2,21 @@ import {
   PrismaClient,
   PreferenceValueType,
   PreferenceScope,
+  PreferenceStatus,
+  SourceType,
+  User,
 } from '@prisma/client';
 import {
   PREFERENCE_CATALOG,
   PreferenceDefinition,
 } from '../src/config/preferences.catalog';
 import { createHash, randomBytes } from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
+
+// ─── Helpers ───
 
 function generateApiKey(prefix: string): string {
   const key = `${prefix}-${randomBytes(16).toString('hex')}`;
@@ -34,6 +41,262 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
   global: PreferenceScope.GLOBAL,
   location: PreferenceScope.LOCATION,
 };
+
+// ─── Core.json types ───
+
+interface MemoryNode<T> {
+  value: T;
+  confidence: number;
+  persistency: string;
+  evidence_ids: string[];
+  updated_at: string;
+  created_at: string;
+}
+
+interface CoreMemory {
+  profile: {
+    summary: string;
+    confidence: number;
+  };
+  identity: {
+    name: MemoryNode<string>;
+    age: MemoryNode<number>;
+    date_of_birth: MemoryNode<string> | null;
+    location: MemoryNode<string>;
+    nationality: MemoryNode<string>;
+    languages: MemoryNode<string[]>;
+    visa_status: MemoryNode<string> | null;
+  };
+  professional: {
+    current_role: MemoryNode<string>;
+    current_company: MemoryNode<string>;
+    industry: MemoryNode<string>;
+    experience_years: MemoryNode<number>;
+    education: MemoryNode<string>;
+    skills: MemoryNode<string[]>;
+    expertise_areas: MemoryNode<string[]>;
+    work_style: MemoryNode<string>;
+  };
+  projects: {
+    current: MemoryNode<{ name: string; description: string; stage: string }>[];
+    past: string[];
+  };
+  goals: {
+    short_term: MemoryNode<string[]>;
+    long_term: MemoryNode<string[]>;
+    career: MemoryNode<string>;
+    personal: MemoryNode<string>;
+  };
+  preferences: {
+    tools: MemoryNode<string[]>;
+    technologies: MemoryNode<string[]>;
+    work_environment: MemoryNode<string>;
+    communication_style: MemoryNode<string>;
+  };
+  values: {
+    core_beliefs: MemoryNode<string[]>;
+    principles: MemoryNode<string[]>;
+    priorities: MemoryNode<string[]>;
+  };
+  relationships: {
+    family: MemoryNode<string>;
+    professional_network: MemoryNode<string[]>;
+    mentors: MemoryNode<string[]> | null;
+  };
+  concerns: {
+    current: MemoryNode<string[]>;
+    recurring: MemoryNode<string[]>;
+  };
+}
+
+// ─── Preference mapping ───
+
+interface PreferenceMapping {
+  slug: string;
+  extract: (core: CoreMemory) => unknown | null;
+  confidence: (core: CoreMemory) => number | null;
+}
+
+const PREFERENCE_MAPPINGS: PreferenceMapping[] = [
+  // Profile
+  {
+    slug: 'profile.bio',
+    extract: (c) => c.profile.summary,
+    confidence: (c) => c.profile.confidence,
+  },
+  // Identity
+  {
+    slug: 'identity.age',
+    extract: (c) => String(c.identity.age.value),
+    confidence: (c) => c.identity.age.confidence,
+  },
+  {
+    slug: 'identity.date_of_birth',
+    extract: (c) => c.identity.date_of_birth?.value ?? null,
+    confidence: (c) => c.identity.date_of_birth?.confidence ?? null,
+  },
+  {
+    slug: 'identity.location',
+    extract: (c) => c.identity.location.value,
+    confidence: (c) => c.identity.location.confidence,
+  },
+  {
+    slug: 'identity.nationality',
+    extract: (c) => c.identity.nationality.value,
+    confidence: (c) => c.identity.nationality.confidence,
+  },
+  {
+    slug: 'identity.languages',
+    extract: (c) => c.identity.languages.value,
+    confidence: (c) => c.identity.languages.confidence,
+  },
+  {
+    slug: 'identity.visa_status',
+    extract: (c) => c.identity.visa_status?.value ?? null,
+    confidence: (c) => c.identity.visa_status?.confidence ?? null,
+  },
+  // Professional
+  {
+    slug: 'professional.current_role',
+    extract: (c) => c.professional.current_role.value,
+    confidence: (c) => c.professional.current_role.confidence,
+  },
+  {
+    slug: 'professional.current_company',
+    extract: (c) => c.professional.current_company.value,
+    confidence: (c) => c.professional.current_company.confidence,
+  },
+  {
+    slug: 'professional.industry',
+    extract: (c) => c.professional.industry.value,
+    confidence: (c) => c.professional.industry.confidence,
+  },
+  {
+    slug: 'professional.experience_years',
+    extract: (c) => String(c.professional.experience_years.value),
+    confidence: (c) => c.professional.experience_years.confidence,
+  },
+  {
+    slug: 'professional.education',
+    extract: (c) => c.professional.education.value,
+    confidence: (c) => c.professional.education.confidence,
+  },
+  {
+    slug: 'professional.skills',
+    extract: (c) => c.professional.skills.value,
+    confidence: (c) => c.professional.skills.confidence,
+  },
+  {
+    slug: 'professional.expertise_areas',
+    extract: (c) => c.professional.expertise_areas.value,
+    confidence: (c) => c.professional.expertise_areas.confidence,
+  },
+  {
+    slug: 'professional.work_style',
+    extract: (c) => c.professional.work_style.value,
+    confidence: (c) => c.professional.work_style.confidence,
+  },
+  // Projects
+  {
+    slug: 'projects.current',
+    extract: (c) => c.projects.current.map((p) => p.value),
+    confidence: (c) =>
+      c.projects.current.length > 0 ? c.projects.current[0].confidence : null,
+  },
+  {
+    slug: 'projects.past',
+    extract: (c) => c.projects.past,
+    confidence: () => null,
+  },
+  // Goals
+  {
+    slug: 'goals.short_term',
+    extract: (c) => c.goals.short_term.value,
+    confidence: (c) => c.goals.short_term.confidence,
+  },
+  {
+    slug: 'goals.long_term',
+    extract: (c) => c.goals.long_term.value,
+    confidence: (c) => c.goals.long_term.confidence,
+  },
+  {
+    slug: 'goals.career',
+    extract: (c) => c.goals.career.value,
+    confidence: (c) => c.goals.career.confidence,
+  },
+  {
+    slug: 'goals.personal',
+    extract: (c) => c.goals.personal.value,
+    confidence: (c) => c.goals.personal.confidence,
+  },
+  // Work preferences
+  {
+    slug: 'work.preferred_tools',
+    extract: (c) => c.preferences.tools.value,
+    confidence: (c) => c.preferences.tools.confidence,
+  },
+  {
+    slug: 'work.preferred_technologies',
+    extract: (c) => c.preferences.technologies.value,
+    confidence: (c) => c.preferences.technologies.confidence,
+  },
+  {
+    slug: 'work.environment',
+    extract: (c) => c.preferences.work_environment.value,
+    confidence: (c) => c.preferences.work_environment.confidence,
+  },
+  // Communication
+  {
+    slug: 'communication.style',
+    extract: (c) => c.preferences.communication_style.value,
+    confidence: (c) => c.preferences.communication_style.confidence,
+  },
+  // Values
+  {
+    slug: 'values.core_beliefs',
+    extract: (c) => c.values.core_beliefs.value,
+    confidence: (c) => c.values.core_beliefs.confidence,
+  },
+  {
+    slug: 'values.principles',
+    extract: (c) => c.values.principles.value,
+    confidence: (c) => c.values.principles.confidence,
+  },
+  {
+    slug: 'values.priorities',
+    extract: (c) => c.values.priorities.value,
+    confidence: (c) => c.values.priorities.confidence,
+  },
+  // Relationships
+  {
+    slug: 'relationships.family',
+    extract: (c) => c.relationships.family.value,
+    confidence: (c) => c.relationships.family.confidence,
+  },
+  {
+    slug: 'relationships.professional_network',
+    extract: (c) => c.relationships.professional_network.value,
+    confidence: (c) => c.relationships.professional_network.confidence,
+  },
+  {
+    slug: 'relationships.mentors',
+    extract: (c) => c.relationships.mentors?.value ?? null,
+    confidence: (c) => c.relationships.mentors?.confidence ?? null,
+  },
+  // Concerns
+  {
+    slug: 'concerns.current',
+    extract: (c) => c.concerns.current.value,
+    confidence: (c) => c.concerns.current.confidence,
+  },
+  {
+    slug: 'concerns.recurring',
+    extract: (c) => c.concerns.recurring.value,
+    confidence: (c) => c.concerns.recurring.confidence,
+  },
+];
+
+// ─── Seed functions ───
 
 async function seedPreferenceDefinitions() {
   console.log('Seeding preference definitions...');
@@ -67,98 +330,176 @@ async function seedPreferenceDefinitions() {
   );
 }
 
-async function main() {
-  console.log('Seeding workshop database...\n');
+function loadSyntheticUsers(): Array<{ dirName: string; coreData: CoreMemory }> {
+  const basePath = path.resolve(
+    __dirname,
+    '../../../synthetic_users/usermem/synthetic_users_20',
+  );
 
-  // Seed preference definitions (must come before any preference data)
-  await seedPreferenceDefinitions();
-
-  // --- Group A ---
-  const groupAKey = generateApiKey('grp-a');
-  const groupA = await prisma.apiKey.create({
-    data: { keyHash: hashKey(groupAKey), groupName: 'Group A' },
-  });
-
-  const groupAUsers = await Promise.all([
-    prisma.user.upsert({
-      where: { email: 'alice@workshop.dev' },
-      update: {},
-      create: { email: 'alice@workshop.dev', firstName: 'Alice', lastName: 'Anderson' },
-    }),
-    prisma.user.upsert({
-      where: { email: 'bob@workshop.dev' },
-      update: {},
-      create: { email: 'bob@workshop.dev', firstName: 'Bob', lastName: 'Brown' },
-    }),
-    prisma.user.upsert({
-      where: { email: 'carol@workshop.dev' },
-      update: {},
-      create: { email: 'carol@workshop.dev', firstName: 'Carol', lastName: 'Chen' },
-    }),
-  ]);
-
-  for (const user of groupAUsers) {
-    await prisma.apiKeyUser.upsert({
-      where: { apiKeyId_userId: { apiKeyId: groupA.id, userId: user.userId } },
-      update: {},
-      create: { apiKeyId: groupA.id, userId: user.userId },
-    });
+  if (!fs.existsSync(basePath)) {
+    console.warn(`Synthetic users directory not found: ${basePath}`);
+    return [];
   }
 
-  // --- Group B ---
-  const groupBKey = generateApiKey('grp-b');
-  const groupB = await prisma.apiKey.create({
-    data: { keyHash: hashKey(groupBKey), groupName: 'Group B' },
-  });
+  const entries = fs.readdirSync(basePath, { withFileTypes: true });
+  const users: Array<{ dirName: string; coreData: CoreMemory }> = [];
 
-  const groupBUsers = await Promise.all([
-    prisma.user.upsert({
-      where: { email: 'dave@workshop.dev' },
-      update: {},
-      create: { email: 'dave@workshop.dev', firstName: 'Dave', lastName: 'Davis' },
-    }),
-    prisma.user.upsert({
-      where: { email: 'eve@workshop.dev' },
-      update: {},
-      create: { email: 'eve@workshop.dev', firstName: 'Eve', lastName: 'Evans' },
-    }),
-    prisma.user.upsert({
-      where: { email: 'frank@workshop.dev' },
-      update: {},
-      create: { email: 'frank@workshop.dev', firstName: 'Frank', lastName: 'Fisher' },
-    }),
-  ]);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const corePath = path.join(basePath, entry.name, 'memory', 'core.json');
+    if (!fs.existsSync(corePath)) continue;
 
-  for (const user of groupBUsers) {
-    await prisma.apiKeyUser.upsert({
-      where: { apiKeyId_userId: { apiKeyId: groupB.id, userId: user.userId } },
-      update: {},
-      create: { apiKeyId: groupB.id, userId: user.userId },
-    });
+    const raw = fs.readFileSync(corePath, 'utf-8');
+    users.push({ dirName: entry.name, coreData: JSON.parse(raw) });
   }
 
-  // --- Print credentials (only time plaintext keys are visible) ---
-  console.log('='.repeat(60));
+  return users.sort((a, b) => a.dirName.localeCompare(b.dirName));
+}
+
+function extractUserFields(dirName: string, core: CoreMemory) {
+  const fullName = core.identity.name.value;
+  const spaceIndex = fullName.indexOf(' ');
+  return {
+    email: `${dirName}@workshop.dev`,
+    firstName: spaceIndex > 0 ? fullName.substring(0, spaceIndex) : fullName,
+    lastName: spaceIndex > 0 ? fullName.substring(spaceIndex + 1) : dirName,
+  };
+}
+
+async function seedSyntheticUsers(): Promise<User[]> {
+  const syntheticUsers = loadSyntheticUsers();
+  console.log(`\nFound ${syntheticUsers.length} synthetic users to seed`);
+
+  const createdUsers: User[] = [];
+  const importedAt = new Date().toISOString();
+
+  for (const { dirName, coreData } of syntheticUsers) {
+    const fields = extractUserFields(dirName, coreData);
+    const user = await prisma.user.upsert({
+      where: { email: fields.email },
+      update: { firstName: fields.firstName, lastName: fields.lastName },
+      create: fields,
+    });
+    createdUsers.push(user);
+
+    let prefCount = 0;
+    for (const mapping of PREFERENCE_MAPPINGS) {
+      const value = mapping.extract(coreData);
+      if (value == null) continue;
+
+      const confidence = mapping.confidence(coreData);
+
+      // Use findFirst + create/update pattern for null locationId
+      const existing = await prisma.preference.findFirst({
+        where: {
+          userId: user.userId,
+          locationId: null,
+          slug: mapping.slug,
+          status: PreferenceStatus.ACTIVE,
+        },
+      });
+
+      if (existing) {
+        await prisma.preference.update({
+          where: { id: existing.id },
+          data: {
+            value: value as any,
+            confidence,
+            sourceType: SourceType.IMPORTED,
+            evidence: {
+              source: 'synthetic_core_memory',
+              importedAt,
+            },
+          },
+        });
+      } else {
+        await prisma.preference.create({
+          data: {
+            userId: user.userId,
+            locationId: null,
+            slug: mapping.slug,
+            value: value as any,
+            status: PreferenceStatus.ACTIVE,
+            sourceType: SourceType.IMPORTED,
+            confidence,
+            evidence: {
+              source: 'synthetic_core_memory',
+              importedAt,
+            },
+          },
+        });
+      }
+      prefCount++;
+    }
+
+    console.log(
+      `  ${user.firstName} ${user.lastName} (${user.email}) - ${prefCount} preferences`,
+    );
+  }
+
+  return createdUsers;
+}
+
+async function createWorkshopGroups(users: User[]) {
+  console.log('\nCreating workshop groups...');
+
+  const groups = [
+    { prefix: 'grp-a', name: 'Group A' },
+    { prefix: 'grp-b', name: 'Group B' },
+  ];
+
+  console.log('\n' + '='.repeat(60));
   console.log('WORKSHOP CREDENTIALS');
   console.log('='.repeat(60));
 
-  console.log('\n--- Group A ---');
-  console.log(`API Key: ${groupAKey}`);
-  console.log('Users:');
-  for (const user of groupAUsers) {
-    console.log(`  ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.userId}`);
-  }
+  for (const group of groups) {
+    const apiKey = generateApiKey(group.prefix);
+    const apiKeyRecord = await prisma.apiKey.create({
+      data: { keyHash: hashKey(apiKey), groupName: group.name },
+    });
 
-  console.log('\n--- Group B ---');
-  console.log(`API Key: ${groupBKey}`);
-  console.log('Users:');
-  for (const user of groupBUsers) {
-    console.log(`  ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.userId}`);
+    // Add ALL users to this group
+    for (const user of users) {
+      await prisma.apiKeyUser.upsert({
+        where: {
+          apiKeyId_userId: {
+            apiKeyId: apiKeyRecord.id,
+            userId: user.userId,
+          },
+        },
+        update: {},
+        create: { apiKeyId: apiKeyRecord.id, userId: user.userId },
+      });
+    }
+
+    console.log(`\n--- ${group.name} ---`);
+    console.log(`API Key: ${apiKey}`);
+    console.log(`Users (${users.length}):`);
+    for (const user of users) {
+      console.log(
+        `  ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.userId}`,
+      );
+    }
   }
 
   console.log('\n' + '='.repeat(60));
   console.log('Save these keys! They cannot be retrieved after this.');
   console.log('='.repeat(60));
+}
+
+// ─── Main ───
+
+async function main() {
+  console.log('Seeding workshop database...\n');
+
+  // 1. Seed preference definitions (must come before preference data)
+  await seedPreferenceDefinitions();
+
+  // 2. Load and seed synthetic users with their preferences
+  const users = await seedSyntheticUsers();
+
+  // 3. Create workshop groups (all users in both groups)
+  await createWorkshopGroups(users);
 }
 
 main()

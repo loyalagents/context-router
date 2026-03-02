@@ -23,9 +23,9 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   });
 
   describe('refreshCache', () => {
-    it('should load all 12 definitions into cache', () => {
+    it('should load all definitions into cache', () => {
       const allSlugs = repository.getAllSlugs();
-      expect(allSlugs).toHaveLength(12);
+      expect(allSlugs).toHaveLength(43);
     });
   });
 
@@ -64,12 +64,14 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   });
 
   describe('getAllSlugs', () => {
-    it('should return all 12 slugs', () => {
+    it('should return all slugs', () => {
       const slugs = repository.getAllSlugs();
-      expect(slugs).toHaveLength(12);
+      expect(slugs).toHaveLength(43);
       expect(slugs).toContain('food.dietary_restrictions');
       expect(slugs).toContain('system.response_tone');
       expect(slugs).toContain('location.quiet_hours');
+      expect(slugs).toContain('profile.bio');
+      expect(slugs).toContain('professional.skills');
     });
   });
 
@@ -88,16 +90,23 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   });
 
   describe('getAllCategories', () => {
-    it('should return 6 sorted categories', () => {
+    it('should return all sorted categories', () => {
       const categories = repository.getAllCategories();
-      expect(categories).toHaveLength(6);
       expect(categories).toEqual([
         'communication',
-        'dev',
+        'concerns',
         'food',
+        'goals',
+        'identity',
         'location',
+        'professional',
+        'profile',
+        'projects',
+        'relationships',
         'system',
         'travel',
+        'values',
+        'work',
       ]);
     });
   });
@@ -123,7 +132,7 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   describe('getAll', () => {
     it('should return all definitions with category derived from slug', () => {
       const all = repository.getAll();
-      expect(all).toHaveLength(12);
+      expect(all).toHaveLength(43);
 
       for (const def of all) {
         expect(def.category).toBe(def.slug.split('.')[0]);

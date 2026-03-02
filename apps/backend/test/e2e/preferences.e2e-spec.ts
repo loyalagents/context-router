@@ -377,7 +377,7 @@ describe('Preferences GraphQL API (e2e)', () => {
 
       const suggestResponse = await graphqlRequest(suggestMutation, {
         input: {
-          slug: 'dev.tech_stack',
+          slug: 'professional.skills',
           value: ['TypeScript', 'Node.js'],
           confidence: 0.9,
         },
