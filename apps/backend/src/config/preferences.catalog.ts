@@ -21,7 +21,7 @@ export interface PreferenceEvidence {
 export type PreferenceValueType = 'string' | 'boolean' | 'enum' | 'array';
 
 export interface PreferenceDefinition {
-  category: string; // UI grouping only (system/food/dev/etc.)
+  category: string; // UI grouping only (system/food/professional/work/etc.)
   description: string; // LLM-facing meaning + how to apply
   valueType: PreferenceValueType;
   options?: string[]; // for enum type
@@ -34,6 +34,7 @@ export interface PreferenceDefinition {
  * Used by seed.ts and test-db.ts to populate the preference_definitions table.
  */
 export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
+  // ─── System ───
   'system.response_tone': {
     category: 'system',
     description:
@@ -50,6 +51,8 @@ export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
     options: ['brief', 'moderate', 'detailed'],
     scope: 'global',
   },
+
+  // ─── Food ───
   'food.dietary_restrictions': {
     category: 'food',
     description:
@@ -71,20 +74,8 @@ export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
     options: ['none', 'mild', 'medium', 'hot', 'extra_hot'],
     scope: 'global',
   },
-  'dev.tech_stack': {
-    category: 'dev',
-    description:
-      'Preferred programming languages, frameworks, and tools the user works with.',
-    valueType: 'array',
-    scope: 'global',
-  },
-  'dev.coding_style': {
-    category: 'dev',
-    description:
-      'Coding conventions and style preferences (e.g., tabs vs spaces, naming conventions).',
-    valueType: 'string',
-    scope: 'global',
-  },
+
+  // ─── Travel ───
   'travel.seat_preference': {
     category: 'travel',
     description: 'Preferred airplane seat location.',
@@ -98,6 +89,8 @@ export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
     valueType: 'string',
     scope: 'global',
   },
+
+  // ─── Communication ───
   'communication.preferred_channels': {
     category: 'communication',
     description:
@@ -105,6 +98,15 @@ export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
     valueType: 'array',
     scope: 'global',
   },
+  'communication.style': {
+    category: 'communication',
+    description:
+      'How the user prefers to communicate — their tone, approach, and interaction style.',
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Location ───
   'location.default_temperature': {
     category: 'location',
     description:
@@ -118,5 +120,227 @@ export const PREFERENCE_CATALOG: Record<string, PreferenceDefinition> = {
       'Time range when the user prefers no notifications or disturbances at this location.',
     valueType: 'string',
     scope: 'location',
+  },
+
+  // ─── Profile ───
+  'profile.bio': {
+    category: 'profile',
+    description:
+      'A narrative summary of who the user is — their background, role, interests, and personality. Used by AI for personalization context.',
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Identity ───
+  'identity.age': {
+    category: 'identity',
+    description: "The user's age.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'identity.date_of_birth': {
+    category: 'identity',
+    description: "The user's date of birth.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'identity.location': {
+    category: 'identity',
+    description: "The user's primary city and country of residence.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'identity.nationality': {
+    category: 'identity',
+    description: "The user's nationality or cultural background.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'identity.languages': {
+    category: 'identity',
+    description:
+      'Languages the user speaks or understands, ordered by proficiency.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'identity.visa_status': {
+    category: 'identity',
+    description: "The user's immigration or visa status.",
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Professional ───
+  'professional.current_role': {
+    category: 'professional',
+    description: "The user's current job title or professional role.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'professional.current_company': {
+    category: 'professional',
+    description: "The user's current employer or organization.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'professional.industry': {
+    category: 'professional',
+    description: 'The industry or sector the user works in.',
+    valueType: 'string',
+    scope: 'global',
+  },
+  'professional.experience_years': {
+    category: 'professional',
+    description: 'Years of professional experience.',
+    valueType: 'string',
+    scope: 'global',
+  },
+  'professional.education': {
+    category: 'professional',
+    description: "The user's educational background.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'professional.skills': {
+    category: 'professional',
+    description: 'Professional skills and competencies the user possesses.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'professional.expertise_areas': {
+    category: 'professional',
+    description:
+      'Domains or subject areas where the user has deep expertise.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'professional.work_style': {
+    category: 'professional',
+    description:
+      "How the user prefers to work — their style, habits, and approach to collaboration.",
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Projects ───
+  'projects.current': {
+    category: 'projects',
+    description:
+      'Current projects the user is working on (array of objects with name, description, stage).',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'projects.past': {
+    category: 'projects',
+    description: 'Past projects or notable experiences.',
+    valueType: 'array',
+    scope: 'global',
+  },
+
+  // ─── Goals ───
+  'goals.short_term': {
+    category: 'goals',
+    description:
+      "The user's current short-term goals or objectives they are working toward.",
+    valueType: 'array',
+    scope: 'global',
+  },
+  'goals.long_term': {
+    category: 'goals',
+    description: "The user's long-term aspirations and ambitions.",
+    valueType: 'array',
+    scope: 'global',
+  },
+  'goals.career': {
+    category: 'goals',
+    description: "The user's overarching career goal.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'goals.personal': {
+    category: 'goals',
+    description: "The user's personal life goal.",
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Work ───
+  'work.preferred_tools': {
+    category: 'work',
+    description:
+      'Tools, instruments, or software the user prefers for their professional work. Not limited to software — can include physical tools.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'work.preferred_technologies': {
+    category: 'work',
+    description:
+      'Technologies, platforms, or technical systems the user prefers working with.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'work.environment': {
+    category: 'work',
+    description:
+      'The type of work environment the user thrives in (e.g., quiet office, fast-paced, remote, collaborative).',
+    valueType: 'string',
+    scope: 'global',
+  },
+
+  // ─── Values ───
+  'values.core_beliefs': {
+    category: 'values',
+    description:
+      'Core beliefs and guiding principles that shape the user\'s decisions.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'values.principles': {
+    category: 'values',
+    description:
+      'Operating principles the user follows in work and life.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'values.priorities': {
+    category: 'values',
+    description:
+      'What the user prioritizes most in their professional and personal life.',
+    valueType: 'array',
+    scope: 'global',
+  },
+
+  // ─── Relationships ───
+  'relationships.family': {
+    category: 'relationships',
+    description: "The user's family situation and context.",
+    valueType: 'string',
+    scope: 'global',
+  },
+  'relationships.professional_network': {
+    category: 'relationships',
+    description: 'Key professional connections and communities.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'relationships.mentors': {
+    category: 'relationships',
+    description: 'Mentors and advisors the user looks up to.',
+    valueType: 'array',
+    scope: 'global',
+  },
+
+  // ─── Concerns ───
+  'concerns.current': {
+    category: 'concerns',
+    description: 'Current worries, challenges, or things on the user\'s mind.',
+    valueType: 'array',
+    scope: 'global',
+  },
+  'concerns.recurring': {
+    category: 'concerns',
+    description: 'Recurring themes of concern or ongoing challenges.',
+    valueType: 'array',
+    scope: 'global',
   },
 };

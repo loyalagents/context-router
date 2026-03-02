@@ -180,14 +180,14 @@ describe('PreferenceRepository (integration)', () => {
     it('should update existing SUGGESTED preference', async () => {
       await repository.upsertSuggested(
         testUserId,
-        'dev.tech_stack',
+        'professional.skills',
         ['JavaScript'],
         0.7,
       );
 
       const updated = await repository.upsertSuggested(
         testUserId,
-        'dev.tech_stack',
+        'professional.skills',
         ['TypeScript', 'Node.js'],
         0.9,
       );

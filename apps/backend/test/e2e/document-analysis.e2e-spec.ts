@@ -276,7 +276,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
             input: [
               {
                 suggestionId: 'array-suggestion',
-                slug: 'dev.tech_stack',
+                slug: 'professional.skills',
                 operation: 'CREATE',
                 newValue: arrayValue,
               },
