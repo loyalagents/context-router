@@ -4,7 +4,7 @@
 
 PreferenceDefinition currently uses `slug` as its primary key and Preference references it via a `slug` FK. This makes definitions global-only, preventing users from creating their own preference keys. The refactor introduces UUID-based identity with a `namespace` field (`"GLOBAL"`, `"USER:<userId>"`) to support user-owned definitions while keeping a simple path to future org/workspace support.
 
-**User decisions:** Private-only user definitions, forbid slug collisions with GLOBAL, immutable slugs, no aliases for MVP, OK to nuke all existing data.
+**User decisions:** Private-only user definitions, forbid slug collisions with GLOBAL, immutable slugs, no aliases for MVP, OK to nuke all existing data, optionally-authenticated catalog query.
 
 ---
 
@@ -36,7 +36,7 @@ model PreferenceDefinition {
 
   preferences Preference[]
 
-  // NO @@unique here — uniqueness enforced by partial index in migration SQL (active defs only)
+  @@unique([namespace, slug], where: { archivedAt: null }, map: "uniq_active_def_per_namespace_slug")
   @@index([namespace, slug])  // for lookup speed
   @@index([namespace])
   @@index([ownerUserId])
@@ -49,23 +49,32 @@ Key changes vs current:
 - New: `namespace`, `displayName`, `archivedAt`, `ownerUserId` (FK to User)
 - `ownerUserId` is NULL for global defs, set for user defs. `onDelete: Cascade` ensures cleanup when a user is deleted.
 - Frontend derives system vs user from `ownerUserId != null` (more robust than parsing namespace strings)
-- **No `@@unique` on `[namespace, slug]` in Prisma** — only `@@index` for lookup speed. Uniqueness enforced by partial index in migration SQL.
+- `@@unique([namespace, slug], where: { archivedAt: null })` — **partial unique index in Prisma schema** (requires `previewFeatures = ["partialIndexes"]`, available in Prisma 7.4.2+)
+- `@@index` kept for lookup speed
 
-**Why no Prisma `@@unique`:** A Prisma-level unique that doesn't match the actual DB constraint causes dangerous mismatches — `upsert`/`ON CONFLICT` breaks, `findUnique` assumptions violated by archived duplicates, and future migrations drift. Since all lookups use `findFirst` with `archivedAt: null` filters (not `findUnique`), we don't need Prisma to know about the uniqueness.
+**Archive strategy: partial unique index.** Archiving sets `archivedAt` but does NOT rename the namespace. Uniqueness of active definitions is enforced by Prisma's native partial unique index:
 
-**Archive strategy: partial unique index.** Archiving sets `archivedAt` but does NOT rename the namespace. Uniqueness of active definitions is enforced by a partial unique index added to the migration SQL:
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
 
-```sql
--- Enforce uniqueness only for non-archived (active) definitions
-CREATE UNIQUE INDEX "uniq_active_def_per_namespace_slug"
-  ON "preference_definitions" ("namespace", "slug")
-  WHERE "archived_at" IS NULL;
+// In PreferenceDefinition model:
+  @@unique([namespace, slug], where: { archivedAt: null }, map: "uniq_active_def_per_namespace_slug")
+  @@index([namespace, slug])
 ```
 
 This means:
-- Active defs: `[namespace, slug]` is unique (enforced by DB)
+- Active defs: `[namespace, slug]` is unique (enforced by DB via partial index)
 - Archived defs: can have duplicate `[namespace, slug]` (allows unlimited archive/recreate cycles)
 - No namespace mutation on archive — identity fields stay stable
+- No manual SQL edits to migration files — Prisma manages the index, avoiding drift on future migrations
+
+**Important:** Even with `@@unique(... where ...)`, we still:
+- Never use `findUnique` on `(namespace, slug)` without `archivedAt: null` semantics
+- Route all slug lookups through `resolveSlugToDefinitionId`
+- Use `findFirst` with explicit `archivedAt: null` filters
 
 ### Preference — new schema
 
@@ -105,9 +114,49 @@ Key changes vs current:
 
 Run destructive migration (nuke data): `npx prisma migrate dev --name namespace_refactor`
 
-Then manually add the partial unique index SQL to the generated migration file (see SQL above). Since there's no Prisma `@@unique` to drop, just append the `CREATE UNIQUE INDEX` statement.
+No manual SQL edits needed — the partial unique index is represented in the Prisma schema via `@@unique(..., where: ...)` and will be included in the generated migration automatically.
 
-Note: `User` model needs a `definitions PreferenceDefinition[]` relation field added.
+Note: `User` model needs a `definitions PreferenceDefinition[]` relation field added. Generator block needs `previewFeatures = ["partialIndexes"]`.
+
+### Implementation rule: explicit `userId` branching
+
+Every repository method that accepts `userId?: string` must use explicit `if (!userId)` branches — never build a single Prisma `OR` clause with a potentially-undefined `userId`. This prevents accidental user-definition leakage to unauthenticated callers.
+
+```typescript
+// CORRECT: explicit branches
+if (!userId) {
+  return prisma.preferenceDefinition.findMany({
+    where: { ownerUserId: null, archivedAt: null },
+  });
+}
+return prisma.preferenceDefinition.findMany({
+  where: {
+    archivedAt: null,
+    OR: [{ ownerUserId: null }, { ownerUserId: userId }],
+  },
+});
+
+// WRONG: undefined in OR clause can match everything
+return prisma.preferenceDefinition.findMany({
+  where: {
+    archivedAt: null,
+    OR: [{ ownerUserId: null }, { ownerUserId: userId }], // userId might be undefined!
+  },
+});
+```
+
+Same pattern applies to `resolveSlugToDefinitionId`:
+```typescript
+if (userId) {
+  const userDef = await prisma.preferenceDefinition.findFirst({
+    where: { ownerUserId: userId, slug, archivedAt: null },
+  });
+  if (userDef) return userDef.id;
+}
+const globalDef = await prisma.preferenceDefinition.findFirst({
+  where: { ownerUserId: null, slug, archivedAt: null },
+});
+```
 
 ### Invariants (enforced in service/repository code)
 
@@ -148,7 +197,7 @@ Collisions are **asymmetric by design:**
     }
   }
   ```
-  This avoids hitting the partial unique index on re-runs. When a global slug collides with existing user slugs, **log a warning but do not reject** (see "Slug collision policy").
+  This avoids hitting the partial unique index on re-runs. When a global slug collides with existing user slugs, **log a warning with slug + collision count (not user IDs) but do not reject** (see "Slug collision policy").
 - [test/setup/test-db.ts](apps/backend/test/setup/test-db.ts) — Tests start with a clean DB (`resetDb()`), so `createMany` is safe here. Set `namespace: 'GLOBAL'`, `ownerUserId: null`
 
 ---
@@ -172,7 +221,7 @@ Replace with direct Prisma queries. **Prefer `ownerUserId`-based filters** over 
 - `resolveSlugToDefinitionId(slug, userId?)` — **the single source of truth for slug resolution.** Query non-archived defs: first check `ownerUserId = userId`, then `ownerUserId IS NULL`. Returns `id`. Throws if not found.
 - `getAllSlugs(userId?)` / `getSlugsByCategory(category, userId?)` / `getAllCategories(userId?)` / `getAll(userId?)` — query non-archived defs where `ownerUserId IS NULL OR ownerUserId = <userId>`. **Deduplicate by slug (user wins):** if a user def and global def share a slug, only the user def appears. This keeps catalog listings, AI prompts, and UI clean.
 - `findSimilarSlugs(input, userId?, limit?)` — query all non-archived visible slugs, score in-memory (table is small)
-- `create(data)` — accepts `namespace`, `ownerUserId`, `displayName?`; **collision checks scoped to active defs only** (`archivedAt IS NULL`): if user-owned, reject if slug exists in GLOBAL. If GLOBAL, **log a warning** if slug exists for any user but do NOT reject (see "Slug collision policy" below).
+- `create(data)` — accepts `namespace`, `ownerUserId`, `displayName?`; **collision checks scoped to active defs only** (`archivedAt IS NULL`): if user-owned, reject if slug exists in GLOBAL. If GLOBAL, **log a warning with slug + count of colliding users** (not user IDs — avoids PII in logs) but do NOT reject (see "Slug collision policy" below).
 - `update(id, data)` — by id, not slug; slug excluded (immutable)
 - `archive(id)` — set `archivedAt = now()`. Namespace stays unchanged; partial unique index allows the `[namespace, slug]` slot to be reused by a new active definition.
 
@@ -186,10 +235,14 @@ Replace with direct Prisma queries. **Prefer `ownerUserId`-based filters** over 
 ### 3c. Resolver
 **File:** [preference-definition.resolver.ts](apps/backend/src/modules/preferences/preference-definition/preference-definition.resolver.ts)
 
-- `preferenceCatalog` query — inject `@CurrentUser()`, pass `userId` to get GLOBAL + user defs (non-archived)
-- `createPreferenceDefinition` — pass `userId` to service
-- `updatePreferenceDefinition` — change arg from `slug` to `id`
-- New mutation: `archivePreferenceDefinition(id: ID!)`
+- `preferenceCatalog` query — **uses `OptionalGqlAuthGuard`** (not `GqlAuthGuard`):
+  - If authenticated: returns GLOBAL + `USER:<userId>` defs (non-archived)
+  - If unauthenticated: returns GLOBAL defs only
+  - `userId` derived from auth context only — **never accepted as a query argument** (prevents data leaks)
+  - This keeps MCP pre-auth callers working (they can still discover global slugs for prompt building)
+- `createPreferenceDefinition` — keeps `GqlAuthGuard`, pass `userId` to service
+- `updatePreferenceDefinition` — keeps `GqlAuthGuard`, change arg from `slug` to `id`
+- New mutation: `archivePreferenceDefinition(id: ID!)` — keeps `GqlAuthGuard`
 
 ### 3d. GraphQL Model
 **File:** [preference-definition.model.ts](apps/backend/src/modules/preferences/preference-definition/models/preference-definition.model.ts)
@@ -312,6 +365,7 @@ Pass `userId` through to `defRepo.getAllSlugs(userId)`, `defRepo.getDefinition(s
 - Verify `namespace = 'GLOBAL'` for seeded defs
 - Test: user-created def appears in authenticated catalog query
 - Test: archived def does NOT appear in catalog
+- **Tripwire test for optional-auth:** create a user definition, query `preferenceCatalog` unauthenticated, assert the user slug does NOT appear in the response (guards against future regressions that could leak user definitions)
 
 ### 6f. E2E: Document Analysis
 **File:** [document-analysis.e2e-spec.ts](apps/backend/test/e2e/document-analysis.e2e-spec.ts)
@@ -337,7 +391,7 @@ Pass `userId` through to `defRepo.getAllSlugs(userId)`, `defRepo.getDefinition(s
 
 ## Verification
 
-1. `cd apps/backend && npx prisma migrate dev --name namespace_refactor` — migration succeeds (manually edit SQL for partial index)
+1. `cd apps/backend && npx prisma migrate dev --name namespace_refactor` — migration succeeds (partial index generated automatically by Prisma)
 2. `pnpm --filter backend prisma:seed` — seeds 12 GLOBAL definitions with `ownerUserId = null`
 3. `pnpm --filter backend test:integration` — all integration tests pass
 4. `pnpm --filter backend test:e2e` — all e2e tests pass
@@ -355,7 +409,7 @@ Pass `userId` through to `defRepo.getAllSlugs(userId)`, `defRepo.getDefinition(s
 
 | Decision | Rationale |
 |----------|-----------|
-| Partial unique index (not Prisma `@@unique`) | Prisma `@@unique` would lie about DB state, break `upsert`/`ON CONFLICT`, and cause migration drift. `@@index` for lookups; partial unique index in migration SQL for correctness |
+| Partial unique index via Prisma `@@unique(..., where: ...)` | Native Prisma support (7.4.2+ with `partialIndexes` preview). Avoids manual SQL in migrations which would be dropped as drift on future migrations. Prisma manages the index lifecycle |
 | Collision checks scoped to `archivedAt IS NULL` | Archived defs should never block new definitions |
 | `ownerUserId`-based queries over namespace string parsing | More robust, leverages FK, makes future org namespaces easier |
 | `contextKey` instead of nullable `locationId` in unique | Postgres NULL uniqueness trap — `NULL != NULL` allows duplicate rows |
@@ -367,6 +421,33 @@ Pass `userId` through to `defRepo.getAllSlugs(userId)`, `defRepo.getDefinition(s
 | Keep slug in GraphQL inputs | All consumers (FE, MCP, doc analysis) use slugs; resolution happens server-side |
 | `getDefinitionById` includes archived defs | Preferences referencing archived definitions still need slug/category for display |
 | Idempotent seed (findFirst → update or create) | Avoids partial unique index violations on re-deploy; safe to run repeatedly |
+| Explicit `if (!userId)` branching in repo methods | Prevents undefined userId in OR clauses from leaking user defs to unauthenticated callers |
+| Log collision counts, not user IDs | Avoids PII in logs while still providing actionable info for future migration decisions |
 | All slug lookups route through `resolveSlugToDefinitionId` | Single resolution path prevents ambiguous multi-row results on collision |
 | Catalog/listing dedupes by slug (user wins) | Prevents confusing duplicate entries in UI and AI prompts when collision exists |
 | Invariants documented, enforced in code | `contextKey`↔`locationId` and `namespace`↔`ownerUserId` consistency; DB constraints deferred to post-MVP |
+| `OptionalGqlAuthGuard` on `preferenceCatalog` | One query, one mental model. Unauth callers see GLOBAL only; authed callers see GLOBAL + user defs. MCP pre-auth callers can still discover slugs. userId derived from auth only, never from args |
+
+---
+
+## Execution Order
+
+Schema migration must precede all code changes (Prisma types won't compile otherwise). After that, follow TDD per CLAUDE.md: update tests first per layer, then implementation, then verify.
+
+### Phase A: Foundation
+1. Prisma schema migration (Step 1) — full DB reset OK
+2. Test DB utilities (Step 2: test-db.ts)
+3. Production seed (Step 2: seed.ts)
+
+### Phase B: Backend (test-first per layer, bottom-up)
+4. PreferenceDefinition integration tests (Step 6a) — **TESTS FIRST**
+5. PreferenceDefinition repository + model + DTOs + service + resolver (Steps 3a–3e) → run `test:integration`
+6. PreferenceDefinition E2E tests (Steps 6d, 6e) → run `test:e2e`
+7. Preference integration tests (Step 6b) — **TESTS FIRST**
+8. Preference repository + model + service (Steps 4a–4c) → run `test:integration`
+9. Preference E2E tests (Steps 6c, 6f) → run `test:e2e`
+
+### Phase C: Consumers
+10. PreferenceExtractionService unit tests (Step 6g) + implementation (Step 5a) → run `test:unit`
+11. MCP tools (Step 5c) → run `test:e2e -- --grep mcp`
+12. Frontend (Step 7) + `pnpm --filter web run codegen`
