@@ -1,4 +1,7 @@
-import { PreferenceValueType, PreferenceScope } from '@prisma/client';
+import {
+  PreferenceValueType,
+  PreferenceScope,
+} from "@infrastructure/prisma/generated-client";
 
 // Slug format validation regex
 const SLUG_REGEX = /^[a-z]+(\.[a-z0-9_]+)+$/;
@@ -20,26 +23,26 @@ export function validateValue(
 ): { valid: boolean; error?: string } {
   switch (def.valueType) {
     case PreferenceValueType.BOOLEAN:
-      if (typeof value !== 'boolean') {
-        return { valid: false, error: 'Value must be a boolean' };
+      if (typeof value !== "boolean") {
+        return { valid: false, error: "Value must be a boolean" };
       }
       break;
 
     case PreferenceValueType.STRING:
-      if (typeof value !== 'string') {
-        return { valid: false, error: 'Value must be a string' };
+      if (typeof value !== "string") {
+        return { valid: false, error: "Value must be a string" };
       }
       break;
 
     case PreferenceValueType.ENUM: {
-      if (typeof value !== 'string') {
-        return { valid: false, error: 'Value must be a string' };
+      if (typeof value !== "string") {
+        return { valid: false, error: "Value must be a string" };
       }
       const options = def.options as string[] | undefined;
       if (!options?.includes(value)) {
         return {
           valid: false,
-          error: `Value must be one of: ${options?.join(', ')}`,
+          error: `Value must be one of: ${options?.join(", ")}`,
         };
       }
       break;
@@ -47,7 +50,7 @@ export function validateValue(
 
     case PreferenceValueType.ARRAY:
       if (!Array.isArray(value)) {
-        return { valid: false, error: 'Value must be an array' };
+        return { valid: false, error: "Value must be an array" };
       }
       break;
 
@@ -65,7 +68,7 @@ export function enforceScope(
   def: { scope: PreferenceScope; category?: string },
   locationId: string | null | undefined,
 ): { valid: boolean; error?: string } {
-  const hasLocationId = locationId != null && locationId !== '';
+  const hasLocationId = locationId != null && locationId !== "";
 
   if (def.scope === PreferenceScope.GLOBAL && hasLocationId) {
     return {
@@ -87,22 +90,23 @@ export function enforceScope(
 /**
  * Validates confidence value for inferred preferences.
  */
-export function validateConfidence(
-  confidence: number | null | undefined,
-): { valid: boolean; error?: string } {
+export function validateConfidence(confidence: number | null | undefined): {
+  valid: boolean;
+  error?: string;
+} {
   if (confidence == null) {
     return {
       valid: false,
-      error: 'Confidence is required for inferred preferences',
+      error: "Confidence is required for inferred preferences",
     };
   }
 
-  if (typeof confidence !== 'number' || isNaN(confidence)) {
-    return { valid: false, error: 'Confidence must be a number' };
+  if (typeof confidence !== "number" || isNaN(confidence)) {
+    return { valid: false, error: "Confidence must be a number" };
   }
 
   if (confidence < 0 || confidence > 1) {
-    return { valid: false, error: 'Confidence must be between 0 and 1' };
+    return { valid: false, error: "Confidence must be between 0 and 1" };
   }
 
   return { valid: true };

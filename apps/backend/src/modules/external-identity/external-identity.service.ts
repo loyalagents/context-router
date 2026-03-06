@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ExternalIdentityRepository } from './external-identity.repository';
-import { ExternalIdentity } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import type { ExternalIdentity } from "@infrastructure/prisma/prisma-models";
+import { ExternalIdentityRepository } from "./external-identity.repository";
 
 @Injectable()
 export class ExternalIdentityService {
@@ -14,9 +14,7 @@ export class ExternalIdentityService {
     provider: string,
     providerUserId: string,
   ): Promise<ExternalIdentity | null> {
-    this.logger.log(
-      `Looking up ${provider} identity: ${providerUserId}`,
-    );
+    this.logger.log(`Looking up ${provider} identity: ${providerUserId}`);
     return this.externalIdentityRepository.findByProviderAndUserId(
       provider,
       providerUserId,
@@ -39,14 +37,15 @@ export class ExternalIdentityService {
     );
 
     // Check if this identity is already linked to this user
-    const existing = await this.externalIdentityRepository.findByProviderAndUserId(
-      provider,
-      providerUserId,
-    );
+    const existing =
+      await this.externalIdentityRepository.findByProviderAndUserId(
+        provider,
+        providerUserId,
+      );
 
     if (existing) {
       if (existing.userId === userId) {
-        this.logger.debug('Identity already linked to this user');
+        this.logger.debug("Identity already linked to this user");
         return existing;
       } else {
         throw new Error(
@@ -63,10 +62,7 @@ export class ExternalIdentityService {
     );
   }
 
-  async updateMetadata(
-    id: string,
-    metadata: any,
-  ): Promise<ExternalIdentity> {
+  async updateMetadata(id: string, metadata: any): Promise<ExternalIdentity> {
     this.logger.log(`Updating metadata for external identity: ${id}`);
     return this.externalIdentityRepository.update(id, { metadata });
   }

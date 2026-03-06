@@ -1,0 +1,62 @@
+import {
+  LocationType,
+  PreferenceScope,
+  PreferenceStatus,
+  PreferenceValueType,
+  SourceType,
+} from "./generated-client";
+
+export interface User {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ExternalIdentity {
+  id: string;
+  userId: string;
+  provider: string;
+  providerUserId: string;
+  metadata: unknown | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Location {
+  locationId: string;
+  userId: string;
+  type: LocationType;
+  label: string;
+  address: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PreferenceDefinition {
+  slug: string;
+  description: string;
+  valueType: PreferenceValueType;
+  scope: PreferenceScope;
+  options: unknown | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Preference {
+  id: string;
+  userId: string;
+  locationId: string | null;
+  slug: string;
+  value: unknown;
+  status: PreferenceStatus;
+  sourceType: SourceType;
+  confidence: number | null;
+  evidence: unknown | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

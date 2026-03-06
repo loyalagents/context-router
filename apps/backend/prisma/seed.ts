@@ -2,13 +2,14 @@ import {
   PrismaClient,
   PreferenceValueType,
   PreferenceScope,
-} from '@prisma/client';
+} from "../src/infrastructure/prisma/generated-client";
 import {
   PREFERENCE_CATALOG,
   PreferenceDefinition,
-} from '../src/config/preferences.catalog';
+} from "../src/config/preferences.catalog";
+import { buildPrismaClientOptions } from "../src/infrastructure/prisma/prisma-client-options";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(buildPrismaClientOptions());
 
 const VALUE_TYPE_MAP: Record<string, PreferenceValueType> = {
   string: PreferenceValueType.STRING,
@@ -23,7 +24,7 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
 };
 
 async function seedPreferenceDefinitions() {
-  console.log('Seeding preference definitions...');
+  console.log("Seeding preference definitions...");
 
   for (const [slug, def] of Object.entries(PREFERENCE_CATALOG)) {
     const catalogDef = def as PreferenceDefinition;
@@ -55,38 +56,38 @@ async function seedPreferenceDefinitions() {
 }
 
 async function main() {
-  console.log('Seeding database...');
+  console.log("Seeding database...");
 
   // Seed preference definitions (must come before any preference data)
   await seedPreferenceDefinitions();
 
   // Create sample users
   const user1 = await prisma.user.upsert({
-    where: { email: 'john.doe@example.com' },
+    where: { email: "john.doe@example.com" },
     update: {},
     create: {
-      email: 'john.doe@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
+      email: "john.doe@example.com",
+      firstName: "John",
+      lastName: "Doe",
     },
   });
 
   const user2 = await prisma.user.upsert({
-    where: { email: 'jane.smith@example.com' },
+    where: { email: "jane.smith@example.com" },
     update: {},
     create: {
-      email: 'jane.smith@example.com',
-      firstName: 'Jane',
-      lastName: 'Smith',
+      email: "jane.smith@example.com",
+      firstName: "Jane",
+      lastName: "Smith",
     },
   });
 
-  console.log('Seeding completed:', { user1, user2 });
+  console.log("Seeding completed:", { user1, user2 });
 }
 
 main()
   .catch((e) => {
-    console.error('Error seeding database:', e);
+    console.error("Error seeding database:", e);
     process.exit(1);
   })
   .finally(async () => {
