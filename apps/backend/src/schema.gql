@@ -48,6 +48,13 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""Filter scope for exporting preference definitions"""
+enum ExportSchemaScope {
+  ALL
+  GLOBAL
+  PERSONAL
+}
+
 """The reason a suggestion was filtered out"""
 enum FilterReason {
   DUPLICATE_KEY
@@ -263,6 +270,11 @@ type Query {
 
   """Send a text prompt to Vertex AI and receive a generated response"""
   askVertexAI(message: String!): String!
+
+  """
+  Export preference definitions filtered by scope: GLOBAL (system only), PERSONAL (user-owned only), or ALL.
+  """
+  exportPreferenceSchema(scope: ExportSchemaScope!): [PreferenceDefinition!]!
   location(locationId: String!): Location!
   locations: [Location!]!
   locationsByType(type: LocationType!): [Location!]!
