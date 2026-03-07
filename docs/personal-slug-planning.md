@@ -464,17 +464,18 @@ Schema migration must precede all code changes (Prisma types won't compile other
 | test-db.ts | ✅ done | namespace/ownerUserId in createMany entries |
 | Migration (CHECKPOINT A) | ✅ done | Applied via `prisma migrate deploy`; local DB reset confirmed |
 | PreferenceDefinition tests (6a) | ✅ done | 34/34 passing |
-| 3a. PreferenceDefinition repository | ✅ done | Namespace-aware, no cache, async, all methods implemented |
-| 3b. PreferenceDefinition service | ⚠️ partial | `create`/`update` work but `create` always creates GLOBAL (no ownerUserId); no `archiveDefinition` |
-| 3c. PreferenceDefinition resolver | ⚠️ partial | `getCatalog` updated; `createPreferenceDefinition` doesn't pass userId; `updatePreferenceDefinition` still takes slug not id; no `archivePreferenceDefinition`; no `OptionalGqlAuthGuard` on catalog |
-| 3d. PreferenceDefinition GraphQL model | ❌ pending | Missing `id`, `namespace`, `ownerUserId`, `archivedAt` fields |
-| 3e. DTOs | ❌ pending | No `displayName` field added |
-| PreferenceDefinition E2E (6d,6e) | ⚠️ partial | Existing tests pass; no new tests for user defs, archive, collision, optional-auth tripwire |
+| 3a. PreferenceDefinition repository | ✅ done | Namespace-aware, no cache, async, all methods implemented; `displayName` in create/update |
+| 3b. PreferenceDefinition service | ✅ done | `create(input, userId)` sets ownerUserId/namespace; `update(id, input, userId)` with ownership check; `archiveDefinition(id, userId)` added |
+| 3c. PreferenceDefinition resolver | ✅ done | `getCatalog` uses `OptionalGqlAuthGuard` + passes userId; `createPreferenceDefinition` passes userId; `updatePreferenceDefinition` uses `id` arg; `archivePreferenceDefinition` mutation added |
+| 3d. PreferenceDefinition GraphQL model | ✅ done | Added `id`, `namespace`, `displayName?`, `ownerUserId?`, `archivedAt?` fields |
+| 3e. DTOs | ✅ done | `displayName` added to both CreatePreferenceDefinitionInput and UpdatePreferenceDefinitionInput |
+| PreferenceDefinition E2E (6d,6e) | ✅ done | Updated mutations to use `id`; added tests for user defs, collision, archive, double archive/recreate, optional-auth tripwire; 35/35 passing |
 | Preference tests (6b) | ✅ done | 30/30 passing |
 | 4a. Preference repository | ✅ done | contextKey, definitionId, include definition, category in enrich() |
 | 4b. Preference service | ✅ done | resolveAndValidateSlug, async validation, definitionId passed to repo |
-| 4c. Preference GraphQL model | ❌ pending | No `definitionId` field added |
-| Preference E2E (6c,6f) | ⚠️ partial | Existing tests pass; no `definitionId` in GQL selections |
+| 4c. Preference GraphQL model | ✅ done | `definitionId: string` field added |
+| Preference E2E (6c,6f) | ✅ done | `definitionId` added to GQL selections; 69/69 e2e tests passing |
+| test-app.ts | ✅ done | `OptionalGqlAuthGuard` override added alongside GqlAuthGuard/JwtAuthGuard |
 | ExtractionService (5a,6g) | ✅ done | 17/17 unit tests passing; async defRepo calls, userId threaded through |
 | MCP tools (5c) | ✅ done | preference-list, preference-search, preference-mutation all updated |
 | Frontend (7) | ❌ pending | SchemaClient, PreferencesClient, codegen not updated |
