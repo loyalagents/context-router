@@ -492,6 +492,112 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
     });
   });
 
+  describe('exportPreferenceSchema query', () => {
+    const EXPORT_QUERY = `
+      query ExportPreferenceSchema($scope: ExportSchemaScope!) {
+        exportPreferenceSchema(scope: $scope) {
+          id
+          slug
+          namespace
+          ownerUserId
+          description
+          valueType
+          scope
+          category
+        }
+      }
+    `;
+
+    it('should return only GLOBAL definitions when scope is GLOBAL', async () => {
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'GLOBAL' }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      const defs = response.body.data.exportPreferenceSchema;
+      expect(defs.length).toBeGreaterThan(0);
+      defs.forEach((d: { namespace: string; ownerUserId: string | null }) => {
+        expect(d.namespace).toBe('GLOBAL');
+        expect(d.ownerUserId).toBeNull();
+      });
+    });
+
+    it('should return only user-owned definitions when scope is PERSONAL', async () => {
+      // Create a personal definition first
+      await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'export.personal_pref',
+          description: 'My personal def',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'PERSONAL' }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      const defs = response.body.data.exportPreferenceSchema;
+      expect(defs.length).toBeGreaterThanOrEqual(1);
+      defs.forEach((d: { ownerUserId: string | null }) => {
+        expect(d.ownerUserId).toBe(testUser.userId);
+      });
+    });
+
+    it('should return empty array for PERSONAL scope when user has no personal definitions', async () => {
+      // testUser from beforeEach has no personal definitions yet (DB is reset each test)
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'PERSONAL' }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.exportPreferenceSchema).toEqual([]);
+    });
+
+    it('should return both GLOBAL and user-owned definitions when scope is ALL', async () => {
+      // Create a personal definition
+      await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'export.all_scope_pref',
+          description: 'For ALL scope test',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'ALL' }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      const defs = response.body.data.exportPreferenceSchema;
+      const namespaces = new Set(defs.map((d: { namespace: string }) => d.namespace));
+      expect(namespaces.has('GLOBAL')).toBe(true);
+      expect(namespaces.has(`USER:${testUser.userId}`)).toBe(true);
+    });
+
+    it('should return definitions sorted by slug', async () => {
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'GLOBAL' }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      const slugs = response.body.data.exportPreferenceSchema.map((d: { slug: string }) => d.slug);
+      const sorted = [...slugs].sort();
+      expect(slugs).toEqual(sorted);
+    });
+
+    it('should not include archived definitions', async () => {
+      // Create and immediately archive a definition
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'export.to_archive',
+          description: 'Will be archived',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
+
+      const response = await graphqlRequest(EXPORT_QUERY, { scope: 'ALL' }).expect(200);
+      const slugs = response.body.data.exportPreferenceSchema.map((d: { slug: string }) => d.slug);
+      expect(slugs).not.toContain('export.to_archive');
+    });
+  });
+
   describe('integration: create definition then use it', () => {
     it('should allow setting a preference with a newly created user definition slug', async () => {
       // Create a user-owned definition

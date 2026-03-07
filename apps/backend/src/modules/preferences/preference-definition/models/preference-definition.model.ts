@@ -15,6 +15,17 @@ registerEnumType(PreferenceScope, {
   description: "Whether a preference is global or location-scoped",
 });
 
+export enum ExportSchemaScope {
+  GLOBAL = "GLOBAL",
+  PERSONAL = "PERSONAL",
+  ALL = "ALL",
+}
+
+registerEnumType(ExportSchemaScope, {
+  name: "ExportSchemaScope",
+  description: "Filter scope for exporting preference definitions",
+});
+
 @ObjectType("PreferenceDefinition")
 export class PreferenceDefinitionModel {
   @Field(() => ID, { description: "Unique UUID identifier" })

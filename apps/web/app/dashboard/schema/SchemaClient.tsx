@@ -22,6 +22,27 @@ interface SchemaClientProps {
   accessToken: string;
 }
 
+type DownloadScope = 'GLOBAL' | 'PERSONAL' | 'ALL';
+
+const EXPORT_SCHEMA_QUERY = `
+  query ExportPreferenceSchema($scope: ExportSchemaScope!) {
+    exportPreferenceSchema(scope: $scope) {
+      id
+      slug
+      namespace
+      displayName
+      ownerUserId
+      description
+      valueType
+      scope
+      options
+      isSensitive
+      isCore
+      category
+    }
+  }
+`;
+
 const CREATE_MUTATION = `
   mutation CreatePreferenceDefinition($input: CreatePreferenceDefinitionInput!) {
     createPreferenceDefinition(input: $input) {
@@ -304,8 +325,40 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+
+  const handleDownload = async (scope: DownloadScope) => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: EXPORT_SCHEMA_QUERY,
+          variables: { scope },
+        }),
+      });
+      const data = await response.json();
+      if (data.errors) throw new Error(data.errors[0]?.message || 'Export failed');
+      const defs = data.data.exportPreferenceSchema;
+      const blob = new Blob([JSON.stringify(defs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `preference-schema-${scope.toLowerCase()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to export schema');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleCreate = () => {
     setEditingId(null);
@@ -493,7 +546,23 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Preference Schema</h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <div className="flex items-center gap-1 border border-gray-300 rounded overflow-hidden">
+            <span className="px-2 py-2 text-xs text-gray-500 bg-gray-50 border-r border-gray-300">
+              Download
+            </span>
+            {(['GLOBAL', 'PERSONAL', 'ALL'] as DownloadScope[]).map((scope) => (
+              <button
+                key={scope}
+                onClick={() => handleDownload(scope)}
+                disabled={isDownloading}
+                className="px-2 py-2 text-xs text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                title={`Download ${scope} definitions as JSON`}
+              >
+                {scope}
+              </button>
+            ))}
+          </div>
           <button
             onClick={handleCreate}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
