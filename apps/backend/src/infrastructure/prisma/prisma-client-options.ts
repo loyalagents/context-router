@@ -23,7 +23,9 @@ export function buildPrismaClientOptions(
   }
 
   return {
-    adapter: new PrismaPg(new Pool({ connectionString: databaseUrl })),
+    adapter: new PrismaPg(new Pool({ connectionString: databaseUrl }), {
+      disposeExternalPool: true,
+    }),
     ...(options.log ? { log: options.log } : {}),
   };
 }
