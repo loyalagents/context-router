@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import type { Preference as PrismaPreference } from "@infrastructure/prisma/prisma-models";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
-  Preference as PrismaPreference,
   PreferenceStatus,
   SourceType,
-} from '@prisma/client';
-import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
+} from "@infrastructure/prisma/generated-client";
+import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
 
 // Type for the enriched preference with catalog data
 export interface EnrichedPreference extends PrismaPreference {
@@ -238,7 +238,7 @@ export class PreferenceRepository {
     locationId?: string | null,
   ): Promise<EnrichedPreference[]> {
     this.logger.log(
-      `Fetching ${status} preferences for user: ${userId}, locationId: ${locationId ?? 'global'}`,
+      `Fetching ${status} preferences for user: ${userId}, locationId: ${locationId ?? "global"}`,
     );
 
     const results = await this.prisma.preference.findMany({
@@ -251,7 +251,7 @@ export class PreferenceRepository {
             ? { locationId: null }
             : { locationId }),
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
     });
 
     return this.enrichManyWithCatalog(results);
@@ -321,7 +321,7 @@ export class PreferenceRepository {
         status: PreferenceStatus.SUGGESTED,
         OR: [{ locationId: null }, { locationId }],
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
     });
 
     return this.enrichManyWithCatalog(results);

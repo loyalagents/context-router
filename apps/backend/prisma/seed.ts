@@ -4,8 +4,8 @@ import {
   PreferenceScope,
   PreferenceStatus,
   SourceType,
-  User,
-} from '@prisma/client';
+} from '../src/infrastructure/prisma/generated-client';
+import type { User } from '../src/infrastructure/prisma/prisma-models';
 import {
   PREFERENCE_CATALOG,
   PreferenceDefinition,
@@ -13,8 +13,9 @@ import {
 import { createHash, randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { buildPrismaClientOptions } from '../src/infrastructure/prisma/prisma-client-options';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(buildPrismaClientOptions());
 
 // ─── Helpers ───
 
@@ -299,7 +300,7 @@ const PREFERENCE_MAPPINGS: PreferenceMapping[] = [
 // ─── Seed functions ───
 
 async function seedPreferenceDefinitions() {
-  console.log('Seeding preference definitions...');
+  console.log("Seeding preference definitions...");
 
   for (const [slug, def] of Object.entries(PREFERENCE_CATALOG)) {
     const catalogDef = def as PreferenceDefinition;
@@ -504,7 +505,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Error seeding database:', e);
+    console.error("Error seeding database:", e);
     process.exit(1);
   })
   .finally(async () => {

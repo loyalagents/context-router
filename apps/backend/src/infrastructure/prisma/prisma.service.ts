@@ -3,8 +3,9 @@ import {
   OnModuleInit,
   OnModuleDestroy,
   Logger,
-} from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+} from "@nestjs/common";
+import { PrismaClient } from "./generated-client";
+import { buildPrismaClientOptions } from "./prisma-client-options";
 
 @Injectable()
 export class PrismaService
@@ -14,39 +15,41 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    super({
-      log: ['query', 'info', 'warn', 'error'],
-    });
+    super(
+      buildPrismaClientOptions({
+        log: ["query", "info", "warn", "error"],
+      }),
+    );
   }
 
   async onModuleInit() {
     try {
       await this.$connect();
-      this.logger.log('Database connection established');
+      this.logger.log("Database connection established");
     } catch (error) {
-      this.logger.error('Failed to connect to database', error);
+      this.logger.error("Failed to connect to database", error);
       throw error;
     }
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    this.logger.log('Database connection closed');
+    this.logger.log("Database connection closed");
   }
 
   async cleanDatabase() {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Cannot clean database in production');
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Cannot clean database in production");
     }
 
     const models = Reflect.ownKeys(this).filter(
-      (key) => typeof key === 'string' && key[0] !== '_' && key[0] !== '$',
+      (key) => typeof key === "string" && key[0] !== "_" && key[0] !== "$",
     );
 
     return Promise.all(
       models.map((modelKey) => {
         const model = this[modelKey as string];
-        if (model && typeof model.deleteMany === 'function') {
+        if (model && typeof model.deleteMany === "function") {
           return model.deleteMany();
         }
       }),

@@ -3,11 +3,11 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
-} from '@nestjs/common';
-import { UserRepository } from './user.repository';
-import { CreateUserInput } from './dto/create-user.input';
-import { UpdateUserInput } from './dto/update-user.input';
-import { User } from '@prisma/client';
+} from "@nestjs/common";
+import type { User } from "@infrastructure/prisma/prisma-models";
+import { UserRepository } from "./user.repository";
+import { CreateUserInput } from "./dto/create-user.input";
+import { UpdateUserInput } from "./dto/update-user.input";
 
 @Injectable()
 export class UserService {
@@ -33,7 +33,7 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    this.logger.log('Fetching all users');
+    this.logger.log("Fetching all users");
     return this.userRepository.findAll();
   }
 
@@ -67,10 +67,7 @@ export class UserService {
       }
     }
 
-    return this.userRepository.update(
-      updateUserInput.userId,
-      updateUserInput,
-    );
+    return this.userRepository.update(updateUserInput.userId, updateUserInput);
   }
 
   async remove(userId: string): Promise<User> {
