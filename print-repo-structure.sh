@@ -7,7 +7,7 @@ echo "# Context Router - Project Structure"
 echo ""
 echo "\`\`\`"
 
-tree -I 'node_modules|dist|.next|build|coverage|.git|*.lock|.cache' \
+tree -I 'node_modules|dist|.next|build|coverage|.git|*.lock|.cache|.pnpm-store|.claude' \
   -L 4 \
   --dirsfirst \
   -F \
@@ -16,16 +16,18 @@ tree -I 'node_modules|dist|.next|build|coverage|.git|*.lock|.cache' \
 
 # Fallback if tree is not installed
 if [ $? -ne 0 ]; then
-  echo "Tree command not found. Using find instead..."
-  echo ""
-
   find /Users/lucasnovak/loyal-agents/context-router \
     -not -path "*/node_modules/*" \
     -not -path "*/.next/*" \
     -not -path "*/dist/*" \
+    -not -path "*/dist" \
     -not -path "*/.git/*" \
     -not -path "*/coverage/*" \
     -not -path "*/build/*" \
+    -not -path "*/.pnpm-store/*" \
+    -not -path "*/.pnpm-store" \
+    -not -path "*/.claude/*" \
+    -not -path "*/.claude" \
     -not -name "*.lock" \
     -not -name ".DS_Store" \
     -print | sed -e "s;/Users/lucasnovak/loyal-agents/context-router;.;" | sort | sed -e 's;[^/]*/;|  ;g;s;|  \([^|]\);+--\1;'
