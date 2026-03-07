@@ -74,6 +74,8 @@ export const createMockVertexAiService = () => ({
 export interface CreateTestAppOptions {
   /** Custom mock for VertexAiService */
   mockVertexAi?: ReturnType<typeof createMockVertexAiService>;
+  /** Whether to replace auth guards with a test guard that injects request.user */
+  mockAuthGuards?: boolean;
 }
 
 /**
@@ -169,6 +171,7 @@ export async function createTestApp(
   };
 }> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
+  const mockAuthGuards = options.mockAuthGuards ?? true;
 
   // Mutable reference - guard always reads current value
   const userRef: UserRef = { current: null };
@@ -178,9 +181,11 @@ export async function createTestApp(
     imports: [AppModule],
   });
 
-  // Override guards
-  moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mockAuthGuard);
-  moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+  if (mockAuthGuards) {
+    // Most tests bypass auth and inject a fresh test user directly.
+    moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mockAuthGuard);
+    moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+  }
 
   // Override external services
   moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);
