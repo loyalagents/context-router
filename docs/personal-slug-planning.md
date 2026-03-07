@@ -462,13 +462,19 @@ Schema migration must precede all code changes (Prisma types won't compile other
 | prisma-models.ts | ✅ done | Updated PreferenceDefinition + Preference interfaces |
 | seed.ts | ✅ done | Idempotent findFirst→update/create, collision warning |
 | test-db.ts | ✅ done | namespace/ownerUserId in createMany entries |
-| Migration (CHECKPOINT A) | ⏳ blocked | Awaiting user consent for `prisma migrate reset --force` on test DB |
-| PreferenceDefinition tests (6a) | ⬜ pending | |
-| PreferenceDefinition impl (3a–3e) | ⬜ pending | |
-| PreferenceDefinition E2E (6d,6e) | ⬜ pending | |
-| Preference tests (6b) | ⬜ pending | |
-| Preference impl (4a–4c) | ⬜ pending | |
-| Preference E2E (6c,6f) | ⬜ pending | |
-| ExtractionService (5a,6g) | ⬜ pending | |
-| MCP tools (5c) | ⬜ pending | |
-| Frontend (7) | ⬜ pending | |
+| Migration (CHECKPOINT A) | ✅ done | Applied via `prisma migrate deploy`; local DB reset confirmed |
+| PreferenceDefinition tests (6a) | ✅ done | 34/34 passing |
+| 3a. PreferenceDefinition repository | ✅ done | Namespace-aware, no cache, async, all methods implemented |
+| 3b. PreferenceDefinition service | ⚠️ partial | `create`/`update` work but `create` always creates GLOBAL (no ownerUserId); no `archiveDefinition` |
+| 3c. PreferenceDefinition resolver | ⚠️ partial | `getCatalog` updated; `createPreferenceDefinition` doesn't pass userId; `updatePreferenceDefinition` still takes slug not id; no `archivePreferenceDefinition`; no `OptionalGqlAuthGuard` on catalog |
+| 3d. PreferenceDefinition GraphQL model | ❌ pending | Missing `id`, `namespace`, `ownerUserId`, `archivedAt` fields |
+| 3e. DTOs | ❌ pending | No `displayName` field added |
+| PreferenceDefinition E2E (6d,6e) | ⚠️ partial | Existing tests pass; no new tests for user defs, archive, collision, optional-auth tripwire |
+| Preference tests (6b) | ✅ done | 30/30 passing |
+| 4a. Preference repository | ✅ done | contextKey, definitionId, include definition, category in enrich() |
+| 4b. Preference service | ✅ done | resolveAndValidateSlug, async validation, definitionId passed to repo |
+| 4c. Preference GraphQL model | ❌ pending | No `definitionId` field added |
+| Preference E2E (6c,6f) | ⚠️ partial | Existing tests pass; no `definitionId` in GQL selections |
+| ExtractionService (5a,6g) | ✅ done | 17/17 unit tests passing; async defRepo calls, userId threaded through |
+| MCP tools (5c) | ✅ done | preference-list, preference-search, preference-mutation all updated |
+| Frontend (7) | ❌ pending | SchemaClient, PreferencesClient, codegen not updated |
