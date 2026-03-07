@@ -393,6 +393,13 @@ async function seedSyntheticUsers(): Promise<User[]> {
   const syntheticUsers = loadSyntheticUsers();
   console.log(`\nFound ${syntheticUsers.length} synthetic users to seed`);
 
+  // Build slug → definitionId map for GLOBAL definitions
+  const globalDefs = await prisma.preferenceDefinition.findMany({
+    where: { namespace: 'GLOBAL', archivedAt: null },
+    select: { id: true, slug: true },
+  });
+  const defIdBySlug = new Map(globalDefs.map((d) => [d.slug, d.id]));
+
   const createdUsers: User[] = [];
   const importedAt = new Date().toISOString();
 
@@ -410,14 +417,21 @@ async function seedSyntheticUsers(): Promise<User[]> {
       const value = mapping.extract(coreData);
       if (value == null) continue;
 
-      const confidence = mapping.confidence(coreData);
+      const definitionId = defIdBySlug.get(mapping.slug);
+      if (!definitionId) {
+        console.warn(`  [seed] No GLOBAL definition found for slug "${mapping.slug}", skipping`);
+        continue;
+      }
 
-      // Use findFirst + create/update pattern for null locationId
+      const confidence = mapping.confidence(coreData);
+      const contextKey = 'GLOBAL';
+
+      // Use findFirst + create/update pattern
       const existing = await prisma.preference.findFirst({
         where: {
           userId: user.userId,
-          locationId: null,
-          slug: mapping.slug,
+          contextKey,
+          definitionId,
           status: PreferenceStatus.ACTIVE,
         },
       });
@@ -440,7 +454,8 @@ async function seedSyntheticUsers(): Promise<User[]> {
           data: {
             userId: user.userId,
             locationId: null,
-            slug: mapping.slug,
+            contextKey,
+            definitionId,
             value: value as any,
             status: PreferenceStatus.ACTIVE,
             sourceType: SourceType.IMPORTED,
