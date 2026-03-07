@@ -4,22 +4,22 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
-import { PreferenceStatus } from '@prisma/client';
+} from "@nestjs/common";
+import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
 import {
   PreferenceRepository,
   EnrichedPreference,
-} from './preference.repository';
-import { LocationService } from '../location/location.service';
-import { SetPreferenceInput } from './dto/set-preference.input';
-import { SuggestPreferenceInput } from './dto/suggest-preference.input';
-import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
+} from "./preference.repository";
+import { LocationService } from "../location/location.service";
+import { SetPreferenceInput } from "./dto/set-preference.input";
+import { SuggestPreferenceInput } from "./dto/suggest-preference.input";
+import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
 import {
   validateSlugFormat,
   validateValue,
   enforceScope,
   validateConfidence,
-} from './preference.validation';
+} from "./preference.validation";
 
 @Injectable()
 export class PreferenceService {
@@ -44,7 +44,7 @@ export class PreferenceService {
     if (!this.defRepo.isKnownSlug(slug)) {
       const similar = this.defRepo.findSimilarSlugs(slug);
       const hint =
-        similar.length > 0 ? ` Did you mean: ${similar.join(', ')}?` : '';
+        similar.length > 0 ? ` Did you mean: ${similar.join(", ")}?` : "";
       throw new BadRequestException(
         `Unknown preference slug: "${slug}".${hint}`,
       );
@@ -170,7 +170,7 @@ export class PreferenceService {
     locationId?: string,
   ): Promise<EnrichedPreference[]> {
     this.logger.log(
-      `Fetching ACTIVE preferences for user ${userId}, location: ${locationId ?? 'global only'}`,
+      `Fetching ACTIVE preferences for user ${userId}, location: ${locationId ?? "global only"}`,
     );
 
     if (locationId) {
@@ -197,7 +197,7 @@ export class PreferenceService {
     locationId?: string,
   ): Promise<EnrichedPreference[]> {
     this.logger.log(
-      `Fetching SUGGESTED preferences for user ${userId}, location: ${locationId ?? 'global only'}`,
+      `Fetching SUGGESTED preferences for user ${userId}, location: ${locationId ?? "global only"}`,
     );
 
     if (locationId) {
@@ -232,7 +232,7 @@ export class PreferenceService {
     // Verify ownership
     if (suggestion.userId !== userId) {
       throw new ForbiddenException(
-        'You can only accept your own preference suggestions',
+        "You can only accept your own preference suggestions",
       );
     }
 
@@ -276,7 +276,7 @@ export class PreferenceService {
     // Verify ownership
     if (suggestion.userId !== userId) {
       throw new ForbiddenException(
-        'You can only reject your own preference suggestions',
+        "You can only reject your own preference suggestions",
       );
     }
 
@@ -320,7 +320,7 @@ export class PreferenceService {
 
     // Verify ownership
     if (preference.userId !== userId) {
-      throw new ForbiddenException('You can only delete your own preferences');
+      throw new ForbiddenException("You can only delete your own preferences");
     }
 
     this.logger.log(`Deleting preference ${id} for user ${userId}`);
@@ -339,7 +339,7 @@ export class PreferenceService {
 
     // Verify ownership
     if (preference.userId !== userId) {
-      throw new ForbiddenException('You can only access your own preferences');
+      throw new ForbiddenException("You can only access your own preferences");
     }
 
     return preference;

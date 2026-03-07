@@ -10,11 +10,12 @@ import {
   PrismaClient,
   PreferenceValueType,
   PreferenceScope,
-} from '@prisma/client';
+} from "@infrastructure/prisma/generated-client";
 import {
   PREFERENCE_CATALOG,
   PreferenceDefinition,
-} from '../../src/config/preferences.catalog';
+} from "../../src/config/preferences.catalog";
+import { buildPrismaClientOptions } from "../../src/infrastructure/prisma/prisma-client-options";
 
 let prismaClient: PrismaClient | null = null;
 
@@ -24,13 +25,11 @@ let prismaClient: PrismaClient | null = null;
  */
 export function getPrismaClient(): PrismaClient {
   if (!prismaClient) {
-    prismaClient = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
+    prismaClient = new PrismaClient(
+      buildPrismaClientOptions({
+        databaseUrl: process.env.DATABASE_URL,
+      }),
+    );
   }
   return prismaClient;
 }
@@ -68,7 +67,7 @@ export async function resetDb(prisma?: PrismaClient): Promise<void> {
   }
 
   // Build a single TRUNCATE statement for all tables
-  const tableNames = tables.map((t) => `"${t.tablename}"`).join(', ');
+  const tableNames = tables.map((t) => `"${t.tablename}"`).join(", ");
 
   await client.$executeRawUnsafe(`TRUNCATE ${tableNames} CASCADE`);
 }

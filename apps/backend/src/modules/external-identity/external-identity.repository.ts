@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
-import { ExternalIdentity } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import type { ExternalIdentity } from "@infrastructure/prisma/prisma-models";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 
 @Injectable()
 export class ExternalIdentityRepository {
@@ -29,7 +29,7 @@ export class ExternalIdentityRepository {
     this.logger.log(`Finding external identities for user: ${userId}`);
     return this.prisma.externalIdentity.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
