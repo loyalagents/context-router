@@ -3,6 +3,10 @@ import { Pool } from "pg";
 import { Prisma } from "./generated-client";
 
 type PrismaLogLevel = "query" | "info" | "warn" | "error";
+type DirectPrismaClientOptions = Extract<
+  Prisma.PrismaClientOptions,
+  { adapter: unknown }
+>;
 
 type BuildPrismaClientOptionsInput = {
   databaseUrl?: string;
@@ -11,7 +15,7 @@ type BuildPrismaClientOptionsInput = {
 
 export function buildPrismaClientOptions(
   options: BuildPrismaClientOptionsInput = {},
-): Prisma.PrismaClientOptions {
+): DirectPrismaClientOptions {
   const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
 
   if (!databaseUrl) {
