@@ -294,8 +294,11 @@ function DefinitionForm({
   );
 }
 
+type ViewFilter = 'all' | 'system' | 'personal';
+
 export default function SchemaClient({ initialCatalog, accessToken }: SchemaClientProps) {
   const [catalog, setCatalog] = useState(initialCatalog);
+  const [view, setView] = useState<ViewFilter>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
@@ -464,8 +467,14 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
     }
   };
 
-  // Group by category
-  const grouped = catalog.reduce(
+  // Filter by view then group by category
+  const visibleCatalog = catalog.filter((def) => {
+    if (view === 'system') return def.ownerUserId == null;
+    if (view === 'personal') return def.ownerUserId != null;
+    return true;
+  });
+
+  const grouped = visibleCatalog.reduce(
     (acc, def) => {
       const cat = def.category;
       if (!acc[cat]) acc[cat] = [];
@@ -476,6 +485,9 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   );
 
   const sortedCategories = Object.keys(grouped).sort();
+
+  const systemCount = catalog.filter((d) => d.ownerUserId == null).length;
+  const personalCount = catalog.filter((d) => d.ownerUserId != null).length;
 
   return (
     <>
@@ -494,9 +506,43 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         </div>
       </div>
 
-      <p className="text-gray-600 mb-6">
-        All available preference slugs and their definitions. These define what preferences can be set for users.
-      </p>
+      {/* View tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {(
+          [
+            { key: 'all', label: 'All', count: catalog.length },
+            { key: 'system', label: 'System', count: systemCount },
+            { key: 'personal', label: 'Personal', count: personalCount },
+          ] as { key: ViewFilter; label: string; count: number }[]
+        ).map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              view === key
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+            <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5">
+              {count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {view === 'personal' && personalCount === 0 && !showCreateForm && (
+        <div className="text-center py-10 text-gray-500 bg-white rounded-lg shadow mb-6">
+          <p className="mb-3">You haven&apos;t created any personal definitions yet.</p>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            + Add your first definition
+          </button>
+        </div>
+      )}
 
       {showCreateForm && (
         <DefinitionForm
