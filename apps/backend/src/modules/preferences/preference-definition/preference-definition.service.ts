@@ -5,10 +5,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  PreferenceDefinitionRepository,
-  PreferenceDefinitionData,
-} from './preference-definition.repository';
+import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
 import { UpdatePreferenceDefinitionInput } from './dto/update-preference-definition.input';
 import { validateSlugFormat } from '../preference/preference.validation';
@@ -22,16 +19,14 @@ export class PreferenceDefinitionService {
   /**
    * Create a new preference definition.
    */
-  async create(
-    input: CreatePreferenceDefinitionInput,
-  ): Promise<PreferenceDefinitionData> {
+  async create(input: CreatePreferenceDefinitionInput) {
     if (!validateSlugFormat(input.slug)) {
       throw new BadRequestException(
         `Invalid slug format: "${input.slug}". Slugs must be lowercase with dots (e.g., "food.dietary_restrictions")`,
       );
     }
 
-    if (this.defRepo.isKnownSlug(input.slug)) {
+    if (await this.defRepo.isKnownSlug(input.slug)) {
       throw new ConflictException(
         `Preference definition with slug "${input.slug}" already exists`,
       );
@@ -49,20 +44,15 @@ export class PreferenceDefinitionService {
       isCore: input.isCore,
     });
 
-    return {
-      ...created,
-      category: created.slug.split('.')[0],
-    };
+    return { ...created, category: created.slug.split('.')[0] };
   }
 
   /**
    * Update an existing preference definition.
    */
-  async update(
-    slug: string,
-    input: UpdatePreferenceDefinitionInput,
-  ): Promise<PreferenceDefinitionData> {
-    if (!this.defRepo.isKnownSlug(slug)) {
+  async update(slug: string, input: UpdatePreferenceDefinitionInput) {
+    const id = await this.defRepo.resolveSlugToDefinitionId(slug);
+    if (!id) {
       throw new NotFoundException(
         `Preference definition with slug "${slug}" not found`,
       );
@@ -70,7 +60,7 @@ export class PreferenceDefinitionService {
 
     this.logger.log(`Updating preference definition: ${slug}`);
 
-    const updated = await this.defRepo.update(slug, {
+    const updated = await this.defRepo.update(id, {
       description: input.description,
       valueType: input.valueType,
       scope: input.scope,
@@ -79,9 +69,6 @@ export class PreferenceDefinitionService {
       isCore: input.isCore,
     });
 
-    return {
-      ...updated,
-      category: updated.slug.split('.')[0],
-    };
+    return { ...updated, category: updated.slug.split('.')[0] };
   }
 }

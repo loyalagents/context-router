@@ -30,26 +30,23 @@ export class PreferenceListTool {
     );
 
     try {
-      // Get slugs (filtered by category if provided)
-      const slugs = params.category
-        ? this.defRepo.getSlugsByCategory(params.category)
-        : this.defRepo.getAllSlugs();
+      const allDefs = await this.defRepo.getAll();
 
-      // Map to full catalog entries
-      const entries: CatalogEntry[] = slugs.map((slug) => {
-        const def = this.defRepo.getDefinition(slug)!;
-        return {
-          slug,
-          category: def.category,
-          description: def.description,
-          valueType: def.valueType,
-          options: def.options,
-          scope: def.scope,
-        };
-      });
+      const filtered = params.category
+        ? allDefs.filter((d) => d.slug.split('.')[0] === params.category)
+        : allDefs;
+
+      const entries: CatalogEntry[] = filtered.map((def) => ({
+        slug: def.slug,
+        category: def.slug.split('.')[0],
+        description: def.description,
+        valueType: def.valueType,
+        options: def.options,
+        scope: def.scope,
+      }));
 
       // Get all categories for reference
-      const categories = this.defRepo.getAllCategories();
+      const categories = await this.defRepo.getAllCategories();
 
       return {
         success: true,

@@ -1,8 +1,8 @@
 /**
- * PreferenceDefinitionRepository Integration Tests
+ * PreferenceDefinitionRepository Integration Tests (namespace-aware)
  *
- * Tests the in-memory cache repository against a real test database.
- * Database is reset and re-seeded between tests via the global beforeEach hook.
+ * Tests the repository against a real test database.
+ * Global beforeEach (jest.after-env.ts) resets DB and seeds 12 GLOBAL definitions.
  */
 import { PreferenceDefinitionRepository } from '../../src/modules/preferences/preference-definition/preference-definition.repository';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -11,6 +11,7 @@ import { getPrismaClient } from '../setup/test-db';
 describe('PreferenceDefinitionRepository (integration)', () => {
   let repository: PreferenceDefinitionRepository;
   let prisma: PrismaService;
+  let testUserId: string;
 
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
@@ -18,78 +19,404 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   });
 
   beforeEach(async () => {
-    // Refresh cache after global beforeEach seeds definitions
-    await repository.refreshCache();
+    // Create a test user for user-owned definition tests
+    const user = await prisma.user.create({
+      data: {
+        email: 'deftest@example.com',
+        firstName: 'Def',
+        lastName: 'Test',
+      },
+    });
+    testUserId = user.userId;
   });
 
-  describe('refreshCache', () => {
-    it('should load all 12 definitions into cache', () => {
-      const allSlugs = repository.getAllSlugs();
-      expect(allSlugs).toHaveLength(12);
+  // ──────────────────────────────────────────────
+  // getAll
+  // ──────────────────────────────────────────────
+  describe('getAll', () => {
+    it('should return all 12 seeded GLOBAL definitions when no userId given', async () => {
+      const defs = await repository.getAll();
+      expect(defs).toHaveLength(12);
+      expect(defs.every((d) => d.namespace === 'GLOBAL')).toBe(true);
+    });
+
+    it('should return GLOBAL + user defs when userId given', async () => {
+      await repository.create({
+        slug: 'custom.user_pref',
+        description: 'User-owned definition',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      const defs = await repository.getAll(testUserId);
+      expect(defs.length).toBe(13); // 12 GLOBAL + 1 user
+
+      const userDef = defs.find((d) => d.slug === 'custom.user_pref');
+      expect(userDef).toBeDefined();
+      expect(userDef!.namespace).toBe(`USER:${testUserId}`);
+    });
+
+    it('should exclude archived definitions', async () => {
+      const def = await repository.create({
+        slug: 'custom.to_archive',
+        description: 'Will be archived',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      await repository.archive(def.id);
+
+      const defs = await repository.getAll(testUserId);
+      const archivedDef = defs.find((d) => d.slug === 'custom.to_archive');
+      expect(archivedDef).toBeUndefined();
     });
   });
 
-  describe('isKnownSlug', () => {
-    it('should return true for a known slug', () => {
-      expect(repository.isKnownSlug('food.dietary_restrictions')).toBe(true);
-    });
-
-    it('should return false for an unknown slug', () => {
-      expect(repository.isKnownSlug('unknown.slug')).toBe(false);
-    });
-  });
-
-  describe('getDefinition', () => {
-    it('should return correct fields for a known slug', () => {
-      const def = repository.getDefinition('system.response_tone');
-
+  // ──────────────────────────────────────────────
+  // getDefinitionBySlug
+  // ──────────────────────────────────────────────
+  describe('getDefinitionBySlug', () => {
+    it('should find GLOBAL definition by slug', async () => {
+      const def = await repository.getDefinitionBySlug('system.response_tone');
       expect(def).toBeDefined();
       expect(def!.slug).toBe('system.response_tone');
-      expect(def!.description).toBeDefined();
-      expect(def!.valueType).toBe('ENUM');
-      expect(def!.scope).toBe('GLOBAL');
-      expect(def!.options).toEqual([
-        'casual',
-        'professional',
-        'concise',
-        'enthusiastic',
-      ]);
-      expect(def!.isCore).toBe(true);
-      expect(def!.category).toBe('system');
+      expect(def!.namespace).toBe('GLOBAL');
     });
 
-    it('should return undefined for an unknown slug', () => {
-      expect(repository.getDefinition('unknown.slug')).toBeUndefined();
+    it('should return null for unknown slug', async () => {
+      const def = await repository.getDefinitionBySlug('unknown.slug');
+      expect(def).toBeNull();
+    });
+
+    it('should prefer user-owned definition over GLOBAL when userId provided', async () => {
+      await repository.create({
+        slug: 'system.response_tone',
+        description: 'My custom response tone',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      const def = await repository.getDefinitionBySlug(
+        'system.response_tone',
+        testUserId,
+      );
+      expect(def).toBeDefined();
+      expect(def!.namespace).toBe(`USER:${testUserId}`);
+      expect(def!.description).toBe('My custom response tone');
+    });
+
+    it('should fall back to GLOBAL if user has no matching def', async () => {
+      const def = await repository.getDefinitionBySlug(
+        'food.dietary_restrictions',
+        testUserId,
+      );
+      expect(def).toBeDefined();
+      expect(def!.namespace).toBe('GLOBAL');
+    });
+
+    it('should exclude archived definitions', async () => {
+      const def = await repository.create({
+        slug: 'custom.archived',
+        description: 'Will be archived',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+      await repository.archive(def.id);
+
+      const found = await repository.getDefinitionBySlug(
+        'custom.archived',
+        testUserId,
+      );
+      expect(found).toBeNull();
     });
   });
 
-  describe('getAllSlugs', () => {
-    it('should return all 12 slugs', () => {
-      const slugs = repository.getAllSlugs();
-      expect(slugs).toHaveLength(12);
-      expect(slugs).toContain('food.dietary_restrictions');
-      expect(slugs).toContain('system.response_tone');
-      expect(slugs).toContain('location.quiet_hours');
+  // ──────────────────────────────────────────────
+  // getDefinitionById
+  // ──────────────────────────────────────────────
+  describe('getDefinitionById', () => {
+    it('should find definition by id', async () => {
+      const all = await repository.getAll();
+      const first = all[0];
+
+      const found = await repository.getDefinitionById(first.id);
+      expect(found).toBeDefined();
+      expect(found!.id).toBe(first.id);
+    });
+
+    it('should return archived definitions', async () => {
+      const def = await repository.create({
+        slug: 'custom.find_archived',
+        description: 'Will be archived',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+      await repository.archive(def.id);
+
+      const found = await repository.getDefinitionById(def.id);
+      expect(found).toBeDefined();
+      expect(found!.archivedAt).not.toBeNull();
+    });
+
+    it('should return null for non-existent id', async () => {
+      const found = await repository.getDefinitionById('non-existent-uuid');
+      expect(found).toBeNull();
     });
   });
 
-  describe('getSlugsByCategory', () => {
-    it('should return food slugs', () => {
-      const foodSlugs = repository.getSlugsByCategory('food');
-      expect(foodSlugs).toHaveLength(3);
-      expect(foodSlugs).toContain('food.dietary_restrictions');
-      expect(foodSlugs).toContain('food.cuisine_preferences');
-      expect(foodSlugs).toContain('food.spice_tolerance');
+  // ──────────────────────────────────────────────
+  // resolveSlugToDefinitionId
+  // ──────────────────────────────────────────────
+  describe('resolveSlugToDefinitionId', () => {
+    it('should resolve GLOBAL slug to its id', async () => {
+      const expected = await repository.getDefinitionBySlug(
+        'system.response_tone',
+      );
+      const id = await repository.resolveSlugToDefinitionId(
+        'system.response_tone',
+      );
+      expect(id).toBe(expected!.id);
     });
 
-    it('should return empty array for unknown category', () => {
-      expect(repository.getSlugsByCategory('nonexistent')).toEqual([]);
+    it('should return null for unknown slug', async () => {
+      const id = await repository.resolveSlugToDefinitionId('unknown.slug');
+      expect(id).toBeNull();
+    });
+
+    it('should prefer user-owned def id over global when userId provided', async () => {
+      const userDef = await repository.create({
+        slug: 'system.response_tone',
+        description: 'User version',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      const id = await repository.resolveSlugToDefinitionId(
+        'system.response_tone',
+        testUserId,
+      );
+      expect(id).toBe(userDef.id);
+    });
+
+    it('should fall back to global id when user has no matching def', async () => {
+      const globalDef = await repository.getDefinitionBySlug(
+        'food.dietary_restrictions',
+      );
+      const id = await repository.resolveSlugToDefinitionId(
+        'food.dietary_restrictions',
+        testUserId,
+      );
+      expect(id).toBe(globalDef!.id);
     });
   });
 
+  // ──────────────────────────────────────────────
+  // create
+  // ──────────────────────────────────────────────
+  describe('create', () => {
+    it('should create a GLOBAL definition (ownerUserId=null)', async () => {
+      const created = await repository.create({
+        slug: 'test.new_definition',
+        description: 'A new test definition',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: null,
+      });
+
+      expect(created.id).toBeDefined();
+      expect(created.slug).toBe('test.new_definition');
+      expect(created.namespace).toBe('GLOBAL');
+      expect(created.ownerUserId).toBeNull();
+      expect(created.isCore).toBe(false);
+      expect(created.archivedAt).toBeNull();
+    });
+
+    it('should create a USER-owned definition (ownerUserId provided)', async () => {
+      const created = await repository.create({
+        slug: 'custom.user_def',
+        description: 'User-owned definition',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      expect(created.namespace).toBe(`USER:${testUserId}`);
+      expect(created.ownerUserId).toBe(testUserId);
+      expect(created.isCore).toBe(false);
+    });
+
+    it('should allow USER def with same slug as GLOBAL (different namespace)', async () => {
+      const globalDef = await repository.getDefinitionBySlug(
+        'system.response_tone',
+      );
+      expect(globalDef).toBeDefined();
+
+      const userDef = await repository.create({
+        slug: 'system.response_tone',
+        description: 'My version',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      expect(userDef.namespace).toBe(`USER:${testUserId}`);
+    });
+
+    it('should throw on duplicate (namespace, slug) within same user', async () => {
+      await repository.create({
+        slug: 'custom.duplicate',
+        description: 'First',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      await expect(
+        repository.create({
+          slug: 'custom.duplicate',
+          description: 'Second',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+          ownerUserId: testUserId,
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('should throw on duplicate GLOBAL slug', async () => {
+      await expect(
+        repository.create({
+          slug: 'food.dietary_restrictions',
+          description: 'Duplicate GLOBAL slug',
+          valueType: 'ARRAY',
+          scope: 'GLOBAL',
+          ownerUserId: null,
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // update
+  // ──────────────────────────────────────────────
+  describe('update', () => {
+    it('should update description by id', async () => {
+      const def = await repository.getDefinitionBySlug(
+        'food.dietary_restrictions',
+      );
+      const updated = await repository.update(def!.id, {
+        description: 'Updated description',
+      });
+
+      expect(updated.description).toBe('Updated description');
+      expect(updated.slug).toBe('food.dietary_restrictions');
+    });
+
+    it('should update only provided fields', async () => {
+      const def = await repository.getDefinitionBySlug('system.response_tone');
+      const before = def!;
+
+      const updated = await repository.update(before.id, {
+        description: 'Changed description',
+      });
+
+      expect(updated.description).toBe('Changed description');
+      expect(updated.valueType).toBe(before.valueType);
+      expect(updated.scope).toBe(before.scope);
+    });
+
+    it('should throw for non-existent id', async () => {
+      await expect(
+        repository.update('non-existent-uuid', { description: 'Will fail' }),
+      ).rejects.toThrow();
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // archive
+  // ──────────────────────────────────────────────
+  describe('archive', () => {
+    it('should set archivedAt on the definition', async () => {
+      const def = await repository.create({
+        slug: 'custom.to_archive',
+        description: 'Will be archived',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      const archived = await repository.archive(def.id);
+
+      expect(archived.archivedAt).not.toBeNull();
+      expect(archived.archivedAt).toBeInstanceOf(Date);
+    });
+
+    it('should allow recreating same slug after archiving (partial unique index)', async () => {
+      const def = await repository.create({
+        slug: 'custom.recyclable',
+        description: 'Will be archived then recreated',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      await repository.archive(def.id);
+
+      const recreated = await repository.create({
+        slug: 'custom.recyclable',
+        description: 'Recreated',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      expect(recreated.id).not.toBe(def.id);
+      expect(recreated.archivedAt).toBeNull();
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // isKnownSlug
+  // ──────────────────────────────────────────────
+  describe('isKnownSlug', () => {
+    it('should return true for a known GLOBAL slug', async () => {
+      const known = await repository.isKnownSlug('food.dietary_restrictions');
+      expect(known).toBe(true);
+    });
+
+    it('should return false for an unknown slug', async () => {
+      const known = await repository.isKnownSlug('unknown.slug');
+      expect(known).toBe(false);
+    });
+
+    it('should return true for user-owned slug when userId provided', async () => {
+      await repository.create({
+        slug: 'custom.user_slug',
+        description: 'User slug',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      const known = await repository.isKnownSlug(
+        'custom.user_slug',
+        testUserId,
+      );
+      expect(known).toBe(true);
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // getAllCategories / getSlugsByCategory
+  // ──────────────────────────────────────────────
   describe('getAllCategories', () => {
-    it('should return 6 sorted categories', () => {
-      const categories = repository.getAllCategories();
+    it('should return 6 sorted categories for GLOBAL defs', async () => {
+      const categories = await repository.getAllCategories();
       expect(categories).toHaveLength(6);
       expect(categories).toEqual([
         'communication',
@@ -102,116 +429,37 @@ describe('PreferenceDefinitionRepository (integration)', () => {
     });
   });
 
+  describe('getSlugsByCategory', () => {
+    it('should return food slugs', async () => {
+      const slugs = await repository.getSlugsByCategory('food');
+      expect(slugs).toHaveLength(3);
+      expect(slugs).toContain('food.dietary_restrictions');
+    });
+
+    it('should return empty array for unknown category', async () => {
+      const slugs = await repository.getSlugsByCategory('nonexistent');
+      expect(slugs).toEqual([]);
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // findSimilarSlugs
+  // ──────────────────────────────────────────────
   describe('findSimilarSlugs', () => {
-    it('should return food-related slugs for "food" input', () => {
-      const similar = repository.findSimilarSlugs('food');
+    it('should return food-related slugs for "food" input', async () => {
+      const similar = await repository.findSimilarSlugs('food');
       expect(similar.length).toBeGreaterThan(0);
       expect(similar.every((s) => s.startsWith('food.'))).toBe(true);
     });
 
-    it('should respect limit parameter', () => {
-      const similar = repository.findSimilarSlugs('food', 1);
+    it('should respect limit parameter', async () => {
+      const similar = await repository.findSimilarSlugs('food', 1);
       expect(similar).toHaveLength(1);
     });
 
-    it('should return empty array for completely unrelated input', () => {
-      const similar = repository.findSimilarSlugs('zzzznothing');
+    it('should return empty array for completely unrelated input', async () => {
+      const similar = await repository.findSimilarSlugs('zzzznothing');
       expect(similar).toEqual([]);
-    });
-  });
-
-  describe('getAll', () => {
-    it('should return all definitions with category derived from slug', () => {
-      const all = repository.getAll();
-      expect(all).toHaveLength(12);
-
-      for (const def of all) {
-        expect(def.category).toBe(def.slug.split('.')[0]);
-        expect(def.isCore).toBe(true);
-      }
-    });
-  });
-
-  describe('create', () => {
-    it('should create a new definition and update the cache', async () => {
-      const created = await repository.create({
-        slug: 'test.new_definition',
-        description: 'A new test definition',
-        valueType: 'STRING',
-        scope: 'GLOBAL',
-      });
-
-      expect(created.slug).toBe('test.new_definition');
-      expect(created.description).toBe('A new test definition');
-      expect(created.valueType).toBe('STRING');
-      expect(created.scope).toBe('GLOBAL');
-      expect(created.isSensitive).toBe(false);
-      expect(created.isCore).toBe(false);
-
-      // Cache should be updated
-      expect(repository.isKnownSlug('test.new_definition')).toBe(true);
-      const cached = repository.getDefinition('test.new_definition');
-      expect(cached).toBeDefined();
-      expect(cached!.category).toBe('test');
-    });
-
-    it('should create an ENUM definition with options', async () => {
-      const created = await repository.create({
-        slug: 'test.enum_field',
-        description: 'An enum field',
-        valueType: 'ENUM',
-        scope: 'GLOBAL',
-        options: ['a', 'b', 'c'],
-      });
-
-      expect(created.options).toEqual(['a', 'b', 'c']);
-    });
-
-    it('should throw on duplicate slug', async () => {
-      await expect(
-        repository.create({
-          slug: 'food.dietary_restrictions',
-          description: 'Duplicate',
-          valueType: 'STRING',
-          scope: 'GLOBAL',
-        }),
-      ).rejects.toThrow();
-    });
-  });
-
-  describe('update', () => {
-    it('should update a definition and refresh the cache', async () => {
-      const updated = await repository.update('food.dietary_restrictions', {
-        description: 'Updated description',
-      });
-
-      expect(updated.slug).toBe('food.dietary_restrictions');
-      expect(updated.description).toBe('Updated description');
-
-      // Cache should reflect the update
-      const cached = repository.getDefinition('food.dietary_restrictions');
-      expect(cached!.description).toBe('Updated description');
-    });
-
-    it('should update only provided fields', async () => {
-      const before = repository.getDefinition('system.response_tone')!;
-
-      const updated = await repository.update('system.response_tone', {
-        description: 'Changed description',
-      });
-
-      expect(updated.description).toBe('Changed description');
-      expect(updated.valueType).toBe(before.valueType);
-      expect(updated.scope).toBe(before.scope);
-      expect(updated.options).toEqual(before.options);
-    });
-
-    it('should throw for non-existent slug', async () => {
-      await expect(
-        repository.update('nonexistent.slug', {
-          description: 'Will fail',
-        }),
-      ).rejects.toThrow();
     });
   });
 });

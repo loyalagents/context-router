@@ -25,16 +25,17 @@ export class PreferenceDefinitionResolver {
     description:
       'List available preference definitions. Optionally filter by category.',
   })
-  getCatalog(
+  async getCatalog(
     @Args('category', { nullable: true }) category?: string,
-  ): PreferenceDefinitionModel[] {
-    if (category) {
-      return this.defRepo
-        .getSlugsByCategory(category)
-        .map((slug) => this.defRepo.getDefinition(slug)!)
-        .filter(Boolean) as PreferenceDefinitionModel[];
-    }
-    return this.defRepo.getAll() as PreferenceDefinitionModel[];
+  ): Promise<PreferenceDefinitionModel[]> {
+    const defs = await this.defRepo.getAll();
+    const filtered = category
+      ? defs.filter((d) => d.slug.split('.')[0] === category)
+      : defs;
+    return filtered.map((d) => ({
+      ...d,
+      category: d.slug.split('.')[0],
+    })) as PreferenceDefinitionModel[];
   }
 
   @Mutation(() => PreferenceDefinitionModel, {

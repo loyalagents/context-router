@@ -14,7 +14,7 @@ import {
 import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
 import { PREFERENCE_CATALOG } from "../../../config/preferences.catalog";
 
-// Helper to create mock Preference objects using the new slug-based model
+// Helper to create mock Preference objects using the new definitionId-based model
 const createMockPreference = (
   slug: string,
   value: any,
@@ -22,6 +22,8 @@ const createMockPreference = (
   id: `pref-${slug.replace(".", "-")}`,
   userId: "user-1",
   slug,
+  definitionId: `def-${slug.replace(".", "-")}`,
+  contextKey: "GLOBAL",
   value,
   status: PreferenceStatus.ACTIVE,
   sourceType: SourceType.USER,
@@ -84,21 +86,20 @@ describe("PreferenceExtractionService", () => {
     } as any;
 
     mockDefRepo = {
-      getAllSlugs: jest
-        .fn()
-        .mockReturnValue(Array.from(mockDefinitions.keys())),
-      getDefinition: jest
-        .fn()
-        .mockImplementation((slug: string) => mockDefinitions.get(slug)),
       isKnownSlug: jest
         .fn()
-        .mockImplementation((slug: string) => mockDefinitions.has(slug)),
-      getAll: jest.fn().mockReturnValue(Array.from(mockDefinitions.values())),
+        .mockResolvedValue(true)
+        .mockImplementation((slug: string) =>
+          Promise.resolve(mockDefinitions.has(slug)),
+        ),
+      getAll: jest
+        .fn()
+        .mockResolvedValue(Array.from(mockDefinitions.values())),
       getSlugsByCategory: jest.fn(),
       getAllCategories: jest.fn(),
       findSimilarSlugs: jest.fn(),
-      refreshCache: jest.fn(),
-      onModuleInit: jest.fn(),
+      getDefinitionBySlug: jest.fn().mockResolvedValue(null),
+      resolveSlugToDefinitionId: jest.fn().mockResolvedValue(null),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
-import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 
 /**
  * Parameters for suggesting a preference via MCP.
@@ -41,24 +40,7 @@ export class PreferenceMutationTool {
 
   constructor(
     private preferenceService: PreferenceService,
-    private defRepo: PreferenceDefinitionRepository,
   ) {}
-
-  /**
-   * Validates a slug and returns an error message if invalid.
-   */
-  private validateSlug(slug: string): string | null {
-    if (!this.defRepo.isKnownSlug(slug)) {
-      const similar = this.defRepo.findSimilarSlugs(slug);
-      const allSlugs = this.defRepo.getAllSlugs();
-
-      if (similar.length > 0) {
-        return `Unknown slug "${slug}". Did you mean: ${similar.join(', ')}? Valid slugs are: ${allSlugs.join(', ')}`;
-      }
-      return `Unknown slug "${slug}". Valid slugs are: ${allSlugs.join(', ')}`;
-    }
-    return null;
-  }
 
   /**
    * Suggest a preference. MCP writes are ALWAYS suggestions.
@@ -72,15 +54,6 @@ export class PreferenceMutationTool {
     );
 
     try {
-      // Validate slug
-      const slugError = this.validateSlug(params.slug);
-      if (slugError) {
-        return {
-          success: false,
-          error: slugError,
-        };
-      }
-
       // Parse the JSON string value from MCP input
       const parsedValue = parseJsonValue(params.value, 'value');
 
@@ -124,9 +97,6 @@ export class PreferenceMutationTool {
 
       this.logger.log(`Preference suggested successfully: ${preference.id}`);
 
-      // Get definition for response enrichment
-      const def = this.defRepo.getDefinition(params.slug);
-
       return {
         success: true,
         preference: {
@@ -135,8 +105,8 @@ export class PreferenceMutationTool {
           value: preference.value,
           status: preference.status,
           confidence: preference.confidence,
-          category: def?.category,
-          description: def?.description,
+          category: preference.slug.split('.')[0],
+          description: preference.description,
         },
       };
     } catch (error) {

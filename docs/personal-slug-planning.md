@@ -451,3 +451,24 @@ Schema migration must precede all code changes (Prisma types won't compile other
 10. PreferenceExtractionService unit tests (Step 6g) + implementation (Step 5a) → run `test:unit`
 11. MCP tools (Step 5c) → run `test:e2e -- --grep mcp`
 12. Frontend (Step 7) + `pnpm --filter web run codegen`
+
+---
+
+## Implementation Status
+
+| Step | Status | Notes |
+|------|--------|-------|
+| Prisma schema | ✅ done | `partialIndexes` preview, new PreferenceDefinition + Preference models |
+| prisma-models.ts | ✅ done | Updated PreferenceDefinition + Preference interfaces |
+| seed.ts | ✅ done | Idempotent findFirst→update/create, collision warning |
+| test-db.ts | ✅ done | namespace/ownerUserId in createMany entries |
+| Migration (CHECKPOINT A) | ⏳ blocked | Awaiting user consent for `prisma migrate reset --force` on test DB |
+| PreferenceDefinition tests (6a) | ⬜ pending | |
+| PreferenceDefinition impl (3a–3e) | ⬜ pending | |
+| PreferenceDefinition E2E (6d,6e) | ⬜ pending | |
+| Preference tests (6b) | ⬜ pending | |
+| Preference impl (4a–4c) | ⬜ pending | |
+| Preference E2E (6c,6f) | ⬜ pending | |
+| ExtractionService (5a,6g) | ⬜ pending | |
+| MCP tools (5c) | ⬜ pending | |
+| Frontend (7) | ⬜ pending | |
