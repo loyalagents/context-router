@@ -478,4 +478,4 @@ Schema migration must precede all code changes (Prisma types won't compile other
 | test-app.ts | ✅ done | `OptionalGqlAuthGuard` override added alongside GqlAuthGuard/JwtAuthGuard |
 | ExtractionService (5a,6g) | ✅ done | 17/17 unit tests passing; async defRepo calls, userId threaded through |
 | MCP tools (5c) | ✅ done | preference-list, preference-search, preference-mutation all updated |
-| Frontend (7) | ❌ pending | SchemaClient, PreferencesClient, codegen not updated |
+| Frontend (7) | ✅ done | SchemaClient, PreferencesClient, schema/page, preferences/page updated; codegen clean |
