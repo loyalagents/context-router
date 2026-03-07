@@ -11,6 +11,7 @@ const ACTIVE_PREFERENCES_QUERY = gql`
     activePreferences {
       id
       slug
+      definitionId
       value
       status
       sourceType
@@ -29,6 +30,7 @@ const SUGGESTED_PREFERENCES_QUERY = gql`
     suggestedPreferences {
       id
       slug
+      definitionId
       value
       status
       sourceType
@@ -46,6 +48,7 @@ const SUGGESTED_PREFERENCES_QUERY = gql`
 interface Preference {
   id: string;
   slug: string;
+  definitionId: string;
   value: any;
   status: string;
   sourceType: string;

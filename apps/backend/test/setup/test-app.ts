@@ -22,6 +22,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { AppModule } from '../../src/app.module';
 import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
 import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
+import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
 import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -203,6 +204,7 @@ export async function createTestApp(
   // Override guards
   moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
   moduleBuilder.overrideGuard(JwtAuthGuard).useValue(mockAuthGuard);
+  moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
 
   // Override external services
   moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);

@@ -39,6 +39,9 @@ export class Preference {
   @Field({ description: 'The preference slug (e.g., "food.dietary_restrictions")' })
   slug: string;
 
+  @Field({ description: 'The UUID of the resolved preference definition' })
+  definitionId: string;
+
   @Field(() => GraphQLJSON, { description: 'The preference value' })
   value: any;
 

@@ -3,7 +3,11 @@
 import { useState } from 'react';
 
 interface PreferenceDefinition {
+  id: string;
   slug: string;
+  namespace: string;
+  displayName?: string | null;
+  ownerUserId?: string | null;
   description: string;
   valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
   scope: 'GLOBAL' | 'LOCATION';
@@ -21,7 +25,11 @@ interface SchemaClientProps {
 const CREATE_MUTATION = `
   mutation CreatePreferenceDefinition($input: CreatePreferenceDefinitionInput!) {
     createPreferenceDefinition(input: $input) {
+      id
       slug
+      namespace
+      displayName
+      ownerUserId
       description
       valueType
       scope
@@ -34,9 +42,13 @@ const CREATE_MUTATION = `
 `;
 
 const UPDATE_MUTATION = `
-  mutation UpdatePreferenceDefinition($slug: String!, $input: UpdatePreferenceDefinitionInput!) {
-    updatePreferenceDefinition(slug: $slug, input: $input) {
+  mutation UpdatePreferenceDefinition($id: ID!, $input: UpdatePreferenceDefinitionInput!) {
+    updatePreferenceDefinition(id: $id, input: $input) {
+      id
       slug
+      namespace
+      displayName
+      ownerUserId
       description
       valueType
       scope
@@ -44,6 +56,16 @@ const UPDATE_MUTATION = `
       isSensitive
       isCore
       category
+    }
+  }
+`;
+
+const ARCHIVE_MUTATION = `
+  mutation ArchivePreferenceDefinition($id: ID!) {
+    archivePreferenceDefinition(id: $id) {
+      id
+      slug
+      archivedAt
     }
   }
 `;
@@ -74,8 +96,18 @@ function ScopeBadge({ scope }: { scope: string }) {
   );
 }
 
+function OriginBadge({ ownerUserId }: { ownerUserId?: string | null }) {
+  const isUser = ownerUserId != null;
+  return (
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${isUser ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>
+      {isUser ? 'My def' : 'System'}
+    </span>
+  );
+}
+
 interface FormData {
   slug: string;
+  displayName: string;
   description: string;
   valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
   scope: 'GLOBAL' | 'LOCATION';
@@ -86,6 +118,7 @@ interface FormData {
 
 const emptyForm: FormData = {
   slug: '',
+  displayName: '',
   description: '',
   valueType: 'STRING',
   scope: 'GLOBAL',
@@ -135,6 +168,19 @@ function DefinitionForm({
             </p>
           </div>
         )}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Display Name <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={formData.displayName}
+            onChange={(e) => onChange({ ...formData, displayName: e.target.value })}
+            placeholder="e.g. Dietary Restrictions"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -248,10 +294,13 @@ function DefinitionForm({
   );
 }
 
+type ViewFilter = 'all' | 'system' | 'personal';
+
 export default function SchemaClient({ initialCatalog, accessToken }: SchemaClientProps) {
   const [catalog, setCatalog] = useState(initialCatalog);
+  const [view, setView] = useState<ViewFilter>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -259,7 +308,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
 
   const handleCreate = () => {
-    setEditingSlug(null);
+    setEditingId(null);
     setFormData(emptyForm);
     setError(null);
     setShowCreateForm(true);
@@ -267,9 +316,10 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
 
   const handleEdit = (def: PreferenceDefinition) => {
     setShowCreateForm(false);
-    setEditingSlug(def.slug);
+    setEditingId(def.id);
     setFormData({
       slug: def.slug,
+      displayName: def.displayName || '',
       description: def.description,
       valueType: def.valueType,
       scope: def.scope,
@@ -282,7 +332,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
 
   const handleCancel = () => {
     setShowCreateForm(false);
-    setEditingSlug(null);
+    setEditingId(null);
     setError(null);
   };
 
@@ -299,6 +349,10 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         isSensitive: formData.isSensitive,
         isCore: formData.isCore,
       };
+
+      if (formData.displayName.trim()) {
+        input.displayName = formData.displayName.trim();
+      }
 
       if (formData.valueType === 'ENUM' && formData.options.trim()) {
         input.options = formData.options.split(',').map((o) => o.trim()).filter(Boolean);
@@ -334,7 +388,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   };
 
   const handleSubmitUpdate = async () => {
-    if (!editingSlug) return;
+    if (!editingId) return;
     setError(null);
     setIsSubmitting(true);
 
@@ -346,6 +400,10 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         isSensitive: formData.isSensitive,
         isCore: formData.isCore,
       };
+
+      if (formData.displayName.trim()) {
+        input.displayName = formData.displayName.trim();
+      }
 
       if (formData.valueType === 'ENUM' && formData.options.trim()) {
         input.options = formData.options.split(',').map((o) => o.trim()).filter(Boolean);
@@ -361,7 +419,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         },
         body: JSON.stringify({
           query: UPDATE_MUTATION,
-          variables: { slug: editingSlug, input },
+          variables: { id: editingId, input },
         }),
       });
 
@@ -372,10 +430,8 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
       }
 
       const updated = data.data.updatePreferenceDefinition;
-      setCatalog((prev) =>
-        prev.map((def) => (def.slug === editingSlug ? updated : def)),
-      );
-      setEditingSlug(null);
+      setCatalog((prev) => prev.map((def) => (def.id === editingId ? updated : def)));
+      setEditingId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update definition');
     } finally {
@@ -383,8 +439,42 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
     }
   };
 
-  // Group by category
-  const grouped = catalog.reduce(
+  const handleArchive = async (def: PreferenceDefinition) => {
+    if (!confirm(`Archive "${def.slug}"? It will no longer appear in the catalog.`)) return;
+
+    try {
+      const response = await fetch(graphqlUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          query: ARCHIVE_MUTATION,
+          variables: { id: def.id },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'Failed to archive definition');
+      }
+
+      setCatalog((prev) => prev.filter((d) => d.id !== def.id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to archive definition');
+    }
+  };
+
+  // Filter by view then group by category
+  const visibleCatalog = catalog.filter((def) => {
+    if (view === 'system') return def.ownerUserId == null;
+    if (view === 'personal') return def.ownerUserId != null;
+    return true;
+  });
+
+  const grouped = visibleCatalog.reduce(
     (acc, def) => {
       const cat = def.category;
       if (!acc[cat]) acc[cat] = [];
@@ -395,6 +485,9 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   );
 
   const sortedCategories = Object.keys(grouped).sort();
+
+  const systemCount = catalog.filter((d) => d.ownerUserId == null).length;
+  const personalCount = catalog.filter((d) => d.ownerUserId != null).length;
 
   return (
     <>
@@ -413,9 +506,43 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         </div>
       </div>
 
-      <p className="text-gray-600 mb-6">
-        All available preference slugs and their definitions. These define what preferences can be set for users.
-      </p>
+      {/* View tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {(
+          [
+            { key: 'all', label: 'All', count: catalog.length },
+            { key: 'system', label: 'System', count: systemCount },
+            { key: 'personal', label: 'Personal', count: personalCount },
+          ] as { key: ViewFilter; label: string; count: number }[]
+        ).map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              view === key
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+            <span className="ml-1.5 text-xs bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5">
+              {count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {view === 'personal' && personalCount === 0 && !showCreateForm && (
+        <div className="text-center py-10 text-gray-500 bg-white rounded-lg shadow mb-6">
+          <p className="mb-3">You haven&apos;t created any personal definitions yet.</p>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            + Add your first definition
+          </button>
+        </div>
+      )}
 
       {showCreateForm && (
         <DefinitionForm
@@ -435,9 +562,9 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
             <h2 className="text-lg font-semibold mb-4 capitalize">{category}</h2>
             <div className="space-y-4">
               {grouped[category].map((def) =>
-                editingSlug === def.slug ? (
+                editingId === def.id ? (
                   <DefinitionForm
-                    key={def.slug}
+                    key={def.id}
                     formData={formData}
                     onChange={setFormData}
                     onSubmit={handleSubmitUpdate}
@@ -447,23 +574,42 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
                     isCreate={false}
                   />
                 ) : (
-                  <div key={def.slug} className="border rounded-lg p-4">
+                  <div key={def.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <code className="text-sm font-mono font-semibold text-gray-900">
-                        {def.slug}
-                      </code>
+                      <div>
+                        <code className="text-sm font-mono font-semibold text-gray-900">
+                          {def.slug}
+                        </code>
+                        {def.displayName && (
+                          <span className="ml-2 text-sm text-gray-500">{def.displayName}</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
+                        <OriginBadge ownerUserId={def.ownerUserId} />
                         <ValueTypeBadge type={def.valueType} />
                         <ScopeBadge scope={def.scope} />
-                        <button
-                          onClick={() => handleEdit(def)}
-                          className="p-1 text-gray-400 hover:text-blue-600"
-                          title="Edit"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
+                        {def.ownerUserId != null && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(def)}
+                              className="p-1 text-gray-400 hover:text-blue-600"
+                              title="Edit"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleArchive(def)}
+                              className="p-1 text-gray-400 hover:text-red-600"
+                              title="Archive"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{def.description}</p>

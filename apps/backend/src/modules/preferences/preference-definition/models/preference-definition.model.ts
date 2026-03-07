@@ -1,4 +1,4 @@
-import { ObjectType, Field, registerEnumType } from "@nestjs/graphql";
+import { ObjectType, Field, ID, registerEnumType } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-type-json";
 import {
   PreferenceValueType,
@@ -17,10 +17,25 @@ registerEnumType(PreferenceScope, {
 
 @ObjectType("PreferenceDefinition")
 export class PreferenceDefinitionModel {
+  @Field(() => ID, { description: "Unique UUID identifier" })
+  id: string;
+
+  @Field({ description: "Namespace: GLOBAL or USER:<userId>" })
+  namespace: string;
+
   @Field({
     description: 'Unique slug identifier (e.g., "food.dietary_restrictions")',
   })
   slug: string;
+
+  @Field({ nullable: true, description: "Optional human-readable display name" })
+  displayName?: string;
+
+  @Field({ nullable: true, description: "Owner user ID (null for global definitions)" })
+  ownerUserId?: string;
+
+  @Field({ nullable: true, description: "When this definition was archived (null if active)" })
+  archivedAt?: Date;
 
   @Field({ description: "Human-readable description of the preference" })
   description: string;

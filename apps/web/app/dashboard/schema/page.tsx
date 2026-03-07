@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
 const PREFERENCE_CATALOG_QUERY = gql`
   query PreferenceCatalog {
     preferenceCatalog {
+      id
       slug
+      namespace
+      displayName
+      ownerUserId
       description
       valueType
       scope
@@ -22,7 +26,11 @@ const PREFERENCE_CATALOG_QUERY = gql`
 `;
 
 interface PreferenceDefinition {
+  id: string;
   slug: string;
+  namespace: string;
+  displayName?: string | null;
+  ownerUserId?: string | null;
   description: string;
   valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
   scope: 'GLOBAL' | 'LOCATION';
@@ -35,6 +43,7 @@ interface PreferenceDefinition {
 interface PreferenceCatalogQuery {
   preferenceCatalog: PreferenceDefinition[];
 }
+
 
 export default async function SchemaPage() {
   const session = await auth0.getSession();

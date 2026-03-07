@@ -8,6 +8,11 @@ import {
 
 @InputType()
 export class UpdatePreferenceDefinitionInput {
+  @Field({ nullable: true, description: "Optional human-readable display name" })
+  @IsString()
+  @IsOptional()
+  displayName?: string;
+
   @Field({
     nullable: true,
     description: "Human-readable description of the preference",

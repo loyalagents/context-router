@@ -67,12 +67,13 @@ export class PreferenceExtractionService {
       await this.preferenceService.getActivePreferences(userId);
 
     // Build the prompt with catalog-based schema
-    const prompt = this.buildExtractionPrompt(
+    const prompt = await this.buildExtractionPrompt(
       currentPreferences.map((p) => ({
         slug: p.slug,
         value: p.value,
       })),
       filename,
+      userId,
     );
 
     this.logger.log(`Calling AI for preference extraction from ${filename}`);
@@ -91,24 +92,24 @@ export class PreferenceExtractionService {
         slug: p.slug,
         value: p.value,
       })),
+      userId,
     );
   }
 
-  private buildExtractionPrompt(
+  private async buildExtractionPrompt(
     currentPreferences: Array<{ slug: string; value: any }>,
     filename: string,
-  ): string {
+    userId: string,
+  ): Promise<string> {
     // Build schema from catalog
-    const catalogSchema = this.defRepo.getAllSlugs().map((slug) => {
-      const def = this.defRepo.getDefinition(slug);
-      return {
-        slug,
-        category: def?.category,
-        description: def?.description,
-        valueType: def?.valueType,
-        options: def?.options,
-      };
-    });
+    const defs = await this.defRepo.getAll(userId);
+    const catalogSchema = defs.map((def) => ({
+      slug: def.slug,
+      category: def.slug.split('.')[0],
+      description: def.description,
+      valueType: def.valueType,
+      options: def.options,
+    }));
 
     const schemaJson = JSON.stringify(catalogSchema, null, 2);
     const currentPreferencesJson = JSON.stringify(currentPreferences, null, 2);
@@ -215,7 +216,6 @@ If no preferences can be extracted, return:
     const suggestions: PreferenceSuggestion[] = parsed.suggestions
       .slice(0, this.config.maxSuggestions)
       .map((s: AiSuggestionSchemaType, index: number) => {
-        const def = this.defRepo.getDefinition(s.slug);
         return {
           id: `${analysisId}:${index}`,
           slug: s.slug,
@@ -234,8 +234,8 @@ If no preferences can be extracted, return:
               }
             : undefined,
           wasCorrected: false,
-          category: def?.category,
-          description: def?.description,
+          category: s.slug.split('.')[0],
+          description: undefined,
         };
       });
 
@@ -261,15 +261,16 @@ If no preferences can be extracted, return:
    * - Logs all corrections and filtered items
    * - Returns filtered suggestions with reasons for UI display
    */
-  private validateAndSanitizeSuggestions(
+  private async validateAndSanitizeSuggestions(
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
     currentPreferences: Array<{ slug: string; value: any }>,
-  ): {
+    userId: string,
+  ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
     documentSummary: string;
     filteredCount: number;
-  } {
+  }> {
     this.logger.debug(
       `Raw AI suggestions (${parsed.suggestions.length}): ${JSON.stringify(
         parsed.suggestions.map((s) => ({
@@ -293,7 +294,7 @@ If no preferences can be extracted, return:
 
     for (const suggestion of parsed.suggestions) {
       // Filter: unknown slug
-      if (!this.defRepo.isKnownSlug(suggestion.slug)) {
+      if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId))) {
         this.logger.warn(
           `Filtered suggestion: unknown slug "${suggestion.slug}"`,
         );
