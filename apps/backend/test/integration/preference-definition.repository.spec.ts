@@ -251,6 +251,31 @@ describe('PreferenceDefinitionRepository (integration)', () => {
       expect(created.isCore).toBe(false);
     });
 
+    it('should store and return displayName when provided', async () => {
+      const created = await repository.create({
+        slug: 'custom.with_display_name',
+        description: 'Has a display name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+        displayName: 'My Display Label',
+      });
+
+      expect(created.displayName).toBe('My Display Label');
+    });
+
+    it('should store null displayName when not provided', async () => {
+      const created = await repository.create({
+        slug: 'custom.no_display_name',
+        description: 'No display name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+      });
+
+      expect(created.displayName).toBeNull();
+    });
+
     it('should allow USER def with same slug as GLOBAL (different namespace)', async () => {
       const globalDef = await repository.getDefinitionBySlug(
         'system.response_tone',
@@ -328,6 +353,24 @@ describe('PreferenceDefinitionRepository (integration)', () => {
       expect(updated.description).toBe('Changed description');
       expect(updated.valueType).toBe(before.valueType);
       expect(updated.scope).toBe(before.scope);
+    });
+
+    it('should update displayName by id', async () => {
+      const def = await repository.create({
+        slug: 'custom.display_name_update',
+        description: 'Has a display name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: testUserId,
+        displayName: 'Original Label',
+      });
+
+      const updated = await repository.update(def.id, {
+        displayName: 'Updated Label',
+      });
+
+      expect(updated.displayName).toBe('Updated Label');
+      expect(updated.description).toBe('Has a display name'); // unchanged
     });
 
     it('should throw for non-existent id', async () => {
