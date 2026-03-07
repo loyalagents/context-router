@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["prisma/seed.ts"],
+  "compilerOptions": {
+    "noEmit": true
+  }
+}
