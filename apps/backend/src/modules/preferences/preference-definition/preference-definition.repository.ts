@@ -75,6 +75,25 @@ export class PreferenceDefinitionRepository {
   }
 
   /**
+   * Returns active definitions filtered by export scope.
+   * GLOBAL: system-owned only. PERSONAL: user-owned only. ALL: both.
+   */
+  async getByScope(
+    scope: "GLOBAL" | "PERSONAL" | "ALL",
+    userId: string,
+  ): Promise<PrismaPreferenceDefinition[]> {
+    const namespaces: string[] = [];
+    if (scope === "GLOBAL" || scope === "ALL") namespaces.push("GLOBAL");
+    if (scope === "PERSONAL" || scope === "ALL")
+      namespaces.push(this.userNamespace(userId));
+
+    return this.prisma.preferenceDefinition.findMany({
+      where: { namespace: { in: namespaces }, archivedAt: null },
+      orderBy: { slug: "asc" },
+    });
+  }
+
+  /**
    * Returns all active definitions visible to the user:
    * GLOBAL definitions + user-owned definitions (if userId provided).
    * Archived definitions are excluded.
