@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { UserService } from '@modules/user/user.service';
-import { Auth0Service } from '@infrastructure/auth0/auth0.service';
-import { ExternalIdentityService } from '@modules/external-identity/external-identity.service';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { UserService } from "@modules/user/user.service";
+import { Auth0Service } from "@infrastructure/auth0/auth0.service";
+import { ExternalIdentityService } from "@modules/external-identity/external-identity.service";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 
 export interface JwtPayload {
   sub: string; // Auth0 user ID (auth0|xxxxx or google-oauth2|xxxxx)
@@ -19,6 +19,8 @@ export interface JwtPayload {
   scope?: string;
   [key: string]: any; // For custom claims like roles
 }
+
+type AuthTransactionClient = Pick<PrismaService, "user" | "externalIdentity">;
 
 @Injectable()
 export class AuthService {
@@ -45,17 +47,16 @@ export class AuthService {
   async validateAndSyncUser(jwtPayload: JwtPayload) {
     const auth0UserId = jwtPayload.sub;
     const email = jwtPayload.email;
-    const provider = 'auth0';
+    const provider = "auth0";
 
-    this.logger.log(
-      `Validating user: ${provider}/${auth0UserId} (${email})`,
-    );
+    this.logger.log(`Validating user: ${provider}/${auth0UserId} (${email})`);
 
     // Try to find user by external identity first
-    const userId = await this.externalIdentityService.findUserIdByProviderIdentity(
-      provider,
-      auth0UserId,
-    );
+    const userId =
+      await this.externalIdentityService.findUserIdByProviderIdentity(
+        provider,
+        auth0UserId,
+      );
 
     if (userId) {
       const user = await this.userService.findOne(userId);
@@ -87,10 +88,11 @@ export class AuthService {
               `Identity already linked (race condition handled): ${auth0UserId}`,
             );
             // Verify it's linked to the same user
-            const linkedUserId = await this.externalIdentityService.findUserIdByProviderIdentity(
-              provider,
-              auth0UserId,
-            );
+            const linkedUserId =
+              await this.externalIdentityService.findUserIdByProviderIdentity(
+                provider,
+                auth0UserId,
+              );
             if (linkedUserId !== user.userId) {
               throw new Error(
                 `This ${provider} identity is already linked to a different user`,
@@ -106,9 +108,9 @@ export class AuthService {
     }
 
     // User doesn't exist - create new user based on sync strategy
-    const syncStrategy = this.configService.get<string>('auth.syncStrategy');
+    const syncStrategy = this.configService.get<string>("auth.syncStrategy");
 
-    if (syncStrategy === 'ON_LOGIN') {
+    if (syncStrategy === "ON_LOGIN") {
       return this.createUserWithRetry(jwtPayload, provider, auth0UserId);
     }
 
@@ -145,30 +147,30 @@ export class AuthService {
         }
 
         // Use transaction to atomically create user and link identity
-        const user = await this.prisma.$transaction(async (tx) => {
-          // Create user
-          const newUser = await tx.user.create({
-            data: {
-              email: email || auth0User?.email || 'unknown@example.com',
-              firstName:
-                jwtPayload.given_name || auth0User?.given_name || 'Unknown',
-              lastName:
-                jwtPayload.family_name || auth0User?.family_name || 'User',
-            },
-          });
+        const user = await this.prisma.$transaction(
+          async (tx: AuthTransactionClient) => {
+            const newUser = await tx.user.create({
+              data: {
+                email: email || auth0User?.email || "unknown@example.com",
+                firstName:
+                  jwtPayload.given_name || auth0User?.given_name || "Unknown",
+                lastName:
+                  jwtPayload.family_name || auth0User?.family_name || "User",
+              },
+            });
 
-          // Link external identity to user
-          await tx.externalIdentity.create({
-            data: {
-              userId: newUser.userId,
-              provider,
-              providerUserId,
-              metadata: null,
-            },
-          });
+            await tx.externalIdentity.create({
+              data: {
+                userId: newUser.userId,
+                provider,
+                providerUserId,
+                metadata: null,
+              },
+            });
 
-          return newUser;
-        });
+            return newUser;
+          },
+        );
 
         this.logger.log(`Successfully created user: ${user.userId}`);
         return user;
@@ -181,13 +183,14 @@ export class AuthService {
 
           // If this is our last retry, try to fetch the existing user
           if (attempt === maxRetries) {
-            this.logger.log('Max retries reached, fetching existing user');
+            this.logger.log("Max retries reached, fetching existing user");
 
             // Try finding by external identity first
-            const userId = await this.externalIdentityService.findUserIdByProviderIdentity(
-              provider,
-              providerUserId,
-            );
+            const userId =
+              await this.externalIdentityService.findUserIdByProviderIdentity(
+                provider,
+                providerUserId,
+              );
 
             if (userId) {
               return this.userService.findOne(userId);
@@ -214,7 +217,7 @@ export class AuthService {
             }
 
             throw new Error(
-              'Failed to create user after max retries and could not find existing user',
+              "Failed to create user after max retries and could not find existing user",
             );
           }
 
@@ -230,7 +233,7 @@ export class AuthService {
       }
     }
 
-    throw new Error('Unexpected error in createUserWithRetry');
+    throw new Error("Unexpected error in createUserWithRetry");
   }
 
   async getCurrentUser(userId: string) {
@@ -265,8 +268,8 @@ export class AuthService {
 
         user = await this.userService.create({
           email,
-          firstName: 'M2M',
-          lastName: 'Client',
+          firstName: "M2M",
+          lastName: "Client",
         });
 
         return user;
@@ -279,7 +282,7 @@ export class AuthService {
 
           // On last retry, fetch the existing user
           if (attempt === maxRetries) {
-            this.logger.log('Max retries reached, fetching existing M2M user');
+            this.logger.log("Max retries reached, fetching existing M2M user");
             user = await this.userService.findByEmail(email);
             if (user) {
               return user;
@@ -300,7 +303,7 @@ export class AuthService {
       }
     }
 
-    throw new Error('Unexpected error in findOrCreateM2MUser');
+    throw new Error("Unexpected error in findOrCreateM2MUser");
   }
 
   /**
@@ -309,6 +312,6 @@ export class AuthService {
    */
   private isUniqueConstraintError(error: any): boolean {
     // Prisma unique constraint error code
-    return error?.code === 'P2002';
+    return error?.code === "P2002";
   }
 }
