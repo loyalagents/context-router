@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
-import { CreateUserInput } from './dto/create-user.input';
-import { UpdateUserInput } from './dto/update-user.input';
-import { User } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import type { User } from "@infrastructure/prisma/prisma-models";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
+import { CreateUserInput } from "./dto/create-user.input";
+import { UpdateUserInput } from "./dto/update-user.input";
 
 @Injectable()
 export class UserRepository {
@@ -22,10 +22,10 @@ export class UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    this.logger.log('Fetching all users');
+    this.logger.log("Fetching all users");
     return this.prisma.user.findMany({
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }

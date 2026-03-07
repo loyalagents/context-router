@@ -1,10 +1,10 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
-  PreferenceDefinition as PrismaPreferenceDefinition,
   PreferenceValueType,
   PreferenceScope,
-} from '@prisma/client';
+} from "@infrastructure/prisma/generated-client";
 
 export interface PreferenceDefinitionData extends PrismaPreferenceDefinition {
   category: string;
@@ -31,7 +31,7 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
     for (const def of defs) {
       this.cache.set(def.slug, {
         ...def,
-        category: def.slug.split('.')[0],
+        category: def.slug.split(".")[0],
       });
     }
     this.logger.log(`Loaded ${this.cache.size} preference definitions`);
@@ -74,7 +74,7 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
       const def = this.cache.get(slug)!;
 
       // Exact category match
-      const [category] = slug.split('.');
+      const [category] = slug.split(".");
       if (normalized.startsWith(category)) score += 10;
 
       // Prefix match
@@ -118,7 +118,7 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
         description: data.description,
         valueType: data.valueType as PreferenceValueType,
         scope: data.scope as PreferenceScope,
-        options: data.options as any ?? undefined,
+        options: (data.options as any) ?? undefined,
         isSensitive: data.isSensitive ?? false,
         isCore: data.isCore ?? false,
       },
@@ -142,11 +142,13 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
     },
   ): Promise<PrismaPreferenceDefinition> {
     const updateData: Record<string, unknown> = {};
-    if (data.description !== undefined) updateData.description = data.description;
+    if (data.description !== undefined)
+      updateData.description = data.description;
     if (data.valueType !== undefined) updateData.valueType = data.valueType;
     if (data.scope !== undefined) updateData.scope = data.scope;
     if (data.options !== undefined) updateData.options = data.options;
-    if (data.isSensitive !== undefined) updateData.isSensitive = data.isSensitive;
+    if (data.isSensitive !== undefined)
+      updateData.isSensitive = data.isSensitive;
     if (data.isCore !== undefined) updateData.isCore = data.isCore;
 
     const updated = await this.prisma.preferenceDefinition.update({
