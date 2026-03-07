@@ -15,14 +15,20 @@ export interface User {
   updatedAt: Date;
 }
 
-export interface ExternalIdentity {
+export interface ApiKey {
   id: string;
-  userId: string;
-  provider: string;
-  providerUserId: string;
-  metadata: unknown | null;
+  keyHash: string;
+  groupName: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ApiKeyUser {
+  id: string;
+  apiKeyId: string;
+  userId: string;
+  createdAt: Date;
 }
 
 export interface Location {
