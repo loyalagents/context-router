@@ -21,6 +21,11 @@ export class CreatePreferenceDefinitionInput {
   @IsNotEmpty()
   slug: string;
 
+  @Field({ nullable: true, description: "Optional human-readable display name" })
+  @IsString()
+  @IsOptional()
+  displayName?: string;
+
   @Field({ description: "Human-readable description of the preference" })
   @IsString()
   @IsNotEmpty()

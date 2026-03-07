@@ -161,6 +161,7 @@ export class PreferenceDefinitionRepository {
    */
   async create(data: {
     slug: string;
+    displayName?: string;
     description: string;
     valueType: PreferenceValueType | string;
     scope: PreferenceScope | string;
@@ -175,6 +176,7 @@ export class PreferenceDefinitionRepository {
       data: {
         namespace,
         slug: data.slug,
+        displayName: data.displayName ?? null,
         description: data.description,
         valueType: data.valueType as PreferenceValueType,
         scope: data.scope as PreferenceScope,
@@ -195,6 +197,7 @@ export class PreferenceDefinitionRepository {
   async update(
     id: string,
     data: {
+      displayName?: string;
       description?: string;
       valueType?: PreferenceValueType | string;
       scope?: PreferenceScope | string;
@@ -204,6 +207,7 @@ export class PreferenceDefinitionRepository {
     },
   ): Promise<PrismaPreferenceDefinition> {
     const updateData: Record<string, unknown> = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName;
     if (data.description !== undefined)
       updateData.description = data.description;
     if (data.valueType !== undefined) updateData.valueType = data.valueType;

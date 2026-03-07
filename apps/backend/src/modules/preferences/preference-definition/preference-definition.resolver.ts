@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { PreferenceDefinitionModel } from './models/preference-definition.model';
 import { PreferenceDefinitionRepository } from './preference-definition.repository';
@@ -6,11 +6,9 @@ import { PreferenceDefinitionService } from './preference-definition.service';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
 import { UpdatePreferenceDefinitionInput } from './dto/update-preference-definition.input';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
-
-// NOTE: Delete is intentionally not supported. The `slug` field is the primary key
-// and is referenced as a foreign key by the Preference table. Deleting a definition
-// would either break existing user preferences or require cascading deletes.
-// If delete is needed in the future, add a check that no Preferences reference the slug.
+import { OptionalGqlAuthGuard } from '@common/guards/optional-gql-auth.guard';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { User } from '@modules/user/models/user.model';
 
 @Resolver(() => PreferenceDefinitionModel)
 @UseGuards(GqlAuthGuard)
@@ -23,12 +21,15 @@ export class PreferenceDefinitionResolver {
   @Query(() => [PreferenceDefinitionModel], {
     name: 'preferenceCatalog',
     description:
-      'List available preference definitions. Optionally filter by category.',
+      'List available preference definitions. Authenticated users also see their own definitions.',
   })
+  @UseGuards(OptionalGqlAuthGuard)
   async getCatalog(
+    @CurrentUser() user: User | undefined,
     @Args('category', { nullable: true }) category?: string,
   ): Promise<PreferenceDefinitionModel[]> {
-    const defs = await this.defRepo.getAll();
+    const userId = user?.userId;
+    const defs = await this.defRepo.getAll(userId);
     const filtered = category
       ? defs.filter((d) => d.slug.split('.')[0] === category)
       : defs;
@@ -39,21 +40,34 @@ export class PreferenceDefinitionResolver {
   }
 
   @Mutation(() => PreferenceDefinitionModel, {
-    description: 'Create a new preference definition.',
+    description: 'Create a new user-owned preference definition.',
   })
   async createPreferenceDefinition(
+    @CurrentUser() user: User,
     @Args('input') input: CreatePreferenceDefinitionInput,
   ): Promise<PreferenceDefinitionModel> {
-    return this.defService.create(input) as Promise<PreferenceDefinitionModel>;
+    return this.defService.create(input, user.userId) as Promise<PreferenceDefinitionModel>;
   }
 
   @Mutation(() => PreferenceDefinitionModel, {
-    description: 'Update an existing preference definition.',
+    description: 'Update an existing preference definition by id.',
   })
   async updatePreferenceDefinition(
-    @Args('slug') slug: string,
+    @CurrentUser() user: User,
+    @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdatePreferenceDefinitionInput,
   ): Promise<PreferenceDefinitionModel> {
-    return this.defService.update(slug, input) as Promise<PreferenceDefinitionModel>;
+    return this.defService.update(id, input, user.userId) as Promise<PreferenceDefinitionModel>;
+  }
+
+  @Mutation(() => PreferenceDefinitionModel, {
+    description: 'Archive a user-owned preference definition.',
+  })
+  async archivePreferenceDefinition(
+    @CurrentUser() user: User,
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<PreferenceDefinitionModel> {
+    const archived = await this.defService.archiveDefinition(id, user.userId);
+    return { ...archived, category: archived.slug.split('.')[0] } as PreferenceDefinitionModel;
   }
 }

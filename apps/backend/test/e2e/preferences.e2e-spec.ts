@@ -36,6 +36,7 @@ describe('Preferences GraphQL API (e2e)', () => {
             id
             userId
             slug
+            definitionId
             value
             status
             sourceType
@@ -64,6 +65,7 @@ describe('Preferences GraphQL API (e2e)', () => {
         category: 'food',
       });
       expect(response.body.data.setPreference.id).toBeDefined();
+      expect(response.body.data.setPreference.definitionId).toBeDefined();
       expect(response.body.data.setPreference.description).toBeDefined();
     });
 

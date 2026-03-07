@@ -30,7 +30,11 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
   const CREATE_MUTATION = `
     mutation CreatePreferenceDefinition($input: CreatePreferenceDefinitionInput!) {
       createPreferenceDefinition(input: $input) {
+        id
         slug
+        namespace
+        ownerUserId
+        displayName
         description
         valueType
         scope
@@ -43,9 +47,12 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
   `;
 
   const UPDATE_MUTATION = `
-    mutation UpdatePreferenceDefinition($slug: String!, $input: UpdatePreferenceDefinitionInput!) {
-      updatePreferenceDefinition(slug: $slug, input: $input) {
+    mutation UpdatePreferenceDefinition($id: ID!, $input: UpdatePreferenceDefinitionInput!) {
+      updatePreferenceDefinition(id: $id, input: $input) {
+        id
         slug
+        namespace
+        ownerUserId
         description
         valueType
         scope
@@ -57,10 +64,23 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
     }
   `;
 
+  const ARCHIVE_MUTATION = `
+    mutation ArchivePreferenceDefinition($id: ID!) {
+      archivePreferenceDefinition(id: $id) {
+        id
+        slug
+        archivedAt
+      }
+    }
+  `;
+
   const CATALOG_QUERY = `
     query PreferenceCatalog($category: String) {
       preferenceCatalog(category: $category) {
+        id
         slug
+        namespace
+        ownerUserId
         description
         valueType
         scope
@@ -85,7 +105,10 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
 
       expect(response.body.errors).toBeUndefined();
       const created = response.body.data.createPreferenceDefinition;
+      expect(created.id).toBeDefined();
       expect(created.slug).toBe('test.new_preference');
+      expect(created.namespace).toBe(`USER:${testUser.userId}`);
+      expect(created.ownerUserId).toBe(testUser.userId);
       expect(created.description).toBe('A test preference');
       expect(created.valueType).toBe('STRING');
       expect(created.scope).toBe('GLOBAL');
@@ -172,9 +195,20 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
   });
 
   describe('updatePreferenceDefinition', () => {
-    it('should update description successfully', async () => {
+    it('should update description of a user-owned definition successfully', async () => {
+      // Create a user definition first
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'test.update_target',
+          description: 'Original description',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
       const response = await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'food.dietary_restrictions',
+        id: defId,
         input: {
           description: 'Updated description',
         },
@@ -182,131 +216,152 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
 
       expect(response.body.errors).toBeUndefined();
       const updated = response.body.data.updatePreferenceDefinition;
-      expect(updated.slug).toBe('food.dietary_restrictions');
+      expect(updated.id).toBe(defId);
+      expect(updated.slug).toBe('test.update_target');
       expect(updated.description).toBe('Updated description');
-      // Other fields should remain unchanged
-      expect(updated.valueType).toBe('ARRAY');
-      expect(updated.scope).toBe('GLOBAL');
+      expect(updated.valueType).toBe('STRING');
     });
 
-    it('should update valueType and options', async () => {
-      const response = await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'food.spice_tolerance',
+    it('should update options on a user-owned definition', async () => {
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
         input: {
-          options: ['none', 'mild', 'medium', 'hot', 'extra_hot', 'extreme'],
+          slug: 'test.options_update',
+          description: 'Options test',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
+          options: ['a', 'b'],
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      const response = await graphqlRequest(UPDATE_MUTATION, {
+        id: defId,
+        input: {
+          options: ['a', 'b', 'c'],
         },
       }).expect(200);
 
       expect(response.body.errors).toBeUndefined();
-      const updated = response.body.data.updatePreferenceDefinition;
-      expect(updated.options).toEqual([
-        'none',
-        'mild',
-        'medium',
-        'hot',
-        'extra_hot',
-        'extreme',
-      ]);
+      expect(response.body.data.updatePreferenceDefinition.options).toEqual(['a', 'b', 'c']);
     });
 
-    it('should update scope, isSensitive, and isCore', async () => {
-      const response = await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'food.dietary_restrictions',
+    it('should update isSensitive on a user-owned definition', async () => {
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
         input: {
-          isSensitive: true,
+          slug: 'test.sensitive_update',
+          description: 'Sensitive test',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
         },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      const response = await graphqlRequest(UPDATE_MUTATION, {
+        id: defId,
+        input: { isSensitive: true },
       }).expect(200);
 
       expect(response.body.errors).toBeUndefined();
-      const updated = response.body.data.updatePreferenceDefinition;
-      expect(updated.isSensitive).toBe(true);
+      expect(response.body.data.updatePreferenceDefinition.isSensitive).toBe(true);
     });
 
-    it('should return error for unknown slug', async () => {
+    it('should return error for unknown id', async () => {
       const response = await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'nonexistent.slug',
+        id: '00000000-0000-0000-0000-000000000000',
+        input: { description: 'Will fail' },
+      }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+    });
+  });
+
+  describe('user definition namespace', () => {
+    it('should create definition in user namespace and appear in catalog', async () => {
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
         input: {
-          description: 'Will fail',
+          slug: 'custom.user_pref',
+          description: 'User-owned preference',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+
+      expect(createRes.body.errors).toBeUndefined();
+      const created = createRes.body.data.createPreferenceDefinition;
+      expect(created.namespace).toBe(`USER:${testUser.userId}`);
+      expect(created.ownerUserId).toBe(testUser.userId);
+
+      // Should appear in authenticated catalog
+      const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'custom' }).expect(200);
+      const catalog = catalogRes.body.data.preferenceCatalog;
+      expect(catalog.some((d: { slug: string }) => d.slug === 'custom.user_pref')).toBe(true);
+    });
+
+    it('should reject user definition with same slug as active global definition', async () => {
+      // 'food.dietary_restrictions' is a GLOBAL seeded definition
+      const response = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'food.dietary_restrictions',
+          description: 'Collision with global',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
         },
       }).expect(200);
 
       expect(response.body.errors).toBeDefined();
     });
-
-    it('should leave other fields unchanged on partial update', async () => {
-      // First, get the current state
-      const catalogResponse = await graphqlRequest(CATALOG_QUERY).expect(200);
-      const original = catalogResponse.body.data.preferenceCatalog.find(
-        (d: { slug: string }) => d.slug === 'system.response_tone',
-      );
-
-      // Update only description
-      const response = await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'system.response_tone',
-        input: {
-          description: 'Changed description only',
-        },
-      }).expect(200);
-
-      expect(response.body.errors).toBeUndefined();
-      const updated = response.body.data.updatePreferenceDefinition;
-      expect(updated.description).toBe('Changed description only');
-      expect(updated.valueType).toBe(original.valueType);
-      expect(updated.scope).toBe(original.scope);
-      expect(updated.options).toEqual(original.options);
-      expect(updated.isSensitive).toBe(original.isSensitive);
-      expect(updated.isCore).toBe(original.isCore);
-    });
   });
 
-  describe('cache consistency', () => {
-    it('should make newly created definition available in preferenceCatalog query', async () => {
-      // Create a new definition
-      await graphqlRequest(CREATE_MUTATION, {
+  describe('archivePreferenceDefinition', () => {
+    it('should archive a user-owned definition', async () => {
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
         input: {
-          slug: 'custom.new_field',
-          description: 'New custom field',
-          valueType: 'BOOLEAN',
+          slug: 'test.to_archive',
+          description: 'Will be archived',
+          valueType: 'STRING',
           scope: 'GLOBAL',
         },
       }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
 
-      // Query the catalog and verify it includes the new definition
-      const catalogResponse = await graphqlRequest(CATALOG_QUERY, {
-        category: 'custom',
-      }).expect(200);
+      const archiveRes = await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
+      expect(archiveRes.body.errors).toBeUndefined();
+      expect(archiveRes.body.data.archivePreferenceDefinition.archivedAt).toBeTruthy();
 
-      expect(catalogResponse.body.errors).toBeUndefined();
-      const catalog = catalogResponse.body.data.preferenceCatalog;
-      expect(catalog).toHaveLength(1);
-      expect(catalog[0].slug).toBe('custom.new_field');
-      expect(catalog[0].description).toBe('New custom field');
+      // Archived def should not appear in catalog
+      const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'test' }).expect(200);
+      const slugs = catalogRes.body.data.preferenceCatalog.map((d: { slug: string }) => d.slug);
+      expect(slugs).not.toContain('test.to_archive');
     });
 
-    it('should reflect updates in preferenceCatalog query', async () => {
-      // Update an existing definition
-      await graphqlRequest(UPDATE_MUTATION, {
-        slug: 'food.spice_tolerance',
-        input: {
-          description: 'Updated via test',
-        },
-      }).expect(200);
+    it('should allow recreating a slug after archiving (double archive/recreate cycle)', async () => {
+      const input = {
+        slug: 'test.recycle_slug',
+        description: 'Recycle test',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      };
 
-      // Query and verify
-      const catalogResponse = await graphqlRequest(CATALOG_QUERY, {
-        category: 'food',
-      }).expect(200);
+      // Create → archive → recreate → archive → recreate
+      for (let i = 0; i < 2; i++) {
+        const createRes = await graphqlRequest(CREATE_MUTATION, { input }).expect(200);
+        expect(createRes.body.errors).toBeUndefined();
+        const defId = createRes.body.data.createPreferenceDefinition.id;
 
-      const updated = catalogResponse.body.data.preferenceCatalog.find(
-        (d: { slug: string }) => d.slug === 'food.spice_tolerance',
-      );
-      expect(updated.description).toBe('Updated via test');
+        const archiveRes = await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
+        expect(archiveRes.body.errors).toBeUndefined();
+      }
+
+      // Final recreation should succeed
+      const finalRes = await graphqlRequest(CREATE_MUTATION, { input }).expect(200);
+      expect(finalRes.body.errors).toBeUndefined();
+      expect(finalRes.body.data.createPreferenceDefinition.slug).toBe('test.recycle_slug');
     });
   });
 
   describe('integration: create definition then use it', () => {
-    it('should allow setting a preference with a newly created definition slug', async () => {
-      // Create a new definition
+    it('should allow setting a preference with a newly created user definition slug', async () => {
+      // Create a user-owned definition
       await graphqlRequest(CREATE_MUTATION, {
         input: {
           slug: 'workshop.team_name',
@@ -316,7 +371,6 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
         },
       }).expect(200);
 
-      // Set a preference using the new slug
       const SET_PREFERENCE = `
         mutation SetPreference($input: SetPreferenceInput!) {
           setPreference(input: $input) {
@@ -329,10 +383,7 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       `;
 
       const prefResponse = await graphqlRequest(SET_PREFERENCE, {
-        input: {
-          slug: 'workshop.team_name',
-          value: 'Team Alpha',
-        },
+        input: { slug: 'workshop.team_name', value: 'Team Alpha' },
       }).expect(200);
 
       expect(prefResponse.body.errors).toBeUndefined();
