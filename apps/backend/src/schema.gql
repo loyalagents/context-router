@@ -21,6 +21,9 @@ input CreatePreferenceDefinitionInput {
   """Human-readable description of the preference"""
   description: String!
 
+  """Optional human-readable display name"""
+  displayName: String
+
   """Whether this is a built-in core preference"""
   isCore: Boolean = false
 
@@ -100,9 +103,12 @@ type Mutation {
   """Accept a suggestion, promoting it to ACTIVE"""
   acceptSuggestedPreference(id: ID!): Preference!
   applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
+
+  """Archive a user-owned preference definition."""
+  archivePreferenceDefinition(id: ID!): PreferenceDefinition!
   createLocation(data: CreateLocationInput!): Location!
 
-  """Create a new preference definition."""
+  """Create a new user-owned preference definition."""
   createPreferenceDefinition(input: CreatePreferenceDefinitionInput!): PreferenceDefinition!
   deleteLocation(locationId: String!): Location!
 
@@ -121,8 +127,8 @@ type Mutation {
   suggestPreference(input: SuggestPreferenceInput!): Preference
   updateLocation(data: UpdateLocationInput!, locationId: String!): Location!
 
-  """Update an existing preference definition."""
-  updatePreferenceDefinition(input: UpdatePreferenceDefinitionInput!, slug: String!): PreferenceDefinition!
+  """Update an existing preference definition by id."""
+  updatePreferenceDefinition(id: ID!, input: UpdatePreferenceDefinitionInput!): PreferenceDefinition!
 
   """Update an existing user"""
   updateUser(updateUserInput: UpdateUserInput!): User!
@@ -135,6 +141,9 @@ type Preference {
   """Confidence score for inferred preferences (0.0 to 1.0)"""
   confidence: Float
   createdAt: DateTime!
+
+  """The UUID of the resolved preference definition"""
+  definitionId: String!
 
   """Description from the preference catalog"""
   description: String
@@ -160,11 +169,20 @@ type Preference {
 }
 
 type PreferenceDefinition {
+  """When this definition was archived (null if active)"""
+  archivedAt: DateTime
+
   """Category derived from slug prefix"""
   category: String!
 
   """Human-readable description of the preference"""
   description: String!
+
+  """Optional human-readable display name"""
+  displayName: String
+
+  """Unique UUID identifier"""
+  id: ID!
 
   """Whether this is a built-in core preference"""
   isCore: Boolean!
@@ -172,8 +190,14 @@ type PreferenceDefinition {
   """Whether this preference contains sensitive data"""
   isSensitive: Boolean!
 
+  """Namespace: GLOBAL or USER:<userId>"""
+  namespace: String!
+
   """Valid options for ENUM type preferences"""
   options: JSON
+
+  """Owner user ID (null for global definitions)"""
+  ownerUserId: String
 
   """Scope: GLOBAL or LOCATION"""
   scope: PreferenceScope!
@@ -252,7 +276,9 @@ type Query {
   """Get a single preference by ID"""
   preference(id: ID!): Preference!
 
-  """List available preference definitions. Optionally filter by category."""
+  """
+  List available preference definitions. Authenticated users also see their own definitions.
+  """
   preferenceCatalog(category: String): [PreferenceDefinition!]!
 
   """
@@ -315,6 +341,9 @@ input UpdateLocationInput {
 input UpdatePreferenceDefinitionInput {
   """Human-readable description of the preference"""
   description: String
+
+  """Optional human-readable display name"""
+  displayName: String
 
   """Whether this is a built-in core preference"""
   isCore: Boolean

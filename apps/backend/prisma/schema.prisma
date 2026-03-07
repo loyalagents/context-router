@@ -6,6 +6,7 @@ generator client {
   output                 = "../src/generated/prisma"
   moduleFormat           = "cjs"
   generatedFileExtension = "ts"
+  previewFeatures        = ["partialIndexes"]
 }
 
 datasource db {
@@ -13,15 +14,16 @@ datasource db {
 }
 
 model User {
-  userId      String       @id @default(uuid()) @map("user_id")
-  email       String       @unique
-  firstName   String       @map("first_name")
-  lastName    String       @map("last_name")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  userId      String                 @id @default(uuid()) @map("user_id")
+  email       String                 @unique
+  firstName   String                 @map("first_name")
+  lastName    String                 @map("last_name")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
   apiKeyUsers ApiKeyUser[]
   locations   Location[]
   preferences Preference[]
+  definitions PreferenceDefinition[]
 
   @@map("users")
 }
@@ -101,43 +103,52 @@ model Location {
 }
 
 model PreferenceDefinition {
-  slug        String              @id
+  id          String              @id @default(uuid())
+  namespace   String              // "GLOBAL" or "USER:<userId>"
+  slug        String
+  displayName String?             @map("display_name")
   description String
   valueType   PreferenceValueType @map("value_type")
   scope       PreferenceScope
   options     Json?
   isSensitive Boolean             @default(false) @map("is_sensitive")
   isCore      Boolean             @default(false) @map("is_core")
+  archivedAt  DateTime?           @map("archived_at")
   createdAt   DateTime            @default(now()) @map("created_at")
   updatedAt   DateTime            @updatedAt @map("updated_at")
 
+  ownerUserId String?             @map("owner_user_id")
+  owner       User?               @relation(fields: [ownerUserId], references: [userId], onDelete: Cascade)
+
   preferences Preference[]
 
+  @@unique([namespace, slug], where: { archivedAt: null }, map: "uniq_active_def_per_namespace_slug")
+  @@index([namespace, slug])
+  @@index([namespace])
+  @@index([ownerUserId])
   @@map("preference_definitions")
 }
 
 model Preference {
-  id          String           @id @default(uuid())
-  userId      String           @map("user_id")
-  locationId  String?          @map("location_id")
+  id           String           @id @default(uuid())
+  userId       String           @map("user_id")
+  locationId   String?          @map("location_id")
+  contextKey   String           @map("context_key")
+  definitionId String           @map("definition_id")
+  value        Json
+  status       PreferenceStatus @default(ACTIVE)
+  sourceType   SourceType       @default(USER)
+  confidence   Float?
+  evidence     Json?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
 
-  slug        String
-  value       Json
+  user       User                 @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  location   Location?            @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
+  definition PreferenceDefinition @relation(fields: [definitionId], references: [id])
 
-  status      PreferenceStatus @default(ACTIVE)
-  sourceType  SourceType       @default(USER)
-  confidence  Float?
-  evidence    Json?
-
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  user        User                 @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  location    Location?            @relation(fields: [locationId], references: [locationId], onDelete: Cascade)
-  definition  PreferenceDefinition @relation(fields: [slug], references: [slug])
-
-  @@unique([userId, locationId, slug, status])
-  @@index([userId, locationId])
-  @@index([slug])
+  @@unique([userId, contextKey, definitionId, status])
+  @@index([userId, contextKey])
+  @@index([definitionId])
   @@map("user_preferences")
 }

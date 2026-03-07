@@ -10,7 +10,11 @@ import SchemaClient from "./SchemaClient";
 const PREFERENCE_CATALOG_QUERY = gql`
   query PreferenceCatalog {
     preferenceCatalog {
+      id
       slug
+      namespace
+      displayName
+      ownerUserId
       description
       valueType
       scope
@@ -23,7 +27,11 @@ const PREFERENCE_CATALOG_QUERY = gql`
 `;
 
 interface PreferenceDefinition {
+  id: string;
   slug: string;
+  namespace: string;
+  displayName?: string | null;
+  ownerUserId?: string | null;
   description: string;
   valueType: "STRING" | "BOOLEAN" | "ENUM" | "ARRAY";
   scope: "GLOBAL" | "LOCATION";

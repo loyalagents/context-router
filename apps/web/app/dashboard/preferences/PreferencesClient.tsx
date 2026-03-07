@@ -13,6 +13,7 @@ import SuggestionInbox from './components/SuggestionInbox';
 interface Preference {
   id: string;
   slug: string;
+  definitionId: string;
   value: any;
   status: string;
   sourceType: string;

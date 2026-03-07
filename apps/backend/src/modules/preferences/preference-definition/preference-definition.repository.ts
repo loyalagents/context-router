@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
@@ -6,84 +6,138 @@ import {
   PreferenceScope,
 } from "@infrastructure/prisma/generated-client";
 
-export interface PreferenceDefinitionData extends PrismaPreferenceDefinition {
-  category: string;
-}
-
 @Injectable()
-export class PreferenceDefinitionRepository implements OnModuleInit {
+export class PreferenceDefinitionRepository {
   private readonly logger = new Logger(PreferenceDefinitionRepository.name);
-  private cache = new Map<string, PreferenceDefinitionData>();
 
   constructor(private prisma: PrismaService) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.refreshCache();
+  // ──────────────────────────────────────────────
+  // Helpers
+  // ──────────────────────────────────────────────
+
+  private userNamespace(userId: string): string {
+    return `USER:${userId}`;
+  }
+
+  private namespaceFor(ownerUserId: string | null | undefined): string {
+    return ownerUserId ? this.userNamespace(ownerUserId) : "GLOBAL";
+  }
+
+  // ──────────────────────────────────────────────
+  // Lookups
+  // ──────────────────────────────────────────────
+
+  /**
+   * Resolves a slug to a definition id.
+   * If userId is provided, prefers the user-owned definition over GLOBAL.
+   * Returns null if no active definition is found.
+   */
+  async resolveSlugToDefinitionId(
+    slug: string,
+    userId?: string | null,
+  ): Promise<string | null> {
+    const def = await this.getDefinitionBySlug(slug, userId);
+    return def?.id ?? null;
   }
 
   /**
-   * Loads all definitions from the database into the in-memory cache.
-   * Derives category from slug prefix (e.g., "food.dietary_restrictions" → "food").
+   * Finds an active (non-archived) definition by slug.
+   * User-first: if userId is provided, checks the user's namespace first.
    */
-  async refreshCache(): Promise<void> {
-    const defs = await this.prisma.preferenceDefinition.findMany();
-    this.cache.clear();
-    for (const def of defs) {
-      this.cache.set(def.slug, {
-        ...def,
-        category: def.slug.split(".")[0],
+  async getDefinitionBySlug(
+    slug: string,
+    userId?: string | null,
+  ): Promise<PrismaPreferenceDefinition | null> {
+    if (userId) {
+      const userDef = await this.prisma.preferenceDefinition.findFirst({
+        where: {
+          namespace: this.userNamespace(userId),
+          slug,
+          archivedAt: null,
+        },
       });
+      if (userDef) return userDef;
     }
-    this.logger.log(`Loaded ${this.cache.size} preference definitions`);
+
+    return this.prisma.preferenceDefinition.findFirst({
+      where: { namespace: "GLOBAL", slug, archivedAt: null },
+    });
   }
 
-  isKnownSlug(slug: string): boolean {
-    return this.cache.has(slug);
+  /**
+   * Finds a definition by id (including archived).
+   */
+  async getDefinitionById(
+    id: string,
+  ): Promise<PrismaPreferenceDefinition | null> {
+    return this.prisma.preferenceDefinition.findUnique({ where: { id } });
   }
 
-  getDefinition(slug: string): PreferenceDefinitionData | undefined {
-    return this.cache.get(slug);
+  /**
+   * Returns all active definitions visible to the user:
+   * GLOBAL definitions + user-owned definitions (if userId provided).
+   * Archived definitions are excluded.
+   */
+  async getAll(userId?: string | null): Promise<PrismaPreferenceDefinition[]> {
+    const namespaces: string[] = ["GLOBAL"];
+    if (userId) namespaces.push(this.userNamespace(userId));
+
+    return this.prisma.preferenceDefinition.findMany({
+      where: {
+        namespace: { in: namespaces },
+        archivedAt: null,
+      },
+      orderBy: { slug: "asc" },
+    });
   }
 
-  getAllSlugs(): string[] {
-    return Array.from(this.cache.keys());
+  // ──────────────────────────────────────────────
+  // Slug/category helpers (direct DB, no cache)
+  // ──────────────────────────────────────────────
+
+  async isKnownSlug(slug: string, userId?: string | null): Promise<boolean> {
+    const def = await this.getDefinitionBySlug(slug, userId);
+    return def !== null;
   }
 
-  getSlugsByCategory(category: string): string[] {
-    return Array.from(this.cache.entries())
-      .filter(([, def]) => def.category === category)
-      .map(([slug]) => slug);
+  async getAllSlugs(userId?: string | null): Promise<string[]> {
+    const defs = await this.getAll(userId);
+    return defs.map((d) => d.slug);
   }
 
-  getAllCategories(): string[] {
-    const categories = new Set(
-      Array.from(this.cache.values()).map((def) => def.category),
-    );
+  async getSlugsByCategory(
+    category: string,
+    userId?: string | null,
+  ): Promise<string[]> {
+    const defs = await this.getAll(userId);
+    return defs
+      .filter((d) => d.slug.split(".")[0] === category)
+      .map((d) => d.slug);
+  }
+
+  async getAllCategories(userId?: string | null): Promise<string[]> {
+    const defs = await this.getAll(userId);
+    const categories = new Set(defs.map((d) => d.slug.split(".")[0]));
     return Array.from(categories).sort();
   }
 
-  /**
-   * Finds slugs similar to the given input (for "did you mean?" suggestions).
-   */
-  findSimilarSlugs(input: string, limit = 3): string[] {
+  async findSimilarSlugs(
+    input: string,
+    limit = 3,
+    userId?: string | null,
+  ): Promise<string[]> {
     const normalized = input.toLowerCase();
-    const allSlugs = this.getAllSlugs();
+    const defs = await this.getAll(userId);
 
-    const scored = allSlugs.map((slug) => {
+    const scored = defs.map((def) => {
       let score = 0;
-      const def = this.cache.get(slug)!;
+      const slug = def.slug;
+      const category = slug.split(".")[0];
 
-      // Exact category match
-      const [category] = slug.split(".");
       if (normalized.startsWith(category)) score += 10;
-
-      // Prefix match
       if (slug.startsWith(normalized)) score += 5;
-
-      // Contains the input
       if (slug.includes(normalized)) score += 3;
-
-      // Check definition description
       if (def.description.toLowerCase().includes(normalized)) score += 2;
 
       return { slug, score };
@@ -96,43 +150,54 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
       .map((s) => s.slug);
   }
 
-  getAll(): PreferenceDefinitionData[] {
-    return Array.from(this.cache.values());
-  }
+  // ──────────────────────────────────────────────
+  // Mutations
+  // ──────────────────────────────────────────────
 
   /**
-   * Creates a new preference definition in the database and refreshes the cache.
+   * Creates a new preference definition.
+   * If ownerUserId is provided, namespace = "USER:<userId>".
+   * Otherwise, namespace = "GLOBAL".
    */
   async create(data: {
     slug: string;
+    displayName?: string;
     description: string;
     valueType: PreferenceValueType | string;
     scope: PreferenceScope | string;
     options?: unknown;
     isSensitive?: boolean;
     isCore?: boolean;
+    ownerUserId?: string | null;
   }): Promise<PrismaPreferenceDefinition> {
+    const namespace = this.namespaceFor(data.ownerUserId);
+
     const created = await this.prisma.preferenceDefinition.create({
       data: {
+        namespace,
         slug: data.slug,
+        displayName: data.displayName ?? null,
         description: data.description,
         valueType: data.valueType as PreferenceValueType,
         scope: data.scope as PreferenceScope,
         options: (data.options as any) ?? undefined,
         isSensitive: data.isSensitive ?? false,
         isCore: data.isCore ?? false,
+        ownerUserId: data.ownerUserId ?? null,
       },
     });
-    await this.refreshCache();
+
+    this.logger.log(`Created definition: ${namespace}/${data.slug}`);
     return created;
   }
 
   /**
-   * Updates an existing preference definition in the database and refreshes the cache.
+   * Updates a definition by id.
    */
   async update(
-    slug: string,
+    id: string,
     data: {
+      displayName?: string;
       description?: string;
       valueType?: PreferenceValueType | string;
       scope?: PreferenceScope | string;
@@ -142,6 +207,7 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
     },
   ): Promise<PrismaPreferenceDefinition> {
     const updateData: Record<string, unknown> = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName;
     if (data.description !== undefined)
       updateData.description = data.description;
     if (data.valueType !== undefined) updateData.valueType = data.valueType;
@@ -151,11 +217,22 @@ export class PreferenceDefinitionRepository implements OnModuleInit {
       updateData.isSensitive = data.isSensitive;
     if (data.isCore !== undefined) updateData.isCore = data.isCore;
 
-    const updated = await this.prisma.preferenceDefinition.update({
-      where: { slug },
+    return this.prisma.preferenceDefinition.update({
+      where: { id },
       data: updateData,
     });
-    await this.refreshCache();
-    return updated;
+  }
+
+  /**
+   * Archives a definition by setting archivedAt.
+   * After archiving, a new definition with the same (namespace, slug) can be created.
+   */
+  async archive(id: string): Promise<PrismaPreferenceDefinition> {
+    const archived = await this.prisma.preferenceDefinition.update({
+      where: { id },
+      data: { archivedAt: new Date() },
+    });
+    this.logger.log(`Archived definition: ${id}`);
+    return archived;
   }
 }

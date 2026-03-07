@@ -85,9 +85,10 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
 };
 
 /**
- * Seeds preference definitions into the test database.
+ * Seeds GLOBAL preference definitions into the test database.
+ * Tests start with a clean DB (resetDb), so createMany is safe here.
  * Must be called after resetDb() and before any preference test data is created,
- * because user_preferences.slug has a FK to preference_definitions.slug.
+ * because user_preferences.definition_id has a FK to preference_definitions.id.
  */
 export async function seedPreferenceDefinitions(
   prisma?: PrismaClient,
@@ -97,7 +98,9 @@ export async function seedPreferenceDefinitions(
   const entries = Object.entries(PREFERENCE_CATALOG).map(([slug, def]) => {
     const catalogDef = def as PreferenceDefinition;
     return {
+      namespace: "GLOBAL",
       slug,
+      ownerUserId: null,
       description: catalogDef.description,
       valueType: VALUE_TYPE_MAP[catalogDef.valueType],
       scope: SCOPE_MAP[catalogDef.scope],

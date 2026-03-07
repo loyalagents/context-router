@@ -23,23 +23,19 @@ export class PreferenceSearchTool {
   /**
    * Search the catalog for matching slugs based on query.
    */
-  private searchCatalog(query: string): string[] {
+  private async searchCatalog(query: string, userId: string): Promise<string[]> {
     const normalized = query.toLowerCase();
-    const allSlugs = this.defRepo.getAllSlugs();
+    const defs = await this.defRepo.getAll(userId);
 
-    return allSlugs.filter((slug) => {
-      // Match by slug prefix
-      if (slug.startsWith(normalized)) return true;
-
-      // Match by category
-      const def = this.defRepo.getDefinition(slug);
-      if (def?.category.includes(normalized)) return true;
-
-      // Match by description keyword
-      if (def?.description.toLowerCase().includes(normalized)) return true;
-
-      return false;
-    });
+    return defs
+      .filter((def) => {
+        const category = def.slug.split('.')[0];
+        if (def.slug.startsWith(normalized)) return true;
+        if (category.includes(normalized)) return true;
+        if (def.description.toLowerCase().includes(normalized)) return true;
+        return false;
+      })
+      .map((d) => d.slug);
   }
 
   async search(params: SearchPreferencesParams, context: McpContext) {
@@ -63,7 +59,7 @@ export class PreferenceSearchTool {
       // If query is provided, filter by matching slugs
       let filteredActive = activePrefs;
       if (params.query) {
-        const matchingSlugs = new Set(this.searchCatalog(params.query));
+        const matchingSlugs = new Set(await this.searchCatalog(params.query, userId));
         filteredActive = activePrefs.filter((p) => matchingSlugs.has(p.slug));
       }
 
@@ -77,7 +73,7 @@ export class PreferenceSearchTool {
           );
 
         if (params.query) {
-          const matchingSlugs = new Set(this.searchCatalog(params.query));
+          const matchingSlugs = new Set(await this.searchCatalog(params.query, userId));
           suggestions = suggestedPrefs.filter((p) =>
             matchingSlugs.has(p.slug),
           );
@@ -102,22 +98,19 @@ export class PreferenceSearchTool {
         }
       }
 
-      // Format results with catalog metadata
-      const formatPreference = (pref: (typeof activePrefs)[0]) => {
-        const def = this.defRepo.getDefinition(pref.slug);
-        return {
-          id: pref.id,
-          slug: pref.slug,
-          value: pref.value,
-          status: pref.status,
-          sourceType: pref.sourceType,
-          confidence: pref.confidence,
-          locationId: pref.locationId,
-          updatedAt: pref.updatedAt,
-          category: def?.category,
-          description: def?.description,
-        };
-      };
+      // Format results — slug and description come from the enriched preference join
+      const formatPreference = (pref: (typeof activePrefs)[0]) => ({
+        id: pref.id,
+        slug: pref.slug,
+        value: pref.value,
+        status: pref.status,
+        sourceType: pref.sourceType,
+        confidence: pref.confidence,
+        locationId: pref.locationId,
+        updatedAt: pref.updatedAt,
+        category: pref.slug.split('.')[0],
+        description: pref.description,
+      });
 
       this.logger.log(
         `Found ${filteredActive.length} active, ${suggestions.length} suggested for user ${userId}`,

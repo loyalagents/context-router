@@ -6,6 +6,7 @@ import { getAuthHeaders } from '@/lib/auth-headers';
 interface Preference {
   id: string;
   slug: string;
+  definitionId: string;
   value: any;
   status: string;
   sourceType: string;
@@ -29,6 +30,7 @@ const ACCEPT_SUGGESTION_MUTATION = `
     acceptSuggestedPreference(id: $id) {
       id
       slug
+      definitionId
       value
       status
       sourceType

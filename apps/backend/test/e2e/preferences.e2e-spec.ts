@@ -36,6 +36,7 @@ describe('Preferences GraphQL API (e2e)', () => {
             id
             userId
             slug
+            definitionId
             value
             status
             sourceType
@@ -64,6 +65,7 @@ describe('Preferences GraphQL API (e2e)', () => {
         category: 'food',
       });
       expect(response.body.data.setPreference.id).toBeDefined();
+      expect(response.body.data.setPreference.definitionId).toBeDefined();
       expect(response.body.data.setPreference.description).toBeDefined();
     });
 
@@ -456,6 +458,43 @@ describe('Preferences GraphQL API (e2e)', () => {
       const checkResponse = await graphqlRequest(query).expect(200);
       const ids = checkResponse.body.data.suggestedPreferences.map((p: { id: string }) => p.id);
       expect(ids).not.toContain(id);
+    });
+  });
+
+  describe('definitionId correctness', () => {
+    it('should return a definitionId that matches the id of the resolved definition', async () => {
+      // Query catalog to find the known definition id for 'food.dietary_restrictions'
+      const CATALOG_QUERY = `
+        query PreferenceCatalog {
+          preferenceCatalog {
+            id
+            slug
+          }
+        }
+      `;
+      const catalogRes = await graphqlRequest(CATALOG_QUERY).expect(200);
+      const catalogDef = catalogRes.body.data.preferenceCatalog.find(
+        (d: { slug: string }) => d.slug === 'food.dietary_restrictions',
+      );
+      expect(catalogDef).toBeDefined();
+      const expectedDefinitionId = catalogDef.id;
+
+      // Set a preference using that slug
+      const SET_MUTATION = `
+        mutation SetPreference($input: SetPreferenceInput!) {
+          setPreference(input: $input) {
+            id
+            slug
+            definitionId
+          }
+        }
+      `;
+      const response = await graphqlRequest(SET_MUTATION, {
+        input: { slug: 'food.dietary_restrictions', value: ['gluten'] },
+      }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.setPreference.definitionId).toBe(expectedDefinitionId);
     });
   });
 
