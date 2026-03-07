@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
 
 describe('PreferenceDefinition Mutations (e2e)', () => {
   let app: INestApplication;
@@ -356,6 +357,138 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       const finalRes = await graphqlRequest(CREATE_MUTATION, { input }).expect(200);
       expect(finalRes.body.errors).toBeUndefined();
       expect(finalRes.body.data.createPreferenceDefinition.slug).toBe('test.recycle_slug');
+    });
+  });
+
+  describe('displayName round-trip', () => {
+    it('should store and return displayName when set on create', async () => {
+      const response = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'test.display_name_pref',
+          description: 'A pref with a display name',
+          displayName: 'My Custom Label',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      const created = response.body.data.createPreferenceDefinition;
+      expect(created.displayName).toBe('My Custom Label');
+
+      // Verify it appears correctly in the catalog
+      const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'test' }).expect(200);
+      const found = catalogRes.body.data.preferenceCatalog.find(
+        (d: { slug: string }) => d.slug === 'test.display_name_pref',
+      );
+      expect(found).toBeDefined();
+    });
+
+    it('should update displayName on an existing user-owned definition', async () => {
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'test.display_name_update',
+          description: 'Original',
+          displayName: 'Original Label',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      const updateRes = await graphqlRequest(UPDATE_MUTATION, {
+        id: defId,
+        input: { displayName: 'Updated Label' },
+      }).expect(200);
+
+      expect(updateRes.body.errors).toBeUndefined();
+    });
+  });
+
+  describe('ownership enforcement: system (GLOBAL) definitions', () => {
+    it('should reject update of a GLOBAL system definition', async () => {
+      // Fetch a known GLOBAL definition from the catalog
+      const catalogRes = await graphqlRequest(CATALOG_QUERY).expect(200);
+      const globalDef = catalogRes.body.data.preferenceCatalog.find(
+        (d: { namespace: string }) => d.namespace === 'GLOBAL',
+      );
+      expect(globalDef).toBeDefined();
+
+      const response = await graphqlRequest(UPDATE_MUTATION, {
+        id: globalDef.id,
+        input: { description: 'Attempted hijack' },
+      }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toMatch(/forbidden|not allowed|permission/i);
+    });
+
+    it('should reject archive of a GLOBAL system definition', async () => {
+      const catalogRes = await graphqlRequest(CATALOG_QUERY).expect(200);
+      const globalDef = catalogRes.body.data.preferenceCatalog.find(
+        (d: { namespace: string }) => d.namespace === 'GLOBAL',
+      );
+      expect(globalDef).toBeDefined();
+
+      const response = await graphqlRequest(ARCHIVE_MUTATION, { id: globalDef.id }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toMatch(/forbidden|not allowed|permission/i);
+    });
+  });
+
+  describe('cross-user isolation', () => {
+    it('should reject update of another user\'s definition', async () => {
+      // User A creates a definition
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'test.user_a_owned',
+          description: 'Owned by user A',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      // Switch to user B
+      const userB = await getPrismaClient().user.create({
+        data: { email: 'userb@example.com', firstName: 'User', lastName: 'B' },
+      });
+      setTestUser(userB);
+
+      const response = await graphqlRequest(UPDATE_MUTATION, {
+        id: defId,
+        input: { description: 'Tampered by user B' },
+      }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toMatch(/forbidden|not allowed|permission/i);
+    });
+
+    it('should reject archive of another user\'s definition', async () => {
+      // Switch back to primary test user first
+      setTestUser(testUser);
+
+      const createRes = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'test.user_a_archive_target',
+          description: 'Owned by user A',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      // Switch to user B
+      const userB = await getPrismaClient().user.create({
+        data: { email: 'userb2@example.com', firstName: 'User', lastName: 'B2' },
+      });
+      setTestUser(userB);
+
+      const response = await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toMatch(/forbidden|not allowed|permission/i);
     });
   });
 
