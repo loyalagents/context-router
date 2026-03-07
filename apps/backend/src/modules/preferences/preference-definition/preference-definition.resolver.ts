@@ -1,6 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { PreferenceDefinitionModel } from './models/preference-definition.model';
+import { PreferenceDefinitionModel, ExportSchemaScope } from './models/preference-definition.model';
 import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { PreferenceDefinitionService } from './preference-definition.service';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
@@ -34,6 +34,22 @@ export class PreferenceDefinitionResolver {
       ? defs.filter((d) => d.slug.split('.')[0] === category)
       : defs;
     return filtered.map((d) => ({
+      ...d,
+      category: d.slug.split('.')[0],
+    })) as PreferenceDefinitionModel[];
+  }
+
+  @Query(() => [PreferenceDefinitionModel], {
+    name: 'exportPreferenceSchema',
+    description:
+      'Export preference definitions filtered by scope: GLOBAL (system only), PERSONAL (user-owned only), or ALL.',
+  })
+  async exportPreferenceSchema(
+    @CurrentUser() user: User,
+    @Args('scope', { type: () => ExportSchemaScope }) scope: ExportSchemaScope,
+  ): Promise<PreferenceDefinitionModel[]> {
+    const defs = await this.defRepo.getByScope(scope, user.userId);
+    return defs.map((d) => ({
       ...d,
       category: d.slug.split('.')[0],
     })) as PreferenceDefinitionModel[];
