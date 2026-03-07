@@ -338,6 +338,7 @@ export default function SchemaClient({ initialCatalog, accessToken, userId }: Sc
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
+          'x-user-id': userId,
         },
         body: JSON.stringify({
           query: EXPORT_SCHEMA_QUERY,
@@ -504,6 +505,7 @@ export default function SchemaClient({ initialCatalog, accessToken, userId }: Sc
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
+          'x-user-id': userId,
         },
         body: JSON.stringify({
           query: ARCHIVE_MUTATION,
