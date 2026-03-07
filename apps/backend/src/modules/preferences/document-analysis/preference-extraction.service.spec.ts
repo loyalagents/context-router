@@ -22,6 +22,7 @@ const createMockPreference = (
   id: `pref-${slug.replace(".", "-")}`,
   userId: "user-1",
   slug,
+  category: slug.split(".")[0],
   definitionId: `def-${slug.replace(".", "-")}`,
   contextKey: "GLOBAL",
   value,
