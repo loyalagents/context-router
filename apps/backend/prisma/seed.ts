@@ -23,7 +23,7 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
   location: PreferenceScope.LOCATION,
 };
 
-async function seedPreferenceDefinitions() {
+export async function seedPreferenceDefinitions() {
   console.log("Seeding preference definitions...");
 
   for (const [slug, def] of Object.entries(PREFERENCE_CATALOG)) {
@@ -107,11 +107,13 @@ async function main() {
   console.log("Seeding completed:", { user1, user2 });
 }
 
-main()
-  .catch((e) => {
-    console.error("Error seeding database:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error("Error seeding database:", e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
