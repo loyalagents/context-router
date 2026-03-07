@@ -1,13 +1,9 @@
 /**
- * Preference Repository Integration Tests
+ * Preference Repository Integration Tests (definitionId + contextKey)
  *
- * Tests the PreferenceRepository against a real test database.
- * Database is reset between tests via the global beforeEach hook.
- *
- * Uses the new slug-based preference model:
- * - Preferences are identified by slug (e.g., "food.dietary_restrictions")
- * - Status can be ACTIVE, SUGGESTED, or REJECTED
- * - Slugs must exist in the preferences catalog
+ * Preferences are now identified by definitionId (UUID FK) + contextKey string.
+ * contextKey = "GLOBAL" for global prefs, "LOCATION:<locationId>" for location-scoped.
+ * EnrichedPreference.slug is derived from the joined definition record.
  */
 import { PreferenceRepository } from "../../src/modules/preferences/preference/preference.repository";
 import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
@@ -21,17 +17,25 @@ describe("PreferenceRepository (integration)", () => {
   let prisma: PrismaService;
   let testUserId: string;
   let testLocationId: string;
+  // Definition IDs for seeded GLOBAL definitions
+  let responseToneDefId: string;
+  let responseLengthDefId: string;
+  let dietaryRestrictionsDefId: string;
+  let cuisinePrefsDefId: string;
+  let spiceToleranceDefId: string;
+  let defaultTempDefId: string;
+  let quietHoursDefId: string;
+  let seatPrefDefId: string;
+  let techStackDefId: string;
 
   beforeAll(async () => {
-    // Use the shared test Prisma client
     prisma = getPrismaClient() as unknown as PrismaService;
     defRepo = new PreferenceDefinitionRepository(prisma);
-    await defRepo.refreshCache();
     repository = new PreferenceRepository(prisma, defRepo);
   });
 
   beforeEach(async () => {
-    // Create a test user for each test
+    // Create a test user
     const user = await prisma.user.create({
       data: {
         email: "preftest@example.com",
@@ -41,7 +45,7 @@ describe("PreferenceRepository (integration)", () => {
     });
     testUserId = user.userId;
 
-    // Create a test location for location-scoped tests
+    // Create a test location
     const location = await prisma.location.create({
       data: {
         userId: testUserId,
@@ -51,116 +55,140 @@ describe("PreferenceRepository (integration)", () => {
       },
     });
     testLocationId = location.locationId;
+
+    // Resolve definition IDs from seeded GLOBAL definitions
+    responseToneDefId = (await defRepo.resolveSlugToDefinitionId(
+      "system.response_tone",
+    ))!;
+    responseLengthDefId = (await defRepo.resolveSlugToDefinitionId(
+      "system.response_length",
+    ))!;
+    dietaryRestrictionsDefId = (await defRepo.resolveSlugToDefinitionId(
+      "food.dietary_restrictions",
+    ))!;
+    cuisinePrefsDefId = (await defRepo.resolveSlugToDefinitionId(
+      "food.cuisine_preferences",
+    ))!;
+    spiceToleranceDefId = (await defRepo.resolveSlugToDefinitionId(
+      "food.spice_tolerance",
+    ))!;
+    defaultTempDefId = (await defRepo.resolveSlugToDefinitionId(
+      "location.default_temperature",
+    ))!;
+    quietHoursDefId = (await defRepo.resolveSlugToDefinitionId(
+      "location.quiet_hours",
+    ))!;
+    seatPrefDefId = (await defRepo.resolveSlugToDefinitionId(
+      "travel.seat_preference",
+    ))!;
+    techStackDefId = (await defRepo.resolveSlugToDefinitionId(
+      "professional.skills",
+    ))!;
   });
 
+  // ──────────────────────────────────────────────
+  // upsertActive
+  // ──────────────────────────────────────────────
   describe("upsertActive", () => {
-    it("should create a global ACTIVE preference", async () => {
-      const preference = await repository.upsertActive(
+    it("should create a global ACTIVE preference with GLOBAL contextKey", async () => {
+      const pref = await repository.upsertActive(
         testUserId,
-        "system.response_tone",
+        responseToneDefId,
         "casual",
       );
 
-      expect(preference).toBeDefined();
-      expect(preference.id).toBeDefined();
-      expect(preference.userId).toBe(testUserId);
-      expect(preference.locationId).toBeNull();
-      expect(preference.slug).toBe("system.response_tone");
-      expect(preference.value).toBe("casual");
-      expect(preference.status).toBe(PreferenceStatus.ACTIVE);
-      // Enriched with catalog data
-      expect(preference.category).toBe("system");
-      expect(preference.description).toBeDefined();
+      expect(pref).toBeDefined();
+      expect(pref.id).toBeDefined();
+      expect(pref.userId).toBe(testUserId);
+      expect(pref.definitionId).toBe(responseToneDefId);
+      expect(pref.contextKey).toBe("GLOBAL");
+      expect(pref.locationId).toBeNull();
+      expect(pref.value).toBe("casual");
+      expect(pref.status).toBe(PreferenceStatus.ACTIVE);
+      // Enriched fields from joined definition
+      expect(pref.slug).toBe("system.response_tone");
+      expect(pref.description).toBeDefined();
     });
 
-    it("should create a location-scoped ACTIVE preference", async () => {
-      const preference = await repository.upsertActive(
+    it("should create a location-scoped ACTIVE preference with LOCATION contextKey", async () => {
+      const pref = await repository.upsertActive(
         testUserId,
-        "location.default_temperature",
+        defaultTempDefId,
         "72",
         testLocationId,
       );
 
-      expect(preference.locationId).toBe(testLocationId);
-      expect(preference.slug).toBe("location.default_temperature");
-      expect(preference.value).toBe("72");
-      expect(preference.category).toBe("location");
+      expect(pref.locationId).toBe(testLocationId);
+      expect(pref.contextKey).toBe(`LOCATION:${testLocationId}`);
+      expect(pref.definitionId).toBe(defaultTempDefId);
+      expect(pref.slug).toBe("location.default_temperature");
+      expect(pref.value).toBe("72");
     });
 
     it("should store array values", async () => {
       const arrayValue = ["Italian", "Japanese", "Mexican"];
-
-      const preference = await repository.upsertActive(
+      const pref = await repository.upsertActive(
         testUserId,
-        "food.cuisine_preferences",
+        cuisinePrefsDefId,
         arrayValue,
       );
-
-      expect(preference.value).toEqual(arrayValue);
+      expect(pref.value).toEqual(arrayValue);
     });
 
     it("should update existing ACTIVE preference (upsert)", async () => {
-      // Create first
-      await repository.upsertActive(
-        testUserId,
-        "system.response_length",
-        "brief",
-      );
-
-      // Upsert with same slug should update
+      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
       const updated = await repository.upsertActive(
         testUserId,
-        "system.response_length",
+        responseLengthDefId,
         "detailed",
       );
 
       expect(updated.value).toBe("detailed");
 
-      // Verify only one preference exists
       const count = await repository.count(testUserId, PreferenceStatus.ACTIVE);
       expect(count).toBe(1);
     });
 
-    it("should handle location-scoped and global as separate preferences", async () => {
-      // Create global preference
+    it("should handle global and location-scoped as separate preferences for same definition", async () => {
       const global = await repository.upsertActive(
         testUserId,
-        "food.spice_tolerance",
-        "medium",
+        defaultTempDefId,
+        "70",
       );
-
-      // Create location-scoped with same slug - for location-scoped prefs we use a location slug
       const locationScoped = await repository.upsertActive(
         testUserId,
-        "location.default_temperature",
-        "68",
+        defaultTempDefId,
+        "72",
         testLocationId,
       );
 
-      // Both should exist as separate preferences
       expect(global.id).not.toBe(locationScoped.id);
-      expect(global.locationId).toBeNull();
-      expect(locationScoped.locationId).toBe(testLocationId);
+      expect(global.contextKey).toBe("GLOBAL");
+      expect(locationScoped.contextKey).toBe(`LOCATION:${testLocationId}`);
 
       const count = await repository.count(testUserId);
       expect(count).toBe(2);
     });
   });
 
+  // ──────────────────────────────────────────────
+  // upsertSuggested
+  // ──────────────────────────────────────────────
   describe("upsertSuggested", () => {
     it("should create a SUGGESTED preference with confidence", async () => {
-      const preference = await repository.upsertSuggested(
+      const pref = await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegetarian"],
         0.85,
       );
 
-      expect(preference).toBeDefined();
-      expect(preference.slug).toBe("food.dietary_restrictions");
-      expect(preference.value).toEqual(["vegetarian"]);
-      expect(preference.status).toBe(PreferenceStatus.SUGGESTED);
-      expect(preference.confidence).toBe(0.85);
+      expect(pref.definitionId).toBe(dietaryRestrictionsDefId);
+      expect(pref.slug).toBe("food.dietary_restrictions");
+      expect(pref.value).toEqual(["vegetarian"]);
+      expect(pref.status).toBe(PreferenceStatus.SUGGESTED);
+      expect(pref.confidence).toBe(0.85);
+      expect(pref.contextKey).toBe("GLOBAL");
     });
 
     it("should create SUGGESTED preference with evidence", async () => {
@@ -169,29 +197,29 @@ describe("PreferenceRepository (integration)", () => {
         reason: "User mentioned dietary preference",
       };
 
-      const preference = await repository.upsertSuggested(
+      const pref = await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegan"],
         0.9,
         null,
         evidence,
       );
 
-      expect(preference.evidence).toEqual(evidence);
+      expect(pref.evidence).toEqual(evidence);
     });
 
     it("should update existing SUGGESTED preference", async () => {
       await repository.upsertSuggested(
         testUserId,
-        "professional.skills",
+        techStackDefId,
         ["JavaScript"],
         0.7,
       );
 
       const updated = await repository.upsertSuggested(
         testUserId,
-        "professional.skills",
+        techStackDefId,
         ["TypeScript", "Node.js"],
         0.9,
       );
@@ -199,7 +227,6 @@ describe("PreferenceRepository (integration)", () => {
       expect(updated.value).toEqual(["TypeScript", "Node.js"]);
       expect(updated.confidence).toBe(0.9);
 
-      // Verify only one SUGGESTED preference exists for this slug
       const count = await repository.count(
         testUserId,
         PreferenceStatus.SUGGESTED,
@@ -208,79 +235,60 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // upsertRejected / hasRejected
+  // ──────────────────────────────────────────────
   describe("upsertRejected", () => {
     it("should create a REJECTED preference", async () => {
-      const preference = await repository.upsertRejected(
+      const pref = await repository.upsertRejected(
         testUserId,
-        "travel.seat_preference",
+        seatPrefDefId,
         "middle",
       );
 
-      expect(preference.status).toBe(PreferenceStatus.REJECTED);
-      expect(preference.slug).toBe("travel.seat_preference");
-      expect(preference.value).toBe("middle");
+      expect(pref.status).toBe(PreferenceStatus.REJECTED);
+      expect(pref.definitionId).toBe(seatPrefDefId);
+      expect(pref.slug).toBe("travel.seat_preference");
+      expect(pref.value).toBe("middle");
     });
   });
 
   describe("hasRejected", () => {
     it("should return true if REJECTED preference exists", async () => {
-      await repository.upsertRejected(
-        testUserId,
-        "travel.seat_preference",
-        "middle",
-      );
-
-      const result = await repository.hasRejected(
-        testUserId,
-        "travel.seat_preference",
-      );
-
+      await repository.upsertRejected(testUserId, seatPrefDefId, "middle");
+      const result = await repository.hasRejected(testUserId, seatPrefDefId);
       expect(result).toBe(true);
     });
 
     it("should return false if no REJECTED preference exists", async () => {
-      const result = await repository.hasRejected(
-        testUserId,
-        "travel.seat_preference",
-      );
-
+      const result = await repository.hasRejected(testUserId, seatPrefDefId);
       expect(result).toBe(false);
     });
 
     it("should not find REJECTED if only ACTIVE exists", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "travel.seat_preference",
-        "window",
-      );
-
-      const result = await repository.hasRejected(
-        testUserId,
-        "travel.seat_preference",
-      );
-
+      await repository.upsertActive(testUserId, seatPrefDefId, "window");
+      const result = await repository.hasRejected(testUserId, seatPrefDefId);
       expect(result).toBe(false);
     });
   });
 
+  // ──────────────────────────────────────────────
+  // findByStatus
+  // ──────────────────────────────────────────────
   describe("findByStatus", () => {
     it("should return empty array when no preferences exist", async () => {
-      const preferences = await repository.findByStatus(
+      const prefs = await repository.findByStatus(
         testUserId,
         PreferenceStatus.ACTIVE,
       );
-      expect(preferences).toEqual([]);
+      expect(prefs).toEqual([]);
     });
 
-    it("should return only ACTIVE preferences", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
+    it("should return only ACTIVE preferences with enriched slug", async () => {
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
       await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegan"],
         0.8,
       );
@@ -295,14 +303,10 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return only SUGGESTED preferences", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
       await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegan"],
         0.8,
       );
@@ -317,36 +321,21 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return preferences ordered by updatedAt desc", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
-      await repository.upsertActive(
-        testUserId,
-        "system.response_length",
-        "brief",
-      );
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
 
-      const preferences = await repository.findByStatus(
+      const prefs = await repository.findByStatus(
         testUserId,
         PreferenceStatus.ACTIVE,
       );
 
-      // Most recent first
-      expect(preferences[0].slug).toBe("system.response_length");
-      expect(preferences[1].slug).toBe("system.response_tone");
+      expect(prefs[0].slug).toBe("system.response_length");
+      expect(prefs[1].slug).toBe("system.response_tone");
     });
 
     it("should not return other users preferences", async () => {
-      // Create preference for test user
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
 
-      // Create another user and preference
       const otherUser = await prisma.user.create({
         data: {
           email: "other@example.com",
@@ -354,39 +343,29 @@ describe("PreferenceRepository (integration)", () => {
           lastName: "User",
         },
       });
-
       await repository.upsertActive(
         otherUser.userId,
-        "system.response_tone",
+        responseToneDefId,
         "professional",
       );
 
-      // Test user should only see their own
-      const preferences = await repository.findByStatus(
+      const prefs = await repository.findByStatus(
         testUserId,
         PreferenceStatus.ACTIVE,
       );
-      expect(preferences).toHaveLength(1);
-      expect(preferences[0].value).toBe("casual");
+      expect(prefs).toHaveLength(1);
+      expect(prefs[0].value).toBe("casual");
     });
 
-    it("should filter by locationId when provided", async () => {
-      // Create global preference
+    it("should filter by contextKey null (global only) when locationId=null", async () => {
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
       await repository.upsertActive(
         testUserId,
-        "system.response_tone",
-        "casual",
-      );
-
-      // Create location-scoped preference
-      await repository.upsertActive(
-        testUserId,
-        "location.default_temperature",
+        defaultTempDefId,
         "72",
         testLocationId,
       );
 
-      // Filter by null location (global only)
       const global = await repository.findByStatus(
         testUserId,
         PreferenceStatus.ACTIVE,
@@ -395,8 +374,17 @@ describe("PreferenceRepository (integration)", () => {
 
       expect(global).toHaveLength(1);
       expect(global[0].slug).toBe("system.response_tone");
+    });
 
-      // Filter by specific location
+    it("should filter by specific location when locationId provided", async () => {
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        defaultTempDefId,
+        "72",
+        testLocationId,
+      );
+
       const locationSpecific = await repository.findByStatus(
         testUserId,
         PreferenceStatus.ACTIVE,
@@ -408,11 +396,14 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // findById
+  // ──────────────────────────────────────────────
   describe("findById", () => {
-    it("should return preference by ID", async () => {
+    it("should return enriched preference by ID", async () => {
       const created = await repository.upsertActive(
         testUserId,
-        "system.response_tone",
+        responseToneDefId,
         "casual",
       );
 
@@ -420,6 +411,7 @@ describe("PreferenceRepository (integration)", () => {
 
       expect(found).toBeDefined();
       expect(found!.id).toBe(created.id);
+      expect(found!.slug).toBe("system.response_tone");
     });
 
     it("should return null for non-existent ID", async () => {
@@ -428,18 +420,13 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // findActiveWithMerge (merge key = definitionId)
+  // ──────────────────────────────────────────────
   describe("findActiveWithMerge", () => {
     it("should return global preferences when no location-specific exist", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
-      await repository.upsertActive(
-        testUserId,
-        "system.response_length",
-        "brief",
-      );
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
 
       const merged = await repository.findActiveWithMerge(
         testUserId,
@@ -449,13 +436,14 @@ describe("PreferenceRepository (integration)", () => {
       expect(merged).toHaveLength(2);
     });
 
-    it("should override global with location-specific for same slug", async () => {
-      // This test would require a slug that supports both global and location scope
-      // For now, we just test that location-specific is returned
+    it("should override global with location-specific for same definitionId", async () => {
+      // Create global version
+      await repository.upsertActive(testUserId, defaultTempDefId, "68");
+      // Create location-specific version (same definitionId, different contextKey)
       await repository.upsertActive(
         testUserId,
-        "location.default_temperature",
-        "68",
+        defaultTempDefId,
+        "72",
         testLocationId,
       );
 
@@ -464,29 +452,30 @@ describe("PreferenceRepository (integration)", () => {
         testLocationId,
       );
 
-      const temp = merged.find(
-        (p) => p.slug === "location.default_temperature",
+      // Only one entry for this definitionId, location-specific wins
+      const tempPrefs = merged.filter(
+        (p) => p.definitionId === defaultTempDefId,
       );
-      expect(temp).toBeDefined();
-      expect(temp!.value).toBe("68");
-      expect(temp!.locationId).toBe(testLocationId);
+      expect(tempPrefs).toHaveLength(1);
+      expect(tempPrefs[0].value).toBe("72");
+      expect(tempPrefs[0].locationId).toBe(testLocationId);
     });
   });
 
+  // ──────────────────────────────────────────────
+  // findSuggestedUnion
+  // ──────────────────────────────────────────────
   describe("findSuggestedUnion", () => {
     it("should return union of global and location-specific SUGGESTED", async () => {
-      // Create global suggested
       await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegetarian"],
         0.8,
       );
-
-      // Create location-specific suggested (using location-scoped slug)
       await repository.upsertSuggested(
         testUserId,
-        "location.quiet_hours",
+        quietHoursDefId,
         "22:00-07:00",
         0.7,
         testLocationId,
@@ -501,11 +490,14 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // updateStatus
+  // ──────────────────────────────────────────────
   describe("updateStatus", () => {
     it("should update preference status", async () => {
       const created = await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegetarian"],
         0.8,
       );
@@ -519,19 +511,20 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // delete
+  // ──────────────────────────────────────────────
   describe("delete", () => {
     it("should delete preference and return deleted preference", async () => {
       const created = await repository.upsertActive(
         testUserId,
-        "system.response_tone",
+        responseToneDefId,
         "casual",
       );
 
       const deleted = await repository.delete(created.id);
-
       expect(deleted.id).toBe(created.id);
 
-      // Verify deletion
       const found = await repository.findById(created.id);
       expect(found).toBeNull();
     });
@@ -541,63 +534,43 @@ describe("PreferenceRepository (integration)", () => {
     });
   });
 
+  // ──────────────────────────────────────────────
+  // count
+  // ──────────────────────────────────────────────
   describe("count", () => {
     it("should return 0 when no preferences exist", async () => {
-      const count = await repository.count(testUserId);
-      expect(count).toBe(0);
+      expect(await repository.count(testUserId)).toBe(0);
     });
 
-    it("should return correct count of all preferences", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
+    it("should return correct total count", async () => {
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
       await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegan"],
         0.8,
       );
-      await repository.upsertRejected(
-        testUserId,
-        "travel.seat_preference",
-        "middle",
-      );
+      await repository.upsertRejected(testUserId, seatPrefDefId, "middle");
 
-      const count = await repository.count(testUserId);
-      expect(count).toBe(3);
+      expect(await repository.count(testUserId)).toBe(3);
     });
 
-    it("should return correct count when filtered by status", async () => {
-      await repository.upsertActive(
-        testUserId,
-        "system.response_tone",
-        "casual",
-      );
-      await repository.upsertActive(
-        testUserId,
-        "system.response_length",
-        "brief",
-      );
+    it("should return correct count filtered by status", async () => {
+      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
       await repository.upsertSuggested(
         testUserId,
-        "food.dietary_restrictions",
+        dietaryRestrictionsDefId,
         ["vegan"],
         0.8,
       );
 
-      const activeCount = await repository.count(
-        testUserId,
-        PreferenceStatus.ACTIVE,
-      );
-      expect(activeCount).toBe(2);
-
-      const suggestedCount = await repository.count(
-        testUserId,
-        PreferenceStatus.SUGGESTED,
-      );
-      expect(suggestedCount).toBe(1);
+      expect(
+        await repository.count(testUserId, PreferenceStatus.ACTIVE),
+      ).toBe(2);
+      expect(
+        await repository.count(testUserId, PreferenceStatus.SUGGESTED),
+      ).toBe(1);
     });
   });
 });

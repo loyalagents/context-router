@@ -304,26 +304,48 @@ async function seedPreferenceDefinitions() {
 
   for (const [slug, def] of Object.entries(PREFERENCE_CATALOG)) {
     const catalogDef = def as PreferenceDefinition;
-    await prisma.preferenceDefinition.upsert({
-      where: { slug },
-      update: {
-        description: catalogDef.description,
-        valueType: VALUE_TYPE_MAP[catalogDef.valueType],
-        scope: SCOPE_MAP[catalogDef.scope],
-        options: catalogDef.options ?? undefined,
-        isSensitive: catalogDef.isSensitive ?? false,
-        isCore: true,
-      },
-      create: {
-        slug,
-        description: catalogDef.description,
-        valueType: VALUE_TYPE_MAP[catalogDef.valueType],
-        scope: SCOPE_MAP[catalogDef.scope],
-        options: catalogDef.options ?? undefined,
-        isSensitive: catalogDef.isSensitive ?? false,
-        isCore: true,
-      },
+
+    const existing = await prisma.preferenceDefinition.findFirst({
+      where: { namespace: "GLOBAL", slug, archivedAt: null },
     });
+
+    if (existing) {
+      await prisma.preferenceDefinition.update({
+        where: { id: existing.id },
+        data: {
+          description: catalogDef.description,
+          valueType: VALUE_TYPE_MAP[catalogDef.valueType],
+          scope: SCOPE_MAP[catalogDef.scope],
+          options: catalogDef.options ?? null,
+          isSensitive: catalogDef.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    } else {
+      // Warn if any active user defs share this slug (slug collision — allowed, user wins)
+      const collidingCount = await prisma.preferenceDefinition.count({
+        where: { namespace: { not: "GLOBAL" }, slug, archivedAt: null },
+      });
+      if (collidingCount > 0) {
+        console.warn(
+          `[seed] GLOBAL slug "${slug}" collides with ${collidingCount} active user definition(s). Global definition created; user defs take precedence for affected users.`,
+        );
+      }
+
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: "GLOBAL",
+          slug,
+          ownerUserId: null,
+          description: catalogDef.description,
+          valueType: VALUE_TYPE_MAP[catalogDef.valueType],
+          scope: SCOPE_MAP[catalogDef.scope],
+          options: catalogDef.options ?? null,
+          isSensitive: catalogDef.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    }
   }
 
   console.log(
@@ -371,6 +393,13 @@ async function seedSyntheticUsers(): Promise<User[]> {
   const syntheticUsers = loadSyntheticUsers();
   console.log(`\nFound ${syntheticUsers.length} synthetic users to seed`);
 
+  // Build slug → definitionId map for GLOBAL definitions
+  const globalDefs = await prisma.preferenceDefinition.findMany({
+    where: { namespace: 'GLOBAL', archivedAt: null },
+    select: { id: true, slug: true },
+  });
+  const defIdBySlug = new Map(globalDefs.map((d) => [d.slug, d.id]));
+
   const createdUsers: User[] = [];
   const importedAt = new Date().toISOString();
 
@@ -388,14 +417,21 @@ async function seedSyntheticUsers(): Promise<User[]> {
       const value = mapping.extract(coreData);
       if (value == null) continue;
 
-      const confidence = mapping.confidence(coreData);
+      const definitionId = defIdBySlug.get(mapping.slug);
+      if (!definitionId) {
+        console.warn(`  [seed] No GLOBAL definition found for slug "${mapping.slug}", skipping`);
+        continue;
+      }
 
-      // Use findFirst + create/update pattern for null locationId
+      const confidence = mapping.confidence(coreData);
+      const contextKey = 'GLOBAL';
+
+      // Use findFirst + create/update pattern
       const existing = await prisma.preference.findFirst({
         where: {
           userId: user.userId,
-          locationId: null,
-          slug: mapping.slug,
+          contextKey,
+          definitionId,
           status: PreferenceStatus.ACTIVE,
         },
       });
@@ -418,7 +454,8 @@ async function seedSyntheticUsers(): Promise<User[]> {
           data: {
             userId: user.userId,
             locationId: null,
-            slug: mapping.slug,
+            contextKey,
+            definitionId,
             value: value as any,
             status: PreferenceStatus.ACTIVE,
             sourceType: SourceType.IMPORTED,

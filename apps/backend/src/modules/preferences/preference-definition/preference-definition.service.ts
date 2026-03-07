@@ -3,12 +3,10 @@ import {
   Logger,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  PreferenceDefinitionRepository,
-  PreferenceDefinitionData,
-} from './preference-definition.repository';
+import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
 import { UpdatePreferenceDefinitionInput } from './dto/update-preference-definition.input';
 import { validateSlugFormat } from '../preference/preference.validation';
@@ -20,57 +18,69 @@ export class PreferenceDefinitionService {
   constructor(private defRepo: PreferenceDefinitionRepository) {}
 
   /**
-   * Create a new preference definition.
+   * Create a new user-owned preference definition.
+   * Namespace and ownerUserId are derived from the authenticated userId.
    */
-  async create(
-    input: CreatePreferenceDefinitionInput,
-  ): Promise<PreferenceDefinitionData> {
+  async create(input: CreatePreferenceDefinitionInput, userId: string) {
     if (!validateSlugFormat(input.slug)) {
       throw new BadRequestException(
         `Invalid slug format: "${input.slug}". Slugs must be lowercase with dots (e.g., "food.dietary_restrictions")`,
       );
     }
 
-    if (this.defRepo.isKnownSlug(input.slug)) {
+    // Block user def if slug already exists in GLOBAL namespace
+    const globalExists = await this.defRepo.isKnownSlug(input.slug);
+    if (globalExists) {
       throw new ConflictException(
-        `Preference definition with slug "${input.slug}" already exists`,
+        `A global preference definition with slug "${input.slug}" already exists`,
       );
     }
 
-    this.logger.log(`Creating preference definition: ${input.slug}`);
+    // Also block if user already has an active def with this slug
+    const userExists = await this.defRepo.isKnownSlug(input.slug, userId);
+    if (userExists) {
+      throw new ConflictException(
+        `You already have an active preference definition with slug "${input.slug}"`,
+      );
+    }
+
+    this.logger.log(`Creating user preference definition: ${input.slug} for user ${userId}`);
 
     const created = await this.defRepo.create({
       slug: input.slug,
+      displayName: input.displayName,
       description: input.description,
       valueType: input.valueType,
       scope: input.scope,
       options: input.options,
       isSensitive: input.isSensitive,
       isCore: input.isCore,
+      ownerUserId: userId,
     });
 
-    return {
-      ...created,
-      category: created.slug.split('.')[0],
-    };
+    return { ...created, category: created.slug.split('.')[0] };
   }
 
   /**
-   * Update an existing preference definition.
+   * Update an existing preference definition by id.
+   * Only the owner can update their definition.
    */
-  async update(
-    slug: string,
-    input: UpdatePreferenceDefinitionInput,
-  ): Promise<PreferenceDefinitionData> {
-    if (!this.defRepo.isKnownSlug(slug)) {
-      throw new NotFoundException(
-        `Preference definition with slug "${slug}" not found`,
+  async update(id: string, input: UpdatePreferenceDefinitionInput, userId: string) {
+    const def = await this.defRepo.getDefinitionById(id);
+    if (!def) {
+      throw new NotFoundException(`Preference definition with id "${id}" not found`);
+    }
+
+    if (def.ownerUserId !== userId) {
+      throw new ForbiddenException(
+        `You do not have permission to update this preference definition`,
       );
     }
 
-    this.logger.log(`Updating preference definition: ${slug}`);
+    this.logger.log(`Updating preference definition: ${id}`);
 
-    const updated = await this.defRepo.update(slug, {
+    const updated = await this.defRepo.update(id, {
+      displayName: input.displayName,
       description: input.description,
       valueType: input.valueType,
       scope: input.scope,
@@ -79,9 +89,26 @@ export class PreferenceDefinitionService {
       isCore: input.isCore,
     });
 
-    return {
-      ...updated,
-      category: updated.slug.split('.')[0],
-    };
+    return { ...updated, category: updated.slug.split('.')[0] };
+  }
+
+  /**
+   * Archive a user-owned preference definition by id.
+   * After archiving, a new definition with the same slug can be created.
+   */
+  async archiveDefinition(id: string, userId: string) {
+    const def = await this.defRepo.getDefinitionById(id);
+    if (!def) {
+      throw new NotFoundException(`Preference definition with id "${id}" not found`);
+    }
+
+    if (def.ownerUserId !== userId) {
+      throw new ForbiddenException(
+        `You do not have permission to archive this preference definition`,
+      );
+    }
+
+    this.logger.log(`Archiving preference definition: ${id}`);
+    return this.defRepo.archive(id);
   }
 }

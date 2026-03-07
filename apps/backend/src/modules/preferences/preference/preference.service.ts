@@ -33,29 +33,43 @@ export class PreferenceService {
 
   /**
    * Validates a slug and throws appropriate errors if invalid.
+   * Returns the resolved definitionId.
    */
-  private validateSlug(slug: string): void {
+  private async resolveAndValidateSlug(
+    slug: string,
+    userId?: string,
+  ): Promise<string> {
     if (!validateSlugFormat(slug)) {
       throw new BadRequestException(
         `Invalid slug format: "${slug}". Slugs must be lowercase with dots (e.g., "food.dietary_restrictions")`,
       );
     }
 
-    if (!this.defRepo.isKnownSlug(slug)) {
-      const similar = this.defRepo.findSimilarSlugs(slug);
+    const definitionId = await this.defRepo.resolveSlugToDefinitionId(
+      slug,
+      userId,
+    );
+    if (!definitionId) {
+      const similar = await this.defRepo.findSimilarSlugs(slug, 3, userId);
       const hint =
         similar.length > 0 ? ` Did you mean: ${similar.join(", ")}?` : "";
       throw new BadRequestException(
         `Unknown preference slug: "${slug}".${hint}`,
       );
     }
+
+    return definitionId;
   }
 
   /**
    * Validates the value type for a slug.
    */
-  private validateValueForSlug(slug: string, value: any): void {
-    const def = this.defRepo.getDefinition(slug);
+  private async validateValueForSlug(
+    slug: string,
+    value: any,
+    userId?: string,
+  ): Promise<void> {
+    const def = await this.defRepo.getDefinitionBySlug(slug, userId);
     if (!def) return;
 
     const validation = validateValue(def, value);
@@ -69,8 +83,12 @@ export class PreferenceService {
   /**
    * Validates and enforces scope rules for a preference.
    */
-  private validateScope(slug: string, locationId?: string): void {
-    const def = this.defRepo.getDefinition(slug);
+  private async validateScope(
+    slug: string,
+    locationId?: string,
+    userId?: string,
+  ): Promise<void> {
+    const def = await this.defRepo.getDefinitionBySlug(slug, userId);
     if (!def) return;
 
     const scopeValidation = enforceScope(def, locationId);
@@ -87,9 +105,9 @@ export class PreferenceService {
     userId: string,
     input: SetPreferenceInput,
   ): Promise<EnrichedPreference> {
-    this.validateSlug(input.slug);
-    this.validateValueForSlug(input.slug, input.value);
-    this.validateScope(input.slug, input.locationId);
+    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
+    await this.validateValueForSlug(input.slug, input.value, userId);
+    await this.validateScope(input.slug, input.locationId, userId);
 
     // If locationId is provided, verify it exists and belongs to user
     if (input.locationId) {
@@ -102,7 +120,7 @@ export class PreferenceService {
 
     return this.preferenceRepository.upsertActive(
       userId,
-      input.slug,
+      definitionId,
       input.value,
       input.locationId,
     );
@@ -117,9 +135,9 @@ export class PreferenceService {
     userId: string,
     input: SuggestPreferenceInput,
   ): Promise<EnrichedPreference | null> {
-    this.validateSlug(input.slug);
-    this.validateValueForSlug(input.slug, input.value);
-    this.validateScope(input.slug, input.locationId);
+    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
+    await this.validateValueForSlug(input.slug, input.value, userId);
+    await this.validateScope(input.slug, input.locationId, userId);
 
     // Validate confidence
     const confidenceValidation = validateConfidence(input.confidence);
@@ -135,7 +153,7 @@ export class PreferenceService {
     // Check if a REJECTED row exists for this preference
     const hasRejected = await this.preferenceRepository.hasRejected(
       userId,
-      input.slug,
+      definitionId,
       input.locationId,
     );
 
@@ -152,7 +170,7 @@ export class PreferenceService {
 
     return this.preferenceRepository.upsertSuggested(
       userId,
-      input.slug,
+      definitionId,
       input.value,
       input.confidence,
       input.locationId,
@@ -250,7 +268,7 @@ export class PreferenceService {
     // Upsert the active preference with the suggested value
     const active = await this.preferenceRepository.upsertActive(
       userId,
-      suggestion.slug,
+      suggestion.definitionId,
       suggestion.value,
       suggestion.locationId,
     );
@@ -294,7 +312,7 @@ export class PreferenceService {
     // Upsert the rejected row
     await this.preferenceRepository.upsertRejected(
       userId,
-      suggestion.slug,
+      suggestion.definitionId,
       suggestion.value,
       suggestion.locationId,
     );

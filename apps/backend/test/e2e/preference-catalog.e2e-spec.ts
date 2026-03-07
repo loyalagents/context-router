@@ -30,7 +30,10 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
   const CATALOG_QUERY = `
     query PreferenceCatalog($category: String) {
       preferenceCatalog(category: $category) {
+        id
         slug
+        namespace
+        ownerUserId
         description
         valueType
         scope
@@ -38,6 +41,26 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         isSensitive
         isCore
         category
+      }
+    }
+  `;
+
+  const CREATE_DEFINITION_MUTATION = `
+    mutation CreatePreferenceDefinition($input: CreatePreferenceDefinitionInput!) {
+      createPreferenceDefinition(input: $input) {
+        id
+        slug
+        namespace
+        ownerUserId
+      }
+    }
+  `;
+
+  const ARCHIVE_MUTATION = `
+    mutation ArchivePreferenceDefinition($id: ID!) {
+      archivePreferenceDefinition(id: $id) {
+        id
+        archivedAt
       }
     }
   `;
@@ -53,7 +76,9 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
 
       // Every entry should have all required fields
       catalog.forEach((def: Record<string, unknown>) => {
+        expect(def.id).toBeDefined();
         expect(def.slug).toBeDefined();
+        expect(def.namespace).toBeDefined();
         expect(def.description).toBeDefined();
         expect(def.valueType).toBeDefined();
         expect(def.scope).toBeDefined();
@@ -165,6 +190,74 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         (d: { slug: string }) => d.slug === 'system.response_tone',
       );
       expect(responseTone.scope).toBe('GLOBAL');
+    });
+
+    it('should return GLOBAL namespace for seeded core definitions', async () => {
+      const response = await graphqlRequest(CATALOG_QUERY).expect(200);
+      const catalog = response.body.data.preferenceCatalog;
+      const globalDefs = catalog.filter((d: { ownerUserId: string | null }) => d.ownerUserId === null);
+      expect(globalDefs.length).toBeGreaterThanOrEqual(12);
+      globalDefs.forEach((def: { namespace: string }) => {
+        expect(def.namespace).toBe('GLOBAL');
+      });
+    });
+  });
+
+  describe('namespace-aware catalog', () => {
+    it('authenticated user should see their own definition in catalog', async () => {
+      // Create a user-owned definition
+      const createRes = await graphqlRequest(CREATE_DEFINITION_MUTATION, {
+        input: {
+          slug: 'custom.user_catalog_pref',
+          description: 'User-owned catalog pref',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      expect(createRes.body.errors).toBeUndefined();
+
+      // Query the catalog — should include user def
+      const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'custom' }).expect(200);
+      const slugs = catalogRes.body.data.preferenceCatalog.map((d: { slug: string }) => d.slug);
+      expect(slugs).toContain('custom.user_catalog_pref');
+    });
+
+    it('archived definition should not appear in catalog', async () => {
+      const createRes = await graphqlRequest(CREATE_DEFINITION_MUTATION, {
+        input: {
+          slug: 'custom.to_archive',
+          description: 'Will be archived',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      const defId = createRes.body.data.createPreferenceDefinition.id;
+
+      await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
+
+      const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'custom' }).expect(200);
+      const slugs = catalogRes.body.data.preferenceCatalog.map((d: { slug: string }) => d.slug);
+      expect(slugs).not.toContain('custom.to_archive');
+    });
+
+    it('unauthenticated query should NOT return user-owned definitions (tripwire)', async () => {
+      // Create a user-owned definition while authenticated
+      const createRes = await graphqlRequest(CREATE_DEFINITION_MUTATION, {
+        input: {
+          slug: 'custom.private_pref',
+          description: 'Should not leak to unauth',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+      expect(createRes.body.errors).toBeUndefined();
+
+      // Simulate unauthenticated request (no user in context)
+      setTestUser(null as unknown as TestUser);
+
+      const unauthRes = await graphqlRequest(CATALOG_QUERY, { category: 'custom' }).expect(200);
+      const slugs = unauthRes.body.data.preferenceCatalog.map((d: { slug: string }) => d.slug);
+      expect(slugs).not.toContain('custom.private_pref');
     });
   });
 });

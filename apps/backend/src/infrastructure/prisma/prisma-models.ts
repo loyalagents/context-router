@@ -15,14 +15,20 @@ export interface User {
   updatedAt: Date;
 }
 
-export interface ExternalIdentity {
+export interface ApiKey {
   id: string;
-  userId: string;
-  provider: string;
-  providerUserId: string;
-  metadata: unknown | null;
+  keyHash: string;
+  groupName: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ApiKeyUser {
+  id: string;
+  apiKeyId: string;
+  userId: string;
+  createdAt: Date;
 }
 
 export interface Location {
@@ -36,13 +42,18 @@ export interface Location {
 }
 
 export interface PreferenceDefinition {
+  id: string;
+  namespace: string;
   slug: string;
+  displayName: string | null;
   description: string;
   valueType: PreferenceValueType;
   scope: PreferenceScope;
   options: unknown | null;
   isSensitive: boolean;
   isCore: boolean;
+  archivedAt: Date | null;
+  ownerUserId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,7 +62,8 @@ export interface Preference {
   id: string;
   userId: string;
   locationId: string | null;
-  slug: string;
+  contextKey: string;
+  definitionId: string;
   value: unknown;
   status: PreferenceStatus;
   sourceType: SourceType;
