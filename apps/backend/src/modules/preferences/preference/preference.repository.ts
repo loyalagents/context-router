@@ -8,9 +8,10 @@ import {
 import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
 
 // EnrichedPreference includes definition fields joined via Prisma include.
-// slug is derived from the joined definition for backward compat with MCP tools and GraphQL.
+// slug/category/description are derived from the joined definition.
 export interface EnrichedPreference extends PrismaPreference {
   slug: string;
+  category: string;
   description?: string;
 }
 
@@ -36,9 +37,11 @@ export class PreferenceRepository {
   }
 
   private enrich(pref: PrefWithDefinition): EnrichedPreference {
+    const slug = pref.definition?.slug ?? "";
     return {
       ...pref,
-      slug: pref.definition?.slug ?? "",
+      slug,
+      category: slug.split(".")[0],
       description: pref.definition?.description,
     };
   }
