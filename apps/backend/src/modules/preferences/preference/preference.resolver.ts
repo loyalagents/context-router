@@ -80,7 +80,7 @@ export class PreferenceResolver {
     @Args('input') input: SetPreferenceInput,
     @CurrentUser() user: User,
   ): Promise<Preference> {
-    const pref = await this.preferenceService.setPreference(user.userId, input);
+    const pref = await this.preferenceService.setPreference(user.userId, input, (user as any).schemaNamespace ?? "GLOBAL");
     return pref as unknown as Preference;
   }
 
@@ -101,6 +101,7 @@ export class PreferenceResolver {
     const pref = await this.preferenceService.suggestPreference(
       user.userId,
       input,
+      (user as any).schemaNamespace ?? "GLOBAL",
     );
     return pref as unknown as Preference | null;
   }

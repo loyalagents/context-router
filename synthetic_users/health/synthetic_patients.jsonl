@@ -1,0 +1,1108 @@
+[
+    {
+  "namespace": "health",
+  "profile": {
+    "identification": {
+      "name": "Marcus Johnson",
+      "age": 42,
+      "gender": "Male",
+      "race_ethnicity": "Black / African-American",
+      "family_composition": {
+        "marital_status": "Married",
+        "household_members": [
+          "Spouse",
+          "Daughter (age 12)",
+          "Son (age 8)"
+        ],
+        "caregiving_roles": [
+          "Primary financial provider",
+          "Shares childcare responsibilities"
+        ]
+      }
+    },
+    "baseline_summary": "Marcus is a middle-aged adult managing hypertension and prediabetes with medication and lifestyle changes. He works a high-stress office job and is trying to improve sleep, diet, and exercise. Safety note: allergic to shellfish with moderate reaction risk.",
+    "care_preferences": {
+      "provider_style": "Direct and collaborative; prefers clear action steps",
+      "care_setting_preference": "In-person for annual exams; telehealth for follow-ups",
+      "privacy_preference": "Share minimum outside primary care team"
+    },
+    "communication_needs": {
+      "language_preference": [
+        "English"
+      ],
+      "health_literacy_preference": "Balanced — prefers explanations with practical takeaways",
+      "accessibility_needs": [
+        "None"
+      ]
+    },
+    "medical_history": {
+      "conditions": {
+        "active": [
+          {
+            "name": "Hypertension",
+            "notes": "Diagnosed 3 years ago; controlled with medication."
+          },
+          {
+            "name": "Prediabetes",
+            "notes": "Monitoring diet and activity to prevent progression."
+          },
+          {
+            "name": "Obstructive sleep apnea (mild)",
+            "notes": "Uses CPAP intermittently; adherence varies."
+          }
+        ],
+        "past": [
+          {
+            "name": "Knee ligament strain",
+            "notes": "Sports-related injury in early 30s; resolved with physical therapy."
+          }
+        ]
+      },
+      "surgeries_and_procedures": [
+        {
+          "name": "Knee arthroscopy",
+          "date": "2016",
+          "notes": "Followed by physical therapy."
+        }
+      ],
+      "family_history_summary": "Father had hypertension and heart disease. Mother diagnosed with type 2 diabetes in her late 50s. No known hereditary cancer syndromes.",
+      "pregnancy_reproductive_history": null
+    },
+    "medications": {
+      "current": [
+        {
+          "name": "Lisinopril",
+          "dose": "20 mg",
+          "schedule": "Once daily",
+          "purpose": "Blood pressure control"
+        },
+        {
+          "name": "Metformin",
+          "dose": "500 mg",
+          "schedule": "Twice daily",
+          "purpose": "Prediabetes management"
+        }
+      ],
+      "past": [
+        {
+          "name": "Ibuprofen",
+          "dose": "400 mg",
+          "schedule": "As needed",
+          "purpose": "Knee pain during injury recovery"
+        }
+      ],
+      "adherence_notes": "Generally consistent; occasionally forgets evening dose when working late."
+    },
+    "allergies_and_sensitivities": {
+      "allergies": [
+        {
+          "type": "food",
+          "substance": "Shellfish",
+          "reaction": "Hives and throat itching",
+          "reaction_severity": "Moderate"
+        }
+      ],
+      "intolerances": [
+        {
+          "substance": "Very spicy foods",
+          "reaction": "Acid reflux"
+        }
+      ]
+    },
+    "vitals_and_measurements": {
+      "baseline_metrics": {
+        "height": "6'0\"",
+        "weight": "210 lb",
+        "blood_pressure_range": "Typically 125–135 / 80–88"
+      },
+      "recent_trends_summary": "Weight increased slightly over the past year due to reduced activity. Blood pressure improved after medication adjustment."
+    },
+    "preventive_care": {
+      "immunizations_summary": "Up to date on routine vaccines; COVID booster received last year.",
+      "screenings": {
+        "recommended": [
+          "Annual blood pressure monitoring",
+          "HbA1c check every 6–12 months",
+          "Cholesterol screening"
+        ],
+        "completed": [
+          "Annual physical exam (last year)",
+          "Blood panel including lipid profile"
+        ],
+        "due_soon": [
+          "HbA1c recheck in next 3 months"
+        ]
+      }
+    },
+    "care_team": {
+      "primary_care_provider": {
+        "name": "Dr. Laura Kim",
+        "org": "Riverbend Family Medicine"
+      },
+      "specialists": [
+        {
+          "name": "Dr. Samuel Ortiz",
+          "org": "Metro Sleep Clinic",
+          "role": "Sleep apnea evaluation and CPAP management"
+        }
+      ],
+      "pharmacy_preferences": "Local pharmacy near workplace for convenience.",
+      "insurance_summary": "Employer-sponsored PPO plan."
+    },
+    "behavior_and_lifestyle": {
+      "sleep": "Typically 6 hours/night; inconsistent CPAP use.",
+      "nutrition_preferences": "Trying to reduce sugar and processed foods; prefers home-cooked meals.",
+      "activity_preferences": "Weekend basketball and walking; inconsistent weekday exercise.",
+      "stress_management_preferences": "Listening to music, short workouts, occasional meditation."
+    },
+    "current_health_context": {
+      "current_symptoms_summary": "Recent fatigue and occasional morning headaches; possibly related to inconsistent CPAP use and work stress.",
+      "ongoing_treatments_summary": "Monitoring diet and weight; continuing blood pressure medication and metformin.",
+      "open_questions_for_provider": [
+        "Should I adjust CPAP usage or settings to improve sleep quality?",
+        "What lifestyle changes would most effectively reverse prediabetes?",
+        "Are my morning headaches related to sleep apnea?"
+      ]
+    },
+    "emergency_and_safety": {
+      "emergency_contacts_reference": "Spouse (primary emergency contact)",
+      "critical_alerts": [
+        "Shellfish allergy — avoid exposure and cross-contamination"
+      ]
+    }
+  }
+},
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Elena Rivera",
+        "age": 29,
+        "gender": "Female",
+        "race_ethnicity": "Latina (Mexican-American)",
+        "family_composition": {
+          "marital_status": "Partnered",
+          "household_members": ["Partner"],
+          "caregiving_roles": []
+        }
+      },
+      "baseline_summary": "Elena is a young adult managing Type 1 diabetes with insulin and a CGM. She is generally stable but worries about overnight lows and exercise-related glucose swings. Safety note: carries glucagon; history of severe hypoglycemia once in college.",
+      "care_preferences": {
+        "provider_style": "Collaborative and data-driven",
+        "care_setting_preference": "Telehealth for routine diabetes follow-ups; in-person annually",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English", "Spanish"],
+        "health_literacy_preference": "Detailed",
+        "accessibility_needs": ["None"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Type 1 diabetes mellitus", "notes": "Diagnosed age 12; uses CGM and insulin pump." },
+            { "name": "Generalized anxiety (mild)", "notes": "Stress spikes around glucose variability; uses coping strategies." }
+          ],
+          "past": [
+            { "name": "Severe hypoglycemia episode", "notes": "Single event in college; no recurrence in last 5 years." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "None", "date": null, "notes": "No surgeries reported." }
+        ],
+        "family_history_summary": "Maternal aunt with thyroid disease; father with hypertension. No known early cardiac deaths.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Insulin aspart (via pump)", "dose": null, "schedule": "Continuous basal + bolus", "purpose": "Glucose control" },
+          { "name": "Glucagon (emergency kit)", "dose": null, "schedule": "As needed", "purpose": "Severe hypoglycemia rescue" }
+        ],
+        "past": [
+          { "name": "Insulin glargine", "dose": null, "schedule": "Once daily (prior regimen)", "purpose": "Basal insulin (previous)" }
+        ],
+        "adherence_notes": "Very adherent; prefers predictable routines and CGM-based adjustments."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "High-sugar sports drinks", "reaction": "Rapid glucose spikes" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'4\"",
+          "weight": "135 lb",
+          "blood_pressure_range": "Typically ~105–115/65–75"
+        },
+        "recent_trends_summary": "Weight stable; glucose control generally steady with occasional exercise-related lows."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; gets annual flu shot.",
+        "screenings": {
+          "recommended": ["Annual dilated eye exam", "Annual urine microalbumin", "Foot exam at least annually"],
+          "completed": ["Eye exam (last year)", "A1c checks every 3 months"],
+          "due_soon": ["Urine microalbumin (within 2 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Hannah Lee", "org": "Sunset Primary Care" },
+        "specialists": [
+          { "name": "Dr. Michael Chen", "org": "Harbor Endocrinology", "role": "Diabetes management" }
+        ],
+        "pharmacy_preferences": "Mail-order for supplies; local pharmacy for urgent refills.",
+        "insurance_summary": "Employer-sponsored PPO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "7 hours/night; worries about overnight lows.",
+        "nutrition_preferences": "Carb-counting; prefers high-protein breakfasts.",
+        "activity_preferences": "Strength training 3x/week; weekend hikes.",
+        "stress_management_preferences": "Breathing exercises; short walks; journaling."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "No acute symptoms; occasional nighttime alarms and post-exercise lows.",
+        "ongoing_treatments_summary": "CGM + pump; adjusting basal rates around workouts.",
+        "open_questions_for_provider": [
+          "How can I reduce overnight low alarms without raising overall glucose?",
+          "What’s the best strategy for preventing post-workout lows?",
+          "Should I change pump settings during travel?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Partner (primary), mother (secondary)",
+        "critical_alerts": ["Type 1 diabetes — risk of severe hypoglycemia; carries glucagon"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "George Patel",
+        "age": 67,
+        "gender": "Male",
+        "race_ethnicity": "South Asian (Indian-American)",
+        "family_composition": {
+          "marital_status": "Married",
+          "household_members": ["Spouse"],
+          "caregiving_roles": []
+        }
+      },
+      "baseline_summary": "George is an older adult with coronary artery disease and heart failure with preserved ejection fraction, plus chronic kidney disease stage 3. He monitors weight and swelling closely and wants simple medication plans. Safety note: avoid NSAIDs due to kidney function and heart risk.",
+      "care_preferences": {
+        "provider_style": "Direct, minimal jargon",
+        "care_setting_preference": "In-person preferred for cardiology; telehealth for brief follow-ups",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English"],
+        "health_literacy_preference": "Simple",
+        "accessibility_needs": ["Large-print visit summaries"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Coronary artery disease", "notes": "Stent placed 2018; no recent chest pain." },
+            { "name": "Heart failure (HFpEF)", "notes": "Edema with salt; tracks daily weight." },
+            { "name": "Chronic kidney disease (stage 3)", "notes": "Stable creatinine; avoids nephrotoxins." },
+            { "name": "Hyperlipidemia", "notes": "On statin therapy." }
+          ],
+          "past": [
+            { "name": "Smoking (former)", "notes": "Quit 20 years ago." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "Coronary stent placement (PCI)", "date": "2018", "notes": "Uncomplicated." }
+        ],
+        "family_history_summary": "Brother had heart attack in early 60s. Father had hypertension.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Atorvastatin", "dose": "40 mg", "schedule": "Once daily", "purpose": "Cholesterol / CAD risk reduction" },
+          { "name": "Aspirin (low-dose)", "dose": "81 mg", "schedule": "Once daily", "purpose": "Antiplatelet" },
+          { "name": "Metoprolol succinate", "dose": "50 mg", "schedule": "Once daily", "purpose": "Heart rate/BP control" },
+          { "name": "Furosemide", "dose": "20 mg", "schedule": "Once daily (adjust per weight)", "purpose": "Edema management" }
+        ],
+        "past": [
+          { "name": "Ibuprofen", "dose": null, "schedule": null, "purpose": "Stopped—kidney concerns" }
+        ],
+        "adherence_notes": "Prefers once-daily meds; occasionally skips diuretic when traveling due to bathroom access."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "High-salt foods", "reaction": "Swelling/weight gain" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'8\"",
+          "weight": "182 lb",
+          "blood_pressure_range": "Typically 120–135/70–85"
+        },
+        "recent_trends_summary": "Weight fluctuates 2–4 lb with salt intake; swelling improves with diuretic adherence."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; received shingles vaccine series and annual flu shot.",
+        "screenings": {
+          "recommended": ["Annual kidney labs", "Cardiology follow-up every 6–12 months"],
+          "completed": ["Echo (last year)", "Lipid panel (6 months ago)"],
+          "due_soon": ["Kidney function labs (next month)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Susan Morales", "org": "Lakeside Internal Medicine" },
+        "specialists": [
+          { "name": "Dr. Ravi Menon", "org": "CardioCare Associates", "role": "Cardiology" },
+          { "name": "Dr. Emily Park", "org": "Renal Partners", "role": "Nephrology (consult)" }
+        ],
+        "pharmacy_preferences": "Local pharmacy with medication synchronization.",
+        "insurance_summary": "Medicare Advantage plan."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "6–7 hours; wakes to urinate when diuretic taken late.",
+        "nutrition_preferences": "Low-salt diet; prefers simple meal plans.",
+        "activity_preferences": "Daily walking 20–30 minutes; avoids steep hills when short of breath.",
+        "stress_management_preferences": "Prayer/meditation; routine-based habits."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "Occasional ankle swelling after salty meals; mild exertional shortness of breath.",
+        "ongoing_treatments_summary": "Diuretic adjustments based on weight; low-salt diet; daily walks.",
+        "open_questions_for_provider": [
+          "When should I adjust my diuretic dose based on weight changes?",
+          "What symptoms should prompt urgent evaluation vs routine follow-up?",
+          "Are there safer pain relief options given kidney disease?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Spouse (primary), adult son (secondary)",
+        "critical_alerts": ["Avoid NSAIDs (kidney + cardiovascular risk)"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Noah Thompson",
+        "age": 34,
+        "gender": "Male",
+        "race_ethnicity": "White (non-Hispanic)",
+        "family_composition": {
+          "marital_status": "Single",
+          "household_members": ["Lives alone"],
+          "caregiving_roles": []
+        }
+      },
+      "baseline_summary": "Noah is managing major depressive disorder and generalized anxiety with therapy and an SSRI. He is functional at work but has periodic low mood, insomnia, and reduced appetite during high-stress periods. Safety note: history of passive suicidal ideation in the past; currently denies intent but wants a clear plan if symptoms worsen.",
+      "care_preferences": {
+        "provider_style": "Collaborative, trauma-informed",
+        "care_setting_preference": "Telehealth preferred for therapy/med refills",
+        "privacy_preference": "Share minimum"
+      },
+      "communication_needs": {
+        "language_preference": ["English"],
+        "health_literacy_preference": "Balanced — wants clear next steps without overwhelming details",
+        "accessibility_needs": ["Prefers written summaries after visits"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Major depressive disorder (recurrent)", "notes": "Responds to SSRI + CBT; flares under work stress." },
+            { "name": "Generalized anxiety disorder", "notes": "Rumination and physical tension; benefits from structured coping plan." },
+            { "name": "Insomnia (stress-related)", "notes": "Difficulty falling asleep; variable." }
+          ],
+          "past": [
+            { "name": "Panic attacks (episodic)", "notes": "More frequent 3 years ago; now rare." }
+          ]
+        },
+        "surgeries_and_procedures": [],
+        "family_history_summary": "Family history of depression in one parent; no known bipolar disorder.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Sertraline", "dose": "100 mg", "schedule": "Once daily", "purpose": "Depression/anxiety" },
+          { "name": "Melatonin", "dose": "3 mg", "schedule": "As needed at night", "purpose": "Sleep onset support" }
+        ],
+        "past": [
+          { "name": "Escitalopram", "dose": "10 mg", "schedule": "Once daily (previous)", "purpose": "Depression/anxiety (switched due to side effects)" }
+        ],
+        "adherence_notes": "Usually adherent; misses doses during travel or disrupted routines."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "High caffeine", "reaction": "Anxiety/jitteriness" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'11\"",
+          "weight": "170 lb",
+          "blood_pressure_range": "Typically ~110–120/70–80"
+        },
+        "recent_trends_summary": "Weight down ~5 lb during recent stressful month; sleep fragmented."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; gets flu shot intermittently.",
+        "screenings": {
+          "recommended": ["Annual primary care visit", "Routine labs as indicated"],
+          "completed": ["Annual physical (last year)"],
+          "due_soon": ["Annual physical (within 4 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Priya Desai", "org": "Evergreen Primary Care" },
+        "specialists": [
+          { "name": "Dr. Allison Grant", "org": "MindPath Psychiatry", "role": "Medication management" },
+          { "name": "Therapist (LCSW) Jordan Kim", "org": "MindPath Therapy", "role": "CBT therapy" }
+        ],
+        "pharmacy_preferences": "Local pharmacy with auto-refill reminders.",
+        "insurance_summary": "Marketplace plan (in-network restrictions)."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "5–7 hours; sleep onset delay when anxious.",
+        "nutrition_preferences": "Simple meals; appetite decreases during stress.",
+        "activity_preferences": "Walking and light strength training; inconsistent when mood is low.",
+        "stress_management_preferences": "Therapy homework, breathing exercises, structured routines."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "Recent increase in rumination, low mood, and insomnia over past 3 weeks.",
+        "ongoing_treatments_summary": "Weekly therapy; SSRI daily; sleep hygiene plan in progress.",
+        "open_questions_for_provider": [
+          "Should medication dose be adjusted or should I add a sleep-focused intervention?",
+          "What are early warning signs that mean I should seek urgent help?",
+          "How can I build a routine that holds during high-stress work periods?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Close friend (primary), sibling (secondary)",
+        "critical_alerts": ["History of passive suicidal ideation — needs clear escalation plan if symptoms worsen"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Fatima Al-Sayed",
+        "age": 38,
+        "gender": "Female",
+        "race_ethnicity": "Middle Eastern (Arab-American)",
+        "family_composition": {
+          "marital_status": "Married",
+          "household_members": ["Spouse", "Son (age 5)"],
+          "caregiving_roles": ["Primary caregiver for child"]
+        }
+      },
+      "baseline_summary": "Fatima is managing rheumatoid arthritis with a DMARD and intermittent NSAID alternatives. She experiences morning stiffness and flares with stress and poor sleep. Safety note: immunosuppression risk—wants guidance on infection precautions and vaccines.",
+      "care_preferences": {
+        "provider_style": "Collaborative, minimal-intervention when possible",
+        "care_setting_preference": "In-person for rheumatology; telehealth for stable follow-ups",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English", "Arabic"],
+        "health_literacy_preference": "Detailed",
+        "accessibility_needs": ["Occasional mobility support during flares (stairs difficult)"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Rheumatoid arthritis", "notes": "Morning stiffness; periodic flares in hands/wrists." },
+            { "name": "Gastritis/GERD (medication-related)", "notes": "Reflux worsens with anti-inflammatory meds." }
+          ],
+          "past": [
+            { "name": "Postpartum anemia (resolved)", "notes": "Resolved after supplementation." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "None", "date": null, "notes": "No surgeries reported." }
+        ],
+        "family_history_summary": "Mother has osteoarthritis; no known autoimmune diseases reported in first-degree relatives.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Methotrexate", "dose": "15 mg", "schedule": "Once weekly", "purpose": "Rheumatoid arthritis control" },
+          { "name": "Folic acid", "dose": "1 mg", "schedule": "Once daily", "purpose": "Methotrexate support" },
+          { "name": "Famotidine", "dose": "20 mg", "schedule": "Once daily", "purpose": "Reflux prevention" }
+        ],
+        "past": [
+          { "name": "Naproxen", "dose": "As needed (previous)", "schedule": null, "purpose": "Pain/inflammation (limited due to GERD)" }
+        ],
+        "adherence_notes": "Very adherent; prefers clear written instructions for weekly medication timing."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [
+          { "type": "drug", "substance": "Sulfa antibiotics", "reaction": "Rash", "reaction_severity": "Mild" }
+        ],
+        "intolerances": [
+          { "substance": "NSAIDs (frequent use)", "reaction": "Worsens reflux/abdominal discomfort" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'3\"",
+          "weight": "150 lb",
+          "blood_pressure_range": "Typically ~110–125/70–80"
+        },
+        "recent_trends_summary": "Weight stable; flare frequency slightly increased during winter."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; wants confirmation of vaccine timing while on immunosuppression.",
+        "screenings": {
+          "recommended": ["Routine labs for DMARD monitoring", "Bone health screening per provider guidance"],
+          "completed": ["DMARD monitoring labs (every 2–3 months)"],
+          "due_soon": ["Monitoring labs (next month)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Emily Carter", "org": "Oak Street Family Practice" },
+        "specialists": [
+          { "name": "Dr. Nadir Hassan", "org": "Arthritis & Rheumatology Center", "role": "Rheumatology" }
+        ],
+        "pharmacy_preferences": "Prefers one pharmacy for all meds to avoid interactions.",
+        "insurance_summary": "Employer-sponsored HMO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "6–7 hours; pain can disrupt sleep during flares.",
+        "nutrition_preferences": "Mediterranean-style diet; avoids triggers for reflux.",
+        "activity_preferences": "Low-impact exercise (walking, gentle yoga); avoids high-impact during flares.",
+        "stress_management_preferences": "Mindfulness and paced activity scheduling."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "Morning hand stiffness ~45 minutes; occasional swelling in wrists; reflux controlled most days.",
+        "ongoing_treatments_summary": "Weekly methotrexate with monitoring labs; flare plan with provider.",
+        "open_questions_for_provider": [
+          "How should I adjust activity during a flare vs when stable?",
+          "What infection precautions are most important while on methotrexate?",
+          "Are there safer pain-control options that won’t worsen reflux?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Spouse (primary), sister (secondary)",
+        "critical_alerts": ["On immunosuppressive therapy (methotrexate) — increased infection risk"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Hannah Kim",
+        "age": 24,
+        "gender": "Female",
+        "race_ethnicity": "Asian (Korean-American)",
+        "family_composition": {
+          "marital_status": "Single",
+          "household_members": ["Roommate"],
+          "caregiving_roles": []
+        }
+      },
+      "baseline_summary": "Hannah is a young adult with severe IgE-mediated peanut allergy and moderate eczema. She is vigilant about carrying epinephrine and wants a clear plan for travel and dining out. Safety note: high risk of anaphylaxis—do not administer peanut-containing products; confirm cross-contamination precautions.",
+      "care_preferences": {
+        "provider_style": "Direct and safety-focused",
+        "care_setting_preference": "Telehealth for routine allergy follow-up; in-person for testing",
+        "privacy_preference": "Share minimum"
+      },
+      "communication_needs": {
+        "language_preference": ["English"],
+        "health_literacy_preference": "Detailed",
+        "accessibility_needs": ["None"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Peanut allergy (anaphylaxis risk)", "notes": "Strict avoidance; carries epinephrine." },
+            { "name": "Atopic dermatitis (eczema)", "notes": "Flares with dry weather and stress." },
+            { "name": "Allergic rhinitis", "notes": "Seasonal symptoms." }
+          ],
+          "past": [
+            { "name": "Childhood asthma (resolved)", "notes": "No inhaler use in years." }
+          ]
+        },
+        "surgeries_and_procedures": [],
+        "family_history_summary": "Sibling with seasonal allergies; no known anaphylaxis in family history.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Epinephrine auto-injector", "dose": "0.3 mg", "schedule": "Carry at all times; use as needed", "purpose": "Anaphylaxis rescue" },
+          { "name": "Cetirizine", "dose": "10 mg", "schedule": "Once daily during allergy season", "purpose": "Allergic rhinitis" },
+          { "name": "Topical corticosteroid (medium potency)", "dose": null, "schedule": "As needed during flares", "purpose": "Eczema control" }
+        ],
+        "past": [
+          { "name": "Oral prednisone (short course)", "dose": null, "schedule": "5 days (prior)", "purpose": "Severe allergic reaction (historical)" }
+        ],
+        "adherence_notes": "Very adherent to carrying epinephrine; prefers the simplest possible daily regimen."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [
+          { "type": "food", "substance": "Peanuts", "reaction": "Anaphylaxis", "reaction_severity": "Severe" }
+        ],
+        "intolerances": [
+          { "substance": "Fragranced skincare", "reaction": "Eczema flare/irritation" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'2\"",
+          "weight": "120 lb",
+          "blood_pressure_range": "Typically ~100–115/60–75"
+        },
+        "recent_trends_summary": "No major changes; eczema flares more in winter."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date on routine vaccines; interested in confirming any allergy-related contraindications (none known).",
+        "screenings": {
+          "recommended": ["Annual physical", "Periodic allergy specialist follow-up"],
+          "completed": ["Annual physical (last year)"],
+          "due_soon": ["Epinephrine renewal check and training review (within 2 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Olivia Martinez", "org": "Downtown Health Partners" },
+        "specialists": [
+          { "name": "Dr. Kevin Brooks", "org": "Allergy & Immunology Clinic", "role": "Food allergy management" }
+        ],
+        "pharmacy_preferences": "Local pharmacy near home; wants auto-refill reminders for epinephrine expiration.",
+        "insurance_summary": "Student health plan."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "7–8 hours; itch can disrupt sleep during eczema flares.",
+        "nutrition_preferences": "Avoids peanuts and high cross-contamination foods; reads labels carefully.",
+        "activity_preferences": "Pilates and walking; avoids eating before group workouts due to allergy anxiety.",
+        "stress_management_preferences": "Planning ahead, checklists, and talking with friends."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "No acute allergic symptoms; eczema mild flare on hands.",
+        "ongoing_treatments_summary": "Strict avoidance; carries epinephrine; topical management for eczema.",
+        "open_questions_for_provider": [
+          "Best practices for dining out and travel to reduce cross-contamination risk?",
+          "Do I need two auto-injectors on hand and where should I keep them?",
+          "Can eczema control be improved without daily steroids?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Close friend (primary), mother (secondary)",
+        "critical_alerts": ["Severe peanut allergy — anaphylaxis risk; epinephrine required if exposure suspected"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Marisol Vega",
+        "age": 52,
+        "gender": "Female",
+        "race_ethnicity": "Latina (Puerto Rican)",
+        "family_composition": {
+          "marital_status": "Divorced",
+          "household_members": ["Adult son (age 24)"],
+          "caregiving_roles": ["Supports adult child intermittently"]
+        }
+      },
+      "baseline_summary": "Marisol has moderate COPD from past smoking and manages breathlessness with daily inhalers. She has frequent winter bronchitis and wants clear action plans for flare-ups. Safety note: avoid sedating cough medicines that worsen breathing; monitor low oxygen symptoms.",
+      "care_preferences": {
+        "provider_style": "Direct and practical",
+        "care_setting_preference": "In-person for lung checkups; telehealth for quick medication refills",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English", "Spanish"],
+        "health_literacy_preference": "Simple",
+        "accessibility_needs": ["Needs breaks when walking long clinic hallways"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "COPD (moderate)", "notes": "Former smoker; dyspnea on stairs; uses maintenance inhaler." },
+            { "name": "Chronic bronchitis (recurrent)", "notes": "Winter flares; uses action plan." },
+            { "name": "Osteopenia", "notes": "Working on weight-bearing exercise and calcium/vitamin D intake." }
+          ],
+          "past": [
+            { "name": "Smoking (former)", "notes": "Quit 8 years ago; ~25 pack-year history." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "Cholecystectomy (gallbladder removal)", "date": "2011", "notes": "No complications." }
+        ],
+        "family_history_summary": "Mother had osteoporosis; father had lung disease and hypertension.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Tiotropium inhaler", "dose": "2 puffs", "schedule": "Once daily", "purpose": "COPD maintenance" },
+          { "name": "Albuterol inhaler", "dose": "90 mcg per puff", "schedule": "As needed", "purpose": "Rescue for shortness of breath" },
+          { "name": "Vitamin D3", "dose": "1000–2000 IU", "schedule": "Once daily", "purpose": "Bone health support" }
+        ],
+        "past": [
+          { "name": "Oral prednisone (burst)", "dose": null, "schedule": "Short course during flares (prior)", "purpose": "COPD exacerbations" }
+        ],
+        "adherence_notes": "Consistent with morning inhaler; sometimes delays rescue inhaler use until symptoms are severe."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [
+          { "type": "drug", "substance": "Codeine", "reaction": "Severe nausea and dizziness", "reaction_severity": "Moderate" }
+        ],
+        "intolerances": [
+          { "substance": "Cold air exposure", "reaction": "Coughing/wheezing trigger" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'5\"",
+          "weight": "168 lb",
+          "blood_pressure_range": "Typically 120–140/75–90"
+        },
+        "recent_trends_summary": "Breathing symptoms slightly worse in winter; activity decreases when weather is cold."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Gets annual flu shot; received pneumococcal vaccination per provider.",
+        "screenings": {
+          "recommended": ["Annual lung function assessment", "Bone density follow-up per PCP"],
+          "completed": ["Annual physical (last year)", "DEXA scan (2 years ago)"],
+          "due_soon": ["Flu shot (this season)", "Pulmonary follow-up (within 3 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Janet Wu", "org": "Harborview Primary Care" },
+        "specialists": [
+          { "name": "Dr. Peter Lang", "org": "Coastal Pulmonary Clinic", "role": "Pulmonology" }
+        ],
+        "pharmacy_preferences": "Local pharmacy with Spanish-speaking staff if possible.",
+        "insurance_summary": "Employer-sponsored PPO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "6–7 hours; cough can wake her during flares.",
+        "nutrition_preferences": "Tries to limit salty foods; small meals when short of breath.",
+        "activity_preferences": "Short walks; pulmonary rehab exercises at home.",
+        "stress_management_preferences": "Breathing exercises and light stretching."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "More coughing and mild wheeze over the past week; no fever; exertional dyspnea unchanged.",
+        "ongoing_treatments_summary": "Daily tiotropium; rescue inhaler as needed; action plan for flares.",
+        "open_questions_for_provider": [
+          "When should I start a flare-up plan vs wait it out?",
+          "Are there safer cough medicines for COPD?",
+          "Would pulmonary rehab sessions help me increase endurance?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Adult son (primary), sister (secondary)",
+        "critical_alerts": ["COPD — seek urgent care for severe breathlessness, blue lips, or confusion"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Omar Haddad",
+        "age": 46,
+        "gender": "Male",
+        "race_ethnicity": "Middle Eastern (Arab-American)",
+        "family_composition": {
+          "marital_status": "Married",
+          "household_members": ["Spouse", "Daughter (age 15)", "Daughter (age 10)"],
+          "caregiving_roles": ["Co-caregiver"]
+        }
+      },
+      "baseline_summary": "Omar has ulcerative colitis with periodic flares and has been stable on maintenance therapy for the past year. He is cautious about side effects and wants shared decision-making. Safety note: dehydration risk during flares; needs guidance on when to seek urgent care.",
+      "care_preferences": {
+        "provider_style": "Collaborative and evidence-based",
+        "care_setting_preference": "Telehealth for stable follow-ups; in-person for flares/procedures",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English", "Arabic"],
+        "health_literacy_preference": "Detailed",
+        "accessibility_needs": ["None"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Ulcerative colitis", "notes": "Diagnosed 6 years ago; stable recently; flares with stress." },
+            { "name": "Iron deficiency (intermittent)", "notes": "Occurs during flares; monitored." }
+          ],
+          "past": [
+            { "name": "C. difficile infection (resolved)", "notes": "One episode 3 years ago; resolved." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "Colonoscopy (surveillance)", "date": "2024", "notes": "No dysplasia; mild inflammation noted." }
+        ],
+        "family_history_summary": "Father has type 2 diabetes; no family history of inflammatory bowel disease reported.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Mesalamine (oral)", "dose": "2.4 g", "schedule": "Once daily", "purpose": "UC maintenance" },
+          { "name": "Mesalamine (rectal)", "dose": null, "schedule": "As needed during mild flares", "purpose": "Distal inflammation control" }
+        ],
+        "past": [
+          { "name": "Prednisone (taper)", "dose": null, "schedule": "Short course during flare (prior)", "purpose": "UC flare control" }
+        ],
+        "adherence_notes": "Prefers once-daily meds; adherent when symptoms are present, sometimes less consistent when feeling well."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "High-fat spicy foods", "reaction": "Worsens GI symptoms during sensitive periods" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'10\"",
+          "weight": "176 lb",
+          "blood_pressure_range": "Typically ~115–130/70–85"
+        },
+        "recent_trends_summary": "Weight stable; mild fatigue during stressful months."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; tracks vaccines due to potential escalation to immunosuppressants.",
+        "screenings": {
+          "recommended": ["IBD surveillance colonoscopy per GI schedule", "Periodic iron studies"],
+          "completed": ["Colonoscopy (2024)", "Iron studies (last year)"],
+          "due_soon": ["Iron studies (within 6 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Megan O'Neill", "org": "Cedar Grove Internal Medicine" },
+        "specialists": [
+          { "name": "Dr. Arjun Sethi", "org": "Digestive Health Center", "role": "Gastroenterology" }
+        ],
+        "pharmacy_preferences": "Prefers mail-order for maintenance meds.",
+        "insurance_summary": "Employer-sponsored PPO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "6–7 hours; disrupted during flares.",
+        "nutrition_preferences": "Avoids trigger foods; prefers simple, low-residue diet during flares.",
+        "activity_preferences": "Walking and light gym; reduces activity during flare risk.",
+        "stress_management_preferences": "Breathing exercises; short breaks; therapy open if symptoms increase."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "Mild increase in urgency and cramping over the past 10 days; no blood reported.",
+        "ongoing_treatments_summary": "Oral mesalamine daily; rectal therapy during symptom uptick.",
+        "open_questions_for_provider": [
+          "How do I distinguish a mild flare from something requiring escalation?",
+          "What labs should I check when symptoms increase?",
+          "What’s my best plan to prevent dehydration during flares?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Spouse (primary), brother (secondary)",
+        "critical_alerts": ["Ulcerative colitis — dehydration risk during flare; seek care for severe pain, fever, or bleeding"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Tanya Brooks",
+        "age": 31,
+        "gender": "Female",
+        "race_ethnicity": "Black / African-American",
+        "family_composition": {
+          "marital_status": "Married",
+          "household_members": ["Spouse", "Infant (age 7 months)"],
+          "caregiving_roles": ["Primary caregiver for infant"]
+        }
+      },
+      "baseline_summary": "Tanya is postpartum and experiencing moderate postpartum depression and anxiety with intrusive worries, plus episodic migraines. She is engaged in therapy and prefers a careful approach to medication while breastfeeding. Safety note: wants clear warning signs and a support plan if symptoms worsen.",
+      "care_preferences": {
+        "provider_style": "Warm, collaborative, trauma-informed",
+        "care_setting_preference": "Telehealth preferred (baby schedule); in-person if needed",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English"],
+        "health_literacy_preference": "Balanced",
+        "accessibility_needs": ["Flexible scheduling due to childcare"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Postpartum depression (moderate)", "notes": "Low mood, tearfulness, guilt; in therapy." },
+            { "name": "Postpartum anxiety", "notes": "Intrusive worries, hypervigilance; sleep disrupted." },
+            { "name": "Migraine without aura", "notes": "1–2/month; worse with sleep loss." }
+          ],
+          "past": [
+            { "name": "Anxiety (situational, past)", "notes": "During college; resolved before pregnancy." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "Vaginal delivery", "date": "2025", "notes": "No major complications reported." }
+        ],
+        "family_history_summary": "Mother has migraines; one first-degree relative with depression history.",
+        "pregnancy_reproductive_history": "G1P1; currently breastfeeding; no prior pregnancy complications reported."
+      },
+      "medications": {
+        "current": [
+          { "name": "Prenatal vitamin", "dose": null, "schedule": "Once daily", "purpose": "Postpartum nutritional support" },
+          { "name": "Magnesium supplement", "dose": "200–400 mg", "schedule": "Nightly", "purpose": "Migraine prevention / sleep support" }
+        ],
+        "past": [
+          { "name": "Acetaminophen", "dose": null, "schedule": "As needed", "purpose": "Postpartum pain (early postpartum)" }
+        ],
+        "adherence_notes": "Adherent; cautious about starting new meds while breastfeeding."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "High caffeine", "reaction": "Anxiety and sleep disruption" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "5'6\"",
+          "weight": "175 lb",
+          "blood_pressure_range": "Typically ~110–125/70–80"
+        },
+        "recent_trends_summary": "Sleep fragmented; mood dips correlate with nights of poor sleep."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date; received Tdap in pregnancy; flu shot this season.",
+        "screenings": {
+          "recommended": ["Postpartum check-ins for mood", "Routine primary care follow-up"],
+          "completed": ["6-week postpartum visit"],
+          "due_soon": ["Mood follow-up (within 4 weeks)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Alicia Grant", "org": "Neighborhood Family Health" },
+        "specialists": [
+          { "name": "Therapist Naomi Chen, LMFT", "org": "Perinatal Wellness Center", "role": "Therapy for postpartum mood/anxiety" }
+        ],
+        "pharmacy_preferences": "Local pharmacy with delivery options.",
+        "insurance_summary": "Employer-sponsored PPO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "3–6 hours fragmented due to infant care; naps when possible.",
+        "nutrition_preferences": "Quick meals; tries to stay hydrated for breastfeeding.",
+        "activity_preferences": "Short stroller walks; gentle stretching.",
+        "stress_management_preferences": "Therapy homework, breathing, partner support, journaling."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "Persistent low mood and anxiety; intrusive worries at night; migraines slightly more frequent.",
+        "ongoing_treatments_summary": "Weekly therapy; sleep hygiene strategies; support from partner.",
+        "open_questions_for_provider": [
+          "What are safe medication options while breastfeeding if symptoms persist?",
+          "What warning signs mean I need urgent help?",
+          "How can I reduce intrusive worries and improve sleep?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Spouse (primary), sister (secondary)",
+        "critical_alerts": ["Postpartum mood/anxiety — needs escalation plan if symptoms worsen or safety concerns arise"]
+      }
+    }
+  },
+  {
+    "namespace": "health",
+    "profile": {
+      "identification": {
+        "name": "Evan Miller",
+        "age": 27,
+        "gender": "Male",
+        "race_ethnicity": "White (non-Hispanic)",
+        "family_composition": {
+          "marital_status": "Partnered",
+          "household_members": ["Partner", "Dog"],
+          "caregiving_roles": []
+        }
+      },
+      "baseline_summary": "Evan has epilepsy (focal seizures) that is well-controlled on medication, but he worries about breakthrough seizures with sleep deprivation. He avoids triggers and wants a clear plan for missed doses. Safety note: do not abruptly stop antiseizure medication; seizure precautions needed.",
+      "care_preferences": {
+        "provider_style": "Direct, safety-focused, and collaborative",
+        "care_setting_preference": "Telehealth for routine neurology follow-ups; in-person if symptoms change",
+        "privacy_preference": "Share for continuity"
+      },
+      "communication_needs": {
+        "language_preference": ["English"],
+        "health_literacy_preference": "Detailed",
+        "accessibility_needs": ["None"]
+      },
+      "medical_history": {
+        "conditions": {
+          "active": [
+            { "name": "Epilepsy (focal seizures, controlled)", "notes": "Seizure-free for 2 years on current regimen." },
+            { "name": "Sleep deprivation sensitivity", "notes": "Poor sleep is a known trigger." }
+          ],
+          "past": [
+            { "name": "Concussion (resolved)", "notes": "Sports-related in high school; no ongoing symptoms." }
+          ]
+        },
+        "surgeries_and_procedures": [
+          { "name": "EEG evaluation", "date": "2022", "notes": "Findings consistent with focal epilepsy." }
+        ],
+        "family_history_summary": "No known family history of epilepsy.",
+        "pregnancy_reproductive_history": null
+      },
+      "medications": {
+        "current": [
+          { "name": "Levetiracetam", "dose": "750 mg", "schedule": "Twice daily", "purpose": "Seizure prevention" }
+        ],
+        "past": [
+          { "name": "Lamotrigine (trial)", "dose": null, "schedule": null, "purpose": "Stopped due to rash concern (non-severe)" }
+        ],
+        "adherence_notes": "Highly adherent; uses phone alarms; anxiety spikes if a dose is late."
+      },
+      "allergies_and_sensitivities": {
+        "allergies": [],
+        "intolerances": [
+          { "substance": "Heavy alcohol use", "reaction": "Increases seizure risk" }
+        ]
+      },
+      "vitals_and_measurements": {
+        "baseline_metrics": {
+          "height": "6'1\"",
+          "weight": "178 lb",
+          "blood_pressure_range": "Typically ~110–125/65–80"
+        },
+        "recent_trends_summary": "Stable; occasional fatigue when sleep is poor."
+      },
+      "preventive_care": {
+        "immunizations_summary": "Up to date on routine vaccines.",
+        "screenings": {
+          "recommended": ["Annual primary care visit", "Medication level/labs as advised by neurology"],
+          "completed": ["Neurology follow-up (6 months ago)"],
+          "due_soon": ["Neurology follow-up (within 3 months)"]
+        }
+      },
+      "care_team": {
+        "primary_care_provider": { "name": "Dr. Renee Foster", "org": "Summit Primary Care" },
+        "specialists": [
+          { "name": "Dr. Luis Herrera", "org": "Bay Neurology Group", "role": "Epilepsy management" }
+        ],
+        "pharmacy_preferences": "Prefers mail-order to avoid missed refills; keeps emergency supply.",
+        "insurance_summary": "Employer-sponsored PPO."
+      },
+      "behavior_and_lifestyle": {
+        "sleep": "Targets 7–8 hours; sleep loss is a trigger.",
+        "nutrition_preferences": "No specific diet; avoids skipping meals when stressed.",
+        "activity_preferences": "Gym 3x/week; avoids unsupervised swimming.",
+        "stress_management_preferences": "Structured routines and planning; light meditation."
+      },
+      "current_health_context": {
+        "current_symptoms_summary": "No seizures; increased anxiety due to recent travel and disrupted sleep.",
+        "ongoing_treatments_summary": "Levetiracetam twice daily; trigger avoidance; sleep prioritization.",
+        "open_questions_for_provider": [
+          "What’s the best protocol if I accidentally miss a dose?",
+          "Are there travel strategies to reduce seizure risk with time zone changes?",
+          "How should I handle sleep disruption without increasing medication side effects?"
+        ]
+      },
+      "emergency_and_safety": {
+        "emergency_contacts_reference": "Partner (primary), parent (secondary)",
+        "critical_alerts": ["Epilepsy — do not abruptly stop antiseizure medication; seizure safety precautions"]
+      }
+    }
+  }
+
+]

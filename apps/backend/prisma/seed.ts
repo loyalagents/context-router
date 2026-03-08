@@ -478,45 +478,499 @@ async function seedSyntheticUsers(): Promise<User[]> {
   return createdUsers;
 }
 
-async function createWorkshopGroups(users: User[]) {
+// ─── Schema namespace constants ───
+
+const SCHEMA_NS = {
+  GLOBAL: 'GLOBAL',
+  HEALTH: 'health',
+  EDUCATION: 'education_k16',
+} as const;
+
+// ─── Health catalog types ───
+
+interface HealthCatalogEntry {
+  id: string;
+  slug: string;
+  namespace: string;
+  displayName: string | null;
+  ownerUserId: string | null;
+  description: string;
+  valueType: string;
+  scope: string;
+  options: string[] | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  category: string;
+}
+
+interface HealthPatient {
+  namespace: string;
+  profile: {
+    identification: {
+      name: string;
+      age: number;
+      gender: string;
+      race_ethnicity: string;
+    };
+    baseline_summary: string;
+    care_preferences: {
+      provider_style: string;
+      care_setting_preference: string;
+      privacy_preference: string;
+    };
+    communication_needs: {
+      language_preference: string[];
+      health_literacy_preference: string;
+      accessibility_needs: string[];
+    };
+    vitals_and_measurements: {
+      baseline_metrics: {
+        height: string;
+        weight: string;
+        blood_pressure_range: string;
+      };
+      recent_trends_summary: string;
+    };
+    behavior_and_lifestyle: {
+      sleep: string;
+      nutrition_preferences: string;
+      activity_preferences: string;
+      stress_management_preferences: string;
+    };
+    [key: string]: unknown;
+  };
+}
+
+// ─── Education catalog types ───
+
+interface EducationCatalogEntry {
+  id: string;
+  slug: string;
+  namespace: string;
+  displayName: string | null;
+  ownerUserId: string | null;
+  description: string;
+  valueType: string;
+  scope: string;
+  options: string[] | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  category: string;
+}
+
+interface EducationStudent {
+  namespace: string;
+  student_profile: {
+    preferred_name: string;
+    age: number;
+    gender: string;
+    race_ethnicity: string;
+    current_level: string;
+    institutions: {
+      current_school: string;
+      past_schools: string[];
+    };
+    identity_at_school: string;
+    languages_at_school: string[];
+    interests_and_extracurriculars: string[];
+    learning_preferences: {
+      modalities: string[];
+      pace: string;
+      group_vs_solo: string;
+    };
+    study_habits: {
+      homework_routine: string;
+      organization_style: string;
+      attention_supports: string[];
+    };
+    academic_snapshot: {
+      strengths: {
+        subjects: string[];
+        skills: string[];
+      };
+      areas_for_growth: string[];
+    };
+    goals_and_plans: {
+      short_term_goals: string[];
+      long_term_goals: string[];
+      milestones: string[];
+    };
+    [key: string]: unknown;
+  };
+}
+
+// ─── Seed health definitions ───
+
+async function seedHealthPreferenceDefinitions(): Promise<void> {
+  console.log('Seeding health preference definitions...');
+
+  const catalogPath = path.resolve(
+    __dirname,
+    '../../../synthetic_users/health/health_patient_field_catalog.json',
+  );
+  const catalog: HealthCatalogEntry[] = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+
+  for (const entry of catalog) {
+    // Downcast types: INTEGER → STRING, ARRAY_OBJECT → ARRAY
+    let valueType: string = entry.valueType;
+    if (valueType === 'INTEGER') valueType = 'STRING';
+    if (valueType === 'ARRAY_OBJECT') valueType = 'ARRAY';
+
+    const existing = await prisma.preferenceDefinition.findFirst({
+      where: { namespace: SCHEMA_NS.HEALTH, slug: entry.slug, archivedAt: null },
+    });
+
+    if (existing) {
+      await prisma.preferenceDefinition.update({
+        where: { id: existing.id },
+        data: {
+          description: entry.description,
+          valueType: VALUE_TYPE_MAP[valueType.toLowerCase()] ?? PreferenceValueType.STRING,
+          scope: SCOPE_MAP[entry.scope.toLowerCase()] ?? PreferenceScope.GLOBAL,
+          options: entry.options ?? null,
+          isSensitive: entry.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    } else {
+      await prisma.preferenceDefinition.create({
+        data: {
+          id: entry.id,
+          namespace: SCHEMA_NS.HEALTH,
+          slug: entry.slug,
+          displayName: entry.displayName ?? null,
+          ownerUserId: null,
+          description: entry.description,
+          valueType: VALUE_TYPE_MAP[valueType.toLowerCase()] ?? PreferenceValueType.STRING,
+          scope: SCOPE_MAP[entry.scope.toLowerCase()] ?? PreferenceScope.GLOBAL,
+          options: entry.options ?? null,
+          isSensitive: entry.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    }
+  }
+
+  console.log(`Seeded ${catalog.length} health preference definitions`);
+}
+
+// ─── Seed education definitions ───
+
+async function seedEducationPreferenceDefinitions(): Promise<void> {
+  console.log('Seeding education preference definitions...');
+
+  const catalogPath = path.resolve(
+    __dirname,
+    '../../../synthetic_users/education/education_k16_field_catalog.json',
+  );
+  const catalog: EducationCatalogEntry[] = JSON.parse(fs.readFileSync(catalogPath, 'utf-8'));
+
+  for (const entry of catalog) {
+    // Downcast types: INTEGER → STRING, ARRAY_OBJECT → ARRAY
+    let valueType: string = entry.valueType;
+    if (valueType === 'INTEGER') valueType = 'STRING';
+    if (valueType === 'ARRAY_OBJECT') valueType = 'ARRAY';
+
+    const existing = await prisma.preferenceDefinition.findFirst({
+      where: { namespace: SCHEMA_NS.EDUCATION, slug: entry.slug, archivedAt: null },
+    });
+
+    if (existing) {
+      await prisma.preferenceDefinition.update({
+        where: { id: existing.id },
+        data: {
+          description: entry.description,
+          valueType: VALUE_TYPE_MAP[valueType.toLowerCase()] ?? PreferenceValueType.STRING,
+          scope: SCOPE_MAP[entry.scope.toLowerCase()] ?? PreferenceScope.GLOBAL,
+          options: entry.options ?? null,
+          isSensitive: entry.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    } else {
+      await prisma.preferenceDefinition.create({
+        data: {
+          id: entry.id,
+          namespace: SCHEMA_NS.EDUCATION,
+          slug: entry.slug,
+          displayName: entry.displayName ?? null,
+          ownerUserId: null,
+          description: entry.description,
+          valueType: VALUE_TYPE_MAP[valueType.toLowerCase()] ?? PreferenceValueType.STRING,
+          scope: SCOPE_MAP[entry.scope.toLowerCase()] ?? PreferenceScope.GLOBAL,
+          options: entry.options ?? null,
+          isSensitive: entry.isSensitive ?? false,
+          isCore: true,
+        },
+      });
+    }
+  }
+
+  console.log(`Seeded ${catalog.length} education preference definitions`);
+}
+
+// ─── Health user seed ───
+
+interface HealthPreferenceMapping {
+  slug: string;
+  extract: (p: HealthPatient) => unknown | null;
+  confidence: (p: HealthPatient) => number;
+}
+
+const HEALTH_PATH_MAPPINGS: HealthPreferenceMapping[] = [
+  { slug: 'identification.name',               extract: (p) => p.profile.identification.name,                          confidence: () => 1.0 },
+  { slug: 'identification.age',                extract: (p) => String(p.profile.identification.age),                   confidence: () => 1.0 },
+  { slug: 'identification.gender',             extract: (p) => p.profile.identification.gender,                        confidence: () => 1.0 },
+  { slug: 'profile.baseline_summary',          extract: (p) => p.profile.baseline_summary,                             confidence: () => 0.9 },
+  { slug: 'care_preferences.provider_style',   extract: (p) => p.profile.care_preferences.provider_style,             confidence: () => 0.9 },
+  { slug: 'care_preferences.care_setting_preference', extract: (p) => p.profile.care_preferences.care_setting_preference, confidence: () => 0.9 },
+  { slug: 'communication_needs.language_preference',  extract: (p) => p.profile.communication_needs.language_preference,  confidence: () => 1.0 },
+  { slug: 'vitals_and_measurements.baseline_metrics.height', extract: (p) => p.profile.vitals_and_measurements.baseline_metrics.height, confidence: () => 0.9 },
+  { slug: 'vitals_and_measurements.baseline_metrics.weight', extract: (p) => p.profile.vitals_and_measurements.baseline_metrics.weight, confidence: () => 0.9 },
+  { slug: 'behavior_and_lifestyle.activity_preferences',     extract: (p) => p.profile.behavior_and_lifestyle.activity_preferences,    confidence: () => 0.85 },
+  { slug: 'behavior_and_lifestyle.nutrition_preferences',    extract: (p) => p.profile.behavior_and_lifestyle.nutrition_preferences,   confidence: () => 0.85 },
+  { slug: 'communication_needs.health_literacy_preference',  extract: (p) => p.profile.communication_needs.health_literacy_preference, confidence: () => 0.9 },
+];
+
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+}
+
+async function seedHealthUsers(): Promise<User[]> {
+  const patientsPath = path.resolve(
+    __dirname,
+    '../../../synthetic_users/health/synthetic_patients.jsonl',
+  );
+  const patients: HealthPatient[] = JSON.parse(fs.readFileSync(patientsPath, 'utf-8'));
+  console.log(`\nFound ${patients.length} health patients to seed`);
+
+  // Build slug → definitionId map for health namespace
+  const healthDefs = await prisma.preferenceDefinition.findMany({
+    where: { namespace: SCHEMA_NS.HEALTH, archivedAt: null },
+    select: { id: true, slug: true },
+  });
+  const defIdBySlug = new Map(healthDefs.map((d) => [d.slug, d.id]));
+
+  const createdUsers: User[] = [];
+  const importedAt = new Date().toISOString();
+
+  for (let i = 0; i < patients.length; i++) {
+    const patient = patients[i];
+    const name = patient.profile.identification.name;
+    const spaceIndex = name.indexOf(' ');
+    const firstName = spaceIndex > 0 ? name.substring(0, spaceIndex) : name;
+    const lastName = spaceIndex > 0 ? name.substring(spaceIndex + 1) : `patient_${i}`;
+    const email = `${slugifyName(name)}_${i}@health.workshop.dev`;
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { firstName, lastName, schemaNamespace: SCHEMA_NS.HEALTH },
+      create: { email, firstName, lastName, schemaNamespace: SCHEMA_NS.HEALTH },
+    });
+    createdUsers.push(user);
+
+    let prefCount = 0;
+    for (const mapping of HEALTH_PATH_MAPPINGS) {
+      let value: unknown;
+      try {
+        value = mapping.extract(patient);
+      } catch {
+        continue;
+      }
+      if (value == null) continue;
+
+      const definitionId = defIdBySlug.get(mapping.slug);
+      if (!definitionId) {
+        console.warn(`  [seed] No health definition found for slug "${mapping.slug}", skipping`);
+        continue;
+      }
+
+      const confidence = mapping.confidence(patient);
+      const contextKey = 'GLOBAL';
+
+      const existing = await prisma.preference.findFirst({
+        where: { userId: user.userId, contextKey, definitionId, status: PreferenceStatus.ACTIVE },
+      });
+
+      if (existing) {
+        await prisma.preference.update({
+          where: { id: existing.id },
+          data: { value: value as any, confidence, sourceType: SourceType.IMPORTED, evidence: { source: 'synthetic_health_patient', importedAt } },
+        });
+      } else {
+        await prisma.preference.create({
+          data: {
+            userId: user.userId,
+            locationId: null,
+            contextKey,
+            definitionId,
+            value: value as any,
+            status: PreferenceStatus.ACTIVE,
+            sourceType: SourceType.IMPORTED,
+            confidence,
+            evidence: { source: 'synthetic_health_patient', importedAt },
+          },
+        });
+      }
+      prefCount++;
+    }
+
+    console.log(`  ${user.firstName} ${user.lastName} (${user.email}) - ${prefCount} preferences`);
+  }
+
+  return createdUsers;
+}
+
+// ─── Education user seed ───
+
+interface EducationPreferenceMapping {
+  slug: string;
+  extract: (s: EducationStudent) => unknown | null;
+  confidence: (s: EducationStudent) => number;
+}
+
+const EDUCATION_PATH_MAPPINGS: EducationPreferenceMapping[] = [
+  { slug: 'profile.preferred_name',           extract: (s) => s.student_profile.preferred_name,                          confidence: () => 1.0 },
+  { slug: 'demographics.age',                 extract: (s) => String(s.student_profile.age),                              confidence: () => 1.0 },
+  { slug: 'demographics.gender',              extract: (s) => s.student_profile.gender,                                   confidence: () => 1.0 },
+  { slug: 'education.current_level',          extract: (s) => s.student_profile.current_level,                            confidence: () => 1.0 },
+  { slug: 'institutions.current_school',      extract: (s) => s.student_profile.institutions.current_school,              confidence: () => 1.0 },
+  { slug: 'identity.identity_at_school',      extract: (s) => s.student_profile.identity_at_school,                       confidence: () => 0.9 },
+  { slug: 'learning_preferences.modalities',  extract: (s) => s.student_profile.learning_preferences.modalities,          confidence: () => 0.9 },
+  { slug: 'learning_preferences.pace',        extract: (s) => s.student_profile.learning_preferences.pace,                confidence: () => 0.9 },
+  { slug: 'study_habits.homework_routine',    extract: (s) => s.student_profile.study_habits.homework_routine,            confidence: () => 0.85 },
+  { slug: 'academic_snapshot.strengths.subjects', extract: (s) => s.student_profile.academic_snapshot.strengths.subjects, confidence: () => 0.9 },
+  { slug: 'goals_and_plans.short_term_goals', extract: (s) => s.student_profile.goals_and_plans.short_term_goals,         confidence: () => 0.9 },
+  { slug: 'interests.interests_and_extracurriculars', extract: (s) => s.student_profile.interests_and_extracurriculars,   confidence: () => 0.9 },
+];
+
+async function seedEducationUsers(): Promise<User[]> {
+  const studentsPath = path.resolve(
+    __dirname,
+    '../../../synthetic_users/education/synthetic_student.jsonl',
+  );
+  const students: EducationStudent[] = JSON.parse(fs.readFileSync(studentsPath, 'utf-8'));
+  console.log(`\nFound ${students.length} education students to seed`);
+
+  // Build slug → definitionId map for education namespace
+  const eduDefs = await prisma.preferenceDefinition.findMany({
+    where: { namespace: SCHEMA_NS.EDUCATION, archivedAt: null },
+    select: { id: true, slug: true },
+  });
+  const defIdBySlug = new Map(eduDefs.map((d) => [d.slug, d.id]));
+
+  const createdUsers: User[] = [];
+  const importedAt = new Date().toISOString();
+
+  for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+    const name = student.student_profile.preferred_name;
+    const firstName = name;
+    const lastName = `student_${i}`;
+    // Always use index to guarantee uniqueness (handles duplicate names like Sofia at 6 and 8)
+    const email = `${slugifyName(name)}_${i}@education.workshop.dev`;
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { firstName, lastName, schemaNamespace: SCHEMA_NS.EDUCATION },
+      create: { email, firstName, lastName, schemaNamespace: SCHEMA_NS.EDUCATION },
+    });
+    createdUsers.push(user);
+
+    let prefCount = 0;
+    for (const mapping of EDUCATION_PATH_MAPPINGS) {
+      let value: unknown;
+      try {
+        value = mapping.extract(student);
+      } catch {
+        continue;
+      }
+      if (value == null) continue;
+
+      const definitionId = defIdBySlug.get(mapping.slug);
+      if (!definitionId) {
+        console.warn(`  [seed] No education definition found for slug "${mapping.slug}", skipping`);
+        continue;
+      }
+
+      const confidence = mapping.confidence(student);
+      const contextKey = 'GLOBAL';
+
+      const existing = await prisma.preference.findFirst({
+        where: { userId: user.userId, contextKey, definitionId, status: PreferenceStatus.ACTIVE },
+      });
+
+      if (existing) {
+        await prisma.preference.update({
+          where: { id: existing.id },
+          data: { value: value as any, confidence, sourceType: SourceType.IMPORTED, evidence: { source: 'synthetic_education_student', importedAt } },
+        });
+      } else {
+        await prisma.preference.create({
+          data: {
+            userId: user.userId,
+            locationId: null,
+            contextKey,
+            definitionId,
+            value: value as any,
+            status: PreferenceStatus.ACTIVE,
+            sourceType: SourceType.IMPORTED,
+            confidence,
+            evidence: { source: 'synthetic_education_student', importedAt },
+          },
+        });
+      }
+      prefCount++;
+    }
+
+    console.log(`  ${user.firstName} (${user.email}) - ${prefCount} preferences`);
+  }
+
+  return createdUsers;
+}
+
+// ─── Workshop API keys ───
+
+async function createWorkshopGroups(
+  usermemUsers: User[],
+  healthUsers: User[],
+  eduUsers: User[],
+) {
   console.log('\nCreating workshop groups...');
 
-  const groups = [
-    { prefix: 'grp-a', name: 'Group A' },
-    { prefix: 'grp-b', name: 'Group B' },
+  const categories = [
+    { key: 'usermem',   users: usermemUsers },
+    { key: 'health',    users: healthUsers  },
+    { key: 'education', users: eduUsers     },
   ];
 
   console.log('\n' + '='.repeat(60));
   console.log('WORKSHOP CREDENTIALS');
   console.log('='.repeat(60));
 
-  for (const group of groups) {
-    const apiKey = generateApiKey(group.prefix);
-    const apiKeyRecord = await prisma.apiKey.create({
-      data: { keyHash: hashKey(apiKey), groupName: group.name },
-    });
-
-    // Add ALL users to this group
-    for (const user of users) {
-      await prisma.apiKeyUser.upsert({
-        where: {
-          apiKeyId_userId: {
-            apiKeyId: apiKeyRecord.id,
-            userId: user.userId,
-          },
-        },
-        update: {},
-        create: { apiKeyId: apiKeyRecord.id, userId: user.userId },
+  for (const grp of ['a', 'b']) {
+    for (const cat of categories) {
+      const groupName = `grp-${grp}-${cat.key}`;
+      const apiKey = generateApiKey(groupName);
+      const apiKeyRecord = await prisma.apiKey.create({
+        data: { keyHash: hashKey(apiKey), groupName },
       });
-    }
 
-    console.log(`\n--- ${group.name} ---`);
-    console.log(`API Key: ${apiKey}`);
-    console.log(`Users (${users.length}):`);
-    for (const user of users) {
-      console.log(
-        `  ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.userId}`,
-      );
+      for (const user of cat.users) {
+        await prisma.apiKeyUser.create({
+          data: { apiKeyId: apiKeyRecord.id, userId: user.userId },
+        });
+      }
+
+      console.log(`\n--- ${groupName} ---`);
+      console.log(`API Key: ${apiKey}`);
+      console.log(`Users (${cat.users.length}):`);
+      for (const user of cat.users) {
+        console.log(`  ${user.firstName} ${user.lastName} (${user.email}) - ID: ${user.userId}`);
+      }
     }
   }
 
@@ -531,13 +985,17 @@ async function main() {
   console.log('Seeding workshop database...\n');
 
   // 1. Seed preference definitions (must come before preference data)
-  await seedPreferenceDefinitions();
+  await seedPreferenceDefinitions();            // GLOBAL (~43 defs)
+  await seedHealthPreferenceDefinitions();      // health (46 defs)
+  await seedEducationPreferenceDefinitions();   // education_k16 (39 defs)
 
   // 2. Load and seed synthetic users with their preferences
-  const users = await seedSyntheticUsers();
+  const usermemUsers = await seedSyntheticUsers();
+  const healthUsers  = await seedHealthUsers();
+  const eduUsers     = await seedEducationUsers();
 
-  // 3. Create workshop groups (all users in both groups)
-  await createWorkshopGroups(users);
+  // 3. Create 6 workshop API keys (grp-a/b × usermem/health/education)
+  await createWorkshopGroups(usermemUsers, healthUsers, eduUsers);
 }
 
 if (require.main === module) {

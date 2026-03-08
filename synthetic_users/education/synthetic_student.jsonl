@@ -1,0 +1,1917 @@
+[
+    {
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Maya",
+    "age": 15,
+    "gender": "Female",
+    "race_ethnicity": "Latina (Mexican-American)",
+    "current_level": "10th grade (Sophomore)",
+    "institutions": {
+      "current_school": "Redwood Ridge High School (public)",
+      "past_schools": [
+        "Cedar Grove Middle School (6–8)",
+        "Oakview Elementary School (K–5)"
+      ]
+    },
+    "languages_at_school": [
+      "English",
+      "Spanish (heritage; conversational, improving academic writing)"
+    ],
+    "identity_at_school": "First-generation college hopeful (kept private; shares only with counselor/tutor if asked)",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "Biology",
+          "English / humanities discussions",
+          "Geometry (strong conceptual understanding)"
+        ],
+        "skills": [
+          "Strong verbal reasoning and class participation",
+          "Explains ideas clearly to peers",
+          "Creative writing and storytelling",
+          "Good at studying from examples (worked solutions)"
+        ]
+      },
+      "areas_for_growth": [
+        "Multi-step algebra problem setup (translating words → equations)",
+        "Test pacing (runs out of time on math assessments)",
+        "Organization of long-term assignments (starts late, then rushes)",
+        "Consistent homework follow-through when workload spikes"
+      ],
+      "current_courses": {
+        "term": "Spring (10th grade)",
+        "courses": [
+          {
+            "name": "English 10 (World Literature)",
+            "notes": "Strong in discussion; needs structure for analytic essays."
+          },
+          {
+            "name": "Algebra II",
+            "notes": "Understands concepts but misses points due to setup and speed."
+          },
+          {
+            "name": "Biology (Honors)",
+            "notes": "High interest; excels in labs and conceptual questions."
+          },
+          {
+            "name": "World History",
+            "notes": "Does well with narratives; benefits from timelines/graphic organizers."
+          },
+          {
+            "name": "Spanish II",
+            "notes": "Comfortable speaking; wants help with formal writing/grammar."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Visual (diagrams, color-coded notes)",
+        "Hands-on (practice problems, labs, demos)",
+        "Reading (short chunks; guided questions help)"
+      ],
+      "pace": "Medium, with periodic slow-down for error-checking on math",
+      "group_vs_solo": "Solo for initial learning; small group for review/quizzing"
+    },
+    "study_habits": {
+      "homework_routine": "Works best right after a snack break; struggles after 9pm",
+      "organization_style": "Digital calendar + paper binder; tends to lose loose worksheets",
+      "attention_supports": [
+        "25/5 timer cycles (Pomodoro)",
+        "Chunking assignments into 10–15 minute steps",
+        "Checklist at start/end of session",
+        "‘Show your setup’ reminders for math (write equation before solving)"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Raise Algebra II from B-/C+ range to solid B by next grading period",
+        "Finish English essays at least 2 days before due date using an outline",
+        "Improve biology test scores via spaced review (2 short sessions/week)"
+      ],
+      "long_term_goals": [
+        "Take AP Biology or AP Environmental Science in 11th grade",
+        "Explore college majors: public health, environmental science, or psychology",
+        "Build a portfolio of writing + science projects for applications"
+      ],
+      "milestones": [
+        "Algebra II midterm (late March)",
+        "Biology genetics unit test (early April)",
+        "English literary analysis essay (mid April)",
+        "Sophomore course selection for next year (April)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Robotics club (design + documentation role)",
+      "School newspaper (feature writing)",
+      "Volunteer: weekend beach/park cleanups (monthly)",
+      "Enjoys podcasts about science + true stories"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "504-style supports for attention and test anxiety (high-level only)",
+        "classroom_accommodations": [
+          "Preferential seating (reduced distractions)",
+          "Written directions + verbal directions",
+          "Teacher check-in for multi-step tasks (start-of-task confirmation)"
+        ],
+        "testing_accommodations": [
+          "Time-and-a-half on major math tests when available",
+          "Reduced-distraction testing environment"
+        ],
+        "accessibility_needs": [
+          "None specific beyond distraction reduction"
+        ],
+        "assistive_technology": [
+          "Digital planner (Google Calendar) with reminders",
+          "Scan/capture worksheets to keep a consistent folder"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "Mostly A/B range; Algebra II fluctuates B-/C+ depending on unit",
+      "standardized_tests": [
+        {
+          "test_name": "PSAT 10 (practice)",
+          "date": "October (10th grade)",
+          "score_summary": "Reading stronger than math; timing was a challenge"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Engaged and thoughtful in class discussion; strong curiosity in science.",
+        "Needs to show work consistently in math and double-check setup.",
+        "Writing is compelling; essays improve with clearer thesis + outline."
+      ],
+      "tutor_notes_summary": [
+        "Most errors are translation/setup, not computation.",
+        "Responds well to worked-example → similar-problem progression.",
+        "Confidence improves when she uses a checklist and catches one mistake early."
+      ],
+      "portfolio_highlights": [
+        "Robotics: wrote a build log + troubleshooting guide for new members (summary)",
+        "Biology: designed a small experiment on plant growth variables (summary)",
+        "English: short story published in school magazine (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Tue/Thu 5:30–6:30pm",
+          "Sun 3:00–4:00pm"
+        ],
+        "notes": "Avoids late evenings; prefers sessions earlier to finish homework after."
+      },
+      "school_calendar_constraints": [
+        "Exam week: last week of March",
+        "Spring break: first week of April"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Text reminders for session goals (day-of)",
+          "Shared checklist/notes doc after each session"
+        ],
+        "with_guardians": [
+          "Monthly progress email summary (high-level), if permitted"
+        ]
+      }
+    }
+  }
+},
+{
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Ethan",
+    "age": 17,
+    "gender": "Male",
+    "race_ethnicity": "White (Irish-American)",
+    "current_level": "12th grade (Senior)",
+    "institutions": {
+      "current_school": "Northbridge STEM Academy (public magnet)",
+      "past_schools": [
+        "Northbridge Middle School (6–8)",
+        "Lakeview Elementary School (K–5)"
+      ]
+    },
+    "languages_at_school": [
+      "English",
+      "French (Level III)"
+    ],
+    "identity_at_school": "Interested in engineering pathways; comfortable sharing academic goals with teachers",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "Physics (AP)",
+          "Computer Science",
+          "Pre-Calculus"
+        ],
+        "skills": [
+          "Logical reasoning and debugging",
+          "Breaks down complex problems into steps",
+          "Strong independent learner",
+          "Comfortable presenting technical ideas"
+        ]
+      },
+      "areas_for_growth": [
+        "Analytical writing (thesis clarity and evidence integration)",
+        "Procrastination on long research papers",
+        "Participating in literature discussions",
+        "Balancing extracurricular workload during application season"
+      ],
+      "current_courses": {
+        "term": "Fall (12th grade)",
+        "courses": [
+          {
+            "name": "AP Physics C",
+            "notes": "Excels in mechanics; needs reinforcement in electricity & magnetism."
+          },
+          {
+            "name": "AP Calculus AB",
+            "notes": "Strong derivative skills; working on integration applications."
+          },
+          {
+            "name": "AP Computer Science A",
+            "notes": "High performance; interested in pursuing CS major."
+          },
+          {
+            "name": "English 12 (Contemporary Literature)",
+            "notes": "Needs support with essay organization and deeper analysis."
+          },
+          {
+            "name": "Government & Economics",
+            "notes": "Solid understanding; benefits from structured notes."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Hands-on (coding, experiments)",
+        "Visual (graphs, simulations)",
+        "Problem-based learning"
+      ],
+      "pace": "Fast conceptual grasp; needs reminders to slow down and check work",
+      "group_vs_solo": "Prefers solo work; collaborates well in structured team roles"
+    },
+    "study_habits": {
+      "homework_routine": "Works late evenings; most productive 8–11pm",
+      "organization_style": "Primarily digital (Notion + Google Drive); rarely uses paper",
+      "attention_supports": [
+        "Task batching (grouping similar assignments)",
+        "Deadline countdown reminders",
+        "Weekly planning session every Sunday night"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Score 4 or 5 on AP Physics and AP Calculus exams",
+        "Submit all college applications by early action deadlines",
+        "Improve English essay grades from B to A- range"
+      ],
+      "long_term_goals": [
+        "Major in Mechanical Engineering or Computer Engineering",
+        "Participate in undergraduate robotics research",
+        "Pursue internships in renewable energy or aerospace"
+      ],
+      "milestones": [
+        "SAT retake (October)",
+        "Early Action college deadlines (November 1)",
+        "AP exams (May)",
+        "Senior capstone engineering project presentation (April)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Robotics Team Captain",
+      "Varsity Cross Country",
+      "Volunteer coding tutor for middle school students",
+      "Builds small Arduino and Raspberry Pi projects"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "No formal plan; mild test anxiety during high-stakes exams",
+        "classroom_accommodations": [
+          "Occasional extended deadline for major essays (when requested)"
+        ],
+        "testing_accommodations": [
+          "None formally assigned"
+        ],
+        "accessibility_needs": [
+          "None"
+        ],
+        "assistive_technology": [
+          "Grammar-check software for essays",
+          "Coding IDE tools with debugging plugins"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "Mostly A range in STEM; B/B+ range in humanities",
+      "standardized_tests": [
+        {
+          "test_name": "SAT",
+          "date": "Spring (11th grade)",
+          "score_summary": "Strong math score; verbal slightly lower but competitive"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Highly capable in STEM subjects; demonstrates leadership in robotics.",
+        "Writing shows good ideas but needs deeper textual analysis.",
+        "Should engage more actively in class discussions."
+      ],
+      "tutor_notes_summary": [
+        "Performs best when given structured essay outlines.",
+        "Needs accountability check-ins for long-term assignments.",
+        "Thrives on challenge problems in calculus and physics."
+      ],
+      "portfolio_highlights": [
+        "Designed and programmed autonomous navigation system for robotics competition (summary)",
+        "Senior capstone: prototype for low-cost wind turbine blade optimization (summary)",
+        "Personal GitHub repository with 10+ coding projects (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Mon/Wed 7:00–8:00pm",
+          "Saturday 10:00–11:00am"
+        ],
+        "notes": "Prefers virtual sessions due to busy extracurricular schedule."
+      },
+      "school_calendar_constraints": [
+        "College application peak season (Oct–Nov)",
+        "AP exam period (May)"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Email summaries after sessions",
+          "Shared Google Doc for essay drafts"
+        ],
+        "with_guardians": [
+          "Updates only upon request"
+        ]
+      }
+    }
+  }
+},
+  {
+    "namespace": "education_k16",
+    "student_profile": {
+      "preferred_name": "Aisha",
+      "age": 13,
+      "gender": "Female",
+      "race_ethnicity": "Black (Nigerian-American)",
+      "current_level": "8th grade",
+      "institutions": {
+        "current_school": "Maplewood Middle School (public)",
+        "past_schools": [
+          "Maplewood Elementary School (K–5)"
+        ]
+      },
+      "languages_at_school": [
+        "English"
+      ],
+      "identity_at_school": "New to the district this year; quiet in large groups but opens up 1:1",
+      "academic_snapshot": {
+        "strengths": {
+          "subjects": [
+            "Math (Pre-Algebra/Algebra readiness)",
+            "Science",
+            "Art"
+          ],
+          "skills": [
+            "Fast mental math and pattern recognition",
+            "Learns well from examples",
+            "Strong visual-spatial reasoning",
+            "Persists on challenging problems when supported"
+          ]
+        },
+        "areas_for_growth": [
+          "Reading comprehension with dense nonfiction texts",
+          "Writing organization (topic sentences, transitions)",
+          "Speaking up to ask for help in class",
+          "Test anxiety (second-guesses correct answers)"
+        ],
+        "current_courses": {
+          "term": "Spring (8th grade)",
+          "courses": [
+            {
+              "name": "English Language Arts 8",
+              "notes": "Better with short stories than informational articles; benefits from annotation prompts."
+            },
+            {
+              "name": "Math 8 (Algebra readiness)",
+              "notes": "Strong skills; needs practice explaining reasoning in words."
+            },
+            {
+              "name": "Science 8",
+              "notes": "High interest; excels in labs and diagrams."
+            },
+            {
+              "name": "US History (Middle School)",
+              "notes": "Remembers stories well; needs help with timelines and cause/effect writing."
+            },
+            {
+              "name": "Art (Elective)",
+              "notes": "A confidence area; enjoys projects and critiques."
+            }
+          ]
+        }
+      },
+      "learning_preferences": {
+        "modalities": [
+          "Visual (charts, diagrams, mind maps)",
+          "Hands-on (projects, experiments)",
+          "Reading (works best with annotation guidance)"
+        ],
+        "pace": "Medium; needs extra time when reading long passages",
+        "group_vs_solo": "Prefers solo/1:1; participates more in small groups than whole class"
+      },
+      "study_habits": {
+        "homework_routine": "Starts after dinner; benefits from a short warm-up task",
+        "organization_style": "Color-coded folders; sometimes forgets to turn in completed work",
+        "attention_supports": [
+          "Chunking reading into sections with check questions",
+          "Timer for writing sprints (10 minutes)",
+          "End-of-day backpack checklist"
+        ]
+      },
+      "goals_and_plans": {
+        "short_term_goals": [
+          "Move ELA grade from B- to B+/A- by improving nonfiction reading strategies",
+          "Write 5-paragraph essays with a clear thesis and transitions",
+          "Feel calmer during tests using a consistent routine"
+        ],
+        "long_term_goals": [
+          "Place into Algebra I in 9th grade",
+          "Join a STEM or art club in high school",
+          "Explore careers that combine creativity and science (design/architecture/engineering)"
+        ],
+        "milestones": [
+          "State ELA assessment (April)",
+          "Math placement test for high school (May)",
+          "End-of-year science project presentation (June)"
+        ]
+      },
+      "interests_and_extracurriculars": [
+        "Sketching and digital art",
+        "Science fair (wants to participate next year)",
+        "Library volunteer helper (occasionally)",
+        "Enjoys building small craft kits at home"
+      ],
+      "support_needs": {
+        "accommodations": {
+          "iep_504_summary": "No formal plan; informal supports for anxiety and organization",
+          "classroom_accommodations": [
+            "Check for understanding after directions",
+            "Preferential seating near instruction"
+          ],
+          "testing_accommodations": [
+            "Small-group testing when available"
+          ],
+          "accessibility_needs": [
+            "None"
+          ],
+          "assistive_technology": [
+            "Text-to-speech for long nonfiction passages (as needed)",
+            "Graphic organizer templates for essays"
+          ]
+        }
+      },
+      "assessments_and_progress": {
+        "grades_summary": "A/B range; strongest in math/science, slightly lower in ELA writing",
+        "standardized_tests": [
+          {
+            "test_name": "District Benchmark (ELA)",
+            "date": "Winter (8th grade)",
+            "score_summary": "Above average in vocabulary; slower on long-passage questions"
+          }
+        ],
+        "teacher_feedback_summary": [
+          "Strong problem-solver; benefits from explaining steps out loud.",
+          "Writing improves with planning and sentence starters.",
+          "Needs confidence to ask questions when confused."
+        ],
+        "tutor_notes_summary": [
+          "Best gains come from structured annotation + summary prompts.",
+          "Anxiety decreases when she practices with timed mini-quizzes.",
+          "Turning in work improves with a simple submission checklist."
+        ],
+        "portfolio_highlights": [
+          "Science lab report with clear diagrams and labeled graphs (summary)",
+          "Art portfolio: 6-piece themed collection on 'community' (summary)",
+          "History project poster with timeline and primary source captions (summary)"
+        ]
+      },
+      "logistics": {
+        "schedule_preferences": {
+          "best_tutoring_times": [
+            "Tue 4:30–5:30pm",
+            "Thu 4:30–5:30pm",
+            "Sun 2:00–3:00pm"
+          ],
+          "notes": "Shorter sessions (45–60 minutes) work best."
+        },
+        "school_calendar_constraints": [
+          "Testing window (April)",
+          "Family travel weekend (mid May)"
+        ],
+        "communication_preferences": {
+          "with_student": [
+            "Short weekly goals checklist",
+            "Gentle reminders before major deadlines"
+          ],
+          "with_guardians": [
+            "Biweekly text update (high-level), if permitted"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "namespace": "education_k16",
+    "student_profile": {
+      "preferred_name": "Diego",
+      "age": 16,
+      "gender": "Male",
+      "race_ethnicity": "Latino (Puerto Rican)",
+      "current_level": "11th grade (Junior)",
+      "institutions": {
+        "current_school": "Bayview High School (public)",
+        "past_schools": [
+          "Bayview Middle School (6–8)",
+          "Harborview Elementary School (K–5)"
+        ]
+      },
+      "languages_at_school": [
+        "English",
+        "Spanish (heritage; strong speaking, developing academic reading)"
+      ],
+      "identity_at_school": "Works part-time after school; values practical learning and career pathways",
+      "academic_snapshot": {
+        "strengths": {
+          "subjects": [
+            "Chemistry",
+            "Statistics",
+            "Auto Tech / Engineering CTE"
+          ],
+          "skills": [
+            "Hands-on problem solving",
+            "Learns quickly through demonstrations",
+            "Strong teamwork and leadership in projects",
+            "Explains processes clearly when speaking"
+          ]
+        },
+        "areas_for_growth": [
+          "Reading-heavy assignments (history/English)",
+          "Long-form writing and citations",
+          "Keeping up when multiple deadlines collide",
+          "Test strategies for AP-style multiple choice"
+        ],
+        "current_courses": {
+          "term": "Spring (11th grade)",
+          "courses": [
+            {
+              "name": "Chemistry",
+              "notes": "Strong in labs; needs help with equilibrium/stoichiometry word problems."
+            },
+            {
+              "name": "Statistics",
+              "notes": "Good intuition; benefits from practice explaining interpretations."
+            },
+            {
+              "name": "English 11",
+              "notes": "Struggles with long readings; does better with guiding questions."
+            },
+            {
+              "name": "US History",
+              "notes": "Remembers key events; writing evidence-based paragraphs is hardest."
+            },
+            {
+              "name": "CTE: Engineering Design / Auto Tech",
+              "notes": "Excels; enjoys building and troubleshooting."
+            }
+          ]
+        }
+      },
+      "learning_preferences": {
+        "modalities": [
+          "Hands-on (projects, labs)",
+          "Visual (worked examples, diagrams)",
+          "Auditory (talk-through explanations)"
+        ],
+        "pace": "Medium-fast when concepts feel relevant; slows down on abstract reading tasks",
+        "group_vs_solo": "Team-oriented; prefers paired work for accountability"
+      },
+      "study_habits": {
+        "homework_routine": "Does homework in short bursts between work shifts; weekends for catch-up",
+        "organization_style": "Phone reminders + a single notebook; papers get messy",
+        "attention_supports": [
+          "Weekly planning (choose 3 priorities)",
+          "Chunking into 20-minute blocks",
+          "‘Two-minute start’ rule to beat procrastination"
+        ]
+      },
+      "goals_and_plans": {
+        "short_term_goals": [
+          "Raise English 11 from C+/B- to solid B by improving reading routines",
+          "Improve chemistry test scores via practice sets twice a week",
+          "Finish assignments on time despite work schedule"
+        ],
+        "long_term_goals": [
+          "Explore community college + transfer options in mechanical engineering",
+          "Build a strong CTE portfolio for internships",
+          "Prepare for FAFSA/financial aid planning with family"
+        ],
+        "milestones": [
+          "Junior-year research paper (English) due (late March)",
+          "Chemistry final project (April)",
+          "SAT/ACT attempt (May)",
+          "Summer internship applications (April–May)"
+        ]
+      },
+      "interests_and_extracurriculars": [
+        "Part-time job (restaurant) ~15 hrs/week",
+        "After-school auto club",
+        "Basketball (recreational)",
+        "Fixing bikes/scooters for friends"
+      ],
+      "support_needs": {
+        "accommodations": {
+          "iep_504_summary": "No formal plan; time-management support recommended",
+          "classroom_accommodations": [
+            "Advance notice for major assignments",
+            "Access to outlines/guiding questions for readings"
+          ],
+          "testing_accommodations": [
+            "None formally assigned"
+          ],
+          "accessibility_needs": [
+            "None"
+          ],
+          "assistive_technology": [
+            "Audiobook/text-to-speech for long readings (as needed)",
+            "Citation tool templates for research writing"
+          ]
+        }
+      },
+      "assessments_and_progress": {
+        "grades_summary": "B range in hands-on/STEM; C+/B- in reading/writing heavy classes",
+        "standardized_tests": [
+          {
+            "test_name": "PSAT/NMSQT",
+            "date": "October (11th grade)",
+            "score_summary": "Math stronger than reading; time pressure noted"
+          }
+        ],
+        "teacher_feedback_summary": [
+          "Excellent in labs and collaborative projects.",
+          "Needs more consistent reading practice and planning for essays.",
+          "Shows growth when given clear step-by-step expectations."
+        ],
+        "tutor_notes_summary": [
+          "Biggest wins come from routine: 15 minutes of reading + notes daily.",
+          "Essay quality improves with sentence frames and paragraph templates.",
+          "When tired after work, he benefits from micro-tasks rather than long sessions."
+        ],
+        "portfolio_highlights": [
+          "CTE: designed a small engine efficiency improvement plan (summary)",
+          "Chemistry: lab notebook with strong observations and visuals (summary)",
+          "Statistics: short report interpreting survey data (summary)"
+        ]
+      },
+      "logistics": {
+        "schedule_preferences": {
+          "best_tutoring_times": [
+            "Mon 6:30–7:30pm",
+            "Wed 6:30–7:30pm",
+            "Sat 11:00am–12:00pm"
+          ],
+          "notes": "Schedule varies due to work; prefers flexible rescheduling."
+        },
+        "school_calendar_constraints": [
+          "Work peak hours (Fri–Sun evenings)",
+          "Exam weeks (late March and early June)"
+        ],
+        "communication_preferences": {
+          "with_student": [
+            "Text reminders with specific next step",
+            "Quick voice-note recap after sessions"
+          ],
+          "with_guardians": [
+            "Monthly update if needed; bilingual (English/Spanish) preferred"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "namespace": "education_k16",
+    "student_profile": {
+      "preferred_name": "Mei",
+      "age": 19,
+      "gender": "Female",
+      "race_ethnicity": "Asian (Chinese-American)",
+      "current_level": "1st year college (Freshman)",
+      "institutions": {
+        "current_school": "State University (large public)",
+        "past_schools": [
+          "Riverton High School (public)"
+        ]
+      },
+      "languages_at_school": [
+        "English",
+        "Mandarin (heritage; fluent speaking, reads well)"
+      ],
+      "identity_at_school": "First-year commuter student; balancing family responsibilities with coursework",
+      "academic_snapshot": {
+        "strengths": {
+          "subjects": [
+            "Calculus I",
+            "General Chemistry",
+            "Introductory Programming"
+          ],
+          "skills": [
+            "Diligent note-taking and review",
+            "Strong procedural math skills",
+            "Learns well from structured lectures",
+            "High persistence and self-discipline"
+          ]
+        },
+        "areas_for_growth": [
+          "Office hours and help-seeking (hesitates to ask questions)",
+          "Time management across multiple classes without weekly quizzes",
+          "Conceptual understanding in chemistry (beyond memorizing steps)",
+          "Stress management during midterms"
+        ],
+        "current_courses": {
+          "term": "Spring (Year 1)",
+          "courses": [
+            {
+              "name": "Calculus I",
+              "notes": "Strong practice performance; needs help on conceptual word problems."
+            },
+            {
+              "name": "General Chemistry I",
+              "notes": "Works hard; benefits from concept maps and mixed practice sets."
+            },
+            {
+              "name": "Intro to Programming (Python)",
+              "notes": "Understands basics; debugging strategies still developing."
+            },
+            {
+              "name": "College Writing",
+              "notes": "Clear writing; needs more confidence forming strong arguments and citing sources."
+            },
+            {
+              "name": "First-Year Seminar",
+              "notes": "Enjoys discussions but is quiet; participates more in written reflections."
+            }
+          ]
+        }
+      },
+      "learning_preferences": {
+        "modalities": [
+          "Reading (textbook + guided notes)",
+          "Visual (concept maps, flowcharts)",
+          "Hands-on (practice sets, coding exercises)"
+        ],
+        "pace": "Steady; prefers predictable weekly study blocks",
+        "group_vs_solo": "Solo first, then small study group for review before exams"
+      },
+      "study_habits": {
+        "homework_routine": "Early morning study (7–9am) before commute; weekend longer blocks",
+        "organization_style": "Planner + digital folders; very organized but over-plans and under-rests",
+        "attention_supports": [
+          "Spaced repetition for formulas/vocab",
+          "Weekly review checklist per course",
+          "Exam countdown schedule (2-week ramp)"
+        ]
+      },
+      "goals_and_plans": {
+        "short_term_goals": [
+          "Build consistent office-hours habit (1 visit/week)",
+          "Raise chemistry exam scores from B- to B+/A- via concept-focused review",
+          "Develop a debugging checklist for programming assignments"
+        ],
+        "long_term_goals": [
+          "Explore majors: chemical engineering, data science, or environmental engineering",
+          "Join a research lab by sophomore year",
+          "Apply for a summer research program or internship"
+        ],
+        "milestones": [
+          "Chemistry midterm (March)",
+          "Calculus common final (May)",
+          "Programming project demo (April)",
+          "Summer program applications (February–March)"
+        ]
+      },
+      "interests_and_extracurriculars": [
+        "Sustainability club (new member)",
+        "Peer-led study sessions (attends occasionally)",
+        "Enjoys cooking and trying new recipes",
+        "Watches science YouTube channels for learning"
+      ],
+      "support_needs": {
+        "accommodations": {
+          "iep_504_summary": "No formal plan; reports high stress during exam periods",
+          "classroom_accommodations": [
+            "None formally assigned"
+          ],
+          "testing_accommodations": [
+            "None formally assigned"
+          ],
+          "accessibility_needs": [
+            "None"
+          ],
+          "assistive_technology": [
+            "Digital flashcards (spaced repetition)",
+            "Note-taking app for lecture recordings (where permitted)"
+          ]
+        }
+      },
+      "assessments_and_progress": {
+        "grades_summary": "A-/B+ range overall; chemistry is the lowest course currently",
+        "standardized_tests": [
+          {
+            "test_name": "AP Calculus AB",
+            "date": "May (12th grade)",
+            "score_summary": "Earned credit for Calculus I placement consideration"
+          }
+        ],
+        "teacher_feedback_summary": [
+          "Hard-working and prepared; should ask more questions in class.",
+          "Strong math foundation; can improve conceptual transfer in chemistry.",
+          "Writing is clear; arguments strengthen with more synthesis of sources."
+        ],
+        "tutor_notes_summary": [
+          "Big gains when she mixes problem types (interleaving) instead of batching.",
+          "Stress drops when she practices under light time constraints weekly.",
+          "Debugging improves with a consistent 'read error → minimal repro → fix' routine."
+        ],
+        "portfolio_highlights": [
+          "Programming: built a small study-tracker app in Python (summary)",
+          "Chemistry: lab report with improved data interpretation over the term (summary)",
+          "Writing: op-ed style essay on local sustainability policy (summary)"
+        ]
+      },
+      "logistics": {
+        "schedule_preferences": {
+          "best_tutoring_times": [
+            "Tue 7:30–8:30pm",
+            "Thu 7:30–8:30pm",
+            "Sun 9:00–10:00am"
+          ],
+          "notes": "Prefers remote sessions; commute makes daytime times difficult."
+        },
+        "school_calendar_constraints": [
+          "Midterms (March)",
+          "Finals (May)"
+        ],
+        "communication_preferences": {
+          "with_student": [
+            "Shared weekly plan in a doc",
+            "Session recap with 3 concrete action items"
+          ],
+          "with_guardians": [
+            "Not applicable (college student); no guardian communication by default"
+          ]
+        }
+      }
+    }
+  },
+  
+  {
+    "namespace": "education_k16",
+    "student_profile": {
+      "preferred_name": "Liam",
+      "age": 17,
+      "gender": "Male",
+      "race_ethnicity": "Asian (Korean-American)",
+      "current_level": "11th grade (Junior)",
+      "institutions": {
+        "current_school": "Westlake College Preparatory (public charter)",
+        "past_schools": [
+          "Westlake Middle School (6–8)",
+          "Greenfield Elementary School (K–5)"
+        ]
+      },
+      "languages_at_school": [
+        "English",
+        "Korean (heritage)"
+      ],
+      "identity_at_school": "High-achieving student in competitive peer environment; self-imposed pressure to attend a top-tier university",
+      "academic_snapshot": {
+        "strengths": {
+          "subjects": [
+            "AP Calculus BC",
+            "AP Chemistry",
+            "AP Computer Science"
+          ],
+          "skills": [
+            "Strong analytical reasoning",
+            "Works efficiently under structure",
+            "High academic stamina",
+            "Detail-oriented note-taking"
+          ]
+        },
+        "areas_for_growth": [
+          "Perfectionism leading to slow completion",
+          "Difficulty sleeping during exam weeks",
+          "Fear of making mistakes publicly",
+          "Overcommitting to advanced coursework"
+        ],
+        "current_courses": {
+          "term": "Spring (11th grade)",
+          "courses": [
+            {
+              "name": "AP Calculus BC",
+              "notes": "Performs at A level; redoes assignments excessively to perfect solutions."
+            },
+            {
+              "name": "AP Chemistry",
+              "notes": "Strong conceptual grasp; stress spikes before tests."
+            },
+            {
+              "name": "AP English Language",
+              "notes": "Struggles with timed essays due to over-editing."
+            },
+            {
+              "name": "AP US History",
+              "notes": "Understands content; anxiety during DBQ writing."
+            },
+            {
+              "name": "AP Computer Science A",
+              "notes": "Technically strong; self-critical about minor bugs."
+            }
+          ]
+        }
+      },
+      "learning_preferences": {
+        "modalities": [
+          "Structured lectures",
+          "Practice exams under timed conditions",
+          "Detailed rubrics and grading breakdowns"
+        ],
+        "pace": "Conceptually fast; slows down due to perfectionism",
+        "group_vs_solo": "Prefers solo; avoids group work due to fear of underperforming"
+      },
+      "study_habits": {
+        "homework_routine": "Studies 3–4 hours nightly; often past midnight",
+        "organization_style": "Highly organized digital folders and spreadsheets tracking grades",
+        "attention_supports": [
+          "Exam simulation practice",
+          "Scheduled break alarms",
+          "Sleep reminder notifications (often ignored)"
+        ]
+      },
+      "goals_and_plans": {
+        "short_term_goals": [
+          "Maintain 4.0 GPA",
+          "Score 5 on at least 4 AP exams",
+          "Qualify for national STEM competitions"
+        ],
+        "long_term_goals": [
+          "Attend a top 10 engineering university",
+          "Pursue research in AI or biomedical engineering",
+          "Secure prestigious internships"
+        ],
+        "milestones": [
+          "AP exams (May)",
+          "SAT retake (March)",
+          "Research summer program applications (February)",
+          "Junior year GPA review (June)"
+        ]
+      },
+      "interests_and_extracurriculars": [
+        "Math competition team",
+        "Robotics club",
+        "Research internship (unpaid)",
+        "Piano (competitive level)"
+      ],
+      "support_needs": {
+        "accommodations": {
+          "iep_504_summary": "No formal plan; experiencing elevated academic stress",
+          "classroom_accommodations": [
+            "None formally assigned"
+          ],
+          "testing_accommodations": [
+            "None formally assigned"
+          ],
+          "accessibility_needs": [
+            "None"
+          ],
+          "assistive_technology": [
+            "Productivity tracking apps",
+            "Meditation app (inconsistently used)"
+          ]
+        }
+      },
+      "assessments_and_progress": {
+        "grades_summary": "Straight A/A+ range",
+        "standardized_tests": [
+          {
+            "test_name": "SAT",
+            "date": "Fall (11th grade)",
+            "score_summary": "High composite; aiming to improve by 30+ points"
+          }
+        ],
+        "teacher_feedback_summary": [
+          "Exceptionally capable; needs to trust his preparation.",
+          "Participation limited by fear of imperfect answers."
+        ],
+        "tutor_notes_summary": [
+          "Biggest growth needed in stress management, not content mastery.",
+          "Benefits from 'good enough' completion rules.",
+          "Performance stable when sleep exceeds 7 hours."
+        ],
+        "portfolio_highlights": [
+          "Science fair research project (regional finalist)",
+          "Robotics autonomous navigation code (summary)",
+          "Competition math awards (summary)"
+        ]
+      },
+      "logistics": {
+        "schedule_preferences": {
+          "best_tutoring_times": [
+            "Sun 4:00–5:00pm"
+          ],
+          "notes": "Weekdays overloaded; weekend only"
+        },
+        "school_calendar_constraints": [
+          "Competition season (Jan–March)",
+          "AP exam period (May)"
+        ],
+        "communication_preferences": {
+          "with_student": [
+            "Detailed performance breakdowns",
+            "Structured study plans"
+          ],
+          "with_guardians": [
+            "Monthly academic progress summary"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "namespace": "education_k16",
+    "student_profile": {
+      "preferred_name": "Sofia",
+      "age": 16,
+      "gender": "Female",
+      "race_ethnicity": "Hispanic (Colombian-American)",
+      "current_level": "10th grade (Sophomore)",
+      "institutions": {
+        "current_school": "Central Valley High School (public)",
+        "past_schools": [
+          "Central Valley Middle School (6–8)"
+        ]
+      },
+      "languages_at_school": [
+        "English",
+        "Spanish (fluent)"
+      ],
+      "identity_at_school": "Primary caregiver support at home for younger sibling; balancing family responsibilities",
+      "academic_snapshot": {
+        "strengths": {
+          "subjects": [
+            "Biology",
+            "Psychology elective",
+            "Art"
+          ],
+          "skills": [
+            "Empathetic communicator",
+            "Strong memorization of factual material",
+            "Creative presentation skills"
+          ]
+        },
+        "areas_for_growth": [
+          "Time management due to home responsibilities",
+          "Chronic fatigue from limited sleep",
+          "Test anxiety (physical symptoms before exams)",
+          "Avoidance of difficult math assignments"
+        ],
+        "current_courses": {
+          "term": "Spring (10th grade)",
+          "courses": [
+            {
+              "name": "Biology",
+              "notes": "High interest; performs well on quizzes."
+            },
+            {
+              "name": "Geometry",
+              "notes": "Struggles with multi-step proofs; anxiety before tests."
+            },
+            {
+              "name": "English 10",
+              "notes": "Strong creative writing; struggles with timed essays."
+            },
+            {
+              "name": "World History",
+              "notes": "Understands concepts but misses homework deadlines."
+            },
+            {
+              "name": "Intro to Psychology",
+              "notes": "Very engaged; considering mental health career."
+            }
+          ]
+        }
+      },
+      "learning_preferences": {
+        "modalities": [
+          "Visual notes",
+          "Guided examples",
+          "Short structured study blocks"
+        ],
+        "pace": "Needs slower pacing when tired",
+        "group_vs_solo": "Prefers supportive small group; avoids competitive settings"
+      },
+      "study_habits": {
+        "homework_routine": "Completes homework late after caring for sibling",
+        "organization_style": "Keeps planner but often falls behind during stressful weeks",
+        "attention_supports": [
+          "Short 15-minute focused blocks",
+          "Weekly catch-up session",
+          "Pre-test calming routine"
+        ]
+      },
+      "goals_and_plans": {
+        "short_term_goals": [
+          "Raise Geometry grade from C to B-",
+          "Reduce test anxiety using breathing routines",
+          "Submit assignments on time for one full month"
+        ],
+        "long_term_goals": [
+          "Explore psychology or nursing career pathways",
+          "Be first in family to attend college",
+          "Apply for scholarships"
+        ],
+        "milestones": [
+          "Geometry midterm (March)",
+          "State Biology assessment (April)",
+          "Course selection for 11th grade"
+        ]
+      },
+      "interests_and_extracurriculars": [
+        "Art club",
+        "Community volunteering (church events)",
+        "Interested in peer mentoring programs"
+      ],
+      "support_needs": {
+        "accommodations": {
+          "iep_504_summary": "Considering 504 plan for anxiety (under discussion)",
+          "classroom_accommodations": [
+            "Extended time on major exams (when approved)",
+            "Flexible deadline communication during family emergencies"
+          ],
+          "testing_accommodations": [
+            "Reduced-distraction testing environment (requested)"
+          ],
+          "accessibility_needs": [
+            "Quiet testing space"
+          ],
+          "assistive_technology": [
+            "Reminder apps",
+            "Guided breathing audio before tests"
+          ]
+        }
+      },
+      "assessments_and_progress": {
+        "grades_summary": "B range overall; Geometry lowest course",
+        "standardized_tests": [
+          {
+            "test_name": "PSAT 10",
+            "date": "Fall (10th grade)",
+            "score_summary": "Average composite; math lower than reading"
+          }
+        ],
+        "teacher_feedback_summary": [
+          "Caring and hardworking; fatigue impacts consistency.",
+          "Math confidence needs rebuilding."
+        ],
+        "tutor_notes_summary": [
+          "Performance drops sharply when sleep <6 hours.",
+          "Anxiety management improves test scores significantly.",
+          "Needs structured weekly planning to prevent overwhelm."
+        ],
+        "portfolio_highlights": [
+          "Biology presentation on genetics (summary)",
+          "Art exhibition participation (summary)",
+          "Psychology reflection essay (summary)"
+        ]
+      },
+      "logistics": {
+        "schedule_preferences": {
+          "best_tutoring_times": [
+            "Sat 1:00–2:00pm",
+            "Sun 3:00–4:00pm"
+          ],
+          "notes": "Weekdays unpredictable due to caregiving"
+        },
+        "school_calendar_constraints": [
+          "Exam week (late March)",
+          "Family commitments (varies)"
+        ],
+        "communication_preferences": {
+          "with_student": [
+            "Encouraging tone",
+            "Simple weekly action plan"
+          ],
+          "with_guardians": [
+            "Monthly update if requested"
+          ]
+        }
+      }
+    }
+  },
+  {
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Arjun",
+    "age": 16,
+    "gender": "Male",
+    "race_ethnicity": "South Asian (Indian-American)",
+    "current_level": "11th grade (Junior)",
+    "institutions": {
+      "current_school": "Silver Creek High School (public, competitive)",
+      "past_schools": [
+        "Silver Creek Middle School (6–8)",
+        "Pine Hills Elementary School (K–5)"
+      ]
+    },
+    "languages_at_school": [
+      "English",
+      "Hindi (heritage)"
+    ],
+    "identity_at_school": "High-achieving student under strong family expectations for STEM excellence",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "AP Calculus BC",
+          "AP Physics 1",
+          "AP Computer Science"
+        ],
+        "skills": [
+          "Abstract reasoning",
+          "Fast problem solving",
+          "Strong memory for formulas and patterns",
+          "Competitive test performance"
+        ]
+      },
+      "areas_for_growth": [
+        "Sleep consistency (averages 5–6 hours/night)",
+        "Perfectionism leading to over-checking and time loss",
+        "Avoids asking for help to protect high-achiever identity",
+        "Burnout symptoms during exam seasons"
+      ],
+      "current_courses": {
+        "term": "Spring (11th grade)",
+        "courses": [
+          {
+            "name": "AP Calculus BC",
+            "notes": "Consistently high scores but high anxiety before tests."
+          },
+          {
+            "name": "AP Physics 1",
+            "notes": "Understands concepts; stress spikes during timed FRQs."
+          },
+          {
+            "name": "AP Computer Science A",
+            "notes": "Performs strongly; enjoys algorithmic challenges."
+          },
+          {
+            "name": "AP English Language",
+            "notes": "Strong structure but over-edits essays."
+          },
+          {
+            "name": "US History",
+            "notes": "Solid recall; struggles balancing workload."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Problem-based practice",
+        "Structured review sheets",
+        "Timed mock exams"
+      ],
+      "pace": "Fast but slows excessively due to perfectionism",
+      "group_vs_solo": "Prefers solo study; reluctant to join collaborative study groups"
+    },
+    "study_habits": {
+      "homework_routine": "Studies late night (often past midnight)",
+      "organization_style": "Extremely organized digital planner; over-schedules",
+      "attention_supports": [
+        "Structured study blocks with hard stop times",
+        "Pre-test calming routine (breathing + 2 practice problems)",
+        "‘Done is better than perfect’ checklist"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Maintain A range across 4 AP classes",
+        "Score 1500+ on SAT",
+        "Reduce pre-test anxiety spikes"
+      ],
+      "long_term_goals": [
+        "Apply to top-tier engineering programs",
+        "Pursue research internships by senior year",
+        "Maintain GPA competitiveness for elite colleges"
+      ],
+      "milestones": [
+        "SAT retake (March)",
+        "AP exams (May)",
+        "Summer research applications (April)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Competitive math team",
+      "Coding competitions",
+      "Robotics programming lead",
+      "Plays piano (rarely due to workload)"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "No formal plan; high stress and sleep deprivation reported",
+        "classroom_accommodations": [
+          "Occasional flexibility on minor deadlines if requested"
+        ],
+        "testing_accommodations": [
+          "None formally assigned"
+        ],
+        "accessibility_needs": [
+          "Stress management support"
+        ],
+        "assistive_technology": [
+          "Focus timer app",
+          "Sleep tracking app"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "Mostly A/A+ range",
+      "standardized_tests": [
+        {
+          "test_name": "SAT",
+          "date": "Fall (11th grade)",
+          "score_summary": "High math; slightly lower verbal; anxiety reported"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Exceptionally capable; should prioritize wellness.",
+        "Sometimes hesitant to participate unless fully certain.",
+        "Perfectionism may limit efficiency."
+      ],
+      "tutor_notes_summary": [
+        "Performance drops slightly under high-pressure timed drills.",
+        "Needs deliberate rest built into schedule.",
+        "Confidence tied strongly to numeric outcomes."
+      ],
+      "portfolio_highlights": [
+        "Regional math competition qualifier (summary)",
+        "Built a data structures mini-library (summary)",
+        "Physics project on projectile modeling (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Sun 4:00–5:00pm"
+        ],
+        "notes": "Very busy weekday schedule; prefers concise, high-efficiency sessions."
+      },
+      "school_calendar_constraints": [
+        "AP exam period (May)",
+        "Competition season (Feb–March)"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Structured agenda before each session",
+          "Clear measurable action items"
+        ],
+        "with_guardians": [
+          "Quarterly summary only"
+        ]
+      }
+    }
+  }
+}
+,
+{
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Sofia",
+    "age": 15,
+    "gender": "Female",
+    "race_ethnicity": "White (Eastern European-American)",
+    "current_level": "10th grade (Sophomore)",
+    "institutions": {
+      "current_school": "Riverside High School (public)",
+      "past_schools": [
+        "Riverside Middle School (6–8)"
+      ]
+    },
+    "languages_at_school": [
+      "English"
+    ],
+    "identity_at_school": "Highly responsible; balancing academics with family caregiving responsibilities",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "Biology",
+          "English Literature"
+        ],
+        "skills": [
+          "Empathetic and reflective writing",
+          "Strong memorization",
+          "Detailed note-taking",
+          "High personal accountability"
+        ]
+      },
+      "areas_for_growth": [
+        "Chronic stress and emotional exhaustion",
+        "Difficulty concentrating after school",
+        "Fear of disappointing teachers/family",
+        "Avoids difficult tasks until last minute"
+      ],
+      "current_courses": {
+        "term": "Spring (10th grade)",
+        "courses": [
+          {
+            "name": "Biology",
+            "notes": "Enjoys content; stress during exams lowers recall."
+          },
+          {
+            "name": "Geometry",
+            "notes": "Understands in class but freezes on tests."
+          },
+          {
+            "name": "English 10",
+            "notes": "Strong essays; struggles when multiple drafts overlap."
+          },
+          {
+            "name": "World History",
+            "notes": "Needs structured review guides."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Reading",
+        "Guided discussion",
+        "Structured outlines"
+      ],
+      "pace": "Steady when calm; slows significantly under stress",
+      "group_vs_solo": "Prefers 1:1 support; overwhelmed in large study groups"
+    },
+    "study_habits": {
+      "homework_routine": "Completes homework late evening after family duties",
+      "organization_style": "Planner + sticky notes; sometimes loses track of priorities",
+      "attention_supports": [
+        "Short 15-minute focus intervals",
+        "Prioritization list (Top 3 tasks only)",
+        "End-of-day reflection check-in"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Stabilize grades at solid B+/A- range",
+        "Reduce test-day panic through practice exams",
+        "Create consistent weekly study rhythm"
+      ],
+      "long_term_goals": [
+        "Explore healthcare careers (nursing, public health)",
+        "Take AP Biology in 11th grade",
+        "Maintain GPA for scholarship eligibility"
+      ],
+      "milestones": [
+        "Geometry unit test (March)",
+        "Biology midterm (April)",
+        "PSAT (Fall 10th grade)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Volunteers at local community center",
+      "School choir (recently paused due to workload)",
+      "Enjoys journaling and creative writing"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "Informal counseling support for stress management",
+        "classroom_accommodations": [
+          "Extended time on major tests when available",
+          "Advance notice of quizzes"
+        ],
+        "testing_accommodations": [
+          "Small group testing (if possible)"
+        ],
+        "accessibility_needs": [
+          "Emotional regulation strategies"
+        ],
+        "assistive_technology": [
+          "Guided meditation app",
+          "Digital planner reminders"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "A-/B+ range; dips during high-stress months",
+      "standardized_tests": [
+        {
+          "test_name": "District Benchmark",
+          "date": "Winter",
+          "score_summary": "Performance inconsistent; stress impact noted"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Very responsible and thoughtful.",
+        "Needs to build confidence under timed conditions.",
+        "Overextends herself trying to meet every expectation."
+      ],
+      "tutor_notes_summary": [
+        "Cognitive performance drops when sleep is low.",
+        "Responds well to predictable routine and small wins.",
+        "Needs reassurance separating self-worth from grades."
+      ],
+      "portfolio_highlights": [
+        "Personal reflective essay on community service (summary)",
+        "Biology project on ecosystem dynamics (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Wed 6:30–7:30pm",
+          "Sun 5:00–6:00pm"
+        ],
+        "notes": "May need occasional flexibility due to family obligations."
+      },
+      "school_calendar_constraints": [
+        "Exam week (late March)",
+        "Family commitments (variable)"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Encouraging recap messages",
+          "Clear, limited task lists"
+        ],
+        "with_guardians": [
+          "Monthly check-in if needed"
+        ]
+      }
+    }
+  }
+},
+{
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Lena",
+    "age": 17,
+    "gender": "Female",
+    "race_ethnicity": "Korean-American",
+    "current_level": "11th grade (Junior)",
+    "institutions": {
+      "current_school": "Westbrook Preparatory High School (public, competitive)",
+      "past_schools": [
+        "Westbrook Middle School (6–8)",
+        "Greenfield Elementary School (K–5)"
+      ]
+    },
+    "languages_at_school": [
+      "English",
+      "Korean (heritage; fluent speaking)"
+    ],
+    "identity_at_school": "Currently ranked near top of class; highly competitive academic environment",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "AP Chemistry",
+          "AP Calculus AB",
+          "AP Biology",
+          "Honors English"
+        ],
+        "skills": [
+          "Rapid conceptual understanding",
+          "Strong synthesis across subjects",
+          "Disciplined study habits",
+          "Clear and structured written explanations"
+        ]
+      },
+      "areas_for_growth": [
+        "Anxiety about maintaining class rank",
+        "Compares performance constantly with peers",
+        "Over-studies minor topics at expense of sleep",
+        "Fear of visible mistakes in class discussions"
+      ],
+      "current_courses": {
+        "term": "Spring (11th grade)",
+        "courses": [
+          {
+            "name": "AP Chemistry",
+            "notes": "Consistently high scores; stress increases before unit exams."
+          },
+          {
+            "name": "AP Calculus AB",
+            "notes": "Strong mastery; re-checks answers repeatedly during tests."
+          },
+          {
+            "name": "AP Biology",
+            "notes": "Deep interest; occasionally over-prepares beyond requirement."
+          },
+          {
+            "name": "Honors English",
+            "notes": "Writes strong analytical essays; reluctant to speak unless fully certain."
+          },
+          {
+            "name": "US History",
+            "notes": "High retention; heavy reading load contributes to stress."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Structured lecture notes",
+        "Practice problem sets",
+        "Self-made summary sheets"
+      ],
+      "pace": "Fast comprehension; slows significantly due to perfectionistic review",
+      "group_vs_solo": "Prefers solo study; competitive mindset limits collaborative learning"
+    },
+    "study_habits": {
+      "homework_routine": "Begins immediately after school; studies 3–4 hours nightly",
+      "organization_style": "Highly structured digital + paper planner; tracks grades obsessively",
+      "attention_supports": [
+        "Pre-defined study blocks with built-in rest reminders",
+        "Limiting re-checking to one final pass",
+        "Weekly 'big picture' review instead of daily micro-optimization"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Maintain top 5% class ranking",
+        "Score 5 on AP Chemistry and AP Biology",
+        "Reduce sleep loss during exam cycles"
+      ],
+      "long_term_goals": [
+        "Apply to selective universities for pre-med or biomedical sciences",
+        "Earn academic scholarships",
+        "Develop healthier competitive mindset"
+      ],
+      "milestones": [
+        "AP exams (May)",
+        "PSAT/NMSQT (Fall)",
+        "Summer research internship applications (March–April)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Science Olympiad (team lead)",
+      "Student council academic committee",
+      "Hospital volunteer program",
+      "Classical violin (private lessons)"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "No formal plan; elevated academic anxiety reported",
+        "classroom_accommodations": [
+          "Occasional flexibility if stress-related overload occurs"
+        ],
+        "testing_accommodations": [
+          "None formally assigned"
+        ],
+        "accessibility_needs": [
+          "Stress management and cognitive reframing support"
+        ],
+        "assistive_technology": [
+          "Focus timer app",
+          "Digital wellness tracker"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "A/A+ range across subjects",
+      "standardized_tests": [
+        {
+          "test_name": "PSAT",
+          "date": "Fall (10th grade)",
+          "score_summary": "High composite; minor drop in reading due to time pressure"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Exceptionally capable and prepared.",
+        "Sometimes hesitant to participate unless fully confident.",
+        "Needs to protect balance and avoid burnout."
+      ],
+      "tutor_notes_summary": [
+        "Cognitive performance very strong; stress drives over-preparation.",
+        "Benefits from deliberate imperfection exercises (submit draft without triple-check).",
+        "Motivation highly tied to comparative ranking."
+      ],
+      "portfolio_highlights": [
+        "Science Olympiad regional medalist (summary)",
+        "Research poster on enzyme kinetics (summary)",
+        "Advanced interdisciplinary essay connecting biology and ethics (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Sun 3:00–4:00pm"
+        ],
+        "notes": "Weekdays heavily scheduled with clubs and practice."
+      },
+      "school_calendar_constraints": [
+        "Competition season (Feb–March)",
+        "AP exam preparation period (April–May)"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Structured weekly performance goals",
+          "Clear metrics and progress tracking"
+        ],
+        "with_guardians": [
+          "Quarterly summary if requested"
+        ]
+      }
+    }
+  }
+},
+{
+  "namespace": "education_k16",
+  "student_profile": {
+    "preferred_name": "Daniel",
+    "age": 17,
+    "gender": "Male",
+    "race_ethnicity": "Chinese-American",
+    "current_level": "11th grade (Junior)",
+    "institutions": {
+      "current_school": "North Valley High School (public, competitive)",
+      "past_schools": [
+        "North Valley Middle School (6–8)",
+        "Canyon Ridge Elementary School (K–5)"
+      ]
+    },
+    "languages_at_school": [
+      "English",
+      "Mandarin (heritage)"
+    ],
+    "identity_at_school": "Previously top 3 in class; recent GPA drop moved him outside top 15%",
+    "academic_snapshot": {
+      "strengths": {
+        "subjects": [
+          "Mathematics (Pre-Calculus)",
+          "Computer Science",
+          "Physics (conceptual)"
+        ],
+        "skills": [
+          "Strong analytical reasoning",
+          "Quick learner in structured subjects",
+          "Independent problem-solving",
+          "Logical argument construction"
+        ]
+      },
+      "areas_for_growth": [
+        "Emotional resilience after performance setbacks",
+        "Avoidance behavior when fearing poor performance",
+        "Reduced participation in class",
+        "Sleep disruption during stress cycles"
+      ],
+      "current_courses": {
+        "term": "Spring (11th grade)",
+        "courses": [
+          {
+            "name": "AP Calculus AB",
+            "notes": "First major B after years of A grades; confidence impacted."
+          },
+          {
+            "name": "AP Physics 1",
+            "notes": "Understands material but performs inconsistently on tests."
+          },
+          {
+            "name": "AP US History",
+            "notes": "Heavy reading load; recent test scores lower than expected."
+          },
+          {
+            "name": "AP English Language",
+            "notes": "Writing strong; participation decreased recently."
+          },
+          {
+            "name": "Computer Science",
+            "notes": "Still performs well; viewed as safe subject."
+          }
+        ]
+      }
+    },
+    "learning_preferences": {
+      "modalities": [
+        "Practice problem sets",
+        "Structured review guides",
+        "Independent study"
+      ],
+      "pace": "Fast comprehension but slows dramatically when doubting himself",
+      "group_vs_solo": "Prefers solo; avoids group work due to fear of comparison"
+    },
+    "study_habits": {
+      "homework_routine": "Irregular; alternates between over-studying and procrastination",
+      "organization_style": "Previously structured; now inconsistent planning",
+      "attention_supports": [
+        "Daily reset routine (short achievable tasks first)",
+        "Scheduled reflection time (separating identity from grades)",
+        "Fixed study end-time to prevent spiraling"
+      ]
+    },
+    "goals_and_plans": {
+      "short_term_goals": [
+        "Stabilize grades back to A-/B+ range",
+        "Rebuild test confidence through low-stakes practice",
+        "Re-establish consistent sleep schedule"
+      ],
+      "long_term_goals": [
+        "Apply to competitive engineering or CS programs",
+        "Regain sense of academic identity beyond rank",
+        "Develop healthier response to setbacks"
+      ],
+      "milestones": [
+        "AP mock exams (April)",
+        "End-of-year GPA recalculation (June)",
+        "Summer program application decisions (May)"
+      ]
+    },
+    "interests_and_extracurriculars": [
+      "Coding club (reduced involvement recently)",
+      "Math team (stepped back after lower ranking)",
+      "Enjoys strategy video games",
+      "Previously volunteered tutoring younger students"
+    ],
+    "support_needs": {
+      "accommodations": {
+        "iep_504_summary": "No formal academic plan; recently began school counseling for stress adjustment",
+        "classroom_accommodations": [
+          "Check-in meetings with teacher after major assessments"
+        ],
+        "testing_accommodations": [
+          "None formally assigned"
+        ],
+        "accessibility_needs": [
+          "Emotional regulation and confidence rebuilding strategies"
+        ],
+        "assistive_technology": [
+          "Task-tracking app",
+          "Mood journaling app"
+        ]
+      }
+    },
+    "assessments_and_progress": {
+      "grades_summary": "Previously A/A+ range; recent semester B/B+ with one B-",
+      "standardized_tests": [
+        {
+          "test_name": "PSAT/NMSQT",
+          "date": "Fall (11th grade)",
+          "score_summary": "High math; slight drop from prior expectations"
+        }
+      ],
+      "teacher_feedback_summary": [
+        "Strong capability; recent dip likely stress-related.",
+        "Participation and confidence have decreased.",
+        "Needs reassurance that one semester does not define trajectory."
+      ],
+      "tutor_notes_summary": [
+        "Performance strongly linked to self-belief.",
+        "Avoidance increases when fearing imperfect outcomes.",
+        "Responds well to mastery-based progress tracking instead of rank comparison."
+      ],
+      "portfolio_highlights": [
+        "Built a competitive programming solution ranked top 5% statewide (summary)",
+        "Physics lab with strong analytical modeling (summary)",
+        "Computer science independent project (summary)"
+      ]
+    },
+    "logistics": {
+      "schedule_preferences": {
+        "best_tutoring_times": [
+          "Sun 2:00–3:00pm",
+          "Wed 7:00–8:00pm"
+        ],
+        "notes": "Prefers calm, structured sessions focused on rebuilding confidence."
+      },
+      "school_calendar_constraints": [
+        "AP exam period (May)",
+        "GPA recalculation after semester end"
+      ],
+      "communication_preferences": {
+        "with_student": [
+          "Supportive tone with clear small-step goals",
+          "Focus on growth metrics instead of rank comparisons"
+        ],
+        "with_guardians": [
+          "Monthly high-level summary if requested"
+        ]
+      }
+    }
+  }
+}
+
+
+]

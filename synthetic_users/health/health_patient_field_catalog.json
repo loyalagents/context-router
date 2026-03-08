@@ -1,0 +1,814 @@
+[
+  {
+    "id": "88f39e28-4c20-541c-a182-3bf8cdc79c32",
+    "slug": "identification.name",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Patient's full name as recorded in the profile.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "7d466d6e-24d2-5599-9ef5-9a881e66e76c",
+    "slug": "identification.age",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Patient age in years.",
+    "valueType": "INTEGER",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "32dd0eca-e105-5985-970a-9cf60dbc910f",
+    "slug": "identification.gender",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Gender identity or recorded sex/gender descriptor in the profile.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "9db00363-2312-5c4e-a97a-38ada120ffb8",
+    "slug": "identification.race_ethnicity",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Race or ethnicity descriptor included in the profile.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "99ae3929-49f7-59f6-8f28-ceabd5fb772f",
+    "slug": "identification.family_composition.marital_status",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Current marital or partnership status.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "d648c56c-0375-5cf9-83b0-e4b29f0efbad",
+    "slug": "identification.family_composition.household_members",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "People living in the patient's household.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "e9e4c56f-0a6a-53a0-bf57-7bd4ddd9a922",
+    "slug": "identification.family_composition.caregiving_roles",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Caregiving responsibilities or family support roles the patient holds.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "identification"
+  },
+  {
+    "id": "2b61070d-2f89-5326-acc9-71c75666907c",
+    "slug": "profile.baseline_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Concise overall summary of the patient's baseline health context, active issues, and major safety notes.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "profile"
+  },
+  {
+    "id": "b8e65b55-1bea-59cc-8f99-6f0766137431",
+    "slug": "care_preferences.provider_style",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "How the patient prefers clinicians to communicate and work with them.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_preferences"
+  },
+  {
+    "id": "370faa91-3dbc-5521-baf4-0e1161ac1242",
+    "slug": "care_preferences.care_setting_preference",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preferred care setting for visits, such as in-person or telehealth.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_preferences"
+  },
+  {
+    "id": "7e99d64f-af87-55d9-9884-5efd2b75251c",
+    "slug": "care_preferences.privacy_preference",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "How broadly the patient wants information shared across teams or settings.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_preferences"
+  },
+  {
+    "id": "78791c7a-781f-527d-b3aa-490521b49c9e",
+    "slug": "communication_needs.language_preference",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preferred languages for healthcare communication.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "communication_needs"
+  },
+  {
+    "id": "dcc3c12b-5690-51a6-a130-43dc3fee6b4b",
+    "slug": "communication_needs.health_literacy_preference",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Level and style of explanation the patient prefers for medical information.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "communication_needs"
+  },
+  {
+    "id": "e1e63d0b-de59-5a2c-ba6b-6d7e4382b8f8",
+    "slug": "communication_needs.accessibility_needs",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Accessibility, mobility, scheduling, or format accommodations that support communication and visits.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "communication_needs"
+  },
+  {
+    "id": "45326db6-6b19-5b9d-8aa9-7eaa5c01dcc0",
+    "slug": "medical_history.conditions.active",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Active medical conditions, each with a condition name and notes.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Name of the active condition."
+          },
+          {
+            "name": "notes",
+            "valueType": "STRING",
+            "description": "Clinical or contextual notes about the condition."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medical_history"
+  },
+  {
+    "id": "8a8bc7d1-8575-5c5b-89fb-b747ec996402",
+    "slug": "medical_history.conditions.past",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Past or resolved medical conditions, each with a condition name and notes.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Name of the past or resolved condition."
+          },
+          {
+            "name": "notes",
+            "valueType": "STRING",
+            "description": "Clinical or contextual notes about the condition history."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medical_history"
+  },
+  {
+    "id": "f1baed54-08f4-5ad7-b94b-143920d9a1a6",
+    "slug": "medical_history.surgeries_and_procedures",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Past surgeries and procedures, each with a name, date, and notes.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Name of the surgery or procedure."
+          },
+          {
+            "name": "date",
+            "valueType": "STRING",
+            "description": "Date or year associated with the surgery or procedure, when available."
+          },
+          {
+            "name": "notes",
+            "valueType": "STRING",
+            "description": "Relevant notes about the surgery, procedure, or outcome."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medical_history"
+  },
+  {
+    "id": "42f9d1dd-b974-5c8b-b923-b7d146536c52",
+    "slug": "medical_history.family_history_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Summary of relevant family medical history.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medical_history"
+  },
+  {
+    "id": "4d5c51fa-16d4-578c-8164-2489ecfb8230",
+    "slug": "medical_history.pregnancy_reproductive_history",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Pregnancy, reproductive, or breastfeeding history when relevant.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medical_history"
+  },
+  {
+    "id": "54e6fab4-f578-5b08-92ac-f6edf26185a8",
+    "slug": "medications.current",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Current medications, each with a medication name, dose, schedule, and purpose.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Medication name."
+          },
+          {
+            "name": "dose",
+            "valueType": "STRING",
+            "description": "Medication dose or strength, when available."
+          },
+          {
+            "name": "schedule",
+            "valueType": "STRING",
+            "description": "Medication schedule or frequency."
+          },
+          {
+            "name": "purpose",
+            "valueType": "STRING",
+            "description": "Reason the medication is being used."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medications"
+  },
+  {
+    "id": "d8dbd28b-fe3b-5d04-a439-7bc22b104368",
+    "slug": "medications.past",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Past or discontinued medications, each with a medication name, dose, schedule, and purpose.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Medication name."
+          },
+          {
+            "name": "dose",
+            "valueType": "STRING",
+            "description": "Medication dose or strength, when available."
+          },
+          {
+            "name": "schedule",
+            "valueType": "STRING",
+            "description": "Medication schedule or frequency, when available."
+          },
+          {
+            "name": "purpose",
+            "valueType": "STRING",
+            "description": "Reason the medication was used or discontinued."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medications"
+  },
+  {
+    "id": "84477074-6040-585c-a611-29a869e4aada",
+    "slug": "medications.adherence_notes",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Notes about medication adherence, consistency, or barriers.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "medications"
+  },
+  {
+    "id": "a7319daf-6a20-5e82-8c3d-54f7cac941b7",
+    "slug": "allergies_and_sensitivities.allergies",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Documented allergies, each with allergy type, substance, reaction, and reaction severity.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "type",
+            "valueType": "STRING",
+            "description": "Category of allergy, such as food or drug."
+          },
+          {
+            "name": "substance",
+            "valueType": "STRING",
+            "description": "Allergen or triggering substance."
+          },
+          {
+            "name": "reaction",
+            "valueType": "STRING",
+            "description": "Observed or reported allergic reaction."
+          },
+          {
+            "name": "reaction_severity",
+            "valueType": "STRING",
+            "description": "Severity of the allergic reaction."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "allergies_and_sensitivities"
+  },
+  {
+    "id": "edd1e64b-260f-557e-9b87-9e5152240ba3",
+    "slug": "allergies_and_sensitivities.intolerances",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Sensitivities or intolerances, each with a substance and reaction.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "substance",
+            "valueType": "STRING",
+            "description": "Substance or exposure associated with the intolerance or sensitivity."
+          },
+          {
+            "name": "reaction",
+            "valueType": "STRING",
+            "description": "Observed or reported intolerance reaction."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "allergies_and_sensitivities"
+  },
+  {
+    "id": "00da4d3b-82ad-5dd9-9586-a7e055fe7b26",
+    "slug": "vitals_and_measurements.baseline_metrics.height",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Recorded height at baseline or in routine measurements.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "vitals_and_measurements"
+  },
+  {
+    "id": "1ea56b5b-55b4-536c-9646-26d789501e1b",
+    "slug": "vitals_and_measurements.baseline_metrics.weight",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Recorded weight at baseline or in routine measurements.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "vitals_and_measurements"
+  },
+  {
+    "id": "a82db1e5-8e92-56e9-8989-1981b2c6c9d1",
+    "slug": "vitals_and_measurements.baseline_metrics.blood_pressure_range",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Typical or baseline blood pressure range.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "vitals_and_measurements"
+  },
+  {
+    "id": "0ab70e62-7263-5fe6-b7bf-584c7c8b1795",
+    "slug": "vitals_and_measurements.recent_trends_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Recent trends in weight, blood pressure, or other routine measurements.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "vitals_and_measurements"
+  },
+  {
+    "id": "d1c754c5-135f-5adc-8ea9-39d8f6b6979a",
+    "slug": "preventive_care.immunizations_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Summary of immunization status.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "preventive_care"
+  },
+  {
+    "id": "444aad60-9141-597e-8e1a-e2d3316f3124",
+    "slug": "preventive_care.screenings.recommended",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Recommended preventive screenings or monitoring items.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "preventive_care"
+  },
+  {
+    "id": "0a50533e-8762-5fab-ac1e-cb8c39110bd0",
+    "slug": "preventive_care.screenings.completed",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preventive screenings or monitoring items already completed.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "preventive_care"
+  },
+  {
+    "id": "06444f88-7e39-51b6-9c9e-2def41ffed5c",
+    "slug": "preventive_care.screenings.due_soon",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preventive screenings or monitoring items coming due soon.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "preventive_care"
+  },
+  {
+    "id": "1e5f42ed-f7ac-5c0b-bb73-320bf60f992e",
+    "slug": "care_team.primary_care_provider.name",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Name of the patient's primary care provider.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_team"
+  },
+  {
+    "id": "e29d591d-e5ec-56c6-b498-e200d0cf3c1a",
+    "slug": "care_team.primary_care_provider.org",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Organization or practice associated with the primary care provider.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_team"
+  },
+  {
+    "id": "51aeee6f-b3cf-5bb7-8433-c4093d43159c",
+    "slug": "care_team.specialists",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Specialists involved in care, each with clinician name, organization, and role.",
+    "valueType": "ARRAY_OBJECT",
+    "scope": "GLOBAL",
+    "options": {
+      "itemSchema": {
+        "type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "valueType": "STRING",
+            "description": "Name of the specialist."
+          },
+          {
+            "name": "org",
+            "valueType": "STRING",
+            "description": "Organization or clinic associated with the specialist."
+          },
+          {
+            "name": "role",
+            "valueType": "STRING",
+            "description": "Specialty or role in the patient's care."
+          }
+        ]
+      }
+    },
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_team"
+  },
+  {
+    "id": "4afe56a8-d70e-5c0f-9f25-fded3143eee3",
+    "slug": "care_team.pharmacy_preferences",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preferred pharmacy arrangement or fulfillment preferences.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_team"
+  },
+  {
+    "id": "53993545-7a69-5987-bc47-c6a616cff7a9",
+    "slug": "care_team.insurance_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "High-level summary of insurance coverage.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "care_team"
+  },
+  {
+    "id": "90523de2-44d2-5f6a-bff6-846642a51051",
+    "slug": "behavior_and_lifestyle.sleep",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Typical sleep pattern, duration, or sleep-related habits.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "behavior_and_lifestyle"
+  },
+  {
+    "id": "f9098f5e-d37a-5dfe-947d-78d5b526f741",
+    "slug": "behavior_and_lifestyle.nutrition_preferences",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Dietary habits, nutrition goals, or food preferences relevant to health.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "behavior_and_lifestyle"
+  },
+  {
+    "id": "95309d4a-9558-57fd-bdd8-823d78c6213e",
+    "slug": "behavior_and_lifestyle.activity_preferences",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Exercise routines, activity patterns, or movement preferences.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "behavior_and_lifestyle"
+  },
+  {
+    "id": "4d23e2e7-0424-5b32-a3d6-471c8f750562",
+    "slug": "behavior_and_lifestyle.stress_management_preferences",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Preferred approaches for managing stress or emotional strain.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "behavior_and_lifestyle"
+  },
+  {
+    "id": "a7225112-544d-5698-9b49-add52aed8893",
+    "slug": "current_health_context.current_symptoms_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Summary of current symptoms or concerns.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "current_health_context"
+  },
+  {
+    "id": "4e1787d7-1189-5f2f-b79b-cd0f56142bc3",
+    "slug": "current_health_context.ongoing_treatments_summary",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Summary of current treatments, monitoring, or management strategies.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "current_health_context"
+  },
+  {
+    "id": "09dabf53-3485-5798-8ab1-2a938f1417ac",
+    "slug": "current_health_context.open_questions_for_provider",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Questions or topics the patient wants to discuss with a clinician.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "current_health_context"
+  },
+  {
+    "id": "739af6af-20b3-5f3d-b617-66d1dc3089fc",
+    "slug": "emergency_and_safety.emergency_contacts_reference",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Reference to primary or backup emergency contacts.",
+    "valueType": "STRING",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "emergency_and_safety"
+  },
+  {
+    "id": "8642018b-ed6e-515d-afba-a550a2c19373",
+    "slug": "emergency_and_safety.critical_alerts",
+    "namespace": "health",
+    "displayName": null,
+    "ownerUserId": null,
+    "description": "Critical safety alerts that should be surfaced prominently.",
+    "valueType": "ARRAY",
+    "scope": "GLOBAL",
+    "options": null,
+    "isSensitive": true,
+    "isCore": true,
+    "category": "emergency_and_safety"
+  }
+]
