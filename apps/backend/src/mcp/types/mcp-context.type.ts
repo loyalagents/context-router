@@ -1,6 +1,6 @@
 /**
- * User context extracted from JWT token
- * Passed to all MCP tool handlers to ensure user-scoped operations
+ * User context extracted from API-key-authenticated HTTP requests.
+ * Passed to MCP tool handlers to ensure user-scoped operations.
  */
 export interface McpUser {
   userId: string;
@@ -10,8 +10,7 @@ export interface McpUser {
 }
 
 /**
- * Context object passed to MCP tool handlers
- * Contains authenticated user information
+ * Context object passed to MCP tool handlers.
  */
 export interface McpContext {
   user: McpUser;

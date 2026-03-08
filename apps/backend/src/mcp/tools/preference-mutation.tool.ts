@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PreferenceService } from '@modules/preferences/preference/preference.service';
-import { McpContext } from '../types/mcp-context.type';
+import { Injectable, Logger } from "@nestjs/common";
+import { PreferenceService } from "@modules/preferences/preference/preference.service";
+import { McpContext } from "../types/mcp-context.type";
 
 /**
  * Parameters for suggesting a preference via MCP.
@@ -38,9 +38,7 @@ function parseJsonValue(value: string, context: string): unknown {
 export class PreferenceMutationTool {
   private readonly logger = new Logger(PreferenceMutationTool.name);
 
-  constructor(
-    private preferenceService: PreferenceService,
-  ) {}
+  constructor(private preferenceService: PreferenceService) {}
 
   /**
    * Suggest a preference. MCP writes are ALWAYS suggestions.
@@ -49,29 +47,41 @@ export class PreferenceMutationTool {
   async suggest(params: SuggestPreferenceParams, context: McpContext) {
     const userId = context.user.userId;
 
-    this.logger.log(
-      `Suggesting preference for user ${userId}: ${params.slug}`,
-    );
+    if (!params?.slug) {
+      return {
+        success: false,
+        error: "slug is required",
+      };
+    }
+
+    if (typeof params.value !== "string") {
+      return {
+        success: false,
+        error: "value must be provided as a JSON string",
+      };
+    }
+
+    this.logger.log(`Suggesting preference for user ${userId}: ${params.slug}`);
 
     try {
       // Parse the JSON string value from MCP input
-      const parsedValue = parseJsonValue(params.value, 'value');
+      const parsedValue = parseJsonValue(params.value, "value");
 
       // Parse evidence if provided
       let parsedEvidence: unknown = undefined;
       if (params.evidence) {
-        parsedEvidence = parseJsonValue(params.evidence, 'evidence');
+        parsedEvidence = parseJsonValue(params.evidence, "evidence");
       }
 
       // Validate confidence
       if (
-        typeof params.confidence !== 'number' ||
+        typeof params.confidence !== "number" ||
         params.confidence < 0 ||
         params.confidence > 1
       ) {
         return {
           success: false,
-          error: 'Confidence must be a number between 0 and 1',
+          error: "Confidence must be a number between 0 and 1",
         };
       }
 
@@ -105,7 +115,7 @@ export class PreferenceMutationTool {
           value: preference.value,
           status: preference.status,
           confidence: preference.confidence,
-          category: preference.slug.split('.')[0],
+          category: preference.slug.split(".")[0],
           description: preference.description,
         },
       };
@@ -127,6 +137,13 @@ export class PreferenceMutationTool {
    */
   async delete(params: DeletePreferenceParams, context: McpContext) {
     const userId = context.user.userId;
+
+    if (!params?.id) {
+      return {
+        success: false,
+        error: "id is required",
+      };
+    }
 
     this.logger.log(`Deleting preference ${params.id} for user ${userId}`);
 

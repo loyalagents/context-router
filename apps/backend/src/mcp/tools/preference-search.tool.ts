@@ -1,11 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PreferenceService } from '@modules/preferences/preference/preference.service';
-import { McpContext } from '../types/mcp-context.type';
-import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PreferenceService } from "@modules/preferences/preference/preference.service";
+import { McpContext } from "../types/mcp-context.type";
+import { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
 
 interface SearchPreferencesParams {
   query?: string; // Search by slug prefix, category, or description keyword
+  category?: string; // Deprecated alias for category-based lookup
   locationId?: string;
   includeSuggestions?: boolean; // Whether to include SUGGESTED preferences
 }
@@ -23,13 +24,16 @@ export class PreferenceSearchTool {
   /**
    * Search the catalog for matching slugs based on query.
    */
-  private async searchCatalog(query: string, userId: string): Promise<string[]> {
+  private async searchCatalog(
+    query: string,
+    userId: string,
+  ): Promise<string[]> {
     const normalized = query.toLowerCase();
     const defs = await this.defRepo.getAll(userId);
 
     return defs
       .filter((def) => {
-        const category = def.slug.split('.')[0];
+        const category = def.slug.split(".")[0];
         if (def.slug.startsWith(normalized)) return true;
         if (category.includes(normalized)) return true;
         if (def.description.toLowerCase().includes(normalized)) return true;
@@ -40,9 +44,10 @@ export class PreferenceSearchTool {
 
   async search(params: SearchPreferencesParams, context: McpContext) {
     const userId = context.user.userId;
+    const effectiveQuery = params.query ?? params.category;
 
     const maxResults = this.configService.get(
-      'mcp.tools.preferences.maxSearchResults',
+      "mcp.tools.preferences.maxSearchResults",
     );
 
     this.logger.log(
@@ -58,8 +63,10 @@ export class PreferenceSearchTool {
 
       // If query is provided, filter by matching slugs
       let filteredActive = activePrefs;
-      if (params.query) {
-        const matchingSlugs = new Set(await this.searchCatalog(params.query, userId));
+      if (effectiveQuery) {
+        const matchingSlugs = new Set(
+          await this.searchCatalog(effectiveQuery, userId),
+        );
         filteredActive = activePrefs.filter((p) => matchingSlugs.has(p.slug));
       }
 
@@ -72,11 +79,11 @@ export class PreferenceSearchTool {
             params.locationId,
           );
 
-        if (params.query) {
-          const matchingSlugs = new Set(await this.searchCatalog(params.query, userId));
-          suggestions = suggestedPrefs.filter((p) =>
-            matchingSlugs.has(p.slug),
+        if (effectiveQuery) {
+          const matchingSlugs = new Set(
+            await this.searchCatalog(effectiveQuery, userId),
           );
+          suggestions = suggestedPrefs.filter((p) => matchingSlugs.has(p.slug));
         } else {
           suggestions = suggestedPrefs;
         }
@@ -108,7 +115,7 @@ export class PreferenceSearchTool {
         confidence: pref.confidence,
         locationId: pref.locationId,
         updatedAt: pref.updatedAt,
-        category: pref.slug.split('.')[0],
+        category: pref.slug.split(".")[0],
         description: pref.description,
       });
 

@@ -7,13 +7,13 @@ import {
   Body,
   Logger,
   UseGuards,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { ConfigService } from '@nestjs/config';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { McpService } from './mcp.service';
-import { ApiKeyGuard } from '@/common/guards/api-key.guard';
-import { McpContext } from './types/mcp-context.type';
+} from "@nestjs/common";
+import { Request, Response } from "express";
+import { ConfigService } from "@nestjs/config";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { McpService } from "./mcp.service";
+import { ApiKeyGuard } from "@/common/guards/api-key.guard";
+import { McpContext } from "./types/mcp-context.type";
 
 @Controller()
 export class McpController {
@@ -27,7 +27,7 @@ export class McpController {
   /**
    * Handle MCP POST requests (JSON-RPC)
    */
-  @Post('/mcp')
+  @Post("/mcp")
   @UseGuards(ApiKeyGuard)
   async handleMcpPost(
     @Req() req: Request,
@@ -40,7 +40,7 @@ export class McpController {
   /**
    * Handle MCP GET requests (SSE streaming)
    */
-  @Get('/mcp')
+  @Get("/mcp")
   @UseGuards(ApiKeyGuard)
   async handleMcpGet(@Req() req: Request, @Res() res: Response) {
     return this.handleMcpRequest(req, res, undefined);
@@ -51,10 +51,10 @@ export class McpController {
    * Streamable HTTP transport handles POST for JSON-RPC and GET for SSE.
    */
   private async handleMcpRequest(req: Request, res: Response, body: any) {
-    const httpEnabled = this.configService.get('mcp.httpTransport.enabled');
+    const httpEnabled = this.configService.get("mcp.httpTransport.enabled");
 
     if (!httpEnabled) {
-      res.status(503).json({ error: 'MCP HTTP transport is disabled' });
+      res.status(503).json({ error: "MCP HTTP transport is disabled" });
       return;
     }
 
@@ -80,18 +80,14 @@ export class McpController {
     );
 
     try {
-      // Set the context for this request in the service
-      // This will be used by tool handlers to access the authenticated user
-      this.mcpService.setContext(context);
-
       // Create Streamable HTTP transport in stateless mode
       // sessionIdGenerator: undefined enables stateless operation for serverless/cloud deployments
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // Stateless mode - no session tracking
       });
 
-      // Get the MCP server and connect the transport
-      const server = this.mcpService.getServer();
+      // Create a request-scoped MCP server so auth context never leaks
+      const server = this.mcpService.createServer(context);
       await server.connect(transport);
 
       this.logger.log(`MCP session established for user: ${user.userId}`);
@@ -109,11 +105,8 @@ export class McpController {
       );
 
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to handle MCP request' });
+        res.status(500).json({ error: "Failed to handle MCP request" });
       }
-    } finally {
-      // Clear the context after request completion to prevent context leakage
-      this.mcpService.clearContext();
     }
   }
 }
