@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { McpService } from './mcp.service';
 import { McpController } from './mcp.controller';
@@ -12,6 +12,7 @@ import { OAuthMetadataController } from './auth/oauth-metadata.controller';
 import { DcrShimController } from './auth/dcr-shim.controller';
 import { DcrRateLimitGuard } from './auth/dcr-rate-limit.guard';
 import { McpAuthGuard } from './auth/mcp-auth.guard';
+import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
 
 @Module({
   imports: [ConfigModule, PreferencesModule, AuthModule],
@@ -24,7 +25,12 @@ import { McpAuthGuard } from './auth/mcp-auth.guard';
     SchemaResource,
     DcrRateLimitGuard,
     McpAuthGuard,
+    McpOriginMiddleware,
   ],
   exports: [McpService],
 })
-export class McpModule {}
+export class McpModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(McpOriginMiddleware).forRoutes('/mcp');
+  }
+}

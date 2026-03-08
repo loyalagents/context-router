@@ -18,7 +18,9 @@ export default registerAs('mcp', () => {
       requireAuth: process.env.MCP_HTTP_REQUIRE_AUTH !== 'false', // JWT required by default
       allowedOrigins: process.env.MCP_HTTP_ALLOWED_ORIGINS
         ? process.env.MCP_HTTP_ALLOWED_ORIGINS.split(',')
-        : ['*'], // CORS origins for AI clients
+        : process.env.CORS_ORIGIN
+          ? process.env.CORS_ORIGIN.split(',')
+          : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3002'],
     },
 
     // Stdio Transport Configuration

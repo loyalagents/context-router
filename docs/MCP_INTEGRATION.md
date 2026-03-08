@@ -11,7 +11,7 @@ The Context Router now exposes a **Model Context Protocol (MCP)** server that al
 │   AI Assistant  │
 │  (Claude, etc)  │
 └────────┬────────┘
-         │ HTTP POST /mcp (SSE)
+         │ HTTP POST /mcp (JSON-response mode)
          │ + JWT Bearer Token
          ▼
 ┌─────────────────────────────────────────┐
@@ -46,22 +46,20 @@ The Context Router now exposes a **Model Context Protocol (MCP)** server that al
 
 ### Tools (4 total)
 
-1. **searchPreferences** - Search user preferences
-   - Filter by category
-   - Filter by location
-   - Get global preferences only
-   - Returns all user preferences
+1. **listPreferenceSlugs** - List all valid preference slugs from the catalog
+   - Optional: filter by category
+   - Returns slug, category, description, valueType, and scope
 
-2. **createPreference** - Create new preference
-   - Requires: category, key, value
-   - Optional: locationId (for location-specific preferences)
+2. **searchPreferences** - Search user preferences (scoped to authenticated user)
+   - Optional: filter by query, locationId, includeSuggestions
+   - Returns all active preferences for the user
 
-3. **updatePreference** - Update existing preference
-   - Requires: preferenceId, new value
-   - Ownership verified automatically
+3. **suggestPreference** - Suggest a preference value for the user
+   - Requires: slug, value, confidence
+   - Creates a SUGGESTED preference the user must approve in the UI
 
-4. **deletePreference** - Delete preference
-   - Requires: preferenceId
+4. **deletePreference** - Delete a preference
+   - Requires: id (returned by searchPreferences)
    - Ownership verified automatically
 
 ### Resources (1 total)
@@ -82,7 +80,7 @@ Add these to your `.env` file:
 MCP_HTTP_ENABLED=true                          # Enable HTTP transport (default: true)
 MCP_HTTP_PATH=/mcp                             # Endpoint path (default: /mcp)
 MCP_HTTP_REQUIRE_AUTH=true                     # Require JWT (default: true)
-MCP_HTTP_ALLOWED_ORIGINS=*                     # CORS origins (default: *)
+MCP_HTTP_ALLOWED_ORIGINS=https://example.com   # Allowed browser origins (comma-separated)
 
 # MCP Stdio Transport (local development only)
 MCP_STDIO_ENABLED=false                        # Enable stdio (default: false)
@@ -108,6 +106,20 @@ All MCP HTTP requests **must** include a valid Auth0 JWT token:
 ```
 Authorization: Bearer <jwt_token>
 ```
+
+### Transport: POST-only JSON-response mode
+
+`POST /mcp` is the only supported method. `GET /mcp` returns `405 Method Not Allowed`. This is intentional — the server uses stateless JSON-response mode; no SSE streaming or persistent sessions.
+
+### Origin Validation
+
+Requests with an `Origin` header (browser clients) are validated against an allowlist to prevent DNS-rebinding attacks:
+
+- `MCP_HTTP_ALLOWED_ORIGINS` set → use that list
+- `MCP_HTTP_ALLOWED_ORIGINS` unset, `CORS_ORIGIN` set → fall back to the app's CORS origins
+- Both unset → `http://localhost:3000`, `http://localhost:3001`, `http://localhost:3002`, `http://127.0.0.1:3002` (matches app CORS defaults)
+
+Non-browser clients (CLI tools, native MCP clients) that omit the `Origin` header are allowed through unconditionally — DNS-rebinding attacks require a browser.
 
 ### User Context Isolation
 
@@ -241,7 +253,7 @@ src/
   mcp/
     mcp.module.ts              # NestJS module
     mcp.service.ts             # Core MCP server logic
-    mcp.controller.ts          # HTTP endpoint (/mcp with SSE)
+    mcp.controller.ts          # HTTP endpoint (POST /mcp, JSON-response mode)
 
     tools/
       preference-search.tool.ts       # Search tool implementation
