@@ -50,7 +50,7 @@ describe("MCP Integration (e2e)", () => {
     request(app.getHttpServer())
       .post("/mcp")
       .set("Content-Type", "application/json")
-      .set("Accept", "application/json")
+      .set("Accept", "application/json, text/event-stream")
       .set(headers)
       .send(body);
 

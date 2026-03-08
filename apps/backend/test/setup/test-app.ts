@@ -90,24 +90,30 @@ export interface CreateTestAppOptions {
 function createMockAuthGuard(userRef: UserRef) {
   return {
     canActivate: (context: ExecutionContext) => {
-      // Handle GraphQL context
-      const gqlContext = GqlExecutionContext.create(context);
-      const ctx = gqlContext.getContext();
-
-      if (ctx?.req) {
-        // GraphQL request
-        ctx.req.user = userRef.current;
-      } else {
-        // HTTP request (REST endpoints)
-        const request = context.switchToHttp().getRequest();
-        if (request) {
-          request.user = userRef.current;
-        }
-      }
+      const request = getRequestFromContext(context);
+      request.user = userRef.current;
 
       return true;
     },
   };
+}
+
+function getRequestFromContext(context: ExecutionContext) {
+  let request;
+
+  if (context.getType<string>() === 'graphql') {
+    request = GqlExecutionContext.create(context).getContext()?.req;
+  } else {
+    request = context.switchToHttp().getRequest();
+  }
+
+  if (!request) {
+    throw new Error(
+      'Test auth guard could not resolve a request object from the execution context',
+    );
+  }
+
+  return request;
 }
 
 /**
@@ -129,7 +135,7 @@ function createMcpMockAuthGuard(
 ) {
   return {
     canActivate: (context: ExecutionContext) => {
-      const request = context.switchToHttp().getRequest();
+      const request = getRequestFromContext(context);
       const testUserId = request?.headers?.['x-test-user-id'];
 
       if (testUserId) {
@@ -229,7 +235,10 @@ export async function createTestApp(
 
   if (mockAuthGuards) {
     // Most tests bypass auth and inject a fresh test user directly.
-    moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mockAuthGuard);
+    // ApiKeyGuard uses mcpMockAuthGuard so X-Test-User-Id is honoured on MCP
+    // endpoints (mcpMockAuthGuard falls back to userRef.current when the header
+    // is absent, keeping all non-MCP tests unchanged).
+    moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mcpMockAuthGuard);
     moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
     moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
   }
