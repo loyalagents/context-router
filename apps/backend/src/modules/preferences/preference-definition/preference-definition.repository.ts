@@ -30,24 +30,27 @@ export class PreferenceDefinitionRepository {
 
   /**
    * Resolves a slug to a definition id.
-   * If userId is provided, prefers the user-owned definition over GLOBAL.
+   * If userId is provided, prefers the user-owned definition over the schema namespace.
    * Returns null if no active definition is found.
    */
   async resolveSlugToDefinitionId(
     slug: string,
     userId?: string | null,
+    schemaNamespace = "GLOBAL",
   ): Promise<string | null> {
-    const def = await this.getDefinitionBySlug(slug, userId);
+    const def = await this.getDefinitionBySlug(slug, userId, schemaNamespace);
     return def?.id ?? null;
   }
 
   /**
    * Finds an active (non-archived) definition by slug.
    * User-first: if userId is provided, checks the user's namespace first.
+   * Falls back to schemaNamespace (default: "GLOBAL").
    */
   async getDefinitionBySlug(
     slug: string,
     userId?: string | null,
+    schemaNamespace = "GLOBAL",
   ): Promise<PrismaPreferenceDefinition | null> {
     if (userId) {
       const userDef = await this.prisma.preferenceDefinition.findFirst({
@@ -61,7 +64,7 @@ export class PreferenceDefinitionRepository {
     }
 
     return this.prisma.preferenceDefinition.findFirst({
-      where: { namespace: "GLOBAL", slug, archivedAt: null },
+      where: { namespace: schemaNamespace, slug, archivedAt: null },
     });
   }
 
@@ -77,13 +80,15 @@ export class PreferenceDefinitionRepository {
   /**
    * Returns active definitions filtered by export scope.
    * GLOBAL: system-owned only. PERSONAL: user-owned only. ALL: both.
+   * Uses schemaNamespace instead of hardcoded "GLOBAL" for the system pool.
    */
   async getByScope(
     scope: "GLOBAL" | "PERSONAL" | "ALL",
     userId: string,
+    schemaNamespace = "GLOBAL",
   ): Promise<PrismaPreferenceDefinition[]> {
     const namespaces: string[] = [];
-    if (scope === "GLOBAL" || scope === "ALL") namespaces.push("GLOBAL");
+    if (scope === "GLOBAL" || scope === "ALL") namespaces.push(schemaNamespace);
     if (scope === "PERSONAL" || scope === "ALL")
       namespaces.push(this.userNamespace(userId));
 
@@ -95,11 +100,14 @@ export class PreferenceDefinitionRepository {
 
   /**
    * Returns all active definitions visible to the user:
-   * GLOBAL definitions + user-owned definitions (if userId provided).
+   * schemaNamespace definitions + user-owned definitions (if userId provided).
    * Archived definitions are excluded.
    */
-  async getAll(userId?: string | null): Promise<PrismaPreferenceDefinition[]> {
-    const namespaces: string[] = ["GLOBAL"];
+  async getAll(
+    userId?: string | null,
+    schemaNamespace = "GLOBAL",
+  ): Promise<PrismaPreferenceDefinition[]> {
+    const namespaces: string[] = [schemaNamespace];
     if (userId) namespaces.push(this.userNamespace(userId));
 
     return this.prisma.preferenceDefinition.findMany({
@@ -115,28 +123,39 @@ export class PreferenceDefinitionRepository {
   // Slug/category helpers (direct DB, no cache)
   // ──────────────────────────────────────────────
 
-  async isKnownSlug(slug: string, userId?: string | null): Promise<boolean> {
-    const def = await this.getDefinitionBySlug(slug, userId);
+  async isKnownSlug(
+    slug: string,
+    userId?: string | null,
+    schemaNamespace = "GLOBAL",
+  ): Promise<boolean> {
+    const def = await this.getDefinitionBySlug(slug, userId, schemaNamespace);
     return def !== null;
   }
 
-  async getAllSlugs(userId?: string | null): Promise<string[]> {
-    const defs = await this.getAll(userId);
+  async getAllSlugs(
+    userId?: string | null,
+    schemaNamespace = "GLOBAL",
+  ): Promise<string[]> {
+    const defs = await this.getAll(userId, schemaNamespace);
     return defs.map((d) => d.slug);
   }
 
   async getSlugsByCategory(
     category: string,
     userId?: string | null,
+    schemaNamespace = "GLOBAL",
   ): Promise<string[]> {
-    const defs = await this.getAll(userId);
+    const defs = await this.getAll(userId, schemaNamespace);
     return defs
       .filter((d) => d.slug.split(".")[0] === category)
       .map((d) => d.slug);
   }
 
-  async getAllCategories(userId?: string | null): Promise<string[]> {
-    const defs = await this.getAll(userId);
+  async getAllCategories(
+    userId?: string | null,
+    schemaNamespace = "GLOBAL",
+  ): Promise<string[]> {
+    const defs = await this.getAll(userId, schemaNamespace);
     const categories = new Set(defs.map((d) => d.slug.split(".")[0]));
     return Array.from(categories).sort();
   }
@@ -145,9 +164,10 @@ export class PreferenceDefinitionRepository {
     input: string,
     limit = 3,
     userId?: string | null,
+    schemaNamespace = "GLOBAL",
   ): Promise<string[]> {
     const normalized = input.toLowerCase();
-    const defs = await this.getAll(userId);
+    const defs = await this.getAll(userId, schemaNamespace);
 
     const scored = defs.map((def) => {
       let score = 0;

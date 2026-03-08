@@ -29,7 +29,8 @@ export class PreferenceDefinitionResolver {
     @Args('category', { nullable: true }) category?: string,
   ): Promise<PreferenceDefinitionModel[]> {
     const userId = user?.userId;
-    const defs = await this.defRepo.getAll(userId);
+    const schemaNamespace = (user as any)?.schemaNamespace ?? "GLOBAL";
+    const defs = await this.defRepo.getAll(userId, schemaNamespace);
     const filtered = category
       ? defs.filter((d) => d.slug.split('.')[0] === category)
       : defs;
@@ -48,7 +49,8 @@ export class PreferenceDefinitionResolver {
     @CurrentUser() user: User,
     @Args('scope', { type: () => ExportSchemaScope }) scope: ExportSchemaScope,
   ): Promise<PreferenceDefinitionModel[]> {
-    const defs = await this.defRepo.getByScope(scope, user.userId);
+    const schemaNamespace = (user as any)?.schemaNamespace ?? "GLOBAL";
+    const defs = await this.defRepo.getByScope(scope, user.userId, schemaNamespace);
     return defs.map((d) => ({
       ...d,
       category: d.slug.split('.')[0],

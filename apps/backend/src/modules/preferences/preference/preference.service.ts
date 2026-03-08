@@ -38,6 +38,7 @@ export class PreferenceService {
   private async resolveAndValidateSlug(
     slug: string,
     userId?: string,
+    schemaNamespace = "GLOBAL",
   ): Promise<string> {
     if (!validateSlugFormat(slug)) {
       throw new BadRequestException(
@@ -48,9 +49,10 @@ export class PreferenceService {
     const definitionId = await this.defRepo.resolveSlugToDefinitionId(
       slug,
       userId,
+      schemaNamespace,
     );
     if (!definitionId) {
-      const similar = await this.defRepo.findSimilarSlugs(slug, 3, userId);
+      const similar = await this.defRepo.findSimilarSlugs(slug, 3, userId, schemaNamespace);
       const hint =
         similar.length > 0 ? ` Did you mean: ${similar.join(", ")}?` : "";
       throw new BadRequestException(
@@ -104,8 +106,9 @@ export class PreferenceService {
   async setPreference(
     userId: string,
     input: SetPreferenceInput,
+    schemaNamespace = "GLOBAL",
   ): Promise<EnrichedPreference> {
-    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
+    const definitionId = await this.resolveAndValidateSlug(input.slug, userId, schemaNamespace);
     await this.validateValueForSlug(input.slug, input.value, userId);
     await this.validateScope(input.slug, input.locationId, userId);
 
@@ -134,8 +137,9 @@ export class PreferenceService {
   async suggestPreference(
     userId: string,
     input: SuggestPreferenceInput,
+    schemaNamespace = "GLOBAL",
   ): Promise<EnrichedPreference | null> {
-    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
+    const definitionId = await this.resolveAndValidateSlug(input.slug, userId, schemaNamespace);
     await this.validateValueForSlug(input.slug, input.value, userId);
     await this.validateScope(input.slug, input.locationId, userId);
 

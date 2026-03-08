@@ -378,7 +378,7 @@ export default function SchemaClient({ initialCatalog, accessToken, userId }: Sc
       description: def.description,
       valueType: def.valueType,
       scope: def.scope,
-      options: def.options ? def.options.join(', ') : '',
+      options: Array.isArray(def.options) ? def.options.join(', ') : '',
       isSensitive: def.isSensitive,
       isCore: def.isCore,
     });
@@ -687,7 +687,7 @@ export default function SchemaClient({ initialCatalog, accessToken, userId }: Sc
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{def.description}</p>
-                    {def.options && (
+                    {Array.isArray(def.options) && def.options.length > 0 && (
                       <div className="mt-2">
                         <span className="text-xs text-gray-500 font-medium">Options: </span>
                         <span className="text-xs text-gray-700">

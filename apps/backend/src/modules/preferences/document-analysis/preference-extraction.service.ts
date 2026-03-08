@@ -172,6 +172,15 @@ If no preferences can be extracted, return:
     }
     cleanResponse = cleanResponse.trim();
 
+    // Fix literal (unescaped) newlines and carriage returns inside JSON string values.
+    // The AI occasionally emits multi-line string content without escaping, which
+    // causes JSON.parse to fail even though the overall structure is valid.
+    cleanResponse = cleanResponse.replace(
+      /"((?:[^"\\]|\\.)*)"/gs,
+      (_, content: string) =>
+        `"${content.replace(/\r\n/g, '\\n').replace(/\r/g, '\\n').replace(/\n/g, '\\n')}"`,
+    );
+
     // Step 1: Parse JSON
     let rawParsed: unknown;
     try {
