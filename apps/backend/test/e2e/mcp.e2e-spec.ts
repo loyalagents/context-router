@@ -1,11 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { ConfigService } from '@nestjs/config';
-import {
-  createTestApp,
-  createTestUser,
-  TestUser,
-} from '../setup/test-app';
+import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { McpService } from '../../src/mcp/mcp.service';
 import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
 
@@ -39,6 +35,7 @@ describe('MCP Integration (e2e)', () => {
     request(app.getHttpServer())
       .post('/mcp')
       .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json, text/event-stream')
       .set(headers)
       .send(body);
 
@@ -151,8 +148,8 @@ describe('MCP Integration (e2e)', () => {
       // Seed preference definitions (required FK)
       await seedPreferenceDefinitions(prisma);
 
-      // Create two distinct users
-      const userA = await createTestUser();
+      // userA is the test user already created in beforeEach
+      const userA = testUser;
       const userB = await prisma.user.create({
         data: {
           email: 'user-b@example.com',
