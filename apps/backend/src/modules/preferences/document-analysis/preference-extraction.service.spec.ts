@@ -594,6 +594,35 @@ describe("PreferenceExtractionService", () => {
         expect(result.suggestions).toHaveLength(1);
       });
 
+      it("should handle AI response with literal newlines inside string fields", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiService.generateTextWithFile.mockResolvedValue(`{
+  "suggestions": [
+    {
+      "slug": "food.dietary_restrictions",
+      "operation": "CREATE",
+      "newValue": ["peanuts", "shellfish"],
+      "confidence": 0.9,
+      "sourceSnippet": "allergic to peanuts
+and shellfish"
+    }
+  ],
+  "documentSummary": "Test"
+}`);
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0].sourceSnippet).toBe(
+          "allergic to peanuts\nand shellfish",
+        );
+      });
+
       it("should handle array newValue with multiple items", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiService.generateTextWithFile.mockResolvedValue(

@@ -39,6 +39,17 @@ const AiResponseSchema = z.object({
 type AiSuggestionSchemaType = z.infer<typeof AiSuggestionSchema>;
 type AiResponseSchemaType = z.infer<typeof AiResponseSchema>;
 
+function escapeLiteralNewlinesInJsonStrings(input: string): string {
+  return input.replace(
+    /"((?:[^"\\]|\\.)*)"/gs,
+    (_, content: string) =>
+      `"${content
+        .replace(/\r\n/g, '\\n')
+        .replace(/\r/g, '\\n')
+        .replace(/\n/g, '\\n')}"`,
+  );
+}
+
 @Injectable()
 export class PreferenceExtractionService {
   private readonly logger = new Logger(PreferenceExtractionService.name);
@@ -171,6 +182,7 @@ If no preferences can be extracted, return:
       cleanResponse = cleanResponse.slice(0, -3);
     }
     cleanResponse = cleanResponse.trim();
+    cleanResponse = escapeLiteralNewlinesInJsonStrings(cleanResponse);
 
     // Step 1: Parse JSON
     let rawParsed: unknown;
