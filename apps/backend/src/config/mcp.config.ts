@@ -11,6 +11,18 @@ export default registerAs("mcp", () => ({
   // HTTP transport configuration
   httpTransport: {
     enabled: process.env.MCP_HTTP_ENABLED !== "false",
+    path: process.env.MCP_HTTP_PATH || "/mcp",
+    requireAuth: process.env.MCP_HTTP_REQUIRE_AUTH !== "false",
+    allowedOrigins: process.env.MCP_HTTP_ALLOWED_ORIGINS
+      ? process.env.MCP_HTTP_ALLOWED_ORIGINS.split(",")
+      : process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",")
+        : [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3002",
+            "http://127.0.0.1:3002",
+          ],
   },
 
   // Feature configuration

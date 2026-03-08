@@ -21,6 +21,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { AppModule } from '../../src/app.module';
 import { ApiKeyGuard } from '../../src/common/guards/api-key.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
+import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from './test-db';
@@ -89,19 +90,65 @@ export interface CreateTestAppOptions {
 function createMockAuthGuard(userRef: UserRef) {
   return {
     canActivate: (context: ExecutionContext) => {
-      // Handle GraphQL context
-      const gqlContext = GqlExecutionContext.create(context);
-      const ctx = gqlContext.getContext();
+      const request = getRequestFromContext(context);
+      request.user = userRef.current;
 
-      if (ctx?.req) {
-        // GraphQL request
-        ctx.req.user = userRef.current;
-      } else {
-        // HTTP request (REST endpoints)
-        const request = context.switchToHttp().getRequest();
-        if (request) {
-          request.user = userRef.current;
+      return true;
+    },
+  };
+}
+
+function getRequestFromContext(context: ExecutionContext) {
+  let request;
+
+  if (context.getType<string>() === 'graphql') {
+    request = GqlExecutionContext.create(context).getContext()?.req;
+  } else {
+    request = context.switchToHttp().getRequest();
+  }
+
+  if (!request) {
+    throw new Error(
+      'Test auth guard could not resolve a request object from the execution context',
+    );
+  }
+
+  return request;
+}
+
+/**
+ * Creates a mock MCP auth guard that supports multi-user MCP testing.
+ *
+ * If the request includes an X-Test-User-Id header, the guard resolves
+ * that user from mcpUsersMap and attaches it to the request. This allows
+ * concurrent MCP requests to authenticate as different users in the same
+ * test run.
+ *
+ * Falls back to userRef.current when the header is absent (single-user tests).
+ *
+ * IMPORTANT: X-Test-User-Id logic must never appear in production code.
+ * This guard is only registered in test-app.ts.
+ */
+function createMcpMockAuthGuard(
+  mcpUsersMap: Map<string, TestUser>,
+  userRef: UserRef,
+) {
+  return {
+    canActivate: (context: ExecutionContext) => {
+      const request = getRequestFromContext(context);
+      const testUserId = request?.headers?.['x-test-user-id'];
+
+      if (testUserId) {
+        const user = mcpUsersMap.get(testUserId);
+        if (!user) {
+          throw new Error(
+            `X-Test-User-Id "${testUserId}" not found in mcpUsersMap. ` +
+              `Call registerMcpUser() before making MCP requests with this user ID.`,
+          );
         }
+        request.user = user;
+      } else {
+        request.user = userRef.current;
       }
 
       return true;
@@ -166,6 +213,7 @@ export async function createTestApp(
   app: INestApplication;
   module: TestingModule;
   setTestUser: (user: TestUser) => void;
+  registerMcpUser: (user: TestUser) => void;
   mocks: {
     vertexAi: ReturnType<typeof createMockVertexAiService>;
   };
@@ -177,14 +225,22 @@ export async function createTestApp(
   const userRef: UserRef = { current: null };
   const mockAuthGuard = createMockAuthGuard(userRef);
 
+  // Per-userId map for concurrent MCP tests using X-Test-User-Id header
+  const mcpUsersMap = new Map<string, TestUser>();
+  const mcpMockAuthGuard = createMcpMockAuthGuard(mcpUsersMap, userRef);
+
   const moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
   });
 
   if (mockAuthGuards) {
     // Most tests bypass auth and inject a fresh test user directly.
-    moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mockAuthGuard);
+    // ApiKeyGuard uses mcpMockAuthGuard so X-Test-User-Id is honoured on MCP
+    // endpoints (mcpMockAuthGuard falls back to userRef.current when the header
+    // is absent, keeping all non-MCP tests unchanged).
+    moduleBuilder.overrideGuard(ApiKeyGuard).useValue(mcpMockAuthGuard);
     moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+    moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
   }
 
   // Override external services
@@ -215,6 +271,9 @@ export async function createTestApp(
     module,
     setTestUser: (user: TestUser) => {
       userRef.current = user;
+    },
+    registerMcpUser: (user: TestUser) => {
+      mcpUsersMap.set(user.userId, user);
     },
     mocks: {
       vertexAi: mockVertexAi,

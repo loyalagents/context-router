@@ -44,6 +44,30 @@ And one user identity mechanism:
 
 The server always scopes tool execution to the authenticated user context.
 
+### Transport: POST-only JSON-response mode
+
+`POST /mcp` is the only supported method. `GET /mcp` returns `405 Method Not Allowed`. This is intentional — the server uses stateless JSON-response mode; no SSE streaming or persistent sessions.
+
+### Origin Validation
+
+Requests with an `Origin` header (browser clients) are validated against an allowlist to prevent DNS-rebinding attacks:
+
+- `MCP_HTTP_ALLOWED_ORIGINS` set → use that list
+- `MCP_HTTP_ALLOWED_ORIGINS` unset, `CORS_ORIGIN` set → fall back to the app's CORS origins
+- Both unset → `http://localhost:3000`, `http://localhost:3001`, `http://localhost:3002`, `http://127.0.0.1:3002` (matches app CORS defaults)
+
+Non-browser clients (CLI tools, native MCP clients) that omit the `Origin` header are allowed through unconditionally — DNS-rebinding attacks require a browser.
+
+### User Context Isolation
+
+**Critical Security Feature**: The MCP server automatically extracts the `userId` from the API key and ensures:
+
+1. Users can only search their own preferences
+2. Users can only create preferences for themselves
+3. Users can only update/delete their own preferences
+
+**The userId is NEVER accepted as a parameter** - it's always extracted from the authenticated context.
+
 ## Supported Tools
 
 ### `listPreferenceSlugs`
@@ -119,10 +143,9 @@ Returns the generated GraphQL schema from `apps/backend/src/schema.gql`.
 
 ## Configuration
 
-The current MCP configuration only supports the flags that are actually wired into the backend:
-
 ```env
 MCP_HTTP_ENABLED=true
+MCP_HTTP_ALLOWED_ORIGINS=https://example.com   # Allowed browser origins (comma-separated)
 MCP_TOOLS_PREFERENCES_ENABLED=true
 MCP_TOOLS_PREFERENCES_MAX_SEARCH_RESULTS=100
 MCP_RESOURCES_SCHEMA_ENABLED=true

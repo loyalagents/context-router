@@ -25,7 +25,7 @@ export class McpService {
     private schemaResource: SchemaResource,
   ) {}
 
-  createServer(context: McpContext | null = null): Server {
+  createServer(context: McpContext): Server {
     const serverConfig = this.configService.get<{
       name: string;
       version: string;
@@ -75,7 +75,7 @@ export class McpService {
     return this.createTextResult({ error: message }, true);
   }
 
-  private registerTools(server: Server, context: McpContext | null) {
+  private registerTools(server: Server, context: McpContext) {
     const toolsEnabled = this.configService.get(
       "mcp.tools.preferences.enabled",
     );
@@ -211,14 +211,14 @@ export class McpService {
       const { name, arguments: args } = request.params;
 
       this.logger.log(
-        `Tool called: ${name} by user: ${context?.user?.userId || "unknown"}`,
+        `Tool called: ${name} by user: ${context.user?.userId || "unknown"}`,
       );
 
       if (name === "listPreferenceSlugs") {
         try {
           const result = await this.preferenceListTool.list(
             (args as Record<string, unknown> | undefined) ?? {},
-            context?.user.userId,
+            context.user.userId,
           );
           return this.createTextResult(result);
         } catch (error) {
@@ -228,14 +228,6 @@ export class McpService {
           );
           return this.createToolError(error);
         }
-      }
-
-      if (!context) {
-        this.logger.error(`Tool called without context: ${name}`);
-        return this.createTextResult(
-          { error: "Authentication context not available" },
-          true,
-        );
       }
 
       try {

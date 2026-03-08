@@ -25,7 +25,12 @@ export class McpController {
   ) {}
 
   /**
-   * Handle MCP POST requests (JSON-RPC)
+   * Handle MCP POST requests (JSON-RPC).
+   * JSON-response mode (enableJsonResponse: true) is used — this is a stateless,
+   * request/response endpoint. GET is intentionally not supported; the transport
+   * will return 405 for GET requests, which is the correct behavior for this mode.
+   * If server-initiated streaming (notifications, sampling, elicitation) is needed
+   * in the future, the transport design must be revisited.
    */
   @Post("/mcp")
   @UseGuards(ApiKeyGuard)
@@ -38,18 +43,14 @@ export class McpController {
   }
 
   /**
-   * Handle MCP GET requests (SSE streaming)
+   * GET /mcp — not supported in JSON-response mode.
+   * Returns 405 Method Not Allowed explicitly.
    */
   @Get("/mcp")
-  @UseGuards(ApiKeyGuard)
-  async handleMcpGet(@Req() req: Request, @Res() res: Response) {
-    return this.handleMcpRequest(req, res, undefined);
+  handleMcpGet(@Res() res: Response) {
+    res.status(405).set("Allow", "POST").json({ error: "Method Not Allowed" });
   }
 
-  /**
-   * Common handler for all MCP HTTP methods.
-   * Streamable HTTP transport handles POST for JSON-RPC and GET for SSE.
-   */
   private async handleMcpRequest(req: Request, res: Response, body: any) {
     const httpEnabled = this.configService.get("mcp.httpTransport.enabled");
 
@@ -65,7 +66,6 @@ export class McpController {
       return;
     }
 
-    // Create MCP context with authenticated user
     const context: McpContext = {
       user: {
         userId: user.userId,
@@ -79,24 +79,20 @@ export class McpController {
       `MCP HTTP request from user: ${user.email} (${user.userId})`,
     );
 
+    const server = this.mcpService.createServer(context);
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+
+    res.on("close", () => {
+      void transport.close().catch(() => {});
+      void server.close().catch(() => {});
+    });
+
     try {
-      // Create Streamable HTTP transport in stateless mode
-      // sessionIdGenerator: undefined enables stateless operation for serverless/cloud deployments
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined, // Stateless mode - no session tracking
-      });
-
-      // Create a request-scoped MCP server so auth context never leaks
-      const server = this.mcpService.createServer(context);
       await server.connect(transport);
-
-      this.logger.log(`MCP session established for user: ${user.userId}`);
-
-      // Handle the incoming HTTP request through the transport
-      // Pass the parsed body as the third parameter so the transport doesn't need to re-parse
-      // The transport will handle SSE streaming or direct HTTP responses as appropriate
       await transport.handleRequest(req, res, body);
-
       this.logger.log(`MCP request completed for user: ${user.userId}`);
     } catch (error) {
       this.logger.error(
