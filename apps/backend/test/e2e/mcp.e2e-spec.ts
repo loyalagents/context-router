@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { McpService } from '../../src/mcp/mcp.service';
 import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 describe('MCP Integration (e2e)', () => {
   let app: INestApplication;
@@ -131,13 +133,22 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should allow requests from an allowed origin', async () => {
-      // Default config has allowedOrigins: ['*'] so any origin passes
+      // CORS_ORIGIN=http://localhost:3001 in .env.test, so allowedOrigins=['http://localhost:3001']
       const response = await mcpPost(
         { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
-        { origin: 'https://example.com' },
+        { origin: 'http://localhost:3001' },
       );
 
       expect(response.status).not.toBe(403);
+    });
+
+    it('should reject requests from a disallowed origin', async () => {
+      const response = await mcpPost(
+        { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} },
+        { origin: 'https://evil.example.com' },
+      );
+
+      expect(response.status).toBe(403);
     });
   });
 
@@ -198,26 +209,34 @@ describe('MCP Integration (e2e)', () => {
         },
       });
 
-      // Spy on preferenceSearchTool.search to add a deterministic delay,
-      // ensuring both requests are in-flight simultaneously before either resolves.
-      const preferenceSearchTool = (mcpService as any).preferenceSearchTool;
-      const originalSearch = preferenceSearchTool.search.bind(preferenceSearchTool);
+      // Spy on Server.prototype.setRequestHandler to wrap the CallToolRequestSchema
+      // handler. The barrier fires at the START of the handler — before any context
+      // is read — ensuring both requests are simultaneously in-flight before either
+      // resolves. This test would fail against the old singleton-context implementation
+      // because both paused handlers would race on getContext() after the barrier lifts.
+      const originalSetRequestHandler = Server.prototype.setRequestHandler;
       let resolveBarrier: () => void;
       const barrier = new Promise<void>((resolve) => {
         resolveBarrier = resolve;
       });
       let inflightCount = 0;
 
-      const searchSpy = jest
-        .spyOn(preferenceSearchTool, 'search')
-        .mockImplementation(async (...args: any[]) => {
-          inflightCount++;
-          if (inflightCount === 2) {
-            // Both requests are now in-flight — release the barrier
-            resolveBarrier();
+      const setRequestHandlerSpy = jest
+        .spyOn(Server.prototype, 'setRequestHandler')
+        .mockImplementation(function (this: Server, schema: any, handler: any) {
+          if (schema === CallToolRequestSchema) {
+            const wrappedHandler = async (...args: any[]) => {
+              inflightCount++;
+              if (inflightCount === 2) {
+                // Both handlers are now in-flight — release the barrier
+                resolveBarrier();
+              }
+              await barrier;
+              return handler.apply(this, args);
+            };
+            return originalSetRequestHandler.call(this, schema, wrappedHandler);
           }
-          await barrier;
-          return originalSearch(...args);
+          return originalSetRequestHandler.call(this, schema, handler);
         });
 
       const mcpRequest = (userId: string) =>
@@ -236,7 +255,7 @@ describe('MCP Integration (e2e)', () => {
         mcpRequest(userB.userId),
       ]);
 
-      searchSpy.mockRestore();
+      setRequestHandlerSpy.mockRestore();
 
       expect(responseA.status).toBe(200);
       expect(responseB.status).toBe(200);
