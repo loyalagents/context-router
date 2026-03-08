@@ -23,6 +23,7 @@ import { AppModule } from '../../src/app.module';
 import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
 import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
+import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
 import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -129,6 +130,46 @@ function createMockAuthGuard(userRef: UserRef) {
 }
 
 /**
+ * Creates a mock MCP auth guard that supports multi-user MCP testing.
+ *
+ * If the request includes an X-Test-User-Id header, the guard resolves
+ * that user from mcpUsersMap and attaches it to the request. This allows
+ * concurrent MCP requests to authenticate as different users in the same
+ * test run.
+ *
+ * Falls back to userRef.current when the header is absent (single-user tests).
+ *
+ * IMPORTANT: X-Test-User-Id logic must never appear in production code.
+ * This guard is only registered in test-app.ts.
+ */
+function createMcpMockAuthGuard(
+  mcpUsersMap: Map<string, TestUser>,
+  userRef: UserRef,
+) {
+  return {
+    canActivate: (context: ExecutionContext) => {
+      const request = context.switchToHttp().getRequest();
+      const testUserId = request?.headers?.['x-test-user-id'];
+
+      if (testUserId) {
+        const user = mcpUsersMap.get(testUserId);
+        if (!user) {
+          throw new Error(
+            `X-Test-User-Id "${testUserId}" not found in mcpUsersMap. ` +
+              `Call registerMcpUser() before making MCP requests with this user ID.`,
+          );
+        }
+        request.user = user;
+      } else {
+        request.user = userRef.current;
+      }
+
+      return true;
+    },
+  };
+}
+
+/**
  * Creates a test user in the database.
  * Call this in beforeEach after resetDb() to ensure a fresh user exists.
  *
@@ -185,6 +226,7 @@ export async function createTestApp(
   app: INestApplication;
   module: TestingModule;
   setTestUser: (user: TestUser) => void;
+  registerMcpUser: (user: TestUser) => void;
   mocks: {
     vertexAi: ReturnType<typeof createMockVertexAiService>;
     auth0: ReturnType<typeof createMockAuth0Service>;
@@ -197,6 +239,10 @@ export async function createTestApp(
   const userRef: UserRef = { current: null };
   const mockAuthGuard = createMockAuthGuard(userRef);
 
+  // Per-userId map for concurrent MCP tests using X-Test-User-Id header
+  const mcpUsersMap = new Map<string, TestUser>();
+  const mcpMockAuthGuard = createMcpMockAuthGuard(mcpUsersMap, userRef);
+
   const moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
   });
@@ -205,6 +251,7 @@ export async function createTestApp(
   moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
   moduleBuilder.overrideGuard(JwtAuthGuard).useValue(mockAuthGuard);
   moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+  moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
 
   // Override external services
   moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);
@@ -235,6 +282,9 @@ export async function createTestApp(
     module,
     setTestUser: (user: TestUser) => {
       userRef.current = user;
+    },
+    registerMcpUser: (user: TestUser) => {
+      mcpUsersMap.set(user.userId, user);
     },
     mocks: {
       vertexAi: mockVertexAi,
