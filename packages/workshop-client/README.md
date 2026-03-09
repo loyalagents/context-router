@@ -2,6 +2,9 @@
 
 Workshop-focused TypeScript client for Context Router. It wraps the existing GraphQL and upload APIs so workshop consumers do not need Apollo, handwritten GraphQL, or custom auth header logic.
 
+Implementation context lives in [docs/package/workshop_client_context.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/workshop_client_context.md).
+Smoke and verification commands live in [docs/package/smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md).
+
 ## Install From A Tarball
 
 ```bash

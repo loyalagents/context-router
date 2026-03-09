@@ -4,6 +4,8 @@
 - Build `@loyalagents/context-router-workshop-client` in `packages/workshop-client` and distribute it as a `.tgz` for the workshop.
 - Keep v1 small: `users()`, `withUser()`, `catalog()`, `me()`, `activePreferences()`, `setPreference()`, and `analyzeDocument()`.
 - Keep out of scope: location-scoped APIs, suggestion review/apply, delete/clear APIs, and npm publishing.
+- Quick implementation context lives in [docs/package/workshop_client_context.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/workshop_client_context.md).
+- Canonical smoke/test commands live in [docs/package/smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md).
 - Locked decisions:
   - `catalog()` fetches live data on every call; no cache and no refresh API.
   - `catalog()` uses `exportPreferenceSchema(scope: ALL)` and filters client-side.

@@ -484,6 +484,8 @@ Schema migration must precede all code changes (Prisma types won't compile other
 
 ## Workshop Client Package
 
+Current runnable smoke/test commands live in [docs/package/smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md). The checkpoint log below stays as the historical record of what was run during implementation.
+
 ### Checkpoint Log
 
 #### Checkpoint 0 — 2026-03-08 18:56 PDT
