@@ -1,14 +1,21 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import {
+  createMockVertexAiService,
+  createTestApp,
+  createTestUser,
+  TestUser,
+} from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
 
 describe('Document Analysis GraphQL API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  const mockVertexAi = createMockVertexAiService();
 
   beforeAll(async () => {
-    const testApp = await createTestApp();
+    const testApp = await createTestApp({ mockVertexAi });
     app = testApp.app;
     setTestUser = testApp.setTestUser;
   });
@@ -403,6 +410,84 @@ describe('Document Analysis GraphQL API (e2e)', () => {
       expect(response.body.errors).toBeUndefined();
       // The unknown slug should not appear in results (it was rejected internally)
       expect(response.body.data.applyPreferenceSuggestions).toEqual([]);
+    });
+  });
+
+  describe('upload analysis route', () => {
+    it('uses schemaNamespace-visible system and personal definitions for upload analysis', async () => {
+      const prisma = getPrismaClient();
+      const healthUser = await prisma.user.create({
+        data: {
+          email: 'health-analysis@test.dev',
+          firstName: 'Health',
+          lastName: 'Analyst',
+          schemaNamespace: 'health',
+        },
+      });
+      setTestUser(healthUser);
+
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: 'health',
+          slug: 'identification.name',
+          description: 'Patient name',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+          isCore: true,
+        },
+      });
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: `USER:${healthUser.userId}`,
+          ownerUserId: healthUser.userId,
+          slug: 'workshop.team_name',
+          description: 'Workshop team name',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      });
+
+      mockVertexAi.generateTextWithFile.mockResolvedValueOnce(
+        JSON.stringify({
+          suggestions: [
+            {
+              slug: 'identification.name',
+              operation: 'CREATE',
+              newValue: 'Alex Morgan',
+              confidence: 0.96,
+              sourceSnippet: 'Patient: Alex Morgan',
+            },
+            {
+              slug: 'workshop.team_name',
+              operation: 'CREATE',
+              newValue: 'Care Tigers',
+              confidence: 0.91,
+              sourceSnippet: 'Team: Care Tigers',
+            },
+          ],
+          documentSummary: 'Health intake form',
+        }),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('Patient: Alex Morgan\nTeam: Care Tigers'), {
+          filename: 'intake.txt',
+          contentType: 'text/plain',
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.documentSummary).toBe('Health intake form');
+      expect(response.body.suggestions).toHaveLength(2);
+      expect(response.body.suggestions.map((entry: any) => entry.slug)).toEqual([
+        'identification.name',
+        'workshop.team_name',
+      ]);
+
+      const prompt = mockVertexAi.generateTextWithFile.mock.calls.at(-1)?.[0];
+      expect(prompt).toContain('identification.name');
+      expect(prompt).toContain('workshop.team_name');
     });
   });
 });

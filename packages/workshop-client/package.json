@@ -1,0 +1,40 @@
+{
+  "name": "@loyalagents/context-router-workshop-client",
+  "version": "0.1.0",
+  "description": "Workshop-focused TypeScript client for Context Router",
+  "license": "ISC",
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "test": "vitest run && tsc -p tsconfig.json --noEmit",
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:consumer": "node scripts/smoke-consumer.mjs",
+    "pack:tgz": "pnpm build && pnpm pack --pack-destination ../../dist/workshop-client"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4"
+  }
+}

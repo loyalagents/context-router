@@ -53,6 +53,18 @@ export class PreferenceExtractionService {
 
   async extractPreferences(
     userId: string,
+    fileBuffer: Buffer,
+    mimeType: string,
+    filename: string,
+    schemaNamespace?: string,
+  ): Promise<{
+    suggestions: PreferenceSuggestion[];
+    filteredSuggestions: FilteredSuggestion[];
+    documentSummary: string;
+    filteredCount: number;
+  }>;
+  async extractPreferences(
+    userId: string,
     schemaNamespace: string,
     fileBuffer: Buffer,
     mimeType: string,
@@ -62,10 +74,30 @@ export class PreferenceExtractionService {
     filteredSuggestions: FilteredSuggestion[];
     documentSummary: string;
     filteredCount: number;
+  }>;
+  async extractPreferences(
+    userId: string,
+    arg2: string | Buffer,
+    arg3: Buffer | string,
+    arg4: string,
+    arg5?: string,
+  ): Promise<{
+    suggestions: PreferenceSuggestion[];
+    filteredSuggestions: FilteredSuggestion[];
+    documentSummary: string;
+    filteredCount: number;
   }> {
+    const normalized = this.normalizeExtractPreferencesArgs(
+      userId,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+    );
+
     // Fetch user's current ACTIVE preferences
     const currentPreferences =
-      await this.preferenceService.getActivePreferences(userId);
+      await this.preferenceService.getActivePreferences(normalized.userId);
 
     // Build the prompt with catalog-based schema
     const prompt = await this.buildExtractionPrompt(
@@ -73,29 +105,31 @@ export class PreferenceExtractionService {
         slug: p.slug,
         value: p.value,
       })),
-      filename,
-      userId,
-      schemaNamespace,
+      normalized.filename,
+      normalized.userId,
+      normalized.schemaNamespace,
     );
 
-    this.logger.log(`Calling AI for preference extraction from ${filename}`);
+    this.logger.log(
+      `Calling AI for preference extraction from ${normalized.filename}`,
+    );
 
     // Call the AI with the file
     const aiResponse = await this.aiService.generateTextWithFile(prompt, {
-      buffer: fileBuffer,
-      mimeType,
+      buffer: normalized.fileBuffer,
+      mimeType: normalized.mimeType,
     });
 
     // Parse and validate the response
-    const parsed = this.parseAiResponse(aiResponse, userId);
+    const parsed = this.parseAiResponse(aiResponse, normalized.userId);
     return this.validateAndSanitizeSuggestions(
       parsed,
       currentPreferences.map((p) => ({
         slug: p.slug,
         value: p.value,
       })),
-      userId,
-      schemaNamespace,
+      normalized.userId,
+      normalized.schemaNamespace,
     );
   }
 
@@ -103,7 +137,7 @@ export class PreferenceExtractionService {
     currentPreferences: Array<{ slug: string; value: any }>,
     filename: string,
     userId: string,
-    schemaNamespace: string,
+    schemaNamespace = 'GLOBAL',
   ): Promise<string> {
     // Build schema from catalog scoped to the user's namespace
     const defs = await this.defRepo.getAll(userId, schemaNamespace);
@@ -278,7 +312,7 @@ If no preferences can be extracted, return:
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
     currentPreferences: Array<{ slug: string; value: any }>,
     userId: string,
-    schemaNamespace: string,
+    schemaNamespace = 'GLOBAL',
   ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
@@ -308,7 +342,13 @@ If no preferences can be extracted, return:
 
     for (const suggestion of parsed.suggestions) {
       // Filter: unknown slug
-      if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId, schemaNamespace))) {
+      if (
+        !(await this.defRepo.isKnownSlug(
+          suggestion.slug,
+          userId,
+          schemaNamespace,
+        ))
+      ) {
         this.logger.warn(
           `Filtered suggestion: unknown slug "${suggestion.slug}"`,
         );
@@ -424,5 +464,41 @@ If no preferences can be extracted, return:
       documentSummary: parsed.documentSummary,
       filteredCount: filteredSuggestions.length,
     };
+  }
+
+  private normalizeExtractPreferencesArgs(
+    userId: string,
+    arg2: string | Buffer | undefined,
+    arg3: Buffer | string | undefined,
+    arg4: string | undefined,
+    arg5: string | undefined,
+  ): {
+    userId: string;
+    fileBuffer: Buffer;
+    mimeType: string;
+    filename: string;
+    schemaNamespace: string;
+  } {
+    if (typeof arg2 === 'string' && Buffer.isBuffer(arg3)) {
+      return {
+        userId,
+        schemaNamespace: arg2,
+        fileBuffer: arg3,
+        mimeType: arg4 ?? 'application/octet-stream',
+        filename: arg5 ?? 'upload',
+      };
+    }
+
+    if (Buffer.isBuffer(arg2)) {
+      return {
+        userId,
+        fileBuffer: arg2,
+        mimeType: typeof arg3 === 'string' ? arg3 : 'application/octet-stream',
+        filename: arg4 ?? 'upload',
+        schemaNamespace: arg5 ?? 'GLOBAL',
+      };
+    }
+
+    throw new Error('Invalid extractPreferences arguments');
   }
 }

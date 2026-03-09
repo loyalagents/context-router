@@ -31,10 +31,10 @@ export class DocumentAnalysisService {
       const { suggestions, filteredSuggestions, documentSummary, filteredCount } =
         await this.preferenceExtractionService.extractPreferences(
           userId,
-          schemaNamespace,
           fileBuffer,
           mimeType,
           filename,
+          schemaNamespace,
         );
 
       // Update suggestion IDs to include analysisId
