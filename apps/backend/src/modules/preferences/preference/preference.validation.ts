@@ -4,7 +4,7 @@ import {
 } from "@infrastructure/prisma/generated-client";
 
 // Slug format validation regex
-const SLUG_REGEX = /^[a-z]+(\.[a-z0-9_]+)+$/;
+const SLUG_REGEX = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/;
 
 /**
  * Validates that a slug matches the required format.
