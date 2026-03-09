@@ -49,7 +49,7 @@ env WORKSHOP_CLIENT_SMOKE_BASE_URL=http://localhost:3010 WORKSHOP_CLIENT_SMOKE_A
 
 ## Tarball Consumer Smoke
 
-This installs the generated `.tgz` into a temporary project and runs the same flow from outside the monorepo package source:
+This installs the generated `.tgz` for the current package version into a temporary project and runs the same flow from outside the monorepo package source:
 
 ```bash
 env WORKSHOP_CLIENT_SMOKE_BASE_URL=http://localhost:3010 WORKSHOP_CLIENT_SMOKE_API_KEY=grp-a-export-auth pnpm smoke:workshop-client:consumer

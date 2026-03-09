@@ -45,18 +45,18 @@ export interface WorkshopCatalogEntry {
 export interface WorkshopPreference {
   id: string;
   userId: string;
-  locationId?: string;
+  locationId: string | null;
   slug: string;
   definitionId: string;
   value: unknown;
   status: WorkshopPreferenceStatus;
   sourceType: WorkshopSourceType;
-  confidence?: number;
-  evidence?: unknown;
+  confidence: number | null;
+  evidence: unknown | null;
   createdAt: string;
   updatedAt: string;
-  category?: string;
-  description?: string;
+  category: string | null;
+  description: string | null;
 }
 
 export interface WorkshopSourceMeta {

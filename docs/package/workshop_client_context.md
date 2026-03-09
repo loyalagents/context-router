@@ -76,31 +76,39 @@ Document analysis now respects the selected user’s schema visibility:
 
 - package unit tests and typecheck
 - package build and tarball pack
+- GitHub Actions now runs package test, build, and pack on pushes and pull requests for `main` and `gates-workshop-2026`
 - live smoke against a prestarted backend
 - tarball consumer smoke from a temp project
 - backend unit regression for namespaced/personal document extraction
 - backend e2e regression for `/api/preferences/analysis`
 
-Canonical commands live in [smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md).
+Canonical commands live in [smoke_test.md](./smoke_test.md).
+
+## Latest Cleanup
+
+- `WorkshopPreference` now mirrors the backend GraphQL nullability for `locationId`, `confidence`, `evidence`, `category`, and `description`.
+- The tarball consumer smoke resolves the exact `.tgz` for the current package version instead of picking a filename by lexicographic sort.
+- `pack:workshop-client` now rebuilds `dist/` before packing so tarball creation does not depend on stale local artifacts.
+- The new package docs no longer embed machine-local absolute paths.
 
 ## Important Files
 
 - Package entry and client logic:
-  - [client.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/packages/workshop-client/src/client.ts)
-  - [catalog.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/packages/workshop-client/src/catalog.ts)
-  - [http.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/packages/workshop-client/src/http.ts)
+  - [client.ts](../../packages/workshop-client/src/client.ts)
+  - [catalog.ts](../../packages/workshop-client/src/catalog.ts)
+  - [http.ts](../../packages/workshop-client/src/http.ts)
 - Package docs:
-  - [README.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/packages/workshop-client/README.md)
-  - [smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md)
+  - [README.md](../../packages/workshop-client/README.md)
+  - [smoke_test.md](./smoke_test.md)
 - Backend namespace/document-analysis path:
-  - [document-analysis.controller.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts)
-  - [document-analysis.service.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/apps/backend/src/modules/preferences/document-analysis/document-analysis.service.ts)
-  - [preference-extraction.service.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/apps/backend/src/modules/preferences/document-analysis/preference-extraction.service.ts)
+  - [document-analysis.controller.ts](../../apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts)
+  - [document-analysis.service.ts](../../apps/backend/src/modules/preferences/document-analysis/document-analysis.service.ts)
+  - [preference-extraction.service.ts](../../apps/backend/src/modules/preferences/document-analysis/preference-extraction.service.ts)
 - Regression coverage:
-  - [preference-extraction.service.spec.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/apps/backend/src/modules/preferences/document-analysis/preference-extraction.service.spec.ts)
-  - [document-analysis.e2e-spec.ts](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/apps/backend/test/e2e/document-analysis.e2e-spec.ts)
+  - [preference-extraction.service.spec.ts](../../apps/backend/src/modules/preferences/document-analysis/preference-extraction.service.spec.ts)
+  - [document-analysis.e2e-spec.ts](../../apps/backend/test/e2e/document-analysis.e2e-spec.ts)
 - Historical implementation log:
-  - [personal-slug-planning.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/personal-slug-planning.md)
+  - [personal-slug-planning.md](../personal-slug-planning.md)
 
 ## Current Status
 
@@ -110,4 +118,4 @@ Canonical commands live in [smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a
 
 ## Operational Note
 
-If live smoke fails with `Invalid API key`, rerun the export-auth e2e contract listed in [smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md) to recreate the expected test API key fixture.
+If live smoke fails with `Invalid API key`, rerun the export-auth e2e contract listed in [smoke_test.md](./smoke_test.md) to recreate the expected test API key fixture.

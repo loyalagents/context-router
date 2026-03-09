@@ -4,6 +4,7 @@ import {
   WorkshopClientError,
   createWorkshopClient,
   type WorkshopCatalogEntry,
+  type WorkshopPreference,
 } from "../src";
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -281,11 +282,27 @@ describe("workshop client", () => {
       .withUser("user-1")
       .activePreferences();
 
-    expect(preferences[0]).toMatchObject({
+    expect(preferences[0]).toEqual({
+      id: "pref-1",
+      userId: "user-1",
+      locationId: null,
       slug: "system.response_tone",
-      value: "casual",
       definitionId: "def-1",
+      value: "casual",
+      status: "ACTIVE",
+      sourceType: "USER",
+      confidence: null,
+      evidence: null,
+      createdAt: "2026-03-08T00:00:00.000Z",
+      updatedAt: "2026-03-08T00:00:00.000Z",
+      category: "system",
+      description: "The AI tone",
     });
+    expectTypeOf<WorkshopPreference["locationId"]>().toEqualTypeOf<string | null>();
+    expectTypeOf<WorkshopPreference["confidence"]>().toEqualTypeOf<number | null>();
+    expectTypeOf<WorkshopPreference["evidence"]>().toEqualTypeOf<unknown | null>();
+    expectTypeOf<WorkshopPreference["category"]>().toEqualTypeOf<string | null>();
+    expectTypeOf<WorkshopPreference["description"]>().toEqualTypeOf<string | null>();
   });
 
   it("validates setPreference() against a fresh live catalog before mutation", async () => {

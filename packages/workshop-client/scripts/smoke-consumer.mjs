@@ -1,12 +1,18 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { findPackedTarballPath, readPackageManifest } from "./tarball.mjs";
+
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(packageDir, "..", "..");
-const tarballPath = findLatestTarball(path.join(repoRoot, "dist", "workshop-client"));
+const packageManifest = readPackageManifest(packageDir);
+const tarballPath = findPackedTarballPath(
+  path.join(repoRoot, "dist", "workshop-client"),
+  packageManifest,
+);
 const tempDir = mkdtempSync(path.join(tmpdir(), "workshop-client-consumer-"));
 const storeDir = path.join(tempDir, "pnpm-store");
 
@@ -114,25 +120,6 @@ function requireEnv(name) {
 }
 `,
   );
-}
-
-function findLatestTarball(tarballDir) {
-  if (!existsSync(tarballDir)) {
-    throw new Error(`Tarball directory not found: ${tarballDir}`);
-  }
-
-  const tarballs = readdirSync(tarballDir)
-    .filter((entry) => entry.endsWith(".tgz"))
-    .sort((left, right) => right.localeCompare(left));
-  const tarball = tarballs[0];
-
-  if (!tarball) {
-    throw new Error(
-      `No workshop-client tarball found in ${tarballDir}. Run pnpm pack:workshop-client first.`,
-    );
-  }
-
-  return path.join(tarballDir, tarball);
 }
 
 function run(command, args, cwd, env = process.env) {

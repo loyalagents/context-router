@@ -28,7 +28,7 @@
     "test": "vitest run && tsc -p tsconfig.json --noEmit",
     "smoke": "node scripts/smoke.mjs",
     "smoke:consumer": "node scripts/smoke-consumer.mjs",
-    "pack:tgz": "pnpm pack --pack-destination ../../dist/workshop-client"
+    "pack:tgz": "pnpm build && pnpm pack --pack-destination ../../dist/workshop-client"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

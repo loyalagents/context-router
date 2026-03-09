@@ -484,7 +484,7 @@ Schema migration must precede all code changes (Prisma types won't compile other
 
 ## Workshop Client Package
 
-Current runnable smoke/test commands live in [docs/package/smoke_test.md](/Users/lucasnovak/.codex/worktrees/4a7a/context-router/docs/package/smoke_test.md). The checkpoint log below stays as the historical record of what was run during implementation.
+Current runnable smoke/test commands live in [smoke_test.md](./package/smoke_test.md). The checkpoint log below stays as the historical record of what was run during implementation.
 
 ### Checkpoint Log
 
@@ -595,3 +595,51 @@ Results:
 Notes:
 - The document-analysis API now respects non-`GLOBAL` schema namespaces and self-added definitions in both prompt generation and slug validation.
 - The live backend smoke depends on a valid API-key fixture being present in the shared test DB; rerunning the export-auth contract is a reliable reseed step when other e2e suites have reset the DB since startup.
+
+#### Checkpoint 4 — 2026-03-08 22:25 PDT
+
+Status: complete
+
+Changes:
+- Aligned `WorkshopPreference` with the backend GraphQL nullability contract for `locationId`, `confidence`, `evidence`, `category`, and `description`.
+- Added package coverage for nullable preference fields and deterministic tarball resolution.
+- Reworked the consumer smoke tarball lookup to require the exact current package-version tarball instead of picking a lexicographically last filename.
+- Cleaned the new workshop package docs so they no longer embed machine-local absolute paths.
+- Updated `docs/package/workshop_client_context.md` with the cleanup details and current constraints.
+- Tightened `pack:tgz` so it rebuilds `dist/` before calling `pnpm pack`.
+
+Commands run:
+- `pnpm test:workshop-client`
+- `pnpm build:workshop-client`
+- `pnpm pack:workshop-client`
+
+Results:
+- `test:workshop-client` passed: 16/16 tests green, including the new tarball helper coverage, plus `tsc --noEmit`.
+- `build:workshop-client` passed and regenerated the dual ESM/CJS outputs plus declarations.
+- `pack:workshop-client` passed and wrote `dist/workshop-client/loyalagents-context-router-workshop-client-0.1.0.tgz`.
+
+Notes:
+- An initial verification attempt surfaced that `pack:tgz` assumed `dist/` already existed. The script now rebuilds before packing, and the rerun passed.
+- Repo docs now use relative links or plain repo paths so the package README no longer ships local-worktree paths inside the tarball.
+
+#### Checkpoint 5 — 2026-03-08 22:30 PDT
+
+Status: complete
+
+Changes:
+- Added a dedicated `workshop-client` job to `.github/workflows/ci.yml`.
+- Wired GitHub Actions to run `pnpm test:workshop-client`, `pnpm build:workshop-client`, and `pnpm pack:workshop-client` on pushes and pull requests.
+- Updated `docs/package/workshop_client_context.md` so the quick handoff doc reflects the new CI coverage.
+
+Commands run:
+- `pnpm test:workshop-client`
+- `pnpm build:workshop-client`
+- `pnpm pack:workshop-client`
+
+Results:
+- `test:workshop-client` passed: 16/16 tests green, plus `tsc --noEmit`.
+- `build:workshop-client` passed and regenerated the package dist artifacts.
+- `pack:workshop-client` passed and wrote `dist/workshop-client/loyalagents-context-router-workshop-client-0.1.0.tgz`.
+
+Notes:
+- The CI job intentionally covers package test, build, and pack only. The live smoke commands still depend on a prestarted backend and seeded API-key fixture, so they remain out of the default GitHub Actions path.
