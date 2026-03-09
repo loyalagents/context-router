@@ -230,6 +230,53 @@ describe("MCP Integration (e2e)", () => {
       expect(afterDelete.suggested.count).toBe(0);
     });
 
+    it("can suggest a preference in a non-GLOBAL schemaNamespace", async () => {
+      // Create a user with a custom schemaNamespace (simulating an education user)
+      const nsUser = await getPrismaClient().user.create({
+        data: {
+          email: "ns-test@education.workshop.dev",
+          firstName: "NS",
+          lastName: "Test",
+          schemaNamespace: "education_k16",
+        },
+      });
+      setTestUser(nsUser);
+
+      // Create a preference definition in that namespace
+      await getPrismaClient().preferenceDefinition.create({
+        data: {
+          namespace: "education_k16",
+          slug: "learning_preferences.group_vs_solo",
+          description: "Group vs solo learning preference",
+          valueType: "STRING",
+          scope: "GLOBAL",
+        },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "suggestPreference",
+          arguments: {
+            slug: "learning_preferences.group_vs_solo",
+            value: '"paired"',
+            confidence: 0.9,
+          },
+        },
+        id: 1,
+      }).expect(200);
+
+      const result = parseToolContent(response.body.result) as {
+        success: boolean;
+        preference: { slug: string; status: string };
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.preference.slug).toBe("learning_preferences.group_vs_solo");
+      expect(result.preference.status).toBe("SUGGESTED");
+    });
+
     it("reads the schema resource", async () => {
       const response = await mcpPost({
         jsonrpc: "2.0",
@@ -326,6 +373,7 @@ describe("MCP Integration (e2e)", () => {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            schemaNamespace: user.schemaNamespace,
           },
         });
 

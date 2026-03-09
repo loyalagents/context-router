@@ -24,13 +24,13 @@ export class PreferenceListTool {
    * List all valid preference slugs from the catalog.
    * Helps LLMs discover what preferences exist before attempting to write.
    */
-  async list(params: ListPreferencesParams = {}, userId?: string) {
+  async list(params: ListPreferencesParams = {}, userId?: string, schemaNamespace?: string) {
     this.logger.log(
       `Listing preference catalog${params.category ? ` for category: ${params.category}` : ""}`,
     );
 
     try {
-      const allDefs = await this.defRepo.getAll(userId);
+      const allDefs = await this.defRepo.getAll(userId, schemaNamespace);
 
       const filtered = params.category
         ? allDefs.filter((d) => d.slug.split(".")[0] === params.category)
@@ -46,7 +46,7 @@ export class PreferenceListTool {
       }));
 
       // Get all categories for reference
-      const categories = await this.defRepo.getAllCategories(userId);
+      const categories = await this.defRepo.getAllCategories(userId, schemaNamespace);
 
       return {
         success: true,

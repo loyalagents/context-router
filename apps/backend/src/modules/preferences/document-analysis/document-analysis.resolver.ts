@@ -19,7 +19,7 @@ export class DocumentAnalysisResolver {
     @Args('analysisId', { type: () => ID }) analysisId: string,
     @Args('input', { type: () => [ApplyPreferenceSuggestionInput] })
     input: ApplyPreferenceSuggestionInput[],
-    @CurrentUser() user: { userId: string },
+    @CurrentUser() user: { userId: string; schemaNamespace?: string },
   ): Promise<Preference[]> {
     this.logger.log(
       `Applying ${input.length} suggestions from analysis ${analysisId} for user ${user.userId}`,
@@ -41,6 +41,7 @@ export class DocumentAnalysisResolver {
                 slug: suggestion.slug,
                 value: suggestion.newValue,
               },
+              user.schemaNamespace ?? 'GLOBAL',
             );
             preference = result as unknown as Preference;
             this.logger.log(

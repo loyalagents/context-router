@@ -43,7 +43,7 @@ export interface TestUser {
   email: string;
   firstName: string;
   lastName: string;
-  schemaNamespace?: string;
+  schemaNamespace: string;
   createdAt: Date;
   updatedAt: Date;
 }

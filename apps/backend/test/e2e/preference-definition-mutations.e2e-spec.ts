@@ -176,6 +176,22 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       expect(response.body.errors).toBeDefined();
     });
 
+    it('should accept slugs with underscores in the category prefix', async () => {
+      const response = await graphqlRequest(CREATE_MUTATION, {
+        input: {
+          slug: 'learning_preferences.group_vs_solo',
+          description: 'Group vs solo learning preference',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.createPreferenceDefinition.slug).toBe(
+        'learning_preferences.group_vs_solo',
+      );
+    });
+
     it('should set isSensitive and isCore when provided', async () => {
       const response = await graphqlRequest(CREATE_MUTATION, {
         input: {

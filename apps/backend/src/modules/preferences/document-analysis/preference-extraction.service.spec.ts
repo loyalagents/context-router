@@ -203,6 +203,7 @@ describe("PreferenceExtractionService", () => {
         await expect(
           service.extractPreferences(
             "user-1",
+            "GLOBAL",
             mockFileBuffer,
             mockMimeType,
             mockFilename,
@@ -228,6 +229,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -254,6 +256,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -293,6 +296,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -323,6 +327,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -352,6 +357,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -386,6 +392,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -413,6 +420,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -445,6 +453,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -472,6 +481,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -499,6 +509,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -526,6 +537,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -573,6 +585,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -592,6 +605,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -622,6 +636,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
@@ -646,6 +661,7 @@ describe("PreferenceExtractionService", () => {
 
         const result = await service.extractPreferences(
           "user-1",
+          "GLOBAL",
           mockFileBuffer,
           mockMimeType,
           mockFilename,
