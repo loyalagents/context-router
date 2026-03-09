@@ -112,19 +112,23 @@ function PreferencesContent({
     setActivePreferences((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleSuggestionAccept = (acceptedPref: Preference) => {
+  const handleSuggestionAccept = (
+    acceptedPref: Preference,
+    originalSuggestionId: string
+  ) => {
     // Add to active preferences and remove from suggestions
     setActivePreferences((prev) => {
       const existingIdx = prev.findIndex((p) => p.slug === acceptedPref.slug);
       if (existingIdx >= 0) {
-        // Update existing
         const updated = [...prev];
         updated[existingIdx] = acceptedPref;
         return updated;
       }
       return [...prev, acceptedPref];
     });
-    setSuggestedPreferences((prev) => prev.filter((p) => p.id !== acceptedPref.id));
+    setSuggestedPreferences((prev) =>
+      prev.filter((p) => p.id !== originalSuggestionId)
+    );
   };
 
   const handleSuggestionReject = (id: string) => {

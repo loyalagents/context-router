@@ -20,7 +20,7 @@ interface Preference {
 interface SuggestionInboxProps {
   suggestions: Preference[];
   accessToken: string;
-  onAccept: (acceptedPref: Preference) => void;
+  onAccept: (acceptedPref: Preference, originalSuggestionId: string) => void;
   onReject: (id: string) => void;
 }
 
@@ -82,7 +82,7 @@ export default function SuggestionInbox({
         throw new Error(data.errors[0]?.message || 'Failed to accept suggestion');
       }
 
-      onAccept(data.data.acceptSuggestedPreference);
+      onAccept(data.data.acceptSuggestedPreference, suggestion.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept suggestion');
     } finally {
