@@ -56,6 +56,7 @@ export class PreferenceExtractionService {
     fileBuffer: Buffer,
     mimeType: string,
     filename: string,
+    schemaNamespace = 'GLOBAL',
   ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
@@ -74,6 +75,7 @@ export class PreferenceExtractionService {
       })),
       filename,
       userId,
+      schemaNamespace,
     );
 
     this.logger.log(`Calling AI for preference extraction from ${filename}`);
@@ -93,6 +95,7 @@ export class PreferenceExtractionService {
         value: p.value,
       })),
       userId,
+      schemaNamespace,
     );
   }
 
@@ -100,9 +103,10 @@ export class PreferenceExtractionService {
     currentPreferences: Array<{ slug: string; value: any }>,
     filename: string,
     userId: string,
+    schemaNamespace = 'GLOBAL',
   ): Promise<string> {
     // Build schema from catalog
-    const defs = await this.defRepo.getAll(userId);
+    const defs = await this.defRepo.getAll(userId, schemaNamespace);
     const catalogSchema = defs.map((def) => ({
       slug: def.slug,
       category: def.slug.split('.')[0],
@@ -274,6 +278,7 @@ If no preferences can be extracted, return:
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
     currentPreferences: Array<{ slug: string; value: any }>,
     userId: string,
+    schemaNamespace = 'GLOBAL',
   ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
@@ -303,7 +308,13 @@ If no preferences can be extracted, return:
 
     for (const suggestion of parsed.suggestions) {
       // Filter: unknown slug
-      if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId))) {
+      if (
+        !(await this.defRepo.isKnownSlug(
+          suggestion.slug,
+          userId,
+          schemaNamespace,
+        ))
+      ) {
         this.logger.warn(
           `Filtered suggestion: unknown slug "${suggestion.slug}"`,
         );

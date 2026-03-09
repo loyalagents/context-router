@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend start:dev\" \"pnpm --filter web dev\"",
@@ -12,12 +13,17 @@
     "build": "pnpm -r build",
     "build:backend": "pnpm --filter backend build",
     "build:web": "pnpm --filter web build",
+    "build:workshop-client": "pnpm --filter @loyalagents/context-router-workshop-client build",
     "test": "pnpm -r test",
     "test:backend": "pnpm --filter backend test",
     "test:backend:unit": "pnpm --filter backend test:unit",
     "test:backend:integration": "pnpm --filter backend test:integration",
     "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
+    "test:workshop-client": "pnpm --filter @loyalagents/context-router-workshop-client test",
+    "smoke:workshop-client": "pnpm --filter @loyalagents/context-router-workshop-client smoke",
+    "smoke:workshop-client:consumer": "pnpm --filter @loyalagents/context-router-workshop-client smoke:consumer",
+    "pack:workshop-client": "pnpm --filter @loyalagents/context-router-workshop-client pack:tgz",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

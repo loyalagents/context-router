@@ -16,6 +16,7 @@ export class DocumentAnalysisService {
 
   async analyzeDocument(
     userId: string,
+    schemaNamespace: string,
     fileBuffer: Buffer,
     mimeType: string,
     filename: string,
@@ -33,6 +34,7 @@ export class DocumentAnalysisService {
           fileBuffer,
           mimeType,
           filename,
+          schemaNamespace,
         );
 
       // Update suggestion IDs to include analysisId

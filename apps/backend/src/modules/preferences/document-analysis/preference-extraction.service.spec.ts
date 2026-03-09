@@ -64,6 +64,42 @@ const mockDefinitions = new Map(
   ]),
 );
 
+const healthDefinition = {
+  id: "def-identification-name",
+  namespace: "health",
+  slug: "identification.name",
+  displayName: null,
+  description: "Patient name",
+  valueType: PreferenceValueType.STRING,
+  scope: PreferenceScope.GLOBAL,
+  options: null,
+  isSensitive: false,
+  isCore: true,
+  archivedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ownerUserId: null,
+  category: "identification",
+};
+
+const personalDefinition = {
+  id: "def-workshop-team-name",
+  namespace: "USER:user-1",
+  slug: "workshop.team_name",
+  displayName: "Team Name",
+  description: "Workshop team name",
+  valueType: PreferenceValueType.STRING,
+  scope: PreferenceScope.GLOBAL,
+  options: null,
+  isSensitive: false,
+  isCore: false,
+  archivedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ownerUserId: "user-1",
+  category: "workshop",
+};
+
 describe("PreferenceExtractionService", () => {
   let service: PreferenceExtractionService;
   let mockAiService: jest.Mocked<AiTextGeneratorPort>;
@@ -621,6 +657,73 @@ describe("PreferenceExtractionService", () => {
           "Japanese",
           "Mexican",
           "Thai",
+        ]);
+      });
+
+      it("uses schemaNamespace-visible system and personal definitions during extraction", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockDefRepo.getAll.mockImplementation((userId?: string, schemaNamespace = "GLOBAL") =>
+          Promise.resolve(
+            (schemaNamespace === "health"
+              ? [healthDefinition, personalDefinition]
+              : Array.from(mockDefinitions.values())) as any,
+          ),
+        );
+        mockDefRepo.isKnownSlug.mockImplementation(
+          (slug: string, userId?: string, schemaNamespace = "GLOBAL") =>
+            Promise.resolve(
+              schemaNamespace === "health"
+                ? slug === healthDefinition.slug || slug === personalDefinition.slug
+                : mockDefinitions.has(slug),
+            ),
+        );
+        mockAiService.generateTextWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "identification.name",
+              operation: "CREATE",
+              newValue: "Alex Morgan",
+              confidence: 0.94,
+              sourceSnippet: "Patient: Alex Morgan",
+            },
+            {
+              slug: "workshop.team_name",
+              operation: "CREATE",
+              newValue: "Care Tigers",
+              confidence: 0.88,
+              sourceSnippet: "Team: Care Tigers",
+            },
+          ], "Health intake form"),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+          "health",
+        );
+
+        expect(mockDefRepo.getAll).toHaveBeenCalledWith("user-1", "health");
+        expect(mockDefRepo.isKnownSlug).toHaveBeenCalledWith(
+          "identification.name",
+          "user-1",
+          "health",
+        );
+        expect(mockDefRepo.isKnownSlug).toHaveBeenCalledWith(
+          "workshop.team_name",
+          "user-1",
+          "health",
+        );
+
+        const prompt = mockAiService.generateTextWithFile.mock.calls[0]?.[0];
+        expect(prompt).toContain("identification.name");
+        expect(prompt).toContain("workshop.team_name");
+
+        expect(result.suggestions).toHaveLength(2);
+        expect(result.suggestions.map((suggestion) => suggestion.slug)).toEqual([
+          "identification.name",
+          "workshop.team_name",
         ]);
       });
     });

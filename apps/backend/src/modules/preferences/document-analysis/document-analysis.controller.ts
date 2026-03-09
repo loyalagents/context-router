@@ -60,6 +60,7 @@ export class DocumentAnalysisController {
     if (!userId) {
       throw new BadRequestException('User ID not found in request');
     }
+    const schemaNamespace = req.user?.schemaNamespace ?? 'GLOBAL';
 
     this.logger.log(
       `Analyzing document for user ${userId}: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`,
@@ -67,6 +68,7 @@ export class DocumentAnalysisController {
 
     return this.documentAnalysisService.analyzeDocument(
       userId,
+      schemaNamespace,
       file.buffer,
       file.mimetype,
       file.originalname,
