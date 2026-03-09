@@ -27,9 +27,10 @@ export class PreferenceSearchTool {
   private async searchCatalog(
     query: string,
     userId: string,
+    schemaNamespace?: string,
   ): Promise<string[]> {
     const normalized = query.toLowerCase();
-    const defs = await this.defRepo.getAll(userId);
+    const defs = await this.defRepo.getAll(userId, schemaNamespace);
 
     return defs
       .filter((def) => {
@@ -44,6 +45,7 @@ export class PreferenceSearchTool {
 
   async search(params: SearchPreferencesParams, context: McpContext) {
     const userId = context.user.userId;
+    const schemaNamespace = context.user.schemaNamespace;
     const effectiveQuery = params.query ?? params.category;
 
     const maxResults = this.configService.get(
@@ -65,7 +67,7 @@ export class PreferenceSearchTool {
       let filteredActive = activePrefs;
       if (effectiveQuery) {
         const matchingSlugs = new Set(
-          await this.searchCatalog(effectiveQuery, userId),
+          await this.searchCatalog(effectiveQuery, userId, schemaNamespace),
         );
         filteredActive = activePrefs.filter((p) => matchingSlugs.has(p.slug));
       }
@@ -81,7 +83,7 @@ export class PreferenceSearchTool {
 
         if (effectiveQuery) {
           const matchingSlugs = new Set(
-            await this.searchCatalog(effectiveQuery, userId),
+            await this.searchCatalog(effectiveQuery, userId, schemaNamespace),
           );
           suggestions = suggestedPrefs.filter((p) => matchingSlugs.has(p.slug));
         } else {

@@ -219,6 +219,7 @@ export class McpService {
           const result = await this.preferenceListTool.list(
             (args as Record<string, unknown> | undefined) ?? {},
             context.user.userId,
+            context.user.schemaNamespace,
           );
           return this.createTextResult(result);
         } catch (error) {

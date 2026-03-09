@@ -72,6 +72,7 @@ export class McpController {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        schemaNamespace: user.schemaNamespace,
       },
     };
 

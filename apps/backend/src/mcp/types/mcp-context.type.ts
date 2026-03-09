@@ -7,6 +7,7 @@ export interface McpUser {
   email: string;
   firstName: string;
   lastName: string;
+  schemaNamespace: string;
 }
 
 /**

@@ -24,6 +24,7 @@ export class ApiKeyService {
     email: string;
     firstName: string;
     lastName: string;
+    schemaNamespace: string;
   }> {
     const keyHash = this.hashKey(apiKey);
 
