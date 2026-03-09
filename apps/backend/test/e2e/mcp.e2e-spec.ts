@@ -326,6 +326,7 @@ describe("MCP Integration (e2e)", () => {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            schemaNamespace: user.schemaNamespace,
           },
         });
 
