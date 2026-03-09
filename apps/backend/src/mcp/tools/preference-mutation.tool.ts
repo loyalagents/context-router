@@ -46,6 +46,7 @@ export class PreferenceMutationTool {
    */
   async suggest(params: SuggestPreferenceParams, context: McpContext) {
     const userId = context.user.userId;
+    const schemaNamespace = context.user.schemaNamespace;
 
     if (!params?.slug) {
       return {
@@ -94,6 +95,7 @@ export class PreferenceMutationTool {
           confidence: params.confidence,
           evidence: parsedEvidence,
         },
+        schemaNamespace,
       );
 
       // If preference is null, it means the user previously rejected this preference

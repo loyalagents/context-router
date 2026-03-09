@@ -16,6 +16,7 @@ export class DocumentAnalysisService {
 
   async analyzeDocument(
     userId: string,
+    schemaNamespace: string,
     fileBuffer: Buffer,
     mimeType: string,
     filename: string,
@@ -30,6 +31,7 @@ export class DocumentAnalysisService {
       const { suggestions, filteredSuggestions, documentSummary, filteredCount } =
         await this.preferenceExtractionService.extractPreferences(
           userId,
+          schemaNamespace,
           fileBuffer,
           mimeType,
           filename,
