@@ -11,6 +11,7 @@ export enum PreferenceStatus {
 export enum SourceType {
   USER = 'USER',
   INFERRED = 'INFERRED',
+  AGENT = 'AGENT',
   IMPORTED = 'IMPORTED',
   SYSTEM = 'SYSTEM',
 }
@@ -48,7 +49,7 @@ export class Preference {
   @Field(() => PreferenceStatus, { description: 'Status: ACTIVE, SUGGESTED, or REJECTED' })
   status: PreferenceStatus;
 
-  @Field(() => SourceType, { description: 'Source: USER, INFERRED, IMPORTED, or SYSTEM' })
+  @Field(() => SourceType, { description: 'Source: USER, INFERRED, AGENT, IMPORTED, or SYSTEM' })
   sourceType: SourceType;
 
   @Field(() => Float, { nullable: true, description: 'Confidence score for inferred preferences (0.0 to 1.0)' })

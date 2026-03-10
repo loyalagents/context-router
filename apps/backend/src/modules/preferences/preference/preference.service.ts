@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
+import { SourceType } from "@infrastructure/prisma/generated-client";
 import {
   PreferenceRepository,
   EnrichedPreference,
@@ -97,6 +98,80 @@ export class PreferenceService {
     if (!scopeValidation.valid) {
       throw new BadRequestException(scopeValidation.error);
     }
+  }
+
+  async applyPreference(
+    userId: string,
+    input: SuggestPreferenceInput,
+    schemaNamespace = "GLOBAL",
+  ): Promise<
+    | { blocked: true; code: "PREFERENCE_REJECTED"; message: string }
+    | {
+        blocked: false;
+        preference: EnrichedPreference;
+        deletedSuggestion: boolean;
+      }
+  > {
+    const definitionId = await this.resolveAndValidateSlug(
+      input.slug,
+      userId,
+      schemaNamespace,
+    );
+    await this.validateValueForSlug(input.slug, input.value, userId);
+    await this.validateScope(input.slug, input.locationId, userId);
+
+    const confidenceValidation = validateConfidence(input.confidence);
+    if (!confidenceValidation.valid) {
+      throw new BadRequestException(confidenceValidation.error);
+    }
+
+    if (input.locationId) {
+      await this.locationService.findOne(input.locationId, userId);
+    }
+
+    const hasRejected = await this.preferenceRepository.hasRejected(
+      userId,
+      definitionId,
+      input.locationId,
+    );
+
+    if (hasRejected) {
+      return {
+        blocked: true,
+        code: "PREFERENCE_REJECTED",
+        message: `Direct apply blocked because the user previously rejected preference "${input.slug}" for this scope.`,
+      };
+    }
+
+    this.logger.log(
+      `Applying ACTIVE preference for user ${userId}: ${input.slug}`,
+    );
+
+    const preference = await this.preferenceRepository.upsertActive(
+      userId,
+      definitionId,
+      input.value,
+      input.locationId,
+      {
+        sourceType: SourceType.AGENT,
+        confidence: input.confidence,
+        evidence: input.evidence,
+      },
+    );
+
+    const deletedSuggestion =
+      await this.preferenceRepository.deleteByStatusAndDefinition(
+        userId,
+        definitionId,
+        PreferenceStatus.SUGGESTED,
+        input.locationId,
+      );
+
+    return {
+      blocked: false,
+      preference,
+      deletedSuggestion,
+    };
   }
 
   /**
@@ -275,6 +350,11 @@ export class PreferenceService {
       suggestion.definitionId,
       suggestion.value,
       suggestion.locationId,
+      {
+        sourceType: SourceType.AGENT,
+        confidence: suggestion.confidence,
+        evidence: suggestion.evidence,
+      },
     );
 
     // Delete the suggestion

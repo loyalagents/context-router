@@ -9,7 +9,10 @@ import { PreferenceRepository } from "../../src/modules/preferences/preference/p
 import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { getPrismaClient } from "../setup/test-db";
-import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
+import {
+  PreferenceStatus,
+  SourceType,
+} from "@infrastructure/prisma/generated-client";
 
 describe("PreferenceRepository (integration)", () => {
   let repository: PreferenceRepository;
@@ -105,6 +108,9 @@ describe("PreferenceRepository (integration)", () => {
       expect(pref.locationId).toBeNull();
       expect(pref.value).toBe("casual");
       expect(pref.status).toBe(PreferenceStatus.ACTIVE);
+      expect(pref.sourceType).toBe(SourceType.USER);
+      expect(pref.confidence).toBeNull();
+      expect(pref.evidence).toBeNull();
       // Enriched fields from joined definition
       expect(pref.slug).toBe("system.response_tone");
       expect(pref.description).toBeDefined();
@@ -147,6 +153,55 @@ describe("PreferenceRepository (integration)", () => {
 
       const count = await repository.count(testUserId, PreferenceStatus.ACTIVE);
       expect(count).toBe(1);
+    });
+
+    it("should create an AGENT-authored ACTIVE preference with metadata", async () => {
+      const evidence = {
+        reason: "Agent applied directly",
+        snippets: ["User said they prefer concise answers"],
+      };
+
+      const pref = await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "professional",
+        null,
+        {
+          sourceType: SourceType.AGENT,
+          confidence: 0.93,
+          evidence,
+        },
+      );
+
+      expect(pref.status).toBe(PreferenceStatus.ACTIVE);
+      expect(pref.sourceType).toBe(SourceType.AGENT);
+      expect(pref.confidence).toBe(0.93);
+      expect(pref.evidence).toEqual(evidence);
+    });
+
+    it("should clear AI metadata when a USER overwrite replaces an AGENT-authored row", async () => {
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "professional",
+        null,
+        {
+          sourceType: SourceType.AGENT,
+          confidence: 0.88,
+          evidence: { reason: "Agent inference" },
+        },
+      );
+
+      const updated = await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+      );
+
+      expect(updated.sourceType).toBe(SourceType.USER);
+      expect(updated.value).toBe("casual");
+      expect(updated.confidence).toBeNull();
+      expect(updated.evidence).toBeNull();
     });
 
     it("should handle global and location-scoped as separate preferences for same definition", async () => {
@@ -531,6 +586,40 @@ describe("PreferenceRepository (integration)", () => {
 
     it("should fail to delete non-existent preference", async () => {
       await expect(repository.delete("non-existent-id")).rejects.toThrow();
+    });
+  });
+
+  describe("deleteByStatusAndDefinition", () => {
+    it("should delete a matching SUGGESTED preference by user, definition, and scope", async () => {
+      await repository.upsertSuggested(
+        testUserId,
+        dietaryRestrictionsDefId,
+        ["vegan"],
+        0.8,
+      );
+
+      const deleted = await repository.deleteByStatusAndDefinition(
+        testUserId,
+        dietaryRestrictionsDefId,
+        PreferenceStatus.SUGGESTED,
+      );
+
+      expect(deleted).toBe(true);
+      const suggested = await repository.findByStatus(
+        testUserId,
+        PreferenceStatus.SUGGESTED,
+      );
+      expect(suggested).toEqual([]);
+    });
+
+    it("should return false when no matching preference exists", async () => {
+      const deleted = await repository.deleteByStatusAndDefinition(
+        testUserId,
+        dietaryRestrictionsDefId,
+        PreferenceStatus.SUGGESTED,
+      );
+
+      expect(deleted).toBe(false);
     });
   });
 

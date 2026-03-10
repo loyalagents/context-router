@@ -82,6 +82,7 @@ describe("MCP Integration (e2e)", () => {
         "listPreferenceSlugs",
         "searchPreferences",
         "suggestPreference",
+        "applyPreference",
         "deletePreference",
         "createPreferenceDefinition",
       ]);
@@ -229,6 +230,210 @@ describe("MCP Integration (e2e)", () => {
 
       expect(afterDelete.success).toBe(true);
       expect(afterDelete.suggested.count).toBe(0);
+    });
+
+    it("can apply a preference directly as ACTIVE with AGENT provenance", async () => {
+      const applyResponse = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "applyPreference",
+          arguments: {
+            slug: "system.response_tone",
+            value: '"professional"',
+            confidence: 0.92,
+            evidence:
+              '{"reason":"Agent applied directly","snippets":["User prefers formal tone"]}',
+          },
+        },
+        id: 1,
+      }).expect(200);
+
+      const applyResult = parseToolContent(applyResponse.body.result) as {
+        success: boolean;
+        preference: {
+          id: string;
+          slug: string;
+          status: string;
+          sourceType: string;
+          confidence: number;
+        };
+      };
+
+      expect(applyResult.success).toBe(true);
+      expect(applyResult.preference.slug).toBe("system.response_tone");
+      expect(applyResult.preference.status).toBe("ACTIVE");
+      expect(applyResult.preference.sourceType).toBe("AGENT");
+      expect(applyResult.preference.confidence).toBe(0.92);
+
+      const searchResponse = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "searchPreferences",
+          arguments: { query: "system" },
+        },
+        id: 2,
+      }).expect(200);
+
+      const searchResult = parseToolContent(searchResponse.body.result) as {
+        success: boolean;
+        active: {
+          count: number;
+          preferences: Array<{ slug: string; sourceType: string }>;
+        };
+      };
+
+      expect(searchResult.success).toBe(true);
+      expect(searchResult.active.count).toBe(1);
+      expect(searchResult.active.preferences[0]).toMatchObject({
+        slug: "system.response_tone",
+        sourceType: "AGENT",
+      });
+    });
+
+    it("can apply a location-scoped preference directly", async () => {
+      const location = await getPrismaClient().location.create({
+        data: {
+          userId: testUser.userId,
+          type: "HOME",
+          label: "Workshop Home",
+          address: "123 Demo St",
+        },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "applyPreference",
+          arguments: {
+            slug: "location.default_temperature",
+            value: '"68"',
+            locationId: location.locationId,
+            confidence: 0.87,
+          },
+        },
+        id: 1,
+      }).expect(200);
+
+      const result = parseToolContent(response.body.result) as {
+        success: boolean;
+        preference: { status: string; sourceType: string; locationId: string };
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.preference.status).toBe("ACTIVE");
+      expect(result.preference.sourceType).toBe("AGENT");
+      expect(result.preference.locationId).toBe(location.locationId);
+    });
+
+    it("blocks applyPreference when the user previously rejected the same preference for this scope", async () => {
+      const definition = await getPrismaClient().preferenceDefinition.findFirst({
+        where: { slug: "system.response_tone" },
+      });
+
+      expect(definition).toBeDefined();
+
+      await getPrismaClient().preference.create({
+        data: {
+          userId: testUser.userId,
+          definitionId: definition!.id,
+          contextKey: "GLOBAL",
+          value: "casual",
+          status: "REJECTED",
+          sourceType: "INFERRED",
+        },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "applyPreference",
+          arguments: {
+            slug: "system.response_tone",
+            value: '"professional"',
+            confidence: 0.95,
+          },
+        },
+        id: 1,
+      }).expect(200);
+
+      const result = parseToolContent(response.body.result) as {
+        success: boolean;
+        code: string;
+        message: string;
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("PREFERENCE_REJECTED");
+      expect(result.message).toContain("previously rejected preference");
+    });
+
+    it("clears a matching pending suggestion after direct apply", async () => {
+      await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "suggestPreference",
+          arguments: {
+            slug: "system.response_length",
+            value: '"brief"',
+            confidence: 0.74,
+          },
+        },
+        id: 1,
+      }).expect(200);
+
+      const applyResponse = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "applyPreference",
+          arguments: {
+            slug: "system.response_length",
+            value: '"detailed"',
+            confidence: 0.89,
+          },
+        },
+        id: 2,
+      }).expect(200);
+
+      const applyResult = parseToolContent(applyResponse.body.result) as {
+        success: boolean;
+        clearedSuggestion: boolean;
+        preference: { status: string; sourceType: string; value: string };
+      };
+
+      expect(applyResult.success).toBe(true);
+      expect(applyResult.clearedSuggestion).toBe(true);
+      expect(applyResult.preference).toMatchObject({
+        status: "ACTIVE",
+        sourceType: "AGENT",
+        value: "detailed",
+      });
+
+      const searchResponse = await mcpPost({
+        jsonrpc: "2.0",
+        method: "tools/call",
+        params: {
+          name: "searchPreferences",
+          arguments: { query: "system.response_length", includeSuggestions: true },
+        },
+        id: 3,
+      }).expect(200);
+
+      const searchResult = parseToolContent(searchResponse.body.result) as {
+        success: boolean;
+        active: { count: number; preferences: Array<{ sourceType: string }> };
+        suggested: { count: number };
+      };
+
+      expect(searchResult.success).toBe(true);
+      expect(searchResult.active.count).toBe(1);
+      expect(searchResult.active.preferences[0].sourceType).toBe("AGENT");
+      expect(searchResult.suggested.count).toBe(0);
     });
 
     it("can suggest a preference in a non-GLOBAL schemaNamespace", async () => {

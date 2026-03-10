@@ -82,6 +82,7 @@ enum PreferenceStatus {
 enum SourceType {
   USER
   INFERRED
+  AGENT
   IMPORTED
   SYSTEM
 }
