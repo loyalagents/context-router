@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
+import { McpContext } from '../types/mcp-context.type';
 
 interface ListPreferencesParams {
   category?: string; // Optional filter by category
@@ -23,14 +24,16 @@ export class PreferenceListTool {
   /**
    * List all valid preference slugs from the catalog.
    * Helps LLMs discover what preferences exist before attempting to write.
+   * When context is provided, user-owned definitions are included alongside global ones.
    */
-  async list(params: ListPreferencesParams) {
+  async list(params: ListPreferencesParams, context?: McpContext) {
+    const userId = context?.user?.userId;
     this.logger.log(
-      `Listing preference catalog${params.category ? ` for category: ${params.category}` : ''}`,
+      `Listing preference catalog${params.category ? ` for category: ${params.category}` : ''}${userId ? ` for user: ${userId}` : ' (global only)'}`,
     );
 
     try {
-      const allDefs = await this.defRepo.getAll();
+      const allDefs = await this.defRepo.getAll(userId);
 
       const filtered = params.category
         ? allDefs.filter((d) => d.slug.split('.')[0] === params.category)
@@ -46,7 +49,7 @@ export class PreferenceListTool {
       }));
 
       // Get all categories for reference
-      const categories = await this.defRepo.getAllCategories();
+      const categories = await this.defRepo.getAllCategories(userId);
 
       return {
         success: true,
