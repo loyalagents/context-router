@@ -11,6 +11,6 @@ import { PreferenceDefinitionService } from './preference-definition.service';
     PreferenceDefinitionResolver,
     PreferenceDefinitionService,
   ],
-  exports: [PreferenceDefinitionRepository],
+  exports: [PreferenceDefinitionRepository, PreferenceDefinitionService],
 })
 export class PreferenceDefinitionModule {}
