@@ -14,6 +14,6 @@ import { OptionalGqlAuthGuard } from '@common/guards/optional-gql-auth.guard';
     PreferenceDefinitionService,
     OptionalGqlAuthGuard,
   ],
-  exports: [PreferenceDefinitionRepository],
+  exports: [PreferenceDefinitionRepository, PreferenceDefinitionService],
 })
 export class PreferenceDefinitionModule {}

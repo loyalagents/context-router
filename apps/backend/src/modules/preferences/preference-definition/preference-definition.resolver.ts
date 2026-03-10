@@ -64,7 +64,8 @@ export class PreferenceDefinitionResolver {
     @CurrentUser() user: User,
     @Args('input') input: CreatePreferenceDefinitionInput,
   ): Promise<PreferenceDefinitionModel> {
-    return this.defService.create(input, user.userId) as Promise<PreferenceDefinitionModel>;
+    const schemaNamespace = (user as any)?.schemaNamespace ?? "GLOBAL";
+    return this.defService.create(input, user.userId, schemaNamespace) as Promise<PreferenceDefinitionModel>;
   }
 
   @Mutation(() => PreferenceDefinitionModel, {

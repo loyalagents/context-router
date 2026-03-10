@@ -11,6 +11,7 @@ import { SchemaResource } from "./resources/schema.resource";
 import { PreferenceListTool } from "./tools/preference-list.tool";
 import { PreferenceMutationTool } from "./tools/preference-mutation.tool";
 import { PreferenceSearchTool } from "./tools/preference-search.tool";
+import { PreferenceDefinitionTool } from "./tools/preference-definition.tool";
 import { McpContext } from "./types/mcp-context.type";
 
 @Injectable()
@@ -22,6 +23,7 @@ export class McpService {
     private preferenceSearchTool: PreferenceSearchTool,
     private preferenceMutationTool: PreferenceMutationTool,
     private preferenceListTool: PreferenceListTool,
+    private preferenceDefinitionTool: PreferenceDefinitionTool,
     private schemaResource: SchemaResource,
   ) {}
 
@@ -204,6 +206,58 @@ export class McpService {
             openWorldHint: false,
           },
         },
+        {
+          name: "createPreferenceDefinition",
+          description:
+            "Create a new personal preference definition (schema) for a slug that does not yet exist. Call this when suggestPreference fails with UNKNOWN_PREFERENCE_SLUG, then retry suggestPreference with the new slug. Definitions are user-owned and immediately usable.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              slug: {
+                type: "string",
+                description:
+                  'Preference slug (e.g., "cooking.preferred_oil"). Must be lowercase with dots.',
+              },
+              description: {
+                type: "string",
+                description:
+                  "Human-readable description of what this preference represents.",
+              },
+              valueType: {
+                type: "string",
+                enum: ["STRING", "BOOLEAN", "ENUM", "ARRAY"],
+                description: "Data type of the preference value.",
+              },
+              scope: {
+                type: "string",
+                enum: ["GLOBAL", "LOCATION"],
+                description:
+                  "GLOBAL for preferences that apply everywhere; LOCATION for location-scoped preferences.",
+              },
+              displayName: {
+                type: "string",
+                description: "Optional short human-readable label.",
+              },
+              options: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Required when valueType is ENUM. List of valid option strings. Must not be provided for other value types.",
+              },
+              isSensitive: {
+                type: "boolean",
+                description:
+                  "Set to true if the preference contains sensitive personal data. Defaults to false.",
+              },
+            },
+            required: ["slug", "description", "valueType", "scope"],
+          },
+          annotations: {
+            readOnlyHint: false,
+            idempotentHint: false,
+            openWorldHint: false,
+          },
+        },
       ],
     }));
 
@@ -249,6 +303,12 @@ export class McpService {
             break;
           case "deletePreference":
             result = await this.preferenceMutationTool.delete(
+              args as any,
+              context,
+            );
+            break;
+          case "createPreferenceDefinition":
+            result = await this.preferenceDefinitionTool.create(
               args as any,
               context,
             );

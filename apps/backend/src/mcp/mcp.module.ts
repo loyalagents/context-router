@@ -6,6 +6,7 @@ import { PreferencesModule } from "@/modules/preferences/preferences.module";
 import { PreferenceSearchTool } from "./tools/preference-search.tool";
 import { PreferenceMutationTool } from "./tools/preference-mutation.tool";
 import { PreferenceListTool } from "./tools/preference-list.tool";
+import { PreferenceDefinitionTool } from "./tools/preference-definition.tool";
 import { SchemaResource } from "./resources/schema.resource";
 import { McpOriginMiddleware } from "./middleware/mcp-origin.middleware";
 import { McpAuthGuard } from "./auth/mcp-auth.guard";
@@ -18,6 +19,7 @@ import { McpAuthGuard } from "./auth/mcp-auth.guard";
     PreferenceSearchTool,
     PreferenceMutationTool,
     PreferenceListTool,
+    PreferenceDefinitionTool,
     SchemaResource,
     McpAuthGuard,
     McpOriginMiddleware,
