@@ -15,14 +15,14 @@ All 3 checkpoints implemented and verified. 208/208 tests passing.
 
 ### Checkpoint 2 — Add `createPreferenceDefinition` MCP tool
 **Files changed:**
-- `src/mcp/tools/preference-definition.tool.ts` (new) — wraps `PreferenceDefinitionService.create`. Handles `options` boundary validation (ENUM requires non-empty string array; non-ENUM rejects `options`). Returns normalized shape with `visibility: "USER"`. Structured error codes: `INVALID_PREFERENCE_DEFINITION`, `PREFERENCE_DEFINITION_CONFLICT`, `INTERNAL_ERROR`.
+- `src/mcp/tools/preference-definition.tool.ts` (new) — wraps `PreferenceDefinitionService.create`. Boundary validates `valueType` and `scope` against allowed enums before calling the service (bad values → `INVALID_PREFERENCE_DEFINITION`). Handles `options` validation (ENUM requires non-empty string array; non-ENUM rejects `options`). Maps Prisma P2002 unique constraint violations (race condition duplicates) to `PREFERENCE_DEFINITION_CONFLICT`. Returns normalized shape with `visibility: "USER"`. Error codes: `INVALID_PREFERENCE_DEFINITION`, `PREFERENCE_DEFINITION_CONFLICT`, `INTERNAL_ERROR`.
 - `src/modules/preferences/preference-definition/preference-definition.module.ts` — exported `PreferenceDefinitionService`.
 - `src/mcp/mcp.module.ts` — added `PreferenceDefinitionTool` as provider.
 - `src/mcp/mcp.service.ts` — injected `PreferenceDefinitionTool`; registered tool in `ListTools`; added `case 'createPreferenceDefinition':` to dispatch.
 
 ### Checkpoint 3 — Structured error guidance in `suggestPreference`
 **Files changed:**
-- `src/mcp/tools/preference-mutation.tool.ts` — detects `Unknown preference slug` in caught errors and returns `{ success: false, code: 'UNKNOWN_PREFERENCE_SLUG', message, suggestedTool: 'createPreferenceDefinition' }`.
+- `src/mcp/tools/preference-mutation.tool.ts` — detects `Unknown preference slug` in caught errors and returns `{ success: false, error, code: 'UNKNOWN_PREFERENCE_SLUG', message, suggestedTool: 'createPreferenceDefinition' }`. The `error` field is preserved for backward compatibility with existing clients.
 
 ### Tests
 **File changed:**
@@ -45,7 +45,7 @@ Tests:       208 passed, 208 total
 
 | Tool | Auth | Description |
 |------|------|-------------|
-| `listPreferenceSlugs` | Optional | Lists GLOBAL + user-owned defs when authenticated; GLOBAL only when not |
+| `listPreferenceSlugs` | Required | Lists GLOBAL + user-owned defs for the authenticated user |
 | `searchPreferences` | Required | Searches user's active/suggested preferences |
 | `suggestPreference` | Required | Suggests a preference value; returns structured guidance if slug unknown |
 | `deletePreference` | Required | Deletes a preference by ID |

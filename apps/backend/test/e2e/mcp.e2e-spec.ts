@@ -419,6 +419,7 @@ describe('MCP Integration (e2e)', () => {
       expect(response.status).toBe(200);
       const result = JSON.parse(response.body.result.content[0].text);
       expect(result.success).toBe(false);
+      expect(result.error).toBeDefined(); // backward compat: error field always present
       expect(result.code).toBe('UNKNOWN_PREFERENCE_SLUG');
       expect(result.suggestedTool).toBe('createPreferenceDefinition');
     });

@@ -1,6 +1,10 @@
 import { Injectable, Logger, BadRequestException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@infrastructure/prisma/generated-client';
 import { PreferenceDefinitionService } from '@modules/preferences/preference-definition/preference-definition.service';
 import { McpContext } from '../types/mcp-context.type';
+
+const VALID_VALUE_TYPES = ['STRING', 'BOOLEAN', 'ENUM', 'ARRAY'] as const;
+const VALID_SCOPES = ['GLOBAL', 'LOCATION'] as const;
 
 interface CreatePreferenceDefinitionParams {
   slug: string;
@@ -22,6 +26,22 @@ export class PreferenceDefinitionTool {
     const userId = context.user.userId;
 
     this.logger.log(`Creating preference definition: ${params.slug} for user ${userId}`);
+
+    // MCP-boundary enum validation
+    if (!VALID_VALUE_TYPES.includes(params.valueType as any)) {
+      return {
+        success: false,
+        code: 'INVALID_PREFERENCE_DEFINITION',
+        error: `Invalid valueType: "${params.valueType}". Must be one of: ${VALID_VALUE_TYPES.join(', ')}`,
+      };
+    }
+    if (!VALID_SCOPES.includes(params.scope as any)) {
+      return {
+        success: false,
+        code: 'INVALID_PREFERENCE_DEFINITION',
+        error: `Invalid scope: "${params.scope}". Must be one of: ${VALID_SCOPES.join(', ')}`,
+      };
+    }
 
     // MCP-boundary validation for options
     if (params.valueType === 'ENUM') {
@@ -88,6 +108,17 @@ export class PreferenceDefinitionTool {
           success: false,
           code: 'PREFERENCE_DEFINITION_CONFLICT',
           error: error.message,
+        };
+      }
+
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return {
+          success: false,
+          code: 'PREFERENCE_DEFINITION_CONFLICT',
+          error: `A preference definition with slug "${params.slug}" already exists`,
         };
       }
 

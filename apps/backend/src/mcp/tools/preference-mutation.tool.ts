@@ -121,6 +121,7 @@ export class PreferenceMutationTool {
       ) {
         return {
           success: false,
+          error: error.message,
           code: 'UNKNOWN_PREFERENCE_SLUG',
           message: error.message,
           suggestedTool: 'createPreferenceDefinition',
