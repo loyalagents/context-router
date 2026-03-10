@@ -170,9 +170,9 @@ export default function PreferenceItem({
                 {new Date(preference.updatedAt).toLocaleDateString()}
               </span>
             )}
-            {preference.sourceType === 'INFERRED' && (
+            {(preference.sourceType === 'AGENT' || preference.sourceType === 'INFERRED') && (
               <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700">
-                AI
+                {preference.sourceType === 'AGENT' ? 'Agent' : 'AI'}
               </span>
             )}
           </div>

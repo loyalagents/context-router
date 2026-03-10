@@ -367,7 +367,12 @@ describe('Preferences GraphQL API (e2e)', () => {
   });
 
   describe('acceptSuggestedPreference mutation', () => {
-    it('should promote a suggested preference to ACTIVE', async () => {
+    it('should promote a suggested preference to ACTIVE with AGENT provenance', async () => {
+      const evidence = {
+        reason: 'Preference inferred from conversation',
+        snippets: ['I mainly work in TypeScript and Node.js'],
+      };
+
       // Create a suggestion
       const suggestMutation = `
         mutation SuggestPreference($input: SuggestPreferenceInput!) {
@@ -382,6 +387,7 @@ describe('Preferences GraphQL API (e2e)', () => {
           slug: 'professional.skills',
           value: ['TypeScript', 'Node.js'],
           confidence: 0.9,
+          evidence,
         },
       });
 
@@ -393,7 +399,10 @@ describe('Preferences GraphQL API (e2e)', () => {
           acceptSuggestedPreference(id: $id) {
             id
             status
+            sourceType
             value
+            confidence
+            evidence
           }
         }
       `;
@@ -407,7 +416,10 @@ describe('Preferences GraphQL API (e2e)', () => {
       // "On accept: upsert new ACTIVE row with the suggested value, then delete the SUGGESTED row"
       expect(response.body.data.acceptSuggestedPreference).toMatchObject({
         status: 'ACTIVE',
+        sourceType: 'AGENT',
         value: ['TypeScript', 'Node.js'],
+        confidence: 0.9,
+        evidence,
       });
       expect(response.body.data.acceptSuggestedPreference.id).toBeDefined();
     });

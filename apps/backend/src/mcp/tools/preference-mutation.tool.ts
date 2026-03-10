@@ -3,16 +3,18 @@ import { PreferenceService } from "@modules/preferences/preference/preference.se
 import { McpContext } from "../types/mcp-context.type";
 
 /**
- * Parameters for suggesting a preference via MCP.
- * Note: MCP writes are ALWAYS suggestions - they never write ACTIVE directly.
+ * Shared MCP write parameters for preference suggestions and direct applies.
  */
-interface SuggestPreferenceParams {
+interface WritePreferenceParams {
   slug: string;
   value: string; // JSON string that will be parsed
   locationId?: string;
   confidence: number;
   evidence?: string; // JSON string for evidence metadata
 }
+
+type SuggestPreferenceParams = WritePreferenceParams;
+type ApplyPreferenceParams = WritePreferenceParams;
 
 interface DeletePreferenceParams {
   id: string;
@@ -116,6 +118,7 @@ export class PreferenceMutationTool {
           slug: preference.slug,
           value: preference.value,
           status: preference.status,
+          sourceType: preference.sourceType,
           confidence: preference.confidence,
           category: preference.slug.split(".")[0],
           description: preference.description,
@@ -137,6 +140,114 @@ export class PreferenceMutationTool {
           code: 'UNKNOWN_PREFERENCE_SLUG',
           message: error.message,
           suggestedTool: 'createPreferenceDefinition',
+        };
+      }
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Apply a preference directly as ACTIVE while preserving agent provenance.
+   */
+  async apply(params: ApplyPreferenceParams, context: McpContext) {
+    const userId = context.user.userId;
+    const schemaNamespace = context.user.schemaNamespace;
+
+    if (!params?.slug) {
+      return {
+        success: false,
+        error: "slug is required",
+      };
+    }
+
+    if (typeof params.value !== "string") {
+      return {
+        success: false,
+        error: "value must be provided as a JSON string",
+      };
+    }
+
+    this.logger.log(`Applying preference for user ${userId}: ${params.slug}`);
+
+    try {
+      const parsedValue = parseJsonValue(params.value, "value");
+
+      let parsedEvidence: unknown = undefined;
+      if (params.evidence) {
+        parsedEvidence = parseJsonValue(params.evidence, "evidence");
+      }
+
+      if (
+        typeof params.confidence !== "number" ||
+        params.confidence < 0 ||
+        params.confidence > 1
+      ) {
+        return {
+          success: false,
+          error: "Confidence must be a number between 0 and 1",
+        };
+      }
+
+      const result = await this.preferenceService.applyPreference(
+        userId,
+        {
+          slug: params.slug,
+          value: parsedValue,
+          locationId: params.locationId,
+          confidence: params.confidence,
+          evidence: parsedEvidence,
+        },
+        schemaNamespace,
+      );
+
+      if (!("preference" in result)) {
+        return {
+          success: false,
+          code: result.code,
+          error: "Preference was previously rejected for this scope",
+          message: result.message,
+        };
+      } else {
+        const preference = result.preference;
+
+        this.logger.log(`Preference applied successfully: ${preference.id}`);
+
+        return {
+          success: true,
+          clearedSuggestion: result.deletedSuggestion,
+          preference: {
+            id: preference.id,
+            slug: preference.slug,
+            value: preference.value,
+            status: preference.status,
+            sourceType: preference.sourceType,
+            confidence: preference.confidence,
+            category: preference.slug.split(".")[0],
+            description: preference.description,
+            locationId: preference.locationId,
+          },
+        };
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error applying preference for user ${userId}: ${error.message}`,
+        error.stack,
+      );
+
+      if (
+        typeof error.message === "string" &&
+        error.message.includes("Unknown preference slug")
+      ) {
+        return {
+          success: false,
+          error: error.message,
+          code: "UNKNOWN_PREFERENCE_SLUG",
+          message: error.message,
+          suggestedTool: "createPreferenceDefinition",
         };
       }
 

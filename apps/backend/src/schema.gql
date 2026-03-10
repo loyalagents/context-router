@@ -163,7 +163,7 @@ type Preference {
   """The preference slug (e.g., "food.dietary_restrictions")"""
   slug: String!
 
-  """Source: USER, INFERRED, IMPORTED, or SYSTEM"""
+  """Source: USER, INFERRED, AGENT, IMPORTED, or SYSTEM"""
   sourceType: SourceType!
 
   """Status: ACTIVE, SUGGESTED, or REJECTED"""
@@ -321,6 +321,7 @@ type SourceMeta {
 
 """The source/origin of a preference"""
 enum SourceType {
+  AGENT
   IMPORTED
   INFERRED
   SYSTEM

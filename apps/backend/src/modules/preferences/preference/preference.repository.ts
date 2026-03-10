@@ -19,6 +19,12 @@ type PrefWithDefinition = PrismaPreference & {
   definition?: { slug: string; description: string } | null;
 };
 
+interface UpsertActiveOptions {
+  sourceType?: SourceType;
+  confidence?: number | null;
+  evidence?: any;
+}
+
 @Injectable()
 export class PreferenceRepository {
   private readonly logger = new Logger(PreferenceRepository.name);
@@ -68,9 +74,15 @@ export class PreferenceRepository {
     definitionId: string,
     value: any,
     locationId?: string | null,
+    options: UpsertActiveOptions = {},
   ): Promise<EnrichedPreference> {
     const normalizedLocationId = locationId ?? null;
     const contextKey = this.contextKeyFor(normalizedLocationId);
+    const sourceType = options.sourceType ?? SourceType.USER;
+    const confidence =
+      sourceType === SourceType.USER ? null : (options.confidence ?? null);
+    const evidence =
+      sourceType === SourceType.USER ? null : (options.evidence ?? null);
 
     const existing = await this.prisma.preference.findFirst({
       where: { userId, definitionId, contextKey, status: PreferenceStatus.ACTIVE },
@@ -82,7 +94,7 @@ export class PreferenceRepository {
     if (existing) {
       result = await this.prisma.preference.update({
         where: { id: existing.id },
-        data: { value, sourceType: SourceType.USER },
+        data: { value, sourceType, confidence, evidence },
         include: this.includeDefinition,
       });
     } else {
@@ -94,7 +106,9 @@ export class PreferenceRepository {
           definitionId,
           value,
           status: PreferenceStatus.ACTIVE,
-          sourceType: SourceType.USER,
+          sourceType,
+          confidence,
+          evidence,
         },
         include: this.includeDefinition,
       });
@@ -305,6 +319,33 @@ export class PreferenceRepository {
       include: this.includeDefinition,
     });
     return this.enrich(result);
+  }
+
+  async deleteByStatusAndDefinition(
+    userId: string,
+    definitionId: string,
+    status: PreferenceStatus,
+    locationId?: string | null,
+  ): Promise<boolean> {
+    const existing = await this.prisma.preference.findFirst({
+      where: {
+        userId,
+        definitionId,
+        contextKey: this.contextKeyFor(locationId),
+        status,
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return false;
+    }
+
+    await this.prisma.preference.delete({
+      where: { id: existing.id },
+    });
+
+    return true;
   }
 
   async updateStatus(
