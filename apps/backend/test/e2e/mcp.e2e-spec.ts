@@ -83,6 +83,7 @@ describe("MCP Integration (e2e)", () => {
         "searchPreferences",
         "suggestPreference",
         "deletePreference",
+        "createPreferenceDefinition",
       ]);
     });
 
@@ -412,6 +413,274 @@ describe("MCP Integration (e2e)", () => {
       expect(slugsA).not.toContain("test.user_b_only");
       expect(slugsB).toContain("test.user_b_only");
       expect(slugsB).not.toContain("test.user_a_only");
+    });
+  });
+
+  describe("listPreferenceSlugs user-awareness", () => {
+    it("should include user-owned definitions for authenticated callers", async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: `USER:${testUser.userId}`,
+          slug: "custom.test_pref",
+          description: "A personal test preference",
+          valueType: "STRING",
+          scope: "GLOBAL",
+          ownerUserId: testUser.userId,
+        },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "listPreferenceSlugs", arguments: {} },
+      });
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      const slugs = result.preferences.map((p: any) => p.slug);
+      expect(slugs).toContain("custom.test_pref");
+    });
+  });
+
+  describe("createPreferenceDefinition", () => {
+    beforeEach(async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+    });
+
+    it("should be included in tools/list", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/list",
+        params: {},
+      });
+      const toolNames = response.body.result.tools.map((t: any) => t.name);
+      expect(toolNames).toContain("createPreferenceDefinition");
+    });
+
+    it("should create a new user-owned definition and return normalized shape", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "cooking.preferred_oil",
+            description: "Preferred cooking oil type",
+            valueType: "ENUM",
+            scope: "GLOBAL",
+            displayName: "Cooking Oil",
+            options: ["olive", "coconut", "avocado"],
+            isSensitive: false,
+          },
+        },
+      });
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(true);
+      expect(result.definition.slug).toBe("cooking.preferred_oil");
+      expect(result.definition.category).toBe("cooking");
+      expect(result.definition.valueType).toBe("ENUM");
+      expect(result.definition.scope).toBe("GLOBAL");
+      expect(result.definition.options).toEqual(["olive", "coconut", "avocado"]);
+      expect(result.definition.visibility).toBe("USER");
+      expect(result.definition.id).toBeDefined();
+    });
+
+    it("should reject a duplicate user slug", async () => {
+      const args = {
+        slug: "cooking.unique_slug",
+        description: "First",
+        valueType: "STRING",
+        scope: "GLOBAL",
+      };
+      await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: { name: "createPreferenceDefinition", arguments: args },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 2, method: "tools/call",
+        params: { name: "createPreferenceDefinition", arguments: args },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("PREFERENCE_DEFINITION_CONFLICT");
+    });
+
+    it("should reject a collision with an active global slug", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "food.dietary_restrictions",
+            description: "Duplicate global",
+            valueType: "ARRAY",
+            scope: "GLOBAL",
+          },
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("PREFERENCE_DEFINITION_CONFLICT");
+    });
+
+    it("should reject an invalid slug format", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "INVALID SLUG!",
+            description: "Bad slug",
+            valueType: "STRING",
+            scope: "GLOBAL",
+          },
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("INVALID_PREFERENCE_DEFINITION");
+    });
+
+    it("should reject ENUM type with missing options", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "test.enum_no_opts",
+            description: "Enum without options",
+            valueType: "ENUM",
+            scope: "GLOBAL",
+          },
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("INVALID_PREFERENCE_DEFINITION");
+    });
+
+    it("should reject options supplied for non-ENUM type", async () => {
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "test.bool_with_opts",
+            description: "Boolean with options",
+            valueType: "BOOLEAN",
+            scope: "GLOBAL",
+            options: ["yes", "no"],
+          },
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("INVALID_PREFERENCE_DEFINITION");
+    });
+
+    it("should not expose definition to another user via listPreferenceSlugs", async () => {
+      const prisma = getPrismaClient();
+
+      const userB = await prisma.user.create({
+        data: { email: "user-b-def@example.com", firstName: "User", lastName: "B" },
+      });
+
+      await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "private.user_a_only",
+            description: "Only for user A",
+            valueType: "STRING",
+            scope: "GLOBAL",
+          },
+        },
+      });
+
+      registerMcpUser(userB as any);
+      const response = await mcpPost(
+        { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "listPreferenceSlugs", arguments: {} } },
+        { "x-test-user-id": userB.userId },
+      );
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      const slugs = result.preferences.map((p: any) => p.slug);
+      expect(slugs).not.toContain("private.user_a_only");
+    });
+
+    it("should allow suggestPreference after createPreferenceDefinition", async () => {
+      await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "cooking.spice_level",
+            description: "Preferred spice level",
+            valueType: "ENUM",
+            scope: "GLOBAL",
+            options: ["mild", "medium", "hot"],
+          },
+        },
+      });
+
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 2, method: "tools/call",
+        params: {
+          name: "suggestPreference",
+          arguments: {
+            slug: "cooking.spice_level",
+            value: '"hot"',
+            confidence: 0.8,
+          },
+        },
+      });
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(true);
+      expect(result.preference.slug).toBe("cooking.spice_level");
+    });
+  });
+
+  describe("suggestPreference unknown-slug structured error", () => {
+    it("should return structured guidance when slug is unknown", async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "suggestPreference",
+          arguments: {
+            slug: "nonexistent.slug_that_does_not_exist",
+            value: '"some value"',
+            confidence: 0.9,
+          },
+        },
+      });
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.code).toBe("UNKNOWN_PREFERENCE_SLUG");
+      expect(result.suggestedTool).toBe("createPreferenceDefinition");
     });
   });
 

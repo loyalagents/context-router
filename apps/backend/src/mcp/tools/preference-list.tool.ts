@@ -23,6 +23,7 @@ export class PreferenceListTool {
   /**
    * List all valid preference slugs from the catalog.
    * Helps LLMs discover what preferences exist before attempting to write.
+   * When context is provided, user-owned definitions are included alongside global ones.
    */
   async list(params: ListPreferencesParams = {}, userId?: string, schemaNamespace?: string) {
     this.logger.log(
