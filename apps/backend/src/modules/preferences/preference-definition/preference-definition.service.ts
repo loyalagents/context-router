@@ -21,15 +21,15 @@ export class PreferenceDefinitionService {
    * Create a new user-owned preference definition.
    * Namespace and ownerUserId are derived from the authenticated userId.
    */
-  async create(input: CreatePreferenceDefinitionInput, userId: string) {
+  async create(input: CreatePreferenceDefinitionInput, userId: string, schemaNamespace = "GLOBAL") {
     if (!validateSlugFormat(input.slug)) {
       throw new BadRequestException(
         `Invalid slug format: "${input.slug}". Slugs must be lowercase with dots (e.g., "food.dietary_restrictions")`,
       );
     }
 
-    // Block user def if slug already exists in GLOBAL namespace
-    const globalExists = await this.defRepo.isKnownSlug(input.slug);
+    // Block user def if slug already exists in the user's schema namespace
+    const globalExists = await this.defRepo.isKnownSlug(input.slug, null, schemaNamespace);
     if (globalExists) {
       throw new ConflictException(
         `A global preference definition with slug "${input.slug}" already exists`,

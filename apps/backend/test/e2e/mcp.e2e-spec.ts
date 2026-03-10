@@ -624,6 +624,50 @@ describe("MCP Integration (e2e)", () => {
       expect(slugs).not.toContain("private.user_a_only");
     });
 
+    it("should reject a collision with a namespace-catalog slug for non-GLOBAL users", async () => {
+      const prisma = getPrismaClient();
+
+      // Create a user in a custom namespace (simulating a workshop group)
+      const nsUser = await prisma.user.create({
+        data: {
+          email: "ns-collision@health.workshop.dev",
+          firstName: "NS",
+          lastName: "User",
+          schemaNamespace: "health",
+        },
+      });
+      setTestUser(nsUser);
+
+      // Seed a system definition in the health namespace
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: "health",
+          slug: "health.dietary_needs",
+          description: "Dietary needs for health context",
+          valueType: "ARRAY",
+          scope: "GLOBAL",
+        },
+      });
+
+      // Attempting to create a personal def with the same slug should conflict
+      const response = await mcpPost({
+        jsonrpc: "2.0", id: 1, method: "tools/call",
+        params: {
+          name: "createPreferenceDefinition",
+          arguments: {
+            slug: "health.dietary_needs",
+            description: "My personal dietary needs",
+            valueType: "ARRAY",
+            scope: "GLOBAL",
+          },
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(false);
+      expect(result.code).toBe("PREFERENCE_DEFINITION_CONFLICT");
+    });
+
     it("should allow suggestPreference after createPreferenceDefinition", async () => {
       await mcpPost({
         jsonrpc: "2.0", id: 1, method: "tools/call",

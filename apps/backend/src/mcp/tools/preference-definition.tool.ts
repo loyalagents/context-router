@@ -78,6 +78,7 @@ export class PreferenceDefinitionTool {
           isCore: false,
         },
         userId,
+        context.user.schemaNamespace,
       );
 
       this.logger.log(`Preference definition created: ${created.id}`);
