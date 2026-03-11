@@ -11,6 +11,13 @@ input ApplyPreferenceSuggestionInput {
   suggestionId: ID!
 }
 
+input CreateGroupUserInput {
+  apiKey: String!
+  email: String!
+  firstName: String!
+  lastName: String!
+}
+
 input CreateLocationInput {
   address: String!
   label: String!
@@ -113,6 +120,9 @@ type Mutation {
 
   """Archive a user-owned preference definition."""
   archivePreferenceDefinition(id: ID!): PreferenceDefinition!
+
+  """Create a new user and associate them with an API key group"""
+  createGroupUser(input: CreateGroupUserInput!): User!
   createLocation(data: CreateLocationInput!): Location!
 
   """Create a new user-owned preference definition."""
