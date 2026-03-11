@@ -95,8 +95,12 @@ export default function GroupBrowser({ initialApiKey }: GroupBrowserProps) {
           },
         },
       });
-      if (result.data?.createGroupUser) {
-        handleSelectUser(result.data.createGroupUser);
+      const newUser = result.data?.createGroupUser;
+      if (newUser) {
+        // Call login() only — page.tsx's useEffect watches isAuthenticated
+        // and navigates to /dashboard, avoiding a race with React state commits
+        // in async context.
+        login(apiKey.trim(), newUser.userId);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create user";

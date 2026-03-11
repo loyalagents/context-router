@@ -27,6 +27,7 @@ export default function Dashboard() {
 
   const { data, loading, error } = useQuery<MeData>(ME_QUERY, {
     skip: !isAuthenticated,
+    fetchPolicy: "network-only",
   });
 
   useEffect(() => {
