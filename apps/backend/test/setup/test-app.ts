@@ -4,6 +4,7 @@
  * Creates a NestJS test application with:
  * - Auth guards bypassed (injects test user into context)
  * - VertexAiService mocked
+ * - AiStructuredOutputPort mocked
  * - ValidationPipe applied globally
  *
  * Usage pattern (Option 5 - fixtures in beforeEach):
@@ -23,6 +24,7 @@ import { ApiKeyGuard } from '../../src/common/guards/api-key.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
 import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
+import { VertexAiStructuredService } from '../../src/infrastructure/vertex-ai/vertex-ai-structured.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from './test-db';
 
@@ -71,11 +73,25 @@ export const createMockVertexAiService = () => ({
 });
 
 /**
+ * Mock implementation of AiStructuredOutputPort.
+ * Returns parsed objects directly (no JSON string parsing needed).
+ */
+export const createMockStructuredAiService = () => ({
+  generateStructured: jest.fn().mockResolvedValue({}),
+  generateStructuredWithFile: jest.fn().mockResolvedValue({
+    suggestions: [],
+    documentSummary: 'Mock document summary',
+  }),
+});
+
+/**
  * Options for createTestApp
  */
 export interface CreateTestAppOptions {
   /** Custom mock for VertexAiService */
   mockVertexAi?: ReturnType<typeof createMockVertexAiService>;
+  /** Custom mock for AiStructuredOutputPort */
+  mockStructuredAi?: ReturnType<typeof createMockStructuredAiService>;
   /** Whether to replace auth guards with a test guard that injects request.user */
   mockAuthGuards?: boolean;
 }
@@ -217,9 +233,12 @@ export async function createTestApp(
   registerMcpUser: (user: TestUser) => void;
   mocks: {
     vertexAi: ReturnType<typeof createMockVertexAiService>;
+    structuredAi: ReturnType<typeof createMockStructuredAiService>;
   };
 }> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
+  const mockStructuredAi =
+    options.mockStructuredAi || createMockStructuredAiService();
   const mockAuthGuards = options.mockAuthGuards ?? true;
 
   // Mutable reference - guard always reads current value
@@ -246,6 +265,12 @@ export async function createTestApp(
 
   // Override external services
   moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);
+  moduleBuilder
+    .overrideProvider(VertexAiStructuredService)
+    .useValue(mockStructuredAi);
+  moduleBuilder
+    .overrideProvider('AiStructuredOutputPort')
+    .useValue(mockStructuredAi);
 
   // Use test database PrismaClient
   moduleBuilder.overrideProvider(PrismaService).useValue(getPrismaClient());
@@ -278,6 +303,7 @@ export async function createTestApp(
     },
     mocks: {
       vertexAi: mockVertexAi,
+      structuredAi: mockStructuredAi,
     },
   };
 }

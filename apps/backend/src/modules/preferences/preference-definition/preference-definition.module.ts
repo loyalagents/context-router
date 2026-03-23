@@ -5,6 +5,7 @@ import { PreferenceDefinitionRepository } from './preference-definition.reposito
 import { PreferenceDefinitionResolver } from './preference-definition.resolver';
 import { PreferenceDefinitionService } from './preference-definition.service';
 import { OptionalGqlAuthGuard } from '@common/guards/optional-gql-auth.guard';
+import { PreferenceSchemaSnapshotService } from './preference-schema-snapshot.service';
 
 @Module({
   imports: [PrismaModule, AuthModule],
@@ -13,7 +14,12 @@ import { OptionalGqlAuthGuard } from '@common/guards/optional-gql-auth.guard';
     PreferenceDefinitionResolver,
     PreferenceDefinitionService,
     OptionalGqlAuthGuard,
+    PreferenceSchemaSnapshotService,
   ],
-  exports: [PreferenceDefinitionRepository, PreferenceDefinitionService],
+  exports: [
+    PreferenceDefinitionRepository,
+    PreferenceDefinitionService,
+    PreferenceSchemaSnapshotService,
+  ],
 })
 export class PreferenceDefinitionModule {}

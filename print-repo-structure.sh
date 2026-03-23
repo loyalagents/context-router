@@ -3,6 +3,8 @@
 # Dynamic script to print clean, accurate file structure
 # Excludes common noise directories while showing the actual project structure
 
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+
 echo "# Context Router - Project Structure"
 echo ""
 echo "\`\`\`"
@@ -12,11 +14,11 @@ tree -I 'node_modules|dist|.next|build|coverage|.git|*.lock|.cache|.pnpm-store|.
   --dirsfirst \
   -F \
   --charset ascii \
-  /Users/lucasnovak/loyal-agents/context-router 2>/dev/null
+  "$REPO_ROOT" 2>/dev/null
 
 # Fallback if tree is not installed
 if [ $? -ne 0 ]; then
-  find /Users/lucasnovak/loyal-agents/context-router \
+  find "$REPO_ROOT" \
     -not -path "*/node_modules/*" \
     -not -path "*/.next/*" \
     -not -path "*/dist/*" \
@@ -30,7 +32,7 @@ if [ $? -ne 0 ]; then
     -not -path "*/.claude" \
     -not -name "*.lock" \
     -not -name ".DS_Store" \
-    -print | sed -e "s;/Users/lucasnovak/loyal-agents/context-router;.;" | sort | sed -e 's;[^/]*/;|  ;g;s;|  \([^|]\);+--\1;'
+    -print | sed -e "s;$REPO_ROOT;.;" | sort | sed -e 's;[^/]*/;|  ;g;s;|  \([^|]\);+--\1;'
 fi
 
 echo "\`\`\`"

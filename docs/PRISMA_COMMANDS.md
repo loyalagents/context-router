@@ -34,6 +34,12 @@ gcloud sql instances patch context-monolith-pg \
 
 ## Local development
 
+If your Prisma config points to the Docker-internal hostname (`postgres`), prefix any command with the localhost connection string:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/context_router?schema=public" pnpm exec prisma <command>
+```
+
 ```bash
 # Apply migrations (interactive, creates new migration if schema changed)
 pnpm exec prisma migrate dev
