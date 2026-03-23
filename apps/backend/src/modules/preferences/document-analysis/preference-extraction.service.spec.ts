@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { Logger } from "@nestjs/common";
 import { PreferenceExtractionService } from "./preference-extraction.service";
 import { PreferenceService } from "../preference/preference.service";
-import { AiTextGeneratorPort } from "../../../domains/shared/ports/ai-text-generator.port";
+import { AiStructuredOutputPort } from "../../../domains/shared/ports/ai-structured-output.port";
 import { PreferenceOperation } from "./dto/preference-suggestion.dto";
 import { EnrichedPreference } from "../preference/preference.repository";
 import {
@@ -12,6 +12,7 @@ import {
   PreferenceScope,
 } from "@infrastructure/prisma/generated-client";
 import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
+import { PreferenceSchemaSnapshotService } from "../preference-definition/preference-schema-snapshot.service";
 import { PREFERENCE_CATALOG } from "../../../config/preferences.catalog";
 
 // Helper to create mock Preference objects using the new definitionId-based model
@@ -66,14 +67,15 @@ const mockDefinitions = new Map(
 
 describe("PreferenceExtractionService", () => {
   let service: PreferenceExtractionService;
-  let mockAiService: jest.Mocked<AiTextGeneratorPort>;
+  let mockAiStructuredService: jest.Mocked<AiStructuredOutputPort>;
   let mockPreferenceService: jest.Mocked<PreferenceService>;
   let mockDefRepo: jest.Mocked<PreferenceDefinitionRepository>;
+  let mockSnapshotService: jest.Mocked<PreferenceSchemaSnapshotService>;
 
   beforeEach(async () => {
-    mockAiService = {
-      generateText: jest.fn(),
-      generateTextWithFile: jest.fn(),
+    mockAiStructuredService = {
+      generateStructured: jest.fn(),
+      generateStructuredWithFile: jest.fn(),
     };
 
     mockPreferenceService = {
@@ -103,12 +105,26 @@ describe("PreferenceExtractionService", () => {
       resolveSlugToDefinitionId: jest.fn().mockResolvedValue(null),
     } as any;
 
+    mockSnapshotService = {
+      getSnapshot: jest.fn().mockResolvedValue({
+        definitions: Array.from(mockDefinitions.values()).map((d) => ({
+          slug: d.slug,
+          category: d.category,
+          description: d.description,
+          valueType: d.valueType,
+          options: d.options,
+          namespace: "GLOBAL",
+        })),
+        promptJson: "[]",
+      }),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PreferenceExtractionService,
         {
-          provide: "AiTextGeneratorPort",
-          useValue: mockAiService,
+          provide: "AiStructuredOutputPort",
+          useValue: mockAiStructuredService,
         },
         {
           provide: PreferenceService,
@@ -117,6 +133,10 @@ describe("PreferenceExtractionService", () => {
         {
           provide: PreferenceDefinitionRepository,
           useValue: mockDefRepo,
+        },
+        {
+          provide: PreferenceSchemaSnapshotService,
+          useValue: mockSnapshotService,
         },
       ],
     }).compile();
@@ -141,44 +161,16 @@ describe("PreferenceExtractionService", () => {
     const mockMimeType = "text/plain";
     const mockFilename = "test.txt";
 
-    // Helper to create AI response JSON using slug-based schema
+    // Helper to create AI response object (port returns parsed objects directly)
     const createAiResponse = (
       suggestions: any[],
       documentSummary = "Test document",
-    ) => {
-      return JSON.stringify({ suggestions, documentSummary });
-    };
+    ) => ({ suggestions, documentSummary });
 
-    describe("rejecting malformed AI responses", () => {
-      it("should throw error when suggestion is missing slug", async () => {
-        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
-          createAiResponse([
-            {
-              // slug is missing
-              operation: "CREATE",
-              newValue: ["peanuts"],
-              confidence: 0.9,
-              sourceSnippet: "allergic to peanuts",
-            },
-          ]),
-        );
-
-        await expect(
-          service.extractPreferences(
-            "user-1",
-            mockFileBuffer,
-            mockMimeType,
-            mockFilename,
-          ),
-        ).rejects.toThrow(
-          "Failed to parse AI response: validation failed at suggestions.0.slug",
-        );
-      });
-
+    describe("filtering unknown slugs", () => {
       it("should filter out suggestions with unknown slugs", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "unknown.invalid_slug",
@@ -204,7 +196,7 @@ describe("PreferenceExtractionService", () => {
 
       it("should filter out suggestions missing newValue", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -236,7 +228,7 @@ describe("PreferenceExtractionService", () => {
     describe("filtering duplicate slug", () => {
       it("should filter duplicate slug and keep first", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -273,7 +265,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.dietary_restrictions", ["nuts"]),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -301,7 +293,7 @@ describe("PreferenceExtractionService", () => {
 
       it("should correct UPDATE to CREATE when preference does not exist", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -335,7 +327,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.dietary_restrictions", actualDbValue),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -362,7 +354,7 @@ describe("PreferenceExtractionService", () => {
 
       it("should remove oldValue for CREATE operations", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -394,7 +386,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.dietary_restrictions", existingValue),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -422,7 +414,7 @@ describe("PreferenceExtractionService", () => {
     describe("wasCorrected flag", () => {
       it("should set wasCorrected=false when no corrections needed", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -449,7 +441,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.dietary_restrictions", ["nuts"]),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -475,7 +467,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.dietary_restrictions", ["actual-value"]),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.dietary_restrictions",
@@ -505,7 +497,7 @@ describe("PreferenceExtractionService", () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([
           createMockPreference("food.cuisine_preferences", "same-value"),
         ]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             // 1. Valid suggestion - should pass
             {
@@ -550,7 +542,7 @@ describe("PreferenceExtractionService", () => {
     describe("edge cases", () => {
       it("should handle empty suggestions array from AI", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([]),
         );
 
@@ -565,67 +557,9 @@ describe("PreferenceExtractionService", () => {
         expect(result.filteredCount).toBe(0);
       });
 
-      it("should handle AI response with markdown code blocks", async () => {
-        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
-          "```json\n" +
-            JSON.stringify({
-              suggestions: [
-                {
-                  slug: "food.dietary_restrictions",
-                  operation: "CREATE",
-                  newValue: ["peanuts"],
-                  confidence: 0.9,
-                  sourceSnippet: "allergic to peanuts",
-                },
-              ],
-              documentSummary: "Test",
-            }) +
-            "\n```",
-        );
-
-        const result = await service.extractPreferences(
-          "user-1",
-          mockFileBuffer,
-          mockMimeType,
-          mockFilename,
-        );
-
-        expect(result.suggestions).toHaveLength(1);
-      });
-
-      it("should handle AI response with literal newlines inside string fields", async () => {
-        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(`{
-  "suggestions": [
-    {
-      "slug": "food.dietary_restrictions",
-      "operation": "CREATE",
-      "newValue": ["peanuts", "shellfish"],
-      "confidence": 0.9,
-      "sourceSnippet": "allergic to peanuts
-and shellfish"
-    }
-  ],
-  "documentSummary": "Test"
-}`);
-
-        const result = await service.extractPreferences(
-          "user-1",
-          mockFileBuffer,
-          mockMimeType,
-          mockFilename,
-        );
-
-        expect(result.suggestions).toHaveLength(1);
-        expect(result.suggestions[0].sourceSnippet).toBe(
-          "allergic to peanuts\nand shellfish",
-        );
-      });
-
       it("should handle array newValue with multiple items", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
-        mockAiService.generateTextWithFile.mockResolvedValue(
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
             {
               slug: "food.cuisine_preferences",
@@ -651,6 +585,22 @@ and shellfish"
           "Mexican",
           "Thai",
         ]);
+      });
+
+      it("should use PreferenceSchemaSnapshotService for prompt building", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([]),
+        );
+
+        await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1");
       });
     });
   });

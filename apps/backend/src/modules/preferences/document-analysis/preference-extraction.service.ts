@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { z } from 'zod';
-import { AiTextGeneratorPort } from '../../../domains/shared/ports/ai-text-generator.port';
+import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceService } from '../preference/preference.service';
 import {
   PreferenceSuggestion,
@@ -10,6 +10,7 @@ import {
 } from './dto/preference-suggestion.dto';
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
 import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
+import { PreferenceSchemaSnapshotService } from '../preference-definition/preference-schema-snapshot.service';
 
 /**
  * Zod schema for validating AI response structure.
@@ -39,27 +40,17 @@ const AiResponseSchema = z.object({
 type AiSuggestionSchemaType = z.infer<typeof AiSuggestionSchema>;
 type AiResponseSchemaType = z.infer<typeof AiResponseSchema>;
 
-function escapeLiteralNewlinesInJsonStrings(input: string): string {
-  return input.replace(
-    /"((?:[^"\\]|\\.)*)"/gs,
-    (_, content: string) =>
-      `"${content
-        .replace(/\r\n/g, '\\n')
-        .replace(/\r/g, '\\n')
-        .replace(/\n/g, '\\n')}"`,
-  );
-}
-
 @Injectable()
 export class PreferenceExtractionService {
   private readonly logger = new Logger(PreferenceExtractionService.name);
   private readonly config = getDocumentUploadConfig();
 
   constructor(
-    @Inject('AiTextGeneratorPort')
-    private readonly aiService: AiTextGeneratorPort,
+    @Inject('AiStructuredOutputPort')
+    private readonly aiStructuredService: AiStructuredOutputPort,
     private readonly preferenceService: PreferenceService,
     private readonly defRepo: PreferenceDefinitionRepository,
+    private readonly snapshotService: PreferenceSchemaSnapshotService,
   ) {}
 
   async extractPreferences(
@@ -89,14 +80,18 @@ export class PreferenceExtractionService {
 
     this.logger.log(`Calling AI for preference extraction from ${filename}`);
 
-    // Call the AI with the file
-    const aiResponse = await this.aiService.generateTextWithFile(prompt, {
-      buffer: fileBuffer,
-      mimeType,
-    });
+    // Call the AI with the file — port handles fence stripping, JSON parsing, Zod validation
+    const aiResult: AiResponseSchemaType =
+      await this.aiStructuredService.generateStructuredWithFile(
+        prompt,
+        { buffer: fileBuffer, mimeType },
+        AiResponseSchema,
+        { operationName: 'preferenceExtraction' },
+      );
 
-    // Parse and validate the response
-    const parsed = this.parseAiResponse(aiResponse, userId);
+    // Transform validated AI data to domain types
+    const parsed = this.transformAiResult(aiResult, userId);
+
     return this.validateAndSanitizeSuggestions(
       parsed,
       currentPreferences.map((p) => ({
@@ -112,23 +107,13 @@ export class PreferenceExtractionService {
     filename: string,
     userId: string,
   ): Promise<string> {
-    // Build schema from catalog
-    const defs = await this.defRepo.getAll(userId);
-    const catalogSchema = defs.map((def) => ({
-      slug: def.slug,
-      category: def.slug.split('.')[0],
-      description: def.description,
-      valueType: def.valueType,
-      options: def.options,
-    }));
-
-    const schemaJson = JSON.stringify(catalogSchema, null, 2);
+    const snapshot = await this.snapshotService.getSnapshot(userId);
     const currentPreferencesJson = JSON.stringify(currentPreferences, null, 2);
 
     return `You are a data extraction assistant that reads documents and proposes preference changes for a user.
 
 Here is the user's current preference schema (valid slugs):
-${schemaJson}
+${snapshot.promptJson}
 
 Here are the user's current preferences:
 ${currentPreferencesJson}
@@ -167,65 +152,11 @@ If no preferences can be extracted, return:
 }`;
   }
 
-  private parseAiResponse(
-    aiResponse: string,
+  private transformAiResult(
+    aiResult: AiResponseSchemaType,
     analysisId: string,
   ): { suggestions: PreferenceSuggestion[]; documentSummary: string } {
-    // Clean up the response - remove markdown code blocks if present
-    let cleanResponse = aiResponse.trim();
-    if (cleanResponse.startsWith('```json')) {
-      cleanResponse = cleanResponse.slice(7);
-    } else if (cleanResponse.startsWith('```')) {
-      cleanResponse = cleanResponse.slice(3);
-    }
-    if (cleanResponse.endsWith('```')) {
-      cleanResponse = cleanResponse.slice(0, -3);
-    }
-    cleanResponse = cleanResponse.trim();
-    cleanResponse = escapeLiteralNewlinesInJsonStrings(cleanResponse);
-
-    // Step 1: Parse JSON
-    let rawParsed: unknown;
-    try {
-      rawParsed = JSON.parse(cleanResponse);
-    } catch {
-      this.logger.error(
-        '[AI_PARSE_ERROR] JSON.parse failed - invalid JSON syntax',
-      );
-      this.logger.debug(`[AI_PARSE_ERROR] Raw response: ${aiResponse}`);
-      throw new Error('Failed to parse AI response: invalid JSON');
-    }
-
-    // Step 2: Validate with Zod schema
-    const validationResult = AiResponseSchema.safeParse(rawParsed);
-
-    if (!validationResult.success) {
-      // Log detailed validation errors
-      const zodIssues = validationResult.error.issues;
-      this.logger.error(
-        `[AI_VALIDATION_ERROR] Zod validation failed with ${zodIssues.length} issue(s)`,
-      );
-
-      for (const issue of zodIssues) {
-        const path = issue.path.join('.');
-        this.logger.error(
-          `[AI_VALIDATION_ERROR] Field "${path}": ${issue.message} (code: ${issue.code})`,
-        );
-      }
-
-      this.logger.debug(
-        `[AI_VALIDATION_ERROR] Raw parsed object: ${JSON.stringify(rawParsed, null, 2)}`,
-      );
-
-      throw new Error(
-        `Failed to parse AI response: validation failed at ${zodIssues.map((i) => i.path.join('.')).join(', ')}`,
-      );
-    }
-
-    const parsed: AiResponseSchemaType = validationResult.data;
-
-    // Step 3: Transform validated data to PreferenceSuggestion[]
-    const suggestions: PreferenceSuggestion[] = parsed.suggestions
+    const suggestions: PreferenceSuggestion[] = aiResult.suggestions
       .slice(0, this.config.maxSuggestions)
       .map((s: AiSuggestionSchemaType, index: number) => {
         return {
@@ -257,7 +188,7 @@ If no preferences can be extracted, return:
 
     return {
       suggestions,
-      documentSummary: parsed.documentSummary,
+      documentSummary: aiResult.documentSummary,
     };
   }
 
