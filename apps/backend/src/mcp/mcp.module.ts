@@ -4,26 +4,60 @@ import { McpService } from './mcp.service';
 import { McpController } from './mcp.controller';
 import { PreferencesModule } from '@/modules/preferences/preferences.module';
 import { AuthModule } from '@/modules/auth/auth.module';
+import { AgentsModule } from '@/modules/agents/agents.module';
 import { PreferenceSearchTool } from './tools/preference-search.tool';
 import { PreferenceMutationTool } from './tools/preference-mutation.tool';
 import { PreferenceListTool } from './tools/preference-list.tool';
 import { PreferenceDefinitionTool } from './tools/preference-definition.tool';
+import { PreferenceSuggestTool } from './tools/preference-suggest.tool';
+import { PreferenceDeleteTool } from './tools/preference-delete.tool';
+import { SmartSearchTool } from './tools/smart-search.tool';
+import { SchemaConsolidationTool } from './tools/schema-consolidation.tool';
 import { SchemaResource } from './resources/schema.resource';
 import { OAuthMetadataController } from './auth/oauth-metadata.controller';
 import { DcrShimController } from './auth/dcr-shim.controller';
 import { DcrRateLimitGuard } from './auth/dcr-rate-limit.guard';
 import { McpAuthGuard } from './auth/mcp-auth.guard';
 import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
+import { MCP_TOOLS } from './mcp.constants';
 
 @Module({
-  imports: [ConfigModule, PreferencesModule, AuthModule],
+  imports: [ConfigModule, PreferencesModule, AuthModule, AgentsModule],
   controllers: [McpController, OAuthMetadataController, DcrShimController],
   providers: [
     McpService,
-    PreferenceSearchTool,
+    // Shared provider (not registered as an MCP tool)
     PreferenceMutationTool,
+    // Tool classes
     PreferenceListTool,
+    PreferenceSearchTool,
     PreferenceDefinitionTool,
+    PreferenceSuggestTool,
+    PreferenceDeleteTool,
+    SmartSearchTool,
+    SchemaConsolidationTool,
+    // MCP_TOOLS token — collects all McpToolInterface implementations
+    {
+      provide: MCP_TOOLS,
+      useFactory: (
+        list: PreferenceListTool,
+        search: PreferenceSearchTool,
+        definition: PreferenceDefinitionTool,
+        suggest: PreferenceSuggestTool,
+        del: PreferenceDeleteTool,
+        smartSearch: SmartSearchTool,
+        consolidation: SchemaConsolidationTool,
+      ) => [list, search, definition, suggest, del, smartSearch, consolidation],
+      inject: [
+        PreferenceListTool,
+        PreferenceSearchTool,
+        PreferenceDefinitionTool,
+        PreferenceSuggestTool,
+        PreferenceDeleteTool,
+        SmartSearchTool,
+        SchemaConsolidationTool,
+      ],
+    },
     SchemaResource,
     DcrRateLimitGuard,
     McpAuthGuard,
