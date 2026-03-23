@@ -3,6 +3,7 @@ import { PrismaModule } from '@infrastructure/prisma/prisma.module';
 import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { PreferenceDefinitionResolver } from './preference-definition.resolver';
 import { PreferenceDefinitionService } from './preference-definition.service';
+import { PreferenceSchemaSnapshotService } from './preference-schema-snapshot.service';
 
 @Module({
   imports: [PrismaModule],
@@ -10,7 +11,12 @@ import { PreferenceDefinitionService } from './preference-definition.service';
     PreferenceDefinitionRepository,
     PreferenceDefinitionResolver,
     PreferenceDefinitionService,
+    PreferenceSchemaSnapshotService,
   ],
-  exports: [PreferenceDefinitionRepository, PreferenceDefinitionService],
+  exports: [
+    PreferenceDefinitionRepository,
+    PreferenceDefinitionService,
+    PreferenceSchemaSnapshotService,
+  ],
 })
 export class PreferenceDefinitionModule {}
