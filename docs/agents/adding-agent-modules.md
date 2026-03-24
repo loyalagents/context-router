@@ -1,5 +1,7 @@
 # Agent/Workflow Architecture for Context Router
 
+> **Status**: v1 fully implemented (CP1–CP4 complete). See [v1 summary](adding-agent-modules-v1-summary.md) for delivery notes.
+
 ## Context
 
 The Context Router backend has a sophisticated MCP tool layer and a proven multi-step AI pipeline (document analysis via `PreferenceExtractionService`). The next evolution is generalizing that pattern into a first-class **agent layer** — NestJS services that combine data retrieval with structured AI invocations to answer complex questions. Two immediate use cases drove this design:
@@ -101,12 +103,11 @@ apps/backend/test/e2e/
 ├── mcp.e2e-spec.ts                            (unchanged)
 └── agents.e2e-spec.ts                         [NEW]
 
-AGENTS.md                                      [MODIFIED: populated]
 docs/agents/adding-agent-modules.md            [MODIFIED: full architecture doc]
-docs/MCP_INTEGRATION.md                        [MODIFIED: note on tools delegating to agents]
+docs/agents/adding-agent-modules-v1-summary.md [NEW: v1 delivery summary]
 ```
 
-**Summary**: 19 new files, 8 modified files (code), 3 modified docs (`AGENTS.md`, `adding-agent-modules.md`, `MCP_INTEGRATION.md`), 0 deleted files, 0 schema migrations. Modified files: `mcp.module.ts`, `mcp.service.ts`, `vertex-ai.module.ts`, `preference-definition.module.ts`, `preference-extraction.service.ts`, plus the three existing tool files updated to implement `McpToolInterface` (`preference-definition.tool.ts`, `preference-list.tool.ts`, `preference-search.tool.ts`). `preference-mutation.tool.ts` is kept as an unregistered provider unchanged; `preference-suggest.tool.ts` and `preference-delete.tool.ts` are new thin adapters wrapping it.
+**Summary**: 19 new files, 8 modified files (code), 1 modified doc (`adding-agent-modules.md`), 1 new doc (`adding-agent-modules-v1-summary.md`), 0 deleted files, 0 schema migrations. Modified files: `mcp.module.ts`, `mcp.service.ts`, `vertex-ai.module.ts`, `preference-definition.module.ts`, `preference-extraction.service.ts`, plus the three existing tool files updated to implement `McpToolInterface` (`preference-definition.tool.ts`, `preference-list.tool.ts`, `preference-search.tool.ts`). `preference-mutation.tool.ts` is kept as an unregistered provider unchanged; `preference-suggest.tool.ts` and `preference-delete.tool.ts` are new thin adapters wrapping it.
 
 **Recommended follow-up** (post-v1): Agent output types currently return repo types (`EnrichedPreference[]`), and `fetchPreferences` fetches all active preferences then filters in memory. Both are consistent with the existing `searchPreferences` tool's approach, but should be addressed once agents have a second consumer (e.g. GraphQL):
 - Add dedicated agent DTOs to decouple agents from repository join shapes
@@ -487,13 +488,13 @@ The real helper returns `{ module, setTestUser, registerMcpUser, mocks }` — `m
 
 All test commands run from `apps/backend/` (`cd apps/backend && pnpm test -- --testPathPattern=...`).
 
-| Checkpoint | What changes | Test command |
-|---|---|---|
-| 1 — AI primitives + snapshot | `ai-structured-output.port.ts`, `vertex-ai-structured.service.ts`, `PreferenceSchemaSnapshotService`, migrate `PreferenceExtractionService` (both AI output parsing → port and prompt-building → snapshot service) | `--testPathPattern=vertex-ai-structured` + `--testPathPattern=document-analysis` |
-| 2 — Agent layer | `agents.module.ts`, shared contracts, both agent classes with prompt/schema files, agent unit specs | Unit tests green: hallucinated slug filtering, `includeSuggestions` output split, <2 defs short-circuit, `maxResults` truncation — following the `preference-extraction.service.spec.ts` pattern |
-| 3 — MCP integration | `mcp.constants.ts`, `mcp-tool.interface.ts`, `MCP_TOOLS` token, registry in `McpService`, add `preference-suggest.tool.ts` and `preference-delete.tool.ts` (keeping `preference-mutation.tool.ts` as a shared non-registered provider), existing tools implement interface, 2 new agent-backed tools | `--testPathPattern=mcp.e2e` |
-| 4 — E2E + docs | `agents.e2e-spec.ts`, `AGENTS.md`, `docs/agents/`, `docs/MCP_INTEGRATION.md` | `--testPathPattern=agents.e2e` |
-| 5 — V1 summary | `docs/agents/adding-agent-modules-v1-summary.md` — what CP1–CP4 delivered, key decisions made during implementation, known limitations/tech debt, concrete v2 roadmap | N/A (doc only) |
+| Checkpoint | What changes | Test command | Status |
+|---|---|---|---|
+| 1 — AI primitives + snapshot | `ai-structured-output.port.ts`, `vertex-ai-structured.service.ts`, `PreferenceSchemaSnapshotService`, migrate `PreferenceExtractionService` (both AI output parsing → port and prompt-building → snapshot service) | `--testPathPattern=vertex-ai-structured` + `--testPathPattern=document-analysis` | **Done** |
+| 2 — Agent layer | `agents.module.ts`, shared contracts, both agent classes with prompt/schema files, agent unit specs | Unit tests green: hallucinated slug filtering, `includeSuggestions` output split, <2 defs short-circuit, `maxResults` truncation — following the `preference-extraction.service.spec.ts` pattern | **Done** |
+| 3 — MCP integration | `mcp.constants.ts`, `mcp-tool.interface.ts`, `MCP_TOOLS` token, registry in `McpService`, add `preference-suggest.tool.ts` and `preference-delete.tool.ts` (keeping `preference-mutation.tool.ts` as a shared non-registered provider), existing tools implement interface, 2 new agent-backed tools | `--testPathPattern=mcp.e2e` | **Done** |
+| 4 — E2E + docs | `agents.e2e-spec.ts`, `docs/agents/` | `--testPathPattern=agents.e2e` | **Done** |
+| 5 — V1 summary | `docs/agents/adding-agent-modules-v1-summary.md` — what CP1–CP4 delivered, key decisions made during implementation, known limitations/tech debt, concrete v2 roadmap | N/A (doc only) | **Done** |
 
 ---
 
