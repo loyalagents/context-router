@@ -465,6 +465,55 @@ describe('Agent MCP Tools (e2e)', () => {
       expect(result.consolidationGroups).toHaveLength(0);
     });
 
+    it('omitted scope — defaults to PERSONAL, not ALL', async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+
+      // Create two user-owned definitions
+      await prisma.preferenceDefinition.createMany({
+        data: [
+          {
+            namespace: `USER:${testUser.userId}`,
+            slug: 'custom.scope_a',
+            description: 'Scope test A',
+            valueType: 'STRING',
+            scope: 'GLOBAL',
+            ownerUserId: testUser.userId,
+          },
+          {
+            namespace: `USER:${testUser.userId}`,
+            slug: 'custom.scope_b',
+            description: 'Scope test B',
+            valueType: 'STRING',
+            scope: 'GLOBAL',
+            ownerUserId: testUser.userId,
+          },
+        ],
+      });
+
+      mocks.structuredAi.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['custom.scope_a', 'custom.scope_b'],
+            reason: 'Similar definitions',
+            suggestion: 'MERGE',
+          },
+        ],
+        summary: 'Found 1 group',
+      });
+
+      // Omit scope entirely — should default to PERSONAL
+      const response = await callTool('consolidateSchema', {});
+
+      expect(response.status).toBe(200);
+      const result = parseToolResult(response);
+
+      // If scope defaulted to ALL, totalDefinitionsAnalyzed would include
+      // all seeded GLOBAL definitions (11+). PERSONAL should only show 2.
+      expect(result.totalDefinitionsAnalyzed).toBe(2);
+      expect(result.consolidationGroups).toHaveLength(1);
+    });
+
     it('ALL scope — GLOBAL and USER definitions with correct slugScopes', async () => {
       const prisma = getPrismaClient();
       await seedPreferenceDefinitions(prisma);

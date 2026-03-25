@@ -200,11 +200,10 @@ describe('VertexAiStructuredService', () => {
       expect(result).toEqual({ name: 'fenced', value: 7 });
     });
 
-    it('should retry via generateText (not generateTextWithFile) on failure', async () => {
-      mockVertexAi.generateTextWithFile.mockResolvedValue('bad json');
-      mockVertexAi.generateText.mockResolvedValue(
-        JSON.stringify({ name: 'corrected', value: 5 }),
-      );
+    it('should retry via generateTextWithFile preserving the file on failure', async () => {
+      mockVertexAi.generateTextWithFile
+        .mockResolvedValueOnce('bad json')
+        .mockResolvedValueOnce(JSON.stringify({ name: 'corrected', value: 5 }));
 
       const result = await service.generateStructuredWithFile(
         'prompt',
@@ -214,8 +213,11 @@ describe('VertexAiStructuredService', () => {
       );
 
       expect(result).toEqual({ name: 'corrected', value: 5 });
-      expect(mockVertexAi.generateTextWithFile).toHaveBeenCalledTimes(1);
-      expect(mockVertexAi.generateText).toHaveBeenCalledTimes(1);
+      // Both calls go through generateTextWithFile — file context is preserved
+      expect(mockVertexAi.generateTextWithFile).toHaveBeenCalledTimes(2);
+      expect(mockVertexAi.generateText).not.toHaveBeenCalled();
+      // Verify the retry call includes the file
+      expect(mockVertexAi.generateTextWithFile.mock.calls[1][1]).toBe(mockFile);
     });
   });
 });

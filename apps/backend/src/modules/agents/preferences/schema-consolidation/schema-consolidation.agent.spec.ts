@@ -12,6 +12,7 @@ const makeSnapshot = (
     slug: string;
     namespace?: string;
     description?: string;
+    scope?: string;
   }>,
 ) => ({
   definitions: defs.map((d) => ({
@@ -20,6 +21,7 @@ const makeSnapshot = (
     description: d.description ?? `Description for ${d.slug}`,
     valueType: 'STRING',
     namespace: d.namespace ?? 'GLOBAL',
+    scope: d.scope ?? 'GLOBAL',
   })),
   promptJson: '[]',
 });
@@ -212,6 +214,32 @@ describe('SchemaConsolidationAgent', () => {
 
       expect(result.consolidationGroups[0].recommendedSlug).toBeUndefined();
     });
+
+    it('should clear recommendedSlug that is a known slug but not in the group', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions' },
+          { slug: 'food.cuisine_preferences' },
+          { slug: 'travel.seat_preference' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['food.dietary_restrictions', 'food.cuisine_preferences'],
+            reason: 'Overlap',
+            suggestion: 'MERGE',
+            recommendedSlug: 'travel.seat_preference', // real slug, wrong group
+          },
+        ],
+        summary: 'Found overlaps',
+      });
+
+      const result = await agent.run(baseInput);
+
+      expect(result.consolidationGroups[0].recommendedSlug).toBeUndefined();
+    });
   });
 
   describe('scope handling', () => {
@@ -251,6 +279,101 @@ describe('SchemaConsolidationAgent', () => {
         'food.dietary_restrictions': 'GLOBAL',
         'food.my_diet': 'USER',
       });
+    });
+  });
+
+  describe('ownership and scope metadata in prompt', () => {
+    it('should include ownership info in the prompt sent to AI', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions', namespace: 'GLOBAL' },
+          { slug: 'food.my_diet', namespace: 'USER:user-1' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [],
+        summary: 'No overlaps found',
+      });
+
+      await agent.run({ ...baseInput, scope: 'ALL' });
+
+      const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
+      expect(prompt).toContain('"ownership": "GLOBAL"');
+      expect(prompt).toContain('"ownership": "USER"');
+    });
+
+    it('should include definitionScope in the prompt sent to AI', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions', scope: 'GLOBAL' },
+          { slug: 'food.local_specials', scope: 'LOCATION' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [],
+        summary: 'No overlaps found',
+      });
+
+      await agent.run(baseInput);
+
+      const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
+      expect(prompt).toContain('"definitionScope": "GLOBAL"');
+      expect(prompt).toContain('"definitionScope": "LOCATION"');
+    });
+  });
+
+  describe('summary consistency', () => {
+    it('should override summary when all AI groups are filtered out', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions' },
+          { slug: 'food.cuisine_preferences' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['food.dietary_restrictions', 'food.hallucinated_slug'],
+            reason: 'Fake overlap',
+            suggestion: 'MERGE',
+          },
+        ],
+        summary: 'Found 1 overlap between definitions',
+      });
+
+      const result = await agent.run(baseInput);
+
+      expect(result.consolidationGroups).toHaveLength(0);
+      // Summary must NOT echo the AI's "Found 1 overlap" when 0 groups survived
+      expect(result.summary).not.toContain('Found 1 overlap');
+    });
+
+    it('should keep AI summary when some groups survive validation', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions' },
+          { slug: 'food.cuisine_preferences' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['food.dietary_restrictions', 'food.cuisine_preferences'],
+            reason: 'Both about food',
+            suggestion: 'REVIEW',
+          },
+        ],
+        summary: 'Found 1 group of overlapping definitions',
+      });
+
+      const result = await agent.run(baseInput);
+
+      expect(result.consolidationGroups).toHaveLength(1);
+      expect(result.summary).toBe('Found 1 group of overlapping definitions');
     });
   });
 

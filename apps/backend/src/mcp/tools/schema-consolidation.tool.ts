@@ -33,12 +33,12 @@ export class SchemaConsolidationTool implements McpToolInterface {
   constructor(private readonly agent: SchemaConsolidationAgent) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
-    const params = args as { scope?: 'PERSONAL' | 'ALL' };
+    const params = (args ?? {}) as { scope?: 'PERSONAL' | 'ALL' };
 
     try {
       const result = await this.agent.run({
         userId: context!.user.userId,
-        scope: params.scope,
+        scope: params.scope ?? 'PERSONAL',
       });
 
       return {

@@ -8,6 +8,7 @@ export interface PreferenceDefinitionSnapshot {
   valueType: string;
   options?: string[];
   namespace: string;
+  scope: string;
 }
 
 export interface PreferenceSchemaSnapshot {
@@ -39,6 +40,7 @@ export class PreferenceSchemaSnapshotService {
         ? (def.options as string[])
         : undefined,
       namespace: def.namespace,
+      scope: def.scope,
     }));
 
     const promptJson = JSON.stringify(

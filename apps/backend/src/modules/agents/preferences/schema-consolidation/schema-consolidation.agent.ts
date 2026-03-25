@@ -67,7 +67,21 @@ export class SchemaConsolidationAgent
     );
 
     // Step 2: AI consolidation analysis
-    const prompt = buildSchemaConsolidationPrompt(snapshot.promptJson);
+    // Build enriched JSON that includes ownership metadata for the model
+    const enrichedJson = JSON.stringify(
+      snapshot.definitions.map((d) => ({
+        slug: d.slug,
+        category: d.category,
+        description: d.description,
+        valueType: d.valueType,
+        ...(d.options ? { options: d.options } : {}),
+        ownership: d.namespace === 'GLOBAL' ? 'GLOBAL' : 'USER',
+        definitionScope: d.scope,
+      })),
+      null,
+      2,
+    );
+    const prompt = buildSchemaConsolidationPrompt(enrichedJson);
 
     const aiResult = await recorder.record(
       'aiConsolidationAnalysis',
@@ -98,9 +112,10 @@ export class SchemaConsolidationAgent
             continue;
           }
 
-          // Clear invalid recommendedSlug
+          // Clear recommendedSlug unless it is one of the group's valid slugs
+          const validSlugSet = new Set(validSlugs);
           const recommendedSlug =
-            group.recommendedSlug && knownSlugs.has(group.recommendedSlug)
+            group.recommendedSlug && validSlugSet.has(group.recommendedSlug)
               ? group.recommendedSlug
               : undefined;
 
@@ -127,10 +142,17 @@ export class SchemaConsolidationAgent
 
     recorder.logSummary();
 
+    // Override summary if validation dropped every group the AI proposed
+    const summary =
+      validatedGroups.length === 0 &&
+      aiResult.consolidationGroups.length > 0
+        ? 'No overlapping or duplicate definitions found after validation.'
+        : aiResult.summary;
+
     return {
       totalDefinitionsAnalyzed: snapshot.definitions.length,
       consolidationGroups: validatedGroups,
-      summary: aiResult.summary,
+      summary,
     };
   }
 }

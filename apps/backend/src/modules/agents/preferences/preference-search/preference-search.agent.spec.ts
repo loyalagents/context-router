@@ -41,6 +41,7 @@ const MOCK_SNAPSHOT = {
       description: 'Dietary restrictions',
       valueType: 'ARRAY',
       namespace: 'GLOBAL',
+      scope: 'GLOBAL',
     },
     {
       slug: 'food.cuisine_preferences',
@@ -48,6 +49,7 @@ const MOCK_SNAPSHOT = {
       description: 'Preferred cuisines',
       valueType: 'ARRAY',
       namespace: 'GLOBAL',
+      scope: 'GLOBAL',
     },
     {
       slug: 'travel.seat_preference',
@@ -55,6 +57,7 @@ const MOCK_SNAPSHOT = {
       description: 'Airplane seat preference',
       valueType: 'ENUM',
       namespace: 'GLOBAL',
+      scope: 'GLOBAL',
     },
   ],
   promptJson: '[]',
@@ -277,6 +280,48 @@ describe('PreferenceSearchAgent', () => {
       'user-1',
       'loc-123',
     );
+  });
+
+  it('should preserve AI relevance ordering in matchedDefinitions', async () => {
+    // AI returns travel first, then food — opposite of snapshot's alphabetical order
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: [
+        'travel.seat_preference',
+        'food.dietary_restrictions',
+      ],
+      queryInterpretation: 'Travel then food',
+    });
+
+    const result = await agent.run(baseInput);
+
+    expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
+      'travel.seat_preference',
+      'food.dietary_restrictions',
+    ]);
+  });
+
+  it('should dedupe repeated slugs from AI while preserving relevance order', async () => {
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: [
+        'food.dietary_restrictions',
+        'food.cuisine_preferences',
+        'food.dietary_restrictions', // duplicate
+      ],
+      queryInterpretation: 'Food prefs',
+    });
+    mockPreferenceService.getActivePreferences.mockResolvedValue([
+      createMockPreference('food.dietary_restrictions'),
+      createMockPreference('food.cuisine_preferences'),
+    ]);
+
+    const result = await agent.run(baseInput);
+
+    expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
+      'food.dietary_restrictions',
+      'food.cuisine_preferences',
+    ]);
+    // Active preferences should also not be duplicated
+    expect(result.matchedActivePreferences).toHaveLength(2);
   });
 
   it('should propagate errors from AI port', async () => {

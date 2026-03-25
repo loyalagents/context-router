@@ -63,21 +63,31 @@ export class PreferenceSearchAgent
       ),
     );
 
-    // Step 3: Slug validation — discard hallucinated slugs
+    // Step 3: Slug validation — discard hallucinated slugs, dedupe preserving order
     const validatedSlugs = await recorder.record(
       'slugValidation',
       'validation',
-      async () =>
-        aiResult.relevantSlugs.filter((slug) => knownSlugs.has(slug)),
+      async () => {
+        const seen = new Set<string>();
+        return aiResult.relevantSlugs.filter((slug) => {
+          if (!knownSlugs.has(slug) || seen.has(slug)) return false;
+          seen.add(slug);
+          return true;
+        });
+      },
     );
 
     // Step 4: Fetch preferences for validated slugs
     const result = await recorder.record('fetchPreferences', 'db', async () => {
       const slugSet = new Set(validatedSlugs);
 
-      // Build matchedDefinitions from snapshot (always populated)
-      const matchedDefinitions = snapshot.definitions
-        .filter((d) => slugSet.has(d.slug))
+      // Build matchedDefinitions preserving AI relevance order
+      const defMap = new Map(
+        snapshot.definitions.map((d) => [d.slug, d]),
+      );
+      const matchedDefinitions = validatedSlugs
+        .map((slug) => defMap.get(slug))
+        .filter((d): d is NonNullable<typeof d> => d != null)
         .map((d) => ({
           slug: d.slug,
           description: d.description,

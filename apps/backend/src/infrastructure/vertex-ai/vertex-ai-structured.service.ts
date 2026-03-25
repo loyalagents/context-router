@@ -70,7 +70,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
       prompt,
       file,
     );
-    return this.parseAndValidate(rawText, schema, prompt, retries, opName);
+    return this.parseAndValidate(rawText, schema, prompt, retries, opName, file);
   }
 
   private async parseAndValidate<T>(
@@ -79,6 +79,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     originalPrompt: string,
     retriesRemaining: number,
     operationName: string,
+    file?: FileInput,
   ): Promise<T> {
     const cleaned = stripMarkdownFences(rawText);
     const escaped = escapeLiteralNewlinesInJsonStrings(cleaned);
@@ -100,6 +101,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
           `JSON parse error: ${parseError.message}`,
           retriesRemaining - 1,
           operationName,
+          file,
         );
       }
 
@@ -132,6 +134,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
         `Validation errors: ${zodErrors}`,
         retriesRemaining - 1,
         operationName,
+        file,
       );
     }
 
@@ -147,6 +150,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     errorDescription: string,
     retriesRemaining: number,
     operationName: string,
+    file?: FileInput,
   ): Promise<T> {
     this.logger.warn(
       `[${operationName}] Attempting correction retry (${retriesRemaining} retries left after this)`,
@@ -165,14 +169,16 @@ ${errorDescription}
 
 Please respond with corrected, valid JSON only. No markdown fences.`;
 
-    const correctedText =
-      await this.vertexAiService.generateText(correctionPrompt);
+    const correctedText = file
+      ? await this.vertexAiService.generateTextWithFile(correctionPrompt, file)
+      : await this.vertexAiService.generateText(correctionPrompt);
     return this.parseAndValidate(
       correctedText,
       schema,
       originalPrompt,
       retriesRemaining,
       operationName,
+      file,
     );
   }
 }
