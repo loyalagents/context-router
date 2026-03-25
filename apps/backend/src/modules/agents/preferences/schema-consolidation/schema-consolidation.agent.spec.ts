@@ -166,6 +166,30 @@ describe('SchemaConsolidationAgent', () => {
       ]);
     });
 
+    it('should drop groups where repeated valid slugs produce < 2 unique slugs', async () => {
+      mockSnapshotService.getSnapshot.mockResolvedValue(
+        makeSnapshot([
+          { slug: 'food.dietary_restrictions' },
+          { slug: 'food.cuisine_preferences' },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['food.dietary_restrictions', 'food.dietary_restrictions'],
+            reason: 'Duplicate entry',
+            suggestion: 'MERGE',
+          },
+        ],
+        summary: 'Found overlaps',
+      });
+
+      const result = await agent.run(baseInput);
+
+      expect(result.consolidationGroups).toHaveLength(0);
+    });
+
     it('should drop groups with < 2 valid slugs after filtering', async () => {
       mockSnapshotService.getSnapshot.mockResolvedValue(
         makeSnapshot([

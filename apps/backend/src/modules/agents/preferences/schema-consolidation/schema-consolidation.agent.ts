@@ -102,18 +102,21 @@ export class SchemaConsolidationAgent
         const groups: ConsolidationGroup[] = [];
 
         for (const group of aiResult.consolidationGroups) {
-          // Filter slugs to only known ones
-          const validSlugs = group.slugs.filter((slug) =>
-            knownSlugs.has(slug),
-          );
+          // Filter and dedupe slugs to only known ones, preserving order
+          const seen = new Set<string>();
+          const validSlugs = group.slugs.filter((slug) => {
+            if (!knownSlugs.has(slug) || seen.has(slug)) return false;
+            seen.add(slug);
+            return true;
+          });
 
-          // Drop groups with < 2 valid slugs
+          // Drop groups with < 2 valid unique slugs
           if (validSlugs.length < 2) {
             continue;
           }
 
           // Clear recommendedSlug unless it is one of the group's valid slugs
-          const validSlugSet = new Set(validSlugs);
+          const validSlugSet = seen;
           const recommendedSlug =
             group.recommendedSlug && validSlugSet.has(group.recommendedSlug)
               ? group.recommendedSlug

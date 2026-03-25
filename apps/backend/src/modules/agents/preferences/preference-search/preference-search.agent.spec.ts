@@ -268,6 +268,35 @@ describe('PreferenceSearchAgent', () => {
     expect(result.matchedSuggestedPreferences).toHaveLength(2);
   });
 
+  it('should sort preference rows by AI relevance before applying maxResults', async () => {
+    // AI ranks travel first, then cuisine, then dietary
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: [
+        'travel.seat_preference',
+        'food.cuisine_preferences',
+        'food.dietary_restrictions',
+      ],
+      queryInterpretation: 'Travel then food',
+    });
+    // Repository returns in a different order (recency / alphabetical)
+    mockPreferenceService.getActivePreferences.mockResolvedValue([
+      createMockPreference('food.dietary_restrictions'),
+      createMockPreference('food.cuisine_preferences'),
+      createMockPreference('travel.seat_preference'),
+    ]);
+
+    const result = await agent.run({
+      ...baseInput,
+      maxResults: 2,
+    });
+
+    // Should keep the top-2 by AI relevance: travel, then cuisine
+    expect(result.matchedActivePreferences.map((p) => p.slug)).toEqual([
+      'travel.seat_preference',
+      'food.cuisine_preferences',
+    ]);
+  });
+
   it('should pass locationId to preference service', async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: ['food.dietary_restrictions'],

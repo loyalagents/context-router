@@ -116,6 +116,13 @@ export class PreferenceSearchAgent
         );
       }
 
+      // Sort preference rows by AI relevance order before capping
+      const slugRank = new Map(validatedSlugs.map((s, i) => [s, i]));
+      const byRelevance = (a: EnrichedPreference, b: EnrichedPreference) =>
+        (slugRank.get(a.slug) ?? Infinity) - (slugRank.get(b.slug) ?? Infinity);
+      matchedActivePreferences.sort(byRelevance);
+      matchedSuggestedPreferences.sort(byRelevance);
+
       // Apply maxResults if specified (definitions are never capped)
       if (input.maxResults !== undefined) {
         matchedActivePreferences = matchedActivePreferences.slice(
