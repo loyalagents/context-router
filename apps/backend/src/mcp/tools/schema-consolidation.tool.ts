@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
-import { SchemaConsolidationAgent } from '@modules/agents/preferences/schema-consolidation/schema-consolidation.agent';
+import { SchemaConsolidationWorkflow } from '@modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow';
 
 @Injectable()
 export class SchemaConsolidationTool implements McpToolInterface {
@@ -30,13 +30,13 @@ export class SchemaConsolidationTool implements McpToolInterface {
 
   readonly requiresAuth = true;
 
-  constructor(private readonly agent: SchemaConsolidationAgent) {}
+  constructor(private readonly workflow: SchemaConsolidationWorkflow) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     const params = (args ?? {}) as { scope?: 'PERSONAL' | 'ALL' };
 
     try {
-      const result = await this.agent.run({
+      const result = await this.workflow.run({
         userId: context!.user.userId,
         scope: params.scope ?? 'PERSONAL',
       });

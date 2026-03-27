@@ -1,24 +1,24 @@
 import { Logger } from '@nestjs/common';
-import { AgentStep } from './agent.interface';
+import { WorkflowStep } from './workflow.interface';
 
-export class AgentStepRecorder {
-  private readonly steps: AgentStep[] = [];
+export class WorkflowStepRecorder {
+  private readonly steps: WorkflowStep[] = [];
   private readonly logger: Logger;
 
-  constructor(agentName: string) {
-    this.logger = new Logger(agentName);
+  constructor(workflowName: string) {
+    this.logger = new Logger(workflowName);
   }
 
   async record<T>(
     name: string,
-    kind: AgentStep['kind'],
+    kind: WorkflowStep['kind'],
     fn: () => Promise<T>,
   ): Promise<T> {
     const start = Date.now();
     const result = await fn();
     const durationMs = Date.now() - start;
 
-    const step: AgentStep = { name, kind, durationMs };
+    const step: WorkflowStep = { name, kind, durationMs };
     this.steps.push(step);
 
     this.logger.debug(
@@ -28,7 +28,7 @@ export class AgentStepRecorder {
     return result;
   }
 
-  getSteps(): ReadonlyArray<AgentStep> {
+  getSteps(): ReadonlyArray<WorkflowStep> {
     return this.steps;
   }
 

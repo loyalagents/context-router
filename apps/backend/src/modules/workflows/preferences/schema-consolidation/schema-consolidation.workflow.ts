@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { AgentInput, IAgent } from '../../shared/agent.interface';
-import { AgentStepRecorder } from '../../shared/agent-step-recorder';
+import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
+import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import {
   PreferenceSchemaSnapshotService,
@@ -9,7 +9,7 @@ import {
 import { ConsolidationResponseSchema } from './schema-consolidation.schema';
 import { buildSchemaConsolidationPrompt } from './schema-consolidation.prompt';
 
-export interface SchemaConsolidationAgentInput extends AgentInput {
+export interface SchemaConsolidationWorkflowInput extends WorkflowInput {
   scope?: 'PERSONAL' | 'ALL';
 }
 
@@ -21,16 +21,16 @@ export interface ConsolidationGroup {
   slugScopes: Record<string, 'GLOBAL' | 'USER'>;
 }
 
-export interface SchemaConsolidationAgentOutput {
+export interface SchemaConsolidationWorkflowOutput {
   totalDefinitionsAnalyzed: number;
   consolidationGroups: ConsolidationGroup[];
   summary: string;
 }
 
 @Injectable()
-export class SchemaConsolidationAgent
+export class SchemaConsolidationWorkflow
   implements
-    IAgent<SchemaConsolidationAgentInput, SchemaConsolidationAgentOutput>
+    IWorkflow<SchemaConsolidationWorkflowInput, SchemaConsolidationWorkflowOutput>
 {
   constructor(
     @Inject('AiStructuredOutputPort')
@@ -39,9 +39,9 @@ export class SchemaConsolidationAgent
   ) {}
 
   async run(
-    input: SchemaConsolidationAgentInput,
-  ): Promise<SchemaConsolidationAgentOutput> {
-    const recorder = new AgentStepRecorder('SchemaConsolidationAgent');
+    input: SchemaConsolidationWorkflowInput,
+  ): Promise<SchemaConsolidationWorkflowOutput> {
+    const recorder = new WorkflowStepRecorder('SchemaConsolidationWorkflow');
 
     // Step 1: Load definitions
     const snapshot = await recorder.record('loadDefinitions', 'db', () =>

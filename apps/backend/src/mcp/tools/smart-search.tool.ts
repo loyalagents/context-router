@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
-import { PreferenceSearchAgent } from '@modules/agents/preferences/preference-search/preference-search.agent';
+import { PreferenceSearchWorkflow } from '@modules/workflows/preferences/preference-search/preference-search.workflow';
 
 @Injectable()
 export class SmartSearchTool implements McpToolInterface {
@@ -41,7 +41,7 @@ export class SmartSearchTool implements McpToolInterface {
   readonly requiresAuth = true;
 
   constructor(
-    private readonly agent: PreferenceSearchAgent,
+    private readonly workflow: PreferenceSearchWorkflow,
     private readonly configService: ConfigService,
   ) {}
 
@@ -57,7 +57,7 @@ export class SmartSearchTool implements McpToolInterface {
         'mcp.tools.preferences.maxSearchResults',
       );
 
-      const result = await this.agent.run({
+      const result = await this.workflow.run({
         userId: context!.user.userId,
         naturalLanguageQuery: params.query,
         locationId: params.locationId,

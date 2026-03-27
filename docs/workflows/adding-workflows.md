@@ -1,7 +1,5 @@
 # Adding Workflows to the Repo
 
-> **Naming note:** The code currently uses `IAgent`, `AgentStepRecorder`, `AgentsModule`, and `src/modules/agents/`. A rename to `IWorkflow`, `WorkflowStepRecorder`, `WorkflowsModule`, and `src/modules/workflows/` is planned as a separate PR. This doc uses "workflow" throughout to reflect intent.
-
 ## One Sentence
 
 A workflow is a typed, deterministic data transform — typed input in, typed output out — where every AI response is validated against ground truth before it reaches the caller.
@@ -9,7 +7,7 @@ A workflow is a typed, deterministic data transform — typed input in, typed ou
 
 ## One Paragraph
 
-The core abstraction is `IAgent<TInput, TOutput>`: an `@Injectable()` NestJS service with a single `run()` method. Despite the interface name (a rename to `IWorkflow` is planned), what we build are **strict workflows**: deterministic sequences with fixed steps, single AI calls, read-only data access, and two layers of validation (structural via Zod, semantic against the database). Any caller — MCP tool, GraphQL resolver, cron job, or another workflow — injects the service and calls `run()`. The workflow doesn't know or care who called it. Alongside this, we provide shared infrastructure: an `AiStructuredOutputPort` for getting typed data from a language model (parsing, retries, correction), a step recorder for observability (all workflows should use it), and an MCP tool registry for exposing workflows over MCP. The AI port and MCP registry are optional — not every workflow needs AI or MCP exposure. The contract that matters is: typed input, validated output, no surprises.
+The core abstraction is `IWorkflow<TInput, TOutput>`: an `@Injectable()` NestJS service with a single `run()` method. What we build are **strict workflows**: deterministic sequences with fixed steps, single AI calls, read-only data access, and two layers of validation (structural via Zod, semantic against the database). Any caller — MCP tool, GraphQL resolver, cron job, or another workflow — injects the service and calls `run()`. The workflow doesn't know or care who called it. Alongside this, we provide shared infrastructure: an `AiStructuredOutputPort` for getting typed data from a language model (parsing, retries, correction), a `WorkflowStepRecorder` for observability (all workflows should use it), and an MCP tool registry for exposing workflows over MCP. The AI port and MCP registry are optional — not every workflow needs AI or MCP exposure. The contract that matters is: typed input, validated output, no surprises.
 
 ```
                     ┌───────────┐  ┌────────────┐  ┌───────────┐
@@ -23,7 +21,7 @@ The core abstraction is `IAgent<TInput, TOutput>`: an `@Injectable()` NestJS ser
               ┌─────────────────────────────────────────────────────────┐
               │  Strict Workflow                                        │
               │                                                        │
-              │  Implements IAgent<TInput, TOutput>                     │
+              │  Implements IWorkflow<TInput, TOutput>                    │
               │  Fixed steps, deterministic, read-only, validated       │
               │                                                        │
               │  e.g. current workflows:                                │
@@ -53,7 +51,7 @@ The core abstraction is `IAgent<TInput, TOutput>`: an `@Injectable()` NestJS ser
 
 ### Strict Workflows: What We Build and Why
 
-We build **strict workflows**. The `IAgent` interface allows anything inside `run()`, but what we actually build — and what contributors should build by default — follows a disciplined set of conventions:
+We build **strict workflows**. The `IWorkflow` interface allows anything inside `run()`, but what we actually build — and what contributors should build by default — follows a disciplined set of conventions:
 
 | Constraint | What it means | Why it matters |
 |---|---|---|
@@ -82,11 +80,11 @@ Zod validates shape. The workflow validates meaning. Both are required because t
 
 ### Recording Steps
 
-Every workflow should use `AgentStepRecorder` for observability. Create a fresh recorder per `run()` call (so concurrent executions don't interleave), then wrap each step in `recorder.record(name, kind, fn)`:
+Every workflow should use `WorkflowStepRecorder` for observability. Create a fresh recorder per `run()` call (so concurrent executions don't interleave), then wrap each step in `recorder.record(name, kind, fn)`:
 
 ```typescript
 async run(input: MyWorkflowInput): Promise<MyWorkflowOutput> {
-  const recorder = new AgentStepRecorder('MyWorkflow');
+  const recorder = new WorkflowStepRecorder('MyWorkflow');
 
   const snapshot = await recorder.record('loadDefinitions', 'db', () =>
     this.snapshotService.getSnapshot(input.userId),
@@ -107,7 +105,7 @@ async run(input: MyWorkflowInput): Promise<MyWorkflowOutput> {
 }
 ```
 
-Step kinds: `'db'`, `'ai'`, `'validation'`, `'subagent'`. The recorder doesn't control flow — you tell it what you did; it doesn't tell you what to do.
+Step kinds: `'db'`, `'ai'`, `'validation'`, `'subworkflow'`. The recorder doesn't control flow — you tell it what you did; it doesn't tell you what to do.
 
 ### Who Can Call a Workflow
 
@@ -115,7 +113,7 @@ A workflow is an `@Injectable()` NestJS service. Anything that can inject it can
 
 - **MCP tools** — map MCP arguments to typed input, call `run()`, format output as `CallToolResult`. The tool handles transport (auth, error formatting); the workflow handles domain logic.
 - **GraphQL resolvers** — map GraphQL arguments to typed input, map output to a GraphQL type. No changes to the workflow.
-- **Other workflows** — inject and call `run()` as a sub-step. The step recorder's `'subagent'` kind tracks it.
+- **Other workflows** — inject and call `run()` as a sub-step. The step recorder's `'subworkflow'` kind tracks it.
 - **Cron jobs, scripts, event handlers** — same pattern.
 
 The MCP tool registry (`MCP_TOOLS` token + `McpService` dispatch map) is specifically for MCP exposure. Registration is explicit: add the tool class to `mcp.module.ts` providers and the `MCP_TOOLS` factory array. Duplicate names fail at startup.
@@ -156,7 +154,7 @@ We are nowhere near that line, and we shouldn't cross it without a strong reason
 **Exists and proven:**
 - Two strict workflows (preference search, schema consolidation)
 - `AiStructuredOutputPort` with Zod validation and correction retry
-- `AgentStepRecorder` for step-level observability
+- `WorkflowStepRecorder` for step-level observability
 - MCP tool registry with explicit registration
 - Two-layer validation (structural + semantic)
 - E2E and unit test patterns for mocked AI workflows

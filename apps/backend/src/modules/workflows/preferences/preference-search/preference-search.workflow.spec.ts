@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import {
-  PreferenceSearchAgent,
-  PreferenceSearchAgentInput,
-} from './preference-search.agent';
+  PreferenceSearchWorkflow,
+  PreferenceSearchWorkflowInput,
+} from './preference-search.workflow';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
@@ -63,8 +63,8 @@ const MOCK_SNAPSHOT = {
   promptJson: '[]',
 };
 
-describe('PreferenceSearchAgent', () => {
-  let agent: PreferenceSearchAgent;
+describe('PreferenceSearchWorkflow', () => {
+  let workflow: PreferenceSearchWorkflow;
   let mockAiPort: jest.Mocked<AiStructuredOutputPort>;
   let mockSnapshotService: jest.Mocked<PreferenceSchemaSnapshotService>;
   let mockPreferenceService: jest.Mocked<PreferenceService>;
@@ -86,7 +86,7 @@ describe('PreferenceSearchAgent', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PreferenceSearchAgent,
+        PreferenceSearchWorkflow,
         { provide: 'AiStructuredOutputPort', useValue: mockAiPort },
         {
           provide: PreferenceSchemaSnapshotService,
@@ -96,7 +96,7 @@ describe('PreferenceSearchAgent', () => {
       ],
     }).compile();
 
-    agent = module.get(PreferenceSearchAgent);
+    workflow = module.get(PreferenceSearchWorkflow);
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
@@ -106,7 +106,7 @@ describe('PreferenceSearchAgent', () => {
     jest.restoreAllMocks();
   });
 
-  const baseInput: PreferenceSearchAgentInput = {
+  const baseInput: PreferenceSearchWorkflowInput = {
     userId: 'user-1',
     naturalLanguageQuery: 'what are my food preferences?',
   };
@@ -120,7 +120,7 @@ describe('PreferenceSearchAgent', () => {
       createMockPreference('food.dietary_restrictions'),
     ]);
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(2);
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
@@ -145,7 +145,7 @@ describe('PreferenceSearchAgent', () => {
     // No active preferences for this slug
     mockPreferenceService.getActivePreferences.mockResolvedValue([]);
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(1);
     expect(result.matchedDefinitions[0].slug).toBe(
@@ -167,7 +167,7 @@ describe('PreferenceSearchAgent', () => {
       createMockPreference('food.dietary_restrictions'),
     ]);
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(1);
     expect(result.matchedDefinitions[0].slug).toBe(
@@ -182,7 +182,7 @@ describe('PreferenceSearchAgent', () => {
       queryInterpretation: 'No matches found',
     });
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(0);
     expect(result.matchedActivePreferences).toHaveLength(0);
@@ -205,7 +205,7 @@ describe('PreferenceSearchAgent', () => {
       ),
     ]);
 
-    const result = await agent.run({
+    const result = await workflow.run({
       ...baseInput,
       includeSuggestions: true,
     });
@@ -223,7 +223,7 @@ describe('PreferenceSearchAgent', () => {
       queryInterpretation: 'Diet info',
     });
 
-    await agent.run({ ...baseInput, includeSuggestions: false });
+    await workflow.run({ ...baseInput, includeSuggestions: false });
 
     expect(
       mockPreferenceService.getSuggestedPreferences,
@@ -255,7 +255,7 @@ describe('PreferenceSearchAgent', () => {
       ),
     ]);
 
-    const result = await agent.run({
+    const result = await workflow.run({
       ...baseInput,
       includeSuggestions: true,
       maxResults: 2,
@@ -285,7 +285,7 @@ describe('PreferenceSearchAgent', () => {
       createMockPreference('travel.seat_preference'),
     ]);
 
-    const result = await agent.run({
+    const result = await workflow.run({
       ...baseInput,
       maxResults: 2,
     });
@@ -303,7 +303,7 @@ describe('PreferenceSearchAgent', () => {
       queryInterpretation: 'Diet info',
     });
 
-    await agent.run({ ...baseInput, locationId: 'loc-123' });
+    await workflow.run({ ...baseInput, locationId: 'loc-123' });
 
     expect(mockPreferenceService.getActivePreferences).toHaveBeenCalledWith(
       'user-1',
@@ -321,7 +321,7 @@ describe('PreferenceSearchAgent', () => {
       queryInterpretation: 'Travel then food',
     });
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
       'travel.seat_preference',
@@ -343,7 +343,7 @@ describe('PreferenceSearchAgent', () => {
       createMockPreference('food.cuisine_preferences'),
     ]);
 
-    const result = await agent.run(baseInput);
+    const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
       'food.dietary_restrictions',
@@ -358,7 +358,7 @@ describe('PreferenceSearchAgent', () => {
       new Error('AI validation failed'),
     );
 
-    await expect(agent.run(baseInput)).rejects.toThrow(
+    await expect(workflow.run(baseInput)).rejects.toThrow(
       'AI validation failed',
     );
   });

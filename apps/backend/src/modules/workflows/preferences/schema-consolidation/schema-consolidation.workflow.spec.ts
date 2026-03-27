@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import {
-  SchemaConsolidationAgent,
-  SchemaConsolidationAgentInput,
-} from './schema-consolidation.agent';
+  SchemaConsolidationWorkflow,
+  SchemaConsolidationWorkflowInput,
+} from './schema-consolidation.workflow';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 
@@ -26,8 +26,8 @@ const makeSnapshot = (
   promptJson: '[]',
 });
 
-describe('SchemaConsolidationAgent', () => {
-  let agent: SchemaConsolidationAgent;
+describe('SchemaConsolidationWorkflow', () => {
+  let workflow: SchemaConsolidationWorkflow;
   let mockAiPort: jest.Mocked<AiStructuredOutputPort>;
   let mockSnapshotService: jest.Mocked<PreferenceSchemaSnapshotService>;
 
@@ -43,7 +43,7 @@ describe('SchemaConsolidationAgent', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        SchemaConsolidationAgent,
+        SchemaConsolidationWorkflow,
         { provide: 'AiStructuredOutputPort', useValue: mockAiPort },
         {
           provide: PreferenceSchemaSnapshotService,
@@ -52,7 +52,7 @@ describe('SchemaConsolidationAgent', () => {
       ],
     }).compile();
 
-    agent = module.get(SchemaConsolidationAgent);
+    workflow = module.get(SchemaConsolidationWorkflow);
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
@@ -62,7 +62,7 @@ describe('SchemaConsolidationAgent', () => {
     jest.restoreAllMocks();
   });
 
-  const baseInput: SchemaConsolidationAgentInput = {
+  const baseInput: SchemaConsolidationWorkflowInput = {
     userId: 'user-1',
   };
 
@@ -70,7 +70,7 @@ describe('SchemaConsolidationAgent', () => {
     it('should return empty groups when 0 definitions exist', async () => {
       mockSnapshotService.getSnapshot.mockResolvedValue(makeSnapshot([]));
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.totalDefinitionsAnalyzed).toBe(0);
       expect(result.consolidationGroups).toHaveLength(0);
@@ -83,7 +83,7 @@ describe('SchemaConsolidationAgent', () => {
         makeSnapshot([{ slug: 'food.dietary_restrictions' }]),
       );
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.totalDefinitionsAnalyzed).toBe(1);
       expect(result.consolidationGroups).toHaveLength(0);
@@ -114,7 +114,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found 1 group of overlapping definitions',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.totalDefinitionsAnalyzed).toBe(3);
       expect(result.consolidationGroups).toHaveLength(1);
@@ -157,7 +157,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found overlaps',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups).toHaveLength(1);
       expect(result.consolidationGroups[0].slugs).toEqual([
@@ -185,7 +185,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found overlaps',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups).toHaveLength(0);
     });
@@ -209,7 +209,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found overlaps',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups).toHaveLength(0);
     });
@@ -234,7 +234,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found overlaps',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups[0].recommendedSlug).toBeUndefined();
     });
@@ -260,7 +260,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found overlaps',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups[0].recommendedSlug).toBeUndefined();
     });
@@ -270,7 +270,7 @@ describe('SchemaConsolidationAgent', () => {
     it('should pass scope to snapshot service', async () => {
       mockSnapshotService.getSnapshot.mockResolvedValue(makeSnapshot([]));
 
-      await agent.run({ ...baseInput, scope: 'PERSONAL' });
+      await workflow.run({ ...baseInput, scope: 'PERSONAL' });
 
       expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith(
         'user-1',
@@ -297,7 +297,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Mixed scope overlap',
       });
 
-      const result = await agent.run({ ...baseInput, scope: 'ALL' });
+      const result = await workflow.run({ ...baseInput, scope: 'ALL' });
 
       expect(result.consolidationGroups[0].slugScopes).toEqual({
         'food.dietary_restrictions': 'GLOBAL',
@@ -320,7 +320,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'No overlaps found',
       });
 
-      await agent.run({ ...baseInput, scope: 'ALL' });
+      await workflow.run({ ...baseInput, scope: 'ALL' });
 
       const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
       expect(prompt).toContain('"ownership": "GLOBAL"');
@@ -340,7 +340,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'No overlaps found',
       });
 
-      await agent.run(baseInput);
+      await workflow.run(baseInput);
 
       const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
       expect(prompt).toContain('"definitionScope": "GLOBAL"');
@@ -368,7 +368,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found 1 overlap between definitions',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups).toHaveLength(0);
       // Summary must NOT echo the AI's "Found 1 overlap" when 0 groups survived
@@ -394,7 +394,7 @@ describe('SchemaConsolidationAgent', () => {
         summary: 'Found 1 group of overlapping definitions',
       });
 
-      const result = await agent.run(baseInput);
+      const result = await workflow.run(baseInput);
 
       expect(result.consolidationGroups).toHaveLength(1);
       expect(result.summary).toBe('Found 1 group of overlapping definitions');
@@ -413,7 +413,7 @@ describe('SchemaConsolidationAgent', () => {
       new Error('AI validation failed'),
     );
 
-    await expect(agent.run(baseInput)).rejects.toThrow(
+    await expect(workflow.run(baseInput)).rejects.toThrow(
       'AI validation failed',
     );
   });

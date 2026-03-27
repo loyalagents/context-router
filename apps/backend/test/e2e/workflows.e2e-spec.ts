@@ -8,7 +8,7 @@ import {
 } from '../setup/test-app';
 import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
 
-describe('Agent MCP Tools (e2e)', () => {
+describe('Workflow MCP Tools (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
@@ -230,7 +230,7 @@ describe('Agent MCP Tools (e2e)', () => {
       await seedPreferenceDefinitions(prisma);
 
       const userB = await prisma.user.create({
-        data: { email: 'agent-user-b@example.com', firstName: 'Agent', lastName: 'B' },
+        data: { email: 'workflow-user-b@example.com', firstName: 'Workflow', lastName: 'B' },
       });
 
       const def = await prisma.preferenceDefinition.findFirst({
@@ -318,7 +318,7 @@ describe('Agent MCP Tools (e2e)', () => {
 
       // Default maxSearchResults is 100, so we need to override it.
       // The SmartSearchTool reads config at call time, so we override via ConfigService.
-      // Instead, we test indirectly: the agent respects maxResults passed by SmartSearchTool.
+      // Instead, we test indirectly: the workflow respects maxResults passed by SmartSearchTool.
       // Since default is 100, seed < 100 preferences and verify all returned (no truncation bug).
       // For a true truncation test, we'd need to change config — verify definitions are NOT capped.
       const response = await callTool('smartSearchPreferences', {

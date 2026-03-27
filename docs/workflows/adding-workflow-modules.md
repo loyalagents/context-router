@@ -1,24 +1,24 @@
-# Agent/Workflow Architecture for Context Router
+# Workflow Architecture for Context Router
 
-> **Status**: v1 fully implemented (CP1–CP4 complete). See [v1 summary](adding-agent-modules-v1-summary.md) for delivery notes.
+> **Status**: v1 fully implemented (CP1–CP4 complete). See [v1 summary](adding-workflow-modules-v1-summary.md) for delivery notes.
 
 ## Context
 
-The Context Router backend has a sophisticated MCP tool layer and a proven multi-step AI pipeline (document analysis via `PreferenceExtractionService`). The next evolution is generalizing that pattern into a first-class **agent layer** — NestJS services that combine data retrieval with structured AI invocations to answer complex questions. Two immediate use cases drove this design:
+The Context Router backend has a sophisticated MCP tool layer and a proven multi-step AI pipeline (document analysis via `PreferenceExtractionService`). The next evolution is generalizing that pattern into a first-class **workflow layer** — NestJS services that combine data retrieval with structured AI invocations to answer complex questions. Two immediate use cases drove this design:
 
 1. **Smart Search**: Replace the current keyword-matching search (`searchCatalog` does slug prefix + description substring matching) with a natural-language search that asks the AI which preference definitions are relevant to a given query.
 2. **Schema Consolidation**: Analyze a user's preference definitions and identify semantic duplicates or overlaps, returning advisory groupings for cleanup.
 
-This document is the canonical architecture reference. Other draft documents (`adding-agent-modules-2.md`, feedback files) are superseded by it.
+This document is the canonical architecture reference. Other draft documents (`adding-workflow-modules-2.md`, feedback files) are superseded by it.
 
 ---
 
 ## Guiding Principles
 
-- **Workflow over autonomy**: Each agent executes a fixed sequence of steps (load data → call AI once → validate → return). The AI does not choose which tools to call. Introduce a subagent only when the same reasoning block is reused across two or more agents.
+- **Workflow over autonomy**: Each workflow executes a fixed sequence of steps (load data → call AI once → validate → return). The AI does not choose which tools to call. Introduce a subworkflow only when the same reasoning block is reused across two or more workflows.
 - **Slugs only from the AI**: The AI receives a catalog of known slugs in its prompt. It returns only slug strings, never preference values or IDs. All returned slugs are validated against ground truth before use. Hallucinated slugs are silently discarded.
-- **Read-heavy, write-never**: Agents do not write to the database. Writes happen only through existing services (`PreferenceService`, `PreferenceDefinitionService`).
-- **Internal-first, MCP-only for v1**: Agents are internal workflow services. MCP, GraphQL, and web routes can expose them through thin adapters — but **v1 adds MCP adapters only**. GraphQL resolvers and frontend integration are deferred until there is a concrete product need. The internal-first design ensures those can be added later without restructuring agents.
+- **Read-heavy, write-never**: Workflows do not write to the database. Writes happen only through existing services (`PreferenceService`, `PreferenceDefinitionService`).
+- **Internal-first, MCP-only for v1**: Workflows are internal services. MCP, GraphQL, and web routes can expose them through thin adapters — but **v1 adds MCP adapters only**. GraphQL resolvers and frontend integration are deferred until there is a concrete product need. The internal-first design ensures those can be added later without restructuring workflows.
 - **One structured-output pattern**: Migrate `PreferenceExtractionService` to the new port so the repo has a single approach to structured AI output.
 - **Existing patterns, not frameworks**: No LangChain or similar. Build on the port/adapter AI abstraction, Zod validation, and NestJS DI already in place.
 
@@ -47,7 +47,7 @@ apps/backend/src/
         └── document-analysis/
             └── preference-extraction.service.ts  ← raw-string AI output
 
-AGENTS.md   (empty)
+WORKFLOWS.md   (empty)
 ```
 
 ### After
@@ -64,7 +64,7 @@ apps/backend/src/
 │   └── vertex-ai.module.ts                    [MODIFIED: add VertexAiStructuredService provider + 'AiStructuredOutputPort' export]
 ├── mcp/
 │   ├── mcp.constants.ts                       [NEW]
-│   ├── mcp.module.ts                          [MODIFIED: +AgentsModule, split mutation tool, +2 agent tools]
+│   ├── mcp.module.ts                          [MODIFIED: +WorkflowsModule, split mutation tool, +2 workflow tools]
 │   ├── mcp.service.ts                         [MODIFIED: switch → registry]
 │   └── tools/
 │       ├── base/
@@ -78,18 +78,18 @@ apps/backend/src/
 │       ├── smart-search.tool.ts               [NEW]
 │       └── schema-consolidation.tool.ts       [NEW]
 └── modules/
-    ├── agents/
-    │   ├── agents.module.ts                   [NEW]
+    ├── workflows/
+    │   ├── workflows.module.ts                   [NEW]
     │   ├── shared/
-    │   │   ├── agent.interface.ts             [NEW]
-    │   │   └── agent-step-recorder.ts         [NEW]
+    │   │   ├── workflow.interface.ts             [NEW]
+    │   │   └── workflow-step-recorder.ts         [NEW]
     │   └── preferences/
     │       ├── preference-search/
-    │       │   ├── preference-search.agent.ts         [NEW]
+    │       │   ├── preference-search.workflow.ts         [NEW]
     │       │   ├── preference-search.prompt.ts        [NEW]
     │       │   └── preference-search.schema.ts        [NEW]
     │       └── schema-consolidation/
-    │           ├── schema-consolidation.agent.ts      [NEW]
+    │           ├── schema-consolidation.workflow.ts      [NEW]
     │           ├── schema-consolidation.prompt.ts     [NEW]
     │           └── schema-consolidation.schema.ts     [NEW]
     └── preferences/
@@ -101,19 +101,19 @@ apps/backend/src/
 
 apps/backend/test/e2e/
 ├── mcp.e2e-spec.ts                            (unchanged)
-└── agents.e2e-spec.ts                         [NEW]
+└── workflows.e2e-spec.ts                         [NEW]
 
-docs/agents/adding-agent-modules.md            [MODIFIED: full architecture doc]
-docs/agents/adding-agent-modules-v1-summary.md [NEW: v1 delivery summary]
+docs/workflows/adding-workflow-modules.md            [MODIFIED: full architecture doc]
+docs/workflows/adding-workflow-modules-v1-summary.md [NEW: v1 delivery summary]
 ```
 
-**Summary**: 19 new files, 8 modified files (code), 1 modified doc (`adding-agent-modules.md`), 1 new doc (`adding-agent-modules-v1-summary.md`), 0 deleted files, 0 schema migrations. Modified files: `mcp.module.ts`, `mcp.service.ts`, `vertex-ai.module.ts`, `preference-definition.module.ts`, `preference-extraction.service.ts`, plus the three existing tool files updated to implement `McpToolInterface` (`preference-definition.tool.ts`, `preference-list.tool.ts`, `preference-search.tool.ts`). `preference-mutation.tool.ts` is kept as an unregistered provider unchanged; `preference-suggest.tool.ts` and `preference-delete.tool.ts` are new thin adapters wrapping it.
+**Summary**: 19 new files, 8 modified files (code), 1 modified doc (`adding-workflow-modules.md`), 1 new doc (`adding-workflow-modules-v1-summary.md`), 0 deleted files, 0 schema migrations. Modified files: `mcp.module.ts`, `mcp.service.ts`, `vertex-ai.module.ts`, `preference-definition.module.ts`, `preference-extraction.service.ts`, plus the three existing tool files updated to implement `McpToolInterface` (`preference-definition.tool.ts`, `preference-list.tool.ts`, `preference-search.tool.ts`). `preference-mutation.tool.ts` is kept as an unregistered provider unchanged; `preference-suggest.tool.ts` and `preference-delete.tool.ts` are new thin adapters wrapping it.
 
-**Recommended follow-up** (post-v1): Agent output types currently return repo types (`EnrichedPreference[]`), and `fetchPreferences` fetches all active preferences then filters in memory. Both are consistent with the existing `searchPreferences` tool's approach, but should be addressed once agents have a second consumer (e.g. GraphQL):
-- Add dedicated agent DTOs to decouple agents from repository join shapes
+**Recommended follow-up** (post-v1): Workflow output types currently return repo types (`EnrichedPreference[]`), and `fetchPreferences` fetches all active preferences then filters in memory. Both are consistent with the existing `searchPreferences` tool's approach, but should be addressed once workflows have a second consumer (e.g. GraphQL):
+- Add dedicated workflow DTOs to decouple workflows from repository join shapes
 - Add slug-targeted read methods (e.g. `findActiveByDefinitionSlugs(userId, slugs, locationId?)`) to avoid fetching all preferences and filtering in TS
 
-**Recommended pre-step** (before implementation): The README still documents a root `src/` app layout from before the monorepo split. Consider a brief docs cleanup pass so contributors know where agent code belongs. This is not a blocking checkpoint — it predates this architecture change.
+**Recommended pre-step** (before implementation): The README still documents a root `src/` app layout from before the monorepo split. Consider a brief docs cleanup pass so contributors know where workflow code belongs. This is not a blocking checkpoint — it predates this architecture change.
 
 ---
 
@@ -177,34 +177,34 @@ Any module that needs the structured output port imports `VertexAiModule` — no
 
 ---
 
-## Agent Base Contracts
+## Workflow Base Contracts
 
-**File**: `apps/backend/src/modules/agents/shared/agent.interface.ts`
+**File**: `apps/backend/src/modules/workflows/shared/workflow.interface.ts`
 
-Agents follow the existing backend service style: **throw on failure, return typed data on success**. This is consistent with `PreferenceService`, `PreferenceDefinitionRepository`, and the rest of the codebase, which return domain data or throw NestJS exceptions — never success/error envelopes. MCP tool adapters catch exceptions and map them to MCP error responses.
+Workflows follow the existing backend service style: **throw on failure, return typed data on success**. This is consistent with `PreferenceService`, `PreferenceDefinitionRepository`, and the rest of the codebase, which return domain data or throw NestJS exceptions — never success/error envelopes. MCP tool adapters catch exceptions and map them to MCP error responses.
 
 ```typescript
-export interface AgentInput {
+export interface WorkflowInput {
   userId: string;
 }
 
-export interface AgentStep {
+export interface WorkflowStep {
   name: string;
-  kind: 'db' | 'ai' | 'validation' | 'subagent';
+  kind: 'db' | 'ai' | 'validation' | 'subworkflow';
   durationMs: number;
   summary?: string;
 }
 
-export interface IAgent<TInput extends AgentInput, TOutput> {
+export interface IWorkflow<TInput extends WorkflowInput, TOutput> {
   run(input: TInput): Promise<TOutput>;
 }
 ```
 
-`AgentStep[]` is collected internally by `AgentStepRecorder` and logged at debug level — it is not part of the return type. This keeps tracing as an observability concern separate from the agent's public contract.
+`WorkflowStep[]` is collected internally by `WorkflowStepRecorder` and logged at debug level — it is not part of the return type. This keeps tracing as an observability concern separate from the workflow's public contract.
 
-**File**: `apps/backend/src/modules/agents/shared/agent-step-recorder.ts`
+**File**: `apps/backend/src/modules/workflows/shared/workflow-step-recorder.ts`
 
-A small utility that agents construct at the start of `run()` and call `recorder.record(name, kind, fn)` — executes `fn`, measures duration, pushes to the internal steps array, and logs at completion. Steps are not returned to callers.
+A small utility that workflows construct at the start of `run()` and call `recorder.record(name, kind, fn)` — executes `fn`, measures duration, pushes to the internal steps array, and logs at completion. Steps are not returned to callers.
 
 ---
 
@@ -271,48 +271,48 @@ Note `provide: MCP_TOOLS` (the imported constant from `mcp.constants.ts`), not t
 
 **File**: `apps/backend/src/modules/preferences/preference-definition/preference-schema-snapshot.service.ts`
 
-Lives in the `preference-definition` module — not in `AgentsModule` — so that both `DocumentAnalysisModule` and `AgentsModule` can import it through the existing `PreferenceDefinitionModule` without inverting the dependency direction. Agents depend on preferences; preferences do not depend on agents.
+Lives in the `preference-definition` module — not in `WorkflowsModule` — so that both `DocumentAnalysisModule` and `WorkflowsModule` can import it through the existing `PreferenceDefinitionModule` without inverting the dependency direction. Workflows depend on preferences; preferences do not depend on workflows.
 
 `apps/backend/src/modules/preferences/preference-definition/preference-definition.module.ts` is **modified** to add `PreferenceSchemaSnapshotService` to both `providers` and `exports`. The current module only provides/exports the repository and service — without this explicit addition, DI will fail for any module that tries to inject the snapshot service.
 
-A shared read-model service used by all AI consumers that need to describe the preference catalog to an LLM. Eliminates duplication across `PreferenceExtractionService` (which currently builds this by hand in `buildExtractionPrompt()`), `PreferenceSearchAgent`, and `SchemaConsolidationAgent`.
+A shared read-model service used by all AI consumers that need to describe the preference catalog to an LLM. Eliminates duplication across `PreferenceExtractionService` (which currently builds this by hand in `buildExtractionPrompt()`), `PreferenceSearchWorkflow`, and `SchemaConsolidationWorkflow`.
 
 **Method signature**: `getSnapshot(userId: string, scope?: 'PERSONAL' | 'ALL'): Promise<PreferenceSchemaSnapshot>`
 
 Responsibilities:
-- When `scope` is absent (or `'ALL'`): call `defRepo.getAll(userId)` — returns GLOBAL + user-owned definitions (used by `PreferenceSearchAgent` and `PreferenceExtractionService`)
-- When `scope` is `'PERSONAL'`: call `defRepo.getByScope('PERSONAL', userId)` — returns user-owned definitions only (used by `SchemaConsolidationAgent` default case)
+- When `scope` is absent (or `'ALL'`): call `defRepo.getAll(userId)` — returns GLOBAL + user-owned definitions (used by `PreferenceSearchWorkflow` and `PreferenceExtractionService`)
+- When `scope` is `'PERSONAL'`: call `defRepo.getByScope('PERSONAL', userId)` — returns user-owned definitions only (used by `SchemaConsolidationWorkflow` default case)
 - Return a typed AI-safe snapshot DTO (slugs, descriptions, valueTypes, options — no sensitive internals) plus a pre-formatted JSON string for prompt injection
 - This is a read-only service; no writes, no side effects
 
 `defRepo.getByScope()` already exists in `apps/backend/src/modules/preferences/preference-definition/preference-definition.repository.ts` — use it directly rather than filtering `getAll()` results.
 
-`PreferenceExtractionService` is updated in Checkpoint 1 to use this service instead of its inline catalog-building logic. Both new agents call it in their first step.
+`PreferenceExtractionService` is updated in Checkpoint 1 to use this service instead of its inline catalog-building logic. Both new workflows call it in their first step.
 
 ---
 
-## `PreferenceSearchAgent`
+## `PreferenceSearchWorkflow`
 
 **Files**:
-- `modules/agents/preferences/preference-search/preference-search.agent.ts`
-- `modules/agents/preferences/preference-search/preference-search.prompt.ts`
-- `modules/agents/preferences/preference-search/preference-search.schema.ts`
+- `modules/workflows/preferences/preference-search/preference-search.workflow.ts`
+- `modules/workflows/preferences/preference-search/preference-search.prompt.ts`
+- `modules/workflows/preferences/preference-search/preference-search.schema.ts`
 
 **Purpose**: Accept a natural-language query and return the semantically relevant preference definitions and matching user preference values.
 
 **Input**:
 ```typescript
-interface PreferenceSearchAgentInput extends AgentInput {
+interface PreferenceSearchWorkflowInput extends WorkflowInput {
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
-  maxResults?: number;   // caller-supplied limit; agent applies it if present, no default
+  maxResults?: number;   // caller-supplied limit; workflow applies it if present, no default
 }
 ```
 
 **Output**:
 ```typescript
-interface PreferenceSearchAgentOutput {
+interface PreferenceSearchWorkflowOutput {
   matchedDefinitions: Array<{ slug: string; description: string; category: string }>;
   matchedActivePreferences: EnrichedPreference[];     // ACTIVE rows for matched slugs; may be a subset of matchedDefinitions
   matchedSuggestedPreferences: EnrichedPreference[];  // SUGGESTED rows; empty when includeSuggestions is false
@@ -332,7 +332,7 @@ export const RelevanceResponseSchema = z.object({
 });
 ```
 
-**Workflow** (4 steps, all via `AgentStepRecorder`):
+**Workflow** (4 steps, all via `WorkflowStepRecorder`):
 
 | Step | Kind | Action |
 |------|------|--------|
@@ -341,31 +341,31 @@ export const RelevanceResponseSchema = z.object({
 | `slugValidation` | `validation` | Filter `relevantSlugs` against a `Set` of known slugs from step 1. Discard hallucinated values silently. |
 | `fetchPreferences` | `db` | `preferenceService.getActivePreferences(userId, locationId)`, filter to validated slugs → `matchedActivePreferences`. If `includeSuggestions`, also call `getSuggestedPreferences(userId, locationId)` and filter → `matchedSuggestedPreferences`. `matchedDefinitions` is assembled from step 1 regardless of whether any preference rows exist. |
 
-**Result-limit policy**: The agent accepts an optional `maxResults` in its input and applies it to `matchedActivePreferences` and `matchedSuggestedPreferences` if present. `matchedDefinitions` is never capped — it is lightweight slug/description metadata. The agent itself has no knowledge of `mcp.tools.preferences.maxSearchResults`. `SmartSearchTool` reads that config value and passes it as `maxResults` when calling the agent — keeping MCP-specific config out of the agent layer. A future GraphQL caller could pass a different limit or omit it entirely.
+**Result-limit policy**: The workflow accepts an optional `maxResults` in its input and applies it to `matchedActivePreferences` and `matchedSuggestedPreferences` if present. `matchedDefinitions` is never capped — it is lightweight slug/description metadata. The workflow itself has no knowledge of `mcp.tools.preferences.maxSearchResults`. `SmartSearchTool` reads that config value and passes it as `maxResults` when calling the workflow — keeping MCP-specific config out of the workflow layer. A future GraphQL caller could pass a different limit or omit it entirely.
 
 **Security**: The AI receives catalog slug/description pairs only — no user preference values. It cannot access preferences directly.
 
 ---
 
-## `SchemaConsolidationAgent`
+## `SchemaConsolidationWorkflow`
 
 **Files**:
-- `modules/agents/preferences/schema-consolidation/schema-consolidation.agent.ts`
-- `modules/agents/preferences/schema-consolidation/schema-consolidation.prompt.ts`
-- `modules/agents/preferences/schema-consolidation/schema-consolidation.schema.ts`
+- `modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow.ts`
+- `modules/workflows/preferences/schema-consolidation/schema-consolidation.prompt.ts`
+- `modules/workflows/preferences/schema-consolidation/schema-consolidation.schema.ts`
 
 **Purpose**: Analyze preference definitions and return advisory consolidation groups. No writes.
 
 **Input**:
 ```typescript
-interface SchemaConsolidationAgentInput extends AgentInput {
+interface SchemaConsolidationWorkflowInput extends WorkflowInput {
   scope?: 'PERSONAL' | 'ALL';
 }
 ```
 
 **Output**:
 ```typescript
-interface SchemaConsolidationAgentOutput {
+interface SchemaConsolidationWorkflowOutput {
   totalDefinitionsAnalyzed: number;
   consolidationGroups: ConsolidationGroup[];
   summary: string;
@@ -400,7 +400,7 @@ description: Natural-language preference search. Understands intent rather than 
 inputSchema: { query: string (required), locationId?: string, includeSuggestions?: boolean }
 annotations: { readOnlyHint: true }
 ```
-Delegates to: `PreferenceSearchAgent.run(...)`
+Delegates to: `PreferenceSearchWorkflow.run(...)`
 
 ### `consolidateSchema`
 ```
@@ -408,13 +408,13 @@ description: Identifies duplicate or overlapping personal preference definitions
 inputSchema: { scope?: 'PERSONAL' | 'ALL' }
 annotations: { readOnlyHint: true }
 ```
-Delegates to: `SchemaConsolidationAgent.run(...)`
+Delegates to: `SchemaConsolidationWorkflow.run(...)`
 
 ---
 
-## `AgentsModule`
+## `WorkflowsModule`
 
-**File**: `apps/backend/src/modules/agents/agents.module.ts`
+**File**: `apps/backend/src/modules/workflows/workflows.module.ts`
 
 ```typescript
 @Module({
@@ -423,38 +423,38 @@ Delegates to: `SchemaConsolidationAgent.run(...)`
     PreferenceDefinitionModule,
     PreferenceModule,
   ],
-  providers: [PreferenceSearchAgent, SchemaConsolidationAgent],
-  exports:   [PreferenceSearchAgent, SchemaConsolidationAgent],
+  providers: [PreferenceSearchWorkflow, SchemaConsolidationWorkflow],
+  exports:   [PreferenceSearchWorkflow, SchemaConsolidationWorkflow],
 })
-export class AgentsModule {}
+export class WorkflowsModule {}
 ```
 
-`McpModule` imports `AgentsModule`. New tool classes are added to `McpModule`'s providers.
+`McpModule` imports `WorkflowsModule`. New tool classes are added to `McpModule`'s providers.
 
 ---
 
-## How to Add a Future Agent (Checklist)
+## How to Add a Future Workflow (Checklist)
 
-1. **Create agent directory**: `src/modules/agents/<domain>/<agent-name>/`
-   - `<agent-name>.agent.ts` — implements `IAgent<Input, Output>`, uses `AgentStepRecorder`
-   - `<agent-name>.prompt.ts` — exports the prompt builder function
-   - `<agent-name>.schema.ts` — exports the Zod response schema
+1. **Create workflow directory**: `src/modules/workflows/<domain>/<workflow-name>/`
+   - `<workflow-name>.workflow.ts` — implements `IWorkflow<Input, Output>`, uses `WorkflowStepRecorder`
+   - `<workflow-name>.prompt.ts` — exports the prompt builder function
+   - `<workflow-name>.schema.ts` — exports the Zod response schema
 
    > **Checkpoint A**: App compiles.
 
-2. **Register in `AgentsModule`**: Add to `providers` and `exports`. Add any new module imports needed.
+2. **Register in `WorkflowsModule`**: Add to `providers` and `exports`. Add any new module imports needed.
 
-3. **Create thin MCP tool**: `src/mcp/tools/<name>.tool.ts` implementing `McpToolInterface`. Provide `descriptor` and `execute(args, context)`. Call `agent.run(...)` inside a try/catch — on success serialize the result as MCP content; on exception set `isError: true` and include the error message. Do not add business logic here.
+3. **Create thin MCP tool**: `src/mcp/tools/<name>.tool.ts` implementing `McpToolInterface`. Provide `descriptor` and `execute(args, context)`. Call `workflow.run(...)` inside a try/catch — on success serialize the result as MCP content; on exception set `isError: true` and include the error message. Do not add business logic here.
 
 4. **Register in `McpModule`**: Add tool to `providers`. It auto-registers in the registry in `McpService`.
 
    > **Checkpoint B** (run from `apps/backend/`): `pnpm test -- --testPathPattern=mcp.e2e` passes. New tool appears in tools list.
 
-5. **Write e2e test** in `test/e2e/agents.e2e-spec.ts`. Use `createTestApp()` and configure `mocks.structuredAi.generateStructured` per test. Cover: happy path, hallucinated slug filtering, empty result, port throws validation error (not non-JSON parsing — that belongs in the port integration tests), any domain-specific short-circuits.
+5. **Write e2e test** in `test/e2e/workflows.e2e-spec.ts`. Use `createTestApp()` and configure `mocks.structuredAi.generateStructured` per test. Cover: happy path, hallucinated slug filtering, empty result, port throws validation error (not non-JSON parsing — that belongs in the port integration tests), any domain-specific short-circuits.
 
-   > **Checkpoint C** (run from `apps/backend/`): `pnpm test -- --testPathPattern=agents.e2e` is green.
+   > **Checkpoint C** (run from `apps/backend/`): `pnpm test -- --testPathPattern=workflows.e2e` is green.
 
-6. **Update docs**: Add a paragraph to `AGENTS.md`. Update `docs/agents/adding-agent-modules.md` if the architecture changed.
+6. **Update docs**: Add a paragraph to `WORKFLOWS.md`. Update `docs/workflows/adding-workflow-modules.md` if the architecture changed.
 
 ---
 
@@ -470,9 +470,9 @@ The real helper returns `{ module, setTestUser, registerMcpUser, mocks }` — `m
 3. `includeSuggestions: true` — mock returns a valid slug; seed one ACTIVE and one SUGGESTED preference for that slug; assert both appear in their respective output arrays
 4. Hallucinated slugs — mock returns a non-existent slug; assert it is absent from all output arrays, no error
 5. Empty result — mock returns `{ relevantSlugs: [], queryInterpretation: "..." }`; assert response contains empty `matchedDefinitions`, `matchedActivePreferences`, and `matchedSuggestedPreferences` arrays
-6. Port throws validation error — `mocks.structuredAi.generateStructured` rejects with an error; assert MCP tool returns `isError: true` (MCP tool catches the thrown exception; agent itself just throws)
+6. Port throws validation error — `mocks.structuredAi.generateStructured` rejects with an error; assert MCP tool returns `isError: true` (MCP tool catches the thrown exception; workflow itself just throws)
 7. User scoping — seed preferences for user A and user B; assert user A's call returns only user A's preference rows
-8. Truncation via MCP adapter — set `mcp.tools.preferences.maxSearchResults` to 2 in test config; seed 5 active preferences for matching slugs; mock `mocks.structuredAi.generateStructured` returning all 5 valid slugs; assert MCP response contains only 2 preferences (verifies `SmartSearchTool` reads config, passes `maxResults: 2` to agent, and agent truncates correctly)
+8. Truncation via MCP adapter — set `mcp.tools.preferences.maxSearchResults` to 2 in test config; seed 5 active preferences for matching slugs; mock `mocks.structuredAi.generateStructured` returning all 5 valid slugs; assert MCP response contains only 2 preferences (verifies `SmartSearchTool` reads config, passes `maxResults: 2` to workflow, and workflow truncates correctly)
 
 **E2E test cases for `consolidateSchema`**:
 1. Happy path — two similar user-owned definitions seeded; mock returns a consolidation group with both; assert group present, both `slugScopes` values are `'USER'`
@@ -491,10 +491,10 @@ All test commands run from `apps/backend/` (`cd apps/backend && pnpm test -- --t
 | Checkpoint | What changes | Test command | Status |
 |---|---|---|---|
 | 1 — AI primitives + snapshot | `ai-structured-output.port.ts`, `vertex-ai-structured.service.ts`, `PreferenceSchemaSnapshotService`, migrate `PreferenceExtractionService` (both AI output parsing → port and prompt-building → snapshot service) | `--testPathPattern=vertex-ai-structured` + `--testPathPattern=document-analysis` | **Done** |
-| 2 — Agent layer | `agents.module.ts`, shared contracts, both agent classes with prompt/schema files, agent unit specs | Unit tests green: hallucinated slug filtering, `includeSuggestions` output split, <2 defs short-circuit, `maxResults` truncation — following the `preference-extraction.service.spec.ts` pattern | **Done** |
-| 3 — MCP integration | `mcp.constants.ts`, `mcp-tool.interface.ts`, `MCP_TOOLS` token, registry in `McpService`, add `preference-suggest.tool.ts` and `preference-delete.tool.ts` (keeping `preference-mutation.tool.ts` as a shared non-registered provider), existing tools implement interface, 2 new agent-backed tools | `--testPathPattern=mcp.e2e` | **Done** |
-| 4 — E2E + docs | `agents.e2e-spec.ts`, `docs/agents/` | `--testPathPattern=agents.e2e` | **Done** |
-| 5 — V1 summary | `docs/agents/adding-agent-modules-v1-summary.md` — what CP1–CP4 delivered, key decisions made during implementation, known limitations/tech debt, concrete v2 roadmap | N/A (doc only) | **Done** |
+| 2 — Workflow layer | `workflows.module.ts`, shared contracts, both workflow classes with prompt/schema files, workflow unit specs | Unit tests green: hallucinated slug filtering, `includeSuggestions` output split, <2 defs short-circuit, `maxResults` truncation — following the `preference-extraction.service.spec.ts` pattern | **Done** |
+| 3 — MCP integration | `mcp.constants.ts`, `mcp-tool.interface.ts`, `MCP_TOOLS` token, registry in `McpService`, add `preference-suggest.tool.ts` and `preference-delete.tool.ts` (keeping `preference-mutation.tool.ts` as a shared non-registered provider), existing tools implement interface, 2 new workflow-backed tools | `--testPathPattern=mcp.e2e` | **Done** |
+| 4 — E2E + docs | `workflows.e2e-spec.ts`, `docs/workflows/` | `--testPathPattern=workflows.e2e` | **Done** |
+| 5 — V1 summary | `docs/workflows/adding-workflow-modules-v1-summary.md` — what CP1–CP4 delivered, key decisions made during implementation, known limitations/tech debt, concrete v2 roadmap | N/A (doc only) | **Done** |
 
 ---
 
@@ -505,9 +505,9 @@ All test commands run from `apps/backend/` (`cd apps/backend && pnpm test -- --t
 | `apps/backend/src/modules/vertex-ai/vertex-ai.module.ts` | Add `VertexAiStructuredService` + `useExisting` alias provider; export token |
 | `apps/backend/src/modules/preferences/preference-definition/preference-definition.module.ts` | Add `PreferenceSchemaSnapshotService` to providers and exports |
 | `apps/backend/src/mcp/mcp.service.ts` | Replace switch with registry; add new tool descriptors |
-| `apps/backend/src/mcp/mcp.module.ts` | Import `AgentsModule`; register `PreferenceSuggestTool`, `PreferenceDeleteTool`, `SmartSearchTool`, `SchemaConsolidationTool` providers; update `MCP_TOOLS` factory |
+| `apps/backend/src/mcp/mcp.module.ts` | Import `WorkflowsModule`; register `PreferenceSuggestTool`, `PreferenceDeleteTool`, `SmartSearchTool`, `SchemaConsolidationTool` providers; update `MCP_TOOLS` factory |
 | `apps/backend/src/modules/preferences/document-analysis/preference-extraction.service.ts` | Migrate to `AiStructuredOutputPort`; reference for prompt/Zod patterns |
-| `apps/backend/test/e2e/mcp.e2e-spec.ts` | Template for `agents.e2e-spec.ts` |
+| `apps/backend/test/e2e/mcp.e2e-spec.ts` | Template for `workflows.e2e-spec.ts` |
 | `apps/backend/test/setup/test-app.ts` | Add `mocks.structuredAi` |
 
 ---
@@ -539,14 +539,14 @@ Since v1 is MCP-only, manual testing goes through the MCP transport. Automated e
 
 These are the recommended follow-ups from this plan, ordered by value:
 
-1. **Agent DTO layer + slug-targeted queries** — Decouple agent outputs from `EnrichedPreference[]` repo shape; add `findActiveByDefinitionSlugs()` to avoid fetching all preferences and filtering in memory
-2. **GraphQL + Frontend integration** — Surface agents through the web UI for easier testing and product use. No agent changes needed — internal-first design means this is purely additive:
+1. **Workflow DTO layer + slug-targeted queries** — Decouple workflow outputs from `EnrichedPreference[]` repo shape; add `findActiveByDefinitionSlugs()` to avoid fetching all preferences and filtering in memory
+2. **GraphQL + Frontend integration** — Surface workflows through the web UI for easier testing and product use. No workflow changes needed — internal-first design means this is purely additive:
 
    **Backend (GraphQL)**:
-   - Add `SmartSearchResolver` in `src/modules/preferences/` (or a new `src/modules/agents-graphql/`) with a query like `smartSearchPreferences(query: String!, locationId: String, includeSuggestions: Boolean): SmartSearchResult`
+   - Add `SmartSearchResolver` in `src/modules/preferences/` (or a new `src/modules/workflows-graphql/`) with a query like `smartSearchPreferences(query: String!, locationId: String, includeSuggestions: Boolean): SmartSearchResult`
    - Add `SchemaConsolidationResolver` with a query like `consolidateSchema(scope: ConsolidationScope): ConsolidationResult`
-   - Define GraphQL output types (`SmartSearchResult`, `ConsolidationResult`, `ConsolidationGroup`) — these map directly from the agent output types
-   - Resolvers inject agents directly (not via MCP), protected by `GqlAuthGuard` (same as existing resolvers like `VertexAiResolver`)
+   - Define GraphQL output types (`SmartSearchResult`, `ConsolidationResult`, `ConsolidationGroup`) — these map directly from the workflow output types
+   - Resolvers inject workflows directly (not via MCP), protected by `GqlAuthGuard` (same as existing resolvers like `VertexAiResolver`)
 
    **Frontend (Next.js)**:
    - Add GraphQL queries in `apps/web/lib/generated/graphql.ts` (via codegen)
@@ -554,64 +554,64 @@ These are the recommended follow-ups from this plan, ordered by value:
    - Add a schema consolidation view under `apps/web/app/dashboard/schema/` — button to run analysis, display consolidation groups with suggested actions
    - Wire both through Apollo Client (already set up in `apps/web/lib/apollo-client.ts`)
 
-   **Testing benefit**: The web UI provides a visual, interactive way to test agents against real data without needing an MCP client. This is the easiest path to manual verification once v1 agents are working
+   **Testing benefit**: The web UI provides a visual, interactive way to test workflows against real data without needing an MCP client. This is the easiest path to manual verification once v1 workflows are working
 3. **Request-object port shape** — Consolidate `generateStructured` / `generateStructuredWithFile` into a single `generateStructured({ prompt, schema, files?, operationName, retries })` to avoid method proliferation
 4. **Per-call model selection** — Extend `VertexAiService` to accept a `modelId` per call, then add `modelId` to `AiStructuredOptions`
-5. **README docs cleanup** — Update root README to reflect monorepo layout and agent architecture
+5. **README docs cleanup** — Update root README to reflect monorepo layout and workflow architecture
 
 ---
 
-## `AGENTS.md` — Content to Populate
+## `WORKFLOWS.md` — Content to Populate
 
 ```markdown
-# Agent Architecture — Context Router
+# Workflow Architecture — Context Router
 
-Agents are deterministic, multi-step workflow services that combine DB reads with a
+Workflows are deterministic, multi-step services that combine DB reads with a
 single structured AI invocation. They are plain NestJS @Injectable() classes.
-No external orchestration framework. Business logic belongs in agents, not in MCP tool classes.
+No external orchestration framework. Business logic belongs in workflows, not in MCP tool classes.
 
 ## Principles
-- Agents are read-only. Writes always go through PreferenceService / PreferenceDefinitionService.
+- Workflows are read-only. Writes always go through PreferenceService / PreferenceDefinitionService.
 - AI receives only catalog slug metadata, never user preference values.
 - All AI-returned slugs are validated against DB ground truth before use.
-- One structured AI call per top-level agent. Add a subagent only when logic is reused in 2+ agents.
-- Agents log internal steps via AgentStepRecorder (kind: db|ai|validation|subagent) for tracing — steps are not returned to callers.
+- One structured AI call per top-level workflow. Add a subworkflow only when logic is reused in 2+ workflows.
+- Workflows log internal steps via WorkflowStepRecorder (kind: db|ai|validation|subworkflow) for tracing — steps are not returned to callers.
 
 ## AI Port
-Agents inject 'AiStructuredOutputPort'.
+Workflows inject 'AiStructuredOutputPort'.
 It handles JSON parsing, fence stripping, Zod validation, and retries internally.
 
 ## Directory
-src/modules/agents/
-├── agents.module.ts
+src/modules/workflows/
+├── workflows.module.ts
 ├── shared/
-│   ├── agent.interface.ts         — IAgent, AgentStep (no AgentResult wrapper — agents throw or return typed data)
-│   └── agent-step-recorder.ts    — timing utility
+│   ├── workflow.interface.ts         — IWorkflow, WorkflowStep (no WorkflowResult wrapper — workflows throw or return typed data)
+│   └── workflow-step-recorder.ts    — timing utility
 └── preferences/
-    ├── preference-search/         — PreferenceSearchAgent
-    └── schema-consolidation/      — SchemaConsolidationAgent
+    ├── preference-search/         — PreferenceSearchWorkflow
+    └── schema-consolidation/      — SchemaConsolidationWorkflow
 
 ## MCP Tool Registry
-| MCP Tool                | Agent                      | Read-only |
-|-------------------------|----------------------------|-----------|
-| smartSearchPreferences  | PreferenceSearchAgent      | yes       |
-| consolidateSchema       | SchemaConsolidationAgent   | yes       |
+| MCP Tool                | Workflow                     | Read-only |
+|-------------------------|------------------------------|-----------|
+| smartSearchPreferences  | PreferenceSearchWorkflow     | yes       |
+| consolidateSchema       | SchemaConsolidationWorkflow  | yes       |
 
 Legacy tool `searchPreferences` (keyword matching) is kept for compatibility.
 
-## Adding a New Agent
-1. Create src/modules/agents/<domain>/<name>/ with .agent.ts, .prompt.ts, .schema.ts
-2. Register in AgentsModule
+## Adding a New Workflow
+1. Create src/modules/workflows/<domain>/<name>/ with .workflow.ts, .prompt.ts, .schema.ts
+2. Register in WorkflowsModule
 3. Create thin MCP tool implementing McpToolInterface in src/mcp/tools/
 4. Register in McpModule (auto-registers in registry)
-5. Write e2e test in test/e2e/agents.e2e-spec.ts
-6. Update this file and docs/agents/adding-agent-modules.md
+5. Write e2e test in test/e2e/workflows.e2e-spec.ts
+6. Update this file and docs/workflows/adding-workflow-modules.md
 
-## PreferenceSearchAgent
+## PreferenceSearchWorkflow
 Natural language → relevant definitions + matching user preference values.
 Steps: loadCatalog (db) → aiSlugIdentification (ai) → slugValidation (validation) → fetchPreferences (db)
 
-## SchemaConsolidationAgent
+## SchemaConsolidationWorkflow
 User definitions → advisory consolidation groups. No writes.
 Steps: loadDefinitions (db) → aiConsolidationAnalysis (ai) → groupValidation (validation)
 Short-circuits with empty result if fewer than 2 definitions exist.

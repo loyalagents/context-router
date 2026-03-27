@@ -6,37 +6,37 @@ This guide walks through adding a new AI-backed workflow end to end. It uses a h
 
 Read [adding-workflows.md](adding-workflows.md) first for principles and tradeoffs. This doc is the mechanical "how"; that doc is the "why."
 
-## Step 1: Define the Agent's Input and Output Types
+## Step 1: Define the Workflow's Input and Output Types
 
-Create the agent file and start with the interfaces. These are the contract — everything else follows from them.
+Create the workflow file and start with the interfaces. These are the contract — everything else follows from them.
 
 ```
-src/modules/agents/preferences/category-suggestion/category-suggestion.agent.ts
+src/modules/workflows/preferences/category-suggestion/category-suggestion.workflow.ts
 ```
 
 ```typescript
-import { AgentInput } from '../../shared/agent.interface';
+import { WorkflowInput } from '../../shared/workflow.interface';
 
-export interface CategorySuggestionAgentInput extends AgentInput {
+export interface CategorySuggestionWorkflowInput extends WorkflowInput {
   value: string;
   currentSlug?: string;
 }
 
-export interface CategorySuggestionAgentOutput {
+export interface CategorySuggestionWorkflowOutput {
   suggestedCategory: string;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
   reasoning: string;
 }
 ```
 
-Every agent input extends `AgentInput` (which provides `userId`). The output is what the caller gets back — keep it typed and specific. Don't pass raw AI output through.
+Every workflow input extends `WorkflowInput` (which provides `userId`). The output is what the caller gets back — keep it typed and specific. Don't pass raw AI output through.
 
 ## Step 2: Define the Zod Schema for the AI Response
 
-This is the shape you tell the model to return. It's often close to your output type but not identical — the agent may transform, enrich, or filter the AI response before producing its output.
+This is the shape you tell the model to return. It's often close to your output type but not identical — the workflow may transform, enrich, or filter the AI response before producing its output.
 
 ```
-src/modules/agents/preferences/category-suggestion/category-suggestion.schema.ts
+src/modules/workflows/preferences/category-suggestion/category-suggestion.schema.ts
 ```
 
 ```typescript
@@ -51,14 +51,14 @@ export const CategorySuggestionResponseSchema = z.object({
 export type CategorySuggestionResponse = z.infer<typeof CategorySuggestionResponseSchema>;
 ```
 
-Keep the schema as the minimum viable contract. Only require what the agent needs to proceed. The `AiStructuredOutputPort` uses this schema for both Zod validation and correction-retry prompts.
+Keep the schema as the minimum viable contract. Only require what the workflow needs to proceed. The `AiStructuredOutputPort` uses this schema for both Zod validation and correction-retry prompts.
 
 ## Step 3: Write the Prompt Builder
 
 Pure function. No injected services. Takes data, returns a string.
 
 ```
-src/modules/agents/preferences/category-suggestion/category-suggestion.prompt.ts
+src/modules/workflows/preferences/category-suggestion/category-suggestion.prompt.ts
 ```
 
 ```typescript
@@ -92,25 +92,25 @@ Respond with JSON only (no markdown code blocks):
 }
 ```
 
-Include explicit instructions to return only known values — the model respects these most of the time, and the agent's validation catches the rest. Always tell the model to respond with JSON only and no markdown fences (the port strips fences as a fallback, but explicit instruction reduces the need).
+Include explicit instructions to return only known values — the model respects these most of the time, and the workflow's validation catches the rest. Always tell the model to respond with JSON only and no markdown fences (the port strips fences as a fallback, but explicit instruction reduces the need).
 
 ## Step 4: Write the Unit Tests
 
-Tests come before the agent implementation. Mock `AiStructuredOutputPort` and any data services. Test the agent's behavior, not the AI's.
+Tests come before the workflow implementation. Mock `AiStructuredOutputPort` and any data services. Test the workflow's behavior, not the AI's.
 
 ```
-src/modules/agents/preferences/category-suggestion/category-suggestion.agent.spec.ts
+src/modules/workflows/preferences/category-suggestion/category-suggestion.workflow.spec.ts
 ```
 
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
-import { CategorySuggestionAgent } from './category-suggestion.agent';
+import { CategorySuggestionWorkflow } from './category-suggestion.workflow';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 
-describe('CategorySuggestionAgent', () => {
-  let agent: CategorySuggestionAgent;
+describe('CategorySuggestionWorkflow', () => {
+  let workflow: CategorySuggestionWorkflow;
   let mockAiPort: jest.Mocked<AiStructuredOutputPort>;
   let mockSnapshotService: jest.Mocked<PreferenceSchemaSnapshotService>;
 
@@ -123,13 +123,13 @@ describe('CategorySuggestionAgent', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        CategorySuggestionAgent,
+        CategorySuggestionWorkflow,
         { provide: 'AiStructuredOutputPort', useValue: mockAiPort },
         { provide: PreferenceSchemaSnapshotService, useValue: mockSnapshotService },
       ],
     }).compile();
 
-    agent = module.get(CategorySuggestionAgent);
+    workflow = module.get(CategorySuggestionWorkflow);
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
   });
@@ -137,44 +137,44 @@ describe('CategorySuggestionAgent', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('should return suggested category for a valid AI response', async () => {
-    // Mock data and AI response, assert agent output
+    // Mock data and AI response, assert workflow output
   });
 
   it('should reject a hallucinated category not in the snapshot', async () => {
-    // AI returns a category that doesn't exist — agent should handle it
+    // AI returns a category that doesn't exist — workflow should handle it
   });
 
   it('should propagate errors from AI port', async () => {
     mockAiPort.generateStructured.mockRejectedValue(new Error('AI failed'));
-    await expect(agent.run({ userId: 'u1', value: 'test' })).rejects.toThrow('AI failed');
+    await expect(workflow.run({ userId: 'u1', value: 'test' })).rejects.toThrow('AI failed');
   });
 });
 ```
 
 Key test cases to always include:
 - **Happy path**: valid AI response, correct output.
-- **Hallucination filtering**: AI returns an identifier that doesn't exist in the database. Verify the agent handles it (drops, clears, or rejects).
+- **Hallucination filtering**: AI returns an identifier that doesn't exist in the database. Verify the workflow handles it (drops, clears, or rejects).
 - **Edge cases**: empty input, single item, no matches.
-- **Error propagation**: AI port throws, agent surfaces it.
+- **Error propagation**: AI port throws, workflow surfaces it.
 
-Run your tests: `pnpm --filter backend exec jest src/modules/agents/preferences/category-suggestion/category-suggestion.agent.spec.ts --runInBand`
+Run your tests: `pnpm --filter backend exec jest src/modules/workflows/preferences/category-suggestion/category-suggestion.workflow.spec.ts --runInBand`
 
-## Step 5: Implement the Agent
+## Step 5: Implement the Workflow
 
-Now fill in the agent class. Follow the pattern: load data, call AI, validate, return.
+Now fill in the workflow class. Follow the pattern: load data, call AI, validate, return.
 
 ```typescript
 import { Injectable, Inject } from '@nestjs/common';
-import { AgentInput, IAgent } from '../../shared/agent.interface';
-import { AgentStepRecorder } from '../../shared/agent-step-recorder';
+import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
+import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { CategorySuggestionResponseSchema } from './category-suggestion.schema';
 import { buildCategorySuggestionPrompt } from './category-suggestion.prompt';
 
 @Injectable()
-export class CategorySuggestionAgent
-  implements IAgent<CategorySuggestionAgentInput, CategorySuggestionAgentOutput>
+export class CategorySuggestionWorkflow
+  implements IWorkflow<CategorySuggestionWorkflowInput, CategorySuggestionWorkflowOutput>
 {
   constructor(
     @Inject('AiStructuredOutputPort')
@@ -182,8 +182,8 @@ export class CategorySuggestionAgent
     private readonly snapshotService: PreferenceSchemaSnapshotService,
   ) {}
 
-  async run(input: CategorySuggestionAgentInput): Promise<CategorySuggestionAgentOutput> {
-    const recorder = new AgentStepRecorder('CategorySuggestionAgent');
+  async run(input: CategorySuggestionWorkflowInput): Promise<CategorySuggestionWorkflowOutput> {
+    const recorder = new WorkflowStepRecorder('CategorySuggestionWorkflow');
 
     // Step 1: Load known categories
     const snapshot = await recorder.record('loadCategories', 'db', () =>
@@ -228,22 +228,22 @@ Points to follow:
 
 Run your tests again. They should pass.
 
-## Step 6: Register in the Agents Module
+## Step 6: Register in the Workflows Module
 
-Add the agent to `src/modules/agents/agents.module.ts`:
+Add the workflow to `src/modules/workflows/workflows.module.ts`:
 
 ```typescript
-import { CategorySuggestionAgent } from './preferences/category-suggestion/category-suggestion.agent';
+import { CategorySuggestionWorkflow } from './preferences/category-suggestion/category-suggestion.workflow';
 
 @Module({
   imports: [VertexAiModule, PreferenceDefinitionModule, PreferenceModule],
-  providers: [PreferenceSearchAgent, SchemaConsolidationAgent, CategorySuggestionAgent],
-  exports: [PreferenceSearchAgent, SchemaConsolidationAgent, CategorySuggestionAgent],
+  providers: [PreferenceSearchWorkflow, SchemaConsolidationWorkflow, CategorySuggestionWorkflow],
+  exports: [PreferenceSearchWorkflow, SchemaConsolidationWorkflow, CategorySuggestionWorkflow],
 })
-export class AgentsModule {}
+export class WorkflowsModule {}
 ```
 
-The agent must be in both `providers` and `exports` so the MCP module can inject it.
+The workflow must be in both `providers` and `exports` so the MCP module can inject it.
 
 ## Step 7: Create the MCP Tool
 
@@ -256,7 +256,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
-import { CategorySuggestionAgent } from '@modules/agents/preferences/category-suggestion/category-suggestion.agent';
+import { CategorySuggestionWorkflow } from '@modules/workflows/preferences/category-suggestion/category-suggestion.workflow';
 
 @Injectable()
 export class CategorySuggestionTool implements McpToolInterface {
@@ -286,13 +286,13 @@ export class CategorySuggestionTool implements McpToolInterface {
 
   readonly requiresAuth = true;
 
-  constructor(private readonly agent: CategorySuggestionAgent) {}
+  constructor(private readonly workflow: CategorySuggestionWorkflow) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     const params = args as { value: string; currentSlug?: string };
 
     try {
-      const result = await this.agent.run({
+      const result = await this.workflow.run({
         userId: context!.user.userId,
         value: params.value,
         currentSlug: params.currentSlug,
@@ -320,7 +320,7 @@ export class CategorySuggestionTool implements McpToolInterface {
 The tool class pattern is always the same:
 - `descriptor`: MCP tool schema with `name`, `description`, `inputSchema`, and `annotations`.
 - `requiresAuth`: `true` for any tool that accesses user data.
-- `execute`: cast args, call `agent.run()`, wrap result in `CallToolResult`. Catch errors and return `isError: true`.
+- `execute`: cast args, call `workflow.run()`, wrap result in `CallToolResult`. Catch errors and return `isError: true`.
 - Set `readOnlyHint: true` in annotations if the tool doesn't write data.
 
 ## Step 8: Register the Tool in the MCP Module
@@ -350,7 +350,7 @@ Both arrays (factory params and inject) must include the new tool. `McpService.o
 
 ## Step 9: Add E2E Tests
 
-Add tests in `test/e2e/agents.e2e-spec.ts` (or a new e2e spec file). These test the full path: MCP request → tool dispatch → agent → mocked AI → response.
+Add tests in `test/e2e/workflows.e2e-spec.ts` (or a new e2e spec file). These test the full path: MCP request → tool dispatch → workflow → mocked AI → response.
 
 ```typescript
 describe('suggestCategory', () => {
@@ -370,18 +370,18 @@ describe('suggestCategory', () => {
 });
 ```
 
-Run: `pnpm --filter backend exec jest test/e2e/agents.e2e-spec.ts --runInBand`
+Run: `pnpm --filter backend exec jest test/e2e/workflows.e2e-spec.ts --runInBand`
 
 ## Checklist
 
 Before opening a PR, verify:
 
-- [ ] Agent input/output types are defined and exported
+- [ ] Workflow input/output types are defined and exported
 - [ ] Zod schema matches the prompt's JSON instructions
 - [ ] Prompt builder is a pure function with no injected dependencies
-- [ ] Agent validates every AI-generated identifier against database state
-- [ ] Agent uses `AgentStepRecorder` for all steps
-- [ ] Agent is registered in `agents.module.ts` (providers + exports)
+- [ ] Workflow validates every AI-generated identifier against database state
+- [ ] Workflow uses `WorkflowStepRecorder` for all steps
+- [ ] Workflow is registered in `workflows.module.ts` (providers + exports)
 - [ ] MCP tool implements `McpToolInterface` with descriptor, requiresAuth, execute
 - [ ] Tool is registered in `mcp.module.ts` (providers + MCP_TOOLS factory)
 - [ ] Unit tests cover: happy path, hallucination filtering, edge cases, error propagation

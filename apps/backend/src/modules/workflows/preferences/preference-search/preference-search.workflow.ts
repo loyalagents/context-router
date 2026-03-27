@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { AgentInput, IAgent } from '../../shared/agent.interface';
-import { AgentStepRecorder } from '../../shared/agent-step-recorder';
+import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
+import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
@@ -8,14 +8,14 @@ import { EnrichedPreference } from '../../../preferences/preference/preference.r
 import { RelevanceResponseSchema } from './preference-search.schema';
 import { buildPreferenceSearchPrompt } from './preference-search.prompt';
 
-export interface PreferenceSearchAgentInput extends AgentInput {
+export interface PreferenceSearchWorkflowInput extends WorkflowInput {
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
   maxResults?: number;
 }
 
-export interface PreferenceSearchAgentOutput {
+export interface PreferenceSearchWorkflowOutput {
   matchedDefinitions: Array<{
     slug: string;
     description: string;
@@ -27,8 +27,8 @@ export interface PreferenceSearchAgentOutput {
 }
 
 @Injectable()
-export class PreferenceSearchAgent
-  implements IAgent<PreferenceSearchAgentInput, PreferenceSearchAgentOutput>
+export class PreferenceSearchWorkflow
+  implements IWorkflow<PreferenceSearchWorkflowInput, PreferenceSearchWorkflowOutput>
 {
   constructor(
     @Inject('AiStructuredOutputPort')
@@ -38,9 +38,9 @@ export class PreferenceSearchAgent
   ) {}
 
   async run(
-    input: PreferenceSearchAgentInput,
-  ): Promise<PreferenceSearchAgentOutput> {
-    const recorder = new AgentStepRecorder('PreferenceSearchAgent');
+    input: PreferenceSearchWorkflowInput,
+  ): Promise<PreferenceSearchWorkflowOutput> {
+    const recorder = new WorkflowStepRecorder('PreferenceSearchWorkflow');
 
     // Step 1: Load catalog
     const snapshot = await recorder.record('loadCatalog', 'db', () =>

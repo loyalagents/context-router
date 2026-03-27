@@ -4,7 +4,7 @@ import { McpService } from './mcp.service';
 import { McpController } from './mcp.controller';
 import { PreferencesModule } from '@/modules/preferences/preferences.module';
 import { AuthModule } from '@/modules/auth/auth.module';
-import { AgentsModule } from '@/modules/agents/agents.module';
+import { WorkflowsModule } from '@/modules/workflows/workflows.module';
 import { PreferenceSearchTool } from './tools/preference-search.tool';
 import { PreferenceMutationTool } from './tools/preference-mutation.tool';
 import { PreferenceListTool } from './tools/preference-list.tool';
@@ -22,7 +22,7 @@ import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
 import { MCP_TOOLS } from './mcp.constants';
 
 @Module({
-  imports: [ConfigModule, PreferencesModule, AuthModule, AgentsModule],
+  imports: [ConfigModule, PreferencesModule, AuthModule, WorkflowsModule],
   controllers: [McpController, OAuthMetadataController, DcrShimController],
   providers: [
     McpService,
