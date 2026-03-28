@@ -17,7 +17,7 @@ CP1–CP4 implemented a first-class workflow layer in the Context Router backend
 - **`SchemaConsolidationWorkflow`** — 3-step workflow: load definitions (short-circuits if <2) → AI consolidation analysis → group validation with `slugScopes` population.
 - **Shared contracts** — `IWorkflow<TInput, TOutput>` interface, `WorkflowStepRecorder` utility for observability.
 - **`WorkflowsModule`** — Imports `VertexAiModule`, `PreferenceDefinitionModule`, `PreferenceModule`; provides and exports both workflows.
-- **18 unit tests** across both workflows (9 each).
+- **27 unit tests** across both workflows (12 preference-search, 15 schema-consolidation).
 
 ### CP3 — MCP Registry + Tools
 
@@ -30,7 +30,7 @@ CP1–CP4 implemented a first-class workflow layer in the Context Router backend
 
 ### CP4 — E2E Tests + Docs
 
-- **`workflows.e2e-spec.ts`** — 12 e2e tests: 8 for `smartSearchPreferences` (happy path, no preference rows, includeSuggestions, hallucinated slugs, empty result, port error, user scoping, truncation) and 4 for `consolidateSchema` (happy path with slugScopes, short-circuit, hallucinated slug drop, ALL scope with GLOBAL+USER).
+- **`workflows.e2e-spec.ts`** — 13 e2e tests: 8 for `smartSearchPreferences` (happy path, no preference rows, includeSuggestions, hallucinated slugs, empty result, port error, user scoping, truncation) and 5 for `consolidateSchema` (happy path with slugScopes, short-circuit, hallucinated slug drop, omitted scope defaults to PERSONAL, ALL scope with GLOBAL+USER).
 - **Architecture doc updated** — Checkpoint table marked complete, repo structure tree corrected.
 
 ## Key decisions made during implementation
@@ -52,10 +52,10 @@ CP1–CP4 implemented a first-class workflow layer in the Context Router backend
 | Suite | Count | Command |
 |-------|-------|---------|
 | Port integration (`vertex-ai-structured`) | 14 | `pnpm test --testPathPattern=vertex-ai-structured` |
-| Workflow unit (preference-search) | 9 | `pnpm test --testPathPattern=preference-search.workflow` |
-| Workflow unit (schema-consolidation) | 9 | `pnpm test --testPathPattern=schema-consolidation.workflow` |
+| Workflow unit (preference-search) | 12 | `pnpm test --testPathPattern=preference-search.workflow` |
+| Workflow unit (schema-consolidation) | 15 | `pnpm test --testPathPattern=schema-consolidation.workflow` |
 | MCP e2e | 24 | `pnpm test --testPathPattern=mcp.e2e` |
-| Workflow e2e | 12 | `pnpm test --testPathPattern=workflows.e2e` |
+| Workflow e2e | 13 | `pnpm test --testPathPattern=workflows.e2e` |
 | Extraction service (migrated) | existing | `pnpm test --testPathPattern=document-analysis` |
 
 All commands run from `apps/backend/`.
