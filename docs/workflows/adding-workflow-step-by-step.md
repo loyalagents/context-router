@@ -361,7 +361,7 @@ describe('suggestCategory', () => {
       reasoning: 'Value mentions dietary needs',
     });
 
-    const res = await mcpPost('suggestCategory', { value: 'I am vegetarian' });
+    const res = await callTool('suggestCategory', { value: 'I am vegetarian' });
     const body = parseToolResult(res);
 
     expect(body.suggestedCategory).toBe('food');
