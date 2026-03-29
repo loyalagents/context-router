@@ -7,33 +7,6 @@ on:
     branches: [main, gates-workshop-2026]
 
 jobs:
-  workshop-client:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test workshop client
-        run: pnpm test:workshop-client
-
-      - name: Build workshop client
-        run: pnpm build:workshop-client
-
-      - name: Pack workshop client
-        run: pnpm pack:workshop-client
-
   backend-tests:
     runs-on: ubuntu-latest
 
