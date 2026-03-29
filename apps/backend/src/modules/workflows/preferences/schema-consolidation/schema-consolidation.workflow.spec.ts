@@ -274,7 +274,7 @@ describe('SchemaConsolidationWorkflow', () => {
 
       expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith(
         'user-1',
-        'PERSONAL',
+        { scope: 'PERSONAL' },
       );
     });
 

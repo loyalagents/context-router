@@ -668,7 +668,7 @@ describe("PreferenceExtractionService", () => {
           mockFilename,
         );
 
-        expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1", "health");
+        expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1", { schemaNamespace: "health" });
         expect(mockDefRepo.isKnownSlug).toHaveBeenCalledWith(
           "identification.name",
           "user-1",
@@ -701,7 +701,7 @@ describe("PreferenceExtractionService", () => {
           mockFilename,
         );
 
-        expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1", "GLOBAL");
+        expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1", { schemaNamespace: "GLOBAL" });
       });
     });
   });

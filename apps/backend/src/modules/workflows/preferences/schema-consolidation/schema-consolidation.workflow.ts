@@ -45,7 +45,7 @@ export class SchemaConsolidationWorkflow
 
     // Step 1: Load definitions
     const snapshot = await recorder.record('loadDefinitions', 'db', () =>
-      this.snapshotService.getSnapshot(input.userId, input.scope),
+      this.snapshotService.getSnapshot(input.userId, { scope: input.scope }),
     );
 
     // Short-circuit: < 2 definitions means nothing to consolidate

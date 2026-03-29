@@ -145,7 +145,7 @@ export class PreferenceExtractionService {
     userId: string,
     schemaNamespace = 'GLOBAL',
   ): Promise<string> {
-    const snapshot = await this.snapshotService.getSnapshot(userId, schemaNamespace);
+    const snapshot = await this.snapshotService.getSnapshot(userId, { schemaNamespace });
     const currentPreferencesJson = JSON.stringify(currentPreferences, null, 2);
 
     return `You are a data extraction assistant that reads documents and proposes preference changes for a user.

@@ -16,16 +16,21 @@ export interface PreferenceSchemaSnapshot {
   promptJson: string;
 }
 
+export interface GetSnapshotOptions {
+  schemaNamespace?: string;
+  scope?: 'PERSONAL' | 'ALL';
+}
+
 @Injectable()
 export class PreferenceSchemaSnapshotService {
   constructor(private readonly defRepo: PreferenceDefinitionRepository) {}
 
   async getSnapshot(
     userId: string,
-    schemaNamespace?: string,
-    scope?: 'PERSONAL' | 'ALL',
+    options?: GetSnapshotOptions,
   ): Promise<PreferenceSchemaSnapshot> {
-    const resolvedScope = scope ?? 'ALL';
+    const resolvedScope = options?.scope ?? 'ALL';
+    const schemaNamespace = options?.schemaNamespace;
 
     const defs =
       resolvedScope === 'ALL'
