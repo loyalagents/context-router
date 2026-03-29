@@ -9,6 +9,7 @@ import { PreferenceMutationTool } from "./tools/preference-mutation.tool";
 import { PreferenceListTool } from "./tools/preference-list.tool";
 import { PreferenceDefinitionTool } from "./tools/preference-definition.tool";
 import { PreferenceSuggestTool } from "./tools/preference-suggest.tool";
+import { PreferenceApplyTool } from "./tools/preference-apply.tool";
 import { PreferenceDeleteTool } from "./tools/preference-delete.tool";
 import { SmartSearchTool } from "./tools/smart-search.tool";
 import { SchemaConsolidationTool } from "./tools/schema-consolidation.tool";
@@ -29,6 +30,7 @@ import { MCP_TOOLS } from "./mcp.constants";
     PreferenceSearchTool,
     PreferenceDefinitionTool,
     PreferenceSuggestTool,
+    PreferenceApplyTool,
     PreferenceDeleteTool,
     SmartSearchTool,
     SchemaConsolidationTool,
@@ -40,15 +42,17 @@ import { MCP_TOOLS } from "./mcp.constants";
         search: PreferenceSearchTool,
         definition: PreferenceDefinitionTool,
         suggest: PreferenceSuggestTool,
+        apply: PreferenceApplyTool,
         del: PreferenceDeleteTool,
         smartSearch: SmartSearchTool,
         consolidation: SchemaConsolidationTool,
-      ) => [list, search, definition, suggest, del, smartSearch, consolidation],
+      ) => [list, search, definition, suggest, apply, del, smartSearch, consolidation],
       inject: [
         PreferenceListTool,
         PreferenceSearchTool,
         PreferenceDefinitionTool,
         PreferenceSuggestTool,
+        PreferenceApplyTool,
         PreferenceDeleteTool,
         SmartSearchTool,
         SchemaConsolidationTool,

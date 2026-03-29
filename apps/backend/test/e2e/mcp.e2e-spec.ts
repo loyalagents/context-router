@@ -81,10 +81,12 @@ describe("MCP Integration (e2e)", () => {
       expect(toolNames).toEqual([
         "listPreferenceSlugs",
         "searchPreferences",
+        "createPreferenceDefinition",
         "suggestPreference",
         "applyPreference",
         "deletePreference",
-        "createPreferenceDefinition",
+        "smartSearchPreferences",
+        "consolidateSchema",
       ]);
     });
 
