@@ -1,8 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
+import { McpContext } from "../types/mcp-context.type";
+import { McpToolInterface } from "./base/mcp-tool.interface";
 
 interface ListPreferencesParams {
-  category?: string; // Optional filter by category
+  category?: string;
 }
 
 interface CatalogEntry {
@@ -15,19 +18,57 @@ interface CatalogEntry {
 }
 
 @Injectable()
-export class PreferenceListTool {
+export class PreferenceListTool implements McpToolInterface {
   private readonly logger = new Logger(PreferenceListTool.name);
+
+  readonly descriptor: Tool = {
+    name: "listPreferenceSlugs",
+    description:
+      "List all valid preference slugs from the catalog. Use this to discover what preferences exist before suggesting new values. Returns slug, category, description, valueType, and scope for each preference.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description:
+            'Optional: filter by category (e.g., "food", "system", "dev")',
+        },
+      },
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+    },
+  };
+
+  readonly requiresAuth = false;
 
   constructor(private defRepo: PreferenceDefinitionRepository) {}
 
-  /**
-   * List all valid preference slugs from the catalog.
-   * Helps LLMs discover what preferences exist before attempting to write.
-   * When context is provided, user-owned definitions are included alongside global ones.
-   */
-  async list(params: ListPreferencesParams = {}, userId?: string, schemaNamespace?: string) {
+  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+    try {
+      const result = await this.list(args as ListPreferencesParams, context);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ error: error.message }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  async list(params: ListPreferencesParams, context?: McpContext) {
+    const userId = context?.user?.userId;
+    const schemaNamespace = context?.user?.schemaNamespace;
     this.logger.log(
-      `Listing preference catalog${params.category ? ` for category: ${params.category}` : ""}`,
+      `Listing preference catalog${params.category ? ` for category: ${params.category}` : ""}${userId ? ` for user: ${userId}` : " (global only)"}`,
     );
 
     try {
@@ -46,8 +87,10 @@ export class PreferenceListTool {
         scope: def.scope,
       }));
 
-      // Get all categories for reference
-      const categories = await this.defRepo.getAllCategories(userId, schemaNamespace);
+      const categories = await this.defRepo.getAllCategories(
+        userId,
+        schemaNamespace,
+      );
 
       return {
         success: true,
@@ -57,11 +100,7 @@ export class PreferenceListTool {
       };
     } catch (error) {
       this.logger.error(`Error listing preference catalog: ${error.message}`);
-
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
 }

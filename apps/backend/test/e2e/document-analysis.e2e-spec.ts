@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import {
-  createMockVertexAiService,
+  createMockStructuredAiService,
   createTestApp,
   createTestUser,
   TestUser,
@@ -12,10 +12,10 @@ describe('Document Analysis GraphQL API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
-  const mockVertexAi = createMockVertexAiService();
+  const mockStructuredAi = createMockStructuredAiService();
 
   beforeAll(async () => {
-    const testApp = await createTestApp({ mockVertexAi });
+    const testApp = await createTestApp({ mockStructuredAi });
     app = testApp.app;
     setTestUser = testApp.setTestUser;
   });
@@ -447,27 +447,25 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         },
       });
 
-      mockVertexAi.generateTextWithFile.mockResolvedValueOnce(
-        JSON.stringify({
-          suggestions: [
-            {
-              slug: 'identification.name',
-              operation: 'CREATE',
-              newValue: 'Alex Morgan',
-              confidence: 0.96,
-              sourceSnippet: 'Patient: Alex Morgan',
-            },
-            {
-              slug: 'workshop.team_name',
-              operation: 'CREATE',
-              newValue: 'Care Tigers',
-              confidence: 0.91,
-              sourceSnippet: 'Team: Care Tigers',
-            },
-          ],
-          documentSummary: 'Health intake form',
-        }),
-      );
+      mockStructuredAi.generateStructuredWithFile.mockResolvedValueOnce({
+        suggestions: [
+          {
+            slug: 'identification.name',
+            operation: 'CREATE',
+            newValue: 'Alex Morgan',
+            confidence: 0.96,
+            sourceSnippet: 'Patient: Alex Morgan',
+          },
+          {
+            slug: 'workshop.team_name',
+            operation: 'CREATE',
+            newValue: 'Care Tigers',
+            confidence: 0.91,
+            sourceSnippet: 'Team: Care Tigers',
+          },
+        ],
+        documentSummary: 'Health intake form',
+      });
 
       const response = await request(app.getHttpServer())
         .post('/api/preferences/analysis')
@@ -485,7 +483,7 @@ describe('Document Analysis GraphQL API (e2e)', () => {
         'workshop.team_name',
       ]);
 
-      const prompt = mockVertexAi.generateTextWithFile.mock.calls.at(-1)?.[0];
+      const prompt = mockStructuredAi.generateStructuredWithFile.mock.calls.at(-1)?.[0];
       expect(prompt).toContain('identification.name');
       expect(prompt).toContain('workshop.team_name');
     });

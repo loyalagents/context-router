@@ -1,25 +1,86 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Tool, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { PreferenceService } from "@modules/preferences/preference/preference.service";
-import { McpContext } from "../types/mcp-context.type";
 import { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
+import { McpContext } from "../types/mcp-context.type";
+import { McpToolInterface } from "./base/mcp-tool.interface";
 
 interface SearchPreferencesParams {
-  query?: string; // Search by slug prefix, category, or description keyword
+  query?: string;
   category?: string; // Deprecated alias for category-based lookup
   locationId?: string;
-  includeSuggestions?: boolean; // Whether to include SUGGESTED preferences
+  includeSuggestions?: boolean;
 }
 
 @Injectable()
-export class PreferenceSearchTool {
+export class PreferenceSearchTool implements McpToolInterface {
   private readonly logger = new Logger(PreferenceSearchTool.name);
+
+  readonly descriptor: Tool = {
+    name: "searchPreferences",
+    description:
+      "Search user preferences by query, category, location, or retrieve all active preferences. Returns preferences scoped to the authenticated user.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "Search by slug prefix, category, or description keyword",
+        },
+        category: {
+          type: "string",
+          description:
+            "Deprecated alias for query. Filters by preference category.",
+        },
+        locationId: {
+          type: "string",
+          description:
+            "Include preferences for this location (merged with global)",
+        },
+        includeSuggestions: {
+          type: "boolean",
+          description:
+            "If true, also return SUGGESTED preferences (inbox)",
+        },
+      },
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+    },
+  };
+
+  readonly requiresAuth = true;
 
   constructor(
     private preferenceService: PreferenceService,
     private configService: ConfigService,
     private defRepo: PreferenceDefinitionRepository,
   ) {}
+
+  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+    try {
+      const result = await this.search(
+        args as SearchPreferencesParams,
+        context!,
+      );
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ error: error.message }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
 
   /**
    * Search the catalog for matching slugs based on query.
@@ -57,13 +118,11 @@ export class PreferenceSearchTool {
     );
 
     try {
-      // Get active preferences
       const activePrefs = await this.preferenceService.getActivePreferences(
         userId,
         params.locationId,
       );
 
-      // If query is provided, filter by matching slugs
       let filteredActive = activePrefs;
       if (effectiveQuery) {
         const matchingSlugs = new Set(
@@ -72,7 +131,6 @@ export class PreferenceSearchTool {
         filteredActive = activePrefs.filter((p) => matchingSlugs.has(p.slug));
       }
 
-      // Optionally include suggestions
       let suggestions: typeof activePrefs = [];
       if (params.includeSuggestions) {
         const suggestedPrefs =
@@ -85,13 +143,14 @@ export class PreferenceSearchTool {
           const matchingSlugs = new Set(
             await this.searchCatalog(effectiveQuery, userId, schemaNamespace),
           );
-          suggestions = suggestedPrefs.filter((p) => matchingSlugs.has(p.slug));
+          suggestions = suggestedPrefs.filter((p) =>
+            matchingSlugs.has(p.slug),
+          );
         } else {
           suggestions = suggestedPrefs;
         }
       }
 
-      // Apply max results limit
       if (maxResults) {
         if (filteredActive.length > maxResults) {
           this.logger.warn(
@@ -107,7 +166,6 @@ export class PreferenceSearchTool {
         }
       }
 
-      // Format results — slug and description come from the enriched preference join
       const formatPreference = (pref: (typeof activePrefs)[0]) => ({
         id: pref.id,
         slug: pref.slug,
@@ -143,11 +201,7 @@ export class PreferenceSearchTool {
         `Error searching preferences for user ${userId}: ${error.message}`,
         error.stack,
       );
-
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
 }
