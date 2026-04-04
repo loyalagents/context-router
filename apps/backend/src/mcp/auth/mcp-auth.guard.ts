@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { JwksClient } from 'jwks-rsa';
 import { AuthService } from '@/modules/auth/auth.service';
+import { normalizeMcpGrants } from '../types/mcp-authorization.types';
 
 // Simple JWT decode without verification (just to read header/payload)
 function decodeJwt(token: string): { header: any; payload: any } | null {
@@ -96,6 +97,7 @@ export class McpAuthGuard implements CanActivate {
 
       // Extract scopes from token
       const scopes = this.extractScopes(payload);
+      const grants = normalizeMcpGrants(scopes);
 
       // Sync/retrieve user from local database (same as existing JwtStrategy)
       let user;
@@ -114,6 +116,7 @@ export class McpAuthGuard implements CanActivate {
       // Attach user and scopes to request for downstream use
       (request as any).user = user;
       (request as any).tokenScopes = scopes;
+      (request as any).tokenGrants = grants;
       (request as any).tokenPayload = payload;
 
       return true;

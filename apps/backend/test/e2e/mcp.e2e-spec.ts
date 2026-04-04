@@ -6,6 +6,25 @@ import { McpService } from '../../src/mcp/mcp.service';
 import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { ResolvedMcpClient } from '../../src/mcp/types/mcp-authorization.types';
+
+const TEST_CLIENT_IDS = {
+  claude: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID!,
+  codex: process.env.AUTH0_MCP_CODEX_CLIENT_ID!,
+  fallback: process.env.AUTH0_MCP_FALLBACK_CLIENT_ID!,
+  unknown: 'test-unknown-client',
+};
+
+const TEST_CLAUDE_CLIENT: ResolvedMcpClient = {
+  key: 'claude',
+  externalId: TEST_CLIENT_IDS.claude,
+  policy: {
+    key: 'claude',
+    label: 'Claude',
+    capabilities: ['preferences:read', 'preferences:write'],
+    targetRules: [],
+  },
+};
 
 describe('MCP Integration (e2e)', () => {
   let app: INestApplication;
@@ -41,13 +60,21 @@ describe('MCP Integration (e2e)', () => {
       .set(headers)
       .send(body);
 
+  const mcpHeaders = (
+    clientId: string,
+    extra: Record<string, string> = {},
+  ) => ({
+    'x-test-mcp-client-id': clientId,
+    ...extra,
+  });
+
   describe('MCP Service', () => {
     it('should be defined', () => {
       expect(mcpService).toBeDefined();
     });
 
     it('should create a distinct server per call', () => {
-      const context = { user: testUser };
+      const context = { user: testUser, client: TEST_CLAUDE_CLIENT };
       const serverA = mcpService.createServer(context);
       const serverB = mcpService.createServer(context);
       expect(serverA).not.toBe(serverB);
@@ -112,6 +139,216 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.content).toBeDefined();
+    });
+  });
+
+  describe('Client policy enforcement', () => {
+    beforeEach(async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+    });
+
+    it('should filter write tools out of tools/list for codex', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 30,
+          method: 'tools/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(response.status).toBe(200);
+      const toolNames = response.body.result.tools.map((tool: any) => tool.name);
+      expect(toolNames).toContain('searchPreferences');
+      expect(toolNames).not.toContain('suggestPreference');
+      expect(toolNames).not.toContain('createPreferenceDefinition');
+    });
+
+    it('should deny write tools for codex', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 31,
+          method: 'tools/call',
+          params: {
+            name: 'suggestPreference',
+            arguments: {
+              slug: 'food.dietary_restrictions',
+              value: '["nuts"]',
+              confidence: 0.9,
+            },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).toBe(true);
+    });
+
+    it('should deny write tools for fallback', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 32,
+          method: 'tools/call',
+          params: {
+            name: 'suggestPreference',
+            arguments: {
+              slug: 'food.dietary_restrictions',
+              value: '["shellfish"]',
+              confidence: 0.8,
+            },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.fallback),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).toBe(true);
+    });
+
+    it('should return an empty tools list for unknown clients', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 33,
+          method: 'tools/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.unknown),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.tools).toEqual([]);
+    });
+
+    it('should deny tool execution for unknown clients', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 34,
+          method: 'tools/call',
+          params: {
+            name: 'searchPreferences',
+            arguments: {},
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.unknown),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).toBe(true);
+    });
+
+    it('should still allow policy-authorized access when grant claims are absent', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 35,
+          method: 'tools/call',
+          params: {
+            name: 'suggestPreference',
+            arguments: {
+              slug: 'food.dietary_restrictions',
+              value: '["dairy"]',
+              confidence: 0.7,
+            },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.claude, {
+          'x-test-mcp-grants': '__absent__',
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).not.toBe(true);
+    });
+  });
+
+  describe('MCP resources', () => {
+    it('should filter resources/list for unknown clients', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 40,
+          method: 'resources/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.unknown),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.resources).toEqual([]);
+    });
+
+    it('should deny resources/read for unknown clients', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 41,
+          method: 'resources/read',
+          params: { uri: 'schema://graphql' },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.unknown),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.error).toBeDefined();
+    });
+  });
+
+  describe('DCR routing', () => {
+    it('should return the claude client for Claude callback URIs', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .set('Content-Type', 'application/json')
+        .send({
+          redirect_uris: ['http://localhost:8081/callback'],
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.client_id).toBe(TEST_CLIENT_IDS.claude);
+    });
+
+    it('should return the codex client for Codex callback URIs', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .set('Content-Type', 'application/json')
+        .send({
+          redirect_uris: ['http://127.0.0.1:8082/callback'],
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.client_id).toBe(TEST_CLIENT_IDS.codex);
+    });
+
+    it('should return the fallback client for supported fallback callback URIs', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .set('Content-Type', 'application/json')
+        .send({
+          redirect_uris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.client_id).toBe(TEST_CLIENT_IDS.fallback);
+    });
+
+    it('should reject mixed-bucket redirect URI sets', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .set('Content-Type', 'application/json')
+        .send({
+          redirect_uris: [
+            'http://localhost:8081/callback',
+            'http://127.0.0.1:8082/callback',
+          ],
+        });
+
+      expect(response.status).toBe(400);
     });
   });
 

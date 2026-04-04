@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpService } from './mcp.service';
 import { McpAuthGuard } from './auth/mcp-auth.guard';
+import { McpClientRegistry } from './auth/mcp-client-registry.service';
 import { McpContext } from './types/mcp-context.type';
 
 @Controller()
@@ -22,6 +23,7 @@ export class McpController {
   constructor(
     private mcpService: McpService,
     private configService: ConfigService,
+    private clientRegistry: McpClientRegistry,
   ) {}
 
   /**
@@ -60,11 +62,14 @@ export class McpController {
     }
 
     const user = (req as any).user;
+    const tokenPayload = (req as any).tokenPayload;
+    const tokenGrants = (req as any).tokenGrants;
 
     if (!user) {
       return;
     }
 
+    const client = this.clientRegistry.resolveFromTokenPayload(tokenPayload);
     const context: McpContext = {
       user: {
         userId: user.userId,
@@ -72,10 +77,12 @@ export class McpController {
         firstName: user.firstName,
         lastName: user.lastName,
       },
+      client,
+      grants: tokenGrants,
     };
 
     this.logger.log(
-      `MCP HTTP request from user: ${user.email} (${user.userId})`,
+      `MCP HTTP request from user: ${user.email} (${user.userId}), client: ${client.key}`,
     );
 
     const server = this.mcpService.createServer(context);

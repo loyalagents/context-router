@@ -9,9 +9,9 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { DcrRateLimitGuard } from './dcr-rate-limit.guard';
+import { McpClientRegistry } from './mcp-client-registry.service';
 
 /**
  * DCR Shim Controller
@@ -31,7 +31,7 @@ import { DcrRateLimitGuard } from './dcr-rate-limit.guard';
 export class DcrShimController {
   private readonly logger = new Logger(DcrShimController.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly clientRegistry: McpClientRegistry) {}
 
   @Post('register')
   @UseGuards(DcrRateLimitGuard)
@@ -62,57 +62,28 @@ export class DcrShimController {
       requestedRedirectUris = [body.redirect_uri];
     }
 
-    // Get the allowlist from config
-    const allowedRedirectUris = this.configService.get<string[]>(
-      'mcp.oauth.allowedRedirectUris',
-      [],
-    );
-
-    // Check if a URI matches the allowlist
-    // For localhost URIs, we allow any port and path (for desktop app OAuth flows)
-    const isUriAllowed = (uri: string): boolean => {
-      // Exact match
-      if (allowedRedirectUris.includes(uri)) {
-        return true;
-      }
-
-      // For localhost/127.0.0.1 URIs, allow any port and any path
-      // Desktop apps use dynamic ports and may use different callback paths
-      try {
-        const url = new URL(uri);
-        if (
-          url.protocol === 'http:' &&
-          (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
-        ) {
-          // Allow ANY localhost/127.0.0.1 URL for desktop app OAuth
-          // This is safe because these URLs can only redirect to the local machine
-          return true;
-        }
-      } catch {
-        // Invalid URL, not allowed
-      }
-
-      return false;
-    };
-
-    // Compute intersection: requested ∩ allowlist (with localhost port flexibility)
-    const validRedirectUris = requestedRedirectUris.filter(isUriAllowed);
-
     // Log the request (sanitized)
     this.logger.log(
-      `DCR request - Requested URIs: ${requestedRedirectUris.length}, Valid URIs: ${validRedirectUris.length}`,
+      `DCR request - Requested URIs: ${requestedRedirectUris.length}`,
     );
 
-    // If no valid redirect URIs, reject with 400
-    if (validRedirectUris.length === 0) {
-      // Log full URIs to help debug what clients are actually sending
-      this.logger.warn(
-        `DCR rejected - no valid redirect_uris. Requested: ${JSON.stringify(requestedRedirectUris)}`,
-      );
-      this.logger.warn(
-        `Allowed redirect_uris: ${JSON.stringify(allowedRedirectUris)}`,
-      );
+    const resolution = this.clientRegistry.resolveForDcr(requestedRedirectUris);
 
+    if (resolution.status === 'empty') {
+      throw new HttpException(
+        {
+          error: 'invalid_redirect_uri',
+          error_description:
+            'At least one redirect_uri must be provided for OAuth client registration.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (resolution.status === 'invalid') {
+      this.logger.warn(
+        `DCR rejected - invalid redirect_uris: ${JSON.stringify(requestedRedirectUris)}`,
+      );
       throw new HttpException(
         {
           error: 'invalid_redirect_uri',
@@ -124,14 +95,25 @@ export class DcrShimController {
       );
     }
 
-    // Get the static client_id from config
-    const clientId = this.configService.get<string>(
-      'mcp.oauth.publicClientId',
-    );
+    if (resolution.status === 'mixed') {
+      this.logger.warn(
+        `DCR rejected - mixed redirect_uri buckets: ${JSON.stringify(requestedRedirectUris)}`,
+      );
+      throw new HttpException(
+        {
+          error: 'invalid_redirect_uri',
+          error_description:
+            'All requested redirect_uris must belong to the same supported MCP client.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
+    const client = resolution.client;
+    const clientId = client.oauth?.clientId;
     if (!clientId) {
       this.logger.error(
-        'AUTH0_MCP_PUBLIC_CLIENT_ID not configured - DCR shim cannot function',
+        `DCR resolved client "${client.key}" without an OAuth client ID`,
       );
       throw new HttpException(
         {
@@ -148,11 +130,11 @@ export class DcrShimController {
       token_endpoint_auth_method: 'none', // Public client (PKCE)
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
-      redirect_uris: validRedirectUris,
+      redirect_uris: requestedRedirectUris,
     };
 
     this.logger.log(
-      `DCR successful - client_id: ${clientId.substring(0, 8)}..., redirect_uris: ${validRedirectUris.length}`,
+      `DCR successful - client: ${client.key}, redirect_uris: ${requestedRedirectUris.length}`,
     );
 
     return response;

@@ -18,8 +18,10 @@ import { OAuthMetadataController } from './auth/oauth-metadata.controller';
 import { DcrShimController } from './auth/dcr-shim.controller';
 import { DcrRateLimitGuard } from './auth/dcr-rate-limit.guard';
 import { McpAuthGuard } from './auth/mcp-auth.guard';
+import { McpClientRegistry } from './auth/mcp-client-registry.service';
+import { McpAuthorizationService } from './auth/mcp-authorization.service';
 import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
-import { MCP_TOOLS } from './mcp.constants';
+import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
 
 @Module({
   imports: [ConfigModule, PreferencesModule, AuthModule, WorkflowsModule],
@@ -61,7 +63,14 @@ import { MCP_TOOLS } from './mcp.constants';
     SchemaResource,
     DcrRateLimitGuard,
     McpAuthGuard,
+    McpClientRegistry,
+    McpAuthorizationService,
     McpOriginMiddleware,
+    {
+      provide: MCP_RESOURCES,
+      useFactory: (schema: SchemaResource) => [schema],
+      inject: [SchemaResource],
+    },
   ],
   exports: [McpService],
 })
