@@ -1,10 +1,10 @@
-# gates-2026 Handoff
+# gates-workshop-2026 Handoff
 
 ## Purpose
 
-This note is for the next agent working on `gates-2026`.
+This note is for the next agent working on `gates-switch-oauth-to-api-branch`, which is branched from `gates-workshop-2026` and should open a PR back into `gates-workshop-2026`.
 
-The goal is to reuse the new shared MCP client-policy authorization model from `main` while keeping the `gates-2026` branch on its API-key-based MCP authentication path for now.
+The goal is to reuse the new shared MCP client-policy authorization model from `main` while keeping the `gates-workshop-2026` line on its API-key-based MCP authentication path for now.
 
 This is intentionally **not** a production rollout guide for the OAuth branch.
 
@@ -39,12 +39,14 @@ This branch should **reuse the shared authorization model**, not re-implement it
 
 ## Cherry-Pick Plan
 
-1. Check out `gates-2026`.
-2. Cherry-pick the squash commit from `main`.
-3. Expect conflicts around MCP auth flow and environment-specific setup.
-4. Keep the shared MCP authorization layer.
-5. Preserve the API-key request-auth path from `gates-2026`.
-6. Re-run the gates-branch MCP tests after integration.
+1. Check out `gates-workshop-2026`.
+2. Create `gates-switch-oauth-to-api-branch` from it.
+3. Cherry-pick the squash commit from `main` onto `gates-switch-oauth-to-api-branch`.
+4. Expect conflicts around MCP auth flow and environment-specific setup.
+5. Keep the shared MCP authorization layer.
+6. Preserve the API-key request-auth path from `gates-workshop-2026`.
+7. Re-run the gates-branch MCP tests after integration.
+8. Open a PR from `gates-switch-oauth-to-api-branch` into `gates-workshop-2026`.
 
 ---
 
@@ -85,13 +87,13 @@ These files are OAuth/Auth0-specific and likely need adaptation or partial reuse
 - OAuth-oriented client config in [mcp.config.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/config/mcp.config.ts)
 - OAuth request-context wiring in [mcp.controller.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.controller.ts)
 
-The `gates-2026` branch should keep its API-key auth path and adapt these ideas instead of replacing that branch’s authentication design with OAuth.
+The `gates-switch-oauth-to-api-branch` work should keep the API-key auth path from `gates-workshop-2026` and adapt these ideas instead of replacing that branch’s authentication design with OAuth.
 
 ---
 
 ## Branch Constraints
 
-While integrating into `gates-2026`:
+While integrating on `gates-switch-oauth-to-api-branch` for a PR back into `gates-workshop-2026`:
 
 - keep API-key auth as the MCP request authentication path
 - do not switch deployed runtime from API keys to OAuth
@@ -103,7 +105,7 @@ While integrating into `gates-2026`:
 
 ## Suggested Adaptation Strategy
 
-For `gates-2026`, the intended adaptation is:
+For `gates-switch-oauth-to-api-branch`, the intended adaptation is:
 
 1. Keep API-key validation/authentication from that branch.
 2. After API-key validation, resolve the caller to a `clientKey`.
@@ -121,15 +123,15 @@ If API keys already carry a group, label, or policy bucket, map that directly to
 The next agent should read these before making changes:
 
 - [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/mcp-client-policy-merge-guide.md)
-- [gates-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/gates-2026-handoff.md)
+- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/gates-workshop-2026-handoff.md)
 - [mcp-authorization.types.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
 - [mcp-authorization.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
 - [mcp-client-registry.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
-- the current `gates-2026` MCP auth entrypoints
+- the current `gates-workshop-2026` MCP auth entrypoints
 
 ---
 
-## Acceptance Criteria For gates-2026
+## Acceptance Criteria For gates-switch-oauth-to-api-branch
 
 The integration is successful when:
 
@@ -140,10 +142,11 @@ The integration is successful when:
 - unauthorized tool/resource calls are denied
 - tests cover at least one read-write client and one read-only client in the API-key flow
 - no production OAuth rollout is required for the branch to function
+- the branch is in a state that can be reviewed as a PR into `gates-workshop-2026`
 
 ---
 
 ## Notes
 
 - The OAuth branch also included a grant-normalization fix so empty or irrelevant token scopes do not collapse effective capabilities to zero. That logic matters for OAuth, but the API-key branch may not need the same grant-handling path.
-- The doc [mcp-connections.md](/Users/lucasnovak/loyal-agents/context-router/docs/mcp-connections.md) now reflects the split Auth0 client setup. That is useful background, but it is not the primary implementation guide for `gates-2026`.
+- The doc [mcp-connections.md](/Users/lucasnovak/loyal-agents/context-router/docs/mcp-connections.md) now reflects the split Auth0 client setup. That is useful background, but it is not the primary implementation guide for `gates-switch-oauth-to-api-branch`.
