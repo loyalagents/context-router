@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import request from 'supertest';
 import { createTestApp } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
+import { ApiKeyMcpClientKey } from '../../src/infrastructure/prisma/generated-client';
 
 describe('createGroupUser mutation (e2e)', () => {
   let app: INestApplication;
@@ -43,6 +44,7 @@ describe('createGroupUser mutation (e2e)', () => {
       data: {
         keyHash: createHash('sha256').update(apiKey).digest('hex'),
         groupName: 'Create User Test Group',
+        mcpClientKey: ApiKeyMcpClientKey.CLAUDE,
       },
     });
     apiKeyId = apiKeyRecord.id;

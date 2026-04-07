@@ -29,6 +29,7 @@ export class SchemaConsolidationTool implements McpToolInterface {
   };
 
   readonly requiresAuth = true;
+  readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
   constructor(private readonly workflow: SchemaConsolidationWorkflow) {}
 

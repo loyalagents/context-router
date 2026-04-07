@@ -7,13 +7,15 @@ import {
   Body,
   Logger,
   UseGuards,
-} from "@nestjs/common";
-import { Request, Response } from "express";
-import { ConfigService } from "@nestjs/config";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { McpService } from "./mcp.service";
-import { ApiKeyGuard } from "@/common/guards/api-key.guard";
-import { McpContext } from "./types/mcp-context.type";
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { McpService } from './mcp.service';
+import { ApiKeyGuard } from '@/common/guards/api-key.guard';
+import { ApiKeyAuthContext } from '@/modules/auth/api-key.service';
+import { McpClientRegistry } from './auth/mcp-client-registry.service';
+import { McpContext } from './types/mcp-context.type';
 
 @Controller()
 export class McpController {
@@ -22,6 +24,7 @@ export class McpController {
   constructor(
     private mcpService: McpService,
     private configService: ConfigService,
+    private clientRegistry: McpClientRegistry,
   ) {}
 
   /**
@@ -59,13 +62,17 @@ export class McpController {
       return;
     }
 
-    // Extract user (set by ApiKeyGuard)
     const user = (req as any).user;
+    const apiKeyAuth = (req as any).apiKeyAuth as ApiKeyAuthContext | undefined;
 
-    if (!user) {
+    if (!user || !apiKeyAuth) {
+      this.logger.error('MCP request missing API-key auth context');
       return;
     }
 
+    const client = this.clientRegistry.resolveFromClientKey(
+      apiKeyAuth.mcpClientKey,
+    );
     const context: McpContext = {
       user: {
         userId: user.userId,
@@ -74,10 +81,11 @@ export class McpController {
         lastName: user.lastName,
         schemaNamespace: user.schemaNamespace,
       },
+      client,
     };
 
     this.logger.log(
-      `MCP HTTP request from user: ${user.email} (${user.userId})`,
+      `MCP HTTP request from user: ${user.email} (${user.userId}), client: ${client.key}`,
     );
 
     const server = this.mcpService.createServer(context);

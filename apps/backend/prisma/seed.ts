@@ -1,4 +1,5 @@
 import {
+  ApiKeyMcpClientKey,
   PrismaClient,
   PreferenceValueType,
   PreferenceScope,
@@ -956,7 +957,11 @@ async function createWorkshopGroups(
       const groupName = `grp-${grp}-${cat.key}`;
       const apiKey = generateApiKey(groupName);
       const apiKeyRecord = await prisma.apiKey.create({
-        data: { keyHash: hashKey(apiKey), groupName },
+        data: {
+          keyHash: hashKey(apiKey),
+          groupName,
+          mcpClientKey: ApiKeyMcpClientKey.CLAUDE,
+        },
       });
 
       for (const user of cat.users) {

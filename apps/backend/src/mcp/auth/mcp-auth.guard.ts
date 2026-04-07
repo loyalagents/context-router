@@ -1,4 +1,4 @@
-import { Injectable, CanActivate } from "@nestjs/common";
+import { Injectable, CanActivate } from '@nestjs/common';
 
 /** Placeholder guard for MCP routes. Override in tests via createTestApp(). */
 @Injectable()

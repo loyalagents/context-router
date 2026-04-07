@@ -1,0 +1,242 @@
+## MCP Client Policy Plan v8
+
+### Summary
+- Implement MCP authorization around a shared `clientKey -> policy -> authorizer` model, not around OAuth-specific checks.
+- Ship four internal client buckets:
+  - `claude` = read/write
+  - `codex` = read-only
+  - `fallback` = read-only for explicitly supported fallback clients
+  - `unknown` = no access for unresolved or unmapped clients
+- Keep the design reusable for a future API-key branch by separating credential resolution, policy lookup, and authorization.
+- Add a minimal concrete target-rule model now, but do not enforce namespace/slug restrictions in this branch.
+- Keep Auth0 and env-file changes out of the implementation phase. Those changes happen later as a user-owned interactive checkpoint, after code/tests are green and after the code changes are committed.
+
+### Public Interfaces and Types
+- Add a required access declaration to every MCP tool.
+  - `requiredAccess: McpAccess`
+- Add a required access declaration to every MCP resource definition.
+  - `requiredAccess: McpAccess`
+- Replace `McpContext.agent` with `McpContext.client`
+- Add shared types:
+  - `McpClientKey = 'claude' | 'codex' | 'fallback' | 'unknown'`
+  - `McpAccess = { resource: 'preferences'; action: 'read' | 'write' }`
+  - `McpCapability = 'preferences:read' | 'preferences:write'`
+  - `ResolvedMcpClient` with:
+    - `key`
+    - `externalId?`
+    - `policy`
+  - `McpClientPolicy` with:
+    - `key`
+    - `label`
+    - `capabilities: McpCapability[]`
+    - `targetRules: McpTargetRule[]`
+  - `McpTarget = { namespace?: string; slug?: string }`
+  - `McpTargetRule` with:
+    - `effect: 'allow' | 'deny'`
+    - `capability: McpCapability`
+    - `matcher: { namespace?: string; slug?: string; slugPrefix?: string }`
+- Keep `McpCapability` internal to registry/authorizer code as much as possible.
+  - Tool and resource authors only declare `requiredAccess: McpAccess`
+  - Access-to-capability conversion lives in shared authz code
+
+### Authorization Contract
+- Step 1: resolve credentials to `clientKey`
+- Step 2: resolve `clientKey` to `McpClientPolicy`
+- Step 3: ask one shared authorizer whether access is allowed
+- Normalize `McpAccess` to `McpCapability` before evaluation.
+- Effective access is evaluated as:
+  - policy capability is the coarse upper bound
+  - normalized token grants narrow that bound when present
+  - target rules narrow access further when a target is supplied
+- Target-rule evaluation algorithm:
+  - coarse capability must allow first
+  - if no target is supplied, target rules are skipped
+  - if target rules exist for the requested capability and a target is supplied:
+    - any matching `deny` causes denial
+    - otherwise at least one matching `allow` is required
+    - if rules exist for that capability and no rule matches, deny
+  - if no target rules exist for that capability, allow based on coarse capability alone
+- Deny beats allow in all cases.
+- Unknown-client behavior:
+  - `tools/list` returns an empty tool list
+  - `resources/list` returns an empty resource list
+  - `tools/call` is denied
+  - `resources/read` is denied
+- For this branch, only coarse read/write authorization is enforced in MCP handlers; target-aware authorizer APIs are added but namespace/slug rules remain inactive.
+
+### Implementation Changes
+- Add a central `McpClientRegistry` that owns shared MCP client config and supports:
+  - resolve OAuth DCR redirect URIs -> `clientKey`
+  - resolve OAuth request token claims -> `clientKey`
+  - resolve future API-key metadata -> `clientKey`
+  - map `clientKey` -> `McpClientPolicy`
+- Add a central `McpAuthorizationService` with methods like:
+  - `toCapability(access: McpAccess): McpCapability`
+  - `getEffectiveCapabilities(client, grants?)`
+  - `canAccess(client, access, grants?, target?)`
+  - `assertAccess(...)`
+- Normalize token scope/permission claims in the MCP auth guard into a simple internal grant set before passing them to the shared authorizer.
+- Do not hard-code the core design around `azp`; implement a token-client resolver owned by the registry or a small resolver service.
+  - First implementation may use `azp`
+  - Resolver owns fallback logic and returns `unknown` when claims do not map cleanly
+- Move policy data into shared MCP config, not OAuth-only config.
+- Configure initial policies as:
+  - `claude`: `['preferences:read', 'preferences:write']`, no target rules
+  - `codex`: `['preferences:read']`, no target rules
+  - `fallback`: `['preferences:read']`, no target rules
+  - `unknown`: `[]`
+- Keep OAuth-specific routing data in registry entries:
+  - `claude` redirect URIs include Claude web callbacks and the local Claude callback on port `8081`
+  - `codex` redirect URI is the Codex callback `http://127.0.0.1:8082/callback`
+  - `fallback` redirect URIs include explicitly supported OpenAI/ChatGPT web callbacks
+- Replace the current permissive localhost DCR shortcut with exact redirect URI allowlisting.
+- DCR matching semantics:
+  - submitted redirect URI set must be non-empty
+  - every submitted URI must exactly match an allowed URI
+  - every submitted URI must map to the same client bucket
+  - the submitted set may be a subset of that bucket’s configured URIs
+  - mixed-bucket URI sets are rejected
+- Add a small MCP resource abstraction so resources follow the same pattern as tools.
+  - Each resource definition declares its descriptor, `requiredAccess`, and read handler
+  - `resources/list` filters resource definitions by each resource’s declaration
+  - `resources/read` enforces the selected resource’s declaration
+- Treat the GraphQL schema resource as `preferences/read` in this branch.
+- Update the MCP controller to resolve `context.client` from the token-client resolver.
+- Pass normalized token grants from the request into MCP authorization decisions, but do not auto-deny solely because grant claims are absent.
+- Add lightweight structured logging at the client-registry and authorizer seam:
+  - client resolution result
+  - DCR bucket choice
+  - unknown-client resolution
+  - authorization denials with `clientKey`, requested access, and MCP surface
+- Keep logging minimal and safe:
+  - do not log raw tokens
+  - do not log full preference values
+  - prefer low-cardinality fields like `clientKey`, `surface`, `resource`, `action`, `decision`
+- Keep current MCP tool implementations focused on coarse access only in this branch.
+- Add a short design note for future namespace/slug rollout:
+  - direct-target tools will need a per-tool target resolver or equivalent hook to derive `McpTarget` from tool input consistently
+  - broad read tools should filter unauthorized results out
+  - direct targeted operations should reject unauthorized targets
+  - do not use ad hoc field redaction as the primary model
+
+### User-Owned Interactive Auth0 and Env Work
+- Auth0 and env-file updates are explicitly user-owned and interactive. The agent should not make those changes during implementation.
+- This includes:
+  - Auth0 dashboard changes
+  - local runtime env files such as `apps/backend/.env`
+  - tracked env templates such as `apps/backend/.env.example` and `apps/backend/.env.test`
+  - deployment env files such as `cloudrun.env` and `cloudrun.prod.env`
+- The implementation phase should be structured so code and tests can be completed before touching Auth0 or env files.
+- To support that:
+  - test coverage should use deterministic test client IDs supplied by test setup/code configuration, not by editing env files first
+  - code/config should be written so the Auth0/env handoff is a separate final integration step
+- After the code changes are green, the user reviews and commits the code changes first.
+- Only after that commit do we enter the interactive Auth0 + env update checkpoint, with the agent acting as a guide/checklist and the user applying the changes.
+
+### Auth0 and Env Changes The User Will Perform Interactively
+- In Auth0, the user will:
+  - keep or repurpose the current MCP public client as the `fallback` client
+  - create a dedicated public/native Auth0 client for `claude`
+  - create a dedicated public/native Auth0 client for `codex`
+  - configure exact allowed callback URLs for each client
+  - verify the chosen token client-identifying claim is present and stable for each client
+- In env files, the user will:
+  - add the Auth0 client IDs backing `claude`, `codex`, and `fallback`
+  - update local runtime env files
+  - update tracked env templates
+  - update deployment env files
+- The agent’s role at that stage is to provide the checklist, expected variable names, and verification steps, not to perform the updates.
+
+### Boot-Time Validation
+- Fail app startup if any MCP tool is missing `requiredAccess`
+- Fail app startup if any MCP resource definition is missing `requiredAccess`
+- Fail app startup if any redirect URI appears in more than one client bucket
+- Fail app startup if any configured OAuth credential mapping resolves to an unknown policy
+- Fail app startup if `unknown` has any capabilities
+- Fail app startup if duplicate `clientKey` definitions or duplicate policy bindings exist
+- Fail app startup if any DCR-returnable OAuth client bucket cannot be resolved back to the same `clientKey` by the token-client resolver configuration
+- Fail app startup if any `McpTargetRule` matcher is malformed
+  - require at least one matcher field
+  - reject unsupported or contradictory matcher combinations
+
+### OAuth and Future API-Key Reuse
+- OAuth branch:
+  - DCR resolves redirect URIs -> `clientKey` and returns that client’s Auth0 public `client_id`
+  - request handling resolves token claims -> `clientKey`
+  - policy lookup and authorization are shared
+- API-key branch reuse path:
+  - API-key auth resolves key metadata / DB row -> `clientKey`
+  - the same `McpClientRegistry`, `McpAuthorizationService`, `McpAccess`, `McpCapability`, `McpTarget`, and `McpContext.client` shape are reused unchanged
+- This branch implements the shared policy model plus OAuth wiring only; API-key auth remains out of scope.
+
+### Checkpoints and Tests
+- Checkpoint 1: write failing tests first.
+  - MCP e2e:
+    - Claude can call write tools
+    - Codex cannot call write tools
+    - Fallback cannot call write tools
+    - Unknown gets empty tool and resource lists
+    - Unknown cannot call tools
+    - Unknown cannot read resources
+    - `tools/list` is filtered per client
+    - `resources/list` and `resources/read` respect per-resource access
+  - DCR tests:
+    - Claude callback returns Claude client ID
+    - Codex callback returns Codex client ID
+    - Explicit supported fallback callback returns fallback client ID
+    - Unknown callback is rejected
+    - Mixed-client redirect URI sets are rejected
+    - Valid subset redirect URI sets succeed
+  - Authorizer unit tests:
+    - capability checks
+    - unknown client behavior
+    - grant intersection when claims are present
+    - no-grant-claims case still allows policy-authorized access
+    - target-rule default behavior
+    - deny-overrides-allow evaluation
+    - unmatched target denies when rules exist for that capability
+  - Startup validation tests:
+    - missing tool access declaration fails
+    - missing resource access declaration fails
+    - duplicate redirect URI mapping fails
+    - `unknown` capability misconfiguration fails
+    - malformed target-rule matcher fails
+    - DCR/request-resolution inconsistency fails
+- Checkpoint 2: add shared types, config, registry, token-client resolver, resource abstraction, and test-harness support for per-request client identity.
+  - Update the MCP mock guard to accept a test header for client-identity override.
+  - Supply deterministic test client IDs from test code/setup, not from env-file edits.
+  - Default existing MCP tests to the full-access Claude test client so current expectations stay stable while wiring lands.
+  - Run targeted MCP and authorizer tests.
+- Checkpoint 3: add required access declarations for tools and resources and wire the shared authorizer into all MCP request handlers.
+  - Run the targeted MCP suite again and keep edits small until green.
+- Checkpoint 4: update DCR to exact per-URI routing with same-bucket subset validation and remove permissive localhost matching.
+  - Run targeted DCR and MCP tests again.
+- Checkpoint 5: finish code-only stabilization before any Auth0/env work.
+  - Run the full targeted backend test set relevant to MCP/auth changes
+  - Verify the code works with test-only configuration and no manual Auth0/env updates
+  - Prepare the implementation summary and the interactive configuration checklist
+  - User reviews and commits the code changes at this point
+- Checkpoint 6: user-owned interactive Auth0 + env update checkpoint.
+  - User updates Auth0 clients and callback URLs
+  - User updates local env files, tracked env templates, and deployment env files
+  - Agent guides the process and answers questions, but does not perform the updates
+- Checkpoint 7: post-config verification after the user finishes interactive updates.
+  - Verify request-time token resolution maps each Auth0 client back to the expected `clientKey`
+  - Re-run targeted MCP/DCR verification against the real OAuth configuration
+  - Update MCP connection docs and auth-rules docs to reflect the final configured callbacks and client mapping
+- Checkpoint 8: add a merge/context document for the API-key branch at `docs/auth-rules/mcp-client-policy-merge-guide.md`.
+  - Summarize the new shared types, config, registry, resolver, resource abstraction, and authorizer
+  - Separate shared authorization logic from OAuth-only wiring
+  - Call out likely merge touchpoints for the API-key branch: context construction, auth guard/middleware, config/env, resources/tools registration, and tests
+  - Include a recommended merge order and a validation checklist
+
+### Assumptions and Defaults
+- Initial policy matrix is:
+  - `claude = read/write`
+  - `codex = read-only`
+  - `fallback = read-only`
+  - `unknown = deny all`
+- `fallback` means “explicitly supported fallback client,” not arbitrary new OAuth callbacks.
+- `unknown` means unresolved or unmapped credentials and gets no access.
+- Token grants narrow policy only when grant claims are actually present in the token.
+- Target-based restrictions are not enforced in this branch; only the shared target-aware model and documented semantics are added so future namespace/slug restrictions can be implemented without redesign.

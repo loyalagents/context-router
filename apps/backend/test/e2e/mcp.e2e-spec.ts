@@ -1,4 +1,5 @@
 import { INestApplication } from "@nestjs/common";
+import { createHash } from "crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -6,7 +7,20 @@ import { CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import request from "supertest";
 import { createTestApp, createTestUser, TestUser } from "../setup/test-app";
 import { getPrismaClient, seedPreferenceDefinitions } from "../setup/test-db";
+import { ApiKeyMcpClientKey } from "../../src/infrastructure/prisma/generated-client";
 import { McpService } from "../../src/mcp/mcp.service";
+import { ResolvedMcpClient } from "../../src/mcp/types/mcp-authorization.types";
+
+const TEST_CLAUDE_CLIENT: ResolvedMcpClient = {
+  key: "claude",
+  externalId: "test-claude-client",
+  policy: {
+    key: "claude",
+    label: "Claude",
+    capabilities: ["preferences:read", "preferences:write"],
+    targetRules: [],
+  },
+};
 
 function parseToolContent(result: {
   content: Array<{ type: string; text: string }>;
@@ -21,6 +35,7 @@ function parseToolContent(result: {
 
 describe("MCP Integration (e2e)", () => {
   let app: INestApplication;
+  let realAuthApp: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
   let registerMcpUser: (user: TestUser) => void;
@@ -32,6 +47,9 @@ describe("MCP Integration (e2e)", () => {
     setTestUser = testApp.setTestUser;
     registerMcpUser = testApp.registerMcpUser;
     mcpService = testApp.module.get<McpService>(McpService);
+
+    const realAuthTestApp = await createTestApp({ mockAuthGuards: false });
+    realAuthApp = realAuthTestApp.app;
   });
 
   beforeEach(async () => {
@@ -41,6 +59,7 @@ describe("MCP Integration (e2e)", () => {
 
   afterAll(async () => {
     await app.close();
+    await realAuthApp.close();
   });
 
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
@@ -54,13 +73,50 @@ describe("MCP Integration (e2e)", () => {
       .set(headers)
       .send(body);
 
+  const realMcpPost = (body: object, headers: Record<string, string> = {}) =>
+    request(realAuthApp.getHttpServer())
+      .post("/mcp")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json, text/event-stream")
+      .set(headers)
+      .send(body);
+
+  const realMcpHeaders = (apiKey: string, userId = testUser.userId) => ({
+    Authorization: `Bearer ${apiKey}`,
+    "x-user-id": userId,
+  });
+
+  const createApiKeyForUser = async (
+    mcpClientKey: ApiKeyMcpClientKey,
+    userId: string,
+    plaintextKey: string,
+  ) => {
+    const prisma = getPrismaClient();
+    const apiKeyRecord = await prisma.apiKey.create({
+      data: {
+        keyHash: createHash("sha256").update(plaintextKey).digest("hex"),
+        groupName: `Test ${mcpClientKey} Group`,
+        mcpClientKey,
+      },
+    });
+
+    await prisma.apiKeyUser.create({
+      data: {
+        apiKeyId: apiKeyRecord.id,
+        userId,
+      },
+    });
+
+    return plaintextKey;
+  };
+
   describe("MCP Service", () => {
     it("should be defined", () => {
       expect(mcpService).toBeDefined();
     });
 
     it("should create a distinct server per call", () => {
-      const context = { user: testUser };
+      const context = { user: testUser, client: TEST_CLAUDE_CLIENT };
       const serverA = mcpService.createServer(context);
       const serverB = mcpService.createServer(context);
       expect(serverA).not.toBe(serverB);
@@ -499,6 +555,212 @@ describe("MCP Integration (e2e)", () => {
     });
   });
 
+  describe("Real API-key client policy enforcement", () => {
+    beforeEach(async () => {
+      const prisma = getPrismaClient();
+      await seedPreferenceDefinitions(prisma);
+    });
+
+    it("allows CLAUDE keys to list and call write tools", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.CLAUDE,
+        testUser.userId,
+        "mcp-real-claude",
+      );
+
+      const listResponse = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 30,
+          method: "tools/list",
+          params: {},
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      const toolNames = listResponse.body.result.tools.map(
+        (tool: { name: string }) => tool.name,
+      );
+      expect(toolNames).toContain("suggestPreference");
+      expect(toolNames).toContain("createPreferenceDefinition");
+      expect(toolNames).toContain("applyPreference");
+
+      const callResponse = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 31,
+          method: "tools/call",
+          params: {
+            name: "suggestPreference",
+            arguments: {
+              slug: "food.dietary_restrictions",
+              value: '["nuts"]',
+              confidence: 0.9,
+            },
+          },
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(callResponse.body.result?.isError).not.toBe(true);
+    });
+
+    it("filters write tools out of tools/list for CODEX keys", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.CODEX,
+        testUser.userId,
+        "mcp-real-codex-list",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 32,
+          method: "tools/list",
+          params: {},
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      const toolNames = response.body.result.tools.map(
+        (tool: { name: string }) => tool.name,
+      );
+      expect(toolNames).toContain("searchPreferences");
+      expect(toolNames).not.toContain("suggestPreference");
+      expect(toolNames).not.toContain("createPreferenceDefinition");
+      expect(toolNames).not.toContain("applyPreference");
+    });
+
+    it("denies write tool calls for CODEX keys", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.CODEX,
+        testUser.userId,
+        "mcp-real-codex-call",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 33,
+          method: "tools/call",
+          params: {
+            name: "suggestPreference",
+            arguments: {
+              slug: "food.dietary_restrictions",
+              value: '["shellfish"]',
+              confidence: 0.8,
+            },
+          },
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.result?.isError).toBe(true);
+    });
+
+    it("allows CLAUDE to read schema://graphql", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.CLAUDE,
+        testUser.userId,
+        "mcp-real-claude-resource",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 34,
+          method: "resources/read",
+          params: { uri: "schema://graphql" },
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.result.contents[0].uri).toBe("schema://graphql");
+      expect(response.body.result.contents[0].text).toContain("type Query");
+    });
+
+    it("allows CODEX to read schema://graphql", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.CODEX,
+        testUser.userId,
+        "mcp-real-codex-resource",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 35,
+          method: "resources/read",
+          params: { uri: "schema://graphql" },
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.result.contents[0].uri).toBe("schema://graphql");
+      expect(response.body.result.contents[0].text).toContain("type Mutation");
+    });
+
+    it("returns an empty tools list for UNKNOWN keys", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.UNKNOWN,
+        testUser.userId,
+        "mcp-real-unknown-tools",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 36,
+          method: "tools/list",
+          params: {},
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.result.tools).toEqual([]);
+    });
+
+    it("returns an empty resources list for UNKNOWN keys", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.UNKNOWN,
+        testUser.userId,
+        "mcp-real-unknown-resources",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 37,
+          method: "resources/list",
+          params: {},
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.result.resources).toEqual([]);
+    });
+
+    it("denies resources/read for UNKNOWN keys", async () => {
+      const apiKey = await createApiKeyForUser(
+        ApiKeyMcpClientKey.UNKNOWN,
+        testUser.userId,
+        "mcp-real-unknown-read",
+      );
+
+      const response = await realMcpPost(
+        {
+          jsonrpc: "2.0",
+          id: 38,
+          method: "resources/read",
+          params: { uri: "schema://graphql" },
+        },
+        realMcpHeaders(apiKey),
+      ).expect(200);
+
+      expect(response.body.error).toBeDefined();
+    });
+  });
+
   describe("GET /mcp", () => {
     it("should return 405 Method Not Allowed", async () => {
       const response = await request(app.getHttpServer()).get("/mcp");
@@ -583,6 +845,7 @@ describe("MCP Integration (e2e)", () => {
             lastName: user.lastName,
             schemaNamespace: user.schemaNamespace,
           },
+          client: TEST_CLAUDE_CLIENT,
         });
 
         await Promise.all([

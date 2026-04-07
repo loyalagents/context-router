@@ -1,4 +1,5 @@
 export {
+  ApiKeyMcpClientKey,
   Prisma,
   PrismaClient,
   LocationType,

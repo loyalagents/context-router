@@ -86,8 +86,10 @@ export class ApiKeyGuard implements CanActivate {
       );
     }
 
-    const user = await this.apiKeyService.validateApiKeyAndUser(apiKey, userId);
+    const { user, apiKeyAuth } =
+      await this.apiKeyService.validateApiKeyUserContext(apiKey, userId);
     request.user = user;
+    request.apiKeyAuth = apiKeyAuth;
 
     this.logger.debug(
       `Auth successful: user ${user.email} (resolved userId from: ${resolvedFrom})`,

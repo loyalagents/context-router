@@ -1,4 +1,5 @@
 import {
+  ApiKeyMcpClientKey,
   LocationType,
   PreferenceScope,
   PreferenceStatus,
@@ -19,6 +20,7 @@ export interface ApiKey {
   id: string;
   keyHash: string;
   groupName: string;
+  mcpClientKey: ApiKeyMcpClientKey;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

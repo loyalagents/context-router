@@ -29,6 +29,7 @@ const mockApiKey = {
   id: 'key-1',
   keyHash: hashKey('grp-a-abc123'),
   groupName: 'Group A',
+  mcpClientKey: 'CLAUDE',
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -125,6 +126,44 @@ describe('ApiKeyService', () => {
       await expect(
         service.validateApiKeyAndUser('grp-a-abc123', 'nonexistent'),
       ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('validateApiKeyUserContext', () => {
+    it('should return user and mapped MCP client metadata for a valid key', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue({
+        ...mockApiKey,
+        users: [{ user: mockUser }],
+      });
+
+      const result = await service.validateApiKeyUserContext(
+        'grp-a-abc123',
+        'user-1',
+      );
+
+      expect(result).toEqual({
+        user: mockUser,
+        apiKeyAuth: {
+          apiKeyId: mockApiKey.id,
+          groupName: mockApiKey.groupName,
+          mcpClientKey: 'claude',
+        },
+      });
+    });
+
+    it('should map UNKNOWN keys to the shared unknown client bucket', async () => {
+      prisma.apiKey.findUnique.mockResolvedValue({
+        ...mockApiKey,
+        mcpClientKey: 'UNKNOWN',
+        users: [{ user: mockUser }],
+      });
+
+      const result = await service.validateApiKeyUserContext(
+        'grp-a-abc123',
+        'user-1',
+      );
+
+      expect(result.apiKeyAuth.mcpClientKey).toBe('unknown');
     });
   });
 

@@ -39,6 +39,7 @@ export class SmartSearchTool implements McpToolInterface {
   };
 
   readonly requiresAuth = true;
+  readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
   constructor(
     private readonly workflow: PreferenceSearchWorkflow,

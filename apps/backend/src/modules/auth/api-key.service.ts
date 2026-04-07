@@ -1,6 +1,24 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { PrismaService } from '@/infrastructure/prisma/prisma.service';
+import { McpClientKey } from '@/mcp/types/mcp-authorization.types';
+
+export interface ApiKeyAuthContext {
+  apiKeyId: string;
+  groupName: string;
+  mcpClientKey: McpClientKey;
+}
+
+export interface ValidatedApiKeyUserContext {
+  user: {
+    userId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    schemaNamespace: string;
+  };
+  apiKeyAuth: ApiKeyAuthContext;
+}
 
 @Injectable()
 export class ApiKeyService {
@@ -26,6 +44,14 @@ export class ApiKeyService {
     lastName: string;
     schemaNamespace: string;
   }> {
+    const context = await this.validateApiKeyUserContext(apiKey, userId);
+    return context.user;
+  }
+
+  async validateApiKeyUserContext(
+    apiKey: string,
+    userId: string,
+  ): Promise<ValidatedApiKeyUserContext> {
     const keyHash = this.hashKey(apiKey);
 
     const apiKeyRecord = await this.prisma.apiKey.findUnique({
@@ -71,7 +97,16 @@ export class ApiKeyService {
       );
     }
 
-    return apiKeyUser.user;
+    return {
+      user: apiKeyUser.user,
+      apiKeyAuth: {
+        apiKeyId: apiKeyRecord.id,
+        groupName: apiKeyRecord.groupName,
+        mcpClientKey: this.toMcpClientKey(
+          (apiKeyRecord as { mcpClientKey?: unknown }).mcpClientKey,
+        ),
+      },
+    };
   }
 
   async getUsersByApiKey(
@@ -118,5 +153,20 @@ export class ApiKeyService {
     }
 
     return apiKeyRecord;
+  }
+
+  private toMcpClientKey(value: unknown): McpClientKey {
+    switch (value) {
+      case 'CLAUDE':
+        return 'claude';
+      case 'CODEX':
+        return 'codex';
+      case 'FALLBACK':
+        return 'fallback';
+      case 'UNKNOWN':
+        return 'unknown';
+      default:
+        return 'unknown';
+    }
   }
 }

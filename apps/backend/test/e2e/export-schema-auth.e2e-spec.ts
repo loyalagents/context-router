@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
+import { ApiKeyMcpClientKey } from '../../src/infrastructure/prisma/generated-client';
 
 describe('Export Preference Schema Auth Contract (e2e)', () => {
   let app: INestApplication;
@@ -31,6 +32,7 @@ describe('Export Preference Schema Auth Contract (e2e)', () => {
       data: {
         keyHash: createHash('sha256').update(apiKey).digest('hex'),
         groupName: 'Export Auth Test Group',
+        mcpClientKey: ApiKeyMcpClientKey.CLAUDE,
       },
     });
 

@@ -81,6 +81,7 @@ export class PreferenceDefinitionTool implements McpToolInterface {
   };
 
   readonly requiresAuth = true;
+  readonly requiredAccess = { resource: 'preferences', action: 'write' } as const;
 
   constructor(private defService: PreferenceDefinitionService) {}
 
