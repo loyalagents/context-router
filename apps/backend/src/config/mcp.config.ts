@@ -1,7 +1,59 @@
 import { registerAs } from '@nestjs/config';
+import { McpClientConfig } from '../mcp/types/mcp-authorization.types';
 
 export default registerAs('mcp', () => {
   const auth0Domain = process.env.AUTH0_DOMAIN;
+  const clients: McpClientConfig[] = [
+    {
+      key: 'claude',
+      label: 'Claude',
+      capabilities: ['preferences:read', 'preferences:write'],
+      targetRules: [],
+      oauth: {
+        clientId: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID,
+        redirectUris: [
+          'https://claude.ai/api/mcp/auth_callback',
+          'https://claude.com/api/mcp/auth_callback',
+          'https://claude.ai/oauth/callback',
+          'https://claude.com/oauth/callback',
+          'https://claude.ai/api/oauth/callback',
+          'https://claude.com/api/oauth/callback',
+          'http://localhost:8081/callback',
+        ],
+      },
+    },
+    {
+      key: 'codex',
+      label: 'Codex',
+      capabilities: ['preferences:read'],
+      targetRules: [],
+      oauth: {
+        clientId: process.env.AUTH0_MCP_CODEX_CLIENT_ID,
+        redirectUris: ['http://127.0.0.1:8082/callback'],
+      },
+    },
+    {
+      key: 'fallback',
+      label: 'Supported Fallback',
+      capabilities: ['preferences:read'],
+      targetRules: [],
+      oauth: {
+        clientId:
+          process.env.AUTH0_MCP_FALLBACK_CLIENT_ID ||
+          process.env.AUTH0_MCP_PUBLIC_CLIENT_ID,
+        redirectUris: [
+          'https://chatgpt.com/connector_platform_oauth_redirect',
+          'https://platform.openai.com/apps-manage/oauth',
+        ],
+      },
+    },
+    {
+      key: 'unknown',
+      label: 'Unknown',
+      capabilities: [],
+      targetRules: [],
+    },
+  ];
 
   return {
     // Server Identity
@@ -72,28 +124,8 @@ export default registerAs('mcp', () => {
           : undefined,
       },
 
-      // Pre-registered public client_id for MCP connectors (PKCE, no secret)
-      publicClientId: process.env.AUTH0_MCP_PUBLIC_CLIENT_ID,
-
       // Scopes supported by MCP tools
       scopes: ['preferences:read', 'preferences:write', 'offline_access'],
-
-      // Allowed redirect URIs for DCR shim (strict allowlist)
-      // Note: Claude Desktop uses http://localhost or http://127.0.0.1 with dynamic ports
-      allowedRedirectUris: [
-        // ChatGPT web
-        'https://chatgpt.com/connector_platform_oauth_redirect',
-        // Claude web and desktop (various possible patterns)
-        'https://claude.ai/api/mcp/auth_callback',
-        'https://claude.com/api/mcp/auth_callback',
-        'https://claude.ai/oauth/callback',
-        'https://claude.com/oauth/callback',
-        'https://claude.ai/api/oauth/callback',
-        'https://claude.com/api/oauth/callback',
-        // Claude Desktop (uses localhost with various ports)
-        'http://localhost/callback',
-        'http://127.0.0.1/callback',
-      ],
 
       // Rate limiting for /oauth/register
       rateLimit: {
@@ -104,5 +136,7 @@ export default registerAs('mcp', () => {
         ),
       },
     },
+
+    clients,
   };
 });

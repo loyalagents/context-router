@@ -165,6 +165,8 @@ function createMcpMockAuthGuard(
     canActivate: (context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
       const testUserId = request?.headers?.['x-test-user-id'];
+      const testClientId = request?.headers?.['x-test-mcp-client-id'];
+      const rawGrants = request?.headers?.['x-test-mcp-grants'];
 
       if (testUserId) {
         const user = mcpUsersMap.get(testUserId);
@@ -177,6 +179,23 @@ function createMcpMockAuthGuard(
         request.user = user;
       } else {
         request.user = userRef.current;
+      }
+
+      request.tokenPayload = testClientId
+        ? { azp: testClientId }
+        : { azp: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID };
+
+      if (rawGrants === undefined) {
+        request.tokenGrants = ['preferences:read', 'preferences:write'];
+      } else if (rawGrants === '__absent__') {
+        request.tokenGrants = undefined;
+      } else if (rawGrants === '') {
+        request.tokenGrants = [];
+      } else {
+        request.tokenGrants = String(rawGrants)
+          .split(',')
+          .map((grant) => grant.trim())
+          .filter(Boolean);
       }
 
       return true;
