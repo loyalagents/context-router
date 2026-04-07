@@ -1,5 +1,8 @@
 import { McpAuthorizationService } from './mcp-authorization.service';
-import { ResolvedMcpClient } from '../types/mcp-authorization.types';
+import {
+  ResolvedMcpClient,
+  normalizeMcpGrants,
+} from '../types/mcp-authorization.types';
 
 function createClient(
   overrides: Partial<ResolvedMcpClient> = {},
@@ -33,6 +36,11 @@ describe('McpAuthorizationService', () => {
         action: 'write',
       }),
     ).toBe(true);
+  });
+
+  it('treats empty or non-mcp grant sets as absent', () => {
+    expect(normalizeMcpGrants([])).toBeUndefined();
+    expect(normalizeMcpGrants(['openid', 'profile', 'offline_access'])).toBeUndefined();
   });
 
   it('intersects policy capabilities with normalized grants when present', () => {

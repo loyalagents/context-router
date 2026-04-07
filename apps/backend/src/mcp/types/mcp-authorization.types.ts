@@ -56,9 +56,10 @@ export function isMcpCapability(value: string): value is McpCapability {
 }
 
 export function normalizeMcpGrants(grants: string[] | undefined): McpCapability[] | undefined {
-  if (!grants) {
+  if (!grants || grants.length === 0) {
     return undefined;
   }
 
-  return grants.filter(isMcpCapability);
+  const normalized = grants.filter(isMcpCapability);
+  return normalized.length > 0 ? normalized : undefined;
 }
