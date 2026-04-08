@@ -1,11 +1,5 @@
-CREATE TYPE "ApiKeyMcpClientKey" AS ENUM ('CLAUDE', 'CODEX', 'FALLBACK', 'UNKNOWN');
-
-ALTER TABLE "api_keys"
-ADD COLUMN "mcp_client_key" "ApiKeyMcpClientKey";
-
-UPDATE "api_keys"
-SET "mcp_client_key" = 'CLAUDE'
-WHERE "mcp_client_key" IS NULL;
-
-ALTER TABLE "api_keys"
-ALTER COLUMN "mcp_client_key" SET NOT NULL;
+-- This migration slot is intentionally left empty.
+-- The original MCP client-key change depends on "api_keys", which is created
+-- later in this branch's migration history by "workshop_api_key_auth".
+-- The actual schema change now lives in
+-- "workshop_api_key_auth_add_mcp_client_key_to_api_keys".
