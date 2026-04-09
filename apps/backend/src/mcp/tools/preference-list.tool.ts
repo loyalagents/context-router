@@ -42,6 +42,7 @@ export class PreferenceListTool implements McpToolInterface {
   };
 
   readonly requiresAuth = false;
+  readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
   constructor(private defRepo: PreferenceDefinitionRepository) {}
 

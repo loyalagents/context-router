@@ -2,6 +2,11 @@
  * User context extracted from API-key-authenticated HTTP requests.
  * Passed to MCP tool handlers to ensure user-scoped operations.
  */
+import {
+  McpCapability,
+  ResolvedMcpClient,
+} from './mcp-authorization.types';
+
 export interface McpUser {
   userId: string;
   email: string;
@@ -15,4 +20,6 @@ export interface McpUser {
  */
 export interface McpContext {
   user: McpUser;
+  client: ResolvedMcpClient;
+  grants?: McpCapability[];
 }

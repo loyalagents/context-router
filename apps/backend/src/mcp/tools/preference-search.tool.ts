@@ -53,6 +53,7 @@ export class PreferenceSearchTool implements McpToolInterface {
   };
 
   readonly requiresAuth = true;
+  readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
   constructor(
     private preferenceService: PreferenceService,

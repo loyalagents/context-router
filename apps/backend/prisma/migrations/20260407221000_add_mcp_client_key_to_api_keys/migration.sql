@@ -1,0 +1,5 @@
+-- This migration slot is intentionally left empty.
+-- The original MCP client-key change depends on "api_keys", which is created
+-- later in this branch's migration history by "workshop_api_key_auth".
+-- The actual schema change now lives in
+-- "workshop_api_key_auth_add_mcp_client_key_to_api_keys".

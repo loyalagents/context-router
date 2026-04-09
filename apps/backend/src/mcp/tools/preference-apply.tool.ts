@@ -49,6 +49,10 @@ export class PreferenceApplyTool implements McpToolInterface {
   };
 
   readonly requiresAuth = true;
+  readonly requiredAccess = {
+    resource: 'preferences',
+    action: 'write',
+  } as const;
 
   constructor(private readonly mutationTool: PreferenceMutationTool) {}
 

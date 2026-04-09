@@ -1,13 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  ReadResourceResult,
+  Resource,
+} from '@modelcontextprotocol/sdk/types.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { McpResourceInterface } from './base/mcp-resource.interface';
+import { McpContext } from '../types/mcp-context.type';
 
 @Injectable()
-export class SchemaResource {
+export class SchemaResource implements McpResourceInterface {
   private readonly logger = new Logger(SchemaResource.name);
   private schemaCache: string | null = null;
   private lastCacheTime: number = 0;
   private readonly CACHE_TTL_MS = 60000; // Cache for 1 minute
+
+  readonly descriptor: Resource = {
+    uri: 'schema://graphql',
+    name: 'GraphQL Schema',
+    description:
+      'The GraphQL schema for the Context Router API, showing available types, queries, and mutations.',
+    mimeType: 'text/plain',
+  };
+
+  readonly requiredAccess = {
+    resource: 'preferences',
+    action: 'read',
+  } as const;
 
   /**
    * Get the GraphQL schema
@@ -51,5 +70,18 @@ export class SchemaResource {
         'GraphQL schema not available. Ensure the application has started and schema has been generated.',
       );
     }
+  }
+
+  async read(_context: McpContext): Promise<ReadResourceResult> {
+    const schemaContent = await this.getGraphQLSchema();
+    return {
+      contents: [
+        {
+          uri: this.descriptor.uri,
+          mimeType: this.descriptor.mimeType,
+          text: schemaContent,
+        },
+      ],
+    };
   }
 }

@@ -11,14 +11,25 @@ describe('ApiKeyGuard', () => {
     firstName: 'Guard',
     lastName: 'Test',
   };
+  const mockUserContext = {
+    user: mockUser,
+    apiKeyAuth: {
+      apiKeyId: 'key-1',
+      groupName: 'Group A',
+      mcpClientKey: 'claude',
+    },
+  };
 
   let reflector: jest.Mocked<Pick<Reflector, 'getAllAndOverride'>>;
-  let apiKeyService: jest.Mocked<Pick<ApiKeyService, 'validateApiKeyAndUser'>>;
+  let apiKeyService: jest.Mocked<
+    Pick<ApiKeyService, 'validateApiKeyUserContext'>
+  >;
   let guard: ApiKeyGuard;
   let request: {
     headers: Record<string, string>;
     query: Record<string, string>;
     user?: unknown;
+    apiKeyAuth?: unknown;
   };
   let context: ExecutionContext;
 
@@ -35,7 +46,7 @@ describe('ApiKeyGuard', () => {
       getAllAndOverride: jest.fn().mockReturnValue(false),
     };
     apiKeyService = {
-      validateApiKeyAndUser: jest.fn().mockResolvedValue(mockUser),
+      validateApiKeyUserContext: jest.fn().mockResolvedValue(mockUserContext),
     };
     guard = new ApiKeyGuard(
       reflector as unknown as Reflector,
@@ -61,7 +72,7 @@ describe('ApiKeyGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(apiKeyService.validateApiKeyAndUser).not.toHaveBeenCalled();
+    expect(apiKeyService.validateApiKeyUserContext).not.toHaveBeenCalled();
   });
 
   it('resolves the user from the x-user-id header', async () => {
@@ -70,11 +81,12 @@ describe('ApiKeyGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(apiKeyService.validateApiKeyAndUser).toHaveBeenCalledWith(
+    expect(apiKeyService.validateApiKeyUserContext).toHaveBeenCalledWith(
       'grp-a-abc123',
       mockUser.userId,
     );
     expect(request.user).toEqual(mockUser);
+    expect(request.apiKeyAuth).toEqual(mockUserContext.apiKeyAuth);
   });
 
   it('falls back to the asUser query parameter', async () => {
@@ -83,7 +95,7 @@ describe('ApiKeyGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(apiKeyService.validateApiKeyAndUser).toHaveBeenCalledWith(
+    expect(apiKeyService.validateApiKeyUserContext).toHaveBeenCalledWith(
       'grp-a-abc123',
       mockUser.userId,
     );
@@ -94,7 +106,7 @@ describe('ApiKeyGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(apiKeyService.validateApiKeyAndUser).toHaveBeenCalledWith(
+    expect(apiKeyService.validateApiKeyUserContext).toHaveBeenCalledWith(
       'grp-a-abc123',
       mockUser.userId,
     );
@@ -109,6 +121,6 @@ describe('ApiKeyGuard', () => {
       ),
     );
 
-    expect(apiKeyService.validateApiKeyAndUser).not.toHaveBeenCalled();
+    expect(apiKeyService.validateApiKeyUserContext).not.toHaveBeenCalled();
   });
 });

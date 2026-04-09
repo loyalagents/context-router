@@ -33,6 +33,7 @@ model ApiKey {
   id        String       @id @default(uuid())
   keyHash   String       @unique @map("key_hash")
   groupName String       @map("group_name")
+  mcpClientKey ApiKeyMcpClientKey @map("mcp_client_key")
   isActive  Boolean      @default(true) @map("is_active")
   createdAt DateTime     @default(now()) @map("created_at")
   updatedAt DateTime     @updatedAt @map("updated_at")
@@ -53,6 +54,13 @@ model ApiKeyUser {
   @@index([apiKeyId])
   @@index([userId])
   @@map("api_key_users")
+}
+
+enum ApiKeyMcpClientKey {
+  CLAUDE
+  CODEX
+  FALLBACK
+  UNKNOWN
 }
 
 enum LocationType {

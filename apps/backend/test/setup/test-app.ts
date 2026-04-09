@@ -23,6 +23,7 @@ import { AppModule } from '../../src/app.module';
 import { ApiKeyGuard } from '../../src/common/guards/api-key.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
 import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
+import { McpClientKey } from '../../src/mcp/types/mcp-authorization.types';
 import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
 import { VertexAiStructuredService } from '../../src/infrastructure/vertex-ai/vertex-ai-structured.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -150,10 +151,27 @@ function createMcpMockAuthGuard(
   mcpUsersMap: Map<string, TestUser>,
   userRef: UserRef,
 ) {
+  const resolveTestClientKey = (value: unknown): McpClientKey => {
+    if (value === process.env.AUTH0_MCP_CODEX_CLIENT_ID || value === 'codex') {
+      return 'codex';
+    }
+    if (
+      value === process.env.AUTH0_MCP_FALLBACK_CLIENT_ID ||
+      value === 'fallback'
+    ) {
+      return 'fallback';
+    }
+    if (value === 'unknown') {
+      return 'unknown';
+    }
+    return 'claude';
+  };
+
   return {
     canActivate: (context: ExecutionContext) => {
       const request = getRequestFromContext(context);
       const testUserId = request?.headers?.['x-test-user-id'];
+      const testClientId = request?.headers?.['x-test-mcp-client-id'];
 
       if (testUserId) {
         const user = mcpUsersMap.get(testUserId);
@@ -167,6 +185,12 @@ function createMcpMockAuthGuard(
       } else {
         request.user = userRef.current;
       }
+
+      request.apiKeyAuth = {
+        apiKeyId: 'test-api-key',
+        groupName: 'Test MCP Group',
+        mcpClientKey: resolveTestClientKey(testClientId),
+      };
 
       return true;
     },
