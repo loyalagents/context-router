@@ -89,7 +89,7 @@ export class PreferenceListTool implements McpToolInterface {
       }));
 
       let visibleEntries = entries;
-      if (context?.user) {
+      if (context?.user && context?.client) {
         const allowedSlugs = new Set(
           await this.authorizationService.filterByTargetAccess(
             context.client,

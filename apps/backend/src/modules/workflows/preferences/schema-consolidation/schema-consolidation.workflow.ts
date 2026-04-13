@@ -3,14 +3,16 @@ import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import {
-  PreferenceSchemaSnapshotService,
-  PreferenceDefinitionSnapshot,
-} from '../../../preferences/preference-definition/preference-schema-snapshot.service';
+    PreferenceSchemaSnapshotService,
+    PreferenceDefinitionSnapshot,
+    PreferenceSlugAccessFilter,
+  } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { ConsolidationResponseSchema } from './schema-consolidation.schema';
 import { buildSchemaConsolidationPrompt } from './schema-consolidation.prompt';
 
 export interface SchemaConsolidationWorkflowInput extends WorkflowInput {
   clientKey: string;
+  filterAccessibleSlugs?: PreferenceSlugAccessFilter;
   scope?: 'PERSONAL' | 'ALL';
 }
 
@@ -51,6 +53,7 @@ export class SchemaConsolidationWorkflow
         input.clientKey,
         'read',
         input.scope,
+        input.filterAccessibleSlugs,
       ),
     );
 

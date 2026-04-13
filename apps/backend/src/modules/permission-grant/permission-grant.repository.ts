@@ -9,6 +9,22 @@ import { PrismaService } from '@infrastructure/prisma/prisma.service';
 export class PermissionGrantRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  private compareTargetsBySpecificity(a: string, b: string): number {
+    const score = (target: string) => {
+      if (target === '*') {
+        return 0;
+      }
+
+      if (target.endsWith('.*')) {
+        return target.split('.').length * 2;
+      }
+
+      return target.split('.').length * 2 + 1;
+    };
+
+    return score(b) - score(a);
+  }
+
   async upsert(
     userId: string,
     clientKey: string,
@@ -44,14 +60,12 @@ export class PermissionGrantRepository {
     target: string,
     action: GrantAction,
   ) {
-    await this.prisma.permissionGrant.delete({
+    await this.prisma.permissionGrant.deleteMany({
       where: {
-        userId_clientKey_target_action: {
-          userId,
-          clientKey,
-          target,
-          action,
-        },
+        userId,
+        clientKey,
+        target,
+        action,
       },
     });
   }
@@ -105,6 +119,8 @@ export class PermissionGrantRepository {
       },
     });
 
-    return rows.sort((a, b) => b.target.length - a.target.length);
+    return rows.sort((a, b) =>
+      this.compareTargetsBySpecificity(a.target, b.target),
+    );
   }
 }

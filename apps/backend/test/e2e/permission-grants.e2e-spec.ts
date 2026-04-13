@@ -221,6 +221,63 @@ describe('Permission Grants (e2e)', () => {
     expect(prompt).not.toContain('food.dietary_restrictions');
   });
 
+  it('keeps client-specific read grants isolated to the matching client bucket', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const claudeList = parseToolResult(
+      await mcpToolCall('listPreferenceSlugs', {}, TEST_CLIENT_IDS.claude),
+    );
+    expect(
+      claudeList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(false);
+
+    const codexList = parseToolResult(
+      await mcpToolCall('listPreferenceSlugs', {}, TEST_CLIENT_IDS.codex),
+    );
+    expect(
+      codexList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(true);
+  });
+
+  it('keeps a short exact-slug allow exception when a category wildcard is denied', async () => {
+    await preferenceDefinitionService.create(
+      {
+        slug: 'a.b',
+        description: 'Allowed short slug',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isSensitive: false,
+        isCore: false,
+      },
+      testUser.userId,
+    );
+    await preferenceDefinitionService.create(
+      {
+        slug: 'a.c',
+        description: 'Denied short slug',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isSensitive: false,
+        isCore: false,
+      },
+      testUser.userId,
+    );
+
+    await grantRepository.upsert(testUser.userId, 'claude', 'a.*', 'READ', 'DENY');
+    await grantRepository.upsert(testUser.userId, 'claude', 'a.b', 'READ', 'ALLOW');
+
+    const result = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+
+    expect(result.preferences.map((pref: any) => pref.slug)).toContain('a.b');
+    expect(result.preferences.map((pref: any) => pref.slug)).not.toContain('a.c');
+  });
+
   it('filters denied slugs before consolidateSchema builds the AI prompt', async () => {
     await preferenceDefinitionService.create(
       {
@@ -286,6 +343,43 @@ describe('Permission Grants (e2e)', () => {
     const prompt = structuredAi.generateStructured.mock.calls[0][0] as string;
     expect(prompt).toContain('system.custom_tone_one');
     expect(prompt).not.toContain('food.secret_sauce');
+  });
+
+  it('does not let DB grants widen codex into write access', async () => {
+    await grantRepository.upsert(testUser.userId, 'codex', '*', 'WRITE', 'ALLOW');
+
+    const denied = await mcpToolCall(
+      'suggestPreference',
+      {
+        slug: 'system.response_tone',
+        value: '"concise"',
+        confidence: 0.9,
+      },
+      TEST_CLIENT_IDS.codex,
+    );
+
+    expect(denied.isError).toBe(true);
+    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+  });
+
+  it('denies createPreferenceDefinition when the slug matches a denied write grant', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'WRITE',
+      'DENY',
+    );
+
+    const denied = await mcpToolCall('createPreferenceDefinition', {
+      slug: 'food.secret_menu_note',
+      description: 'Secret menu note',
+      valueType: 'STRING',
+      scope: 'GLOBAL',
+    });
+
+    expect(denied.isError).toBe(true);
+    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
   });
 
   it('scopes listPermissionGrants to the calling client key', async () => {
@@ -370,5 +464,101 @@ describe('Permission Grants (e2e)', () => {
 
     expect(removeMutation.body.errors).toBeUndefined();
     expect(removeMutation.body.data.removePermissionGrant).toBe(true);
+  });
+
+  it('rejects invalid client keys in GraphQL grant mutations', async () => {
+    const response = await graphQlPost(
+      `
+        mutation SetGrant($input: SetPermissionGrantInput!) {
+          setPermissionGrant(input: $input) {
+            clientKey
+          }
+        }
+      `,
+      {
+        input: {
+          clientKey: 'codeex',
+          target: 'food.*',
+          action: 'READ',
+          effect: 'DENY',
+        },
+      },
+    );
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe('Bad Request Exception');
+
+    const query = await graphQlPost(`
+      query MyGrants {
+        myPermissionGrants {
+          clientKey
+        }
+      }
+    `);
+
+    expect(query.body.errors).toBeUndefined();
+    expect(query.body.data.myPermissionGrants).toEqual([]);
+  });
+
+  it('rejects invalid grant targets in GraphQL grant mutations', async () => {
+    const response = await graphQlPost(
+      `
+        mutation SetGrant($input: SetPermissionGrantInput!) {
+          setPermissionGrant(input: $input) {
+            target
+          }
+        }
+      `,
+      {
+        input: {
+          clientKey: 'claude',
+          target: 'food*',
+          action: 'READ',
+          effect: 'DENY',
+        },
+      },
+    );
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe('Bad Request Exception');
+
+    const query = await graphQlPost(`
+      query MyGrants {
+        myPermissionGrants {
+          target
+        }
+      }
+    `);
+
+    expect(query.body.errors).toBeUndefined();
+    expect(query.body.data.myPermissionGrants).toEqual([]);
+  });
+
+  it('treats removePermissionGrant as idempotent', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const mutation = `
+      mutation RemoveGrant {
+        removePermissionGrant(
+          clientKey: "claude"
+          target: "food.*"
+          action: READ
+        )
+      }
+    `;
+
+    const first = await graphQlPost(mutation);
+    expect(first.body.errors).toBeUndefined();
+    expect(first.body.data.removePermissionGrant).toBe(true);
+
+    const second = await graphQlPost(mutation);
+    expect(second.body.errors).toBeUndefined();
+    expect(second.body.data.removePermissionGrant).toBe(true);
   });
 });

@@ -278,6 +278,27 @@ describe('SchemaConsolidationWorkflow', () => {
         'claude',
         'read',
         'PERSONAL',
+        undefined,
+      );
+    });
+
+    it('should pass a tool-provided access filter through to the snapshot service', async () => {
+      const filterAccessibleSlugs = jest.fn().mockResolvedValue([]);
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
+        makeSnapshot([]),
+      );
+
+      await workflow.run({
+        ...baseInput,
+        filterAccessibleSlugs,
+      } as SchemaConsolidationWorkflowInput);
+
+      expect(mockSnapshotService.getGrantFilteredSnapshot).toHaveBeenCalledWith(
+        'user-1',
+        'claude',
+        'read',
+        undefined,
+        filterAccessibleSlugs,
       );
     });
 

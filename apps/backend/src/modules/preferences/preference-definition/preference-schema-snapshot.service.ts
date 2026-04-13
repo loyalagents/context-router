@@ -17,6 +17,8 @@ export interface PreferenceSchemaSnapshot {
   promptJson: string;
 }
 
+export type PreferenceSlugAccessFilter = (slugs: string[]) => Promise<string[]>;
+
 @Injectable()
 export class PreferenceSchemaSnapshotService {
   constructor(
@@ -61,15 +63,19 @@ export class PreferenceSchemaSnapshotService {
     clientKey: string,
     action: 'read' | 'write',
     scope?: 'PERSONAL' | 'ALL',
+    filterAccessibleSlugs?: PreferenceSlugAccessFilter,
   ): Promise<PreferenceSchemaSnapshot> {
     const snapshot = await this.getSnapshot(userId, scope);
+    const allSlugs = snapshot.definitions.map((definition) => definition.slug);
     const allowedSlugs = new Set(
-      await this.permissionGrantService.filterSlugsByAccess(
-        userId,
-        clientKey,
-        action,
-        snapshot.definitions.map((definition) => definition.slug),
-      ),
+      await (filterAccessibleSlugs
+        ? filterAccessibleSlugs(allSlugs)
+        : this.permissionGrantService.filterSlugsByAccess(
+            userId,
+            clientKey,
+            action,
+            allSlugs,
+          )),
     );
 
     const definitions = snapshot.definitions.filter((definition) =>

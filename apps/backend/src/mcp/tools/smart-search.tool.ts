@@ -59,10 +59,19 @@ export class SmartSearchTool implements McpToolInterface {
       const maxResults = this.configService.get<number>(
         'mcp.tools.preferences.maxSearchResults',
       );
+      const filterAccessibleSlugs = (slugs: string[]) =>
+        this.authorizationService.filterByTargetAccess(
+          context!.client,
+          this.requiredAccess,
+          context!.grants,
+          context!.user.userId,
+          slugs,
+        );
 
       const result = await this.workflow.run({
         userId: context!.user.userId,
         clientKey: context!.client.key,
+        filterAccessibleSlugs,
         naturalLanguageQuery: params.query,
         locationId: params.locationId,
         includeSuggestions: params.includeSuggestions,
@@ -70,12 +79,9 @@ export class SmartSearchTool implements McpToolInterface {
       });
 
       const allowedSlugs = new Set(
-        await this.authorizationService.filterByTargetAccess(
-          context!.client,
-          this.requiredAccess,
-          context!.grants,
-          context!.user.userId,
+        await filterAccessibleSlugs(
           [
+            ...result.matchedDefinitions.map((definition) => definition.slug),
             ...result.matchedActivePreferences.map((pref) => pref.slug),
             ...result.matchedSuggestedPreferences.map((pref) => pref.slug),
           ],
@@ -84,6 +90,9 @@ export class SmartSearchTool implements McpToolInterface {
 
       const filteredResult = {
         ...result,
+        matchedDefinitions: result.matchedDefinitions.filter((definition) =>
+          allowedSlugs.has(definition.slug),
+        ),
         matchedActivePreferences: result.matchedActivePreferences.filter((pref) =>
           allowedSlugs.has(pref.slug),
         ),

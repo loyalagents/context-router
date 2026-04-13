@@ -269,6 +269,29 @@ describe('PreferenceSearchWorkflow', () => {
     expect(result.matchedSuggestedPreferences).toHaveLength(2);
   });
 
+  it('should pass a tool-provided access filter through to the snapshot service', async () => {
+    const filterAccessibleSlugs = jest.fn().mockResolvedValue([
+      'food.dietary_restrictions',
+    ]);
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: [],
+      queryInterpretation: 'No matches found',
+    });
+
+    await workflow.run({
+      ...baseInput,
+      filterAccessibleSlugs,
+    } as PreferenceSearchWorkflowInput);
+
+    expect(mockSnapshotService.getGrantFilteredSnapshot).toHaveBeenCalledWith(
+      'user-1',
+      'claude',
+      'read',
+      undefined,
+      filterAccessibleSlugs,
+    );
+  });
+
   it('should sort preference rows by AI relevance before applying maxResults', async () => {
     // AI ranks travel first, then cuisine, then dietary
     mockAiPort.generateStructured.mockResolvedValue({

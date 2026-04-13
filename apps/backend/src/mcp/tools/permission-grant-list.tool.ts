@@ -6,6 +6,10 @@ import { McpToolInterface } from './base/mcp-tool.interface';
 
 @Injectable()
 export class PermissionGrantListTool implements McpToolInterface {
+  // TODO: MCP tools for setting/removing grants are intentionally omitted for now.
+  // A write-capable client should not be able to loosen its own restrictions until
+  // we decide on a trust model, such as a separate permissions capability or an
+  // explicit self-modification guard.
   readonly descriptor: Tool = {
     name: 'listPermissionGrants',
     description:

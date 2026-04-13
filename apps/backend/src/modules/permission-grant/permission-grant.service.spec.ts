@@ -132,6 +132,23 @@ describe('PermissionGrantService', () => {
       ).resolves.toBe('allow');
     });
 
+    it('should let a short exact slug beat a same-length wildcard target', async () => {
+      repository.findMatchingGrants.mockResolvedValue([
+        {
+          target: 'a.b',
+          effect: 'ALLOW',
+        },
+        {
+          target: 'a.*',
+          effect: 'DENY',
+        },
+      ] as any);
+
+      await expect(
+        service.evaluateAccess('user-1', 'claude', 'READ', 'a.b'),
+      ).resolves.toBe('allow');
+    });
+
     it('should apply the global wildcard when that is the only match', async () => {
       repository.findMatchingGrants.mockResolvedValue([
         {
@@ -191,6 +208,23 @@ describe('PermissionGrantService', () => {
         'food.dietary_restrictions',
         'system.response_tone',
       ]);
+    });
+
+    it('should preserve short exact-slug allowlist exceptions over wildcard denies', async () => {
+      repository.findByUserClientAction.mockResolvedValue([
+        {
+          target: 'a.*',
+          effect: 'DENY',
+        },
+        {
+          target: 'a.b',
+          effect: 'ALLOW',
+        },
+      ] as any);
+
+      await expect(
+        service.filterSlugsByAccess('user-1', 'claude', 'READ', ['a.b', 'a.c']),
+      ).resolves.toEqual(['a.b']);
     });
 
     it('should allow all slugs when there are no grants', async () => {

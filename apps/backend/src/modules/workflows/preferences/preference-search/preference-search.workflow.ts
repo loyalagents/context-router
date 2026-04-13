@@ -3,6 +3,7 @@ import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
+import { PreferenceSlugAccessFilter } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
 import { EnrichedPreference } from '../../../preferences/preference/preference.repository';
 import { RelevanceResponseSchema } from './preference-search.schema';
@@ -10,6 +11,7 @@ import { buildPreferenceSearchPrompt } from './preference-search.prompt';
 
 export interface PreferenceSearchWorkflowInput extends WorkflowInput {
   clientKey: string;
+  filterAccessibleSlugs?: PreferenceSlugAccessFilter;
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
@@ -49,6 +51,8 @@ export class PreferenceSearchWorkflow
         input.userId,
         input.clientKey,
         'read',
+        undefined,
+        input.filterAccessibleSlugs,
       ),
     );
 

@@ -75,6 +75,12 @@ describe('PermissionGrantRepository (integration)', () => {
       const rows = await repository.findByUserAndClient(userId, 'claude');
       expect(rows).toEqual([]);
     });
+
+    it('should not throw when the matching grant does not exist', async () => {
+      await expect(
+        repository.remove(userId, 'claude', 'food.*', 'READ'),
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe('findByUserAndClient', () => {
@@ -142,6 +148,20 @@ describe('PermissionGrantRepository (integration)', () => {
         'food.*',
         '*',
       ]);
+    });
+
+    it('should order a short exact slug ahead of a same-length wildcard target', async () => {
+      await repository.upsert(userId, 'claude', 'a.*', 'READ', 'DENY');
+      await repository.upsert(userId, 'claude', 'a.b', 'READ', 'ALLOW');
+
+      const rows = await repository.findMatchingGrants(
+        userId,
+        'claude',
+        'READ',
+        ['a.b', 'a.*', '*'],
+      );
+
+      expect(rows.map((row) => row.target)).toEqual(['a.b', 'a.*']);
     });
   });
 

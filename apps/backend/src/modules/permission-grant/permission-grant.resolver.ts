@@ -25,6 +25,7 @@ export class PermissionGrantResolver {
     @Args('clientKey', { nullable: true }) clientKey?: string,
   ): Promise<PermissionGrantModel[]> {
     if (clientKey) {
+      this.permissionGrantService.assertManagedClientKey(clientKey);
       return this.repository.findByUserAndClient(
         user.userId,
         clientKey,
@@ -43,6 +44,7 @@ export class PermissionGrantResolver {
     @CurrentUser() user: User,
     @Args('input') input: SetPermissionGrantInput,
   ): Promise<PermissionGrantModel> {
+    this.permissionGrantService.assertManagedClientKey(input.clientKey);
     this.permissionGrantService.assertValidTarget(input.target);
 
     return this.repository.upsert(
@@ -63,6 +65,7 @@ export class PermissionGrantResolver {
     @Args('target') target: string,
     @Args('action', { type: () => GrantAction }) action: GrantAction,
   ): Promise<boolean> {
+    this.permissionGrantService.assertManagedClientKey(clientKey);
     this.permissionGrantService.assertValidTarget(target);
 
     await this.repository.remove(user.userId, clientKey, target, action);
