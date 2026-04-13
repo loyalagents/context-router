@@ -76,7 +76,7 @@ describe('PreferenceSearchWorkflow', () => {
     };
 
     mockSnapshotService = {
-      getSnapshot: jest.fn().mockResolvedValue(MOCK_SNAPSHOT),
+      getGrantFilteredSnapshot: jest.fn().mockResolvedValue(MOCK_SNAPSHOT),
     } as any;
 
     mockPreferenceService = {
@@ -108,6 +108,7 @@ describe('PreferenceSearchWorkflow', () => {
 
   const baseInput: PreferenceSearchWorkflowInput = {
     userId: 'user-1',
+    clientKey: 'claude',
     naturalLanguageQuery: 'what are my food preferences?',
   };
 

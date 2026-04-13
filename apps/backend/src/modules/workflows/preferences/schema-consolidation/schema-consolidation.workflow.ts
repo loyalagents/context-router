@@ -10,6 +10,7 @@ import { ConsolidationResponseSchema } from './schema-consolidation.schema';
 import { buildSchemaConsolidationPrompt } from './schema-consolidation.prompt';
 
 export interface SchemaConsolidationWorkflowInput extends WorkflowInput {
+  clientKey: string;
   scope?: 'PERSONAL' | 'ALL';
 }
 
@@ -45,7 +46,12 @@ export class SchemaConsolidationWorkflow
 
     // Step 1: Load definitions
     const snapshot = await recorder.record('loadDefinitions', 'db', () =>
-      this.snapshotService.getSnapshot(input.userId, input.scope),
+      this.snapshotService.getGrantFilteredSnapshot(
+        input.userId,
+        input.clientKey,
+        'read',
+        input.scope,
+      ),
     );
 
     // Short-circuit: < 2 definitions means nothing to consolidate

@@ -39,6 +39,7 @@ export class SchemaConsolidationTool implements McpToolInterface {
     try {
       const result = await this.workflow.run({
         userId: context!.user.userId,
+        clientKey: context!.client.key,
         scope: params.scope ?? 'PERSONAL',
       });
 

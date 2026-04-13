@@ -199,6 +199,12 @@ export class McpClientRegistry implements OnModuleInit {
 
   private validateTargetRules(client: McpClientConfig) {
     for (const rule of client.targetRules) {
+      if (rule.matcher.namespace) {
+        throw new Error(
+          `MCP client "${client.key}" has a target rule with unsupported namespace matching`,
+        );
+      }
+
       const matcherKeys = [
         rule.matcher.namespace,
         rule.matcher.slug,

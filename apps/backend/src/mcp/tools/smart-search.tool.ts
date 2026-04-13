@@ -4,6 +4,7 @@ import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { PreferenceSearchWorkflow } from '@modules/workflows/preferences/preference-search/preference-search.workflow';
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 @Injectable()
 export class SmartSearchTool implements McpToolInterface {
@@ -44,6 +45,7 @@ export class SmartSearchTool implements McpToolInterface {
   constructor(
     private readonly workflow: PreferenceSearchWorkflow,
     private readonly configService: ConfigService,
+    private readonly authorizationService: McpAuthorizationService,
   ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
@@ -60,14 +62,41 @@ export class SmartSearchTool implements McpToolInterface {
 
       const result = await this.workflow.run({
         userId: context!.user.userId,
+        clientKey: context!.client.key,
         naturalLanguageQuery: params.query,
         locationId: params.locationId,
         includeSuggestions: params.includeSuggestions,
         maxResults,
       });
 
+      const allowedSlugs = new Set(
+        await this.authorizationService.filterByTargetAccess(
+          context!.client,
+          this.requiredAccess,
+          context!.grants,
+          context!.user.userId,
+          [
+            ...result.matchedActivePreferences.map((pref) => pref.slug),
+            ...result.matchedSuggestedPreferences.map((pref) => pref.slug),
+          ],
+        ),
+      );
+
+      const filteredResult = {
+        ...result,
+        matchedActivePreferences: result.matchedActivePreferences.filter((pref) =>
+          allowedSlugs.has(pref.slug),
+        ),
+        matchedSuggestedPreferences:
+          result.matchedSuggestedPreferences.filter((pref) =>
+            allowedSlugs.has(pref.slug),
+          ),
+      };
+
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        content: [
+          { type: 'text', text: JSON.stringify(filteredResult, null, 2) },
+        ],
       };
     } catch (error) {
       this.logger.error(

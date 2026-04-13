@@ -94,6 +94,12 @@ export default async function Dashboard() {
             >
               Preference Schema
             </a>
+            <a
+              href="/dashboard/permissions"
+              className="inline-block px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 transition"
+            >
+              Permission Grants
+            </a>
           </div>
         </div>
       )}

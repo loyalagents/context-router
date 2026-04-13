@@ -9,6 +9,7 @@ import { RelevanceResponseSchema } from './preference-search.schema';
 import { buildPreferenceSearchPrompt } from './preference-search.prompt';
 
 export interface PreferenceSearchWorkflowInput extends WorkflowInput {
+  clientKey: string;
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
@@ -44,7 +45,11 @@ export class PreferenceSearchWorkflow
 
     // Step 1: Load catalog
     const snapshot = await recorder.record('loadCatalog', 'db', () =>
-      this.snapshotService.getSnapshot(input.userId),
+      this.snapshotService.getGrantFilteredSnapshot(
+        input.userId,
+        input.clientKey,
+        'read',
+      ),
     );
 
     const knownSlugs = new Set(snapshot.definitions.map((d) => d.slug));

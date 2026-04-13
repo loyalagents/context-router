@@ -38,7 +38,7 @@ describe('SchemaConsolidationWorkflow', () => {
     };
 
     mockSnapshotService = {
-      getSnapshot: jest.fn(),
+      getGrantFilteredSnapshot: jest.fn(),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -64,11 +64,12 @@ describe('SchemaConsolidationWorkflow', () => {
 
   const baseInput: SchemaConsolidationWorkflowInput = {
     userId: 'user-1',
+    clientKey: 'claude',
   };
 
   describe('short-circuit with < 2 definitions', () => {
     it('should return empty groups when 0 definitions exist', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(makeSnapshot([]));
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(makeSnapshot([]));
 
       const result = await workflow.run(baseInput);
 
@@ -79,7 +80,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should return empty groups when 1 definition exists', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([{ slug: 'food.dietary_restrictions' }]),
       );
 
@@ -94,7 +95,7 @@ describe('SchemaConsolidationWorkflow', () => {
 
   describe('happy path', () => {
     it('should return consolidation groups with validated slugs', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions', namespace: 'USER:user-1' },
           { slug: 'food.diet_requirements', namespace: 'USER:user-1' },
@@ -135,7 +136,7 @@ describe('SchemaConsolidationWorkflow', () => {
 
   describe('slug validation', () => {
     it('should silently drop hallucinated slugs from groups', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -167,7 +168,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should drop groups where repeated valid slugs produce < 2 unique slugs', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -191,7 +192,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should drop groups with < 2 valid slugs after filtering', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -215,7 +216,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should clear invalid recommendedSlug', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -240,7 +241,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should clear recommendedSlug that is a known slug but not in the group', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -268,18 +269,20 @@ describe('SchemaConsolidationWorkflow', () => {
 
   describe('scope handling', () => {
     it('should pass scope to snapshot service', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(makeSnapshot([]));
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(makeSnapshot([]));
 
       await workflow.run({ ...baseInput, scope: 'PERSONAL' });
 
-      expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith(
+      expect(mockSnapshotService.getGrantFilteredSnapshot).toHaveBeenCalledWith(
         'user-1',
+        'claude',
+        'read',
         'PERSONAL',
       );
     });
 
     it('should correctly identify GLOBAL vs USER scopes', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions', namespace: 'GLOBAL' },
           { slug: 'food.my_diet', namespace: 'USER:user-1' },
@@ -308,7 +311,7 @@ describe('SchemaConsolidationWorkflow', () => {
 
   describe('ownership and scope metadata in prompt', () => {
     it('should include ownership info in the prompt sent to AI', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions', namespace: 'GLOBAL' },
           { slug: 'food.my_diet', namespace: 'USER:user-1' },
@@ -328,7 +331,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should include definitionScope in the prompt sent to AI', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions', scope: 'GLOBAL' },
           { slug: 'food.local_specials', scope: 'LOCATION' },
@@ -350,7 +353,7 @@ describe('SchemaConsolidationWorkflow', () => {
 
   describe('summary consistency', () => {
     it('should override summary when all AI groups are filtered out', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -376,7 +379,7 @@ describe('SchemaConsolidationWorkflow', () => {
     });
 
     it('should keep AI summary when some groups survive validation', async () => {
-      mockSnapshotService.getSnapshot.mockResolvedValue(
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
         makeSnapshot([
           { slug: 'food.dietary_restrictions' },
           { slug: 'food.cuisine_preferences' },
@@ -402,7 +405,7 @@ describe('SchemaConsolidationWorkflow', () => {
   });
 
   it('should propagate errors from AI port', async () => {
-    mockSnapshotService.getSnapshot.mockResolvedValue(
+    mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
       makeSnapshot([
         { slug: 'food.dietary_restrictions' },
         { slug: 'food.cuisine_preferences' },
