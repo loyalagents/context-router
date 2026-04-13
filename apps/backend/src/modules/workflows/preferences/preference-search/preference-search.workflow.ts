@@ -3,12 +3,15 @@ import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
+import { PreferenceSlugAccessFilter } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
 import { EnrichedPreference } from '../../../preferences/preference/preference.repository';
 import { RelevanceResponseSchema } from './preference-search.schema';
 import { buildPreferenceSearchPrompt } from './preference-search.prompt';
 
 export interface PreferenceSearchWorkflowInput extends WorkflowInput {
+  clientKey: string;
+  filterAccessibleSlugs?: PreferenceSlugAccessFilter;
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
@@ -44,7 +47,13 @@ export class PreferenceSearchWorkflow
 
     // Step 1: Load catalog
     const snapshot = await recorder.record('loadCatalog', 'db', () =>
-      this.snapshotService.getSnapshot(input.userId),
+      this.snapshotService.getGrantFilteredSnapshot(
+        input.userId,
+        input.clientKey,
+        'read',
+        undefined,
+        input.filterAccessibleSlugs,
+      ),
     );
 
     const knownSlugs = new Set(snapshot.definitions.map((d) => d.slug));

@@ -76,7 +76,7 @@ describe('PreferenceSearchWorkflow', () => {
     };
 
     mockSnapshotService = {
-      getSnapshot: jest.fn().mockResolvedValue(MOCK_SNAPSHOT),
+      getGrantFilteredSnapshot: jest.fn().mockResolvedValue(MOCK_SNAPSHOT),
     } as any;
 
     mockPreferenceService = {
@@ -108,6 +108,7 @@ describe('PreferenceSearchWorkflow', () => {
 
   const baseInput: PreferenceSearchWorkflowInput = {
     userId: 'user-1',
+    clientKey: 'claude',
     naturalLanguageQuery: 'what are my food preferences?',
   };
 
@@ -266,6 +267,29 @@ describe('PreferenceSearchWorkflow', () => {
     // Preferences are capped at maxResults
     expect(result.matchedActivePreferences).toHaveLength(2);
     expect(result.matchedSuggestedPreferences).toHaveLength(2);
+  });
+
+  it('should pass a tool-provided access filter through to the snapshot service', async () => {
+    const filterAccessibleSlugs = jest.fn().mockResolvedValue([
+      'food.dietary_restrictions',
+    ]);
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: [],
+      queryInterpretation: 'No matches found',
+    });
+
+    await workflow.run({
+      ...baseInput,
+      filterAccessibleSlugs,
+    } as PreferenceSearchWorkflowInput);
+
+    expect(mockSnapshotService.getGrantFilteredSnapshot).toHaveBeenCalledWith(
+      'user-1',
+      'claude',
+      'read',
+      undefined,
+      filterAccessibleSlugs,
+    );
   });
 
   it('should sort preference rows by AI relevance before applying maxResults', async () => {

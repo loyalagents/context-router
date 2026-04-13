@@ -111,6 +111,8 @@ export interface CreateTestAppOptions {
   mockStructuredAi?: ReturnType<typeof createMockStructuredAiService>;
   /** Custom mock for Auth0Service */
   mockAuth0?: ReturnType<typeof createMockAuth0Service>;
+  /** Whether to override GraphQL/JWT auth guards with the test user injector */
+  overrideGraphqlAuthGuards?: boolean;
 }
 
 /**
@@ -271,6 +273,8 @@ export async function createTestApp(
   const mockStructuredAi =
     options.mockStructuredAi || createMockStructuredAiService();
   const mockAuth0 = options.mockAuth0 || createMockAuth0Service();
+  const overrideGraphqlAuthGuards =
+    options.overrideGraphqlAuthGuards ?? true;
 
   // Mutable reference - guard always reads current value
   const userRef: UserRef = { current: null };
@@ -285,9 +289,11 @@ export async function createTestApp(
   });
 
   // Override guards
-  moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
-  moduleBuilder.overrideGuard(JwtAuthGuard).useValue(mockAuthGuard);
-  moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+  if (overrideGraphqlAuthGuards) {
+    moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
+    moduleBuilder.overrideGuard(JwtAuthGuard).useValue(mockAuthGuard);
+    moduleBuilder.overrideGuard(OptionalGqlAuthGuard).useValue(mockAuthGuard);
+  }
   moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
 
   // Override external services

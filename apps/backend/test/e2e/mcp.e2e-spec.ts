@@ -148,7 +148,7 @@ describe('MCP Integration (e2e)', () => {
       await seedPreferenceDefinitions(prisma);
     });
 
-    it('should filter write tools out of tools/list for codex', async () => {
+    it('should expose write tools in tools/list for codex', async () => {
       const response = await mcpPost(
         {
           jsonrpc: '2.0',
@@ -162,11 +162,11 @@ describe('MCP Integration (e2e)', () => {
       expect(response.status).toBe(200);
       const toolNames = response.body.result.tools.map((tool: any) => tool.name);
       expect(toolNames).toContain('searchPreferences');
-      expect(toolNames).not.toContain('suggestPreference');
-      expect(toolNames).not.toContain('createPreferenceDefinition');
+      expect(toolNames).toContain('suggestPreference');
+      expect(toolNames).toContain('createPreferenceDefinition');
     });
 
-    it('should deny write tools for codex', async () => {
+    it('should allow write tools for codex', async () => {
       const response = await mcpPost(
         {
           jsonrpc: '2.0',
@@ -185,7 +185,7 @@ describe('MCP Integration (e2e)', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(response.body.result?.isError).toBe(true);
+      expect(response.body.result?.isError).not.toBe(true);
     });
 
     it('should deny write tools for fallback', async () => {

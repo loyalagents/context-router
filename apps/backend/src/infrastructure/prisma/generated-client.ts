@@ -1,4 +1,6 @@
 export {
+  GrantAction,
+  GrantEffect,
   Prisma,
   PrismaClient,
   LocationType,

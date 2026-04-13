@@ -24,6 +24,7 @@ model User {
   locations          Location[]
   preferences        Preference[]
   definitions        PreferenceDefinition[]
+  permissionGrants   PermissionGrant[]
 
   @@map("users")
 }
@@ -74,6 +75,16 @@ enum SourceType {
   INFERRED
   IMPORTED
   SYSTEM
+}
+
+enum GrantAction {
+  READ
+  WRITE
+}
+
+enum GrantEffect {
+  ALLOW
+  DENY
 }
 
 model Location {
@@ -142,4 +153,21 @@ model Preference {
   @@index([userId, contextKey])
   @@index([definitionId])
   @@map("user_preferences")
+}
+
+model PermissionGrant {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  clientKey String      @map("client_key")
+  target    String
+  action    GrantAction
+  effect    GrantEffect
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, clientKey, target, action])
+  @@index([userId, clientKey, action])
+  @@map("permission_grants")
 }

@@ -3,6 +3,7 @@ import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 interface ListPreferencesParams {
   category?: string;
@@ -44,7 +45,10 @@ export class PreferenceListTool implements McpToolInterface {
   readonly requiresAuth = false;
   readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
-  constructor(private defRepo: PreferenceDefinitionRepository) {}
+  constructor(
+    private defRepo: PreferenceDefinitionRepository,
+    private readonly authorizationService: McpAuthorizationService,
+  ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     try {
@@ -84,13 +88,29 @@ export class PreferenceListTool implements McpToolInterface {
         scope: def.scope,
       }));
 
-      const categories = await this.defRepo.getAllCategories(userId);
+      let visibleEntries = entries;
+      if (context?.user && context?.client) {
+        const allowedSlugs = new Set(
+          await this.authorizationService.filterByTargetAccess(
+            context.client,
+            this.requiredAccess,
+            context.grants,
+            context.user.userId,
+            entries.map((entry) => entry.slug),
+          ),
+        );
+        visibleEntries = entries.filter((entry) => allowedSlugs.has(entry.slug));
+      }
+
+      const categories = Array.from(
+        new Set(visibleEntries.map((entry) => entry.category)),
+      ).sort();
 
       return {
         success: true,
         categories,
-        count: entries.length,
-        preferences: entries,
+        count: visibleEntries.length,
+        preferences: visibleEntries,
       };
     } catch (error) {
       this.logger.error(`Error listing preference catalog: ${error.message}`);

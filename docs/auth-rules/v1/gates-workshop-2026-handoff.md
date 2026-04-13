@@ -76,6 +76,15 @@ Core model to preserve:
 - `tools/list` and `resources/list` filter unauthorized entries out
 - `tools/call` and `resources/read` deny unauthorized access
 
+Permission-grant follow-up from `main`:
+
+- `PermissionGrantModule` now adds per-client per-slug narrowing on top of coarse client policy
+- `McpAuthorizationService.canAccessTarget(...)` and `filterByTargetAccess(...)` are the merge points to preserve
+- `listPermissionGrants` is read-only and scoped to `context.client.key`
+- write clients are still prevented from self-managing grants over MCP; grant mutation stays in GraphQL/web only for now
+- if permission grants are cherry-picked onto the API-key branch, preserve the same layering:
+  coarse policy -> static `targetRules` -> DB permission grants
+
 ---
 
 ## Do Not Blindly Copy These Pieces

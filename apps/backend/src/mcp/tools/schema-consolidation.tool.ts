@@ -3,6 +3,7 @@ import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { SchemaConsolidationWorkflow } from '@modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow';
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 @Injectable()
 export class SchemaConsolidationTool implements McpToolInterface {
@@ -31,14 +32,28 @@ export class SchemaConsolidationTool implements McpToolInterface {
   readonly requiresAuth = true;
   readonly requiredAccess = { resource: 'preferences', action: 'read' } as const;
 
-  constructor(private readonly workflow: SchemaConsolidationWorkflow) {}
+  constructor(
+    private readonly workflow: SchemaConsolidationWorkflow,
+    private readonly authorizationService: McpAuthorizationService,
+  ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     const params = (args ?? {}) as { scope?: 'PERSONAL' | 'ALL' };
 
     try {
+      const filterAccessibleSlugs = (slugs: string[]) =>
+        this.authorizationService.filterByTargetAccess(
+          context!.client,
+          this.requiredAccess,
+          context!.grants,
+          context!.user.userId,
+          slugs,
+        );
+
       const result = await this.workflow.run({
         userId: context!.user.userId,
+        clientKey: context!.client.key,
+        filterAccessibleSlugs,
         scope: params.scope ?? 'PERSONAL',
       });
 
