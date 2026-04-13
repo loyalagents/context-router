@@ -61,9 +61,10 @@ describe('Permission Grants (e2e)', () => {
   const mcpHeaders = (
     clientId: string,
     extra: Record<string, string> = {},
+    userId = testUser.userId,
   ) => ({
     'x-test-mcp-client-id': clientId,
-    'x-test-user-id': testUser.userId,
+    'x-test-user-id': userId,
     ...extra,
   });
 
@@ -71,12 +72,13 @@ describe('Permission Grants (e2e)', () => {
     name: string,
     args: Record<string, unknown>,
     clientId = TEST_CLIENT_IDS.claude,
+    userId = testUser.userId,
   ) => {
     const response = await request(app.getHttpServer())
       .post('/mcp')
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json, text/event-stream')
-      .set(mcpHeaders(clientId))
+      .set(mcpHeaders(clientId, {}, userId))
       .send({
         jsonrpc: '2.0',
         id: 1,
@@ -144,6 +146,56 @@ describe('Permission Grants (e2e)', () => {
 
     expect(denied.isError).toBe(true);
     expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+  });
+
+  it('does not let read denies block writes for the same slug', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const allowed = await mcpToolCall('suggestPreference', {
+      slug: 'food.dietary_restrictions',
+      value: '["nuts"]',
+      confidence: 0.9,
+    });
+
+    expect(allowed.isError).not.toBe(true);
+    expect(parseToolResult(allowed).success).toBe(true);
+  });
+
+  it('does not let write denies block reads for the same slug', async () => {
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'food.dietary_restrictions',
+      value: ['nuts'],
+    });
+
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'WRITE',
+      'DENY',
+    );
+
+    const search = parseToolResult(
+      await mcpToolCall('searchPreferences', {
+        includeSuggestions: false,
+      }),
+    );
+    expect(search.active.preferences.map((pref: any) => pref.slug)).toContain(
+      'food.dietary_restrictions',
+    );
+
+    const list = parseToolResult(
+      await mcpToolCall('listPreferenceSlugs', {}),
+    );
+    expect(list.preferences.map((pref: any) => pref.slug)).toContain(
+      'food.dietary_restrictions',
+    );
   });
 
   it('filters denied slugs out of searchPreferences and listPreferenceSlugs responses', async () => {
@@ -221,6 +273,121 @@ describe('Permission Grants (e2e)', () => {
     expect(prompt).not.toContain('food.dietary_restrictions');
   });
 
+  it('returns empty read results across tools when deny * read is set', async () => {
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'food.dietary_restrictions',
+      value: ['nuts'],
+    });
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'system.response_tone',
+      value: 'concise',
+    });
+
+    structuredAi.generateStructured.mockResolvedValue({
+      relevantSlugs: ['food.dietary_restrictions', 'system.response_tone'],
+      queryInterpretation: 'all preferences',
+      consolidationGroups: [],
+      summary: 'No overlaps found',
+    });
+
+    await grantRepository.upsert(testUser.userId, 'claude', '*', 'READ', 'DENY');
+
+    const search = parseToolResult(
+      await mcpToolCall('searchPreferences', { includeSuggestions: false }),
+    );
+    expect(search.active.preferences).toEqual([]);
+
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    expect(list.preferences).toEqual([]);
+    expect(list.categories).toEqual([]);
+
+    const smartSearch = parseToolResult(
+      await mcpToolCall('smartSearchPreferences', {
+        query: 'Show me all of my preferences',
+      }),
+    );
+    expect(smartSearch.matchedDefinitions).toEqual([]);
+    expect(smartSearch.matchedActivePreferences).toEqual([]);
+    expect(smartSearch.matchedSuggestedPreferences).toEqual([]);
+
+    const smartSearchPrompt = structuredAi.generateStructured.mock.calls[0][0] as string;
+    expect(smartSearchPrompt).not.toContain('food.dietary_restrictions');
+    expect(smartSearchPrompt).not.toContain('system.response_tone');
+
+    structuredAi.generateStructured.mockReset();
+    structuredAi.generateStructured.mockResolvedValue({
+      consolidationGroups: [],
+      summary: 'No overlaps found',
+    });
+
+    const consolidation = parseToolResult(
+      await mcpToolCall('consolidateSchema', { scope: 'ALL' }),
+    );
+    expect(consolidation.totalDefinitionsAnalyzed).toBe(0);
+    expect(consolidation.consolidationGroups).toEqual([]);
+    expect(consolidation.summary).toContain('No definitions');
+    expect(structuredAi.generateStructured).not.toHaveBeenCalled();
+  });
+
+  it('supports sub-category wildcard denies without hiding sibling categories', async () => {
+    await preferenceDefinitionService.create(
+      {
+        slug: 'food.french.wine',
+        description: 'French wine preference',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isSensitive: false,
+        isCore: false,
+      },
+      testUser.userId,
+    );
+    await preferenceDefinitionService.create(
+      {
+        slug: 'food.italian.pasta',
+        description: 'Italian pasta preference',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isSensitive: false,
+        isCore: false,
+      },
+      testUser.userId,
+    );
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'food.french.wine',
+      value: 'red',
+    });
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'food.italian.pasta',
+      value: 'rigatoni',
+    });
+
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.french.*',
+      'READ',
+      'DENY',
+    );
+
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    expect(list.preferences.map((pref: any) => pref.slug)).not.toContain(
+      'food.french.wine',
+    );
+    expect(list.preferences.map((pref: any) => pref.slug)).toContain(
+      'food.italian.pasta',
+    );
+
+    const search = parseToolResult(
+      await mcpToolCall('searchPreferences', { includeSuggestions: false }),
+    );
+    expect(search.active.preferences.map((pref: any) => pref.slug)).not.toContain(
+      'food.french.wine',
+    );
+    expect(search.active.preferences.map((pref: any) => pref.slug)).toContain(
+      'food.italian.pasta',
+    );
+  });
+
   it('keeps client-specific read grants isolated to the matching client bucket', async () => {
     await grantRepository.upsert(
       testUser.userId,
@@ -243,6 +410,78 @@ describe('Permission Grants (e2e)', () => {
     expect(
       codexList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
     ).toBe(true);
+  });
+
+  it('keeps grants isolated per user', async () => {
+    const prisma = getPrismaClient();
+    const otherUser = await prisma.user.create({
+      data: {
+        email: 'other-permission-user@example.com',
+        firstName: 'Other',
+        lastName: 'User',
+      },
+    });
+    registerMcpUser(otherUser);
+
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const firstUserList = parseToolResult(
+      await mcpToolCall('listPreferenceSlugs', {}, TEST_CLIENT_IDS.claude, testUser.userId),
+    );
+    expect(
+      firstUserList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(false);
+
+    const secondUserList = parseToolResult(
+      await mcpToolCall(
+        'listPreferenceSlugs',
+        {},
+        TEST_CLIENT_IDS.claude,
+        otherUser.userId,
+      ),
+    );
+    expect(
+      secondUserList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(true);
+  });
+
+  it('supports allowlist-style read access with deny * plus allow food.*', async () => {
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'food.dietary_restrictions',
+      value: ['nuts'],
+    });
+    await preferenceService.setPreference(testUser.userId, {
+      slug: 'system.response_tone',
+      value: 'concise',
+    });
+
+    await grantRepository.upsert(testUser.userId, 'claude', '*', 'READ', 'DENY');
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'ALLOW',
+    );
+
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    expect(list.preferences.every((pref: any) => pref.slug.startsWith('food.'))).toBe(
+      true,
+    );
+    expect(list.categories).toEqual(['food']);
+
+    const search = parseToolResult(
+      await mcpToolCall('searchPreferences', { includeSuggestions: false }),
+    );
+    expect(search.active.preferences.map((pref: any) => pref.slug)).toEqual([
+      'food.dietary_restrictions',
+    ]);
   });
 
   it('keeps a short exact-slug allow exception when a category wildcard is denied', async () => {
@@ -466,6 +705,69 @@ describe('Permission Grants (e2e)', () => {
     expect(removeMutation.body.data.removePermissionGrant).toBe(true);
   });
 
+  it('filters myPermissionGrants by clientKey', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+    await grantRepository.upsert(
+      testUser.userId,
+      'codex',
+      'system.*',
+      'READ',
+      'ALLOW',
+    );
+
+    const response = await graphQlPost(
+      `
+        query MyGrants($clientKey: String) {
+          myPermissionGrants(clientKey: $clientKey) {
+            clientKey
+            target
+            action
+            effect
+          }
+        }
+      `,
+      {
+        clientKey: 'claude',
+      },
+    );
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.myPermissionGrants).toEqual([
+      expect.objectContaining({
+        clientKey: 'claude',
+        target: 'food.*',
+        action: 'READ',
+        effect: 'DENY',
+      }),
+    ]);
+  });
+
+  it('rejects invalid client keys when filtering myPermissionGrants', async () => {
+    const response = await graphQlPost(
+      `
+        query MyGrants($clientKey: String) {
+          myPermissionGrants(clientKey: $clientKey) {
+            clientKey
+          }
+        }
+      `,
+      {
+        clientKey: 'codeex',
+      },
+    );
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe(
+      'Invalid permission grant clientKey: "codeex". Expected one of: claude, codex, fallback',
+    );
+  });
+
   it('rejects invalid client keys in GraphQL grant mutations', async () => {
     const response = await graphQlPost(
       `
@@ -498,6 +800,50 @@ describe('Permission Grants (e2e)', () => {
 
     expect(query.body.errors).toBeUndefined();
     expect(query.body.data.myPermissionGrants).toEqual([]);
+  });
+
+  it('rejects invalid client keys in removePermissionGrant', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const response = await graphQlPost(`
+      mutation RemoveGrant {
+        removePermissionGrant(
+          clientKey: "codeex"
+          target: "food.*"
+          action: READ
+        )
+      }
+    `);
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe(
+      'Invalid permission grant clientKey: "codeex". Expected one of: claude, codex, fallback',
+    );
+
+    const query = await graphQlPost(`
+      query MyGrants {
+        myPermissionGrants {
+          clientKey
+          target
+          action
+        }
+      }
+    `);
+
+    expect(query.body.errors).toBeUndefined();
+    expect(query.body.data.myPermissionGrants).toEqual([
+      expect.objectContaining({
+        clientKey: 'claude',
+        target: 'food.*',
+        action: 'READ',
+      }),
+    ]);
   });
 
   it('rejects invalid grant targets in GraphQL grant mutations', async () => {
@@ -534,6 +880,50 @@ describe('Permission Grants (e2e)', () => {
     expect(query.body.data.myPermissionGrants).toEqual([]);
   });
 
+  it('rejects invalid targets in removePermissionGrant', async () => {
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.*',
+      'READ',
+      'DENY',
+    );
+
+    const response = await graphQlPost(`
+      mutation RemoveGrant {
+        removePermissionGrant(
+          clientKey: "claude"
+          target: "food*"
+          action: READ
+        )
+      }
+    `);
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe(
+      'Invalid permission grant target: "food*". Expected "*", "<category>.*", "<nested.prefix>.*", or an exact slug.',
+    );
+
+    const query = await graphQlPost(`
+      query MyGrants {
+        myPermissionGrants {
+          clientKey
+          target
+          action
+        }
+      }
+    `);
+
+    expect(query.body.errors).toBeUndefined();
+    expect(query.body.data.myPermissionGrants).toEqual([
+      expect.objectContaining({
+        clientKey: 'claude',
+        target: 'food.*',
+        action: 'READ',
+      }),
+    ]);
+  });
+
   it('treats removePermissionGrant as idempotent', async () => {
     await grantRepository.upsert(
       testUser.userId,
@@ -560,5 +950,34 @@ describe('Permission Grants (e2e)', () => {
     const second = await graphQlPost(mutation);
     expect(second.body.errors).toBeUndefined();
     expect(second.body.data.removePermissionGrant).toBe(true);
+  });
+
+  it('rejects unauthenticated GraphQL access to permission grants', async () => {
+    const unauthenticatedApp = (
+      await createTestApp({
+        mockStructuredAi: structuredAi,
+        overrideGraphqlAuthGuards: false,
+      })
+    ).app;
+
+    try {
+      const response = await request(unauthenticatedApp.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            query MyGrants {
+              myPermissionGrants {
+                clientKey
+              }
+            }
+          `,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toBeNull();
+      expect(response.body.errors?.[0]?.message).toBe('Unauthorized');
+    } finally {
+      await unauthenticatedApp.close();
+    }
   });
 });
