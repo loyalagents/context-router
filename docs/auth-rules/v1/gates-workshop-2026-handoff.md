@@ -131,8 +131,8 @@ If API keys already carry a group, label, or policy bucket, map that directly to
 
 The next agent should read these before making changes:
 
-- [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/mcp-client-policy-merge-guide.md)
-- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/gates-workshop-2026-handoff.md)
+- [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/v1/mcp-client-policy-merge-guide.md)
+- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/v1/gates-workshop-2026-handoff.md)
 - [mcp-authorization.types.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
 - [mcp-authorization.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
 - [mcp-client-registry.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
