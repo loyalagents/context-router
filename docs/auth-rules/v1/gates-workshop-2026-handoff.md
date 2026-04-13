@@ -54,19 +54,19 @@ This branch should **reuse the shared authorization model**, not re-implement it
 
 These files contain the shared authorization model that should be reused as much as possible:
 
-- [mcp-authorization.types.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
-- [mcp-authorization.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
-- [mcp-client-registry.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
-- [mcp-context.type.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-context.type.ts)
-- [mcp.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.service.ts)
-- [mcp-tool.interface.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/tools/base/mcp-tool.interface.ts)
-- [mcp-resource.interface.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/resources/base/mcp-resource.interface.ts)
-- tool `requiredAccess` declarations under [apps/backend/src/mcp/tools](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/tools)
-- resource access declarations under [apps/backend/src/mcp/resources](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/resources)
+- [mcp-authorization.types.ts](../../../apps/backend/src/mcp/types/mcp-authorization.types.ts)
+- [mcp-authorization.service.ts](../../../apps/backend/src/mcp/auth/mcp-authorization.service.ts)
+- [mcp-client-registry.service.ts](../../../apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
+- [mcp-context.type.ts](../../../apps/backend/src/mcp/types/mcp-context.type.ts)
+- [mcp.service.ts](../../../apps/backend/src/mcp/mcp.service.ts)
+- [mcp-tool.interface.ts](../../../apps/backend/src/mcp/tools/base/mcp-tool.interface.ts)
+- [mcp-resource.interface.ts](../../../apps/backend/src/mcp/resources/base/mcp-resource.interface.ts)
+- tool `requiredAccess` declarations under [apps/backend/src/mcp/tools](../../../apps/backend/src/mcp/tools)
+- resource access declarations under [apps/backend/src/mcp/resources](../../../apps/backend/src/mcp/resources)
 - targeted tests:
-  - [mcp-authorization.service.spec.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.spec.ts)
-  - [mcp-client-registry.service.spec.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.spec.ts)
-  - [mcp.e2e-spec.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/test/e2e/mcp.e2e-spec.ts)
+  - [mcp-authorization.service.spec.ts](../../../apps/backend/src/mcp/auth/mcp-authorization.service.spec.ts)
+  - [mcp-client-registry.service.spec.ts](../../../apps/backend/src/mcp/auth/mcp-client-registry.service.spec.ts)
+  - [mcp.e2e-spec.ts](../../../apps/backend/test/e2e/mcp.e2e-spec.ts)
 
 Core model to preserve:
 
@@ -91,10 +91,10 @@ Permission-grant follow-up from `main`:
 
 These files are OAuth/Auth0-specific and likely need adaptation or partial reuse only:
 
-- [mcp-auth.guard.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-auth.guard.ts)
-- [dcr-shim.controller.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/dcr-shim.controller.ts)
-- OAuth-oriented client config in [mcp.config.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/config/mcp.config.ts)
-- OAuth request-context wiring in [mcp.controller.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.controller.ts)
+- [mcp-auth.guard.ts](../../../apps/backend/src/mcp/auth/mcp-auth.guard.ts)
+- [dcr-shim.controller.ts](../../../apps/backend/src/mcp/auth/dcr-shim.controller.ts)
+- OAuth-oriented client config in [mcp.config.ts](../../../apps/backend/src/config/mcp.config.ts)
+- OAuth request-context wiring in [mcp.controller.ts](../../../apps/backend/src/mcp/mcp.controller.ts)
 
 The `gates-switch-oauth-to-api-branch` work should keep the API-key auth path from `gates-workshop-2026` and adapt these ideas instead of replacing that branch’s authentication design with OAuth.
 
@@ -107,7 +107,7 @@ While integrating on `gates-switch-oauth-to-api-branch` for a PR back into `gate
 - keep API-key auth as the MCP request authentication path
 - do not switch deployed runtime from API keys to OAuth
 - do not treat Auth0 env/config as required for the branch to work
-- do not update [apps/backend/.env.gates](/Users/lucasnovak/loyal-agents/context-router/apps/backend/.env.gates) unless the branch actually needs new values after the integration
+- do not update [apps/backend/.env.gates](../../../apps/backend/.env.gates) unless the branch actually needs new values after the integration
 - do not assume Cloud Run should be updated yet
 
 ---
@@ -131,11 +131,11 @@ If API keys already carry a group, label, or policy bucket, map that directly to
 
 The next agent should read these before making changes:
 
-- [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/mcp-client-policy-merge-guide.md)
-- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/gates-workshop-2026-handoff.md)
-- [mcp-authorization.types.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
-- [mcp-authorization.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
-- [mcp-client-registry.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
+- [mcp-client-policy-merge-guide.md](./mcp-client-policy-merge-guide.md)
+- [gates-workshop-2026-handoff.md](./gates-workshop-2026-handoff.md)
+- [mcp-authorization.types.ts](../../../apps/backend/src/mcp/types/mcp-authorization.types.ts)
+- [mcp-authorization.service.ts](../../../apps/backend/src/mcp/auth/mcp-authorization.service.ts)
+- [mcp-client-registry.service.ts](../../../apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
 - the current `gates-workshop-2026` MCP auth entrypoints
 
 ---
@@ -158,4 +158,4 @@ The integration is successful when:
 ## Notes
 
 - The OAuth branch also included a grant-normalization fix so empty or irrelevant token scopes do not collapse effective capabilities to zero. That logic matters for OAuth, but the API-key branch may not need the same grant-handling path.
-- The doc [mcp-connections.md](/Users/lucasnovak/loyal-agents/context-router/docs/mcp-connections.md) now reflects the split Auth0 client setup. That is useful background, but it is not the primary implementation guide for `gates-switch-oauth-to-api-branch`.
+- The doc [mcp-connections.md](../../mcp-connections.md) now reflects the split Auth0 client setup. That is useful background, but it is not the primary implementation guide for `gates-switch-oauth-to-api-branch`.
