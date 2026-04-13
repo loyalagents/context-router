@@ -584,14 +584,27 @@ describe('Permission Grants (e2e)', () => {
     expect(prompt).not.toContain('food.secret_sauce');
   });
 
-  it('does not let DB grants widen codex into write access', async () => {
-    await grantRepository.upsert(testUser.userId, 'codex', '*', 'WRITE', 'ALLOW');
-
-    const denied = await mcpToolCall(
+  it('lets codex write by default and still allows DB write denies to narrow it', async () => {
+    const allowed = await mcpToolCall(
       'suggestPreference',
       {
         slug: 'system.response_tone',
         value: '"concise"',
+        confidence: 0.9,
+      },
+      TEST_CLIENT_IDS.codex,
+    );
+
+    expect(allowed.isError).not.toBe(true);
+    expect(parseToolResult(allowed).success).toBe(true);
+
+    await grantRepository.upsert(testUser.userId, 'codex', '*', 'WRITE', 'DENY');
+
+    const denied = await mcpToolCall(
+      'suggestPreference',
+      {
+        slug: 'system.response_length',
+        value: '"detailed"',
         confidence: 0.9,
       },
       TEST_CLIENT_IDS.codex,

@@ -2,7 +2,7 @@
 
 ## Context
 
-The current MCP auth system has coarse read/write permissions per client bucket (claude=read+write, codex=read-only, etc.) but no way for users to control which slugs/categories each client can access. The goal is to let users set granular permissions like "codex can read `food.*` but not `dev.*`" — stored in the DB, configurable via the web UI.
+The current MCP auth system has coarse read/write permissions per client bucket (claude=read+write, codex=read+write, fallback=read-only, etc.) but no way for users to control which slugs/categories each client can access. The goal is to let users set granular permissions like "codex can read `food.*` but not `dev.*`" — stored in the DB, configurable via the web UI.
 
 The approach: a `PermissionGrant` table with **prefix matching** (`*`, `food.*`, `food.french.*`, exact slug). The authorizer decomposes a target slug into a prefix chain and picks the most specific matching grant. No grant = allow by default (coarse policy still applies as the first gate).
 

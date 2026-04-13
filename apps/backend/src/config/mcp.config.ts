@@ -25,7 +25,7 @@ export default registerAs('mcp', () => {
     {
       key: 'codex',
       label: 'Codex',
-      capabilities: ['preferences:read'],
+      capabilities: ['preferences:read', 'preferences:write'],
       targetRules: [],
       oauth: {
         clientId: process.env.AUTH0_MCP_CODEX_CLIENT_ID,

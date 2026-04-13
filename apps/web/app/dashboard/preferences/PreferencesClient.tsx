@@ -11,6 +11,7 @@ import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
 import SuggestionInbox from './components/SuggestionInbox';
+import ManualPreferenceForm from './components/ManualPreferenceForm';
 
 interface Preference {
   id: string;
@@ -64,7 +65,23 @@ interface DocumentAnalysisResult {
 interface PreferencesClientProps {
   initialActivePreferences: Preference[];
   initialSuggestedPreferences: Preference[];
+  initialPreferenceDefinitions: PreferenceDefinition[];
   accessToken: string;
+}
+
+interface PreferenceDefinition {
+  id: string;
+  slug: string;
+  namespace: string;
+  displayName?: string | null;
+  ownerUserId?: string | null;
+  description: string;
+  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
+  scope: 'GLOBAL' | 'LOCATION';
+  options: string[] | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  category: string;
 }
 
 function createApolloClient(accessToken: string) {
@@ -82,10 +99,14 @@ function createApolloClient(accessToken: string) {
 function PreferencesContent({
   initialActivePreferences,
   initialSuggestedPreferences,
+  initialPreferenceDefinitions,
   accessToken,
 }: PreferencesClientProps) {
   const [activePreferences, setActivePreferences] = useState<Preference[]>(initialActivePreferences);
   const [suggestedPreferences, setSuggestedPreferences] = useState<Preference[]>(initialSuggestedPreferences);
+  const [preferenceDefinitions, setPreferenceDefinitions] = useState<PreferenceDefinition[]>(
+    initialPreferenceDefinitions,
+  );
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
 
   const handleAnalysisComplete = (result: DocumentAnalysisResult) => {
@@ -133,6 +154,29 @@ function PreferencesContent({
 
   const handleSuggestionReject = (id: string) => {
     setSuggestedPreferences((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const handleManualPreferenceSaved = (
+    savedPreference: Preference,
+    createdDefinition?: PreferenceDefinition,
+  ) => {
+    setActivePreferences((prev) => {
+      const existingIndex = prev.findIndex(
+        (preference) => preference.slug === savedPreference.slug,
+      );
+
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = savedPreference;
+        return updated;
+      }
+
+      return [...prev, savedPreference];
+    });
+
+    if (createdDefinition) {
+      setPreferenceDefinitions((prev) => [...prev, createdDefinition]);
+    }
   };
 
   // Group preferences by category
@@ -192,6 +236,12 @@ function PreferencesContent({
             />
           )}
         </div>
+
+        <ManualPreferenceForm
+          accessToken={accessToken}
+          definitions={preferenceDefinitions}
+          onSaved={handleManualPreferenceSaved}
+        />
 
         {/* Current Preferences Section */}
         <div className="bg-white rounded-lg shadow p-6">

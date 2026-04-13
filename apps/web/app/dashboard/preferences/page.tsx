@@ -45,6 +45,25 @@ const SUGGESTED_PREFERENCES_QUERY = gql`
   }
 `;
 
+const PREFERENCE_CATALOG_QUERY = gql`
+  query PreferenceCatalogForPreferencesPage {
+    preferenceCatalog {
+      id
+      slug
+      namespace
+      displayName
+      ownerUserId
+      description
+      valueType
+      scope
+      options
+      isSensitive
+      isCore
+      category
+    }
+  }
+`;
+
 interface Preference {
   id: string;
   slug: string;
@@ -68,6 +87,25 @@ interface SuggestedPreferencesQuery {
   suggestedPreferences: Preference[];
 }
 
+interface PreferenceDefinition {
+  id: string;
+  slug: string;
+  namespace: string;
+  displayName?: string | null;
+  ownerUserId?: string | null;
+  description: string;
+  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
+  scope: 'GLOBAL' | 'LOCATION';
+  options: string[] | null;
+  isSensitive: boolean;
+  isCore: boolean;
+  category: string;
+}
+
+interface PreferenceCatalogQuery {
+  preferenceCatalog: PreferenceDefinition[];
+}
+
 export default async function PreferencesPage() {
   const session = await auth0.getSession();
   if (!session?.user) redirect('/auth/login');
@@ -83,9 +121,10 @@ export default async function PreferencesPage() {
 
   let activePreferences: Preference[] = [];
   let suggestedPreferences: Preference[] = [];
+  let preferenceDefinitions: PreferenceDefinition[] = [];
 
   try {
-    const [activeResult, suggestedResult] = await Promise.all([
+    const [activeResult, suggestedResult, catalogResult] = await Promise.all([
       getClient().query<ActivePreferencesQuery>({
         query: ACTIVE_PREFERENCES_QUERY,
         context: {
@@ -98,9 +137,16 @@ export default async function PreferencesPage() {
           headers: { Authorization: `Bearer ${accessToken}` },
         },
       }),
+      getClient().query<PreferenceCatalogQuery>({
+        query: PREFERENCE_CATALOG_QUERY,
+        context: {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      }),
     ]);
     activePreferences = activeResult.data?.activePreferences || [];
     suggestedPreferences = suggestedResult.data?.suggestedPreferences || [];
+    preferenceDefinitions = catalogResult.data?.preferenceCatalog || [];
   } catch (e) {
     console.error('Failed to fetch preferences:', e);
   }
@@ -109,6 +155,7 @@ export default async function PreferencesPage() {
     <PreferencesClient
       initialActivePreferences={activePreferences}
       initialSuggestedPreferences={suggestedPreferences}
+      initialPreferenceDefinitions={preferenceDefinitions}
       accessToken={accessToken || ''}
     />
   );
