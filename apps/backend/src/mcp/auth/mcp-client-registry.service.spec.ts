@@ -154,4 +154,25 @@ describe('McpClientRegistry', () => {
       'Duplicate MCP redirect URI mapping: http://localhost:8081/callback',
     );
   });
+
+  it('fails startup when a target rule uses namespace matching', () => {
+    const invalidClients = TEST_CLIENTS.map((client) =>
+      client.key === 'claude'
+        ? {
+            ...client,
+            targetRules: [
+              {
+                effect: 'allow' as const,
+                capability: 'preferences:read' as const,
+                matcher: { namespace: 'GLOBAL', slugPrefix: 'food.' },
+              },
+            ],
+          }
+        : client,
+    ) as McpClientConfig[];
+
+    expect(() => createRegistry(invalidClients)).toThrow(
+      'MCP client "claude" has a target rule with unsupported namespace matching',
+    );
+  });
 });

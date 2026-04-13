@@ -224,7 +224,7 @@
   - Verify request-time token resolution maps each Auth0 client back to the expected `clientKey`
   - Re-run targeted MCP/DCR verification against the real OAuth configuration
   - Update MCP connection docs and auth-rules docs to reflect the final configured callbacks and client mapping
-- Checkpoint 8: add a merge/context document for the API-key branch at `docs/auth-rules/mcp-client-policy-merge-guide.md`.
+- Checkpoint 8: add a merge/context document for the API-key branch at `docs/auth-rules/v1/mcp-client-policy-merge-guide.md`.
   - Summarize the new shared types, config, registry, resolver, resource abstraction, and authorizer
   - Separate shared authorization logic from OAuth-only wiring
   - Call out likely merge touchpoints for the API-key branch: context construction, auth guard/middleware, config/env, resources/tools registration, and tests

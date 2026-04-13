@@ -76,6 +76,15 @@ Core model to preserve:
 - `tools/list` and `resources/list` filter unauthorized entries out
 - `tools/call` and `resources/read` deny unauthorized access
 
+Permission-grant follow-up from `main`:
+
+- `PermissionGrantModule` now adds per-client per-slug narrowing on top of coarse client policy
+- `McpAuthorizationService.canAccessTarget(...)` and `filterByTargetAccess(...)` are the merge points to preserve
+- `listPermissionGrants` is read-only and scoped to `context.client.key`
+- write clients are still prevented from self-managing grants over MCP; grant mutation stays in GraphQL/web only for now
+- if permission grants are cherry-picked onto the API-key branch, preserve the same layering:
+  coarse policy -> static `targetRules` -> DB permission grants
+
 ---
 
 ## Do Not Blindly Copy These Pieces
@@ -122,8 +131,8 @@ If API keys already carry a group, label, or policy bucket, map that directly to
 
 The next agent should read these before making changes:
 
-- [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/mcp-client-policy-merge-guide.md)
-- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/gates-workshop-2026-handoff.md)
+- [mcp-client-policy-merge-guide.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/v1/mcp-client-policy-merge-guide.md)
+- [gates-workshop-2026-handoff.md](/Users/lucasnovak/loyal-agents/context-router/docs/auth-rules/v1/gates-workshop-2026-handoff.md)
 - [mcp-authorization.types.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
 - [mcp-authorization.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
 - [mcp-client-registry.service.ts](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)

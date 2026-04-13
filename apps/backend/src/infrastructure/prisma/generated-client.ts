@@ -1,5 +1,7 @@
 export {
   ApiKeyMcpClientKey,
+  GrantAction,
+  GrantEffect,
   Prisma,
   PrismaClient,
   LocationType,

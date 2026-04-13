@@ -9,6 +9,7 @@ import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceDefinitionService } from '@modules/preferences/preference-definition/preference-definition.service';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 const VALID_VALUE_TYPES = ['STRING', 'BOOLEAN', 'ENUM', 'ARRAY'] as const;
 const VALID_SCOPES = ['GLOBAL', 'LOCATION'] as const;
@@ -83,7 +84,10 @@ export class PreferenceDefinitionTool implements McpToolInterface {
   readonly requiresAuth = true;
   readonly requiredAccess = { resource: 'preferences', action: 'write' } as const;
 
-  constructor(private defService: PreferenceDefinitionService) {}
+  constructor(
+    private defService: PreferenceDefinitionService,
+    private readonly authorizationService: McpAuthorizationService,
+  ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     try {
@@ -109,6 +113,15 @@ export class PreferenceDefinitionTool implements McpToolInterface {
     context: McpContext,
   ) {
     const userId = context.user.userId;
+
+    await this.authorizationService.assertAccessTarget(
+      context.client,
+      this.requiredAccess,
+      context.grants,
+      userId,
+      'tools/call',
+      { slug: params.slug },
+    );
 
     this.logger.log(
       `Creating preference definition: ${params.slug} for user ${userId}`,

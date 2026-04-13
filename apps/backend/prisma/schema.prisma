@@ -14,17 +14,18 @@ datasource db {
 }
 
 model User {
-  userId          String                 @id @default(uuid()) @map("user_id")
-  email           String                 @unique
-  firstName       String                 @map("first_name")
-  lastName        String                 @map("last_name")
-  schemaNamespace String                 @default("GLOBAL") @map("schema_namespace")
-  createdAt       DateTime               @default(now()) @map("created_at")
-  updatedAt       DateTime               @updatedAt @map("updated_at")
-  apiKeyUsers ApiKeyUser[]
-  locations   Location[]
-  preferences Preference[]
-  definitions PreferenceDefinition[]
+  userId           String               @id @default(uuid()) @map("user_id")
+  email            String               @unique
+  firstName        String               @map("first_name")
+  lastName         String               @map("last_name")
+  schemaNamespace  String               @default("GLOBAL") @map("schema_namespace")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  apiKeyUsers      ApiKeyUser[]
+  locations        Location[]
+  preferences      Preference[]
+  definitions      PreferenceDefinition[]
+  permissionGrants PermissionGrant[]
 
   @@map("users")
 }
@@ -95,6 +96,16 @@ enum SourceType {
   SYSTEM
 }
 
+enum GrantAction {
+  READ
+  WRITE
+}
+
+enum GrantEffect {
+  ALLOW
+  DENY
+}
+
 model Location {
   locationId  String       @id @default(uuid()) @map("location_id")
   userId      String       @map("user_id")
@@ -161,4 +172,21 @@ model Preference {
   @@index([userId, contextKey])
   @@index([definitionId])
   @@map("user_preferences")
+}
+
+model PermissionGrant {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  clientKey String      @map("client_key")
+  target    String
+  action    GrantAction
+  effect    GrantEffect
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, clientKey, target, action])
+  @@index([userId, clientKey, action])
+  @@map("permission_grants")
 }

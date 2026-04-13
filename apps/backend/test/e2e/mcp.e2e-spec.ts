@@ -143,6 +143,7 @@ describe("MCP Integration (e2e)", () => {
         "deletePreference",
         "smartSearchPreferences",
         "consolidateSchema",
+        "listPermissionGrants",
       ]);
     });
 
