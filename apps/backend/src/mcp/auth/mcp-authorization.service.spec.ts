@@ -3,6 +3,7 @@ import {
   ResolvedMcpClient,
   normalizeMcpGrants,
 } from '../types/mcp-authorization.types';
+import { PermissionGrantService } from '../../modules/permission-grant/permission-grant.service';
 
 function createClient(
   overrides: Partial<ResolvedMcpClient> = {},
@@ -22,9 +23,18 @@ function createClient(
 
 describe('McpAuthorizationService', () => {
   let service: McpAuthorizationService;
+  let permissionGrantService: jest.Mocked<
+    Pick<PermissionGrantService, 'evaluateAccess' | 'filterSlugsByAccess'>
+  >;
 
   beforeEach(() => {
-    service = new McpAuthorizationService();
+    permissionGrantService = {
+      evaluateAccess: jest.fn(),
+      filterSlugsByAccess: jest.fn(),
+    };
+    service = new McpAuthorizationService(
+      permissionGrantService as unknown as PermissionGrantService,
+    );
   });
 
   it('allows policy-authorized access when grant claims are absent', () => {
@@ -160,5 +170,174 @@ describe('McpAuthorizationService', () => {
         { namespace: 'dev', slug: 'editor.theme' },
       ),
     ).toBe(false);
+  });
+
+  describe('canAccessTarget', () => {
+    it('calls the existing target-aware coarse access path before DB grants', async () => {
+      const client = createClient();
+      const canAccessSpy = jest.spyOn(service, 'canAccess');
+      permissionGrantService.evaluateAccess.mockResolvedValue('allow');
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          { slug: 'food.dietary_restrictions' },
+        ),
+      ).resolves.toBe(true);
+
+      expect(canAccessSpy).toHaveBeenCalledWith(
+        client,
+        { resource: 'preferences', action: 'read' },
+        undefined,
+        { slug: 'food.dietary_restrictions' },
+      );
+    });
+
+    it('short-circuits before DB grants when static target rules deny access', async () => {
+      const client = createClient({
+        policy: {
+          key: 'claude',
+          label: 'Claude',
+          capabilities: ['preferences:read', 'preferences:write'],
+          targetRules: [
+            {
+              effect: 'deny',
+              capability: 'preferences:read',
+              matcher: { slug: 'food.dietary_restrictions' },
+            },
+          ],
+        },
+      });
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          { slug: 'food.dietary_restrictions' },
+        ),
+      ).resolves.toBe(false);
+
+      expect(permissionGrantService.evaluateAccess).not.toHaveBeenCalled();
+    });
+
+    it('lets DB deny narrow past a static allow', async () => {
+      const client = createClient({
+        policy: {
+          key: 'claude',
+          label: 'Claude',
+          capabilities: ['preferences:read', 'preferences:write'],
+          targetRules: [
+            {
+              effect: 'allow',
+              capability: 'preferences:read',
+              matcher: { slugPrefix: 'food.' },
+            },
+          ],
+        },
+      });
+      permissionGrantService.evaluateAccess.mockResolvedValue('deny');
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          { slug: 'food.dietary_restrictions' },
+        ),
+      ).resolves.toBe(false);
+    });
+
+    it('does not let DB allow widen past a static deny', async () => {
+      const client = createClient({
+        policy: {
+          key: 'claude',
+          label: 'Claude',
+          capabilities: ['preferences:read', 'preferences:write'],
+          targetRules: [
+            {
+              effect: 'deny',
+              capability: 'preferences:read',
+              matcher: { slug: 'food.dietary_restrictions' },
+            },
+          ],
+        },
+      });
+      permissionGrantService.evaluateAccess.mockResolvedValue('allow');
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          { slug: 'food.dietary_restrictions' },
+        ),
+      ).resolves.toBe(false);
+    });
+
+    it('defaults to allow when no DB grant matches', async () => {
+      const client = createClient();
+      permissionGrantService.evaluateAccess.mockResolvedValue('no-grant');
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          { slug: 'system.response_tone' },
+        ),
+      ).resolves.toBe(true);
+    });
+  });
+
+  describe('filterByTargetAccess', () => {
+    it('filters slugs using coarse access first, then DB grants', async () => {
+      const client = createClient();
+      permissionGrantService.filterSlugsByAccess.mockResolvedValue([
+        'food.dietary_restrictions',
+      ]);
+
+      await expect(
+        service.filterByTargetAccess(
+          client,
+          {
+            resource: 'preferences',
+            action: 'read',
+          },
+          undefined,
+          'user-1',
+          ['food.dietary_restrictions', 'system.response_tone'],
+        ),
+      ).resolves.toEqual(['food.dietary_restrictions']);
+
+      expect(permissionGrantService.filterSlugsByAccess).toHaveBeenCalledWith(
+        'user-1',
+        'claude',
+        'read',
+        ['food.dietary_restrictions', 'system.response_tone'],
+      );
+    });
   });
 });

@@ -3,6 +3,7 @@ import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { PreferenceMutationTool } from './preference-mutation.tool';
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 @Injectable()
 export class PreferenceSuggestTool implements McpToolInterface {
@@ -51,10 +52,23 @@ export class PreferenceSuggestTool implements McpToolInterface {
   readonly requiresAuth = true;
   readonly requiredAccess = { resource: 'preferences', action: 'write' } as const;
 
-  constructor(private readonly mutationTool: PreferenceMutationTool) {}
+  constructor(
+    private readonly mutationTool: PreferenceMutationTool,
+    private readonly authorizationService: McpAuthorizationService,
+  ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
     try {
+      const params = args as { slug: string };
+      await this.authorizationService.assertAccessTarget(
+        context!.client,
+        this.requiredAccess,
+        context!.grants,
+        context!.user.userId,
+        'tools/call',
+        { slug: params.slug },
+      );
+
       const result = await this.mutationTool.suggest(args as any, context!);
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],

@@ -1,4 +1,15 @@
-export type McpClientKey = 'claude' | 'codex' | 'fallback' | 'unknown';
+export const MCP_CLIENT_KEYS = [
+  'claude',
+  'codex',
+  'fallback',
+  'unknown',
+] as const;
+
+export type McpClientKey = (typeof MCP_CLIENT_KEYS)[number];
+
+export const MANAGED_MCP_CLIENT_KEYS = ['claude', 'codex', 'fallback'] as const;
+
+export type ManagedMcpClientKey = (typeof MANAGED_MCP_CLIENT_KEYS)[number];
 
 export interface McpAccess {
   resource: 'preferences';

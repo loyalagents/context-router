@@ -3,13 +3,17 @@ import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
 import {
-  PreferenceSchemaSnapshotService,
-  PreferenceDefinitionSnapshot,
-} from '../../../preferences/preference-definition/preference-schema-snapshot.service';
+    PreferenceSchemaSnapshotService,
+    PreferenceDefinitionSnapshot,
+    PreferenceSlugAccessFilter,
+  } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { ConsolidationResponseSchema } from './schema-consolidation.schema';
 import { buildSchemaConsolidationPrompt } from './schema-consolidation.prompt';
 
 export interface SchemaConsolidationWorkflowInput extends WorkflowInput {
+  clientKey: string;
+  schemaNamespace?: string;
+  filterAccessibleSlugs?: PreferenceSlugAccessFilter;
   scope?: 'PERSONAL' | 'ALL';
 }
 
@@ -45,7 +49,16 @@ export class SchemaConsolidationWorkflow
 
     // Step 1: Load definitions
     const snapshot = await recorder.record('loadDefinitions', 'db', () =>
-      this.snapshotService.getSnapshot(input.userId, { scope: input.scope }),
+      this.snapshotService.getGrantFilteredSnapshot(
+        input.userId,
+        {
+          clientKey: input.clientKey,
+          action: 'read',
+          schemaNamespace: input.schemaNamespace,
+          scope: input.scope,
+        },
+        input.filterAccessibleSlugs,
+      ),
     );
 
     // Short-circuit: < 2 definitions means nothing to consolidate

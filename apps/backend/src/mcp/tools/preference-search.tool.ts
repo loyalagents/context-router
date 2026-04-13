@@ -5,6 +5,7 @@ import { PreferenceService } from "@modules/preferences/preference/preference.se
 import { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
 import { McpContext } from "../types/mcp-context.type";
 import { McpToolInterface } from "./base/mcp-tool.interface";
+import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 
 interface SearchPreferencesParams {
   query?: string;
@@ -59,6 +60,7 @@ export class PreferenceSearchTool implements McpToolInterface {
     private preferenceService: PreferenceService,
     private configService: ConfigService,
     private defRepo: PreferenceDefinitionRepository,
+    private readonly authorizationService: McpAuthorizationService,
   ) {}
 
   async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
@@ -151,6 +153,27 @@ export class PreferenceSearchTool implements McpToolInterface {
           suggestions = suggestedPrefs;
         }
       }
+
+      const allCandidateSlugs = Array.from(
+        new Set([
+          ...filteredActive.map((pref) => pref.slug),
+          ...suggestions.map((pref) => pref.slug),
+        ]),
+      );
+      const allowedSlugs = new Set(
+        await this.authorizationService.filterByTargetAccess(
+          context.client,
+          this.requiredAccess,
+          context.grants,
+          userId,
+          allCandidateSlugs,
+        ),
+      );
+
+      filteredActive = filteredActive.filter((pref) =>
+        allowedSlugs.has(pref.slug),
+      );
+      suggestions = suggestions.filter((pref) => allowedSlugs.has(pref.slug));
 
       if (maxResults) {
         if (filteredActive.length > maxResults) {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@infrastructure/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { PermissionGrantModule } from '@modules/permission-grant/permission-grant.module';
 import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { PreferenceDefinitionResolver } from './preference-definition.resolver';
 import { PreferenceDefinitionService } from './preference-definition.service';
@@ -8,7 +9,7 @@ import { OptionalGqlAuthGuard } from '@common/guards/optional-gql-auth.guard';
 import { PreferenceSchemaSnapshotService } from './preference-schema-snapshot.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, PermissionGrantModule],
   providers: [
     PreferenceDefinitionRepository,
     PreferenceDefinitionResolver,

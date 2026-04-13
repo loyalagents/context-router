@@ -17,6 +17,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { HealthModule } from './modules/health/health.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { PermissionGrantModule } from './modules/permission-grant/permission-grant.module';
 import { McpModule } from './mcp/mcp.module';
 import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
 
@@ -59,6 +60,7 @@ import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
     UserModule,
     HealthModule,
     PreferencesModule,
+    PermissionGrantModule,
     McpModule,
     VertexAiModule,
   ],
