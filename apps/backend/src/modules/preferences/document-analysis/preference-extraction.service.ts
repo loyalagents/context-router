@@ -11,6 +11,8 @@ import {
 import { getDocumentUploadConfig } from '../../../config/document-upload.config';
 import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
 import { PreferenceSchemaSnapshotService } from '../preference-definition/preference-schema-snapshot.service';
+import { buildDuplicateConsolidationPrompt } from './duplicate-consolidation.prompt';
+import { buildDuplicateConsolidationSchema } from './duplicate-consolidation.schema';
 
 /**
  * Zod schema for validating AI response structure.
@@ -39,6 +41,12 @@ const AiResponseSchema = z.object({
 
 type AiSuggestionSchemaType = z.infer<typeof AiSuggestionSchema>;
 type AiResponseSchemaType = z.infer<typeof AiResponseSchema>;
+type ConsolidatedAiResponse = {
+  suggestion: AiSuggestionSchemaType;
+};
+type NormalizationResult =
+  | { kind: 'accepted'; suggestion: PreferenceSuggestion }
+  | { kind: 'filtered'; suggestion: FilteredSuggestion };
 
 @Injectable()
 export class PreferenceExtractionService {
@@ -90,7 +98,7 @@ export class PreferenceExtractionService {
       );
 
     // Transform validated AI data to domain types
-    const parsed = this.transformAiResult(aiResult, userId);
+    const parsed = this.transformAiResult(aiResult);
 
     return this.validateAndSanitizeSuggestions(
       parsed,
@@ -154,13 +162,12 @@ If no preferences can be extracted, return:
 
   private transformAiResult(
     aiResult: AiResponseSchemaType,
-    analysisId: string,
   ): { suggestions: PreferenceSuggestion[]; documentSummary: string } {
     const suggestions: PreferenceSuggestion[] = aiResult.suggestions
       .slice(0, this.config.maxSuggestions)
       .map((s: AiSuggestionSchemaType, index: number) => {
         return {
-          id: `${analysisId}:${index}`,
+          id: `candidate:${index}`,
           slug: s.slug,
           operation:
             s.operation === 'UPDATE'
@@ -195,14 +202,11 @@ If no preferences can be extracted, return:
   /**
    * Validates and sanitizes AI-generated suggestions against actual DB state.
    *
-   * - Filters out suggestions with invalid/unknown slugs
-   * - Filters out suggestions missing required fields (slug, newValue)
-   * - Corrects operation type (CREATE vs UPDATE) based on DB state
-   * - Corrects oldValue with actual DB value if exists
-   * - Deduplicates by slug (keeps first occurrence)
-   * - Sets wasCorrected flag when corrections are made
-   * - Logs all corrections and filtered items
-   * - Returns filtered suggestions with reasons for UI display
+   * - Prefilters hard-invalid suggestions (unknown slug, missing fields)
+   * - Groups remaining suggestions by exact slug
+   * - Consolidates duplicate groups via a second AI pass
+   * - Corrects operation/oldValue and filters no-change against DB state
+   * - Keeps duplicate audit items for UI visibility
    */
   private async validateAndSanitizeSuggestions(
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
@@ -233,114 +237,98 @@ If no preferences can be extracted, return:
 
     const validatedSuggestions: PreferenceSuggestion[] = [];
     const filteredSuggestions: FilteredSuggestion[] = [];
-    const seenSlugs = new Set<string>();
+    const candidates: PreferenceSuggestion[] = [];
 
     for (const suggestion of parsed.suggestions) {
-      // Filter: unknown slug
-      if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId))) {
-        this.logger.warn(
-          `Filtered suggestion: unknown slug "${suggestion.slug}"`,
-        );
-        filteredSuggestions.push({
-          ...suggestion,
-          filterReason: FilterReason.UNKNOWN_SLUG,
-          filterDetails: `Slug "${suggestion.slug}" is not in the catalog`,
-        });
+      const prefiltered = await this.prefilterSuggestion(suggestion, userId);
+      if (prefiltered) {
+        filteredSuggestions.push(prefiltered);
         continue;
       }
 
-      // Filter: missing required fields
-      if (!suggestion.slug || suggestion.newValue === undefined) {
-        const details = `slug: ${suggestion.slug}, newValue: ${suggestion.newValue}`;
-        this.logger.warn(
-          `Filtered suggestion: missing required field(s) - ${details}`,
+      candidates.push(suggestion);
+    }
+
+    const groupedSuggestions = new Map<string, PreferenceSuggestion[]>();
+    for (const suggestion of candidates) {
+      const existingGroup = groupedSuggestions.get(suggestion.slug) ?? [];
+      existingGroup.push(suggestion);
+      groupedSuggestions.set(suggestion.slug, existingGroup);
+    }
+
+    for (const [slug, group] of groupedSuggestions.entries()) {
+      if (group.length === 1) {
+        this.pushNormalizationResult(
+          this.normalizeSuggestion(group[0], preferenceMap),
+          validatedSuggestions,
+          filteredSuggestions,
         );
-        filteredSuggestions.push({
-          ...suggestion,
-          filterReason: FilterReason.MISSING_FIELDS,
-          filterDetails: details,
-        });
         continue;
       }
 
-      // Filter: duplicate slug (keep first)
-      if (seenSlugs.has(suggestion.slug)) {
-        this.logger.warn(
-          `Filtered suggestion: duplicate slug ${suggestion.slug}`,
+      this.logger.log(
+        `[DUPLICATE_GROUP_DETECTED] slug=${slug} candidateCount=${group.length}`,
+      );
+
+      try {
+        const consolidatedSuggestion = await this.consolidateDuplicateGroup(
+          slug,
+          group,
+          preferenceMap.get(slug),
         );
-        filteredSuggestions.push({
-          ...suggestion,
-          filterReason: FilterReason.DUPLICATE_KEY,
-          filterDetails: `First occurrence of ${suggestion.slug} was already added`,
-        });
-        continue;
-      }
-      seenSlugs.add(suggestion.slug);
 
-      // Check if preference exists in DB
-      const existingValue = preferenceMap.get(suggestion.slug);
-      const existsInDb = preferenceMap.has(suggestion.slug);
-      let wasCorrected = false;
-
-      // Correct operation type based on DB state
-      const expectedOperation = existsInDb
-        ? PreferenceOperation.UPDATE
-        : PreferenceOperation.CREATE;
-
-      if (suggestion.operation !== expectedOperation) {
-        this.logger.warn(
-          `Corrected operation for ${suggestion.slug}: AI said ${suggestion.operation}, but DB says ${expectedOperation}`,
+        filteredSuggestions.push(
+          ...group.map((candidate) =>
+            this.buildDuplicateAuditSuggestion(
+              candidate,
+              `Merged into consolidated suggestion for ${slug}`,
+            ),
+          ),
         );
-        suggestion.operation = expectedOperation;
-        wasCorrected = true;
-      }
 
-      // Correct oldValue based on DB state
-      if (existsInDb) {
-        const actualOldValue = existingValue;
-        const aiOldValue = suggestion.oldValue;
+        const normalizedConsolidated = this.normalizeSuggestion(
+          consolidatedSuggestion,
+          preferenceMap,
+        );
 
-        // Check if oldValue matches (deep comparison for objects)
-        const oldValueMatches =
-          JSON.stringify(actualOldValue) === JSON.stringify(aiOldValue);
-
-        if (!oldValueMatches) {
-          this.logger.warn(
-            `Corrected oldValue for ${suggestion.slug}: AI said ${JSON.stringify(aiOldValue)}, actual is ${JSON.stringify(actualOldValue)}`,
+        if (normalizedConsolidated.kind === 'accepted') {
+          validatedSuggestions.push(normalizedConsolidated.suggestion);
+          this.logger.log(
+            `[DUPLICATE_GROUP_CONSOLIDATED] slug=${slug} candidateCount=${group.length}`,
           );
-          suggestion.oldValue = actualOldValue;
-          wasCorrected = true;
+          continue;
         }
-      } else if (
-        suggestion.oldValue !== undefined &&
-        suggestion.oldValue !== null
-      ) {
-        // CREATE operation shouldn't have oldValue
-        this.logger.warn(
-          `Corrected oldValue for ${suggestion.slug}: removed oldValue for CREATE operation`,
-        );
-        suggestion.oldValue = undefined;
-        wasCorrected = true;
-      }
 
-      // Filter: UPDATE where newValue equals existing value (no change)
-      if (
-        existsInDb &&
-        JSON.stringify(existingValue) === JSON.stringify(suggestion.newValue)
-      ) {
-        this.logger.warn(
-          `Filtered suggestion: ${suggestion.slug} newValue matches existing value (no change)`,
+        filteredSuggestions.push(
+          this.buildConsolidatedNoChangeSuggestion(
+            normalizedConsolidated.suggestion,
+            group.length,
+          ),
         );
-        filteredSuggestions.push({
-          ...suggestion,
-          filterReason: FilterReason.NO_CHANGE,
-          filterDetails: `Value "${JSON.stringify(suggestion.newValue)}" already exists`,
-        });
-        continue;
-      }
+        this.logger.log(
+          `[DUPLICATE_GROUP_NO_CHANGE] slug=${slug} candidateCount=${group.length}`,
+        );
+      } catch (error) {
+        const reason =
+          error instanceof Error ? error.message : 'unknown consolidation error';
+        this.logger.warn(
+          `[DUPLICATE_GROUP_FALLBACK_FIRST] slug=${slug} candidateCount=${group.length} reason=${reason}`,
+        );
 
-      suggestion.wasCorrected = wasCorrected;
-      validatedSuggestions.push(suggestion);
+        this.pushNormalizationResult(
+          this.normalizeSuggestion(group[0], preferenceMap),
+          validatedSuggestions,
+          filteredSuggestions,
+        );
+        filteredSuggestions.push(
+          ...group.slice(1).map((candidate) =>
+            this.buildDuplicateAuditSuggestion(
+              candidate,
+              `Retained first valid candidate for ${slug}; this duplicate was not applied`,
+            ),
+          ),
+        );
+      }
     }
 
     this.logger.log(
@@ -353,5 +341,203 @@ If no preferences can be extracted, return:
       documentSummary: parsed.documentSummary,
       filteredCount: filteredSuggestions.length,
     };
+  }
+
+  private async prefilterSuggestion(
+    suggestion: PreferenceSuggestion,
+    userId: string,
+  ): Promise<FilteredSuggestion | null> {
+    const originalIndex = this.getOriginalIndex(suggestion.id);
+
+    if (!suggestion.slug || suggestion.newValue === undefined) {
+      const details = `slug: ${suggestion.slug}, newValue: ${suggestion.newValue}`;
+      this.logger.warn(
+        `Filtered suggestion: missing required field(s) - ${details}`,
+      );
+      return {
+        ...suggestion,
+        id: `filtered:invalid:${originalIndex}`,
+        filterReason: FilterReason.MISSING_FIELDS,
+        filterDetails: details,
+      };
+    }
+
+    if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId))) {
+      this.logger.warn(`Filtered suggestion: unknown slug "${suggestion.slug}"`);
+      return {
+        ...suggestion,
+        id: `filtered:invalid:${originalIndex}`,
+        filterReason: FilterReason.UNKNOWN_SLUG,
+        filterDetails: `Slug "${suggestion.slug}" is not in the catalog`,
+      };
+    }
+
+    return null;
+  }
+
+  private normalizeSuggestion(
+    suggestion: PreferenceSuggestion,
+    preferenceMap: Map<string, any>,
+  ): NormalizationResult {
+    const normalizedSuggestion: PreferenceSuggestion = { ...suggestion };
+    const existingValue = preferenceMap.get(normalizedSuggestion.slug);
+    const existsInDb = preferenceMap.has(normalizedSuggestion.slug);
+    let wasCorrected = false;
+
+    const expectedOperation = existsInDb
+      ? PreferenceOperation.UPDATE
+      : PreferenceOperation.CREATE;
+
+    if (normalizedSuggestion.operation !== expectedOperation) {
+      this.logger.warn(
+        `Corrected operation for ${normalizedSuggestion.slug}: AI said ${normalizedSuggestion.operation}, but DB says ${expectedOperation}`,
+      );
+      normalizedSuggestion.operation = expectedOperation;
+      wasCorrected = true;
+    }
+
+    if (existsInDb) {
+      const actualOldValue = existingValue;
+      const aiOldValue = normalizedSuggestion.oldValue;
+      const oldValueMatches =
+        JSON.stringify(actualOldValue) === JSON.stringify(aiOldValue);
+
+      if (!oldValueMatches) {
+        this.logger.warn(
+          `Corrected oldValue for ${normalizedSuggestion.slug}: AI said ${JSON.stringify(aiOldValue)}, actual is ${JSON.stringify(actualOldValue)}`,
+        );
+        normalizedSuggestion.oldValue = actualOldValue;
+        wasCorrected = true;
+      }
+    } else if (
+      normalizedSuggestion.oldValue !== undefined &&
+      normalizedSuggestion.oldValue !== null
+    ) {
+      this.logger.warn(
+        `Corrected oldValue for ${normalizedSuggestion.slug}: removed oldValue for CREATE operation`,
+      );
+      normalizedSuggestion.oldValue = undefined;
+      wasCorrected = true;
+    }
+
+    if (
+      existsInDb &&
+      JSON.stringify(existingValue) ===
+        JSON.stringify(normalizedSuggestion.newValue)
+    ) {
+      this.logger.warn(
+        `Filtered suggestion: ${normalizedSuggestion.slug} newValue matches existing value (no change)`,
+      );
+      return {
+        kind: 'filtered',
+        suggestion: {
+          ...normalizedSuggestion,
+          wasCorrected,
+          filterReason: FilterReason.NO_CHANGE,
+          filterDetails: `Value "${JSON.stringify(normalizedSuggestion.newValue)}" already exists`,
+        },
+      };
+    }
+
+    return {
+      kind: 'accepted',
+      suggestion: {
+        ...normalizedSuggestion,
+        wasCorrected,
+      },
+    };
+  }
+
+  private pushNormalizationResult(
+    result: NormalizationResult,
+    validatedSuggestions: PreferenceSuggestion[],
+    filteredSuggestions: FilteredSuggestion[],
+  ): void {
+    if (result.kind === 'accepted') {
+      validatedSuggestions.push(result.suggestion);
+      return;
+    }
+
+    filteredSuggestions.push(result.suggestion);
+  }
+
+  private async consolidateDuplicateGroup(
+    slug: string,
+    suggestions: PreferenceSuggestion[],
+    currentValue: any,
+  ): Promise<PreferenceSuggestion> {
+    const consolidationPrompt = buildDuplicateConsolidationPrompt(
+      slug,
+      currentValue,
+      JSON.stringify(
+        suggestions.map((suggestion) => ({
+          operation: suggestion.operation,
+          oldValue: suggestion.oldValue,
+          newValue: suggestion.newValue,
+          confidence: suggestion.confidence,
+          sourceSnippet: suggestion.sourceSnippet,
+          sourceMeta: suggestion.sourceMeta,
+        })),
+        null,
+        2,
+      ),
+    );
+    const schema = buildDuplicateConsolidationSchema(slug);
+    const result: ConsolidatedAiResponse =
+      await this.aiStructuredService.generateStructured(
+        consolidationPrompt,
+        schema,
+        { operationName: `preferenceExtraction.duplicateConsolidation.${slug}` },
+      );
+
+    return {
+      id: `consolidated:${slug}`,
+      slug: result.suggestion.slug,
+      operation:
+        result.suggestion.operation === 'UPDATE'
+          ? PreferenceOperation.UPDATE
+          : PreferenceOperation.CREATE,
+      oldValue: result.suggestion.oldValue,
+      newValue: result.suggestion.newValue,
+      confidence: result.suggestion.confidence,
+      sourceSnippet: result.suggestion.sourceSnippet,
+      sourceMeta: result.suggestion.sourceMeta
+        ? {
+            page: result.suggestion.sourceMeta.page ?? undefined,
+            line: result.suggestion.sourceMeta.line ?? undefined,
+          }
+        : undefined,
+      wasCorrected: false,
+      category: slug.split('.')[0],
+      description: undefined,
+    };
+  }
+
+  private buildDuplicateAuditSuggestion(
+    suggestion: PreferenceSuggestion,
+    filterDetails: string,
+  ): FilteredSuggestion {
+    return {
+      ...suggestion,
+      id: `filtered:duplicate:${suggestion.slug}:${this.getOriginalIndex(suggestion.id)}`,
+      filterReason: FilterReason.DUPLICATE_KEY,
+      filterDetails,
+    };
+  }
+
+  private buildConsolidatedNoChangeSuggestion(
+    suggestion: FilteredSuggestion,
+    candidateCount: number,
+  ): FilteredSuggestion {
+    return {
+      ...suggestion,
+      id: `filtered:consolidated-no-change:${suggestion.slug}`,
+      filterReason: FilterReason.NO_CHANGE,
+      filterDetails: `Consolidated ${candidateCount} candidates for ${suggestion.slug}, but the merged value matches the existing preference.`,
+    };
+  }
+
+  private getOriginalIndex(id: string): string {
+    return id.replace(/^candidate:/, '');
   }
 }
