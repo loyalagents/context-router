@@ -2,25 +2,128 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 
-describe('Document Analysis GraphQL API (e2e)', () => {
+describe('Document Analysis API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  let structuredAi: {
+    generateStructured: jest.Mock;
+    generateStructuredWithFile: jest.Mock;
+  };
 
   beforeAll(async () => {
     const testApp = await createTestApp();
     app = testApp.app;
     setTestUser = testApp.setTestUser;
+    structuredAi = testApp.mocks.structuredAi;
   });
 
   beforeEach(async () => {
     // Create fresh user after resetDb()
     testUser = await createTestUser();
     setTestUser(testUser);
+    structuredAi.generateStructured.mockReset();
+    structuredAi.generateStructuredWithFile.mockReset();
   });
 
   afterAll(async () => {
     await app.close();
+  });
+
+  describe('analyzeDocument REST endpoint', () => {
+    it('should consolidate duplicate candidates and preserve stable IDs', async () => {
+      structuredAi.generateStructuredWithFile.mockResolvedValue({
+        suggestions: [
+          {
+            slug: 'food.dietary_restrictions',
+            operation: 'CREATE',
+            newValue: ['peanuts'],
+            confidence: 0.8,
+            sourceSnippet: 'allergic to peanuts',
+            sourceMeta: { page: 1, line: 2 },
+          },
+          {
+            slug: 'food.dietary_restrictions',
+            operation: 'CREATE',
+            newValue: ['shellfish'],
+            confidence: 0.87,
+            sourceSnippet: 'allergic to shellfish',
+            sourceMeta: { page: 2, line: 4 },
+          },
+          {
+            slug: 'system.response_tone',
+            operation: 'CREATE',
+            newValue: 'casual',
+            confidence: 0.92,
+            sourceSnippet: 'likes casual replies',
+            sourceMeta: { page: 3, line: 1 },
+          },
+        ],
+        documentSummary: 'Customer preference notes',
+      });
+      structuredAi.generateStructured.mockResolvedValue({
+        suggestion: {
+          slug: 'food.dietary_restrictions',
+          operation: 'CREATE',
+          newValue: ['peanuts', 'shellfish'],
+          confidence: 0.95,
+          sourceSnippet: 'allergic to shellfish',
+          sourceMeta: { page: 2, line: 4 },
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('allergic to peanuts and shellfish'), {
+          filename: 'preferences.txt',
+          contentType: 'text/plain',
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.documentSummary).toBe('Customer preference notes');
+      expect(response.body.suggestions).toHaveLength(2);
+      expect(response.body.filteredSuggestions).toHaveLength(2);
+      expect(response.body.filteredCount).toBe(2);
+
+      const analysisId = response.body.analysisId;
+      const consolidated = response.body.suggestions.find(
+        (suggestion: any) =>
+          suggestion.slug === 'food.dietary_restrictions',
+      );
+      const ordinary = response.body.suggestions.find(
+        (suggestion: any) => suggestion.slug === 'system.response_tone',
+      );
+
+      expect(consolidated).toMatchObject({
+        id: `${analysisId}:consolidated:food.dietary_restrictions`,
+        newValue: ['peanuts', 'shellfish'],
+        confidence: 0.95,
+        sourceSnippet: 'allergic to shellfish',
+      });
+      expect(ordinary).toMatchObject({
+        id: `${analysisId}:candidate:2`,
+        newValue: 'casual',
+        sourceSnippet: 'likes casual replies',
+      });
+      expect(response.body.filteredSuggestions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: `${analysisId}:filtered:duplicate:food.dietary_restrictions:0`,
+            filterReason: 'DUPLICATE_KEY',
+            sourceSnippet: 'allergic to peanuts',
+            sourceMeta: { page: 1, line: 2 },
+          }),
+          expect.objectContaining({
+            id: `${analysisId}:filtered:duplicate:food.dietary_restrictions:1`,
+            filterReason: 'DUPLICATE_KEY',
+            sourceSnippet: 'allergic to shellfish',
+            sourceMeta: { page: 2, line: 4 },
+          }),
+        ]),
+      );
+      expect(structuredAi.generateStructured).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('applyPreferenceSuggestions mutation', () => {

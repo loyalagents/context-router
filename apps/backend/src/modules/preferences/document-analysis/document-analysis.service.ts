@@ -35,16 +35,16 @@ export class DocumentAnalysisService {
           filename,
         );
 
-      // Update suggestion IDs to include analysisId
-      const suggestionsWithIds = suggestions.map((s, index) => ({
+      // Prefix stable extraction IDs with the analysisId without reindexing.
+      const suggestionsWithIds = suggestions.map((s) => ({
         ...s,
-        id: `${analysisId}:${index}`,
+        id: `${analysisId}:${s.id}`,
       }));
 
-      // Update filtered suggestion IDs as well
-      const filteredWithIds = filteredSuggestions.map((s, index) => ({
+      // Prefix filtered suggestion IDs as well without reindexing.
+      const filteredWithIds = filteredSuggestions.map((s) => ({
         ...s,
-        id: `${analysisId}:filtered:${index}`,
+        id: `${analysisId}:${s.id}`,
       }));
 
       if (suggestionsWithIds.length === 0) {

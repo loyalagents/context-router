@@ -167,6 +167,10 @@ describe("PreferenceExtractionService", () => {
       documentSummary = "Test document",
     ) => ({ suggestions, documentSummary });
 
+    const createConsolidationResponse = (suggestion: any) => ({
+      suggestion,
+    });
+
     describe("filtering unknown slugs", () => {
       it("should filter out suggestions with unknown slugs", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
@@ -225,8 +229,8 @@ describe("PreferenceExtractionService", () => {
       });
     });
 
-    describe("filtering duplicate slug", () => {
-      it("should filter duplicate slug and keep first", async () => {
+    describe("duplicate slug consolidation", () => {
+      it("should consolidate duplicate slug groups into one merged suggestion", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
           createAiResponse([
@@ -246,6 +250,16 @@ describe("PreferenceExtractionService", () => {
             },
           ]),
         );
+        mockAiStructuredService.generateStructured.mockResolvedValue(
+          createConsolidationResponse({
+            slug: "food.dietary_restrictions",
+            operation: "CREATE",
+            newValue: ["peanuts", "shellfish"],
+            confidence: 0.95,
+            sourceSnippet: "allergic to shellfish",
+            sourceMeta: { page: 2, line: 4 },
+          }),
+        );
 
         const result = await service.extractPreferences(
           "user-1",
@@ -255,8 +269,243 @@ describe("PreferenceExtractionService", () => {
         );
 
         expect(result.suggestions).toHaveLength(1);
-        expect(result.suggestions[0].newValue).toEqual(["peanuts"]); // first one kept
-        expect(result.filteredCount).toBe(1);
+        expect(result.suggestions[0]).toMatchObject({
+          id: "consolidated:food.dietary_restrictions",
+          slug: "food.dietary_restrictions",
+          newValue: ["peanuts", "shellfish"],
+          confidence: 0.95,
+          sourceSnippet: "allergic to shellfish",
+        });
+        expect(result.filteredCount).toBe(2);
+        expect(result.filteredSuggestions).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: "filtered:duplicate:food.dietary_restrictions:0",
+              filterReason: "DUPLICATE_KEY",
+              sourceSnippet: "allergic to peanuts",
+            }),
+            expect.objectContaining({
+              id: "filtered:duplicate:food.dietary_restrictions:1",
+              filterReason: "DUPLICATE_KEY",
+              sourceSnippet: "allergic to shellfish",
+            }),
+          ]),
+        );
+        expect(mockAiStructuredService.generateStructured).toHaveBeenCalledTimes(
+          1,
+        );
+      });
+
+      it("should preserve a later duplicate when the first would become no-change", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("food.dietary_restrictions", ["peanuts"]),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["peanuts"],
+              newValue: ["peanuts"],
+              confidence: 0.7,
+              sourceSnippet: "still allergic to peanuts",
+            },
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["peanuts"],
+              newValue: ["peanuts", "shellfish"],
+              confidence: 0.92,
+              sourceSnippet: "allergic to peanuts and shellfish",
+            },
+          ]),
+        );
+        mockAiStructuredService.generateStructured.mockResolvedValue(
+          createConsolidationResponse({
+            slug: "food.dietary_restrictions",
+            operation: "UPDATE",
+            oldValue: ["peanuts"],
+            newValue: ["peanuts", "shellfish"],
+            confidence: 0.91,
+            sourceSnippet: "allergic to peanuts and shellfish",
+          }),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0]).toMatchObject({
+          id: "consolidated:food.dietary_restrictions",
+          newValue: ["peanuts", "shellfish"],
+        });
+      });
+
+      it("should fall back to the first valid candidate when consolidation fails", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "food.dietary_restrictions",
+              operation: "CREATE",
+              newValue: ["peanuts"],
+              confidence: 0.9,
+              sourceSnippet: "allergic to peanuts",
+            },
+            {
+              slug: "food.dietary_restrictions",
+              operation: "CREATE",
+              newValue: ["shellfish"],
+              confidence: 0.8,
+              sourceSnippet: "allergic to shellfish",
+            },
+          ]),
+        );
+        mockAiStructuredService.generateStructured.mockRejectedValue(
+          new Error("consolidation failed"),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0]).toMatchObject({
+          id: "candidate:0",
+          newValue: ["peanuts"],
+        });
+        expect(result.filteredSuggestions).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: "filtered:duplicate:food.dietary_restrictions:1",
+              filterReason: "DUPLICATE_KEY",
+            }),
+          ]),
+        );
+        expect(Logger.prototype.warn).toHaveBeenCalledWith(
+          expect.stringContaining("[DUPLICATE_GROUP_FALLBACK_FIRST]"),
+        );
+      });
+
+      it("should add a synthetic no-change filtered item when consolidation matches the DB value", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("food.dietary_restrictions", [
+            "peanuts",
+            "shellfish",
+          ]),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["peanuts"],
+              newValue: ["peanuts"],
+              confidence: 0.7,
+              sourceSnippet: "allergic to peanuts",
+            },
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["peanuts"],
+              newValue: ["peanuts", "shellfish"],
+              confidence: 0.9,
+              sourceSnippet: "also allergic to shellfish",
+              sourceMeta: { page: 3, line: 8 },
+            },
+          ]),
+        );
+        mockAiStructuredService.generateStructured.mockResolvedValue(
+          createConsolidationResponse({
+            slug: "food.dietary_restrictions",
+            operation: "UPDATE",
+            oldValue: ["peanuts"],
+            newValue: ["peanuts", "shellfish"],
+            confidence: 0.88,
+            sourceSnippet: "also allergic to shellfish",
+            sourceMeta: { page: 3, line: 8 },
+          }),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(0);
+        expect(result.filteredCount).toBe(3);
+        expect(result.filteredSuggestions).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: "filtered:consolidated-no-change:food.dietary_restrictions",
+              filterReason: "NO_CHANGE",
+              confidence: 0.88,
+              sourceSnippet: "also allergic to shellfish",
+              filterDetails:
+                "Consolidated 2 candidates for food.dietary_restrictions, but the merged value matches the existing preference.",
+            }),
+            expect.objectContaining({
+              id: "filtered:duplicate:food.dietary_restrictions:0",
+              filterReason: "DUPLICATE_KEY",
+            }),
+            expect.objectContaining({
+              id: "filtered:duplicate:food.dietary_restrictions:1",
+              filterReason: "DUPLICATE_KEY",
+            }),
+          ]),
+        );
+      });
+
+      it("should skip consolidation when only one candidate survives pre-filtering", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "food.dietary_restrictions",
+              operation: "CREATE",
+              confidence: 0.9,
+              sourceSnippet: "missing value",
+            },
+            {
+              slug: "food.dietary_restrictions",
+              operation: "CREATE",
+              newValue: ["peanuts"],
+              confidence: 0.92,
+              sourceSnippet: "allergic to peanuts",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0]).toMatchObject({
+          id: "candidate:1",
+          newValue: ["peanuts"],
+        });
+        expect(result.filteredSuggestions).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: "filtered:invalid:0",
+              filterReason: "MISSING_FIELDS",
+            }),
+          ]),
+        );
+        expect(mockAiStructuredService.generateStructured).not.toHaveBeenCalled();
       });
     });
 
@@ -352,6 +601,60 @@ describe("PreferenceExtractionService", () => {
         expect(result.suggestions[0].wasCorrected).toBe(true);
       });
 
+      it("should correct operation and oldValue after duplicate consolidation", async () => {
+        const actualDbValue = ["nuts"];
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("food.dietary_restrictions", actualDbValue),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["nuts"],
+              newValue: ["nuts", "shellfish"],
+              confidence: 0.85,
+              sourceSnippet: "allergic to shellfish",
+            },
+            {
+              slug: "food.dietary_restrictions",
+              operation: "UPDATE",
+              oldValue: ["nuts"],
+              newValue: ["nuts", "peanuts"],
+              confidence: 0.8,
+              sourceSnippet: "allergic to peanuts",
+            },
+          ]),
+        );
+        mockAiStructuredService.generateStructured.mockResolvedValue(
+          createConsolidationResponse({
+            slug: "food.dietary_restrictions",
+            operation: "CREATE",
+            oldValue: ["wrong-old"],
+            newValue: ["nuts", "shellfish", "peanuts"],
+            confidence: 0.93,
+            sourceSnippet: "allergic to peanuts",
+          }),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0]).toMatchObject({
+          id: "consolidated:food.dietary_restrictions",
+          operation: PreferenceOperation.UPDATE,
+          oldValue: actualDbValue,
+          newValue: ["nuts", "shellfish", "peanuts"],
+          confidence: 0.93,
+          wasCorrected: true,
+        });
+      });
+
       it("should remove oldValue for CREATE operations", async () => {
         mockPreferenceService.getActivePreferences.mockResolvedValue([]);
         mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
@@ -434,6 +737,7 @@ describe("PreferenceExtractionService", () => {
         );
 
         expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0].id).toBe("candidate:0");
         expect(result.suggestions[0].wasCorrected).toBe(false);
       });
 
@@ -507,11 +811,10 @@ describe("PreferenceExtractionService", () => {
               confidence: 0.9,
               sourceSnippet: "allergic to peanuts",
             },
-            // 2. Duplicate slug - should be filtered
+            // 2. Hard invalid - should be filtered before grouping
             {
               slug: "food.dietary_restrictions",
               operation: "CREATE",
-              newValue: ["duplicate"],
               confidence: 0.8,
               sourceSnippet: "duplicate",
             },
@@ -535,7 +838,7 @@ describe("PreferenceExtractionService", () => {
         );
 
         expect(result.suggestions).toHaveLength(1);
-        expect(result.filteredCount).toBe(2); // 2 filtered: duplicate, no-change
+        expect(result.filteredCount).toBe(2); // 2 filtered: invalid, no-change
       });
     });
 

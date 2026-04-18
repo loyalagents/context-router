@@ -259,6 +259,25 @@ export default function SuggestionsList({
                         </p>
                       )}
                       <div className="mt-2 text-xs text-gray-500">
+                        <span className="font-medium">Source:</span>{' '}
+                        <span className="italic">&quot;{suggestion.sourceSnippet}&quot;</span>
+                        {(suggestion.sourceMeta?.page || suggestion.sourceMeta?.line) && (
+                          <span className="ml-1">
+                            (
+                            {suggestion.sourceMeta?.page
+                              ? `page ${suggestion.sourceMeta.page}`
+                              : null}
+                            {suggestion.sourceMeta?.page && suggestion.sourceMeta?.line
+                              ? ', '
+                              : null}
+                            {suggestion.sourceMeta?.line
+                              ? `line ${suggestion.sourceMeta.line}`
+                              : null}
+                            )
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
                         <span className="font-medium">Value:</span>{' '}
                         <code className="bg-gray-100 px-1 rounded">
                           {JSON.stringify(suggestion.newValue)}
