@@ -3,6 +3,8 @@
 # ------------------------------------------------------
 
 input ApplyPreferenceSuggestionInput {
+  confidence: Float
+  evidence: JSON
   newValue: JSON
   operation: PreferenceOperation!
 

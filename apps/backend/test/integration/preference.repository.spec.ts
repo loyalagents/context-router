@@ -9,7 +9,10 @@ import { PreferenceRepository } from "../../src/modules/preferences/preference/p
 import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { getPrismaClient } from "../setup/test-db";
-import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
+import {
+  PreferenceStatus,
+  SourceType,
+} from "@infrastructure/prisma/generated-client";
 
 describe("PreferenceRepository (integration)", () => {
   let repository: PreferenceRepository;
@@ -27,6 +30,8 @@ describe("PreferenceRepository (integration)", () => {
   let quietHoursDefId: string;
   let seatPrefDefId: string;
   let techStackDefId: string;
+  const userProvenance = { sourceType: SourceType.USER } as const;
+  const inferredProvenance = { sourceType: SourceType.INFERRED } as const;
 
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
@@ -90,14 +95,17 @@ describe("PreferenceRepository (integration)", () => {
   // upsertActive
   // ──────────────────────────────────────────────
   describe("upsertActive", () => {
-    it("should create a global ACTIVE preference with GLOBAL contextKey", async () => {
-      const pref = await repository.upsertActive(
+    it("should create a global ACTIVE preference with GLOBAL contextKey and return beforeState", async () => {
+      const { result: pref, beforeState } = await repository.upsertActive(
         testUserId,
         responseToneDefId,
         "casual",
+        undefined,
+        userProvenance,
       );
 
       expect(pref).toBeDefined();
+      expect(beforeState).toBeNull();
       expect(pref.id).toBeDefined();
       expect(pref.userId).toBe(testUserId);
       expect(pref.definitionId).toBe(responseToneDefId);
@@ -111,11 +119,12 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should create a location-scoped ACTIVE preference with LOCATION contextKey", async () => {
-      const pref = await repository.upsertActive(
+      const { result: pref } = await repository.upsertActive(
         testUserId,
         defaultTempDefId,
         "72",
         testLocationId,
+        userProvenance,
       );
 
       expect(pref.locationId).toBe(testLocationId);
@@ -127,23 +136,53 @@ describe("PreferenceRepository (integration)", () => {
 
     it("should store array values", async () => {
       const arrayValue = ["Italian", "Japanese", "Mexican"];
-      const pref = await repository.upsertActive(
+      const { result: pref } = await repository.upsertActive(
         testUserId,
         cuisinePrefsDefId,
         arrayValue,
+        undefined,
+        {
+          sourceType: SourceType.IMPORTED,
+          confidence: 0.42,
+          evidence: { importedFrom: "seed-file" },
+        },
       );
+
       expect(pref.value).toEqual(arrayValue);
+      expect(pref.sourceType).toBe(SourceType.IMPORTED);
+      expect(pref.confidence).toBe(0.42);
+      expect(pref.evidence).toEqual({ importedFrom: "seed-file" });
     });
 
     it("should update existing ACTIVE preference (upsert)", async () => {
-      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
+      const created = await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "brief",
+        undefined,
+        userProvenance,
+      );
       const updated = await repository.upsertActive(
         testUserId,
         responseLengthDefId,
         "detailed",
+        undefined,
+        {
+          sourceType: SourceType.IMPORTED,
+          confidence: 0.99,
+          evidence: { source: "migration" },
+        },
       );
 
-      expect(updated.value).toBe("detailed");
+      expect(updated.result.value).toBe("detailed");
+      expect(updated.result.sourceType).toBe(SourceType.IMPORTED);
+      expect(updated.result.confidence).toBe(0.99);
+      expect(updated.result.evidence).toEqual({ source: "migration" });
+      expect(updated.beforeState).toMatchObject({
+        id: created.result.id,
+        value: "brief",
+        sourceType: SourceType.USER,
+      });
 
       const count = await repository.count(testUserId, PreferenceStatus.ACTIVE);
       expect(count).toBe(1);
@@ -154,17 +193,22 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         defaultTempDefId,
         "70",
+        undefined,
+        userProvenance,
       );
       const locationScoped = await repository.upsertActive(
         testUserId,
         defaultTempDefId,
         "72",
         testLocationId,
+        userProvenance,
       );
 
-      expect(global.id).not.toBe(locationScoped.id);
-      expect(global.contextKey).toBe("GLOBAL");
-      expect(locationScoped.contextKey).toBe(`LOCATION:${testLocationId}`);
+      expect(global.result.id).not.toBe(locationScoped.result.id);
+      expect(global.result.contextKey).toBe("GLOBAL");
+      expect(locationScoped.result.contextKey).toBe(
+        `LOCATION:${testLocationId}`,
+      );
 
       const count = await repository.count(testUserId);
       expect(count).toBe(2);
@@ -175,14 +219,19 @@ describe("PreferenceRepository (integration)", () => {
   // upsertSuggested
   // ──────────────────────────────────────────────
   describe("upsertSuggested", () => {
-    it("should create a SUGGESTED preference with confidence", async () => {
-      const pref = await repository.upsertSuggested(
+    it("should create a SUGGESTED preference with provenance options and return beforeState", async () => {
+      const { result: pref, beforeState } = await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegetarian"],
-        0.85,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.85,
+        },
       );
 
+      expect(beforeState).toBeNull();
       expect(pref.definitionId).toBe(dietaryRestrictionsDefId);
       expect(pref.slug).toBe("food.dietary_restrictions");
       expect(pref.value).toEqual(["vegetarian"]);
@@ -197,13 +246,16 @@ describe("PreferenceRepository (integration)", () => {
         reason: "User mentioned dietary preference",
       };
 
-      const pref = await repository.upsertSuggested(
+      const { result: pref } = await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegan"],
-        0.9,
         null,
-        evidence,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.9,
+          evidence,
+        },
       );
 
       expect(pref.evidence).toEqual(evidence);
@@ -214,18 +266,33 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         techStackDefId,
         ["JavaScript"],
-        0.7,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.7,
+        },
       );
 
       const updated = await repository.upsertSuggested(
         testUserId,
         techStackDefId,
         ["TypeScript", "Node.js"],
-        0.9,
+        undefined,
+        {
+          sourceType: SourceType.IMPORTED,
+          confidence: 0.9,
+          evidence: { source: "import-job" },
+        },
       );
 
-      expect(updated.value).toEqual(["TypeScript", "Node.js"]);
-      expect(updated.confidence).toBe(0.9);
+      expect(updated.result.value).toEqual(["TypeScript", "Node.js"]);
+      expect(updated.result.confidence).toBe(0.9);
+      expect(updated.result.sourceType).toBe(SourceType.IMPORTED);
+      expect(updated.result.evidence).toEqual({ source: "import-job" });
+      expect(updated.beforeState).toMatchObject({
+        value: ["JavaScript"],
+        confidence: 0.7,
+      });
 
       const count = await repository.count(
         testUserId,
@@ -239,23 +306,38 @@ describe("PreferenceRepository (integration)", () => {
   // upsertRejected / hasRejected
   // ──────────────────────────────────────────────
   describe("upsertRejected", () => {
-    it("should create a REJECTED preference", async () => {
-      const pref = await repository.upsertRejected(
+    it("should create a REJECTED preference with caller-supplied provenance", async () => {
+      const { result: pref, beforeState } = await repository.upsertRejected(
         testUserId,
         seatPrefDefId,
         "middle",
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.55,
+          evidence: { source: "reject-flow" },
+        },
       );
 
+      expect(beforeState).toBeNull();
       expect(pref.status).toBe(PreferenceStatus.REJECTED);
       expect(pref.definitionId).toBe(seatPrefDefId);
       expect(pref.slug).toBe("travel.seat_preference");
       expect(pref.value).toBe("middle");
+      expect(pref.confidence).toBe(0.55);
+      expect(pref.evidence).toEqual({ source: "reject-flow" });
     });
   });
 
   describe("hasRejected", () => {
     it("should return true if REJECTED preference exists", async () => {
-      await repository.upsertRejected(testUserId, seatPrefDefId, "middle");
+      await repository.upsertRejected(
+        testUserId,
+        seatPrefDefId,
+        "middle",
+        undefined,
+        inferredProvenance,
+      );
       const result = await repository.hasRejected(testUserId, seatPrefDefId);
       expect(result).toBe(true);
     });
@@ -266,7 +348,13 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should not find REJECTED if only ACTIVE exists", async () => {
-      await repository.upsertActive(testUserId, seatPrefDefId, "window");
+      await repository.upsertActive(
+        testUserId,
+        seatPrefDefId,
+        "window",
+        undefined,
+        userProvenance,
+      );
       const result = await repository.hasRejected(testUserId, seatPrefDefId);
       expect(result).toBe(false);
     });
@@ -285,12 +373,22 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return only ACTIVE preferences with enriched slug", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegan"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
 
       const active = await repository.findByStatus(
@@ -303,12 +401,22 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return only SUGGESTED preferences", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegan"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
 
       const suggested = await repository.findByStatus(
@@ -321,8 +429,20 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return preferences ordered by updatedAt desc", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
-      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
+      await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "brief",
+        undefined,
+        userProvenance,
+      );
 
       const prefs = await repository.findByStatus(
         testUserId,
@@ -334,7 +454,13 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should not return other users preferences", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
 
       const otherUser = await prisma.user.create({
         data: {
@@ -347,6 +473,8 @@ describe("PreferenceRepository (integration)", () => {
         otherUser.userId,
         responseToneDefId,
         "professional",
+        undefined,
+        userProvenance,
       );
 
       const prefs = await repository.findByStatus(
@@ -358,12 +486,19 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should filter by contextKey null (global only) when locationId=null", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertActive(
         testUserId,
         defaultTempDefId,
         "72",
         testLocationId,
+        userProvenance,
       );
 
       const global = await repository.findByStatus(
@@ -377,12 +512,19 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should filter by specific location when locationId provided", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertActive(
         testUserId,
         defaultTempDefId,
         "72",
         testLocationId,
+        userProvenance,
       );
 
       const locationSpecific = await repository.findByStatus(
@@ -405,12 +547,14 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         responseToneDefId,
         "casual",
+        undefined,
+        userProvenance,
       );
 
-      const found = await repository.findById(created.id);
+      const found = await repository.findById(created.result.id);
 
       expect(found).toBeDefined();
-      expect(found!.id).toBe(created.id);
+      expect(found!.id).toBe(created.result.id);
       expect(found!.slug).toBe("system.response_tone");
     });
 
@@ -425,8 +569,20 @@ describe("PreferenceRepository (integration)", () => {
   // ──────────────────────────────────────────────
   describe("findActiveWithMerge", () => {
     it("should return global preferences when no location-specific exist", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
-      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
+      await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "brief",
+        undefined,
+        userProvenance,
+      );
 
       const merged = await repository.findActiveWithMerge(
         testUserId,
@@ -438,13 +594,20 @@ describe("PreferenceRepository (integration)", () => {
 
     it("should override global with location-specific for same definitionId", async () => {
       // Create global version
-      await repository.upsertActive(testUserId, defaultTempDefId, "68");
+      await repository.upsertActive(
+        testUserId,
+        defaultTempDefId,
+        "68",
+        undefined,
+        userProvenance,
+      );
       // Create location-specific version (same definitionId, different contextKey)
       await repository.upsertActive(
         testUserId,
         defaultTempDefId,
         "72",
         testLocationId,
+        userProvenance,
       );
 
       const merged = await repository.findActiveWithMerge(
@@ -471,14 +634,21 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         dietaryRestrictionsDefId,
         ["vegetarian"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
       await repository.upsertSuggested(
         testUserId,
         quietHoursDefId,
         "22:00-07:00",
-        0.7,
         testLocationId,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.7,
+        },
       );
 
       const union = await repository.findSuggestedUnion(
@@ -499,11 +669,15 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         dietaryRestrictionsDefId,
         ["vegetarian"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
 
       const updated = await repository.updateStatus(
-        created.id,
+        created.result.id,
         PreferenceStatus.ACTIVE,
       );
 
@@ -520,12 +694,14 @@ describe("PreferenceRepository (integration)", () => {
         testUserId,
         responseToneDefId,
         "casual",
+        undefined,
+        userProvenance,
       );
 
-      const deleted = await repository.delete(created.id);
-      expect(deleted.id).toBe(created.id);
+      const deleted = await repository.delete(created.result.id);
+      expect(deleted.id).toBe(created.result.id);
 
-      const found = await repository.findById(created.id);
+      const found = await repository.findById(created.result.id);
       expect(found).toBeNull();
     });
 
@@ -543,26 +719,58 @@ describe("PreferenceRepository (integration)", () => {
     });
 
     it("should return correct total count", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegan"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
-      await repository.upsertRejected(testUserId, seatPrefDefId, "middle");
+      await repository.upsertRejected(
+        testUserId,
+        seatPrefDefId,
+        "middle",
+        undefined,
+        inferredProvenance,
+      );
 
       expect(await repository.count(testUserId)).toBe(3);
     });
 
     it("should return correct count filtered by status", async () => {
-      await repository.upsertActive(testUserId, responseToneDefId, "casual");
-      await repository.upsertActive(testUserId, responseLengthDefId, "brief");
+      await repository.upsertActive(
+        testUserId,
+        responseToneDefId,
+        "casual",
+        undefined,
+        userProvenance,
+      );
+      await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "brief",
+        undefined,
+        userProvenance,
+      );
       await repository.upsertSuggested(
         testUserId,
         dietaryRestrictionsDefId,
         ["vegan"],
-        0.8,
+        undefined,
+        {
+          sourceType: SourceType.INFERRED,
+          confidence: 0.8,
+        },
       );
 
       expect(

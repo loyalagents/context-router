@@ -1,4 +1,8 @@
 export {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+  AuditTargetType,
   GrantAction,
   GrantEffect,
   Prisma,

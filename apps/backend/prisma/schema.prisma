@@ -24,6 +24,7 @@ model User {
   locations          Location[]
   preferences        Preference[]
   definitions        PreferenceDefinition[]
+  auditEvents        PreferenceAuditEvent[]
   permissionGrants   PermissionGrant[]
 
   @@map("users")
@@ -75,6 +76,38 @@ enum SourceType {
   INFERRED
   IMPORTED
   SYSTEM
+}
+
+enum AuditTargetType {
+  PREFERENCE
+  PREFERENCE_DEFINITION
+}
+
+enum AuditActorType {
+  USER
+  MCP_CLIENT
+  SYSTEM
+  WORKFLOW
+  IMPORT
+}
+
+enum AuditOrigin {
+  GRAPHQL
+  MCP
+  DOCUMENT_ANALYSIS
+  WORKFLOW
+  SYSTEM
+}
+
+enum AuditEventType {
+  PREFERENCE_SET
+  PREFERENCE_SUGGESTED_UPSERTED
+  PREFERENCE_SUGGESTION_ACCEPTED
+  PREFERENCE_SUGGESTION_REJECTED
+  PREFERENCE_DELETED
+  DEFINITION_CREATED
+  DEFINITION_UPDATED
+  DEFINITION_ARCHIVED
 }
 
 enum GrantAction {
@@ -153,6 +186,30 @@ model Preference {
   @@index([userId, contextKey])
   @@index([definitionId])
   @@map("user_preferences")
+}
+
+model PreferenceAuditEvent {
+  id             String          @id @default(uuid())
+  userId         String          @map("user_id")
+  occurredAt     DateTime        @default(now()) @map("occurred_at")
+  targetType     AuditTargetType @map("target_type")
+  targetId       String          @map("target_id")
+  eventType      AuditEventType  @map("event_type")
+  actorType      AuditActorType  @map("actor_type")
+  actorClientKey String?         @map("actor_client_key")
+  origin         AuditOrigin
+  correlationId  String          @map("correlation_id")
+  beforeState    Json?           @map("before_state")
+  afterState     Json?           @map("after_state")
+  metadata       Json?
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([userId, eventType, occurredAt(sort: Desc)])
+  @@index([targetType, targetId, occurredAt(sort: Desc)])
+  @@index([correlationId])
+  @@map("preference_audit_events")
 }
 
 model PermissionGrant {

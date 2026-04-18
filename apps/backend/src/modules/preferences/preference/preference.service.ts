@@ -6,7 +6,13 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
-import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
+import {
+  AuditEventType,
+  AuditTargetType,
+  PreferenceStatus,
+  SourceType,
+} from "@infrastructure/prisma/generated-client";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
   PreferenceRepository,
   EnrichedPreference,
@@ -22,6 +28,9 @@ import {
   validateConfidence,
 } from "./preference.validation";
 import { canonicalizePreferenceValue } from "./preference-value-normalization";
+import { MutationContext } from "../audit/audit.types";
+import { PreferenceAuditService } from "../audit/preference-audit.service";
+import { buildPreferenceAuditSnapshot } from "../audit/snapshot-builders";
 
 @Injectable()
 export class PreferenceService {
@@ -31,6 +40,8 @@ export class PreferenceService {
     private preferenceRepository: PreferenceRepository,
     private locationService: LocationService,
     private defRepo: PreferenceDefinitionRepository,
+    private prisma: PrismaService,
+    private preferenceAuditService: PreferenceAuditService,
   ) {}
 
   /**
@@ -118,6 +129,7 @@ export class PreferenceService {
   async setPreference(
     userId: string,
     input: SetPreferenceInput,
+    context: MutationContext,
   ): Promise<EnrichedPreference> {
     const definition = await this.resolveAndValidateDefinition(input.slug, userId);
     const normalizedValue = this.canonicalizeValue(definition, input.value);
@@ -133,12 +145,44 @@ export class PreferenceService {
       `Setting ACTIVE preference for user ${userId}: ${input.slug}`,
     );
 
-    return this.preferenceRepository.upsertActive(
-      userId,
-      definition.id,
-      normalizedValue,
-      input.locationId,
+    const write = await this.prisma.$transaction((tx) =>
+      this.preferenceRepository
+        .upsertActive(
+          userId,
+          definition.id,
+          normalizedValue,
+          input.locationId,
+          {
+            sourceType: context.sourceType,
+            confidence: context.confidence,
+            evidence: context.evidence,
+          },
+          tx,
+        )
+        .then(async (result) => {
+          await this.preferenceAuditService.record(
+            {
+              userId,
+              targetType: AuditTargetType.PREFERENCE,
+              targetId: result.result.id,
+              eventType: AuditEventType.PREFERENCE_SET,
+              actorType: context.actorType,
+              actorClientKey: context.actorClientKey,
+              origin: context.origin,
+              correlationId: context.correlationId,
+              beforeState: result.beforeState
+                ? buildPreferenceAuditSnapshot(result.beforeState)
+                : null,
+              afterState: buildPreferenceAuditSnapshot(result.result),
+            },
+            tx,
+          );
+
+          return result;
+        }),
     );
+
+    return write.result;
   }
 
   /**
@@ -149,6 +193,7 @@ export class PreferenceService {
   async suggestPreference(
     userId: string,
     input: SuggestPreferenceInput,
+    context: MutationContext,
   ): Promise<EnrichedPreference | null> {
     const definition = await this.resolveAndValidateDefinition(input.slug, userId);
     const normalizedValue = this.canonicalizeValue(definition, input.value);
@@ -184,14 +229,44 @@ export class PreferenceService {
       `Creating SUGGESTED preference for user ${userId}: ${input.slug}`,
     );
 
-    return this.preferenceRepository.upsertSuggested(
-      userId,
-      definition.id,
-      normalizedValue,
-      input.confidence,
-      input.locationId,
-      input.evidence,
+    const write = await this.prisma.$transaction((tx) =>
+      this.preferenceRepository
+        .upsertSuggested(
+          userId,
+          definition.id,
+          normalizedValue,
+          input.locationId,
+          {
+            sourceType: SourceType.INFERRED,
+            confidence: input.confidence,
+            evidence: input.evidence,
+          },
+          tx,
+        )
+        .then(async (result) => {
+          await this.preferenceAuditService.record(
+            {
+              userId,
+              targetType: AuditTargetType.PREFERENCE,
+              targetId: result.result.id,
+              eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+              actorType: context.actorType,
+              actorClientKey: context.actorClientKey,
+              origin: context.origin,
+              correlationId: context.correlationId,
+              beforeState: result.beforeState
+                ? buildPreferenceAuditSnapshot(result.beforeState)
+                : null,
+              afterState: buildPreferenceAuditSnapshot(result.result),
+            },
+            tx,
+          );
+
+          return result;
+        }),
     );
+
+    return write.result;
   }
 
   /**
@@ -255,6 +330,7 @@ export class PreferenceService {
   async acceptSuggestion(
     id: string,
     userId: string,
+    context: MutationContext,
   ): Promise<EnrichedPreference> {
     // Find the suggestion
     const suggestion = await this.preferenceRepository.findById(id);
@@ -287,24 +363,58 @@ export class PreferenceService {
     );
 
     // Upsert the active preference with the suggested value
-    const active = await this.preferenceRepository.upsertActive(
-      userId,
-      suggestion.definitionId,
-      normalizedValue,
-      suggestion.locationId,
-    );
+    const active = await this.prisma.$transaction(async (tx) => {
+      const activeWrite = await this.preferenceRepository.upsertActive(
+        userId,
+        suggestion.definitionId,
+        normalizedValue,
+        suggestion.locationId,
+        {
+          sourceType: suggestion.sourceType,
+          confidence: suggestion.confidence,
+          evidence: suggestion.evidence,
+        },
+        tx,
+      );
 
-    // Delete the suggestion
-    await this.preferenceRepository.delete(id);
+      await this.preferenceRepository.delete(id, tx);
 
-    return active;
+      await this.preferenceAuditService.record(
+        {
+          userId,
+          targetType: AuditTargetType.PREFERENCE,
+          targetId: activeWrite.result.id,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_ACCEPTED,
+          actorType: context.actorType,
+          actorClientKey: context.actorClientKey,
+          origin: context.origin,
+          correlationId: context.correlationId,
+          beforeState: activeWrite.beforeState
+            ? buildPreferenceAuditSnapshot(activeWrite.beforeState)
+            : null,
+          afterState: buildPreferenceAuditSnapshot(activeWrite.result),
+          metadata: {
+            consumedSuggestion: buildPreferenceAuditSnapshot(suggestion),
+          },
+        },
+        tx,
+      );
+
+      return activeWrite;
+    });
+
+    return active.result;
   }
 
   /**
    * Reject a suggested preference.
    * Creates/updates a REJECTED row and deletes the suggestion.
    */
-  async rejectSuggestion(id: string, userId: string): Promise<boolean> {
+  async rejectSuggestion(
+    id: string,
+    userId: string,
+    context: MutationContext,
+  ): Promise<boolean> {
     // Find the suggestion
     const suggestion = await this.preferenceRepository.findById(id);
 
@@ -336,15 +446,45 @@ export class PreferenceService {
     );
 
     // Upsert the rejected row
-    await this.preferenceRepository.upsertRejected(
-      userId,
-      suggestion.definitionId,
-      normalizedValue,
-      suggestion.locationId,
-    );
+    await this.prisma.$transaction(async (tx) => {
+      await this.preferenceRepository
+        .upsertRejected(
+        userId,
+        suggestion.definitionId,
+        normalizedValue,
+        suggestion.locationId,
+        {
+          sourceType: suggestion.sourceType,
+          confidence: suggestion.confidence,
+          evidence: suggestion.evidence,
+        },
+        tx,
+        )
+        .then(async (rejectedWrite) => {
+          await this.preferenceAuditService.record(
+            {
+              userId,
+              targetType: AuditTargetType.PREFERENCE,
+              targetId: rejectedWrite.result.id,
+              eventType: AuditEventType.PREFERENCE_SUGGESTION_REJECTED,
+              actorType: context.actorType,
+              actorClientKey: context.actorClientKey,
+              origin: context.origin,
+              correlationId: context.correlationId,
+              beforeState: rejectedWrite.beforeState
+                ? buildPreferenceAuditSnapshot(rejectedWrite.beforeState)
+                : null,
+              afterState: buildPreferenceAuditSnapshot(rejectedWrite.result),
+              metadata: {
+                consumedSuggestion: buildPreferenceAuditSnapshot(suggestion),
+              },
+            },
+            tx,
+          );
+        });
 
-    // Delete the suggestion
-    await this.preferenceRepository.delete(id);
+      await this.preferenceRepository.delete(id, tx);
+    });
 
     return true;
   }
@@ -355,6 +495,7 @@ export class PreferenceService {
   async deletePreference(
     id: string,
     userId: string,
+    context: MutationContext,
   ): Promise<EnrichedPreference> {
     const preference = await this.preferenceRepository.findById(id);
 
@@ -368,7 +509,27 @@ export class PreferenceService {
     }
 
     this.logger.log(`Deleting preference ${id} for user ${userId}`);
-    return this.preferenceRepository.delete(id);
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await this.preferenceRepository.delete(id, tx);
+
+      await this.preferenceAuditService.record(
+        {
+          userId,
+          targetType: AuditTargetType.PREFERENCE,
+          targetId: deleted.id,
+          eventType: AuditEventType.PREFERENCE_DELETED,
+          actorType: context.actorType,
+          actorClientKey: context.actorClientKey,
+          origin: context.origin,
+          correlationId: context.correlationId,
+          beforeState: buildPreferenceAuditSnapshot(preference),
+          afterState: null,
+        },
+        tx,
+      );
+
+      return deleted;
+    });
   }
 
   /**

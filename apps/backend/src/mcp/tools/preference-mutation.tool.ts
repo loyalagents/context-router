@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpContext } from '../types/mcp-context.type';
+import {
+  AuditActorType,
+  AuditOrigin,
+  SourceType,
+} from '@infrastructure/prisma/generated-client';
 
 /**
  * Parameters for suggesting a preference via MCP.
@@ -84,6 +90,13 @@ export class PreferenceMutationTool {
           confidence: params.confidence,
           evidence: parsedEvidence,
         },
+        {
+          actorType: AuditActorType.MCP_CLIENT,
+          actorClientKey: context.client.key,
+          origin: AuditOrigin.MCP,
+          correlationId: randomUUID(),
+          sourceType: SourceType.INFERRED,
+        },
       );
 
       // If preference is null, it means the user previously rejected this preference
@@ -147,6 +160,13 @@ export class PreferenceMutationTool {
       const preference = await this.preferenceService.deletePreference(
         params.id,
         userId,
+        {
+          actorType: AuditActorType.MCP_CLIENT,
+          actorClientKey: context.client.key,
+          origin: AuditOrigin.MCP,
+          correlationId: randomUUID(),
+          sourceType: SourceType.USER,
+        },
       );
 
       this.logger.log(`Preference deleted successfully: ${preference.id}`);
