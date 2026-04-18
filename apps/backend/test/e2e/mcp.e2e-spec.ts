@@ -672,6 +672,72 @@ describe('MCP Integration (e2e)', () => {
     });
   });
 
+  describe('deletePreference', () => {
+    it('should record MCP actor provenance for deletePreference', async () => {
+      const createResponse = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            mutation SetPreference($input: SetPreferenceInput!) {
+              setPreference(input: $input) {
+                id
+              }
+            }
+          `,
+          variables: {
+            input: {
+              slug: 'system.response_length',
+              value: 'brief',
+            },
+          },
+        })
+        .expect(200);
+
+      const preferenceId = createResponse.body.data.setPreference.id;
+
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 52,
+          method: 'tools/call',
+          params: {
+            name: 'deletePreference',
+            arguments: {
+              id: preferenceId,
+            },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(true);
+      expect(result.deletedId).toBe(preferenceId);
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_DELETED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: 'codex',
+        origin: AuditOrigin.MCP,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+      expect(auditRows[0].beforeState).toMatchObject({
+        id: preferenceId,
+        slug: 'system.response_length',
+        value: 'brief',
+      });
+      expect(auditRows[0].afterState).toBeNull();
+    });
+  });
+
   describe('suggestPreference unknown-slug structured error', () => {
     it('should return structured guidance when slug is unknown', async () => {
       const prisma = getPrismaClient();

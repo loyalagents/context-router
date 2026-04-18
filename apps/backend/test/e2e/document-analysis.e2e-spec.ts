@@ -210,6 +210,7 @@ describe('Document Analysis API (e2e)', () => {
     });
 
     it('should apply multiple CREATE suggestions in batch', async () => {
+      const analysisId = 'analysis-456';
       const response = await request(app.getHttpServer())
         .post('/graphql')
         .send({
@@ -224,7 +225,7 @@ describe('Document Analysis API (e2e)', () => {
             }
           `,
           variables: {
-            analysisId: 'analysis-456',
+            analysisId,
             input: [
               {
                 suggestionId: 'suggestion-1',
@@ -257,6 +258,38 @@ describe('Document Analysis API (e2e)', () => {
       );
       expect(categories).toContain('system');
       expect(categories).toContain('food');
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { correlationId: analysisId },
+      });
+
+      expect(auditRows).toHaveLength(3);
+      expect(
+        auditRows.map((auditRow) => auditRow.correlationId),
+      ).toEqual([analysisId, analysisId, analysisId]);
+      expect(
+        auditRows.map((auditRow) => auditRow.eventType),
+      ).toEqual([
+        AuditEventType.PREFERENCE_SET,
+        AuditEventType.PREFERENCE_SET,
+        AuditEventType.PREFERENCE_SET,
+      ]);
+      expect(
+        auditRows.map((auditRow) => auditRow.origin),
+      ).toEqual([
+        AuditOrigin.DOCUMENT_ANALYSIS,
+        AuditOrigin.DOCUMENT_ANALYSIS,
+        AuditOrigin.DOCUMENT_ANALYSIS,
+      ]);
+      expect(
+        auditRows.map((auditRow) => (auditRow.afterState as { slug?: string }).slug),
+      ).toEqual(
+        expect.arrayContaining([
+          'system.response_tone',
+          'system.response_length',
+          'food.spice_tolerance',
+        ]),
+      );
     });
 
     it('should update preferences with UPDATE operation', async () => {
