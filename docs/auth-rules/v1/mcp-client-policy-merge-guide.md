@@ -18,24 +18,24 @@ This guide assumes:
 
 These pieces should be reusable from an API-key branch without changing their core behavior:
 
-- [`apps/backend/src/mcp/types/mcp-authorization.types.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-authorization.types.ts)
-- [`apps/backend/src/mcp/auth/mcp-authorization.service.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-authorization.service.ts)
-- [`apps/backend/src/mcp/auth/mcp-client-registry.service.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
-- [`apps/backend/src/mcp/types/mcp-context.type.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/types/mcp-context.type.ts)
+- [`apps/backend/src/mcp/types/mcp-authorization.types.ts`](../../../apps/backend/src/mcp/types/mcp-authorization.types.ts)
+- [`apps/backend/src/mcp/auth/mcp-authorization.service.ts`](../../../apps/backend/src/mcp/auth/mcp-authorization.service.ts)
+- [`apps/backend/src/mcp/auth/mcp-client-registry.service.ts`](../../../apps/backend/src/mcp/auth/mcp-client-registry.service.ts)
+- [`apps/backend/src/mcp/types/mcp-context.type.ts`](../../../apps/backend/src/mcp/types/mcp-context.type.ts)
 - MCP tool/resource access declarations:
-  - [`apps/backend/src/mcp/tools/base/mcp-tool.interface.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/tools/base/mcp-tool.interface.ts)
-  - [`apps/backend/src/mcp/resources/base/mcp-resource.interface.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/resources/base/mcp-resource.interface.ts)
+  - [`apps/backend/src/mcp/tools/base/mcp-tool.interface.ts`](../../../apps/backend/src/mcp/tools/base/mcp-tool.interface.ts)
+  - [`apps/backend/src/mcp/resources/base/mcp-resource.interface.ts`](../../../apps/backend/src/mcp/resources/base/mcp-resource.interface.ts)
 - MCP dispatcher enforcement:
-  - [`apps/backend/src/mcp/mcp.service.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.service.ts)
+  - [`apps/backend/src/mcp/mcp.service.ts`](../../../apps/backend/src/mcp/mcp.service.ts)
 
 ### OAuth-only wiring
 
 These pieces are specific to OAuth token handling or OAuth discovery/DCR:
 
-- [`apps/backend/src/mcp/auth/mcp-auth.guard.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-auth.guard.ts)
-- [`apps/backend/src/mcp/auth/dcr-shim.controller.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/dcr-shim.controller.ts)
-- OAuth-oriented MCP config in [`apps/backend/src/config/mcp.config.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/config/mcp.config.ts)
-- MCP request context construction in [`apps/backend/src/mcp/mcp.controller.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.controller.ts)
+- [`apps/backend/src/mcp/auth/mcp-auth.guard.ts`](../../../apps/backend/src/mcp/auth/mcp-auth.guard.ts)
+- [`apps/backend/src/mcp/auth/dcr-shim.controller.ts`](../../../apps/backend/src/mcp/auth/dcr-shim.controller.ts)
+- OAuth-oriented MCP config in [`apps/backend/src/config/mcp.config.ts`](../../../apps/backend/src/config/mcp.config.ts)
+- MCP request context construction in [`apps/backend/src/mcp/mcp.controller.ts`](../../../apps/backend/src/mcp/mcp.controller.ts)
 
 The API-key branch should reuse the shared layer and replace only the credential-resolution path.
 
@@ -93,7 +93,7 @@ That gives both branches one shared authorization model, even though the credent
 
 OAuth branch:
 
-- [`apps/backend/src/mcp/mcp.controller.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/mcp.controller.ts) resolves the client from token payload claims
+- [`apps/backend/src/mcp/mcp.controller.ts`](../../../apps/backend/src/mcp/mcp.controller.ts) resolves the client from token payload claims
 
 API-key branch expectation:
 
@@ -104,7 +104,7 @@ API-key branch expectation:
 
 OAuth branch:
 
-- [`apps/backend/src/mcp/auth/mcp-auth.guard.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/mcp/auth/mcp-auth.guard.ts) verifies JWTs and normalizes grants
+- [`apps/backend/src/mcp/auth/mcp-auth.guard.ts`](../../../apps/backend/src/mcp/auth/mcp-auth.guard.ts) verifies JWTs and normalizes grants
 
 API-key branch expectation:
 
@@ -117,7 +117,7 @@ API-key branch expectation:
 
 OAuth branch:
 
-- [`apps/backend/src/config/mcp.config.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/src/config/mcp.config.ts) includes OAuth client IDs and redirect URIs in each MCP client bucket
+- [`apps/backend/src/config/mcp.config.ts`](../../../apps/backend/src/config/mcp.config.ts) includes OAuth client IDs and redirect URIs in each MCP client bucket
 
 API-key branch expectation:
 
@@ -129,7 +129,7 @@ API-key branch expectation:
 
 OAuth branch test setup:
 
-- [`apps/backend/test/setup/test-app.ts`](/Users/lucasnovak/loyal-agents/context-router/apps/backend/test/setup/test-app.ts) supports `x-test-mcp-client-id`
+- [`apps/backend/test/setup/test-app.ts`](../../../apps/backend/test/setup/test-app.ts) supports `x-test-mcp-client-id`
 
 API-key branch expectation:
 
