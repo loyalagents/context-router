@@ -1,6 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+} from '../../src/infrastructure/prisma/generated-client';
 
 describe('Document Analysis API (e2e)', () => {
   let app: INestApplication;
@@ -10,6 +16,7 @@ describe('Document Analysis API (e2e)', () => {
     generateStructured: jest.Mock;
     generateStructuredWithFile: jest.Mock;
   };
+  const prisma = getPrismaClient();
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -128,6 +135,7 @@ describe('Document Analysis API (e2e)', () => {
 
   describe('applyPreferenceSuggestions mutation', () => {
     it('should create preferences from CREATE operation suggestions', async () => {
+      const analysisId = 'analysis-123';
       const response = await request(app.getHttpServer())
         .post('/graphql')
         .send({
@@ -143,13 +151,15 @@ describe('Document Analysis API (e2e)', () => {
             }
           `,
           variables: {
-            analysisId: 'analysis-123',
+            analysisId,
             input: [
               {
                 suggestionId: 'suggestion-1',
                 slug: 'food.dietary_restrictions',
                 operation: 'CREATE',
                 newValue: ['peanuts', 'shellfish'],
+                confidence: 0.88,
+                evidence: { source: 'document', snippet: 'allergic to peanuts and shellfish' },
               },
             ],
           },
@@ -164,9 +174,43 @@ describe('Document Analysis API (e2e)', () => {
         status: 'ACTIVE',
         category: 'food',
       });
+
+      const activeRow = await prisma.preference.findUnique({
+        where: { id: response.body.data.applyPreferenceSuggestions[0].id },
+      });
+
+      expect(activeRow).toMatchObject({
+        sourceType: 'INFERRED',
+        confidence: 0.88,
+        evidence: {
+          source: 'document',
+          snippet: 'allergic to peanuts and shellfish',
+        },
+      });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { correlationId: analysisId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SET,
+        origin: AuditOrigin.DOCUMENT_ANALYSIS,
+        actorType: AuditActorType.USER,
+        correlationId: analysisId,
+      });
+      expect(auditRows[0].afterState).toMatchObject({
+        sourceType: 'INFERRED',
+        confidence: 0.88,
+        evidence: {
+          source: 'document',
+          snippet: 'allergic to peanuts and shellfish',
+        },
+      });
     });
 
     it('should apply multiple CREATE suggestions in batch', async () => {
+      const analysisId = 'analysis-456';
       const response = await request(app.getHttpServer())
         .post('/graphql')
         .send({
@@ -181,7 +225,7 @@ describe('Document Analysis API (e2e)', () => {
             }
           `,
           variables: {
-            analysisId: 'analysis-456',
+            analysisId,
             input: [
               {
                 suggestionId: 'suggestion-1',
@@ -214,6 +258,38 @@ describe('Document Analysis API (e2e)', () => {
       );
       expect(categories).toContain('system');
       expect(categories).toContain('food');
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { correlationId: analysisId },
+      });
+
+      expect(auditRows).toHaveLength(3);
+      expect(
+        auditRows.map((auditRow) => auditRow.correlationId),
+      ).toEqual([analysisId, analysisId, analysisId]);
+      expect(
+        auditRows.map((auditRow) => auditRow.eventType),
+      ).toEqual([
+        AuditEventType.PREFERENCE_SET,
+        AuditEventType.PREFERENCE_SET,
+        AuditEventType.PREFERENCE_SET,
+      ]);
+      expect(
+        auditRows.map((auditRow) => auditRow.origin),
+      ).toEqual([
+        AuditOrigin.DOCUMENT_ANALYSIS,
+        AuditOrigin.DOCUMENT_ANALYSIS,
+        AuditOrigin.DOCUMENT_ANALYSIS,
+      ]);
+      expect(
+        auditRows.map((auditRow) => (auditRow.afterState as { slug?: string }).slug),
+      ).toEqual(
+        expect.arrayContaining([
+          'system.response_tone',
+          'system.response_length',
+          'food.spice_tolerance',
+        ]),
+      );
     });
 
     it('should update preferences with UPDATE operation', async () => {
@@ -506,6 +582,66 @@ describe('Document Analysis API (e2e)', () => {
       expect(response.body.errors).toBeUndefined();
       // The unknown slug should not appear in results (it was rejected internally)
       expect(response.body.data.applyPreferenceSuggestions).toEqual([]);
+    });
+
+    it('should write audit rows only for successful mutations in a partial-failure batch', async () => {
+      const analysisId = 'analysis-partial-failure';
+      const response = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
+              applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
+                id
+                slug
+                value
+              }
+            }
+          `,
+          variables: {
+            analysisId,
+            input: [
+              {
+                suggestionId: 'valid-suggestion',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'casual',
+                confidence: 0.73,
+                evidence: { source: 'pdf', page: 1 },
+              },
+              {
+                suggestionId: 'invalid-suggestion',
+                slug: 'unknown.invalid_category',
+                operation: 'CREATE',
+                newValue: 'bad',
+                confidence: 0.11,
+                evidence: { source: 'pdf', page: 2 },
+              },
+            ],
+          },
+        })
+        .expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.applyPreferenceSuggestions).toHaveLength(1);
+      expect(response.body.data.applyPreferenceSuggestions[0]).toMatchObject({
+        slug: 'system.response_tone',
+        value: 'casual',
+      });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { correlationId: analysisId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SET,
+        origin: AuditOrigin.DOCUMENT_ANALYSIS,
+      });
+      expect(auditRows[0].afterState).toMatchObject({
+        slug: 'system.response_tone',
+        value: 'casual',
+      });
     });
   });
 });

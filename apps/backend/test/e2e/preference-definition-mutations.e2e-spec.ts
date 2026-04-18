@@ -2,11 +2,17 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+} from '../../src/infrastructure/prisma/generated-client';
 
 describe('PreferenceDefinition Mutations (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  const prisma = getPrismaClient();
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -117,6 +123,23 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       expect(created.isSensitive).toBe(false);
       expect(created.isCore).toBe(false);
       expect(created.category).toBe('test');
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.DEFINITION_CREATED,
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+        beforeState: null,
+      });
+      expect(auditRows[0].afterState).toMatchObject({
+        id: created.id,
+        slug: 'test.new_preference',
+        description: 'A test preference',
+      });
     });
 
     it('should create an ENUM definition with options', async () => {
@@ -237,6 +260,27 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       expect(updated.slug).toBe('test.update_target');
       expect(updated.description).toBe('Updated description');
       expect(updated.valueType).toBe('STRING');
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.DEFINITION_UPDATED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].beforeState).toMatchObject({
+        id: defId,
+        description: 'Original description',
+      });
+      expect(auditRows[0].afterState).toMatchObject({
+        id: defId,
+        description: 'Updated description',
+      });
     });
 
     it('should update options on a user-owned definition', async () => {
@@ -344,6 +388,29 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
       const archiveRes = await graphqlRequest(ARCHIVE_MUTATION, { id: defId }).expect(200);
       expect(archiveRes.body.errors).toBeUndefined();
       expect(archiveRes.body.data.archivePreferenceDefinition.archivedAt).toBeTruthy();
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.DEFINITION_ARCHIVED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].beforeState).toMatchObject({
+        id: defId,
+        slug: 'test.to_archive',
+        archivedAt: null,
+      });
+      expect(auditRows[0].afterState).toMatchObject({
+        id: defId,
+        slug: 'test.to_archive',
+      });
+      expect((auditRows[0].afterState as { archivedAt?: string }).archivedAt).toBeTruthy();
 
       // Archived def should not appear in catalog
       const catalogRes = await graphqlRequest(CATALOG_QUERY, { category: 'test' }).expect(200);

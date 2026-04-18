@@ -2,10 +2,14 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { Preference as PrismaPreference } from "@infrastructure/prisma/prisma-models";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
+  Prisma,
   PreferenceStatus,
-  SourceType,
 } from "@infrastructure/prisma/generated-client";
 import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
+import {
+  PreferenceProvenanceOptions,
+  PreferenceWriteResult,
+} from "../audit/audit.types";
 
 // EnrichedPreference includes definition fields joined via Prisma include.
 // slug/category/description are derived from the joined definition.
@@ -54,6 +58,10 @@ export class PreferenceRepository {
     definition: { select: { slug: true, description: true } },
   } as const;
 
+  private toJsonValue(value: unknown) {
+    return value == null ? Prisma.DbNull : (value as Prisma.InputJsonValue);
+  }
+
   // ──────────────────────────────────────────────
   // Upserts
   // ──────────────────────────────────────────────
@@ -68,25 +76,38 @@ export class PreferenceRepository {
     definitionId: string,
     value: any,
     locationId?: string | null,
-  ): Promise<EnrichedPreference> {
+    provenance?: PreferenceProvenanceOptions,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PreferenceWriteResult<EnrichedPreference>> {
+    if (!provenance) {
+      throw new Error("Preference provenance is required");
+    }
+
+    const client = tx ?? this.prisma;
     const normalizedLocationId = locationId ?? null;
     const contextKey = this.contextKeyFor(normalizedLocationId);
 
-    const existing = await this.prisma.preference.findFirst({
+    const existing = await client.preference.findFirst({
       where: { userId, definitionId, contextKey, status: PreferenceStatus.ACTIVE },
       include: this.includeDefinition,
     });
+    const beforeState = existing ? this.enrich(existing) : null;
 
     let result: PrefWithDefinition;
 
     if (existing) {
-      result = await this.prisma.preference.update({
+      result = await client.preference.update({
         where: { id: existing.id },
-        data: { value, sourceType: SourceType.USER },
+        data: {
+          value,
+          sourceType: provenance.sourceType,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
+        },
         include: this.includeDefinition,
       });
     } else {
-      result = await this.prisma.preference.create({
+      result = await client.preference.create({
         data: {
           userId,
           locationId: normalizedLocationId,
@@ -94,13 +115,15 @@ export class PreferenceRepository {
           definitionId,
           value,
           status: PreferenceStatus.ACTIVE,
-          sourceType: SourceType.USER,
+          sourceType: provenance.sourceType,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
         },
         include: this.includeDefinition,
       });
     }
 
-    return this.enrich(result);
+    return { result: this.enrich(result), beforeState };
   }
 
   /**
@@ -110,28 +133,39 @@ export class PreferenceRepository {
     userId: string,
     definitionId: string,
     value: any,
-    confidence: number,
     locationId?: string | null,
-    evidence?: any,
-  ): Promise<EnrichedPreference> {
+    provenance?: PreferenceProvenanceOptions,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PreferenceWriteResult<EnrichedPreference>> {
+    if (!provenance) {
+      throw new Error("Preference provenance is required");
+    }
+
+    const client = tx ?? this.prisma;
     const normalizedLocationId = locationId ?? null;
     const contextKey = this.contextKeyFor(normalizedLocationId);
 
-    const existing = await this.prisma.preference.findFirst({
+    const existing = await client.preference.findFirst({
       where: { userId, definitionId, contextKey, status: PreferenceStatus.SUGGESTED },
       include: this.includeDefinition,
     });
+    const beforeState = existing ? this.enrich(existing) : null;
 
     let result: PrefWithDefinition;
 
     if (existing) {
-      result = await this.prisma.preference.update({
+      result = await client.preference.update({
         where: { id: existing.id },
-        data: { value, confidence, evidence, sourceType: SourceType.INFERRED },
+        data: {
+          value,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
+          sourceType: provenance.sourceType,
+        },
         include: this.includeDefinition,
       });
     } else {
-      result = await this.prisma.preference.create({
+      result = await client.preference.create({
         data: {
           userId,
           locationId: normalizedLocationId,
@@ -139,15 +173,15 @@ export class PreferenceRepository {
           definitionId,
           value,
           status: PreferenceStatus.SUGGESTED,
-          sourceType: SourceType.INFERRED,
-          confidence,
-          evidence,
+          sourceType: provenance.sourceType,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
         },
         include: this.includeDefinition,
       });
     }
 
-    return this.enrich(result);
+    return { result: this.enrich(result), beforeState };
   }
 
   /**
@@ -158,25 +192,39 @@ export class PreferenceRepository {
     definitionId: string,
     value: any,
     locationId?: string | null,
-  ): Promise<EnrichedPreference> {
+    provenance?: PreferenceProvenanceOptions,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PreferenceWriteResult<EnrichedPreference>> {
+    if (!provenance) {
+      throw new Error("Preference provenance is required");
+    }
+
+    const client = tx ?? this.prisma;
     const normalizedLocationId = locationId ?? null;
     const contextKey = this.contextKeyFor(normalizedLocationId);
 
-    const existing = await this.prisma.preference.findFirst({
+    const existing = await client.preference.findFirst({
       where: { userId, definitionId, contextKey, status: PreferenceStatus.REJECTED },
       include: this.includeDefinition,
     });
+    const beforeState = existing ? this.enrich(existing) : null;
 
     let result: PrefWithDefinition;
 
     if (existing) {
-      result = await this.prisma.preference.update({
+      result = await client.preference.update({
         where: { id: existing.id },
-        data: { updatedAt: new Date() },
+        data: {
+          value,
+          sourceType: provenance.sourceType,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
+          updatedAt: new Date(),
+        },
         include: this.includeDefinition,
       });
     } else {
-      result = await this.prisma.preference.create({
+      result = await client.preference.create({
         data: {
           userId,
           locationId: normalizedLocationId,
@@ -184,13 +232,15 @@ export class PreferenceRepository {
           definitionId,
           value,
           status: PreferenceStatus.REJECTED,
-          sourceType: SourceType.INFERRED,
+          sourceType: provenance.sourceType,
+          confidence: provenance.confidence ?? null,
+          evidence: this.toJsonValue(provenance.evidence),
         },
         include: this.includeDefinition,
       });
     }
 
-    return this.enrich(result);
+    return { result: this.enrich(result), beforeState };
   }
 
   // ──────────────────────────────────────────────
@@ -299,8 +349,12 @@ export class PreferenceRepository {
     return this.enrichMany(results);
   }
 
-  async delete(id: string): Promise<EnrichedPreference> {
-    const result = await this.prisma.preference.delete({
+  async delete(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<EnrichedPreference> {
+    const client = tx ?? this.prisma;
+    const result = await client.preference.delete({
       where: { id },
       include: this.includeDefinition,
     });

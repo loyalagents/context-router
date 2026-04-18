@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PreferenceService } from './preference.service';
 import { Preference } from './models/preference.model';
 import { SetPreferenceInput } from './dto/set-preference.input';
@@ -7,11 +8,26 @@ import { SuggestPreferenceInput } from './dto/suggest-preference.input';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@modules/user/models/user.model';
+import {
+  AuditActorType,
+  AuditOrigin,
+  SourceType,
+} from '@infrastructure/prisma/generated-client';
+import { MutationContext } from '../audit/audit.types';
 
 @Resolver(() => Preference)
 @UseGuards(GqlAuthGuard)
 export class PreferenceResolver {
   constructor(private preferenceService: PreferenceService) {}
+
+  private buildMutationContext(sourceType: SourceType): MutationContext {
+    return {
+      actorType: AuditActorType.USER,
+      origin: AuditOrigin.GRAPHQL,
+      correlationId: randomUUID(),
+      sourceType,
+    };
+  }
 
   // ========== Queries ==========
 
@@ -80,7 +96,11 @@ export class PreferenceResolver {
     @Args('input') input: SetPreferenceInput,
     @CurrentUser() user: User,
   ): Promise<Preference> {
-    const pref = await this.preferenceService.setPreference(user.userId, input);
+    const pref = await this.preferenceService.setPreference(
+      user.userId,
+      input,
+      this.buildMutationContext(SourceType.USER),
+    );
     return pref as unknown as Preference;
   }
 
@@ -101,6 +121,7 @@ export class PreferenceResolver {
     const pref = await this.preferenceService.suggestPreference(
       user.userId,
       input,
+      this.buildMutationContext(SourceType.INFERRED),
     );
     return pref as unknown as Preference | null;
   }
@@ -115,7 +136,11 @@ export class PreferenceResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: User,
   ): Promise<Preference> {
-    const pref = await this.preferenceService.acceptSuggestion(id, user.userId);
+    const pref = await this.preferenceService.acceptSuggestion(
+      id,
+      user.userId,
+      this.buildMutationContext(SourceType.USER),
+    );
     return pref as unknown as Preference;
   }
 
@@ -131,7 +156,11 @@ export class PreferenceResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: User,
   ): Promise<boolean> {
-    return this.preferenceService.rejectSuggestion(id, user.userId);
+    return this.preferenceService.rejectSuggestion(
+      id,
+      user.userId,
+      this.buildMutationContext(SourceType.USER),
+    );
   }
 
   /**
@@ -142,7 +171,11 @@ export class PreferenceResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: User,
   ): Promise<Preference> {
-    const pref = await this.preferenceService.deletePreference(id, user.userId);
+    const pref = await this.preferenceService.deletePreference(
+      id,
+      user.userId,
+      this.buildMutationContext(SourceType.USER),
+    );
     return pref as unknown as Preference;
   }
 }
