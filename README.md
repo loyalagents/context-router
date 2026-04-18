@@ -2,9 +2,19 @@
 
 Context Router is a `pnpm` workspace monorepo with:
 
-- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and an Auth0-protected MCP HTTP endpoint.
-- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens.
-- PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage.
+- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and an Auth0-protected MCP HTTP endpoint
+- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
+- PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage
+
+## Start Here
+
+If you are orienting yourself in the repo:
+
+1. Run `./print-repo-structure.sh`.
+2. Read every file in [`docs/IMPORTANT/`](docs/IMPORTANT/).
+3. Use [`docs/current/`](docs/current/), [`docs/useful/`](docs/useful/), and [`docs/plans/active/`](docs/plans/active/) as needed for your task.
+
+For docs writing rules, see [`docs/README.md`](docs/README.md).
 
 ## How The Repo Works
 
@@ -13,16 +23,16 @@ The main request flow looks like this:
 1. A user signs into the Next.js app through Auth0.
 2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
 3. The backend validates the token, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
-4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth/JWT setup.
+4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth and JWT setup.
 
 Major product areas currently in the repo:
 
-- Account/profile management
+- Account and profile management
 - Preferences and preference definitions
 - Location-scoped preferences
 - Permission grants
 - Document analysis and AI-generated preference suggestions
-- Preference schema/search workflows
+- Preference schema and search workflows
 - MCP tools and resources for preference access
 
 ## Repo Layout
@@ -32,10 +42,8 @@ Major product areas currently in the repo:
 ├── apps
 │   ├── backend   # NestJS + GraphQL + Prisma + MCP
 │   └── web       # Next.js dashboard
-├── docs          # design notes, plans, and MCP references
+├── docs          # canonical docs tree
 ├── docker-compose.yml
-├── DEVELOPMENT.md
-├── QUICK_START.md
 └── print-repo-structure.sh
 ```
 
@@ -78,16 +86,16 @@ cp apps/web/.env.example apps/web/.env.local
 
 Important backend env notes:
 
-- `apps/backend/.env` is the container-oriented baseline file used by `docker compose`.
-- The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides.
-- Authenticated flows require valid `AUTH0_*` values in both apps.
-- Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials.
-- MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs.
+- `apps/backend/.env` is the container-oriented baseline file used by `docker compose`
+- The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides
+- Authenticated flows require valid `AUTH0_*` values in both apps
+- Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
+- MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs
 
 Important frontend env notes:
 
-- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` at the backend, usually `http://localhost:3000/graphql`.
-- `APP_BASE_URL` should match the frontend dev server, usually `http://localhost:3002`.
+- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` at the backend, usually `http://localhost:3000/graphql`
+- `APP_BASE_URL` should match the frontend dev server, usually `http://localhost:3002`
 
 ### Database Hostname Rule
 
@@ -163,7 +171,7 @@ Use this if you want the backend to run inside Docker instead of on the host:
    pnpm dev:web
    ```
 
-Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding/restarting the container.
+Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding or restarting the container.
 
 ## Local URLs And Endpoints
 
@@ -200,12 +208,14 @@ pnpm --filter backend test:db:migrate
 pnpm --filter backend test:e2e:tests-only
 ```
 
+More targeted operational commands live in [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md).
+
 ## Testing
 
 Backend tests live under `apps/backend` and are split into:
 
 - Unit tests for isolated services and utilities
-- Integration tests for Prisma/repository behavior against a real test database
+- Integration tests for Prisma and repository behavior against a real test database
 - E2E tests for GraphQL, MCP, health, and preference-related flows
 
 Test database details:
@@ -221,12 +231,6 @@ CI currently validates:
 - Backend e2e tests against the test database
 - Frontend production build
 
-## Related Docs
+## Docs
 
-Use `README.md` as the entry point for setup and day-to-day commands. Other markdown files in the repo are mostly deeper design notes, plans, or feature-specific references, especially:
-
-- `DEVELOPMENT.md`
-- `QUICK_START.md`
-- `docs/MCP_INTEGRATION.md`
-- `docs/mcp-connections.md`
-- `docs/workflows/`
+[`docs/README.md`](docs/README.md) explains the docs layout and writing rules. Start there to find the right doc for your task.

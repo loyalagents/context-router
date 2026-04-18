@@ -1,7 +1,25 @@
-Before starting always look at the README.md and run ./print-repo-structure.sh to understand what is going on.
+Before starting:
 
-Currently the repo is a monolith with a FE app and a BE app.
+1. Read `README.md`.
+2. Run `./print-repo-structure.sh`.
+3. Read `docs/README.md` to get a sense of the documents available in this repo.
+4. Read every file in `docs/IMPORTANT/`.
+5. Read `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
 
-When adding/changing backend behavior: write or update tests first; don’t change tests unless requirements changed; run targeted tests after each change; keep edits small and incremental; stop when tests are green and summarize what changed.
+This repo is a `pnpm` workspace monorepo with:
 
-When making plans for the backend: please make plans with checkpoints in mind. Checkpoints are ares where we can run tests and update our progression in our plan.
+- `apps/backend`: NestJS + GraphQL + Prisma + MCP
+- `apps/web`: Next.js dashboard and support routes
+
+When adding or changing backend behavior:
+
+- Write or update tests first.
+- Do not change tests unless requirements changed.
+- Run targeted tests after each change.
+- Keep edits small and incremental.
+- Stop when tests are green and summarize what changed.
+
+When making plans for backend work:
+
+- Use checkpoints.
+- Each checkpoint should end at a place where tests can run and progress can be reported clearly.
