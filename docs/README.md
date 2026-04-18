@@ -1,18 +1,10 @@
 # Docs Guide
 
-- Status: important
-- Read when: startup, or before adding/changing docs
-- Source of truth: `README.md`, `apps/backend/**`, `apps/web/**`, and the docs in this tree
+- Status: reference
+- Read when: adding or changing docs
 - Last reviewed: 2026-04-18
 
-## Read Order
-
-For a fresh agent startup:
-
-1. Read `README.md`.
-2. Run `./print-repo-structure.sh`.
-3. Read every file in `docs/IMPORTANT/`.
-4. Read the specific docs under `docs/useful/`, `docs/current/`, or `docs/plans/active/` that match the task.
+This file is for doc writers. For agent startup, follow `AGENTS.md`.
 
 ## Folder Layout
 
@@ -31,18 +23,3 @@ For a fresh agent startup:
 - Sanitize brittle or sensitive values. Do not commit passwords, raw client IDs, fixed IPs, or environment-specific secrets into repo docs.
 - Delete superseded docs instead of building a large archive inside the repo. Git history is the archive.
 - Put new design work in `docs/plans/active/` only while it is still relevant. Once shipped, either delete it or distill the lasting parts into `docs/current/`.
-
-## Special Cases
-
-- `docs/preference-extraction/deduping-preferences/` is an active working area. Do not reorganize or rewrite that subtree unless you are explicitly asked to work in it.
-
-## Current Canonical Docs
-
-- `docs/IMPORTANT/REPO_MAP.md`
-- `docs/IMPORTANT/CURRENT_STATE.md`
-- `docs/useful/PRISMA_COMMANDS.md`
-- `docs/useful/MCP_LOCAL_SETUP.md`
-- `docs/current/MCP_AUTHORIZATION.md`
-- `docs/current/PREFERENCE_SCHEMA.md`
-- `docs/current/WORKFLOWS.md`
-- `docs/current/LEGACY_DOC_TRIAGE.md`

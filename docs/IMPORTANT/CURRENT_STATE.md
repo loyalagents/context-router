@@ -2,8 +2,14 @@
 
 - Status: important
 - Read when: startup
-- Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`
+- Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`, `README.md`
 - Last reviewed: 2026-04-18
+
+## What This Is
+
+A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend (`apps/web/`). PostgreSQL via Prisma. Auth0 for authentication. Vertex AI for AI-backed features. The backend exposes both GraphQL and an MCP HTTP endpoint.
+
+Run `./print-repo-structure.sh` for the full layout. See `README.md` for setup and dev workflows.
 
 ## Implemented Systems
 
@@ -17,6 +23,7 @@
 
 ## Where To Look Next
 
+- Live repo layout: run `./print-repo-structure.sh`
 - Runbooks: `docs/useful/`
 - Implemented-system docs: `docs/current/`
 - Active follow-up work: `docs/plans/active/`

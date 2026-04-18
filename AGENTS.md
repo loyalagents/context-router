@@ -2,9 +2,10 @@ Before starting:
 
 1. Read `README.md`.
 2. Run `./print-repo-structure.sh`.
-3. Read `docs/README.md`.
-4. Read every file in `docs/IMPORTANT/`.
-5. Use `docs/useful/`, `docs/current/`, and `docs/plans/active/` as needed.
+3. Read every file in `docs/IMPORTANT/`.
+4. Use `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
+
+For docs writing rules, read `docs/README.md`. That file is not needed at startup for most tasks.
 
 This repo is a monorepo with:
 

@@ -11,16 +11,10 @@ Context Router is a `pnpm` workspace monorepo with:
 If you are orienting yourself in the repo:
 
 1. Run `./print-repo-structure.sh`.
-2. Read [`docs/README.md`](docs/README.md).
-3. Read every file in [`docs/IMPORTANT/`](docs/IMPORTANT/).
+2. Read every file in [`docs/IMPORTANT/`](docs/IMPORTANT/).
+3. Use [`docs/current/`](docs/current/), [`docs/useful/`](docs/useful/), and [`docs/plans/active/`](docs/plans/active/) as needed for your task.
 
-The docs system is intentionally small:
-
-- [`docs/README.md`](docs/README.md) is the canonical docs map
-- [`docs/IMPORTANT/`](docs/IMPORTANT/) is the startup pack every agent should read
-- [`docs/useful/`](docs/useful/) contains sanitized runbooks
-- [`docs/current/`](docs/current/) contains canonical docs for implemented systems
-- [`docs/plans/active/`](docs/plans/active/) contains live follow-up work
+For docs writing rules, see [`docs/README.md`](docs/README.md).
 
 ## How The Repo Works
 
@@ -50,8 +44,6 @@ Major product areas currently in the repo:
 │   └── web       # Next.js dashboard
 ├── docs          # canonical docs tree
 ├── docker-compose.yml
-├── DEVELOPMENT.md
-├── QUICK_START.md
 └── print-repo-structure.sh
 ```
 
@@ -241,14 +233,4 @@ CI currently validates:
 
 ## Docs
 
-Use the canonical docs tree instead of the older one-off plan files:
-
-- [`docs/README.md`](docs/README.md): docs layout and writing rules
-- [`docs/IMPORTANT/REPO_MAP.md`](docs/IMPORTANT/REPO_MAP.md): short repo orientation
-- [`docs/IMPORTANT/CURRENT_STATE.md`](docs/IMPORTANT/CURRENT_STATE.md): implemented systems summary
-- [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md): Prisma and DB runbook
-- [`docs/useful/MCP_LOCAL_SETUP.md`](docs/useful/MCP_LOCAL_SETUP.md): local MCP client setup
-- [`docs/current/MCP_AUTHORIZATION.md`](docs/current/MCP_AUTHORIZATION.md): current MCP auth and permission-grant behavior
-- [`docs/current/PREFERENCE_SCHEMA.md`](docs/current/PREFERENCE_SCHEMA.md): current preference-definition behavior
-- [`docs/current/WORKFLOWS.md`](docs/current/WORKFLOWS.md): workflow layer guidance
-- [`docs/plans/active/`](docs/plans/active/): active follow-up work
+[`docs/README.md`](docs/README.md) explains the docs layout and writing rules. Start there to find the right doc for your task.
