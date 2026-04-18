@@ -1,6 +1,6 @@
-Before starting always look at the README.md, run ./print-repo-structure.sh, and read every file in docs/IMPORTANT/ to understand what is going on. Use docs/current/, docs/useful/, and docs/plans/active/ as needed for your task.
+Before starting always read `README.md`, run `./print-repo-structure.sh`, read `docs/README.md` to get a sense of the documents available in this repo, and read every file in `docs/IMPORTANT/` to understand what is going on. Then read `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
 
-Currently the repo is a monolith with a FE app and a BE app.
+Currently the repo is a `pnpm` workspace monorepo with a frontend app and a backend app.
 
 When adding/changing backend behavior: write or update tests first; don't change tests unless requirements changed; run targeted tests after each change; keep edits small and incremental; stop when tests are green and summarize what changed.
 

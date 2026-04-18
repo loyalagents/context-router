@@ -2,12 +2,11 @@ Before starting:
 
 1. Read `README.md`.
 2. Run `./print-repo-structure.sh`.
-3. Read every file in `docs/IMPORTANT/`.
-4. Use `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
+3. Read `docs/README.md` to get a sense of the documents available in this repo.
+4. Read every file in `docs/IMPORTANT/`.
+5. Read `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
 
-For docs writing rules, read `docs/README.md`. That file is not needed at startup for most tasks.
-
-This repo is a monorepo with:
+This repo is a `pnpm` workspace monorepo with:
 
 - `apps/backend`: NestJS + GraphQL + Prisma + MCP
 - `apps/web`: Next.js dashboard and support routes
