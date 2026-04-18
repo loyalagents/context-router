@@ -1,441 +1,232 @@
 # Context Router
 
-A NestJS GraphQL monolith built with Prisma and PostgreSQL, designed with clean separation for easy microservice migration.
+Context Router is a `pnpm` workspace monorepo with:
 
-## Tech Stack
+- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and an Auth0-protected MCP HTTP endpoint.
+- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens.
+- PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage.
 
-- **Framework**: NestJS
-- **API**: GraphQL with Apollo Server
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Language**: TypeScript
-- **Containerization**: Docker & Docker Compose
-- **AI**: Google Vertex AI (Gemini 1.5 Flash)
+## How The Repo Works
 
-## Project Structure
+The main request flow looks like this:
 
-```
-src/
-├── main.ts                      # Application bootstrap
-├── app.module.ts                # Root module
-├── config/                      # Configuration files
-│   ├── app.config.ts
-│   ├── database.config.ts
-│   └── graphql.config.ts
-├── common/                      # Shared utilities
-│   ├── decorators/
-│   ├── filters/
-│   ├── interceptors/
-│   ├── guards/
-│   ├── pipes/
-│   ├── exceptions/
-│   └── utils/
-├── infrastructure/              # Infrastructure layer
-│   ├── prisma/
-│   │   ├── prisma.module.ts
-│   │   └── prisma.service.ts
-│   ├── cache/
-│   └── http/
-├── graphql/                     # GraphQL-specific code
-│   ├── scalars/
-│   ├── plugins/
-│   └── loaders/
-└── modules/                     # Feature modules
-    ├── user/
-    │   ├── user.module.ts
-    │   ├── user.service.ts
-    │   ├── user.resolver.ts
-    │   ├── user.repository.ts
-    │   ├── dto/
-    │   └── models/
-    ├── auth/
-    ├── health/
-    └── system/
+1. A user signs into the Next.js app through Auth0.
+2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
+3. The backend validates the token, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
+4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth/JWT setup.
+
+Major product areas currently in the repo:
+
+- Account/profile management
+- Preferences and preference definitions
+- Location-scoped preferences
+- Permission grants
+- Document analysis and AI-generated preference suggestions
+- Preference schema/search workflows
+- MCP tools and resources for preference access
+
+## Repo Layout
+
+```text
+.
+├── apps
+│   ├── backend   # NestJS + GraphQL + Prisma + MCP
+│   └── web       # Next.js dashboard
+├── docs          # design notes, plans, and MCP references
+├── docker-compose.yml
+├── DEVELOPMENT.md
+├── QUICK_START.md
+└── print-repo-structure.sh
 ```
 
-## Getting Started
+Key backend areas:
 
-### Prerequisites
+- `apps/backend/src/modules`: domain modules such as auth, preferences, permission grants, user, and workflows
+- `apps/backend/src/mcp`: MCP transport, auth, tools, and resources
+- `apps/backend/prisma`: schema, migrations, and seed script
+- `apps/backend/test`: unit, integration, and e2e test suites
 
-- Docker & Docker Compose
-- Node.js 20+ (for local development without Docker)
+Key frontend areas:
 
-### Running with Docker
+- `apps/web/app/dashboard`: authenticated dashboard pages for profile, preferences, schema, permissions, and chat
+- `apps/web/app/api`: Next.js route handlers that proxy authenticated actions to the backend
+- `apps/web/lib`: Auth0 and Apollo client setup
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd context-router
-   ```
+## Prerequisites
 
-2. **Copy environment variables**
-   ```bash
-   cp .env.example .env
-   ```
+- Node.js 20+
+- `pnpm` via Corepack
+- Docker with `docker compose`
+- Auth0 credentials for the backend API and frontend web app
+- Optional: Google Cloud application default credentials if you want Vertex AI-backed features to work locally
 
-3. **Start the application**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Run Prisma migrations**
-   ```bash
-   docker-compose exec app npx prisma migrate dev --name init
-   ```
-
-5. **Seed the database (optional)**
-   ```bash
-   docker-compose exec app pnpm run prisma:seed
-   ```
-
-6. **Access the application**
-   - API: http://localhost:3000
-   - GraphQL Playground: http://localhost:3000/graphql
-   - Health Check: http://localhost:3000/health
-
-### Local Development (without Docker)
-
-1. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
-
-2. **Start PostgreSQL** (via Docker)
-   ```bash
-   docker-compose up postgres -d
-   ```
-
-3. **Run migrations**
-   ```bash
-   pnpm run prisma:migrate
-   ```
-
-4. **Start development server**
-   ```bash
-   pnpm run start:dev
-   ```
-
-## Available Scripts
-
-### Backend (apps/backend)
-- `pnpm --filter backend build` - Build the application
-- `pnpm --filter backend start` - Start the application
-- `pnpm --filter backend start:dev` - Start in development mode with watch
-- `pnpm --filter backend start:prod` - Start in production mode
-- `pnpm --filter backend prisma:generate` - Generate Prisma Client
-- `pnpm --filter backend prisma:migrate` - Run database migrations
-- `pnpm --filter backend prisma:studio` - Open Prisma Studio
-- `pnpm --filter backend prisma:seed` - Seed the database
-
-### Frontend (apps/web)
-- `pnpm --filter web run dev` - Start Next.js dev server (port 3002)
-- `pnpm --filter web run build` - Build Next.js app
-- `pnpm --filter web run codegen` - Generate TypeScript types from GraphQL schema
-- `pnpm --filter web run codegen:watch` - Watch mode for type generation
-
-## Testing
-
-The backend uses Jest with a three-layer test architecture: unit, integration, and e2e tests.
-
-### Running Tests
-
-From `apps/backend`:
+Install dependencies from the repo root:
 
 ```bash
-# Run all tests (unit + integration + e2e)
-npm test
-
-# Run only unit tests (fast, no DB required)
-npm run test:unit
-
-# Run only integration tests (requires test DB)
-npm run test:integration
-
-# Run e2e tests (starts DB container, runs migrations, executes tests)
-npm run test:e2e
-
-# Run e2e tests only (when test DB is already running)
-npm run test:e2e:tests-only
+corepack enable
+pnpm install
 ```
 
-### Test Database Management
+## Environment Setup
+
+Create the env files the apps expect:
 
 ```bash
-# Start the test database container (PostgreSQL on port 5433)
-npm run test:db:up
-
-# Stop the test database container
-npm run test:db:down
-
-# Run migrations on the test database
-npm run test:db:migrate
+cp apps/backend/.env.example apps/backend/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-### Test Structure
+Important backend env notes:
 
-| Layer       | Location                         | Description                              |
-|-------------|----------------------------------|------------------------------------------|
-| Unit        | `src/**/*.spec.ts`               | Fast, isolated tests (no DB, no app)     |
-| Integration | `test/integration/**/*.spec.ts`  | Repository tests with real DB            |
-| E2E         | `test/e2e/**/*.e2e-spec.ts`      | Full HTTP/GraphQL API tests with real DB |
+- `apps/backend/.env` is the container-oriented baseline file used by `docker compose`.
+- The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides.
+- Authenticated flows require valid `AUTH0_*` values in both apps.
+- Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials.
+- MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs.
 
-### Test Harness Features
+Important frontend env notes:
 
-- **Database isolation**: Each test runs with a fresh database (tables truncated before each test)
-- **Auth bypass**: Auth guards are mocked to inject test users
-- **External service mocks**: Vertex AI and Auth0 services are mocked
-- **Shared test app factory**: `createTestApp()` provides a consistent test setup
+- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` at the backend, usually `http://localhost:3000/graphql`.
+- `APP_BASE_URL` should match the frontend dev server, usually `http://localhost:3002`.
 
-### Writing New Tests
+### Database Hostname Rule
 
-**E2E Test Example:**
-```typescript
-import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+Use different `DATABASE_URL` hostnames depending on where the backend runs:
 
-describe('MyFeature (e2e)', () => {
-  let app: INestApplication;
-  let testUser: TestUser;
-  let setTestUser: (user: TestUser) => void;
+- Backend in Docker: use `postgres` as the hostname
+- Backend on your host machine: use `localhost` as the hostname
 
-  beforeAll(async () => {
-    const testApp = await createTestApp();
-    app = testApp.app;
-    setTestUser = testApp.setTestUser;
-  });
-
-  beforeEach(async () => {
-    testUser = await createTestUser();
-    setTestUser(testUser);
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
-  it('should work', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/graphql')
-      .send({ query: '{ ... }' });
-    expect(response.body.data).toBeDefined();
-  });
-});
-```
-
-## GraphQL Code Generation
-
-The frontend uses [GraphQL Code Generator](https://the-guild.dev/graphql/codegen) to automatically generate TypeScript types from the backend GraphQL schema. This ensures type safety and keeps frontend types in sync with the backend.
-
-### How It Works
-
-1. **Schema File**: Reads from `apps/backend/src/schema.gql` (auto-generated by backend on startup)
-2. **Document Scanning**: Scans frontend files for `gql` queries and mutations
-3. **Type Generation**: Generates TypeScript types in `apps/web/lib/generated/graphql.ts`
-
-**No Docker required!** Codegen reads directly from the schema file.
-
-### Usage
-
-**Generate types (no Docker needed!):**
-```bash
-pnpm --filter web run codegen
-```
-
-**Watch mode (auto-regenerate on changes):**
-```bash
-pnpm --filter web run codegen:watch
-```
-
-### Example
-
-**Before (manual types):**
-```typescript
-interface MeQueryResponse {
-  me: {
-    userId: string;
-    email: string;
-    // ... manually defined
-  };
-}
-
-const { data } = await client.query<MeQueryResponse>({ ... });
-```
-
-**After (generated types):**
-```typescript
-import { MeQuery } from '@/lib/generated/graphql';
-
-const { data } = await client.query<MeQuery>({ ... });
-// Types are auto-generated and always match the backend schema!
-```
-
-### When to Regenerate Types
-
-**For Frontend Developers:**
-- After pulling changes that include `apps/backend/src/schema.gql` updates
-- After adding/modifying GraphQL queries or mutations in the frontend
-- When setting up the project for the first time
-
-**For Backend Developers (when schema changes):**
-1. Start backend to regenerate `schema.gql`:
-   ```bash
-   docker-compose up -d
-   # Wait for backend to start (generates schema.gql)
-   docker-compose down
-   ```
-2. Commit the updated schema file:
-   ```bash
-   git add apps/backend/src/schema.gql
-   git commit -m "Update GraphQL schema"
-   ```
-3. Frontend developers then:
-   ```bash
-   git pull
-   pnpm --filter web run codegen
-   ```
-
-**Note:**
-- Schema file (`apps/backend/src/schema.gql`) is committed to git
-- Generated types (`apps/web/lib/generated/`) are in `.gitignore`
-
-## GraphQL API
-
-### Queries
-
-```graphql
-# Get all users
-query {
-  users {
-    userId
-    email
-    firstName
-    lastName
-    createdAt
-    updatedAt
-  }
-}
-
-# Get a single user
-query {
-  user(id: "user-id-here") {
-    userId
-    email
-    firstName
-    lastName
-  }
-}
-```
-
-### Mutations
-
-```graphql
-# Create a user
-mutation {
-  createUser(createUserInput: {
-    email: "john@example.com"
-    firstName: "John"
-    lastName: "Doe"
-  }) {
-    userId
-    email
-    firstName
-    lastName
-  }
-}
-
-# Update a user
-mutation {
-  updateUser(updateUserInput: {
-    userId: "user-id-here"
-    firstName: "Jane"
-  }) {
-    userId
-    firstName
-  }
-}
-
-# Delete a user
-mutation {
-  removeUser(id: "user-id-here") {
-    userId
-    email
-  }
-}
-```
-
-## Architecture Decisions
-
-### Layered Architecture
-- **Resolver**: GraphQL API layer
-- **Service**: Business logic (stateless, testable)
-- **Repository**: Data access abstraction (wraps Prisma)
-
-### Microservice Ready
-Each module is self-contained with clear boundaries:
-- Domain logic isolated in services
-- Data access abstracted in repositories
-- GraphQL resolvers can be swapped for REST/gRPC
-
-### Infrastructure Abstraction
-Database and external dependencies are isolated in the infrastructure layer, making it easy to swap implementations.
-
-## Docker Services
-
-- **postgres**: PostgreSQL database (port 5432)
-- **app**: NestJS application (port 3000)
-
-## Environment Variables
-
-See `.env.example` for all available configuration options.
-
-### Vertex AI Configuration
-
-The application integrates with Google Vertex AI for text generation capabilities. The following environment variables are required:
+Example local override file for host-based backend development:
 
 ```bash
-GCP_PROJECT_ID=your-gcp-project-id
-VERTEX_REGION=us-central1          # or your chosen region
-VERTEX_MODEL_ID=gemini-2.5-flash-lite   # default model
+cat > apps/backend/.env.local <<'EOF'
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/context_router?schema=public
+PORT=3000
+EOF
 ```
 
-**For local development:**
+### Vertex AI Note
+
+The root `docker-compose.yml` mounts `~/.config/gcloud/application_default_credentials.json` into the backend container. If you want containerized Vertex AI calls to work, run:
+
 ```bash
 gcloud auth application-default login
 ```
 
-**For Cloud Run deployment:**
-- Ensure the Cloud Run service account has the `roles/aiplatform.user` role (Vertex AI User)
-- Set the environment variables in Cloud Run configuration
+## Running The Repo
 
-**TODO: Rate Limiting**
-⚠️ The Vertex AI endpoint currently only requires authentication (Auth0) for access control. Consider implementing additional rate limiting to:
-- Prevent excessive API usage and costs
-- Protect against abuse
-- Set per-user or per-organization quotas
+### Recommended Local Development Loop
 
-## Vertex AI Integration
+This is the best workflow if you are actively changing backend code and want hot reload:
 
-### GraphQL Query
+1. Start only PostgreSQL in Docker:
+   ```bash
+   docker compose up -d postgres
+   ```
+2. Make sure `apps/backend/.env.local` points `DATABASE_URL` at `localhost`.
+3. Run Prisma migrations from the repo root:
+   ```bash
+   pnpm --filter backend exec prisma migrate dev
+   ```
+4. Start the backend:
+   ```bash
+   pnpm dev:backend
+   ```
+5. In another terminal, start the frontend:
+   ```bash
+   pnpm dev:web
+   ```
 
-The `askVertexAI` query allows authenticated users to send prompts to Vertex AI:
+You can also run both apps locally with:
 
-```graphql
-query {
-  askVertexAI(message: "What is the capital of France?")
-}
+```bash
+pnpm dev
 ```
 
-**Authentication Required:** This endpoint is protected by Auth0. You must be logged in to use it.
+That still assumes your backend is using a host-based `DATABASE_URL`, not the Docker hostname.
 
-### Architecture
+### Containerized Backend Workflow
 
-The Vertex AI integration follows clean architecture principles:
-- **Port Interface** (`AiTextGeneratorPort`): Provider-agnostic interface for text generation
-- **Infrastructure Adapter** (`VertexAiService`): Vertex AI-specific implementation
-- **GraphQL Resolver** (`VertexAiResolver`): API layer with Auth0 guard
-- **Module** (`VertexAiModule`): Encapsulates the feature for easy swapping/extension
+Use this if you want the backend to run inside Docker instead of on the host:
 
-This design allows for easy migration to other AI providers (OpenAI, Anthropic, etc.) by implementing the same port interface.
+1. Keep `apps/backend/.env` using `postgres` as the database hostname.
+2. Start the backend and database:
+   ```bash
+   docker compose up -d postgres app
+   ```
+3. Run migrations inside the container:
+   ```bash
+   docker compose exec app npx prisma migrate dev
+   ```
+4. Start the frontend locally:
+   ```bash
+   pnpm dev:web
+   ```
 
-## License
+Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding/restarting the container.
 
-ISC
+## Local URLs And Endpoints
+
+- Frontend dashboard: `http://localhost:3002`
+- Backend GraphQL API: `http://localhost:3000/graphql`
+- Backend health check: `http://localhost:3000/health`
+- Document analysis upload endpoint: `POST http://localhost:3000/api/preferences/analysis`
+- MCP HTTP endpoint: `POST http://localhost:3000/mcp`
+
+## Common Commands
+
+From the repo root:
+
+```bash
+pnpm dev
+pnpm dev:backend
+pnpm dev:web
+pnpm build
+pnpm build:backend
+pnpm build:web
+pnpm test:backend
+pnpm test:backend:unit
+pnpm test:backend:integration
+pnpm test:backend:e2e
+```
+
+Backend-specific commands:
+
+```bash
+pnpm --filter backend prisma:generate
+pnpm --filter backend test:db:up
+pnpm --filter backend test:db:down
+pnpm --filter backend test:db:migrate
+pnpm --filter backend test:e2e:tests-only
+```
+
+## Testing
+
+Backend tests live under `apps/backend` and are split into:
+
+- Unit tests for isolated services and utilities
+- Integration tests for Prisma/repository behavior against a real test database
+- E2E tests for GraphQL, MCP, health, and preference-related flows
+
+Test database details:
+
+- `apps/backend/docker-compose.test.yml` starts PostgreSQL on `localhost:5433`
+- `pnpm --filter backend test:db:migrate` runs migrations against `context_router_test`
+- `pnpm test:backend:e2e` starts the test DB, migrates it, and then runs the e2e suite
+
+CI currently validates:
+
+- Backend unit tests
+- Backend integration tests
+- Backend e2e tests against the test database
+- Frontend production build
+
+## Related Docs
+
+Use `README.md` as the entry point for setup and day-to-day commands. Other markdown files in the repo are mostly deeper design notes, plans, or feature-specific references, especially:
+
+- `DEVELOPMENT.md`
+- `QUICK_START.md`
+- `docs/MCP_INTEGRATION.md`
+- `docs/mcp-connections.md`
+- `docs/workflows/`
