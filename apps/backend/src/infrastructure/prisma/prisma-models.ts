@@ -1,4 +1,8 @@
 import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+  AuditTargetType,
   LocationType,
   PreferenceScope,
   PreferenceStatus,
@@ -65,4 +69,20 @@ export interface Preference {
   evidence: unknown | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PreferenceAuditEvent {
+  id: string;
+  userId: string;
+  occurredAt: Date;
+  targetType: AuditTargetType;
+  targetId: string;
+  eventType: AuditEventType;
+  actorType: AuditActorType;
+  actorClientKey: string | null;
+  origin: AuditOrigin;
+  correlationId: string;
+  beforeState: unknown | null;
+  afterState: unknown | null;
+  metadata: unknown | null;
 }

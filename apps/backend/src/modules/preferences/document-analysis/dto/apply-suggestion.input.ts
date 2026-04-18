@@ -1,6 +1,7 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
 import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 import { GraphQLJSON } from 'graphql-type-json';
+import { Float } from '@nestjs/graphql';
 import { PreferenceOperation } from './preference-suggestion.dto';
 
 @InputType()
@@ -24,4 +25,12 @@ export class ApplyPreferenceSuggestionInput {
   @Field(() => GraphQLJSON, { nullable: true })
   @IsOptional()
   newValue?: any;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  confidence?: number;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  @IsOptional()
+  evidence?: any;
 }

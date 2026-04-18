@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
@@ -6,6 +7,11 @@ import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { PermissionGrantRepository } from '../../src/modules/permission-grant/permission-grant.repository';
 import { PreferenceService } from '../../src/modules/preferences/preference/preference.service';
 import { PreferenceDefinitionService } from '../../src/modules/preferences/preference-definition/preference-definition.service';
+import {
+  AuditActorType,
+  AuditOrigin,
+  SourceType,
+} from '../../src/infrastructure/prisma/generated-client';
 
 const TEST_CLIENT_IDS = {
   claude: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID!,
@@ -98,6 +104,13 @@ describe('Permission Grants (e2e)', () => {
   const parseToolResult = (result: any) =>
     JSON.parse(result.content[0].text);
 
+  const buildUserMutationContext = () => ({
+    actorType: AuditActorType.USER,
+    origin: AuditOrigin.GRAPHQL,
+    correlationId: randomUUID(),
+    sourceType: SourceType.USER,
+  });
+
   it('denies suggestPreference for matching denied write grants and allows unmatched slugs', async () => {
     await grantRepository.upsert(
       testUser.userId,
@@ -127,10 +140,14 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('denies deletePreference when the preference slug matches a denied write grant', async () => {
-    const preference = await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
+    const preference = await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
 
     await grantRepository.upsert(
       testUser.userId,
@@ -168,10 +185,14 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('does not let write denies block reads for the same slug', async () => {
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
 
     await grantRepository.upsert(
       testUser.userId,
@@ -199,14 +220,22 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('filters denied slugs out of searchPreferences and listPreferenceSlugs responses', async () => {
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'system.response_tone',
-      value: 'concise',
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'system.response_tone',
+        value: 'concise',
+      },
+      buildUserMutationContext(),
+    );
 
     await grantRepository.upsert(
       testUser.userId,
@@ -233,14 +262,22 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('filters denied slugs before smartSearchPreferences builds the AI prompt', async () => {
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'system.response_tone',
-      value: 'concise',
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'system.response_tone',
+        value: 'concise',
+      },
+      buildUserMutationContext(),
+    );
 
     structuredAi.generateStructured.mockResolvedValue({
       relevantSlugs: ['food.dietary_restrictions', 'system.response_tone'],
@@ -274,14 +311,22 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('returns empty read results across tools when deny * read is set', async () => {
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'system.response_tone',
-      value: 'concise',
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'system.response_tone',
+        value: 'concise',
+      },
+      buildUserMutationContext(),
+    );
 
     structuredAi.generateStructured.mockResolvedValue({
       relevantSlugs: ['food.dietary_restrictions', 'system.response_tone'],
@@ -340,6 +385,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
     await preferenceDefinitionService.create(
       {
@@ -351,15 +397,24 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.french.wine',
-      value: 'red',
-    });
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.italian.pasta',
-      value: 'rigatoni',
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.french.wine',
+        value: 'red',
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.italian.pasta',
+        value: 'rigatoni',
+      },
+      buildUserMutationContext(),
+    );
 
     await grantRepository.upsert(
       testUser.userId,
@@ -452,14 +507,22 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('supports allowlist-style read access with deny * plus allow food.*', async () => {
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'food.dietary_restrictions',
-      value: ['nuts'],
-    });
-    await preferenceService.setPreference(testUser.userId, {
-      slug: 'system.response_tone',
-      value: 'concise',
-    });
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'food.dietary_restrictions',
+        value: ['nuts'],
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'system.response_tone',
+        value: 'concise',
+      },
+      buildUserMutationContext(),
+    );
 
     await grantRepository.upsert(testUser.userId, 'claude', '*', 'READ', 'DENY');
     await grantRepository.upsert(
@@ -495,6 +558,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
     await preferenceDefinitionService.create(
       {
@@ -506,6 +570,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
 
     await grantRepository.upsert(testUser.userId, 'claude', 'a.*', 'READ', 'DENY');
@@ -528,6 +593,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
     await preferenceDefinitionService.create(
       {
@@ -539,6 +605,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
     await preferenceDefinitionService.create(
       {
@@ -550,6 +617,7 @@ describe('Permission Grants (e2e)', () => {
         isCore: false,
       },
       testUser.userId,
+      buildUserMutationContext(),
     );
 
     structuredAi.generateStructured.mockResolvedValue({

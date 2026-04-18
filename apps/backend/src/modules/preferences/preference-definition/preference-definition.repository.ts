@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
+  Prisma,
   PreferenceValueType,
   PreferenceScope,
 } from "@infrastructure/prisma/generated-client";
@@ -188,10 +189,11 @@ export class PreferenceDefinitionRepository {
     isSensitive?: boolean;
     isCore?: boolean;
     ownerUserId?: string | null;
-  }): Promise<PrismaPreferenceDefinition> {
+  }, tx?: Prisma.TransactionClient): Promise<PrismaPreferenceDefinition> {
+    const client = tx ?? this.prisma;
     const namespace = this.namespaceFor(data.ownerUserId);
 
-    const created = await this.prisma.preferenceDefinition.create({
+    const created = await client.preferenceDefinition.create({
       data: {
         namespace,
         slug: data.slug,
@@ -224,7 +226,9 @@ export class PreferenceDefinitionRepository {
       isSensitive?: boolean;
       isCore?: boolean;
     },
+    tx?: Prisma.TransactionClient,
   ): Promise<PrismaPreferenceDefinition> {
+    const client = tx ?? this.prisma;
     const updateData: Record<string, unknown> = {};
     if (data.displayName !== undefined) updateData.displayName = data.displayName;
     if (data.description !== undefined)
@@ -236,7 +240,7 @@ export class PreferenceDefinitionRepository {
       updateData.isSensitive = data.isSensitive;
     if (data.isCore !== undefined) updateData.isCore = data.isCore;
 
-    return this.prisma.preferenceDefinition.update({
+    return client.preferenceDefinition.update({
       where: { id },
       data: updateData,
     });
@@ -246,8 +250,12 @@ export class PreferenceDefinitionRepository {
    * Archives a definition by setting archivedAt.
    * After archiving, a new definition with the same (namespace, slug) can be created.
    */
-  async archive(id: string): Promise<PrismaPreferenceDefinition> {
-    const archived = await this.prisma.preferenceDefinition.update({
+  async archive(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<PrismaPreferenceDefinition> {
+    const client = tx ?? this.prisma;
+    const archived = await client.preferenceDefinition.update({
       where: { id },
       data: { archivedAt: new Date() },
     });

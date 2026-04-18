@@ -1,11 +1,20 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+  PreferenceStatus,
+  SourceType,
+} from '../../src/infrastructure/prisma/generated-client';
 
 describe('Preferences GraphQL API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  const prisma = getPrismaClient();
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -67,6 +76,25 @@ describe('Preferences GraphQL API (e2e)', () => {
       expect(response.body.data.setPreference.id).toBeDefined();
       expect(response.body.data.setPreference.definitionId).toBeDefined();
       expect(response.body.data.setPreference.description).toBeDefined();
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SET,
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+      expect(auditRows[0].afterState).toMatchObject({
+        id: response.body.data.setPreference.id,
+        slug: 'food.dietary_restrictions',
+        value: ['peanuts', 'shellfish'],
+        status: 'ACTIVE',
+        sourceType: 'USER',
+      });
     });
 
     it('should create a location-scoped preference', async () => {
@@ -155,6 +183,31 @@ describe('Preferences GraphQL API (e2e)', () => {
       expect(updateResponse.body.errors).toBeUndefined();
       expect(updateResponse.body.data.setPreference.id).toBe(id);
       expect(updateResponse.body.data.setPreference.value).toBe('professional');
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SET,
+        },
+      });
+
+      expect(auditRows).toHaveLength(2);
+      const updateAudit = auditRows.find(
+        (auditRow) =>
+          (auditRow.afterState as { value?: string } | null)?.value === 'professional',
+      );
+
+      expect(updateAudit).toBeDefined();
+      expect(updateAudit?.beforeState).toMatchObject({
+        id,
+        value: 'casual',
+        sourceType: 'USER',
+      });
+      expect(updateAudit?.afterState).toMatchObject({
+        id,
+        value: 'professional',
+        sourceType: 'USER',
+      });
     });
 
     it('should reject unknown slug', async () => {
@@ -175,6 +228,11 @@ describe('Preferences GraphQL API (e2e)', () => {
 
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors[0].message).toContain('Unknown preference slug');
+      expect(
+        await prisma.preferenceAuditEvent.count({
+          where: { userId: testUser.userId },
+        }),
+      ).toBe(0);
     });
   });
 
@@ -363,6 +421,112 @@ describe('Preferences GraphQL API (e2e)', () => {
       response.body.data.suggestedPreferences.forEach((pref: { status: string }) => {
         expect(pref.status).toBe('SUGGESTED');
       });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+      expect(auditRows[0].afterState).toMatchObject({
+        status: 'SUGGESTED',
+        slug: 'food.cuisine_preferences',
+        value: ['Italian', 'Japanese'],
+        sourceType: 'INFERRED',
+      });
+    });
+
+    it('should update an existing suggestion and capture beforeState in the audit event', async () => {
+      const suggestMutation = `
+        mutation SuggestPreference($input: SuggestPreferenceInput!) {
+          suggestPreference(input: $input) {
+            id
+            value
+            confidence
+          }
+        }
+      `;
+
+      const initialResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'food.cuisine_preferences',
+          value: ['Italian'],
+          confidence: 0.51,
+          evidence: { source: 'chat', snippet: 'Usually picks Italian' },
+        },
+      }).expect(200);
+
+      const updatedResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'food.cuisine_preferences',
+          value: ['Italian', 'Japanese'],
+          confidence: 0.93,
+          evidence: { source: 'chat', snippet: 'Also likes Japanese food' },
+        },
+      }).expect(200);
+
+      expect(initialResponse.body.errors).toBeUndefined();
+      expect(updatedResponse.body.errors).toBeUndefined();
+      expect(updatedResponse.body.data.suggestPreference.id).toBe(
+        initialResponse.body.data.suggestPreference.id,
+      );
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(2);
+      const updateAudit = auditRows.find(
+        (auditRow) =>
+          (auditRow.afterState as { confidence?: number } | null)?.confidence === 0.93,
+      );
+
+      expect(updateAudit).toBeDefined();
+      expect(updateAudit?.beforeState).toMatchObject({
+        id: initialResponse.body.data.suggestPreference.id,
+        value: ['Italian'],
+        confidence: 0.51,
+        evidence: { source: 'chat', snippet: 'Usually picks Italian' },
+      });
+      expect(updateAudit?.afterState).toMatchObject({
+        id: initialResponse.body.data.suggestPreference.id,
+        value: ['Italian', 'Japanese'],
+        confidence: 0.93,
+        evidence: { source: 'chat', snippet: 'Also likes Japanese food' },
+      });
+    });
+
+    it('should not write an audit row when suggestion input fails validation', async () => {
+      const suggestMutation = `
+        mutation SuggestPreference($input: SuggestPreferenceInput!) {
+          suggestPreference(input: $input) {
+            id
+          }
+        }
+      `;
+
+      const response = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'food.cuisine_preferences',
+          value: ['Italian'],
+          confidence: 1.5,
+        },
+      }).expect(200);
+
+      expect(response.body.errors).toBeDefined();
+      expect(
+        await prisma.preferenceAuditEvent.count({
+          where: { userId: testUser.userId },
+        }),
+      ).toBe(0);
     });
   });
 
@@ -382,6 +546,7 @@ describe('Preferences GraphQL API (e2e)', () => {
           slug: 'dev.tech_stack',
           value: ['TypeScript', 'Node.js'],
           confidence: 0.9,
+          evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
         },
       });
 
@@ -410,6 +575,106 @@ describe('Preferences GraphQL API (e2e)', () => {
         value: ['TypeScript', 'Node.js'],
       });
       expect(response.body.data.acceptSuggestedPreference.id).toBeDefined();
+
+      const activeRow = await prisma.preference.findUnique({
+        where: { id: response.body.data.acceptSuggestedPreference.id },
+      });
+
+      expect(activeRow).toMatchObject({
+        status: 'ACTIVE',
+        sourceType: 'INFERRED',
+        confidence: 0.9,
+        evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+      });
+
+      const acceptedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_ACCEPTED,
+        },
+      });
+
+      expect(acceptedAuditRows).toHaveLength(1);
+      expect(acceptedAuditRows[0].metadata).toMatchObject({
+        consumedSuggestion: {
+          id,
+          sourceType: 'INFERRED',
+          confidence: 0.9,
+          evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+        },
+      });
+    });
+
+    it('should capture the previous ACTIVE row in the accept audit beforeState', async () => {
+      const setMutation = `
+        mutation SetPreference($input: SetPreferenceInput!) {
+          setPreference(input: $input) {
+            id
+          }
+        }
+      `;
+      const suggestMutation = `
+        mutation SuggestPreference($input: SuggestPreferenceInput!) {
+          suggestPreference(input: $input) {
+            id
+          }
+        }
+      `;
+      const acceptMutation = `
+        mutation AcceptSuggestion($id: ID!) {
+          acceptSuggestedPreference(id: $id) {
+            id
+            value
+            status
+          }
+        }
+      `;
+
+      const existingActive = await graphqlRequest(setMutation, {
+        input: {
+          slug: 'dev.tech_stack',
+          value: ['Python'],
+        },
+      }).expect(200);
+
+      const suggestResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'dev.tech_stack',
+          value: ['TypeScript', 'Node.js'],
+          confidence: 0.82,
+          evidence: { source: 'resume', snippet: 'Primary stack is TS/Node' },
+        },
+      }).expect(200);
+
+      const suggestionId = suggestResponse.body.data.suggestPreference.id;
+
+      const response = await graphqlRequest(acceptMutation, { id: suggestionId }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.acceptSuggestedPreference).toMatchObject({
+        status: 'ACTIVE',
+        value: ['TypeScript', 'Node.js'],
+      });
+
+      const acceptedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_ACCEPTED,
+        },
+      });
+
+      expect(acceptedAuditRows).toHaveLength(1);
+      expect(acceptedAuditRows[0].beforeState).toMatchObject({
+        id: existingActive.body.data.setPreference.id,
+        status: 'ACTIVE',
+        value: ['Python'],
+        sourceType: 'USER',
+      });
+      expect(acceptedAuditRows[0].afterState).toMatchObject({
+        status: 'ACTIVE',
+        value: ['TypeScript', 'Node.js'],
+        sourceType: 'INFERRED',
+      });
     });
   });
 
@@ -429,6 +694,7 @@ describe('Preferences GraphQL API (e2e)', () => {
           slug: 'communication.preferred_channels',
           value: ['email'],
           confidence: 0.7,
+          evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
         },
       });
 
@@ -458,6 +724,129 @@ describe('Preferences GraphQL API (e2e)', () => {
       const checkResponse = await graphqlRequest(query).expect(200);
       const ids = checkResponse.body.data.suggestedPreferences.map((p: { id: string }) => p.id);
       expect(ids).not.toContain(id);
+
+      const rejectedRows = await prisma.preference.findMany({
+        where: {
+          userId: testUser.userId,
+          status: 'REJECTED',
+        },
+      });
+
+      expect(rejectedRows).toHaveLength(1);
+      expect(rejectedRows[0]).toMatchObject({
+        sourceType: 'INFERRED',
+        confidence: 0.7,
+        evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
+      });
+
+      const rejectedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_REJECTED,
+        },
+      });
+
+      expect(rejectedAuditRows).toHaveLength(1);
+      expect(rejectedAuditRows[0].metadata).toMatchObject({
+        consumedSuggestion: {
+          id,
+          sourceType: 'INFERRED',
+          confidence: 0.7,
+          evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
+        },
+      });
+
+      const resuggestResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'communication.preferred_channels',
+          value: ['email'],
+          confidence: 0.95,
+          evidence: { source: 'ticket', snippet: 'Same preference repeated' },
+        },
+      }).expect(200);
+
+      expect(resuggestResponse.body.errors).toBeUndefined();
+      expect(resuggestResponse.body.data.suggestPreference).toBeNull();
+
+      expect(
+        await prisma.preferenceAuditEvent.count({
+          where: {
+            userId: testUser.userId,
+            eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+          },
+        }),
+      ).toBe(1);
+    });
+
+    it('should capture the previous REJECTED row in the reject audit beforeState', async () => {
+      const definition = await prisma.preferenceDefinition.findFirstOrThrow({
+        where: {
+          slug: 'communication.preferred_channels',
+          archivedAt: null,
+        },
+      });
+
+      const existingRejected = await prisma.preference.create({
+        data: {
+          userId: testUser.userId,
+          definitionId: definition.id,
+          contextKey: 'GLOBAL',
+          value: ['sms'],
+          status: PreferenceStatus.REJECTED,
+          sourceType: SourceType.INFERRED,
+          confidence: 0.21,
+          evidence: { source: 'old-ticket', snippet: 'Previously rejected SMS' },
+        },
+      });
+
+      const suggestion = await prisma.preference.create({
+        data: {
+          userId: testUser.userId,
+          definitionId: definition.id,
+          contextKey: 'GLOBAL',
+          value: ['email'],
+          status: PreferenceStatus.SUGGESTED,
+          sourceType: SourceType.INFERRED,
+          confidence: 0.74,
+          evidence: { source: 'new-ticket', snippet: 'Latest preference is email' },
+        },
+      });
+
+      const rejectMutation = `
+        mutation RejectSuggestion($id: ID!) {
+          rejectSuggestedPreference(id: $id)
+        }
+      `;
+
+      const response = await graphqlRequest(rejectMutation, {
+        id: suggestion.id,
+      }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.rejectSuggestedPreference).toBe(true);
+
+      const rejectedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_REJECTED,
+        },
+      });
+
+      expect(rejectedAuditRows).toHaveLength(1);
+      expect(rejectedAuditRows[0].beforeState).toMatchObject({
+        id: existingRejected.id,
+        status: 'REJECTED',
+        value: ['sms'],
+        confidence: 0.21,
+        evidence: { source: 'old-ticket', snippet: 'Previously rejected SMS' },
+      });
+      expect(rejectedAuditRows[0].afterState).toMatchObject({
+        id: existingRejected.id,
+        status: 'REJECTED',
+        value: ['email'],
+        confidence: 0.74,
+        evidence: { source: 'new-ticket', snippet: 'Latest preference is email' },
+      });
     });
   });
 
@@ -541,6 +930,25 @@ describe('Preferences GraphQL API (e2e)', () => {
 
       // Should return an error (preference not found)
       expect(getResponse.body.errors).toBeDefined();
+
+      const deleteAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_DELETED,
+        },
+      });
+
+      expect(deleteAuditRows).toHaveLength(1);
+      expect(deleteAuditRows[0]).toMatchObject({
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+        afterState: null,
+      });
+      expect(deleteAuditRows[0].beforeState).toMatchObject({
+        id,
+        slug: 'system.response_length',
+        value: 'brief',
+      });
     });
   });
 });
