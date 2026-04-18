@@ -4,12 +4,18 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { Prisma } from '@infrastructure/prisma/generated-client';
 import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceDefinitionService } from '@modules/preferences/preference-definition/preference-definition.service';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import {
+  AuditActorType,
+  AuditOrigin,
+  SourceType,
+} from '@infrastructure/prisma/generated-client';
 
 const VALID_VALUE_TYPES = ['STRING', 'BOOLEAN', 'ENUM', 'ARRAY'] as const;
 const VALID_SCOPES = ['GLOBAL', 'LOCATION'] as const;
@@ -177,6 +183,13 @@ export class PreferenceDefinitionTool implements McpToolInterface {
           isCore: false,
         },
         userId,
+        {
+          actorType: AuditActorType.MCP_CLIENT,
+          actorClientKey: context.client.key,
+          origin: AuditOrigin.MCP,
+          correlationId: randomUUID(),
+          sourceType: SourceType.USER,
+        },
       );
 
       this.logger.log(`Preference definition created: ${created.id}`);

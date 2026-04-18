@@ -6,6 +6,11 @@ import { PreferenceService } from '../preference/preference.service';
 import { Preference } from '../preference/models/preference.model';
 import { ApplyPreferenceSuggestionInput } from './dto/apply-suggestion.input';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
+import {
+  AuditActorType,
+  AuditOrigin,
+  SourceType,
+} from '@infrastructure/prisma/generated-client';
 
 @Resolver()
 @UseGuards(GqlAuthGuard)
@@ -40,6 +45,14 @@ export class DocumentAnalysisResolver {
               {
                 slug: suggestion.slug,
                 value: suggestion.newValue,
+              },
+              {
+                actorType: AuditActorType.USER,
+                origin: AuditOrigin.DOCUMENT_ANALYSIS,
+                correlationId: analysisId,
+                sourceType: SourceType.INFERRED,
+                confidence: suggestion.confidence,
+                evidence: suggestion.evidence,
               },
             );
             preference = result as unknown as Preference;

@@ -7,6 +7,11 @@ import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { ResolvedMcpClient } from '../../src/mcp/types/mcp-authorization.types';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+} from '../../src/infrastructure/prisma/generated-client';
 
 const TEST_CLIENT_IDS = {
   claude: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID!,
@@ -33,6 +38,7 @@ describe('MCP Integration (e2e)', () => {
   let registerMcpUser: (user: TestUser) => void;
   let mcpService: McpService;
   let configService: ConfigService;
+  const prisma = getPrismaClient();
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -186,6 +192,21 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.isError).not.toBe(true);
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: 'codex',
+        origin: AuditOrigin.MCP,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
     });
 
     it('should deny write tools for fallback', async () => {
@@ -466,6 +487,21 @@ describe('MCP Integration (e2e)', () => {
       expect(result.definition.options).toEqual(['olive', 'coconut', 'avocado']);
       expect(result.definition.visibility).toBe('USER');
       expect(result.definition.id).toBeDefined();
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.DEFINITION_CREATED,
+        },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: 'claude',
+        origin: AuditOrigin.MCP,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
     });
 
     it('should reject a duplicate user slug', async () => {

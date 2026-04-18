@@ -1,11 +1,18 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+} from '../../src/infrastructure/prisma/generated-client';
 
 describe('Preferences GraphQL API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  const prisma = getPrismaClient();
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -67,6 +74,25 @@ describe('Preferences GraphQL API (e2e)', () => {
       expect(response.body.data.setPreference.id).toBeDefined();
       expect(response.body.data.setPreference.definitionId).toBeDefined();
       expect(response.body.data.setPreference.description).toBeDefined();
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SET,
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+      expect(auditRows[0].afterState).toMatchObject({
+        id: response.body.data.setPreference.id,
+        slug: 'food.dietary_restrictions',
+        value: ['peanuts', 'shellfish'],
+        status: 'ACTIVE',
+        sourceType: 'USER',
+      });
     });
 
     it('should create a location-scoped preference', async () => {
@@ -363,6 +389,24 @@ describe('Preferences GraphQL API (e2e)', () => {
       response.body.data.suggestedPreferences.forEach((pref: { status: string }) => {
         expect(pref.status).toBe('SUGGESTED');
       });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+      expect(auditRows[0].afterState).toMatchObject({
+        status: 'SUGGESTED',
+        slug: 'food.cuisine_preferences',
+        value: ['Italian', 'Japanese'],
+        sourceType: 'INFERRED',
+      });
     });
   });
 
@@ -382,6 +426,7 @@ describe('Preferences GraphQL API (e2e)', () => {
           slug: 'dev.tech_stack',
           value: ['TypeScript', 'Node.js'],
           confidence: 0.9,
+          evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
         },
       });
 
@@ -410,6 +455,34 @@ describe('Preferences GraphQL API (e2e)', () => {
         value: ['TypeScript', 'Node.js'],
       });
       expect(response.body.data.acceptSuggestedPreference.id).toBeDefined();
+
+      const activeRow = await prisma.preference.findUnique({
+        where: { id: response.body.data.acceptSuggestedPreference.id },
+      });
+
+      expect(activeRow).toMatchObject({
+        status: 'ACTIVE',
+        sourceType: 'INFERRED',
+        confidence: 0.9,
+        evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+      });
+
+      const acceptedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_ACCEPTED,
+        },
+      });
+
+      expect(acceptedAuditRows).toHaveLength(1);
+      expect(acceptedAuditRows[0].metadata).toMatchObject({
+        consumedSuggestion: {
+          id,
+          sourceType: 'INFERRED',
+          confidence: 0.9,
+          evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+        },
+      });
     });
   });
 
@@ -429,6 +502,7 @@ describe('Preferences GraphQL API (e2e)', () => {
           slug: 'communication.preferred_channels',
           value: ['email'],
           confidence: 0.7,
+          evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
         },
       });
 
@@ -458,6 +532,49 @@ describe('Preferences GraphQL API (e2e)', () => {
       const checkResponse = await graphqlRequest(query).expect(200);
       const ids = checkResponse.body.data.suggestedPreferences.map((p: { id: string }) => p.id);
       expect(ids).not.toContain(id);
+
+      const rejectedRows = await prisma.preference.findMany({
+        where: {
+          userId: testUser.userId,
+          status: 'REJECTED',
+        },
+      });
+
+      expect(rejectedRows).toHaveLength(1);
+      expect(rejectedRows[0]).toMatchObject({
+        sourceType: 'INFERRED',
+        confidence: 0.7,
+        evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
+      });
+
+      const rejectedAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SUGGESTION_REJECTED,
+        },
+      });
+
+      expect(rejectedAuditRows).toHaveLength(1);
+      expect(rejectedAuditRows[0].metadata).toMatchObject({
+        consumedSuggestion: {
+          id,
+          sourceType: 'INFERRED',
+          confidence: 0.7,
+          evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
+        },
+      });
+
+      const resuggestResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'communication.preferred_channels',
+          value: ['email'],
+          confidence: 0.95,
+          evidence: { source: 'ticket', snippet: 'Same preference repeated' },
+        },
+      }).expect(200);
+
+      expect(resuggestResponse.body.errors).toBeUndefined();
+      expect(resuggestResponse.body.data.suggestPreference).toBeNull();
     });
   });
 
@@ -541,6 +658,25 @@ describe('Preferences GraphQL API (e2e)', () => {
 
       // Should return an error (preference not found)
       expect(getResponse.body.errors).toBeDefined();
+
+      const deleteAuditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_DELETED,
+        },
+      });
+
+      expect(deleteAuditRows).toHaveLength(1);
+      expect(deleteAuditRows[0]).toMatchObject({
+        origin: AuditOrigin.GRAPHQL,
+        actorType: AuditActorType.USER,
+        afterState: null,
+      });
+      expect(deleteAuditRows[0].beforeState).toMatchObject({
+        id,
+        slug: 'system.response_length',
+        value: 'brief',
+      });
     });
   });
 });
