@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
+import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
 import { PreferenceStatus } from "@infrastructure/prisma/generated-client";
 import {
   PreferenceRepository,
@@ -20,6 +21,7 @@ import {
   enforceScope,
   validateConfidence,
 } from "./preference.validation";
+import { canonicalizePreferenceValue } from "./preference-value-normalization";
 
 @Injectable()
 export class PreferenceService {
@@ -33,23 +35,20 @@ export class PreferenceService {
 
   /**
    * Validates a slug and throws appropriate errors if invalid.
-   * Returns the resolved definitionId.
+   * Returns the resolved definition.
    */
-  private async resolveAndValidateSlug(
+  private async resolveAndValidateDefinition(
     slug: string,
     userId?: string,
-  ): Promise<string> {
+  ): Promise<PrismaPreferenceDefinition> {
     if (!validateSlugFormat(slug)) {
       throw new BadRequestException(
         `Invalid slug format: "${slug}". Slugs must be lowercase with dots (e.g., "food.dietary_restrictions")`,
       );
     }
 
-    const definitionId = await this.defRepo.resolveSlugToDefinitionId(
-      slug,
-      userId,
-    );
-    if (!definitionId) {
+    const definition = await this.defRepo.getDefinitionBySlug(slug, userId);
+    if (!definition) {
       const similar = await this.defRepo.findSimilarSlugs(slug, 3, userId);
       const hint =
         similar.length > 0 ? ` Did you mean: ${similar.join(", ")}?` : "";
@@ -58,21 +57,18 @@ export class PreferenceService {
       );
     }
 
-    return definitionId;
+    return definition;
   }
 
   /**
    * Validates the value type for a slug.
    */
-  private async validateValueForSlug(
+  private validateValueForDefinition(
     slug: string,
+    definition: { valueType: PrismaPreferenceDefinition["valueType"]; options?: unknown },
     value: any,
-    userId?: string,
-  ): Promise<void> {
-    const def = await this.defRepo.getDefinitionBySlug(slug, userId);
-    if (!def) return;
-
-    const validation = validateValue(def, value);
+  ): void {
+    const validation = validateValue(definition, value);
     if (!validation.valid) {
       throw new BadRequestException(
         `Invalid value for "${slug}": ${validation.error}`,
@@ -83,18 +79,36 @@ export class PreferenceService {
   /**
    * Validates and enforces scope rules for a preference.
    */
-  private async validateScope(
-    slug: string,
+  private validateScopeForDefinition(
+    definition: {
+      scope: PrismaPreferenceDefinition["scope"];
+      category?: string;
+    },
     locationId?: string,
-    userId?: string,
-  ): Promise<void> {
-    const def = await this.defRepo.getDefinitionBySlug(slug, userId);
-    if (!def) return;
-
-    const scopeValidation = enforceScope(def, locationId);
+  ): void {
+    const scopeValidation = enforceScope(definition, locationId);
     if (!scopeValidation.valid) {
       throw new BadRequestException(scopeValidation.error);
     }
+  }
+
+  private canonicalizeValue(
+    definition: { valueType: PrismaPreferenceDefinition["valueType"] },
+    value: unknown,
+  ): unknown {
+    return canonicalizePreferenceValue(definition, value);
+  }
+
+  private async canonicalizeValueByDefinitionId(
+    definitionId: string,
+    value: unknown,
+  ): Promise<unknown> {
+    const definition = await this.defRepo.getDefinitionById(definitionId);
+    if (!definition) {
+      return value;
+    }
+
+    return this.canonicalizeValue(definition, value);
   }
 
   /**
@@ -105,9 +119,10 @@ export class PreferenceService {
     userId: string,
     input: SetPreferenceInput,
   ): Promise<EnrichedPreference> {
-    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
-    await this.validateValueForSlug(input.slug, input.value, userId);
-    await this.validateScope(input.slug, input.locationId, userId);
+    const definition = await this.resolveAndValidateDefinition(input.slug, userId);
+    const normalizedValue = this.canonicalizeValue(definition, input.value);
+    this.validateValueForDefinition(input.slug, definition, normalizedValue);
+    this.validateScopeForDefinition(definition, input.locationId);
 
     // If locationId is provided, verify it exists and belongs to user
     if (input.locationId) {
@@ -120,8 +135,8 @@ export class PreferenceService {
 
     return this.preferenceRepository.upsertActive(
       userId,
-      definitionId,
-      input.value,
+      definition.id,
+      normalizedValue,
       input.locationId,
     );
   }
@@ -135,9 +150,10 @@ export class PreferenceService {
     userId: string,
     input: SuggestPreferenceInput,
   ): Promise<EnrichedPreference | null> {
-    const definitionId = await this.resolveAndValidateSlug(input.slug, userId);
-    await this.validateValueForSlug(input.slug, input.value, userId);
-    await this.validateScope(input.slug, input.locationId, userId);
+    const definition = await this.resolveAndValidateDefinition(input.slug, userId);
+    const normalizedValue = this.canonicalizeValue(definition, input.value);
+    this.validateValueForDefinition(input.slug, definition, normalizedValue);
+    this.validateScopeForDefinition(definition, input.locationId);
 
     // Validate confidence
     const confidenceValidation = validateConfidence(input.confidence);
@@ -153,7 +169,7 @@ export class PreferenceService {
     // Check if a REJECTED row exists for this preference
     const hasRejected = await this.preferenceRepository.hasRejected(
       userId,
-      definitionId,
+      definition.id,
       input.locationId,
     );
 
@@ -170,8 +186,8 @@ export class PreferenceService {
 
     return this.preferenceRepository.upsertSuggested(
       userId,
-      definitionId,
-      input.value,
+      definition.id,
+      normalizedValue,
       input.confidence,
       input.locationId,
       input.evidence,
@@ -265,11 +281,16 @@ export class PreferenceService {
       `Accepting suggestion ${id} for user ${userId}: ${suggestion.slug}`,
     );
 
+    const normalizedValue = await this.canonicalizeValueByDefinitionId(
+      suggestion.definitionId,
+      suggestion.value,
+    );
+
     // Upsert the active preference with the suggested value
     const active = await this.preferenceRepository.upsertActive(
       userId,
       suggestion.definitionId,
-      suggestion.value,
+      normalizedValue,
       suggestion.locationId,
     );
 
@@ -309,11 +330,16 @@ export class PreferenceService {
       `Rejecting suggestion ${id} for user ${userId}: ${suggestion.slug}`,
     );
 
+    const normalizedValue = await this.canonicalizeValueByDefinitionId(
+      suggestion.definitionId,
+      suggestion.value,
+    );
+
     // Upsert the rejected row
     await this.preferenceRepository.upsertRejected(
       userId,
       suggestion.definitionId,
-      suggestion.value,
+      normalizedValue,
       suggestion.locationId,
     );
 

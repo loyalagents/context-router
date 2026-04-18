@@ -188,6 +188,35 @@ describe('MCP Integration (e2e)', () => {
       expect(response.body.result?.isError).not.toBe(true);
     });
 
+    it('should canonicalize array values in suggestPreference for codex', async () => {
+      const response = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 31,
+          method: 'tools/call',
+          params: {
+            name: 'suggestPreference',
+            arguments: {
+              slug: 'dev.tech_stack',
+              value: '["AI", " software engineering ", "AI", ""]',
+              confidence: 0.91,
+            },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).not.toBe(true);
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.success).toBe(true);
+      expect(result.preference).toMatchObject({
+        slug: 'dev.tech_stack',
+        value: ['AI', 'software engineering'],
+      });
+    });
+
     it('should deny write tools for fallback', async () => {
       const response = await mcpPost(
         {

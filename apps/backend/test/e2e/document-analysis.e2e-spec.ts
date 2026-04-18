@@ -395,6 +395,41 @@ describe('Document Analysis API (e2e)', () => {
       );
     });
 
+    it('should canonicalize duplicated array members when applying suggestions', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            mutation ApplyPreferenceSuggestions($analysisId: ID!, $input: [ApplyPreferenceSuggestionInput!]!) {
+              applyPreferenceSuggestions(analysisId: $analysisId, input: $input) {
+                id
+                slug
+                value
+              }
+            }
+          `,
+          variables: {
+            analysisId: 'analysis-array-canonicalized',
+            input: [
+              {
+                suggestionId: 'array-canonicalized',
+                slug: 'dev.tech_stack',
+                operation: 'CREATE',
+                newValue: ['AI', ' software engineering ', 'AI', ''],
+              },
+            ],
+          },
+        })
+        .expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.applyPreferenceSuggestions).toHaveLength(1);
+      expect(response.body.data.applyPreferenceSuggestions[0].value).toEqual([
+        'AI',
+        'software engineering',
+      ]);
+    });
+
     it('should return empty array when no suggestions are provided', async () => {
       const response = await request(app.getHttpServer())
         .post('/graphql')

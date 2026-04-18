@@ -101,7 +101,11 @@ describe("PreferenceExtractionService", () => {
       getSlugsByCategory: jest.fn(),
       getAllCategories: jest.fn(),
       findSimilarSlugs: jest.fn(),
-      getDefinitionBySlug: jest.fn().mockResolvedValue(null),
+      getDefinitionBySlug: jest
+        .fn()
+        .mockImplementation((slug: string) =>
+          Promise.resolve(mockDefinitions.get(slug) ?? null),
+        ),
       resolveSlugToDefinitionId: jest.fn().mockResolvedValue(null),
     } as any;
 
@@ -888,6 +892,113 @@ describe("PreferenceExtractionService", () => {
           "Mexican",
           "Thai",
         ]);
+      });
+
+      it("should canonicalize duplicate and whitespace-padded array entries", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "dev.tech_stack",
+              operation: "CREATE",
+              newValue: ["AI", " software engineering ", "AI", " "],
+              confidence: 0.93,
+              sourceSnippet: "works on AI and software engineering",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0].newValue).toEqual([
+          "AI",
+          "software engineering",
+        ]);
+      });
+
+      it("should filter updates that only add duplicate array entries after canonicalization", async () => {
+        const existingValue = [
+          "distributed systems",
+          "security",
+          "AI",
+          "software engineering",
+        ];
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("dev.tech_stack", existingValue),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "dev.tech_stack",
+              operation: "UPDATE",
+              oldValue: existingValue,
+              newValue: [
+                "distributed systems",
+                "security",
+                "AI",
+                "software engineering",
+                "software engineering",
+              ],
+              confidence: 0.87,
+              sourceSnippet: "still focused on software engineering",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(0);
+        expect(result.filteredCount).toBe(1);
+        expect(result.filteredSuggestions[0]).toMatchObject({
+          slug: "dev.tech_stack",
+          filterReason: "NO_CHANGE",
+          newValue: existingValue,
+        });
+      });
+
+      it("should treat whitespace-only array differences as no change", async () => {
+        const existingValue = ["AI", "software engineering"];
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("dev.tech_stack", existingValue),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "dev.tech_stack",
+              operation: "UPDATE",
+              oldValue: existingValue,
+              newValue: ["AI", " software engineering "],
+              confidence: 0.84,
+              sourceSnippet: "focuses on software engineering",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(0);
+        expect(result.filteredCount).toBe(1);
+        expect(result.filteredSuggestions[0]).toMatchObject({
+          slug: "dev.tech_stack",
+          filterReason: "NO_CHANGE",
+          newValue: existingValue,
+        });
       });
 
       it("should use PreferenceSchemaSnapshotService for prompt building", async () => {

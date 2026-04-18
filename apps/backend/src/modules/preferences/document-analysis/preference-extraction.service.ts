@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import type { PreferenceDefinition as PrismaPreferenceDefinition } from '@infrastructure/prisma/prisma-models';
 import { z } from 'zod';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
 import { PreferenceService } from '../preference/preference.service';
@@ -13,6 +14,7 @@ import { PreferenceDefinitionRepository } from '../preference-definition/prefere
 import { PreferenceSchemaSnapshotService } from '../preference-definition/preference-schema-snapshot.service';
 import { buildDuplicateConsolidationPrompt } from './duplicate-consolidation.prompt';
 import { buildDuplicateConsolidationSchema } from './duplicate-consolidation.schema';
+import { canonicalizePreferenceValue } from '../preference/preference-value-normalization';
 
 /**
  * Zod schema for validating AI response structure.
@@ -230,9 +232,18 @@ If no preferences can be extracted, return:
     );
 
     // Build a lookup map for current preferences
+    const definitionCache = new Map<string, PrismaPreferenceDefinition>();
     const preferenceMap = new Map<string, any>();
     for (const pref of currentPreferences) {
-      preferenceMap.set(pref.slug, pref.value);
+      preferenceMap.set(
+        pref.slug,
+        await this.canonicalizeValueForSlug(
+          pref.slug,
+          pref.value,
+          userId,
+          definitionCache,
+        ),
+      );
     }
 
     const validatedSuggestions: PreferenceSuggestion[] = [];
@@ -240,13 +251,23 @@ If no preferences can be extracted, return:
     const candidates: PreferenceSuggestion[] = [];
 
     for (const suggestion of parsed.suggestions) {
-      const prefiltered = await this.prefilterSuggestion(suggestion, userId);
+      const prefiltered = await this.prefilterSuggestion(
+        suggestion,
+        userId,
+        definitionCache,
+      );
       if (prefiltered) {
         filteredSuggestions.push(prefiltered);
         continue;
       }
 
-      candidates.push(suggestion);
+      candidates.push(
+        await this.canonicalizeSuggestionValues(
+          suggestion,
+          userId,
+          definitionCache,
+        ),
+      );
     }
 
     const groupedSuggestions = new Map<string, PreferenceSuggestion[]>();
@@ -287,7 +308,11 @@ If no preferences can be extracted, return:
         );
 
         const normalizedConsolidated = this.normalizeSuggestion(
-          consolidatedSuggestion,
+          await this.canonicalizeSuggestionValues(
+            consolidatedSuggestion,
+            userId,
+            definitionCache,
+          ),
           preferenceMap,
         );
 
@@ -346,6 +371,7 @@ If no preferences can be extracted, return:
   private async prefilterSuggestion(
     suggestion: PreferenceSuggestion,
     userId: string,
+    definitionCache: Map<string, PrismaPreferenceDefinition>,
   ): Promise<FilteredSuggestion | null> {
     const originalIndex = this.getOriginalIndex(suggestion.id);
 
@@ -362,7 +388,12 @@ If no preferences can be extracted, return:
       };
     }
 
-    if (!(await this.defRepo.isKnownSlug(suggestion.slug, userId))) {
+    const definition = await this.getDefinitionForSlug(
+      suggestion.slug,
+      userId,
+      definitionCache,
+    );
+    if (!definition) {
       this.logger.warn(`Filtered suggestion: unknown slug "${suggestion.slug}"`);
       return {
         ...suggestion,
@@ -539,5 +570,63 @@ If no preferences can be extracted, return:
 
   private getOriginalIndex(id: string): string {
     return id.replace(/^candidate:/, '');
+  }
+
+  private async getDefinitionForSlug(
+    slug: string,
+    userId: string,
+    definitionCache: Map<string, PrismaPreferenceDefinition>,
+  ): Promise<PrismaPreferenceDefinition | null> {
+    const cached = definitionCache.get(slug);
+    if (cached) {
+      return cached;
+    }
+
+    const definition = await this.defRepo.getDefinitionBySlug(slug, userId);
+    if (definition) {
+      definitionCache.set(slug, definition);
+    }
+
+    return definition;
+  }
+
+  private async canonicalizeValueForSlug(
+    slug: string,
+    value: unknown,
+    userId: string,
+    definitionCache: Map<string, PrismaPreferenceDefinition>,
+  ): Promise<unknown> {
+    const definition = await this.getDefinitionForSlug(
+      slug,
+      userId,
+      definitionCache,
+    );
+    if (!definition) {
+      return value;
+    }
+
+    return canonicalizePreferenceValue(definition, value);
+  }
+
+  private async canonicalizeSuggestionValues(
+    suggestion: PreferenceSuggestion,
+    userId: string,
+    definitionCache: Map<string, PrismaPreferenceDefinition>,
+  ): Promise<PreferenceSuggestion> {
+    return {
+      ...suggestion,
+      oldValue: await this.canonicalizeValueForSlug(
+        suggestion.slug,
+        suggestion.oldValue,
+        userId,
+        definitionCache,
+      ),
+      newValue: await this.canonicalizeValueForSlug(
+        suggestion.slug,
+        suggestion.newValue,
+        userId,
+        definitionCache,
+      ),
+    };
   }
 }
