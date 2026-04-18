@@ -1,6 +1,10 @@
 # Context Router
 
-Context Router is a pnpm monorepo with a NestJS backend and a Next.js web app. The backend owns GraphQL, MCP, Auth0-backed auth, Prisma/Postgres persistence, permission grants, AI-backed workflows, and document analysis. The web app is mainly a dashboard for exercising and validating those systems.
+Context Router is a `pnpm` workspace monorepo with:
+
+- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and an Auth0-protected MCP HTTP endpoint
+- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
+- PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage
 
 ## Start Here
 
@@ -10,70 +14,241 @@ If you are orienting yourself in the repo:
 2. Read [`docs/README.md`](docs/README.md).
 3. Read every file in [`docs/IMPORTANT/`](docs/IMPORTANT/).
 
-The docs system is intentionally small. `docs/README.md` explains what is startup-critical, what is a runbook, what documents describe current implemented systems, and where active plans live.
+The docs system is intentionally small:
+
+- [`docs/README.md`](docs/README.md) is the canonical docs map
+- [`docs/IMPORTANT/`](docs/IMPORTANT/) is the startup pack every agent should read
+- [`docs/useful/`](docs/useful/) contains sanitized runbooks
+- [`docs/current/`](docs/current/) contains canonical docs for implemented systems
+- [`docs/plans/active/`](docs/plans/active/) contains live follow-up work
+
+## How The Repo Works
+
+The main request flow looks like this:
+
+1. A user signs into the Next.js app through Auth0.
+2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
+3. The backend validates the token, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
+4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth and JWT setup.
+
+Major product areas currently in the repo:
+
+- Account and profile management
+- Preferences and preference definitions
+- Location-scoped preferences
+- Permission grants
+- Document analysis and AI-generated preference suggestions
+- Preference schema and search workflows
+- MCP tools and resources for preference access
 
 ## Repo Layout
 
-### `apps/backend`
+```text
+.
+├── apps
+│   ├── backend   # NestJS + GraphQL + Prisma + MCP
+│   └── web       # Next.js dashboard
+├── docs          # canonical docs tree
+├── docker-compose.yml
+├── DEVELOPMENT.md
+├── QUICK_START.md
+└── print-repo-structure.sh
+```
 
-NestJS application with these high-signal areas:
+Key backend areas:
 
-- `src/modules/` for domain modules such as auth, preferences, permission grants, users, and workflows
-- `src/mcp/` for the MCP transport, auth, tool registry, and resources
-- `prisma/` for the schema, migrations, and seed data
-- `test/integration/` and `test/e2e/` for backend verification
+- `apps/backend/src/modules`: domain modules such as auth, preferences, permission grants, user, and workflows
+- `apps/backend/src/mcp`: MCP transport, auth, tools, and resources
+- `apps/backend/prisma`: schema, migrations, and seed script
+- `apps/backend/test`: unit, integration, and e2e test suites
 
-### `apps/web`
+Key frontend areas:
 
-Next.js app router frontend with:
+- `apps/web/app/dashboard`: authenticated dashboard pages for profile, preferences, schema, permissions, and chat
+- `apps/web/app/api`: Next.js route handlers that proxy authenticated actions to the backend
+- `apps/web/lib`: Auth0 and Apollo client setup
 
-- `app/dashboard/` for profile, preferences, schema, permissions, and chat pages
-- `app/api/` for server-side web routes
-- `lib/` for Apollo/Auth0 integration
+## Prerequisites
 
-### Root Utilities
+- Node.js 20+
+- `pnpm` via Corepack
+- Docker with `docker compose`
+- Auth0 credentials for the backend API and frontend web app
+- Optional: Google Cloud application default credentials if you want Vertex AI-backed features to work locally
 
-- `print-repo-structure.sh` prints the current repo tree
-- `docker-compose.yml` starts the local backend stack
-- `DEVELOPMENT.md` and `QUICK_START.md` exist, but `docs/README.md` is the canonical docs entrypoint
+Install dependencies from the repo root:
+
+```bash
+corepack enable
+pnpm install
+```
+
+## Environment Setup
+
+Create the env files the apps expect:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+cp apps/web/.env.example apps/web/.env.local
+```
+
+Important backend env notes:
+
+- `apps/backend/.env` is the container-oriented baseline file used by `docker compose`
+- The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides
+- Authenticated flows require valid `AUTH0_*` values in both apps
+- Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
+- MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs
+
+Important frontend env notes:
+
+- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` at the backend, usually `http://localhost:3000/graphql`
+- `APP_BASE_URL` should match the frontend dev server, usually `http://localhost:3002`
+
+### Database Hostname Rule
+
+Use different `DATABASE_URL` hostnames depending on where the backend runs:
+
+- Backend in Docker: use `postgres` as the hostname
+- Backend on your host machine: use `localhost` as the hostname
+
+Example local override file for host-based backend development:
+
+```bash
+cat > apps/backend/.env.local <<'EOF'
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/context_router?schema=public
+PORT=3000
+EOF
+```
+
+### Vertex AI Note
+
+The root `docker-compose.yml` mounts `~/.config/gcloud/application_default_credentials.json` into the backend container. If you want containerized Vertex AI calls to work, run:
+
+```bash
+gcloud auth application-default login
+```
+
+## Running The Repo
+
+### Recommended Local Development Loop
+
+This is the best workflow if you are actively changing backend code and want hot reload:
+
+1. Start only PostgreSQL in Docker:
+   ```bash
+   docker compose up -d postgres
+   ```
+2. Make sure `apps/backend/.env.local` points `DATABASE_URL` at `localhost`.
+3. Run Prisma migrations from the repo root:
+   ```bash
+   pnpm --filter backend exec prisma migrate dev
+   ```
+4. Start the backend:
+   ```bash
+   pnpm dev:backend
+   ```
+5. In another terminal, start the frontend:
+   ```bash
+   pnpm dev:web
+   ```
+
+You can also run both apps locally with:
+
+```bash
+pnpm dev
+```
+
+That still assumes your backend is using a host-based `DATABASE_URL`, not the Docker hostname.
+
+### Containerized Backend Workflow
+
+Use this if you want the backend to run inside Docker instead of on the host:
+
+1. Keep `apps/backend/.env` using `postgres` as the database hostname.
+2. Start the backend and database:
+   ```bash
+   docker compose up -d postgres app
+   ```
+3. Run migrations inside the container:
+   ```bash
+   docker compose exec app npx prisma migrate dev
+   ```
+4. Start the frontend locally:
+   ```bash
+   pnpm dev:web
+   ```
+
+Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding or restarting the container.
+
+## Local URLs And Endpoints
+
+- Frontend dashboard: `http://localhost:3002`
+- Backend GraphQL API: `http://localhost:3000/graphql`
+- Backend health check: `http://localhost:3000/health`
+- Document analysis upload endpoint: `POST http://localhost:3000/api/preferences/analysis`
+- MCP HTTP endpoint: `POST http://localhost:3000/mcp`
 
 ## Common Commands
 
 From the repo root:
 
 ```bash
-pnpm install
 pnpm dev
+pnpm dev:backend
+pnpm dev:web
 pnpm build
-pnpm test
+pnpm build:backend
+pnpm build:web
+pnpm test:backend
+pnpm test:backend:unit
+pnpm test:backend:integration
+pnpm test:backend:e2e
 ```
 
-Useful targeted commands:
+Backend-specific commands:
 
 ```bash
-pnpm --filter backend start:dev
-pnpm --filter backend test:unit
-pnpm --filter backend test:integration
+pnpm --filter backend prisma:generate
+pnpm --filter backend test:db:up
+pnpm --filter backend test:db:down
+pnpm --filter backend test:db:migrate
 pnpm --filter backend test:e2e:tests-only
-pnpm --filter web dev
 ```
 
-Prisma-specific commands live in [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md).
+More targeted operational commands live in [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md).
 
 ## Testing
 
-The backend test layers are:
+Backend tests live under `apps/backend` and are split into:
 
-- `src/**/*.spec.ts` for fast unit tests
-- `test/integration/**/*.spec.ts` for real-DB integration tests
-- `test/e2e/**/*.e2e-spec.ts` for full app/API tests
+- Unit tests for isolated services and utilities
+- Integration tests for Prisma and repository behavior against a real test database
+- E2E tests for GraphQL, MCP, health, and preference-related flows
 
-For backend work, prefer small changes with targeted tests after each step. The test DB helpers and scripts live under `apps/backend/test/` and `apps/backend/package.json`.
+Test database details:
+
+- `apps/backend/docker-compose.test.yml` starts PostgreSQL on `localhost:5433`
+- `pnpm --filter backend test:db:migrate` runs migrations against `context_router_test`
+- `pnpm test:backend:e2e` starts the test DB, migrates it, and then runs the e2e suite
+
+CI currently validates:
+
+- Backend unit tests
+- Backend integration tests
+- Backend e2e tests against the test database
+- Frontend production build
 
 ## Docs
 
-- [`docs/README.md`](docs/README.md): canonical docs layout
-- [`docs/IMPORTANT/`](docs/IMPORTANT/): short startup pack
-- [`docs/useful/`](docs/useful/): sanitized runbooks
-- [`docs/current/`](docs/current/): canonical docs for implemented systems
-- [`docs/plans/active/`](docs/plans/active/): current design and follow-up work
+Use the canonical docs tree instead of the older one-off plan files:
+
+- [`docs/README.md`](docs/README.md): docs layout and writing rules
+- [`docs/IMPORTANT/REPO_MAP.md`](docs/IMPORTANT/REPO_MAP.md): short repo orientation
+- [`docs/IMPORTANT/CURRENT_STATE.md`](docs/IMPORTANT/CURRENT_STATE.md): implemented systems summary
+- [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md): Prisma and DB runbook
+- [`docs/useful/MCP_LOCAL_SETUP.md`](docs/useful/MCP_LOCAL_SETUP.md): local MCP client setup
+- [`docs/current/MCP_AUTHORIZATION.md`](docs/current/MCP_AUTHORIZATION.md): current MCP auth and permission-grant behavior
+- [`docs/current/PREFERENCE_SCHEMA.md`](docs/current/PREFERENCE_SCHEMA.md): current preference-definition behavior
+- [`docs/current/WORKFLOWS.md`](docs/current/WORKFLOWS.md): workflow layer guidance
+- [`docs/plans/active/`](docs/plans/active/): active follow-up work
