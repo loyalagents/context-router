@@ -39,6 +39,7 @@ Current gaps:
 - no audit backfill exists for pre-audit rows
 - `SYSTEM`, `WORKFLOW`, and `IMPORT` actors are schema-ready but not yet wired into real mutation producers
 - rejected-suggestion suppression behavior remains unchanged
+- no MCP read/access logging exists yet for MCP tools or resources
 - no MCP audit read surface exists yet
 - archived or deleted definitions may lose sensitivity masking in the history UI because MR2 only uses the live catalog
 
@@ -72,16 +73,33 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 - revisit JSON presentation if raw payloads prove hard to scan in real usage
 - revisit sensitivity detection if archived-definition masking becomes important
 
+4. MCP log track: add MCP read/access logging, read APIs, and UX
+- prefer a separate request-level MCP log table rather than stretching `PreferenceAuditEvent`
+- instrument `McpService` centrally for `tools/call` and `resources/read`
+- allow tool/resource-specific sanitized metadata where base request logging is too thin
+- add a backend read surface with filters for client, operation, outcome, and time
+- add an MCP access tab inside the existing history experience rather than creating a separate history surface
+
 ## Open Questions To Resolve After MR2
 
 - how much raw snapshot JSON should be exposed directly versus lightly normalized or masked for display
 - whether future usage justifies more denormalized query fields beyond `subjectSlug`
 - whether the history UI should gain URL-synced filters or saved views after the first demo pass
 
+## Open Questions For MCP Logging
+
+- should `tools/list` and `resources/list` count as logged access events or only `tools/call` and `resources/read`
+- whether returned slugs should be logged directly in MCP read metadata or whether counts are enough for v1
+- whether the first MCP log API should be user-scoped GraphQL, admin-facing, or both
+- whether failed auth before MCP dispatch should appear in the same history surface or remain only in operational logs
+- how much filter state, page chrome, and detail rendering should be shared between the existing audit history view and a future MCP access tab
+- whether object-level access logging is ever needed, or whether request-level logs are enough
+
 ## Deferred Work
 
 - add a safe revert helper that computes inverse changes without clobbering newer state
 - decide which event types are safely revertable in a first rollback pass
 - define metadata conventions for future workflow, system, and import mutation producers
-- decide whether MCP needs an audit read surface after the GraphQL + UI path is exercised
+- decide whether MCP needs its own MCP-protocol audit read surface after the GraphQL + UI path is exercised
 - evaluate retention and archival needs after a real demo and usage period
+- evaluate whether MCP access history needs per-object fan-out after request-level logging has real usage data
