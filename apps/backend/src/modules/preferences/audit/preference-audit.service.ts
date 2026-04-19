@@ -11,11 +11,18 @@ export class PreferenceAuditService {
     event: AuditEventInput,
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
+    const subjectSlug = event.subjectSlug.trim();
+
+    if (!subjectSlug) {
+      throw new Error("Audit event subjectSlug is required");
+    }
+
     const client = tx ?? this.prisma;
 
     await client.preferenceAuditEvent.create({
       data: {
         userId: event.userId,
+        subjectSlug,
         targetType: event.targetType,
         targetId: event.targetId,
         eventType: event.eventType,

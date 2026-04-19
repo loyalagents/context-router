@@ -13,6 +13,42 @@ input ApplyPreferenceSuggestionInput {
   suggestionId: ID!
 }
 
+"""The actor category recorded for an audit event"""
+enum AuditActorType {
+  IMPORT
+  MCP_CLIENT
+  SYSTEM
+  USER
+  WORKFLOW
+}
+
+"""The mutation recorded by an audit event"""
+enum AuditEventType {
+  DEFINITION_ARCHIVED
+  DEFINITION_CREATED
+  DEFINITION_UPDATED
+  PREFERENCE_DELETED
+  PREFERENCE_SET
+  PREFERENCE_SUGGESTED_UPSERTED
+  PREFERENCE_SUGGESTION_ACCEPTED
+  PREFERENCE_SUGGESTION_REJECTED
+}
+
+"""The surface where the mutation originated"""
+enum AuditOrigin {
+  DOCUMENT_ANALYSIS
+  GRAPHQL
+  MCP
+  SYSTEM
+  WORKFLOW
+}
+
+"""The kind of resource touched by an audit event"""
+enum AuditTargetType {
+  PREFERENCE
+  PREFERENCE_DEFINITION
+}
+
 input CreateLocationInput {
   address: String!
   label: String!
@@ -205,6 +241,48 @@ type Preference {
   value: JSON!
 }
 
+type PreferenceAuditEvent {
+  actorClientKey: String
+  actorType: AuditActorType!
+  afterState: JSON
+  beforeState: JSON
+  correlationId: String!
+  eventType: AuditEventType!
+  id: ID!
+  metadata: JSON
+  occurredAt: DateTime!
+  origin: AuditOrigin!
+  subjectSlug: String!
+  targetId: String!
+  targetType: AuditTargetType!
+  userId: String!
+}
+
+input PreferenceAuditHistoryInput {
+  actorClientKey: String
+  after: String
+  correlationId: String
+  eventType: AuditEventType
+
+  """Page size. Defaults to 20 and is capped at 100."""
+  first: Int = 20
+  occurredFrom: DateTime
+  occurredTo: DateTime
+  origin: AuditOrigin
+
+  """
+  Matches audit events whose subject slug starts with the provided prefix.
+  """
+  subjectSlug: String
+  targetType: AuditTargetType
+}
+
+type PreferenceAuditHistoryPage {
+  hasNextPage: Boolean!
+  items: [PreferenceAuditEvent!]!
+  nextCursor: String
+}
+
 type PreferenceDefinition {
   """When this definition was archived (null if active)"""
   archivedAt: DateTime
@@ -317,6 +395,11 @@ type Query {
 
   """Get a single preference by ID"""
   preference(id: ID!): Preference!
+
+  """
+  Get audit history for the current user with cursor pagination and filters.
+  """
+  preferenceAuditHistory(input: PreferenceAuditHistoryInput!): PreferenceAuditHistoryPage!
 
   """
   List available preference definitions. Authenticated users also see their own definitions.

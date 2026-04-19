@@ -81,6 +81,7 @@ export class PreferenceDefinitionService {
       await this.preferenceAuditService.record(
         {
           userId,
+          subjectSlug: createdDefinition.slug,
           targetType: AuditTargetType.PREFERENCE_DEFINITION,
           targetId: createdDefinition.id,
           eventType: AuditEventType.DEFINITION_CREATED,
@@ -141,6 +142,7 @@ export class PreferenceDefinitionService {
       await this.preferenceAuditService.record(
         {
           userId,
+          subjectSlug: updatedDefinition.slug,
           targetType: AuditTargetType.PREFERENCE_DEFINITION,
           targetId: updatedDefinition.id,
           eventType: AuditEventType.DEFINITION_UPDATED,
@@ -187,6 +189,7 @@ export class PreferenceDefinitionService {
       await this.preferenceAuditService.record(
         {
           userId,
+          subjectSlug: archivedDefinition.slug,
           targetType: AuditTargetType.PREFERENCE_DEFINITION,
           targetId: archivedDefinition.id,
           eventType: AuditEventType.DEFINITION_ARCHIVED,

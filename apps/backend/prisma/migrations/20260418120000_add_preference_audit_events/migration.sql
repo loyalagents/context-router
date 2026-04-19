@@ -23,6 +23,7 @@ CREATE TYPE "AuditEventType" AS ENUM (
 CREATE TABLE "preference_audit_events" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
+    "subject_slug" TEXT NOT NULL,
     "occurred_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "target_type" "AuditTargetType" NOT NULL,
     "target_id" TEXT NOT NULL,
@@ -40,6 +41,9 @@ CREATE TABLE "preference_audit_events" (
 
 -- CreateIndex
 CREATE INDEX "preference_audit_events_user_id_occurred_at_idx" ON "preference_audit_events"("user_id", "occurred_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "preference_audit_events_user_id_subject_slug_occurred_at_idx" ON "preference_audit_events"("user_id", "subject_slug", "occurred_at" DESC);
 
 -- CreateIndex
 CREATE INDEX "preference_audit_events_user_id_event_type_occurred_at_idx" ON "preference_audit_events"("user_id", "event_type", "occurred_at" DESC);

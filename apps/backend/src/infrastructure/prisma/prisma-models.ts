@@ -74,6 +74,7 @@ export interface Preference {
 export interface PreferenceAuditEvent {
   id: string;
   userId: string;
+  subjectSlug: string;
   occurredAt: Date;
   targetType: AuditTargetType;
   targetId: string;

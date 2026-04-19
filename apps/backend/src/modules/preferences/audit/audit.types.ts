@@ -9,6 +9,7 @@ import {
 
 export interface AuditEventInput {
   userId: string;
+  subjectSlug: string;
   targetType: AuditTargetType;
   targetId: string;
   eventType: AuditEventType;
