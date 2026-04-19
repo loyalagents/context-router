@@ -230,7 +230,7 @@
   - one MCP definition create
 
 9. Checkpoint 8: implementation summary doc.
-- Write `docs/preference-extraction/audit-log/implementation-summary.md`
+- Write `docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md`
 - Describe what actually landed, not the intended design
 - Include:
   - what shipped

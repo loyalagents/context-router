@@ -283,4 +283,3 @@ The full-auto design still needs more discussion on:
 See:
 
 - `docs/preference-extraction/full-auto/brainstorming-notes.md`
-
