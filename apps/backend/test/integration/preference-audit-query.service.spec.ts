@@ -180,6 +180,69 @@ describe("PreferenceAuditQueryService (integration)", () => {
     ).rejects.toThrow("Invalid audit history cursor");
   });
 
+  it("includes events that land exactly on the occurredFrom and occurredTo boundaries", async () => {
+    const rangeStart = new Date("2026-04-18T10:00:00.000Z");
+    const rangeEnd = new Date("2026-04-18T11:00:00.000Z");
+
+    await createAuditEvent({
+      id: "audit-before-range",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-before-range",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T09:59:59.999Z"),
+    });
+    await createAuditEvent({
+      id: "audit-at-start",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-at-start",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: rangeStart,
+    });
+    await createAuditEvent({
+      id: "audit-middle",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-middle",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T10:30:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-at-end",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-at-end",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: rangeEnd,
+    });
+    await createAuditEvent({
+      id: "audit-after-range",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-after-range",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T11:00:00.001Z"),
+    });
+
+    const page = await queryService.getHistory(primaryUserId, {
+      subjectSlug: "food.dietary_restrictions",
+      occurredFrom: rangeStart,
+      occurredTo: rangeEnd,
+    });
+
+    expect(page.items.map((item) => item.id)).toEqual([
+      "audit-at-end",
+      "audit-middle",
+      "audit-at-start",
+    ]);
+  });
+
   it("returns both preference and definition events for a subjectSlug and narrows with targetType", async () => {
     await createAuditEvent({
       id: "audit-pref",
@@ -294,5 +357,79 @@ describe("PreferenceAuditQueryService (integration)", () => {
     });
 
     expect(page.items.map((item) => item.id)).toEqual(["audit-primary"]);
+  });
+
+  it("keeps subjectSlug filtering stable across cursor pagination when other slugs are interleaved", async () => {
+    await createAuditEvent({
+      id: "audit-target-1",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-target-1",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T10:00:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-other-1",
+      userId: primaryUserId,
+      subjectSlug: "system.response_tone",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-other-1",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T10:30:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-target-2",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-target-2",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T11:00:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-other-2",
+      userId: primaryUserId,
+      subjectSlug: "system.response_tone",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-other-2",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T11:30:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-target-3",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-target-3",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T12:00:00.000Z"),
+    });
+
+    const firstPage = await queryService.getHistory(primaryUserId, {
+      subjectSlug: "food.dietary_restrictions",
+      first: 2,
+    });
+
+    expect(firstPage.items.map((item) => item.id)).toEqual([
+      "audit-target-3",
+      "audit-target-2",
+    ]);
+    expect(firstPage.items.every((item) => item.subjectSlug === "food.dietary_restrictions")).toBe(
+      true,
+    );
+    expect(firstPage.hasNextPage).toBe(true);
+
+    const secondPage = await queryService.getHistory(primaryUserId, {
+      subjectSlug: "food.dietary_restrictions",
+      first: 2,
+      after: firstPage.nextCursor!,
+    });
+
+    expect(secondPage.items.map((item) => item.id)).toEqual(["audit-target-1"]);
+    expect(
+      secondPage.items.every((item) => item.subjectSlug === "food.dietary_restrictions"),
+    ).toBe(true);
+    expect(secondPage.hasNextPage).toBe(false);
   });
 });

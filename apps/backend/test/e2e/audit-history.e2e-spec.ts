@@ -3,9 +3,11 @@ import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
 import {
+  AuditActorType,
   AuditEventType,
   AuditOrigin,
   AuditTargetType,
+  Prisma,
 } from '../../src/infrastructure/prisma/generated-client';
 
 const TEST_CLIENT_IDS = {
@@ -160,6 +162,42 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
 
     expect(response.body.errors).toBeUndefined();
     return response.body.data.createPreferenceDefinition.id as string;
+  }
+
+  async function seedAuditEvent(params: {
+    id: string;
+    userId?: string;
+    subjectSlug: string;
+    targetType: AuditTargetType;
+    targetId: string;
+    eventType: AuditEventType;
+    occurredAt: Date;
+    actorType?: AuditActorType;
+    actorClientKey?: string | null;
+    origin?: AuditOrigin;
+    correlationId?: string;
+    beforeState?: Prisma.InputJsonValue | null;
+    afterState?: Prisma.InputJsonValue | null;
+    metadata?: Prisma.InputJsonValue | null;
+  }) {
+    return prisma.preferenceAuditEvent.create({
+      data: {
+        id: params.id,
+        userId: params.userId ?? testUser.userId,
+        subjectSlug: params.subjectSlug,
+        targetType: params.targetType,
+        targetId: params.targetId,
+        eventType: params.eventType,
+        actorType: params.actorType ?? AuditActorType.USER,
+        actorClientKey: params.actorClientKey ?? null,
+        origin: params.origin ?? AuditOrigin.GRAPHQL,
+        correlationId: params.correlationId ?? `corr-${params.id}`,
+        occurredAt: params.occurredAt,
+        beforeState: params.beforeState ?? undefined,
+        afterState: params.afterState ?? undefined,
+        metadata: params.metadata ?? undefined,
+      },
+    });
   }
 
   it('returns mixed slug history across preference and definition events and narrows with targetType', async () => {
@@ -371,6 +409,17 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     expect(response.body.errors[0].message).toContain('Invalid audit history cursor');
   });
 
+  it.each([0, 101])('rejects first=%s outside the supported page-size range', async (first) => {
+    const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        first,
+      },
+    }).expect(200);
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toBe('Bad Request Exception');
+  });
+
   it('supports correlationId and date-range filters together', async () => {
     const beforeResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
       input: {
@@ -416,5 +465,213 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
       origin: AuditOrigin.DOCUMENT_ANALYSIS,
       subjectSlug: 'food.dietary_restrictions',
     });
+  });
+
+  it('returns raw snapshot payloads and metadata for lifecycle events', async () => {
+    const slug = 'custom.audit_payloads';
+    const definitionId = await createDefinition(slug);
+
+    const setResponse = await graphqlRequest(SET_PREFERENCE_MUTATION, {
+      input: {
+        slug,
+        value: 'initial',
+      },
+    }).expect(200);
+    expect(setResponse.body.errors).toBeUndefined();
+    const activePreferenceId = setResponse.body.data.setPreference.id as string;
+
+    const suggestionResponse = await graphqlRequest(SUGGEST_PREFERENCE_MUTATION, {
+      input: {
+        slug,
+        value: 'accepted',
+        confidence: 0.9,
+      },
+    }).expect(200);
+    expect(suggestionResponse.body.errors).toBeUndefined();
+    const acceptedSuggestionId = suggestionResponse.body.data.suggestPreference.id as string;
+
+    await graphqlRequest(ACCEPT_SUGGESTION_MUTATION, {
+      id: acceptedSuggestionId,
+    }).expect(200);
+
+    await graphqlRequest(DELETE_PREFERENCE_MUTATION, {
+      id: activePreferenceId,
+    }).expect(200);
+
+    const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: slug,
+      },
+    }).expect(200);
+
+    expect(response.body.errors).toBeUndefined();
+    const items = response.body.data.preferenceAuditHistory.items as any[];
+
+    const definitionCreatedEvent = items.find(
+      (item) => item.eventType === 'DEFINITION_CREATED',
+    );
+    const acceptedEvent = items.find(
+      (item) => item.eventType === 'PREFERENCE_SUGGESTION_ACCEPTED',
+    );
+    const deletedEvent = items.find((item) => item.eventType === 'PREFERENCE_DELETED');
+
+    expect(definitionCreatedEvent).toMatchObject({
+      subjectSlug: slug,
+      targetType: 'PREFERENCE_DEFINITION',
+      targetId: definitionId,
+      beforeState: null,
+      afterState: expect.objectContaining({
+        slug,
+      }),
+    });
+    expect(acceptedEvent).toMatchObject({
+      subjectSlug: slug,
+      targetType: 'PREFERENCE',
+      metadata: {
+        consumedSuggestion: expect.objectContaining({
+          slug,
+          status: 'SUGGESTED',
+          value: 'accepted',
+        }),
+      },
+    });
+    expect(deletedEvent).toMatchObject({
+      subjectSlug: slug,
+      targetType: 'PREFERENCE',
+      afterState: null,
+      beforeState: expect.objectContaining({
+        slug,
+      }),
+    });
+  });
+
+  it('keeps subjectSlug pagination stable when other slugs are interleaved in the global timeline', async () => {
+    await seedAuditEvent({
+      id: 'audit-target-1',
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-target-1',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T10:00:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-other-1',
+      subjectSlug: 'system.response_tone',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-other-1',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T10:30:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-target-2',
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-target-2',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T11:00:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-other-2',
+      subjectSlug: 'system.response_tone',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-other-2',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T11:30:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-target-3',
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-target-3',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T12:00:00.000Z'),
+    });
+
+    const firstPageResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: 'food.dietary_restrictions',
+        first: 2,
+      },
+    }).expect(200);
+
+    expect(firstPageResponse.body.errors).toBeUndefined();
+    const firstPage = firstPageResponse.body.data.preferenceAuditHistory;
+    expect(firstPage.items.map((item: any) => item.id)).toEqual([
+      'audit-target-3',
+      'audit-target-2',
+    ]);
+    expect(
+      firstPage.items.every((item: any) => item.subjectSlug === 'food.dietary_restrictions'),
+    ).toBe(true);
+    expect(firstPage.hasNextPage).toBe(true);
+
+    const secondPageResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: 'food.dietary_restrictions',
+        first: 2,
+        after: firstPage.nextCursor,
+      },
+    }).expect(200);
+
+    expect(secondPageResponse.body.errors).toBeUndefined();
+    const secondPage = secondPageResponse.body.data.preferenceAuditHistory;
+    expect(secondPage.items.map((item: any) => item.id)).toEqual(['audit-target-1']);
+    expect(
+      secondPage.items.every((item: any) => item.subjectSlug === 'food.dietary_restrictions'),
+    ).toBe(true);
+    expect(secondPage.hasNextPage).toBe(false);
+    expect(secondPage.nextCursor).toBeNull();
+  });
+
+  it('scopes audit history to the authenticated user at the GraphQL resolver layer', async () => {
+    const secondaryUser = await prisma.user.create({
+      data: {
+        email: 'audit-history-secondary@example.com',
+        firstName: 'Secondary',
+        lastName: 'User',
+      },
+    });
+
+    await seedAuditEvent({
+      id: 'audit-primary-user',
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-primary-user',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T10:00:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-secondary-user',
+      userId: secondaryUser.userId,
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-secondary-user',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T11:00:00.000Z'),
+    });
+
+    const primaryResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: 'food.dietary_restrictions',
+      },
+    }).expect(200);
+
+    expect(primaryResponse.body.errors).toBeUndefined();
+    expect(primaryResponse.body.data.preferenceAuditHistory.items.map((item: any) => item.id)).toEqual([
+      'audit-primary-user',
+    ]);
+
+    setTestUser(secondaryUser);
+
+    const secondaryResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: 'food.dietary_restrictions',
+      },
+    }).expect(200);
+
+    expect(secondaryResponse.body.errors).toBeUndefined();
+    expect(
+      secondaryResponse.body.data.preferenceAuditHistory.items.map((item: any) => item.id),
+    ).toEqual(['audit-secondary-user']);
   });
 });

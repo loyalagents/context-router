@@ -232,6 +232,26 @@ describe("PreferenceAuditService (integration)", () => {
     ).rejects.toThrow("Audit event subjectSlug is required");
   });
 
+  it("trims subjectSlug before persisting the audit row", async () => {
+    await auditService.record({
+      userId: testUserId,
+      subjectSlug: "  system.response_tone  ",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-trimmed",
+      eventType: AuditEventType.PREFERENCE_SET,
+      actorType: AuditActorType.USER,
+      origin: AuditOrigin.GRAPHQL,
+      correlationId: "corr-trimmed-slug",
+      afterState: { id: "pref-trimmed", status: "ACTIVE" },
+    });
+
+    const stored = await prisma.preferenceAuditEvent.findFirstOrThrow({
+      where: { userId: testUserId, targetId: "pref-trimmed" },
+    });
+
+    expect(stored.subjectSlug).toBe("system.response_tone");
+  });
+
   it("builds normalized preference and definition snapshots", () => {
     const preferenceSnapshot = buildPreferenceAuditSnapshot({
       id: "pref-123",
