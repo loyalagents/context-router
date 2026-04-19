@@ -222,24 +222,8 @@ Final validation sweep:
 - `pnpm --filter backend test:integration`
 - `pnpm --filter backend exec jest test/e2e/preferences.e2e-spec.ts test/e2e/document-analysis.e2e-spec.ts test/e2e/preference-definition-mutations.e2e-spec.ts test/e2e/mcp.e2e-spec.ts --runInBand`
 
-## Known limitations and deferred work
-
-- no API or query surface exists yet for reading audit events
-- no rollback workflow exists yet
-- no revert helper exists to safely compute and apply inverse changes
-- no audit backfill was added for existing rows
-- this pass does not add frontend visibility or controls for the audit log
-- `SYSTEM`, `WORKFLOW`, and `IMPORT` actors and origins are schema-ready, but unused in current mutation flows
-- rejected-suggestion suppression logic was intentionally left unchanged in this pass
-
-## TODO / Future Steps
-
-- add a read API for audit events
-- add rollback UX on top of audit history
-- add a safe revert mechanism that applies inverse changes without corrupting newer state
-- evaluate pagination and retention strategy for the audit table once volume is understood
-- add workflow and system-originated mutation paths when those producers exist
-
 ## Notes
 
 The new audit log is append-only. It records normalized before and after snapshots, plus mutation provenance, but it does not yet expose any user-facing history or rollback capability.
+
+For the live follow-up state, sequencing, and remaining TODO items, see [`../TODO.md`](../TODO.md).

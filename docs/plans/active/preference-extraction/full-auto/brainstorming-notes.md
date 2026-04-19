@@ -53,7 +53,8 @@ Because of that, the audit groundwork is a prerequisite or near-prerequisite for
 
 See:
 
-- `docs/preference-extraction/audit-log/audit-log-rough-plan.md`
+- `docs/plans/active/preference-extraction/audit-log/TODO.md`
+- `docs/plans/active/preference-extraction/audit-log/initial-implementation/audit-log-rough-plan.md`
 
 ## Open Design Area 1: MCP Tool Shape
 
@@ -256,4 +257,3 @@ Before implementation planning, we should have a focused follow-up discussion on
 - what minimal guarantees full-auto must have before it is acceptable
 
 Once that conversation is clearer, this document can turn into a real implementation plan.
-
