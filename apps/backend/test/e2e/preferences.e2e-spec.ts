@@ -97,6 +97,31 @@ describe('Preferences GraphQL API (e2e)', () => {
       });
     });
 
+    it('should canonicalize array values before persisting', async () => {
+      const mutation = `
+        mutation SetPreference($input: SetPreferenceInput!) {
+          setPreference(input: $input) {
+            id
+            slug
+            value
+          }
+        }
+      `;
+
+      const response = await graphqlRequest(mutation, {
+        input: {
+          slug: 'dev.tech_stack',
+          value: ['AI', ' software engineering ', 'AI', ''],
+        },
+      }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.setPreference).toMatchObject({
+        slug: 'dev.tech_stack',
+        value: ['AI', 'software engineering'],
+      });
+    });
+
     it('should create a location-scoped preference', async () => {
       // First create a location
       const createLocationMutation = `
@@ -674,6 +699,44 @@ describe('Preferences GraphQL API (e2e)', () => {
         status: 'ACTIVE',
         value: ['TypeScript', 'Node.js'],
         sourceType: 'INFERRED',
+      });
+    });
+
+    it('should promote a canonicalized array value when accepting a suggestion', async () => {
+      const suggestMutation = `
+        mutation SuggestPreference($input: SuggestPreferenceInput!) {
+          suggestPreference(input: $input) {
+            id
+          }
+        }
+      `;
+
+      const suggestResponse = await graphqlRequest(suggestMutation, {
+        input: {
+          slug: 'dev.tech_stack',
+          value: ['AI', ' software engineering ', 'AI'],
+          confidence: 0.94,
+        },
+      }).expect(200);
+
+      const id = suggestResponse.body.data.suggestPreference.id;
+
+      const acceptMutation = `
+        mutation AcceptSuggestion($id: ID!) {
+          acceptSuggestedPreference(id: $id) {
+            id
+            status
+            value
+          }
+        }
+      `;
+
+      const response = await graphqlRequest(acceptMutation, { id }).expect(200);
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.acceptSuggestedPreference).toMatchObject({
+        status: 'ACTIVE',
+        value: ['AI', 'software engineering'],
       });
     });
   });
