@@ -87,6 +87,7 @@ describe("PreferenceAuditService (integration)", () => {
 
     await auditService.record({
       userId: testUserId,
+      subjectSlug: "system.response_tone",
       targetType: AuditTargetType.PREFERENCE,
       targetId: "pref-1",
       eventType: AuditEventType.PREFERENCE_SET,
@@ -105,6 +106,7 @@ describe("PreferenceAuditService (integration)", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
       userId: testUserId,
+      subjectSlug: "system.response_tone",
       targetType: AuditTargetType.PREFERENCE,
       targetId: "pref-1",
       eventType: AuditEventType.PREFERENCE_SET,
@@ -123,6 +125,7 @@ describe("PreferenceAuditService (integration)", () => {
   it("supports the intended audit query patterns", async () => {
     await auditService.record({
       userId: testUserId,
+      subjectSlug: "food.dietary_restrictions",
       targetType: AuditTargetType.PREFERENCE,
       targetId: "pref-a",
       eventType: AuditEventType.PREFERENCE_SET,
@@ -134,6 +137,7 @@ describe("PreferenceAuditService (integration)", () => {
 
     await auditService.record({
       userId: testUserId,
+      subjectSlug: "food.dietary_restrictions",
       targetType: AuditTargetType.PREFERENCE,
       targetId: "pref-a",
       eventType: AuditEventType.PREFERENCE_DELETED,
@@ -146,6 +150,7 @@ describe("PreferenceAuditService (integration)", () => {
 
     await auditService.record({
       userId: testUserId,
+      subjectSlug: "food.dietary_restrictions",
       targetType: AuditTargetType.PREFERENCE_DEFINITION,
       targetId: "def-a",
       eventType: AuditEventType.DEFINITION_CREATED,
@@ -176,6 +181,14 @@ describe("PreferenceAuditService (integration)", () => {
       orderBy: { occurredAt: "desc" },
     });
 
+    const bySubjectSlug = await prisma.preferenceAuditEvent.findMany({
+      where: {
+        userId: testUserId,
+        subjectSlug: "food.dietary_restrictions",
+      },
+      orderBy: { occurredAt: "desc" },
+    });
+
     expect(byUserAndEvent).toHaveLength(1);
     expect(byUserAndEvent[0]).toMatchObject({
       eventType: AuditEventType.PREFERENCE_DELETED,
@@ -195,6 +208,28 @@ describe("PreferenceAuditService (integration)", () => {
       AuditTargetType.PREFERENCE,
       AuditTargetType.PREFERENCE_DEFINITION,
     ]);
+
+    expect(bySubjectSlug).toHaveLength(3);
+    expect(bySubjectSlug.map((event) => event.eventType).sort()).toEqual([
+      AuditEventType.DEFINITION_CREATED,
+      AuditEventType.PREFERENCE_DELETED,
+      AuditEventType.PREFERENCE_SET,
+    ]);
+  });
+
+  it("throws immediately when subjectSlug is missing", async () => {
+    await expect(
+      auditService.record({
+        userId: testUserId,
+        subjectSlug: "",
+        targetType: AuditTargetType.PREFERENCE,
+        targetId: "pref-1",
+        eventType: AuditEventType.PREFERENCE_SET,
+        actorType: AuditActorType.USER,
+        origin: AuditOrigin.GRAPHQL,
+        correlationId: "corr-missing-slug",
+      }),
+    ).rejects.toThrow("Audit event subjectSlug is required");
   });
 
   it("builds normalized preference and definition snapshots", () => {

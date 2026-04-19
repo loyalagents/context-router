@@ -163,6 +163,7 @@ export class PreferenceService {
           await this.preferenceAuditService.record(
             {
               userId,
+              subjectSlug: result.result.slug,
               targetType: AuditTargetType.PREFERENCE,
               targetId: result.result.id,
               eventType: AuditEventType.PREFERENCE_SET,
@@ -247,6 +248,7 @@ export class PreferenceService {
           await this.preferenceAuditService.record(
             {
               userId,
+              subjectSlug: result.result.slug,
               targetType: AuditTargetType.PREFERENCE,
               targetId: result.result.id,
               eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
@@ -382,6 +384,7 @@ export class PreferenceService {
       await this.preferenceAuditService.record(
         {
           userId,
+          subjectSlug: activeWrite.result.slug,
           targetType: AuditTargetType.PREFERENCE,
           targetId: activeWrite.result.id,
           eventType: AuditEventType.PREFERENCE_SUGGESTION_ACCEPTED,
@@ -464,6 +467,7 @@ export class PreferenceService {
           await this.preferenceAuditService.record(
             {
               userId,
+              subjectSlug: rejectedWrite.result.slug,
               targetType: AuditTargetType.PREFERENCE,
               targetId: rejectedWrite.result.id,
               eventType: AuditEventType.PREFERENCE_SUGGESTION_REJECTED,
@@ -515,6 +519,7 @@ export class PreferenceService {
       await this.preferenceAuditService.record(
         {
           userId,
+          subjectSlug: deleted.slug,
           targetType: AuditTargetType.PREFERENCE,
           targetId: deleted.id,
           eventType: AuditEventType.PREFERENCE_DELETED,
