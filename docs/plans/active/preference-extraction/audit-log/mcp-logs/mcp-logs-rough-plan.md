@@ -268,29 +268,31 @@ Still open:
 - should `tools/list` and `resources/list` count as access events or only `tools/call` and `resources/read`
 - whether returned slugs should be stored directly in response metadata or only counts in v1
 - whether the first read API should be user-scoped GraphQL, admin-only, or both
-- whether MCP read history should appear in the same UX as mutation audit history or in a separate screen
+- how much layout, filter state, and detail rendering should be shared with the existing audit-history UI versus staying MCP-specific inside its own tab
 - whether failed auth before MCP dispatch should be part of the same log surface or only application logs
 
 Current leaning:
 
 - definitely log `tools/call` and `resources/read`
 - decide later on `tools/list` and `resources/list`
-- keep the first UX separate from the preference mutation timeline
+- keep mutation history and MCP access history distinct, but show them inside the same overall history experience using separate tabs rather than separate routes
 
 ## UX Direction
 
 Likely first-pass UX:
 
-- a separate MCP access-history view, not mixed into the preference mutation history
+- the existing history experience gains an MCP access tab alongside the current preference/definition audit view
+- the current mutation history remains its own tab rather than being merged into one mixed event list
 - request-level events only
 - filters by client, operation, outcome, and time
 - expandable metadata panel for sanitized request/response details
 
-Why separate from mutation history:
+Why use the same history surface with separate tabs:
 
 - mutation audit answers "what changed"
 - MCP read logs answer "what was accessed"
-- mixing both in one timeline likely creates confusing product semantics
+- keeping both in one route reduces navigation churn for users already reviewing history
+- separate tabs keep the semantics clear without forcing a new standalone screen
 
 ## Suggested Checkpoints
 
@@ -337,7 +339,7 @@ Validation:
 
 ### Checkpoint 5: UX
 
-- add a simple MCP access-history view
+- add an MCP access tab to the existing history UI
 - keep it request-level and read-only
 
 Validation:
@@ -349,7 +351,7 @@ Validation:
 - do not build full object-level access traceability
 - do not log full returned payloads
 - do not fail MCP reads because the log insert failed
-- do not merge mutation history and access history into one product concept by default
+- do not merge mutation history and access history into one undifferentiated event list
 
 ## Notes For Future Implementation
 

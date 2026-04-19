@@ -191,6 +191,7 @@ model Preference {
 model PreferenceAuditEvent {
   id             String          @id @default(uuid())
   userId         String          @map("user_id")
+  subjectSlug    String          @map("subject_slug")
   occurredAt     DateTime        @default(now()) @map("occurred_at")
   targetType     AuditTargetType @map("target_type")
   targetId       String          @map("target_id")
@@ -206,6 +207,7 @@ model PreferenceAuditEvent {
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId, occurredAt(sort: Desc)])
+  @@index([userId, subjectSlug, occurredAt(sort: Desc)])
   @@index([userId, eventType, occurredAt(sort: Desc)])
   @@index([targetType, targetId, occurredAt(sort: Desc)])
   @@index([correlationId])

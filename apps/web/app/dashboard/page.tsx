@@ -69,7 +69,7 @@ export default async function Dashboard() {
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <a
               href="/dashboard/profile"
               className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -81,6 +81,12 @@ export default async function Dashboard() {
               className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
             >
               Preferences
+            </a>
+            <a
+              href="/dashboard/history"
+              className="inline-block px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 transition"
+            >
+              Audit History
             </a>
             <a
               href="/dashboard/chat"
