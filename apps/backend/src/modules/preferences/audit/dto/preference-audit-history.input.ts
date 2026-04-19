@@ -30,7 +30,11 @@ export class PreferenceAuditHistoryInput {
   @IsString()
   after?: string;
 
-  @Field({ nullable: true })
+  @Field({
+    nullable: true,
+    description:
+      'Matches audit events whose subject slug starts with the provided prefix.',
+  })
   @IsOptional()
   @IsString()
   subjectSlug?: string;

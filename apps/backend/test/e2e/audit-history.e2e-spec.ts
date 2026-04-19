@@ -397,6 +397,44 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     });
   });
 
+  it('matches subjectSlug by prefix so food. returns all food.* audit rows', async () => {
+    await seedAuditEvent({
+      id: 'audit-food-1',
+      subjectSlug: 'food.dietary_restrictions',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-food-1',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T10:00:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-food-2',
+      subjectSlug: 'food.favorite_cuisine',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-food-2',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T11:00:00.000Z'),
+    });
+    await seedAuditEvent({
+      id: 'audit-system-1',
+      subjectSlug: 'system.response_tone',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: 'pref-system-1',
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date('2026-04-18T12:00:00.000Z'),
+    });
+
+    const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: {
+        subjectSlug: 'food.',
+      },
+    }).expect(200);
+
+    expect(response.body.errors).toBeUndefined();
+    const items = response.body.data.preferenceAuditHistory.items;
+    expect(items.map((item: any) => item.id)).toEqual(['audit-food-2', 'audit-food-1']);
+    expect(items.every((item: any) => item.subjectSlug.startsWith('food.'))).toBe(true);
+  });
+
   it('returns a clear GraphQL error for malformed cursors', async () => {
     const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
       input: {

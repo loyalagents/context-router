@@ -25,10 +25,17 @@ export class PreferenceAuditQueryService {
   ): Promise<PreferenceAuditHistoryPage> {
     const first = input.first ?? 20;
     const cursor = input.after ? this.decodeCursor(input.after) : null;
+    const subjectSlugPrefix = input.subjectSlug?.trim();
 
     const where: Prisma.PreferenceAuditEventWhereInput = {
       userId,
-      ...(input.subjectSlug ? { subjectSlug: input.subjectSlug } : {}),
+      ...(subjectSlugPrefix
+        ? {
+            subjectSlug: {
+              startsWith: subjectSlugPrefix,
+            },
+          }
+        : {}),
       ...(input.eventType ? { eventType: input.eventType } : {}),
       ...(input.targetType ? { targetType: input.targetType } : {}),
       ...(input.origin ? { origin: input.origin } : {}),

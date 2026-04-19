@@ -172,6 +172,46 @@ describe("PreferenceAuditQueryService (integration)", () => {
     });
   });
 
+  it("matches subjectSlug by prefix instead of requiring an exact slug", async () => {
+    await createAuditEvent({
+      id: "audit-food-1",
+      userId: primaryUserId,
+      subjectSlug: "food.dietary_restrictions",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-food-1",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T10:00:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-food-2",
+      userId: primaryUserId,
+      subjectSlug: "food.favorite_cuisine",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-food-2",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T11:00:00.000Z"),
+    });
+    await createAuditEvent({
+      id: "audit-system-1",
+      userId: primaryUserId,
+      subjectSlug: "system.response_tone",
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: "pref-system-1",
+      eventType: AuditEventType.PREFERENCE_SET,
+      occurredAt: new Date("2026-04-18T12:00:00.000Z"),
+    });
+
+    const page = await queryService.getHistory(primaryUserId, {
+      subjectSlug: "food.",
+    });
+
+    expect(page.items.map((item) => item.id)).toEqual([
+      "audit-food-2",
+      "audit-food-1",
+    ]);
+    expect(page.items.every((item) => item.subjectSlug.startsWith("food."))).toBe(true);
+  });
+
   it("rejects malformed cursors with a BadRequestException", async () => {
     await expect(
       queryService.getHistory(primaryUserId, {

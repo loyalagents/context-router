@@ -269,6 +269,10 @@ input PreferenceAuditHistoryInput {
   occurredFrom: DateTime
   occurredTo: DateTime
   origin: AuditOrigin
+
+  """
+  Matches audit events whose subject slug starts with the provided prefix.
+  """
   subjectSlug: String
   targetType: AuditTargetType
 }

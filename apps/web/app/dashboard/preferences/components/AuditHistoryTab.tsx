@@ -460,6 +460,9 @@ export default function AuditHistoryTab({
               placeholder="food.dietary_restrictions"
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
+            <span className="mt-1 block text-xs text-gray-500">
+              Prefix match, for example <code>food.</code>
+            </span>
           </label>
 
           <label className="text-sm">
