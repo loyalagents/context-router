@@ -30,6 +30,7 @@ Current gaps:
 
 - no read API or query surface exists yet for audit events
 - no audit history UI exists yet
+- no MCP read/access logging exists yet for MCP tools or resources
 - no rollback or revert mechanism exists yet
 - no audit backfill exists for pre-audit rows
 - `SYSTEM`, `WORKFLOW`, and `IMPORT` actors are schema-ready but not yet wired into real mutation producers
@@ -70,6 +71,13 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 - add workflow/system-originated mutation paths and shared context conventions
 - revisit pagination tuning, retention, and storage strategy only after real usage data exists
 
+5. MCP log track: add MCP read/access logging, read APIs, and UX
+- prefer a separate request-level MCP log table rather than stretching `PreferenceAuditEvent`
+- instrument `McpService` centrally for `tools/call` and `resources/read`
+- allow tool/resource-specific sanitized metadata where base request logging is too thin
+- add a backend read surface with filters for client, operation, outcome, and time
+- add a dedicated MCP access-history UX instead of mixing request history into the mutation timeline in the first pass
+
 ## Open Questions To Resolve During MR1-MR2
 
 - what GraphQL audit event shape is the smallest useful read contract for the UI
@@ -77,9 +85,19 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 - whether the first UI should live as a dedicated page, a preferences tab, or an event drawer off the existing preferences surface
 - how much raw snapshot JSON should be exposed directly versus lightly normalized for display
 
+## Open Questions For MCP Logging
+
+- should `tools/list` and `resources/list` count as logged access events or only `tools/call` and `resources/read`
+- whether returned slugs should be logged directly in MCP read metadata or whether counts are enough for v1
+- whether the first MCP log API should be user-scoped GraphQL, admin-facing, or both
+- whether failed auth before MCP dispatch should appear in the same history surface or remain only in operational logs
+- how strongly the first UX should separate mutation audit history from MCP access history
+- whether object-level access logging is ever needed, or whether request-level logs are enough
+
 ## Deferred Work
 
 - add a safe revert helper that computes inverse changes without clobbering newer state
 - decide which event types are safely revertable in a first rollback pass
 - define metadata conventions for future workflow, system, and import mutation producers
 - evaluate retention and archival needs after a real demo and usage period
+- evaluate whether MCP access history needs per-object fan-out after request-level logging has real usage data
