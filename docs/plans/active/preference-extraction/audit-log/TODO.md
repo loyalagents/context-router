@@ -20,7 +20,7 @@ Shipped behavior:
 - user-scoped GraphQL audit history query with cursor pagination
 - audit history filters for slug, event type, target type, origin, actor client key, correlation id, and date range
 - integration and e2e coverage for the landed audit behavior and read API
-- read-only audit history tab inside the preferences UI
+- read-only audit history page linked from the main dashboard and preferences page
 - lazy-loaded history rows with expandable before/after/metadata panels
 - visible common filters plus advanced filters behind a disclosure
 - sensitivity masking toggle in the UI using the live preference catalog
@@ -68,7 +68,7 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 ### Much Later
 
 3. Follow-up audit UI refinements
-- decide whether URL-synced filters or a dedicated deep-linkable history route are worth adding
+- decide whether the history page should gain URL-synced filters or saved views
 - revisit JSON presentation if raw payloads prove hard to scan in real usage
 - revisit sensitivity detection if archived-definition masking becomes important
 
@@ -76,7 +76,7 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 
 - how much raw snapshot JSON should be exposed directly versus lightly normalized or masked for display
 - whether future usage justifies more denormalized query fields beyond `subjectSlug`
-- whether the history UI should gain URL-synced filters or a dedicated route after the first demo pass
+- whether the history UI should gain URL-synced filters or saved views after the first demo pass
 
 ## Deferred Work
 

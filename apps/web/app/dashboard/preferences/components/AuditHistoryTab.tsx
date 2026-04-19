@@ -124,6 +124,7 @@ interface AuditHistoryTabProps {
     isSensitive: boolean;
   }>;
   shouldLoad: boolean;
+  showHeader?: boolean;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -188,8 +189,8 @@ async function fetchAuditHistory(
   accessToken: string,
   input: Record<string, unknown>,
 ): Promise<AuditHistoryPage> {
-  // Keep this request fetch-based to match the existing preferences-area convention,
-  // even though this component lives inside ApolloNextAppProvider.
+  // Keep this request fetch-based to match the existing dashboard/preferences GraphQL
+  // request convention rather than mixing raw fetch and Apollo hooks in the same UI area.
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -215,6 +216,7 @@ export default function AuditHistoryTab({
   accessToken,
   preferenceDefinitions,
   shouldLoad,
+  showHeader = true,
 }: AuditHistoryTabProps) {
   const [draftFilters, setDraftFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
@@ -422,12 +424,16 @@ export default function AuditHistoryTab({
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Audit History</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Review the append-only history of preference and definition changes.
-            </p>
-          </div>
+          {showHeader ? (
+            <div>
+              <h2 className="text-lg font-semibold">Audit History</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Review the append-only history of preference and definition changes.
+              </p>
+            </div>
+          ) : (
+            <div />
+          )}
 
           <label className="inline-flex items-center gap-3 text-sm text-gray-700">
             <input

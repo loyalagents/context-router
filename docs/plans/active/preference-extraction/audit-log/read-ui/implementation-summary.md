@@ -1,11 +1,11 @@
-## MR2 Preferences Audit History Tab
+## MR2 Preferences Audit History UI
 
 ### Summary
-MR2 shipped a read-only audit history UI inside the existing Preferences page. The preferences surface now has `Manage` and `History` tabs, with audit history loaded lazily when the user first opens the new tab.
+MR2 shipped a read-only audit history UI as a dedicated `/dashboard/history` page. The history experience is linked from the main dashboard and from the Preferences page, and loads lazily once the user navigates to the history screen.
 
 ### Shipped Behavior
-- new `History` tab inside `/dashboard/preferences`
-- local tab state with both panels kept mounted so history data and expanded rows persist across tab switches
+- new `/dashboard/history` page for audit browsing
+- main-dashboard button and preferences-page link to reach audit history
 - lazy-loaded audit history using the existing `preferenceAuditHistory(input)` GraphQL query
 - compact event rows showing timestamp, event label, slug, target type, origin, and actor badge
 - inline expandable details for `beforeState`, `afterState`, and `metadata`

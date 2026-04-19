@@ -12,7 +12,6 @@ import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
 import SuggestionInbox from './components/SuggestionInbox';
 import ManualPreferenceForm from './components/ManualPreferenceForm';
-import AuditHistoryTab from './components/AuditHistoryTab';
 
 interface Preference {
   id: string;
@@ -85,8 +84,6 @@ interface PreferenceDefinition {
   category: string;
 }
 
-type PreferencesTab = 'manage' | 'history';
-
 function createApolloClient(accessToken: string) {
   return new ApolloClient({
     link: new HttpLink({
@@ -111,8 +108,6 @@ function PreferencesContent({
     initialPreferenceDefinitions,
   );
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<PreferencesTab>('manage');
-  const [hasVisitedHistory, setHasVisitedHistory] = useState(false);
 
   const handleAnalysisComplete = (result: DocumentAnalysisResult) => {
     setAnalysisResult(result);
@@ -197,17 +192,9 @@ function PreferencesContent({
     {} as Record<string, Preference[]>
   );
 
-  const handleTabSelect = (tab: PreferencesTab) => {
-    setActiveTab(tab);
-
-    if (tab === 'history') {
-      setHasVisitedHistory(true);
-    }
-  };
-
   return (
     <div className="p-10">
-      <div className="max-w-6xl">
+      <div className="max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Preferences</h1>
           <a
@@ -218,105 +205,81 @@ function PreferencesContent({
           </a>
         </div>
 
-        <div className="flex gap-1 mb-6 border-b border-gray-200">
-          {(
-            [
-              { key: 'manage', label: 'Manage' },
-              { key: 'history', label: 'History' },
-            ] as { key: PreferencesTab; label: string }[]
-          ).map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => handleTabSelect(key)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === key
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Suggestion Inbox - Show if there are pending suggestions */}
+        {suggestedPreferences.length > 0 && (
+          <SuggestionInbox
+            suggestions={suggestedPreferences}
+            accessToken={accessToken}
+            onAccept={handleSuggestionAccept}
+            onReject={handleSuggestionReject}
+          />
+        )}
 
-        <div className={activeTab === 'manage' ? 'block' : 'hidden'}>
-          {/* Suggestion Inbox - Show if there are pending suggestions */}
-          {suggestedPreferences.length > 0 && (
-            <SuggestionInbox
-              suggestions={suggestedPreferences}
+        {/* Document Upload Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Import from Document</h2>
+          <p className="text-gray-600 text-sm mb-4">
+            Upload a document (PDF, image, or text file) and we&apos;ll extract preferences
+            for you to review.
+          </p>
+          {analysisResult ? (
+            <SuggestionsList
+              result={analysisResult}
+              onClose={handleClose}
+              onApplied={handleApplied}
               accessToken={accessToken}
-              onAccept={handleSuggestionAccept}
-              onReject={handleSuggestionReject}
+            />
+          ) : (
+            <DocumentUpload
+              onAnalysisComplete={handleAnalysisComplete}
+              accessToken={accessToken}
             />
           )}
-
-          {/* Document Upload Section */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Import from Document</h2>
-            <p className="text-gray-600 text-sm mb-4">
-              Upload a document (PDF, image, or text file) and we&apos;ll extract preferences
-              for you to review.
-            </p>
-            {analysisResult ? (
-              <SuggestionsList
-                result={analysisResult}
-                onClose={handleClose}
-                onApplied={handleApplied}
-                accessToken={accessToken}
-              />
-            ) : (
-              <DocumentUpload
-                onAnalysisComplete={handleAnalysisComplete}
-                accessToken={accessToken}
-              />
-            )}
-          </div>
-
-          <ManualPreferenceForm
-            accessToken={accessToken}
-            definitions={preferenceDefinitions}
-            onSaved={handleManualPreferenceSaved}
-          />
-
-          {/* Current Preferences Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Active Preferences</h2>
-            {activePreferences.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No preferences yet. Upload a document to get started!
-              </p>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedPreferences).map(([category, prefs]) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-                      {category}
-                    </h3>
-                    <div className="space-y-2">
-                      {prefs.map((pref) => (
-                        <PreferenceItem
-                          key={pref.id}
-                          preference={pref}
-                          accessToken={accessToken}
-                          onUpdate={handlePreferenceUpdate}
-                          onDelete={handlePreferenceDelete}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className={activeTab === 'history' ? 'block' : 'hidden'}>
-          <AuditHistoryTab
-            accessToken={accessToken}
-            preferenceDefinitions={preferenceDefinitions}
-            shouldLoad={hasVisitedHistory}
-          />
+        <ManualPreferenceForm
+          accessToken={accessToken}
+          definitions={preferenceDefinitions}
+          onSaved={handleManualPreferenceSaved}
+        />
+
+        {/* Current Preferences Section */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <h2 className="text-lg font-semibold">Active Preferences</h2>
+            <a
+              href="/dashboard/history"
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View Audit History
+            </a>
+          </div>
+          {activePreferences.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No preferences yet. Upload a document to get started!
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedPreferences).map(([category, prefs]) => (
+                <div key={category}>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
+                    {category}
+                  </h3>
+                  <div className="space-y-2">
+                    {prefs.map((pref) => (
+                      <PreferenceItem
+                        key={pref.id}
+                        preference={pref}
+                        accessToken={accessToken}
+                        onUpdate={handlePreferenceUpdate}
+                        onDelete={handlePreferenceDelete}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
