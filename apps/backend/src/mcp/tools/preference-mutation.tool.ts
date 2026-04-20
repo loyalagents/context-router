@@ -94,7 +94,7 @@ export class PreferenceMutationTool {
           actorType: AuditActorType.MCP_CLIENT,
           actorClientKey: context.client.key,
           origin: AuditOrigin.MCP,
-          correlationId: randomUUID(),
+          correlationId: context.correlationId ?? randomUUID(),
           sourceType: SourceType.INFERRED,
         },
       );
@@ -164,7 +164,7 @@ export class PreferenceMutationTool {
           actorType: AuditActorType.MCP_CLIENT,
           actorClientKey: context.client.key,
           origin: AuditOrigin.MCP,
-          correlationId: randomUUID(),
+          correlationId: context.correlationId ?? randomUUID(),
           sourceType: SourceType.USER,
         },
       );

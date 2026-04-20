@@ -25,6 +25,7 @@ model User {
   preferences        Preference[]
   definitions        PreferenceDefinition[]
   auditEvents        PreferenceAuditEvent[]
+  mcpAccessEvents    McpAccessEvent[]
   permissionGrants   PermissionGrant[]
 
   @@map("users")
@@ -108,6 +109,17 @@ enum AuditEventType {
   DEFINITION_CREATED
   DEFINITION_UPDATED
   DEFINITION_ARCHIVED
+}
+
+enum McpAccessSurface {
+  TOOLS_CALL
+  RESOURCES_READ
+}
+
+enum McpAccessOutcome {
+  SUCCESS
+  DENY
+  ERROR
 }
 
 enum GrantAction {
@@ -212,6 +224,30 @@ model PreferenceAuditEvent {
   @@index([targetType, targetId, occurredAt(sort: Desc)])
   @@index([correlationId])
   @@map("preference_audit_events")
+}
+
+model McpAccessEvent {
+  id               String           @id @default(uuid())
+  userId           String           @map("user_id")
+  clientKey        String           @map("client_key")
+  occurredAt       DateTime         @default(now()) @map("occurred_at")
+  surface          McpAccessSurface
+  operationName    String           @map("operation_name")
+  outcome          McpAccessOutcome
+  correlationId    String           @map("correlation_id")
+  latencyMs        Int              @map("latency_ms")
+  requestMetadata  Json?            @map("request_metadata")
+  responseMetadata Json?            @map("response_metadata")
+  errorMetadata    Json?            @map("error_metadata")
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([userId, clientKey, occurredAt(sort: Desc)])
+  @@index([userId, operationName, occurredAt(sort: Desc)])
+  @@index([userId, outcome, occurredAt(sort: Desc)])
+  @@index([correlationId])
+  @@map("mcp_access_events")
 }
 
 model PermissionGrant {

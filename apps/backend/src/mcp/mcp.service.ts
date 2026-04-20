@@ -1,5 +1,7 @@
 import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
+import { performance } from 'perf_hooks';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   ListToolsRequestSchema,
@@ -15,6 +17,12 @@ import {
   McpAuthorizationError,
   McpAuthorizationService,
 } from './auth/mcp-authorization.service';
+import { McpAccessLogService } from './access-log/mcp-access-log.service';
+import { McpAccessLogMetadata } from './access-log/access-log.types';
+import {
+  McpAccessOutcome,
+  McpAccessSurface,
+} from '@infrastructure/prisma/generated-client';
 
 @Injectable()
 export class McpService implements OnModuleInit {
@@ -27,6 +35,7 @@ export class McpService implements OnModuleInit {
     @Inject(MCP_TOOLS) private readonly tools: McpToolInterface[],
     @Inject(MCP_RESOURCES) private readonly resources: McpResourceInterface[],
     private readonly authorizationService: McpAuthorizationService,
+    private readonly mcpAccessLogService: McpAccessLogService,
   ) {}
 
   onModuleInit() {
@@ -97,14 +106,19 @@ export class McpService implements OnModuleInit {
 
       server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { name, arguments: args } = request.params;
+        const startedAt = performance.now();
+        const dispatchContext: McpContext = {
+          ...context,
+          correlationId: randomUUID(),
+        };
 
         this.logger.log(
-          `Tool called: ${name} by user: ${context?.user?.userId || 'unknown'}`,
+          `Tool called: ${name} by user: ${dispatchContext?.user?.userId || 'unknown'}`,
         );
 
         const tool = this.toolMap.get(name);
         if (!tool) {
-          return {
+          const result = {
             content: [
               {
                 type: 'text',
@@ -113,11 +127,28 @@ export class McpService implements OnModuleInit {
             ],
             isError: true,
           };
+          await this.recordMcpAccessEvent({
+            context: dispatchContext,
+            surface: McpAccessSurface.TOOLS_CALL,
+            operationName: name,
+            outcome: McpAccessOutcome.ERROR,
+            latencyMs: this.elapsedMs(startedAt),
+            accessLog: {
+              errorMetadata: {
+                source: 'DISPATCH',
+                message: `Unknown tool: ${name}`,
+              },
+            },
+          });
+          return result;
         }
 
-        if (tool.requiresAuth && !context) {
+        const shouldLogAccess =
+          tool.descriptor.annotations?.readOnlyHint === true;
+
+        if (tool.requiresAuth && !dispatchContext) {
           this.logger.error(`Tool called without context: ${name}`);
-          return {
+          const result = {
             content: [
               {
                 type: 'text',
@@ -130,18 +161,34 @@ export class McpService implements OnModuleInit {
             ],
             isError: true,
           };
+          if (shouldLogAccess) {
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.TOOLS_CALL,
+              operationName: name,
+              outcome: McpAccessOutcome.ERROR,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: {
+                errorMetadata: {
+                  source: 'DISPATCH',
+                  message: 'Authentication context not available',
+                },
+              },
+            });
+          }
+          return result;
         }
 
         try {
           this.authorizationService.assertAccess(
-            context.client,
+            dispatchContext.client,
             tool.requiredAccess,
-            context.grants,
+            dispatchContext.grants,
             'tools/call',
           );
         } catch (error) {
           if (error instanceof McpAuthorizationError) {
-            return {
+            const result = {
               content: [
                 {
                   type: 'text',
@@ -150,11 +197,79 @@ export class McpService implements OnModuleInit {
               ],
               isError: true,
             };
+            if (shouldLogAccess) {
+              await this.recordMcpAccessEvent({
+                context: dispatchContext,
+                surface: McpAccessSurface.TOOLS_CALL,
+                operationName: name,
+                outcome: McpAccessOutcome.DENY,
+                latencyMs: this.elapsedMs(startedAt),
+                accessLog: {
+                  errorMetadata: {
+                    source: 'AUTHORIZATION',
+                    message: error.message,
+                  },
+                },
+              });
+            }
+            return result;
+          }
+          if (shouldLogAccess) {
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.TOOLS_CALL,
+              operationName: name,
+              outcome: McpAccessOutcome.ERROR,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: {
+                errorMetadata: {
+                  source: 'HANDLER_EXCEPTION',
+                  message: error.message,
+                },
+              },
+            });
           }
           throw error;
         }
 
-        return tool.execute(args, context);
+        try {
+          const execution = await tool.execute(args, dispatchContext);
+          const outcome = execution.result.isError
+            ? McpAccessOutcome.ERROR
+            : McpAccessOutcome.SUCCESS;
+
+          if (shouldLogAccess) {
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.TOOLS_CALL,
+              operationName: name,
+              outcome,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: execution.result.isError
+                ? this.withErrorSource(execution.accessLog, 'TOOL_RESULT')
+                : execution.accessLog,
+            });
+          }
+
+          return execution.result;
+        } catch (error) {
+          if (shouldLogAccess) {
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.TOOLS_CALL,
+              operationName: name,
+              outcome: McpAccessOutcome.ERROR,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: {
+                errorMetadata: {
+                  source: 'HANDLER_EXCEPTION',
+                  message: error.message,
+                },
+              },
+            });
+          }
+          throw error;
+        }
       });
     } else {
       this.logger.warn('Preference tools are disabled in configuration');
@@ -179,22 +294,63 @@ export class McpService implements OnModuleInit {
         ReadResourceRequestSchema,
         async (request) => {
           const { uri } = request.params;
+          const startedAt = performance.now();
+          const dispatchContext: McpContext = {
+            ...context,
+            correlationId: randomUUID(),
+          };
 
           this.logger.log(`Resource requested: ${uri}`);
 
-          const resource = this.resourceMap.get(uri);
-          if (!resource) {
-            throw new Error(`Unknown resource: ${uri}`);
+          try {
+            const resource = this.resourceMap.get(uri);
+            if (!resource) {
+              throw new Error(`Unknown resource: ${uri}`);
+            }
+
+            this.authorizationService.assertAccess(
+              dispatchContext.client,
+              resource.requiredAccess,
+              dispatchContext.grants,
+              'resources/read',
+            );
+
+            const execution = await resource.read(dispatchContext);
+
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.RESOURCES_READ,
+              operationName: uri,
+              outcome: McpAccessOutcome.SUCCESS,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: execution.accessLog,
+            });
+
+            return execution.result;
+          } catch (error) {
+            await this.recordMcpAccessEvent({
+              context: dispatchContext,
+              surface: McpAccessSurface.RESOURCES_READ,
+              operationName: uri,
+              outcome:
+                error instanceof McpAuthorizationError
+                  ? McpAccessOutcome.DENY
+                  : McpAccessOutcome.ERROR,
+              latencyMs: this.elapsedMs(startedAt),
+              accessLog: {
+                errorMetadata: {
+                  source:
+                    error instanceof McpAuthorizationError
+                      ? 'AUTHORIZATION'
+                      : uri && !this.resourceMap.has(uri)
+                        ? 'DISPATCH'
+                        : 'HANDLER_EXCEPTION',
+                  message: error.message,
+                },
+              },
+            });
+            throw error;
           }
-
-          this.authorizationService.assertAccess(
-            context.client,
-            resource.requiredAccess,
-            context.grants,
-            'resources/read',
-          );
-
-          return resource.read(context);
         },
       );
     } else {
@@ -202,5 +358,53 @@ export class McpService implements OnModuleInit {
     }
 
     return server;
+  }
+
+  private elapsedMs(startedAt: number): number {
+    return Math.max(0, Math.round(performance.now() - startedAt));
+  }
+
+  private withErrorSource(
+    accessLog: McpAccessLogMetadata | undefined,
+    source: string,
+  ): McpAccessLogMetadata {
+    return {
+      ...accessLog,
+      errorMetadata: {
+        ...(typeof accessLog?.errorMetadata === 'object' &&
+        accessLog.errorMetadata !== null
+          ? accessLog.errorMetadata
+          : {}),
+        source,
+      },
+    };
+  }
+
+  private async recordMcpAccessEvent(params: {
+    context: McpContext;
+    surface: McpAccessSurface;
+    operationName: string;
+    outcome: McpAccessOutcome;
+    latencyMs: number;
+    accessLog?: McpAccessLogMetadata;
+  }): Promise<void> {
+    try {
+      await this.mcpAccessLogService.record({
+        userId: params.context.user.userId,
+        clientKey: params.context.client.key,
+        surface: params.surface,
+        operationName: params.operationName,
+        outcome: params.outcome,
+        correlationId: params.context.correlationId ?? randomUUID(),
+        latencyMs: params.latencyMs,
+        requestMetadata: params.accessLog?.requestMetadata,
+        responseMetadata: params.accessLog?.responseMetadata,
+        errorMetadata: params.accessLog?.errorMetadata,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to record MCP access event: ${error.message}`,
+      );
+    }
   }
 }

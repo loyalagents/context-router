@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { SchemaConsolidationWorkflow } from '@modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 @Injectable()
 export class SchemaConsolidationTool implements McpToolInterface {
@@ -37,7 +38,7 @@ export class SchemaConsolidationTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
     const params = (args ?? {}) as { scope?: 'PERSONAL' | 'ALL' };
 
     try {
@@ -58,7 +59,18 @@ export class SchemaConsolidationTool implements McpToolInterface {
       });
 
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        result: {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        },
+        accessLog: {
+          requestMetadata: {
+            scope: params.scope ?? 'PERSONAL',
+          },
+          responseMetadata: {
+            totalDefinitionsAnalyzed: result.totalDefinitionsAnalyzed,
+            consolidationGroupCount: result.consolidationGroups.length,
+          },
+        },
       };
     } catch (error) {
       this.logger.error(
@@ -66,10 +78,20 @@ export class SchemaConsolidationTool implements McpToolInterface {
         error.stack,
       );
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
+        accessLog: {
+          requestMetadata: {
+            scope: params.scope ?? 'PERSONAL',
+          },
+          errorMetadata: {
+            message: error.message,
+          },
+        },
       };
     }
   }

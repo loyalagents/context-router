@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import { auth0 } from '@/lib/auth0';
-import AuditHistoryTab from '../preferences/components/AuditHistoryTab';
+import HistoryTabs from './HistoryTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +60,7 @@ export default async function AuditHistoryPage() {
           <div>
             <h1 className="text-2xl font-bold">Audit History</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Review the append-only history of preference and definition changes.
+              Review preference changes and MCP access by connected clients.
             </p>
           </div>
           <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
@@ -74,11 +74,9 @@ export default async function AuditHistoryPage() {
             <p className="text-sm mt-2">Ensure backend is running on port 3000.</p>
           </div>
         ) : (
-          <AuditHistoryTab
+          <HistoryTabs
             accessToken={accessToken}
             preferenceDefinitions={preferenceDefinitions}
-            shouldLoad={true}
-            showHeader={false}
           />
         )}
       </div>

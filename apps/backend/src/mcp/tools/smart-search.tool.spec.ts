@@ -73,7 +73,7 @@ describe('SmartSearchTool', () => {
 
   it('passes an access filter into the workflow and post-filters matched definitions', async () => {
     const result = await tool.execute({ query: 'tone' }, context);
-    const payload = JSON.parse((result.content[0] as { text: string }).text);
+    const payload = JSON.parse((result.result.content[0] as { text: string }).text);
 
     expect(workflow.run).toHaveBeenCalledWith(
       expect.objectContaining({

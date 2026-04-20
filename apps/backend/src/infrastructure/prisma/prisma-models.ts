@@ -4,6 +4,8 @@ import {
   AuditOrigin,
   AuditTargetType,
   LocationType,
+  McpAccessOutcome,
+  McpAccessSurface,
   PreferenceScope,
   PreferenceStatus,
   PreferenceValueType,
@@ -86,4 +88,19 @@ export interface PreferenceAuditEvent {
   beforeState: unknown | null;
   afterState: unknown | null;
   metadata: unknown | null;
+}
+
+export interface McpAccessEvent {
+  id: string;
+  userId: string;
+  clientKey: string;
+  occurredAt: Date;
+  surface: McpAccessSurface;
+  operationName: string;
+  outcome: McpAccessOutcome;
+  correlationId: string;
+  latencyMs: number;
+  requestMetadata: unknown | null;
+  responseMetadata: unknown | null;
+  errorMetadata: unknown | null;
 }

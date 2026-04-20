@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 interface ListPreferencesParams {
   category?: string;
@@ -50,18 +51,40 @@ export class PreferenceListTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
+    const params = args as ListPreferencesParams;
     try {
-      const result = await this.list(args as ListPreferencesParams, context);
+      const result = await this.list(params, context);
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        result: {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        },
+        accessLog: {
+          requestMetadata: {
+            category: params.category ?? null,
+          },
+          responseMetadata: {
+            count: result.count,
+            categories: result.categories,
+          },
+        },
       };
     } catch (error) {
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
+        accessLog: {
+          requestMetadata: {
+            category: params.category ?? null,
+          },
+          errorMetadata: {
+            message: error.message,
+          },
+        },
       };
     }
   }

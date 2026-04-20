@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { PreferenceMutationTool } from './preference-mutation.tool';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 @Injectable()
 export class PreferenceDeleteTool implements McpToolInterface {
@@ -39,7 +40,7 @@ export class PreferenceDeleteTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
     try {
       const params = args as { id: string };
       const preference = await this.preferenceService.getPreference(
@@ -58,14 +59,18 @@ export class PreferenceDeleteTool implements McpToolInterface {
 
       const result = await this.mutationTool.delete(args as any, context!);
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        result: {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        },
       };
     } catch (error) {
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
       };
     }
   }

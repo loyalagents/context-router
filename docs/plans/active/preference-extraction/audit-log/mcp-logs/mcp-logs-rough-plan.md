@@ -5,6 +5,10 @@
 - Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/modules/preferences/audit/**`, `apps/backend/prisma/schema.prisma`, `apps/backend/test/e2e/mcp.e2e-spec.ts`
 - Last reviewed: 2026-04-18
 
+Implementation note: this rough plan used the tentative name `McpReadEvent`.
+The implemented durable model name is `McpAccessEvent`; see
+`implementation-plan.md` and `implementation-summary.md` for the final shape.
+
 ## Background
 
 The shipped audit groundwork is mutation-focused:

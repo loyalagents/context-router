@@ -16,6 +16,7 @@ import { SmartSearchTool } from './tools/smart-search.tool';
 import { SchemaConsolidationTool } from './tools/schema-consolidation.tool';
 import { PermissionGrantListTool } from './tools/permission-grant-list.tool';
 import { SchemaResource } from './resources/schema.resource';
+import { McpAccessLogModule } from './access-log/mcp-access-log.module';
 import { OAuthMetadataController } from './auth/oauth-metadata.controller';
 import { DcrShimController } from './auth/dcr-shim.controller';
 import { DcrRateLimitGuard } from './auth/dcr-rate-limit.guard';
@@ -32,6 +33,7 @@ import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
     PermissionGrantModule,
     AuthModule,
     WorkflowsModule,
+    McpAccessLogModule,
   ],
   controllers: [McpController, OAuthMetadataController, DcrShimController],
   providers: [

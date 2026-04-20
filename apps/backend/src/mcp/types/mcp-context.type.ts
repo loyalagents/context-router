@@ -22,4 +22,5 @@ export interface McpContext {
   user: McpUser;
   client: ResolvedMcpClient;
   grants?: McpCapability[];
+  correlationId?: string;
 }

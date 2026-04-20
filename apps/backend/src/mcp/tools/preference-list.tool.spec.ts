@@ -29,9 +29,9 @@ describe('PreferenceListTool', () => {
         user: { userId: 'user-1' },
       } as any,
     );
-    const payload = JSON.parse((result.content[0] as { text: string }).text);
+    const payload = JSON.parse((result.result.content[0] as { text: string }).text);
 
-    expect(result.isError).not.toBe(true);
+    expect(result.result.isError).not.toBe(true);
     expect(authorizationService.filterByTargetAccess).not.toHaveBeenCalled();
     expect(payload.success).toBe(true);
     expect(payload.preferences.map((pref: any) => pref.slug)).toEqual([
