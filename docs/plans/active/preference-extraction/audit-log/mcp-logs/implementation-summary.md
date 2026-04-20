@@ -111,6 +111,11 @@ Added:
 - `apps/backend/test/integration/mcp-access-log-query.service.spec.ts`
 - `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
 
+Additional MCP access-log e2e coverage includes discovery-call exclusion,
+resource authorization denials, all known write-tool exclusions, resource
+fail-open behavior, GraphQL cursor pagination, invalid cursors, and user
+isolation.
+
 Updated:
 
 - MCP tool/resource interfaces and wrapper-return unit tests

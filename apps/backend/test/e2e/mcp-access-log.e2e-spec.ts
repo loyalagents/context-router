@@ -319,6 +319,25 @@ describe('MCP Access Log (e2e)', () => {
     });
   });
 
+  it('records resources/read authorization denial with authorization source', async () => {
+    await readResource(
+      'schema://graphql',
+      mcpHeaders(TEST_CLIENT_IDS.unknown),
+    ).expect(200);
+
+    const event = await prisma.mcpAccessEvent.findFirstOrThrow({
+      where: { userId: testUser.userId },
+    });
+
+    expect(event).toMatchObject({
+      clientKey: 'unknown',
+      surface: McpAccessSurface.RESOURCES_READ,
+      operationName: 'schema://graphql',
+      outcome: McpAccessOutcome.DENY,
+      errorMetadata: expect.objectContaining({ source: 'AUTHORIZATION' }),
+    });
+  });
+
   it('records tool-result errors separately from dispatch errors', async () => {
     mocks.structuredAi.generateStructured.mockRejectedValue(
       new Error('Zod validation failed: expected string, got number'),
@@ -345,8 +364,27 @@ describe('MCP Access Log (e2e)', () => {
     });
   });
 
-  it('does not create access rows for known write tools but shares dispatch correlation with mutation audit', async () => {
-    const response = await callTool(
+  it('does not log tools/list or resources/list', async () => {
+    await mcpPost({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/list',
+      params: {},
+    }).expect(200);
+    await mcpPost({
+      jsonrpc: '2.0',
+      id: 2,
+      method: 'resources/list',
+      params: {},
+    }).expect(200);
+
+    await expect(
+      prisma.mcpAccessEvent.count({ where: { userId: testUser.userId } }),
+    ).resolves.toBe(0);
+  });
+
+  it('does not create access rows for known write tools but keeps mutation audit correlation ids', async () => {
+    const suggestResponse = await callTool(
       'suggestPreference',
       {
         slug: 'food.dietary_restrictions',
@@ -356,19 +394,63 @@ describe('MCP Access Log (e2e)', () => {
       mcpHeaders(TEST_CLIENT_IDS.codex),
     );
 
-    expect(response.status).toBe(200);
-    expect(response.body.result?.isError).not.toBe(true);
+    expect(suggestResponse.status).toBe(200);
+    expect(suggestResponse.body.result?.isError).not.toBe(true);
+    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
 
+    const createDefinitionResponse = await callTool(
+      'createPreferenceDefinition',
+      {
+        slug: 'access_log.created_definition',
+        description: 'Definition created by MCP access-log e2e coverage',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      },
+      mcpHeaders(TEST_CLIENT_IDS.codex),
+    );
+
+    expect(createDefinitionResponse.status).toBe(200);
+    expect(createDefinitionResponse.body.result?.isError).not.toBe(true);
+    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+
+    const definition = await prisma.preferenceDefinition.findFirstOrThrow({
+      where: { slug: 'system.response_tone' },
+    });
+    const preference = await prisma.preference.create({
+      data: {
+        userId: testUser.userId,
+        definitionId: definition.id,
+        contextKey: 'GLOBAL',
+        value: JSON.stringify('brief'),
+        status: 'ACTIVE',
+        sourceType: 'USER',
+      },
+    });
+
+    const deleteResponse = await callTool(
+      'deletePreference',
+      { id: preference.id },
+      mcpHeaders(TEST_CLIENT_IDS.codex),
+    );
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body.result?.isError).not.toBe(true);
     await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
 
     const auditRows = await prisma.preferenceAuditEvent.findMany({
       where: {
         userId: testUser.userId,
-        eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
       },
     });
-    expect(auditRows).toHaveLength(1);
-    expect(auditRows[0].correlationId).toBeTruthy();
+    expect(auditRows).toHaveLength(3);
+    expect(auditRows.map((row) => row.eventType)).toEqual(
+      expect.arrayContaining([
+        AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+        AuditEventType.DEFINITION_CREATED,
+        AuditEventType.PREFERENCE_DELETED,
+      ]),
+    );
+    expect(auditRows.every((row) => Boolean(row.correlationId))).toBe(true);
   });
 
   it('does not fail the MCP response when access logging fails', async () => {
@@ -376,14 +458,42 @@ describe('MCP Access Log (e2e)', () => {
       .spyOn(accessLogService, 'record')
       .mockRejectedValueOnce(new Error('access log unavailable'));
 
-    const response = await callTool('listPreferenceSlugs', {});
+    try {
+      const response = await callTool('listPreferenceSlugs', {});
 
-    expect(response.status).toBe(200);
-    expect(response.body.result?.isError).not.toBe(true);
-    expect(recordSpy).toHaveBeenCalled();
-    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).not.toBe(true);
+      expect(recordSpy).toHaveBeenCalled();
+      await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+    } finally {
+      recordSpy.mockRestore();
+    }
+  });
 
-    recordSpy.mockRestore();
+  it('does not fail resource reads or mask resource errors when access logging fails', async () => {
+    const recordSpy = jest
+      .spyOn(accessLogService, 'record')
+      .mockRejectedValue(new Error('access log unavailable'));
+
+    try {
+      const successResponse = await readResource('schema://graphql');
+      expect(successResponse.status).toBe(200);
+      expect(successResponse.body.result?.contents).toEqual(
+        expect.any(Array),
+      );
+
+      const errorResponse = await readResource('schema://missing');
+      expect(errorResponse.status).toBe(200);
+      expect(errorResponse.body.error).toBeDefined();
+      expect(errorResponse.body.error.message).toContain(
+        'Unknown resource: schema://missing',
+      );
+
+      expect(recordSpy).toHaveBeenCalledTimes(2);
+      await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+    } finally {
+      recordSpy.mockRestore();
+    }
   });
 
   it('exposes user-scoped MCP access history through GraphQL filters', async () => {
@@ -416,6 +526,127 @@ describe('MCP Access Log (e2e)', () => {
       surface: 'TOOLS_CALL',
       operationName: 'searchPreferences',
       outcome: 'SUCCESS',
+    });
+  });
+
+  it('paginates MCP access history with cursors', async () => {
+    await prisma.mcpAccessEvent.createMany({
+      data: [
+        {
+          userId: testUser.userId,
+          clientKey: 'claude',
+          occurredAt: new Date('2026-04-18T10:00:00.000Z'),
+          surface: McpAccessSurface.TOOLS_CALL,
+          operationName: 'searchPreferences',
+          outcome: McpAccessOutcome.SUCCESS,
+          correlationId: 'mcp-access-cursor-1',
+          latencyMs: 1,
+        },
+        {
+          userId: testUser.userId,
+          clientKey: 'claude',
+          occurredAt: new Date('2026-04-18T11:00:00.000Z'),
+          surface: McpAccessSurface.TOOLS_CALL,
+          operationName: 'listPreferenceSlugs',
+          outcome: McpAccessOutcome.SUCCESS,
+          correlationId: 'mcp-access-cursor-2',
+          latencyMs: 2,
+        },
+        {
+          userId: testUser.userId,
+          clientKey: 'claude',
+          occurredAt: new Date('2026-04-18T12:00:00.000Z'),
+          surface: McpAccessSurface.RESOURCES_READ,
+          operationName: 'schema://graphql',
+          outcome: McpAccessOutcome.SUCCESS,
+          correlationId: 'mcp-access-cursor-3',
+          latencyMs: 3,
+        },
+      ],
+    });
+
+    const firstPageResponse = await graphqlRequest(MCP_ACCESS_HISTORY_QUERY, {
+      input: { first: 2 },
+    }).expect(200);
+
+    expect(firstPageResponse.body.errors).toBeUndefined();
+    const firstPage = firstPageResponse.body.data.mcpAccessHistory;
+
+    expect(firstPage.hasNextPage).toBe(true);
+    expect(firstPage.nextCursor).toEqual(expect.any(String));
+    expect(
+      firstPage.items.map(
+        (item: { operationName: string }) => item.operationName,
+      ),
+    ).toEqual(['schema://graphql', 'listPreferenceSlugs']);
+
+    const secondPageResponse = await graphqlRequest(MCP_ACCESS_HISTORY_QUERY, {
+      input: { first: 2, after: firstPage.nextCursor },
+    }).expect(200);
+
+    expect(secondPageResponse.body.errors).toBeUndefined();
+    expect(secondPageResponse.body.data.mcpAccessHistory).toMatchObject({
+      hasNextPage: false,
+      nextCursor: null,
+    });
+    expect(secondPageResponse.body.data.mcpAccessHistory.items).toHaveLength(1);
+    expect(
+      secondPageResponse.body.data.mcpAccessHistory.items[0].operationName,
+    ).toBe('searchPreferences');
+  });
+
+  it('returns GraphQL errors for invalid MCP access history cursors', async () => {
+    const response = await graphqlRequest(MCP_ACCESS_HISTORY_QUERY, {
+      input: { after: 'not-a-valid-cursor' },
+    }).expect(200);
+
+    expect(response.body.data).toBeNull();
+    expect(response.body.errors?.[0]?.message).toContain(
+      'Invalid MCP access history cursor',
+    );
+  });
+
+  it('keeps MCP access history GraphQL results isolated to the authenticated user', async () => {
+    const otherUser = await prisma.user.create({
+      data: {
+        email: 'other-mcp-access-user@example.com',
+        firstName: 'Other',
+        lastName: 'User',
+      },
+    });
+
+    await prisma.mcpAccessEvent.createMany({
+      data: [
+        {
+          userId: testUser.userId,
+          clientKey: 'claude',
+          surface: McpAccessSurface.TOOLS_CALL,
+          operationName: 'searchPreferences',
+          outcome: McpAccessOutcome.SUCCESS,
+          correlationId: 'mcp-access-primary-user',
+          latencyMs: 5,
+        },
+        {
+          userId: otherUser.userId,
+          clientKey: 'claude',
+          surface: McpAccessSurface.TOOLS_CALL,
+          operationName: 'listPreferenceSlugs',
+          outcome: McpAccessOutcome.SUCCESS,
+          correlationId: 'mcp-access-other-user',
+          latencyMs: 6,
+        },
+      ],
+    });
+
+    const response = await graphqlRequest(MCP_ACCESS_HISTORY_QUERY, {
+      input: { first: 10 },
+    }).expect(200);
+
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.mcpAccessHistory.items).toHaveLength(1);
+    expect(response.body.data.mcpAccessHistory.items[0]).toMatchObject({
+      userId: testUser.userId,
+      operationName: 'searchPreferences',
     });
   });
 });
