@@ -3,7 +3,7 @@
 - Status: active-plan
 - Read when: planning follow-up audit history, audit UI, rollback, or future workflow/system mutation work
 - Source of truth: `apps/backend/prisma/schema.prisma`, `apps/backend/src/modules/preferences/**`, `apps/backend/test/**`, and the historical docs in `initial-implementation/`
-- Last reviewed: 2026-04-18
+- Last reviewed: 2026-04-21
 
 ## Current State
 
@@ -47,7 +47,9 @@ Current gaps:
 - rejected-suggestion suppression behavior remains unchanged
 - archived or deleted definitions may lose sensitivity masking in the history UI because MR2 only uses the live catalog
 - no object-level MCP access fan-out exists yet; MCP access history is request-level only
+- MCP access history does not yet show the exact preferences, slugs, or returned objects an LLM was able to access; v1 only shows sanitized request/response metadata and counts
 - pre-dispatch MCP Auth0/JWT failures are not included in user-facing MCP access history
+- audit history and MCP Access UI flows still need a broader manual test pass against realistic/demo data
 
 Historical initial-implementation docs now live under `initial-implementation/`.
 
@@ -75,6 +77,7 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 ### Much Later
 
 3. Follow-up audit UI refinements
+- manually test Audit and MCP Access tabs with realistic/demo data, including filters, load-more, expanded metadata, masking, empty states, and error states
 - decide whether the history page should gain URL-synced filters or saved views
 - revisit JSON presentation if raw payloads prove hard to scan in real usage
 - revisit sensitivity detection if archived-definition masking becomes important
@@ -82,6 +85,7 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 4. MCP log follow-ups
 - decide whether `tools/list` and `resources/list` should become access events
 - decide whether object-level MCP access fan-out is needed after request-level history has real usage
+- if exact LLM data visibility becomes important, design an object-level access log that records returned preference/object identifiers without storing raw sensitive values
 - evaluate retention and archival needs for MCP access events after usage data exists
 
 ## Open Questions To Resolve After MR2
