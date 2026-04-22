@@ -26,7 +26,12 @@ const TEST_CLAUDE_CLIENT: ResolvedMcpClient = {
   policy: {
     key: 'claude',
     label: 'Claude',
-    capabilities: ['preferences:read', 'preferences:write'],
+    capabilities: [
+      'preferences:read',
+      'preferences:suggest',
+      'preferences:write',
+      'preferences:define',
+    ],
     targetRules: [],
   },
 };
@@ -74,6 +79,24 @@ describe('MCP Integration (e2e)', () => {
     ...extra,
   });
 
+  const mutatePreferences = (
+    args: object,
+    headers: Record<string, string> = {},
+    id = 1,
+  ) =>
+    mcpPost(
+      {
+        jsonrpc: '2.0',
+        id,
+        method: 'tools/call',
+        params: {
+          name: 'mutatePreferences',
+          arguments: args,
+        },
+      },
+      headers,
+    );
+
   describe('MCP Service', () => {
     it('should be defined', () => {
       expect(mcpService).toBeDefined();
@@ -111,7 +134,9 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should have schema resources enabled', () => {
-      const resourcesEnabled = configService.get('mcp.resources.schema.enabled');
+      const resourcesEnabled = configService.get(
+        'mcp.resources.schema.enabled',
+      );
       expect(resourcesEnabled).toBe(true);
     });
   });
@@ -154,7 +179,7 @@ describe('MCP Integration (e2e)', () => {
       await seedPreferenceDefinitions(prisma);
     });
 
-    it('should expose write tools in tools/list for codex', async () => {
+    it('should expose mutatePreferences in tools/list for codex and hide old mutation tools', async () => {
       const response = await mcpPost(
         {
           jsonrpc: '2.0',
@@ -166,28 +191,28 @@ describe('MCP Integration (e2e)', () => {
       );
 
       expect(response.status).toBe(200);
-      const toolNames = response.body.result.tools.map((tool: any) => tool.name);
+      const toolNames = response.body.result.tools.map(
+        (tool: any) => tool.name,
+      );
       expect(toolNames).toContain('searchPreferences');
-      expect(toolNames).toContain('suggestPreference');
-      expect(toolNames).toContain('createPreferenceDefinition');
+      expect(toolNames).toContain('mutatePreferences');
+      expect(toolNames).not.toContain('suggestPreference');
+      expect(toolNames).not.toContain('createPreferenceDefinition');
+      expect(toolNames).not.toContain('deletePreference');
     });
 
-    it('should allow write tools for codex', async () => {
-      const response = await mcpPost(
+    it('should allow SUGGEST_PREFERENCE for codex', async () => {
+      const response = await mutatePreferences(
         {
-          jsonrpc: '2.0',
-          id: 31,
-          method: 'tools/call',
-          params: {
-            name: 'suggestPreference',
-            arguments: {
-              slug: 'food.dietary_restrictions',
-              value: '["nuts"]',
-              confidence: 0.9,
-            },
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'food.dietary_restrictions',
+            value: '["nuts"]',
+            confidence: 0.9,
           },
         },
         mcpHeaders(TEST_CLIENT_IDS.codex),
+        31,
       );
 
       expect(response.status).toBe(200);
@@ -209,22 +234,18 @@ describe('MCP Integration (e2e)', () => {
       expect(auditRows[0].correlationId).toBeTruthy();
     });
 
-    it('should canonicalize array values in suggestPreference for codex', async () => {
-      const response = await mcpPost(
+    it('should canonicalize array values in SUGGEST_PREFERENCE for codex', async () => {
+      const response = await mutatePreferences(
         {
-          jsonrpc: '2.0',
-          id: 31,
-          method: 'tools/call',
-          params: {
-            name: 'suggestPreference',
-            arguments: {
-              slug: 'dev.tech_stack',
-              value: '["AI", " software engineering ", "AI", ""]',
-              confidence: 0.91,
-            },
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'dev.tech_stack',
+            value: '["AI", " software engineering ", "AI", ""]',
+            confidence: 0.91,
           },
         },
         mcpHeaders(TEST_CLIENT_IDS.codex),
+        31,
       );
 
       expect(response.status).toBe(200);
@@ -238,22 +259,33 @@ describe('MCP Integration (e2e)', () => {
       });
     });
 
-    it('should deny write tools for fallback', async () => {
-      const response = await mcpPost(
+    it('should hide and deny mutatePreferences for fallback', async () => {
+      const listResponse = await mcpPost(
         {
           jsonrpc: '2.0',
           id: 32,
-          method: 'tools/call',
-          params: {
-            name: 'suggestPreference',
-            arguments: {
-              slug: 'food.dietary_restrictions',
-              value: '["shellfish"]',
-              confidence: 0.8,
-            },
+          method: 'tools/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.fallback),
+      );
+      const toolNames = listResponse.body.result.tools.map(
+        (tool: any) => tool.name,
+      );
+      expect(toolNames).toContain('searchPreferences');
+      expect(toolNames).not.toContain('mutatePreferences');
+
+      const response = await mutatePreferences(
+        {
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'food.dietary_restrictions',
+            value: '["shellfish"]',
+            confidence: 0.8,
           },
         },
         mcpHeaders(TEST_CLIENT_IDS.fallback),
+        32,
       );
 
       expect(response.status).toBe(200);
@@ -294,23 +326,19 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should still allow policy-authorized access when grant claims are absent', async () => {
-      const response = await mcpPost(
+      const response = await mutatePreferences(
         {
-          jsonrpc: '2.0',
-          id: 35,
-          method: 'tools/call',
-          params: {
-            name: 'suggestPreference',
-            arguments: {
-              slug: 'food.dietary_restrictions',
-              value: '["dairy"]',
-              confidence: 0.7,
-            },
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'food.dietary_restrictions',
+            value: '["dairy"]',
+            confidence: 0.7,
           },
         },
         mcpHeaders(TEST_CLIENT_IDS.claude, {
           'x-test-mcp-grants': '__absent__',
         }),
+        35,
       );
 
       expect(response.status).toBe(200);
@@ -380,7 +408,9 @@ describe('MCP Integration (e2e)', () => {
         .post('/oauth/register')
         .set('Content-Type', 'application/json')
         .send({
-          redirect_uris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+          redirect_uris: [
+            'https://chatgpt.com/connector_platform_oauth_redirect',
+          ],
         });
 
       expect(response.status).toBe(201);
@@ -470,7 +500,7 @@ describe('MCP Integration (e2e)', () => {
     });
   });
 
-  describe('createPreferenceDefinition', () => {
+  describe('mutatePreferences operations', () => {
     beforeEach(async () => {
       const prisma = getPrismaClient();
       await seedPreferenceDefinitions(prisma);
@@ -484,25 +514,20 @@ describe('MCP Integration (e2e)', () => {
         params: {},
       });
       const toolNames = response.body.result.tools.map((t: any) => t.name);
-      expect(toolNames).toContain('createPreferenceDefinition');
+      expect(toolNames).toContain('mutatePreferences');
     });
 
     it('should create a new user-owned definition and return normalized shape', async () => {
-      const response = await mcpPost({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'cooking.preferred_oil',
-            description: 'Preferred cooking oil type',
-            valueType: 'ENUM',
-            scope: 'GLOBAL',
-            displayName: 'Cooking Oil',
-            options: ['olive', 'coconut', 'avocado'],
-            isSensitive: false,
-          },
+      const response = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'cooking.preferred_oil',
+          description: 'Preferred cooking oil type',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
+          displayName: 'Cooking Oil',
+          options: ['olive', 'coconut', 'avocado'],
+          isSensitive: false,
         },
       });
 
@@ -513,7 +538,11 @@ describe('MCP Integration (e2e)', () => {
       expect(result.definition.category).toBe('cooking');
       expect(result.definition.valueType).toBe('ENUM');
       expect(result.definition.scope).toBe('GLOBAL');
-      expect(result.definition.options).toEqual(['olive', 'coconut', 'avocado']);
+      expect(result.definition.options).toEqual([
+        'olive',
+        'coconut',
+        'avocado',
+      ]);
       expect(result.definition.visibility).toBe('USER');
       expect(result.definition.id).toBeDefined();
 
@@ -533,22 +562,165 @@ describe('MCP Integration (e2e)', () => {
       expect(auditRows[0].correlationId).toBeTruthy();
     });
 
-    it('should reject a duplicate user slug', async () => {
-      const args = {
-        slug: 'cooking.unique_slug',
-        description: 'First',
-        valueType: 'STRING',
-        scope: 'GLOBAL',
-      };
-      await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: { name: 'createPreferenceDefinition', arguments: args },
+    it('should set an active preference with MCP provenance and inferred source', async () => {
+      const response = await mutatePreferences(
+        {
+          operation: 'SET_PREFERENCE',
+          preference: {
+            slug: 'system.response_length',
+            value: '"brief"',
+            confidence: 0.87,
+            evidence: { source: 'mcp-test', snippet: 'Keep replies brief' },
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(response.status).toBe(200);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result).toMatchObject({
+        success: true,
+        changed: true,
+        operation: 'SET_PREFERENCE',
+        requiredPermission: 'WRITE',
+      });
+      expect(result.preference).toMatchObject({
+        slug: 'system.response_length',
+        value: 'brief',
+        status: 'ACTIVE',
+        sourceType: 'INFERRED',
+        confidence: 0.87,
       });
 
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 2, method: 'tools/call',
-        params: { name: 'createPreferenceDefinition', arguments: args },
+      const stored = await prisma.preference.findUniqueOrThrow({
+        where: { id: result.preference.id },
       });
+      expect(stored.evidence).toEqual({
+        source: 'mcp-test',
+        snippet: 'Keep replies brief',
+      });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SET,
+        },
+      });
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0]).toMatchObject({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: 'codex',
+        origin: AuditOrigin.MCP,
+      });
+      expect(auditRows[0].correlationId).toBeTruthy();
+    });
+
+    it('should update and archive a user-owned definition, then reject archived updates', async () => {
+      const createResponse = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'cooking.pan_material',
+          description: 'Preferred pan material',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      });
+      const created = JSON.parse(createResponse.body.result.content[0].text);
+      const definitionId = created.definition.id;
+
+      const updateResponse = await mutatePreferences({
+        operation: 'UPDATE_DEFINITION',
+        definition: {
+          id: definitionId,
+          displayName: 'Pan Material',
+          description: 'Preferred cookware material',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
+          options: ['cast_iron', 'stainless_steel'],
+        },
+      });
+      const updated = JSON.parse(updateResponse.body.result.content[0].text);
+      expect(updated).toMatchObject({
+        success: true,
+        changed: true,
+        operation: 'UPDATE_DEFINITION',
+        requiredPermission: 'DEFINE',
+      });
+      expect(updated.definition).toMatchObject({
+        id: definitionId,
+        displayName: 'Pan Material',
+        valueType: 'ENUM',
+      });
+
+      const archiveResponse = await mutatePreferences({
+        operation: 'ARCHIVE_DEFINITION',
+        definition: { id: definitionId },
+      });
+      const archived = JSON.parse(archiveResponse.body.result.content[0].text);
+      expect(archived).toMatchObject({
+        success: true,
+        changed: true,
+        operation: 'ARCHIVE_DEFINITION',
+        requiredPermission: 'DEFINE',
+      });
+      expect(archived.definition.archivedAt).toBeTruthy();
+
+      const rejectedUpdateResponse = await mutatePreferences({
+        operation: 'UPDATE_DEFINITION',
+        definition: {
+          id: definitionId,
+          description: 'Should not update archived definitions',
+        },
+      });
+      const rejectedUpdate = JSON.parse(
+        rejectedUpdateResponse.body.result.content[0].text,
+      );
+      expect(rejectedUpdate).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'PREFERENCE_DEFINITION_ARCHIVED',
+      });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: {
+            in: [
+              AuditEventType.DEFINITION_CREATED,
+              AuditEventType.DEFINITION_UPDATED,
+              AuditEventType.DEFINITION_ARCHIVED,
+            ],
+          },
+        },
+      });
+      expect(auditRows.map((row) => row.eventType).sort()).toEqual([
+        AuditEventType.DEFINITION_ARCHIVED,
+        AuditEventType.DEFINITION_CREATED,
+        AuditEventType.DEFINITION_UPDATED,
+      ]);
+      for (const row of auditRows) {
+        expect(row).toMatchObject({
+          actorType: AuditActorType.MCP_CLIENT,
+          actorClientKey: 'claude',
+          origin: AuditOrigin.MCP,
+        });
+        expect(row.correlationId).toBeTruthy();
+      }
+    });
+
+    it('should reject a duplicate user slug', async () => {
+      const args = {
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'cooking.unique_slug',
+          description: 'First',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      };
+      await mutatePreferences(args);
+
+      const response = await mutatePreferences(args, {}, 2);
 
       const result = JSON.parse(response.body.result.content[0].text);
       expect(result.success).toBe(false);
@@ -556,16 +728,13 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should reject a collision with an active global slug', async () => {
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'food.dietary_restrictions', // seeded GLOBAL slug
-            description: 'Duplicate global',
-            valueType: 'ARRAY',
-            scope: 'GLOBAL',
-          },
+      const response = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'food.dietary_restrictions', // seeded GLOBAL slug
+          description: 'Duplicate global',
+          valueType: 'ARRAY',
+          scope: 'GLOBAL',
         },
       });
 
@@ -575,16 +744,13 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should reject an invalid slug format', async () => {
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'INVALID SLUG!',
-            description: 'Bad slug',
-            valueType: 'STRING',
-            scope: 'GLOBAL',
-          },
+      const response = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'INVALID SLUG!',
+          description: 'Bad slug',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
         },
       });
 
@@ -594,16 +760,13 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should reject ENUM type with missing options', async () => {
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'test.enum_no_opts',
-            description: 'Enum without options',
-            valueType: 'ENUM',
-            scope: 'GLOBAL',
-          },
+      const response = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'test.enum_no_opts',
+          description: 'Enum without options',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
         },
       });
 
@@ -613,17 +776,14 @@ describe('MCP Integration (e2e)', () => {
     });
 
     it('should reject options supplied for non-ENUM type', async () => {
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'test.bool_with_opts',
-            description: 'Boolean with options',
-            valueType: 'BOOLEAN',
-            scope: 'GLOBAL',
-            options: ['yes', 'no'],
-          },
+      const response = await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'test.bool_with_opts',
+          description: 'Boolean with options',
+          valueType: 'BOOLEAN',
+          scope: 'GLOBAL',
+          options: ['yes', 'no'],
         },
       });
 
@@ -636,27 +796,33 @@ describe('MCP Integration (e2e)', () => {
       const prisma = getPrismaClient();
 
       const userB = await prisma.user.create({
-        data: { email: 'user-b-def@example.com', firstName: 'User', lastName: 'B' },
+        data: {
+          email: 'user-b-def@example.com',
+          firstName: 'User',
+          lastName: 'B',
+        },
       });
 
       // Create definition as testUser
-      await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'private.user_a_only',
-            description: 'Only for user A',
-            valueType: 'STRING',
-            scope: 'GLOBAL',
-          },
+      await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'private.user_a_only',
+          description: 'Only for user A',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
         },
       });
 
       // List slugs as userB
       registerMcpUser(userB as any);
       const response = await mcpPost(
-        { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'listPreferenceSlugs', arguments: {} } },
+        {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/call',
+          params: { name: 'listPreferenceSlugs', arguments: {} },
+        },
         { 'x-test-user-id': userB.userId },
       );
 
@@ -665,44 +831,91 @@ describe('MCP Integration (e2e)', () => {
       expect(slugs).not.toContain('private.user_a_only');
     });
 
-    it('should allow suggestPreference after createPreferenceDefinition', async () => {
+    it('should allow SUGGEST_PREFERENCE after CREATE_DEFINITION', async () => {
       // Create the definition
-      await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'createPreferenceDefinition',
-          arguments: {
-            slug: 'cooking.spice_level',
-            description: 'Preferred spice level',
-            valueType: 'ENUM',
-            scope: 'GLOBAL',
-            options: ['mild', 'medium', 'hot'],
-          },
+      await mutatePreferences({
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'cooking.spice_level',
+          description: 'Preferred spice level',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
+          options: ['mild', 'medium', 'hot'],
         },
       });
 
       // Now suggest a value for it
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 2, method: 'tools/call',
-        params: {
-          name: 'suggestPreference',
-          arguments: {
+      const response = await mutatePreferences(
+        {
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
             slug: 'cooking.spice_level',
             value: '"hot"',
             confidence: 0.8,
           },
         },
-      });
+        {},
+        2,
+      );
 
       expect(response.status).toBe(200);
       const result = JSON.parse(response.body.result.content[0].text);
       expect(result.success).toBe(true);
       expect(result.preference.slug).toBe('cooking.spice_level');
     });
-  });
 
-  describe('deletePreference', () => {
-    it('should record MCP actor provenance for deletePreference', async () => {
+    it('should return an explicit suppressed no-op when a suggestion was already rejected', async () => {
+      const suggestResponse = await mutatePreferences({
+        operation: 'SUGGEST_PREFERENCE',
+        preference: {
+          slug: 'communication.preferred_channels',
+          value: '["email"]',
+          confidence: 0.7,
+        },
+      });
+      const suggestion = JSON.parse(
+        suggestResponse.body.result.content[0].text,
+      );
+
+      await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            mutation RejectSuggestion($id: ID!) {
+              rejectSuggestedPreference(id: $id)
+            }
+          `,
+          variables: { id: suggestion.preference.id },
+        })
+        .expect(200);
+
+      const resuggestResponse = await mutatePreferences({
+        operation: 'SUGGEST_PREFERENCE',
+        preference: {
+          slug: 'communication.preferred_channels',
+          value: '["email"]',
+          confidence: 0.95,
+        },
+      });
+      const result = JSON.parse(resuggestResponse.body.result.content[0].text);
+      expect(result).toMatchObject({
+        success: true,
+        changed: false,
+        code: 'SUGGESTION_SUPPRESSED',
+        preference: null,
+      });
+
+      expect(
+        await prisma.preferenceAuditEvent.count({
+          where: {
+            userId: testUser.userId,
+            eventType: AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
+          },
+        }),
+      ).toBe(1);
+    });
+
+    it('should record MCP actor provenance for DELETE_PREFERENCE', async () => {
       const createResponse = await request(app.getHttpServer())
         .post('/graphql')
         .send({
@@ -724,25 +937,22 @@ describe('MCP Integration (e2e)', () => {
 
       const preferenceId = createResponse.body.data.setPreference.id;
 
-      const response = await mcpPost(
+      const response = await mutatePreferences(
         {
-          jsonrpc: '2.0',
-          id: 52,
-          method: 'tools/call',
-          params: {
-            name: 'deletePreference',
-            arguments: {
-              id: preferenceId,
-            },
+          operation: 'DELETE_PREFERENCE',
+          preference: {
+            id: preferenceId,
           },
         },
         mcpHeaders(TEST_CLIENT_IDS.codex),
+        52,
       );
 
       expect(response.status).toBe(200);
       const result = JSON.parse(response.body.result.content[0].text);
       expect(result.success).toBe(true);
-      expect(result.deletedId).toBe(preferenceId);
+      expect(result.changed).toBe(true);
+      expect(result.preference.id).toBe(preferenceId);
 
       const auditRows = await prisma.preferenceAuditEvent.findMany({
         where: {
@@ -765,22 +975,17 @@ describe('MCP Integration (e2e)', () => {
       });
       expect(auditRows[0].afterState).toBeNull();
     });
-  });
 
-  describe('suggestPreference unknown-slug structured error', () => {
     it('should return structured guidance when slug is unknown', async () => {
       const prisma = getPrismaClient();
       await seedPreferenceDefinitions(prisma);
 
-      const response = await mcpPost({
-        jsonrpc: '2.0', id: 1, method: 'tools/call',
-        params: {
-          name: 'suggestPreference',
-          arguments: {
-            slug: 'nonexistent.slug_that_does_not_exist',
-            value: '"some value"',
-            confidence: 0.9,
-          },
+      const response = await mutatePreferences({
+        operation: 'SUGGEST_PREFERENCE',
+        preference: {
+          slug: 'nonexistent.slug_that_does_not_exist',
+          value: '"some value"',
+          confidence: 0.9,
         },
       });
 
@@ -789,7 +994,7 @@ describe('MCP Integration (e2e)', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined(); // backward compat: error field always present
       expect(result.code).toBe('UNKNOWN_PREFERENCE_SLUG');
-      expect(result.suggestedTool).toBe('createPreferenceDefinition');
+      expect(result.changed).toBe(false);
     });
   });
 

@@ -37,9 +37,7 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
   });
 
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
-    request(app.getHttpServer())
-      .post('/graphql')
-      .send({ query, variables });
+    request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
   const mcpPost = (body: object, headers: Record<string, string> = {}) =>
     request(app.getHttpServer())
@@ -218,15 +216,19 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     expect(setResponse.body.errors).toBeUndefined();
     const activePreferenceId = setResponse.body.data.setPreference.id as string;
 
-    const firstSuggestionResponse = await graphqlRequest(SUGGEST_PREFERENCE_MUTATION, {
-      input: {
-        slug,
-        value: 'accepted',
-        confidence: 0.9,
+    const firstSuggestionResponse = await graphqlRequest(
+      SUGGEST_PREFERENCE_MUTATION,
+      {
+        input: {
+          slug,
+          value: 'accepted',
+          confidence: 0.9,
+        },
       },
-    }).expect(200);
+    ).expect(200);
     expect(firstSuggestionResponse.body.errors).toBeUndefined();
-    const acceptedSuggestionId = firstSuggestionResponse.body.data.suggestPreference.id as string;
+    const acceptedSuggestionId = firstSuggestionResponse.body.data
+      .suggestPreference.id as string;
 
     await graphqlRequest(ACCEPT_SUGGESTION_MUTATION, {
       id: acceptedSuggestionId,
@@ -236,15 +238,19 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
       id: activePreferenceId,
     }).expect(200);
 
-    const secondSuggestionResponse = await graphqlRequest(SUGGEST_PREFERENCE_MUTATION, {
-      input: {
-        slug,
-        value: 'rejected',
-        confidence: 0.7,
+    const secondSuggestionResponse = await graphqlRequest(
+      SUGGEST_PREFERENCE_MUTATION,
+      {
+        input: {
+          slug,
+          value: 'rejected',
+          confidence: 0.7,
+        },
       },
-    }).expect(200);
+    ).expect(200);
     expect(secondSuggestionResponse.body.errors).toBeUndefined();
-    const rejectedSuggestionId = secondSuggestionResponse.body.data.suggestPreference.id as string;
+    const rejectedSuggestionId = secondSuggestionResponse.body.data
+      .suggestPreference.id as string;
 
     await graphqlRequest(REJECT_SUGGESTION_MUTATION, {
       id: rejectedSuggestionId,
@@ -266,7 +272,9 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     expect(page.hasNextPage).toBe(false);
     expect(page.nextCursor).toBeNull();
     expect(page.items).toHaveLength(9);
-    expect(page.items.every((item: any) => item.subjectSlug === slug)).toBe(true);
+    expect(page.items.every((item: any) => item.subjectSlug === slug)).toBe(
+      true,
+    );
     expect(page.items.map((item: any) => item.eventType)).toEqual(
       expect.arrayContaining([
         'DEFINITION_CREATED',
@@ -305,11 +313,14 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
         id: 1,
         method: 'tools/call',
         params: {
-          name: 'suggestPreference',
+          name: 'mutatePreferences',
           arguments: {
-            slug: 'food.dietary_restrictions',
-            value: '["nuts"]',
-            confidence: 0.9,
+            operation: 'SUGGEST_PREFERENCE',
+            preference: {
+              slug: 'food.dietary_restrictions',
+              value: '["nuts"]',
+              confidence: 0.9,
+            },
           },
         },
       },
@@ -322,11 +333,14 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
         id: 2,
         method: 'tools/call',
         params: {
-          name: 'suggestPreference',
+          name: 'mutatePreferences',
           arguments: {
-            slug: 'system.response_tone',
-            value: '"concise"',
-            confidence: 0.8,
+            operation: 'SUGGEST_PREFERENCE',
+            preference: {
+              slug: 'system.response_tone',
+              value: '"concise"',
+              confidence: 0.8,
+            },
           },
         },
       },
@@ -431,8 +445,13 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
 
     expect(response.body.errors).toBeUndefined();
     const items = response.body.data.preferenceAuditHistory.items;
-    expect(items.map((item: any) => item.id)).toEqual(['audit-food-2', 'audit-food-1']);
-    expect(items.every((item: any) => item.subjectSlug.startsWith('food.'))).toBe(true);
+    expect(items.map((item: any) => item.id)).toEqual([
+      'audit-food-2',
+      'audit-food-1',
+    ]);
+    expect(
+      items.every((item: any) => item.subjectSlug.startsWith('food.')),
+    ).toBe(true);
   });
 
   it('returns a clear GraphQL error for malformed cursors', async () => {
@@ -444,19 +463,24 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
 
     expect(response.body.data).toBeNull();
     expect(response.body.errors).toBeDefined();
-    expect(response.body.errors[0].message).toContain('Invalid audit history cursor');
+    expect(response.body.errors[0].message).toContain(
+      'Invalid audit history cursor',
+    );
   });
 
-  it.each([0, 101])('rejects first=%s outside the supported page-size range', async (first) => {
-    const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
-      input: {
-        first,
-      },
-    }).expect(200);
+  it.each([0, 101])(
+    'rejects first=%s outside the supported page-size range',
+    async (first) => {
+      const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+        input: {
+          first,
+        },
+      }).expect(200);
 
-    expect(response.body.data).toBeNull();
-    expect(response.body.errors?.[0]?.message).toBe('Bad Request Exception');
-  });
+      expect(response.body.data).toBeNull();
+      expect(response.body.errors?.[0]?.message).toBe('Bad Request Exception');
+    },
+  );
 
   it('supports correlationId and date-range filters together', async () => {
     const beforeResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
@@ -491,8 +515,12 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     const response = await graphqlRequest(AUDIT_HISTORY_QUERY, {
       input: {
         correlationId: 'analysis-2',
-        occurredFrom: new Date(auditRow!.occurredAt.getTime() - 1000).toISOString(),
-        occurredTo: new Date(auditRow!.occurredAt.getTime() + 1000).toISOString(),
+        occurredFrom: new Date(
+          auditRow!.occurredAt.getTime() - 1000,
+        ).toISOString(),
+        occurredTo: new Date(
+          auditRow!.occurredAt.getTime() + 1000,
+        ).toISOString(),
       },
     }).expect(200);
 
@@ -518,15 +546,19 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     expect(setResponse.body.errors).toBeUndefined();
     const activePreferenceId = setResponse.body.data.setPreference.id as string;
 
-    const suggestionResponse = await graphqlRequest(SUGGEST_PREFERENCE_MUTATION, {
-      input: {
-        slug,
-        value: 'accepted',
-        confidence: 0.9,
+    const suggestionResponse = await graphqlRequest(
+      SUGGEST_PREFERENCE_MUTATION,
+      {
+        input: {
+          slug,
+          value: 'accepted',
+          confidence: 0.9,
+        },
       },
-    }).expect(200);
+    ).expect(200);
     expect(suggestionResponse.body.errors).toBeUndefined();
-    const acceptedSuggestionId = suggestionResponse.body.data.suggestPreference.id as string;
+    const acceptedSuggestionId = suggestionResponse.body.data.suggestPreference
+      .id as string;
 
     await graphqlRequest(ACCEPT_SUGGESTION_MUTATION, {
       id: acceptedSuggestionId,
@@ -551,7 +583,9 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     const acceptedEvent = items.find(
       (item) => item.eventType === 'PREFERENCE_SUGGESTION_ACCEPTED',
     );
-    const deletedEvent = items.find((item) => item.eventType === 'PREFERENCE_DELETED');
+    const deletedEvent = items.find(
+      (item) => item.eventType === 'PREFERENCE_DELETED',
+    );
 
     expect(definitionCreatedEvent).toMatchObject({
       subjectSlug: slug,
@@ -639,7 +673,9 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
       'audit-target-2',
     ]);
     expect(
-      firstPage.items.every((item: any) => item.subjectSlug === 'food.dietary_restrictions'),
+      firstPage.items.every(
+        (item: any) => item.subjectSlug === 'food.dietary_restrictions',
+      ),
     ).toBe(true);
     expect(firstPage.hasNextPage).toBe(true);
 
@@ -653,9 +689,13 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
 
     expect(secondPageResponse.body.errors).toBeUndefined();
     const secondPage = secondPageResponse.body.data.preferenceAuditHistory;
-    expect(secondPage.items.map((item: any) => item.id)).toEqual(['audit-target-1']);
+    expect(secondPage.items.map((item: any) => item.id)).toEqual([
+      'audit-target-1',
+    ]);
     expect(
-      secondPage.items.every((item: any) => item.subjectSlug === 'food.dietary_restrictions'),
+      secondPage.items.every(
+        (item: any) => item.subjectSlug === 'food.dietary_restrictions',
+      ),
     ).toBe(true);
     expect(secondPage.hasNextPage).toBe(false);
     expect(secondPage.nextCursor).toBeNull();
@@ -695,9 +735,11 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     }).expect(200);
 
     expect(primaryResponse.body.errors).toBeUndefined();
-    expect(primaryResponse.body.data.preferenceAuditHistory.items.map((item: any) => item.id)).toEqual([
-      'audit-primary-user',
-    ]);
+    expect(
+      primaryResponse.body.data.preferenceAuditHistory.items.map(
+        (item: any) => item.id,
+      ),
+    ).toEqual(['audit-primary-user']);
 
     setTestUser(secondaryUser);
 
@@ -709,7 +751,9 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
 
     expect(secondaryResponse.body.errors).toBeUndefined();
     expect(
-      secondaryResponse.body.data.preferenceAuditHistory.items.map((item: any) => item.id),
+      secondaryResponse.body.data.preferenceAuditHistory.items.map(
+        (item: any) => item.id,
+      ),
     ).toEqual(['audit-secondary-user']);
   });
 });

@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 
+type GrantAction = 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE';
+
 interface PermissionGrant {
   id: string;
   clientKey: string;
   target: string;
-  action: 'READ' | 'WRITE';
+  action: GrantAction;
   effect: 'ALLOW' | 'DENY';
   createdAt: string;
   updatedAt: string;
@@ -85,7 +87,7 @@ export default function PermissionsClient({
   const [grants, setGrants] = useState(initialGrants);
   const [clientKey, setClientKey] = useState<ClientKey>('claude');
   const [target, setTarget] = useState('');
-  const [action, setAction] = useState<'READ' | 'WRITE'>('READ');
+  const [action, setAction] = useState<GrantAction>('READ');
   const [effect, setEffect] = useState<'ALLOW' | 'DENY'>('DENY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,10 +99,9 @@ export default function PermissionsClient({
   );
 
   const refreshGrants = async () => {
-    const data = await graphQlRequest<{ myPermissionGrants: PermissionGrant[] }>(
-      accessToken,
-      QUERY,
-    );
+    const data = await graphQlRequest<{
+      myPermissionGrants: PermissionGrant[];
+    }>(accessToken, QUERY);
     setGrants(data.myPermissionGrants);
   };
 
@@ -122,7 +123,9 @@ export default function PermissionsClient({
       await refreshGrants();
     } catch (submitError) {
       setError(
-        submitError instanceof Error ? submitError.message : 'Failed to save grant',
+        submitError instanceof Error
+          ? submitError.message
+          : 'Failed to save grant',
       );
     } finally {
       setIsSubmitting(false);
@@ -142,7 +145,9 @@ export default function PermissionsClient({
       await refreshGrants();
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error ? deleteError.message : 'Failed to delete grant',
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Failed to delete grant',
       );
     } finally {
       setIsSubmitting(false);
@@ -172,7 +177,9 @@ export default function PermissionsClient({
             <span className="block font-medium text-gray-700 mb-1">Client</span>
             <select
               value={clientKey}
-              onChange={(event) => setClientKey(event.target.value as ClientKey)}
+              onChange={(event) =>
+                setClientKey(event.target.value as ClientKey)
+              }
               className="w-full border border-gray-300 rounded px-3 py-2"
             >
               <option value="claude">claude</option>
@@ -185,13 +192,13 @@ export default function PermissionsClient({
             <span className="block font-medium text-gray-700 mb-1">Action</span>
             <select
               value={action}
-              onChange={(event) =>
-                setAction(event.target.value as 'READ' | 'WRITE')
-              }
+              onChange={(event) => setAction(event.target.value as GrantAction)}
               className="w-full border border-gray-300 rounded px-3 py-2"
             >
               <option value="READ">READ</option>
+              <option value="SUGGEST">SUGGEST</option>
               <option value="WRITE">WRITE</option>
+              <option value="DEFINE">DEFINE</option>
             </select>
           </label>
 
@@ -214,7 +221,7 @@ export default function PermissionsClient({
             <input
               value={target}
               onChange={(event) => setTarget(event.target.value)}
-              placeholder='*, food.*, food.french.*, food.dietary_restrictions'
+              placeholder="*, food.*, food.french.*, food.dietary_restrictions"
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </label>
@@ -234,7 +241,9 @@ export default function PermissionsClient({
         </div>
 
         {error ? (
-          <div className="p-3 rounded bg-red-50 text-red-700 text-sm">{error}</div>
+          <div className="p-3 rounded bg-red-50 text-red-700 text-sm">
+            {error}
+          </div>
         ) : null}
       </form>
 
@@ -264,7 +273,9 @@ export default function PermissionsClient({
                 {sortedGrants.map((grant) => (
                   <tr key={grant.id} className="border-t">
                     <td className="px-6 py-3">{grant.clientKey}</td>
-                    <td className="px-6 py-3 font-mono text-xs">{grant.target}</td>
+                    <td className="px-6 py-3 font-mono text-xs">
+                      {grant.target}
+                    </td>
                     <td className="px-6 py-3">{grant.action}</td>
                     <td className="px-6 py-3">
                       <span

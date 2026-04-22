@@ -8,6 +8,13 @@ import {
   ResolvedMcpClient,
 } from '../types/mcp-authorization.types';
 
+const VALUE_ACCESS_CHAIN: Record<McpAccess['action'], McpAccess['action'][]> = {
+  read: ['read'],
+  suggest: ['read', 'suggest'],
+  write: ['read', 'suggest', 'write'],
+  define: ['define'],
+};
+
 export class McpAuthorizationError extends Error {
   constructor(
     message: string,
@@ -32,8 +39,16 @@ export class McpAuthorizationService {
       return 'preferences:read';
     }
 
+    if (access.resource === 'preferences' && access.action === 'suggest') {
+      return 'preferences:suggest';
+    }
+
     if (access.resource === 'preferences' && access.action === 'write') {
       return 'preferences:write';
+    }
+
+    if (access.resource === 'preferences' && access.action === 'define') {
+      return 'preferences:define';
     }
 
     throw new Error(
@@ -41,16 +56,21 @@ export class McpAuthorizationService {
     );
   }
 
+  normalizeAccessList(access: McpAccess | readonly McpAccess[]): McpAccess[] {
+    return Array.isArray(access) ? [...access] : [access as McpAccess];
+  }
+
   getEffectiveCapabilities(
     client: ResolvedMcpClient,
     grants?: McpCapability[],
   ): McpCapability[] {
-    const policyCaps = new Set(client.policy.capabilities);
+    const policyCaps = this.expandCapabilities(client.policy.capabilities);
     if (!grants) {
       return [...policyCaps];
     }
 
-    return [...policyCaps].filter((capability) => grants.includes(capability));
+    const grantCaps = this.expandCapabilities(grants);
+    return [...policyCaps].filter((capability) => grantCaps.has(capability));
   }
 
   canAccess(
@@ -70,6 +90,41 @@ export class McpAuthorizationService {
       return true;
     }
 
+    for (const action of this.getActionChain(access.action)) {
+      const chainedAccess: McpAccess = {
+        resource: access.resource,
+        action,
+      };
+      const chainedCapability = this.toCapability(chainedAccess);
+
+      if (!effectiveCapabilities.includes(chainedCapability)) {
+        return false;
+      }
+
+      if (!this.canAccessTargetRule(client, chainedCapability, target)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  canAccessAny(
+    client: ResolvedMcpClient,
+    access: McpAccess | readonly McpAccess[],
+    grants?: McpCapability[],
+    target?: McpTarget,
+  ): boolean {
+    return this.normalizeAccessList(access).some((entry) =>
+      this.canAccess(client, entry, grants, target),
+    );
+  }
+
+  private canAccessTargetRule(
+    client: ResolvedMcpClient,
+    capability: McpCapability,
+    target: McpTarget,
+  ): boolean {
     const relevantRules = client.policy.targetRules.filter(
       (rule) => rule.capability === capability,
     );
@@ -138,14 +193,20 @@ export class McpAuthorizationService {
       return true;
     }
 
-    const decision = await this.permissionGrantService.evaluateAccess(
-      userId,
-      client.key,
-      access.action,
-      target.slug,
-    );
+    for (const action of this.getActionChain(access.action)) {
+      const decision = await this.permissionGrantService.evaluateAccess(
+        userId,
+        client.key,
+        action,
+        target.slug,
+      );
 
-    return decision !== 'deny';
+      if (decision === 'deny') {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   async assertAccessTarget(
@@ -156,9 +217,7 @@ export class McpAuthorizationService {
     surface: string,
     target: McpTarget,
   ): Promise<void> {
-    if (
-      await this.canAccessTarget(client, access, grants, userId, target)
-    ) {
+    if (await this.canAccessTarget(client, access, grants, userId, target)) {
       return;
     }
 
@@ -198,12 +257,40 @@ export class McpAuthorizationService {
       return [];
     }
 
-    return this.permissionGrantService.filterSlugsByAccess(
-      userId,
-      client.key,
-      access.action,
-      coarseAllowedSlugs,
-    );
+    let allowedSlugs = coarseAllowedSlugs;
+    for (const action of this.getActionChain(access.action)) {
+      allowedSlugs = await this.permissionGrantService.filterSlugsByAccess(
+        userId,
+        client.key,
+        action,
+        allowedSlugs,
+      );
+    }
+
+    return allowedSlugs;
+  }
+
+  private expandCapabilities(
+    capabilities: readonly McpCapability[],
+  ): Set<McpCapability> {
+    const expanded = new Set<McpCapability>();
+
+    for (const capability of capabilities) {
+      expanded.add(capability);
+      if (capability === 'preferences:suggest') {
+        expanded.add('preferences:read');
+      }
+      if (capability === 'preferences:write') {
+        expanded.add('preferences:read');
+        expanded.add('preferences:suggest');
+      }
+    }
+
+    return expanded;
+  }
+
+  private getActionChain(action: McpAccess['action']): McpAccess['action'][] {
+    return VALUE_ACCESS_CHAIN[action];
   }
 
   private matchesTarget(rule: McpTargetRule, target: McpTarget): boolean {

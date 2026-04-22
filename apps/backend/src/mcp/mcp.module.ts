@@ -7,11 +7,8 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { WorkflowsModule } from '@/modules/workflows/workflows.module';
 import { PermissionGrantModule } from '@/modules/permission-grant/permission-grant.module';
 import { PreferenceSearchTool } from './tools/preference-search.tool';
-import { PreferenceMutationTool } from './tools/preference-mutation.tool';
 import { PreferenceListTool } from './tools/preference-list.tool';
-import { PreferenceDefinitionTool } from './tools/preference-definition.tool';
-import { PreferenceSuggestTool } from './tools/preference-suggest.tool';
-import { PreferenceDeleteTool } from './tools/preference-delete.tool';
+import { PreferenceMutateTool } from './tools/preference-mutate.tool';
 import { SmartSearchTool } from './tools/smart-search.tool';
 import { SchemaConsolidationTool } from './tools/schema-consolidation.tool';
 import { PermissionGrantListTool } from './tools/permission-grant-list.tool';
@@ -38,14 +35,10 @@ import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
   controllers: [McpController, OAuthMetadataController, DcrShimController],
   providers: [
     McpService,
-    // Shared provider (not registered as an MCP tool)
-    PreferenceMutationTool,
     // Tool classes
     PreferenceListTool,
     PreferenceSearchTool,
-    PreferenceDefinitionTool,
-    PreferenceSuggestTool,
-    PreferenceDeleteTool,
+    PreferenceMutateTool,
     SmartSearchTool,
     SchemaConsolidationTool,
     PermissionGrantListTool,
@@ -55,18 +48,14 @@ import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
       useFactory: (
         list: PreferenceListTool,
         search: PreferenceSearchTool,
-        definition: PreferenceDefinitionTool,
-        suggest: PreferenceSuggestTool,
-        del: PreferenceDeleteTool,
+        mutate: PreferenceMutateTool,
         smartSearch: SmartSearchTool,
         consolidation: SchemaConsolidationTool,
         permissionGrantList: PermissionGrantListTool,
       ) => [
         list,
         search,
-        definition,
-        suggest,
-        del,
+        mutate,
         smartSearch,
         consolidation,
         permissionGrantList,
@@ -74,9 +63,7 @@ import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
       inject: [
         PreferenceListTool,
         PreferenceSearchTool,
-        PreferenceDefinitionTool,
-        PreferenceSuggestTool,
-        PreferenceDeleteTool,
+        PreferenceMutateTool,
         SmartSearchTool,
         SchemaConsolidationTool,
         PermissionGrantListTool,

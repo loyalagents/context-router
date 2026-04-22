@@ -5,6 +5,13 @@ import {
 } from '../types/mcp-authorization.types';
 import { PermissionGrantService } from '../../modules/permission-grant/permission-grant.service';
 
+const FULL_CAPABILITIES = [
+  'preferences:read',
+  'preferences:suggest',
+  'preferences:write',
+  'preferences:define',
+] as const;
+
 function createClient(
   overrides: Partial<ResolvedMcpClient> = {},
 ): ResolvedMcpClient {
@@ -14,7 +21,7 @@ function createClient(
     policy: {
       key: 'claude',
       label: 'Claude',
-      capabilities: ['preferences:read', 'preferences:write'],
+      capabilities: [...FULL_CAPABILITIES],
       targetRules: [],
     },
     ...overrides,
@@ -48,9 +55,54 @@ describe('McpAuthorizationService', () => {
     ).toBe(true);
   });
 
+  it('treats write as including read and suggest capabilities', () => {
+    const client = createClient({
+      policy: {
+        key: 'claude',
+        label: 'Claude',
+        capabilities: ['preferences:write'],
+        targetRules: [],
+      },
+    });
+
+    expect(
+      service.canAccess(client, { resource: 'preferences', action: 'read' }),
+    ).toBe(true);
+    expect(
+      service.canAccess(client, { resource: 'preferences', action: 'suggest' }),
+    ).toBe(true);
+    expect(
+      service.canAccess(client, { resource: 'preferences', action: 'write' }),
+    ).toBe(true);
+    expect(
+      service.canAccess(client, { resource: 'preferences', action: 'define' }),
+    ).toBe(false);
+  });
+
+  it('checks any access declaration for multi-operation tools', () => {
+    const client = createClient({
+      policy: {
+        key: 'claude',
+        label: 'Claude',
+        capabilities: ['preferences:define'],
+        targetRules: [],
+      },
+    });
+
+    expect(
+      service.canAccessAny(client, [
+        { resource: 'preferences', action: 'suggest' },
+        { resource: 'preferences', action: 'write' },
+        { resource: 'preferences', action: 'define' },
+      ]),
+    ).toBe(true);
+  });
+
   it('treats empty or non-mcp grant sets as absent', () => {
     expect(normalizeMcpGrants([])).toBeUndefined();
-    expect(normalizeMcpGrants(['openid', 'profile', 'offline_access'])).toBeUndefined();
+    expect(
+      normalizeMcpGrants(['openid', 'profile', 'offline_access']),
+    ).toBeUndefined();
   });
 
   it('intersects policy capabilities with normalized grants when present', () => {
@@ -102,7 +154,7 @@ describe('McpAuthorizationService', () => {
       policy: {
         key: 'claude',
         label: 'Claude',
-        capabilities: ['preferences:read', 'preferences:write'],
+        capabilities: [...FULL_CAPABILITIES],
         targetRules: [
           {
             effect: 'allow',
@@ -148,7 +200,7 @@ describe('McpAuthorizationService', () => {
       policy: {
         key: 'claude',
         label: 'Claude',
-        capabilities: ['preferences:read', 'preferences:write'],
+        capabilities: [...FULL_CAPABILITIES],
         targetRules: [
           {
             effect: 'allow',
@@ -204,7 +256,7 @@ describe('McpAuthorizationService', () => {
         policy: {
           key: 'claude',
           label: 'Claude',
-          capabilities: ['preferences:read', 'preferences:write'],
+          capabilities: [...FULL_CAPABILITIES],
           targetRules: [
             {
               effect: 'deny',
@@ -236,7 +288,7 @@ describe('McpAuthorizationService', () => {
         policy: {
           key: 'claude',
           label: 'Claude',
-          capabilities: ['preferences:read', 'preferences:write'],
+          capabilities: [...FULL_CAPABILITIES],
           targetRules: [
             {
               effect: 'allow',
@@ -267,7 +319,7 @@ describe('McpAuthorizationService', () => {
         policy: {
           key: 'claude',
           label: 'Claude',
-          capabilities: ['preferences:read', 'preferences:write'],
+          capabilities: [...FULL_CAPABILITIES],
           targetRules: [
             {
               effect: 'deny',
@@ -310,6 +362,31 @@ describe('McpAuthorizationService', () => {
         ),
       ).resolves.toBe(true);
     });
+
+    it('checks lower value actions before allowing writes', async () => {
+      const client = createClient();
+      permissionGrantService.evaluateAccess.mockResolvedValueOnce('deny');
+
+      await expect(
+        service.canAccessTarget(
+          client,
+          {
+            resource: 'preferences',
+            action: 'write',
+          },
+          undefined,
+          'user-1',
+          { slug: 'health.medical_notes' },
+        ),
+      ).resolves.toBe(false);
+
+      expect(permissionGrantService.evaluateAccess).toHaveBeenCalledWith(
+        'user-1',
+        'claude',
+        'read',
+        'health.medical_notes',
+      );
+    });
   });
 
   describe('filterByTargetAccess', () => {
@@ -338,6 +415,45 @@ describe('McpAuthorizationService', () => {
         'read',
         ['food.dietary_restrictions', 'system.response_tone'],
       );
+    });
+
+    it('filters write access through read, suggest, and write grants', async () => {
+      const client = createClient();
+      permissionGrantService.filterSlugsByAccess
+        .mockResolvedValueOnce(['food.likes', 'system.response_tone'])
+        .mockResolvedValueOnce(['system.response_tone'])
+        .mockResolvedValueOnce(['system.response_tone']);
+
+      await expect(
+        service.filterByTargetAccess(
+          client,
+          {
+            resource: 'preferences',
+            action: 'write',
+          },
+          undefined,
+          'user-1',
+          ['food.likes', 'system.response_tone'],
+        ),
+      ).resolves.toEqual(['system.response_tone']);
+
+      expect(
+        permissionGrantService.filterSlugsByAccess,
+      ).toHaveBeenNthCalledWith(1, 'user-1', 'claude', 'read', [
+        'food.likes',
+        'system.response_tone',
+      ]);
+      expect(
+        permissionGrantService.filterSlugsByAccess,
+      ).toHaveBeenNthCalledWith(2, 'user-1', 'claude', 'suggest', [
+        'food.likes',
+        'system.response_tone',
+      ]);
+      expect(
+        permissionGrantService.filterSlugsByAccess,
+      ).toHaveBeenNthCalledWith(3, 'user-1', 'claude', 'write', [
+        'system.response_tone',
+      ]);
     });
   });
 });

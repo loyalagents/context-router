@@ -36,9 +36,8 @@ describe('MCP Access Log (e2e)', () => {
     const testApp = await createTestApp();
     app = testApp.app;
     setTestUser = testApp.setTestUser;
-    accessLogService = testApp.module.get<McpAccessLogService>(
-      McpAccessLogService,
-    );
+    accessLogService =
+      testApp.module.get<McpAccessLogService>(McpAccessLogService);
     mocks = testApp.mocks;
   });
 
@@ -79,6 +78,11 @@ describe('MCP Access Log (e2e)', () => {
       headers,
     );
 
+  const mutatePreferences = (
+    args: object = {},
+    headers: Record<string, string> = {},
+  ) => callTool('mutatePreferences', args, headers);
+
   const readResource = (uri: string, headers: Record<string, string> = {}) =>
     mcpPost(
       {
@@ -114,9 +118,7 @@ describe('MCP Access Log (e2e)', () => {
   `;
 
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
-    request(app.getHttpServer())
-      .post('/graphql')
-      .send({ query, variables });
+    request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
   it('records searchPreferences success with sanitized metadata', async () => {
     const definition = await prisma.preferenceDefinition.findFirstOrThrow({
@@ -383,74 +385,117 @@ describe('MCP Access Log (e2e)', () => {
     ).resolves.toBe(0);
   });
 
-  it('does not create access rows for known write tools but keeps mutation audit correlation ids', async () => {
-    const suggestResponse = await callTool(
-      'suggestPreference',
+  it('records mutatePreferences success, validation errors, and denials with sanitized metadata', async () => {
+    const successResponse = await mutatePreferences(
       {
-        slug: 'food.dietary_restrictions',
-        value: '["nuts"]',
-        confidence: 0.9,
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'system.response_length',
+          value: '"brief"',
+          confidence: 0.8,
+          evidence: {
+            source: 'access-log-test',
+            snippet: 'Do not store this raw evidence in MCP access logs',
+          },
+        },
       },
       mcpHeaders(TEST_CLIENT_IDS.codex),
     );
 
-    expect(suggestResponse.status).toBe(200);
-    expect(suggestResponse.body.result?.isError).not.toBe(true);
-    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+    expect(successResponse.status).toBe(200);
+    expect(successResponse.body.result?.isError).not.toBe(true);
 
-    const createDefinitionResponse = await callTool(
-      'createPreferenceDefinition',
+    const invalidResponse = await mutatePreferences(
       {
-        slug: 'access_log.created_definition',
-        description: 'Definition created by MCP access-log e2e coverage',
-        valueType: 'STRING',
-        scope: 'GLOBAL',
+        operation: 'NOT_A_REAL_OPERATION',
       },
       mcpHeaders(TEST_CLIENT_IDS.codex),
     );
+    expect(invalidResponse.status).toBe(200);
+    expect(invalidResponse.body.result?.isError).toBe(true);
 
-    expect(createDefinitionResponse.status).toBe(200);
-    expect(createDefinitionResponse.body.result?.isError).not.toBe(true);
-    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
-
-    const definition = await prisma.preferenceDefinition.findFirstOrThrow({
-      where: { slug: 'system.response_tone' },
-    });
-    const preference = await prisma.preference.create({
+    await prisma.permissionGrant.create({
       data: {
         userId: testUser.userId,
-        definitionId: definition.id,
-        contextKey: 'GLOBAL',
-        value: JSON.stringify('brief'),
-        status: 'ACTIVE',
-        sourceType: 'USER',
+        clientKey: 'codex',
+        target: 'food.*',
+        action: 'SUGGEST',
+        effect: 'DENY',
       },
     });
 
-    const deleteResponse = await callTool(
-      'deletePreference',
-      { id: preference.id },
+    const deniedResponse = await mutatePreferences(
+      {
+        operation: 'SUGGEST_PREFERENCE',
+        preference: {
+          slug: 'food.dietary_restrictions',
+          value: '["nuts"]',
+          confidence: 0.9,
+        },
+      },
       mcpHeaders(TEST_CLIENT_IDS.codex),
     );
+    expect(deniedResponse.status).toBe(200);
+    expect(deniedResponse.body.result?.isError).toBe(true);
 
-    expect(deleteResponse.status).toBe(200);
-    expect(deleteResponse.body.result?.isError).not.toBe(true);
-    await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+    const events = await prisma.mcpAccessEvent.findMany({
+      where: {
+        userId: testUser.userId,
+        operationName: 'mutatePreferences',
+      },
+      orderBy: { occurredAt: 'asc' },
+    });
+
+    expect(events).toHaveLength(3);
+    expect(events[0]).toMatchObject({
+      clientKey: 'codex',
+      surface: McpAccessSurface.TOOLS_CALL,
+      outcome: McpAccessOutcome.SUCCESS,
+      requestMetadata: {
+        operation: 'SET_PREFERENCE',
+        target: 'system.response_length',
+        requiredPermission: 'WRITE',
+      },
+      responseMetadata: expect.objectContaining({
+        success: true,
+        changed: true,
+        preferenceId: expect.any(String),
+        definitionId: null,
+      }),
+    });
+    expect(events[1]).toMatchObject({
+      outcome: McpAccessOutcome.ERROR,
+      errorMetadata: expect.objectContaining({
+        source: 'TOOL_RESULT',
+        code: 'INVALID_MUTATION_OPERATION',
+      }),
+    });
+    expect(events[2]).toMatchObject({
+      outcome: McpAccessOutcome.DENY,
+      requestMetadata: {
+        operation: 'SUGGEST_PREFERENCE',
+        target: 'food.dietary_restrictions',
+        requiredPermission: 'SUGGEST',
+      },
+      errorMetadata: expect.objectContaining({
+        source: 'AUTHORIZATION',
+        code: 'MCP_PERMISSION_DENIED',
+      }),
+    });
+
+    const serializedEvents = JSON.stringify(events);
+    expect(serializedEvents).not.toContain('brief');
+    expect(serializedEvents).not.toContain('access-log-test');
+    expect(serializedEvents).not.toContain('nuts');
 
     const auditRows = await prisma.preferenceAuditEvent.findMany({
       where: {
         userId: testUser.userId,
+        eventType: AuditEventType.PREFERENCE_SET,
       },
     });
-    expect(auditRows).toHaveLength(3);
-    expect(auditRows.map((row) => row.eventType)).toEqual(
-      expect.arrayContaining([
-        AuditEventType.PREFERENCE_SUGGESTED_UPSERTED,
-        AuditEventType.DEFINITION_CREATED,
-        AuditEventType.PREFERENCE_DELETED,
-      ]),
-    );
-    expect(auditRows.every((row) => Boolean(row.correlationId))).toBe(true);
+    expect(auditRows).toHaveLength(1);
+    expect(auditRows[0].correlationId).toBe(events[0].correlationId);
   });
 
   it('does not fail the MCP response when access logging fails', async () => {
@@ -478,9 +523,7 @@ describe('MCP Access Log (e2e)', () => {
     try {
       const successResponse = await readResource('schema://graphql');
       expect(successResponse.status).toBe(200);
-      expect(successResponse.body.result?.contents).toEqual(
-        expect.any(Array),
-      );
+      expect(successResponse.body.result?.contents).toEqual(expect.any(Array));
 
       const errorResponse = await readResource('schema://missing');
       expect(errorResponse.status).toBe(200);

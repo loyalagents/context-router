@@ -13,12 +13,14 @@ export type ManagedMcpClientKey = (typeof MANAGED_MCP_CLIENT_KEYS)[number];
 
 export interface McpAccess {
   resource: 'preferences';
-  action: 'read' | 'write';
+  action: 'read' | 'suggest' | 'write' | 'define';
 }
 
 export const MCP_CAPABILITIES = [
   'preferences:read',
+  'preferences:suggest',
   'preferences:write',
+  'preferences:define',
 ] as const;
 
 export type McpCapability = (typeof MCP_CAPABILITIES)[number];
@@ -66,7 +68,9 @@ export function isMcpCapability(value: string): value is McpCapability {
   return (MCP_CAPABILITIES as readonly string[]).includes(value);
 }
 
-export function normalizeMcpGrants(grants: string[] | undefined): McpCapability[] | undefined {
+export function normalizeMcpGrants(
+  grants: string[] | undefined,
+): McpCapability[] | undefined {
   if (!grants || grants.length === 0) {
     return undefined;
   }

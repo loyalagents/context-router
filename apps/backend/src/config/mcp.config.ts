@@ -7,7 +7,12 @@ export default registerAs('mcp', () => {
     {
       key: 'claude',
       label: 'Claude',
-      capabilities: ['preferences:read', 'preferences:write'],
+      capabilities: [
+        'preferences:read',
+        'preferences:suggest',
+        'preferences:write',
+        'preferences:define',
+      ],
       targetRules: [],
       oauth: {
         clientId: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID,
@@ -25,7 +30,12 @@ export default registerAs('mcp', () => {
     {
       key: 'codex',
       label: 'Codex',
-      capabilities: ['preferences:read', 'preferences:write'],
+      capabilities: [
+        'preferences:read',
+        'preferences:suggest',
+        'preferences:write',
+        'preferences:define',
+      ],
       targetRules: [],
       oauth: {
         clientId: process.env.AUTH0_MCP_CODEX_CLIENT_ID,
@@ -72,7 +82,12 @@ export default registerAs('mcp', () => {
         ? process.env.MCP_HTTP_ALLOWED_ORIGINS.split(',')
         : process.env.CORS_ORIGIN
           ? process.env.CORS_ORIGIN.split(',')
-          : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3002'],
+          : [
+              'http://localhost:3000',
+              'http://localhost:3001',
+              'http://localhost:3002',
+              'http://127.0.0.1:3002',
+            ],
     },
 
     // Stdio Transport Configuration
@@ -125,7 +140,13 @@ export default registerAs('mcp', () => {
       },
 
       // Scopes supported by MCP tools
-      scopes: ['preferences:read', 'preferences:write', 'offline_access'],
+      scopes: [
+        'preferences:read',
+        'preferences:suggest',
+        'preferences:write',
+        'preferences:define',
+        'offline_access',
+      ],
 
       // Rate limiting for /oauth/register
       rateLimit: {

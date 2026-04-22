@@ -124,7 +124,9 @@ type FilteredSuggestion {
 
 """The action covered by a permission grant"""
 enum GrantAction {
+  DEFINE
   READ
+  SUGGEST
   WRITE
 }
 
