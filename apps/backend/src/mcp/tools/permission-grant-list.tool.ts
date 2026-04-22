@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { PermissionGrantRepository } from '@modules/permission-grant/permission-grant.repository';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 @Injectable()
 export class PermissionGrantListTool implements McpToolInterface {
@@ -29,34 +30,57 @@ export class PermissionGrantListTool implements McpToolInterface {
 
   constructor(private readonly repository: PermissionGrantRepository) {}
 
-  async execute(_: unknown, context?: McpContext): Promise<CallToolResult> {
-    const grants = await this.repository.findByUserAndClient(
-      context!.user.userId,
-      context!.client.key,
-    );
+  async execute(_: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
+    try {
+      const grants = await this.repository.findByUserAndClient(
+        context!.user.userId,
+        context!.client.key,
+      );
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(
+      return {
+        result: {
+          content: [
             {
-              success: true,
-              grants: grants.map((grant) => ({
-                id: grant.id,
-                clientKey: grant.clientKey,
-                target: grant.target,
-                action: grant.action,
-                effect: grant.effect,
-                createdAt: grant.createdAt,
-                updatedAt: grant.updatedAt,
-              })),
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: true,
+                  grants: grants.map((grant) => ({
+                    id: grant.id,
+                    clientKey: grant.clientKey,
+                    target: grant.target,
+                    action: grant.action,
+                    effect: grant.effect,
+                    createdAt: grant.createdAt,
+                    updatedAt: grant.updatedAt,
+                  })),
+                },
+                null,
+                2,
+              ),
             },
-            null,
-            2,
-          ),
+          ],
         },
-      ],
-    };
+        accessLog: {
+          responseMetadata: {
+            grantCount: grants.length,
+          },
+        },
+      };
+    } catch (error) {
+      return {
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
+        accessLog: {
+          errorMetadata: {
+            message: error.message,
+          },
+        },
+      };
+    }
   }
 }

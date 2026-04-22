@@ -156,6 +156,54 @@ enum LocationType {
   WORK
 }
 
+type McpAccessEvent {
+  clientKey: String!
+  correlationId: String!
+  errorMetadata: JSON
+  id: ID!
+  latencyMs: Float!
+  occurredAt: DateTime!
+  operationName: String!
+  outcome: McpAccessOutcome!
+  requestMetadata: JSON
+  responseMetadata: JSON
+  surface: McpAccessSurface!
+  userId: String!
+}
+
+input McpAccessHistoryInput {
+  after: String
+  clientKey: String
+  correlationId: String
+
+  """Page size. Defaults to 20 and is capped at 100."""
+  first: Int = 20
+  occurredFrom: DateTime
+  occurredTo: DateTime
+  operationName: String
+  outcome: McpAccessOutcome
+  surface: McpAccessSurface
+}
+
+type McpAccessHistoryPage {
+  hasNextPage: Boolean!
+  items: [McpAccessEvent!]!
+  nextCursor: String
+}
+
+"""The result of an MCP access event"""
+enum McpAccessOutcome {
+  DENY
+  ERROR
+  SUCCESS
+}
+
+"""The MCP surface where an access event occurred"""
+enum McpAccessSurface {
+  RESOURCES_READ
+  TOOLS_CALL
+}
+
 type Mutation {
   """Accept a suggestion, promoting it to ACTIVE"""
   acceptSuggestedPreference(id: ID!): Preference!
@@ -386,6 +434,11 @@ type Query {
   location(locationId: String!): Location!
   locations: [Location!]!
   locationsByType(type: LocationType!): [Location!]!
+
+  """
+  Get MCP access history for the current user with cursor pagination and filters.
+  """
+  mcpAccessHistory(input: McpAccessHistoryInput!): McpAccessHistoryPage!
 
   """Get current authenticated user"""
   me: User!

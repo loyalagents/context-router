@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { PreferenceSearchWorkflow } from '@modules/workflows/preferences/preference-search/preference-search.workflow';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 @Injectable()
 export class SmartSearchTool implements McpToolInterface {
@@ -48,7 +49,7 @@ export class SmartSearchTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
     const params = args as {
       query: string;
       locationId?: string;
@@ -103,9 +104,26 @@ export class SmartSearchTool implements McpToolInterface {
       };
 
       return {
-        content: [
-          { type: 'text', text: JSON.stringify(filteredResult, null, 2) },
-        ],
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify(filteredResult, null, 2) },
+          ],
+        },
+        accessLog: {
+          requestMetadata: {
+            locationId: params.locationId ?? null,
+            includeSuggestions: params.includeSuggestions === true,
+            queryPresent: Boolean(params.query),
+            queryLength: params.query?.length ?? 0,
+          },
+          responseMetadata: {
+            matchedDefinitionCount: filteredResult.matchedDefinitions.length,
+            matchedActiveCount:
+              filteredResult.matchedActivePreferences.length,
+            matchedSuggestedCount:
+              filteredResult.matchedSuggestedPreferences.length,
+          },
+        },
       };
     } catch (error) {
       this.logger.error(
@@ -113,10 +131,23 @@ export class SmartSearchTool implements McpToolInterface {
         error.stack,
       );
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
+        accessLog: {
+          requestMetadata: {
+            locationId: params.locationId ?? null,
+            includeSuggestions: params.includeSuggestions === true,
+            queryPresent: Boolean(params.query),
+            queryLength: params.query?.length ?? 0,
+          },
+          errorMetadata: {
+            message: error.message,
+          },
+        },
       };
     }
   }

@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 interface SearchPreferencesParams {
   query?: string;
@@ -57,21 +58,64 @@ export class PreferenceSearchTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
+    const params = args as SearchPreferencesParams;
     try {
       const result = await this.search(
-        args as SearchPreferencesParams,
+        params,
         context!,
       );
+      const searchResult = result as {
+        success: boolean;
+        active?: { count: number };
+        suggested?: { count: number };
+        error?: string;
+      };
+      const activeCount = searchResult.success ? searchResult.active?.count ?? 0 : 0;
+      const suggestedCount =
+        searchResult.success && searchResult.suggested
+          ? searchResult.suggested.count
+          : 0;
+
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        result: {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        },
+        accessLog: {
+          requestMetadata: {
+            locationId: params.locationId ?? null,
+            includeSuggestions: params.includeSuggestions === true,
+            queryPresent: Boolean(params.query),
+            queryLength: params.query?.length ?? 0,
+          },
+          responseMetadata: {
+            activeCount,
+            suggestedCount,
+          },
+          ...(!searchResult.success
+            ? { errorMetadata: { message: searchResult.error } }
+            : {}),
+        },
       };
     } catch (error) {
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
+        accessLog: {
+          requestMetadata: {
+            locationId: params.locationId ?? null,
+            includeSuggestions: params.includeSuggestions === true,
+            queryPresent: Boolean(params.query),
+            queryLength: params.query?.length ?? 0,
+          },
+          errorMetadata: {
+            message: error.message,
+          },
+        },
       };
     }
   }

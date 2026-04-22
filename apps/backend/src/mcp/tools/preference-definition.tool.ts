@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma } from '@infrastructure/prisma/generated-client';
-import { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { PreferenceDefinitionService } from '@modules/preferences/preference-definition/preference-definition.service';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
@@ -16,6 +16,7 @@ import {
   AuditOrigin,
   SourceType,
 } from '@infrastructure/prisma/generated-client';
+import { McpToolExecutionResult } from '../access-log/access-log.types';
 
 const VALID_VALUE_TYPES = ['STRING', 'BOOLEAN', 'ENUM', 'ARRAY'] as const;
 const VALID_SCOPES = ['GLOBAL', 'LOCATION'] as const;
@@ -95,21 +96,25 @@ export class PreferenceDefinitionTool implements McpToolInterface {
     private readonly authorizationService: McpAuthorizationService,
   ) {}
 
-  async execute(args: unknown, context?: McpContext): Promise<CallToolResult> {
+  async execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult> {
     try {
       const result = await this.create(
         args as CreatePreferenceDefinitionParams,
         context!,
       );
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        result: {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        },
       };
     } catch (error) {
       return {
-        content: [
-          { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-        ],
-        isError: true,
+        result: {
+          content: [
+            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
+          ],
+          isError: true,
+        },
       };
     }
   }
@@ -187,7 +192,7 @@ export class PreferenceDefinitionTool implements McpToolInterface {
           actorType: AuditActorType.MCP_CLIENT,
           actorClientKey: context.client.key,
           origin: AuditOrigin.MCP,
-          correlationId: randomUUID(),
+          correlationId: context.correlationId ?? randomUUID(),
           sourceType: SourceType.USER,
         },
       );

@@ -5,6 +5,8 @@ export {
   AuditTargetType,
   GrantAction,
   GrantEffect,
+  McpAccessOutcome,
+  McpAccessSurface,
   Prisma,
   PrismaClient,
   LocationType,

@@ -3,11 +3,12 @@
 - Status: active-plan
 - Read when: planning follow-up audit history, audit UI, rollback, or future workflow/system mutation work
 - Source of truth: `apps/backend/prisma/schema.prisma`, `apps/backend/src/modules/preferences/**`, `apps/backend/test/**`, and the historical docs in `initial-implementation/`
-- Last reviewed: 2026-04-18
+- Last reviewed: 2026-04-21
 
 ## Current State
 
-The initial backend audit-log groundwork, MR1 backend read API, and MR2 read-only history UI have shipped.
+The initial backend audit-log groundwork, MR1 backend read API, MR2 read-only
+history UI, and MCP access-log track have shipped.
 
 Shipped behavior:
 
@@ -24,6 +25,11 @@ Shipped behavior:
 - lazy-loaded history rows with expandable before/after/metadata panels
 - visible common filters plus advanced filters behind a disclosure
 - sensitivity masking toggle in the UI using the live preference catalog
+- separate append-only `McpAccessEvent` table for request-level MCP access history
+- central MCP access logging in `McpService` for read-only `tools/call` and all `resources/read`
+- sanitized MCP request, response, and error metadata for representative tools/resources
+- user-scoped GraphQL `mcpAccessHistory` query with cursor pagination and filters
+- `/dashboard/history` now has separate Audit and MCP Access tabs
 
 Covered mutation paths today:
 
@@ -39,9 +45,11 @@ Current gaps:
 - no audit backfill exists for pre-audit rows
 - `SYSTEM`, `WORKFLOW`, and `IMPORT` actors are schema-ready but not yet wired into real mutation producers
 - rejected-suggestion suppression behavior remains unchanged
-- no MCP read/access logging exists yet for MCP tools or resources
-- no MCP audit read surface exists yet
 - archived or deleted definitions may lose sensitivity masking in the history UI because MR2 only uses the live catalog
+- no object-level MCP access fan-out exists yet; MCP access history is request-level only
+- MCP access history does not yet show the exact preferences, slugs, or returned objects an LLM was able to access; v1 only shows sanitized request/response metadata and counts
+- pre-dispatch MCP Auth0/JWT failures are not included in user-facing MCP access history
+- audit history and MCP Access UI flows still need a broader manual test pass against realistic/demo data
 
 Historical initial-implementation docs now live under `initial-implementation/`.
 
@@ -69,16 +77,16 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 ### Much Later
 
 3. Follow-up audit UI refinements
+- manually test Audit and MCP Access tabs with realistic/demo data, including filters, load-more, expanded metadata, masking, empty states, and error states
 - decide whether the history page should gain URL-synced filters or saved views
 - revisit JSON presentation if raw payloads prove hard to scan in real usage
 - revisit sensitivity detection if archived-definition masking becomes important
 
-4. MCP log track: add MCP read/access logging, read APIs, and UX
-- prefer a separate request-level MCP log table rather than stretching `PreferenceAuditEvent`
-- instrument `McpService` centrally for `tools/call` and `resources/read`
-- allow tool/resource-specific sanitized metadata where base request logging is too thin
-- add a backend read surface with filters for client, operation, outcome, and time
-- add an MCP access tab inside the existing history experience rather than creating a separate history surface
+4. MCP log follow-ups
+- decide whether `tools/list` and `resources/list` should become access events
+- decide whether object-level MCP access fan-out is needed after request-level history has real usage
+- if exact LLM data visibility becomes important, design an object-level access log that records returned preference/object identifiers without storing raw sensitive values
+- evaluate retention and archival needs for MCP access events after usage data exists
 
 ## Open Questions To Resolve After MR2
 
@@ -89,11 +97,8 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 ## Open Questions For MCP Logging
 
 - should `tools/list` and `resources/list` count as logged access events or only `tools/call` and `resources/read`
-- whether returned slugs should be logged directly in MCP read metadata or whether counts are enough for v1
-- whether the first MCP log API should be user-scoped GraphQL, admin-facing, or both
-- whether failed auth before MCP dispatch should appear in the same history surface or remain only in operational logs
-- how much filter state, page chrome, and detail rendering should be shared between the existing audit history view and a future MCP access tab
 - whether object-level access logging is ever needed, or whether request-level logs are enough
+- whether failed auth before MCP dispatch should remain only in operational logs long-term
 
 ## Deferred Work
 

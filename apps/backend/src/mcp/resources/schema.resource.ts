@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  ReadResourceResult,
   Resource,
 } from '@modelcontextprotocol/sdk/types.js';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { McpResourceInterface } from './base/mcp-resource.interface';
 import { McpContext } from '../types/mcp-context.type';
+import { McpResourceExecutionResult } from '../access-log/access-log.types';
 
 @Injectable()
 export class SchemaResource implements McpResourceInterface {
@@ -33,13 +33,13 @@ export class SchemaResource implements McpResourceInterface {
    * Returns the auto-generated schema from src/schema.gql
    * Caches the schema for 1 minute to avoid excessive file reads
    */
-  async getGraphQLSchema(): Promise<string> {
+  async getGraphQLSchema(): Promise<{ schema: string; cacheHit: boolean }> {
     const now = Date.now();
 
     // Return cached schema if still valid
     if (this.schemaCache && now - this.lastCacheTime < this.CACHE_TTL_MS) {
       this.logger.debug('Returning cached GraphQL schema');
-      return this.schemaCache;
+      return { schema: this.schemaCache, cacheHit: true };
     }
 
     try {
@@ -53,7 +53,7 @@ export class SchemaResource implements McpResourceInterface {
       this.lastCacheTime = now;
 
       this.logger.log('GraphQL schema loaded successfully');
-      return schema;
+      return { schema, cacheHit: false };
     } catch (error) {
       this.logger.error(
         `Error reading GraphQL schema: ${error.message}`,
@@ -63,7 +63,7 @@ export class SchemaResource implements McpResourceInterface {
       // Return cached schema if available, even if expired
       if (this.schemaCache) {
         this.logger.warn('Returning expired cached schema due to read error');
-        return this.schemaCache;
+        return { schema: this.schemaCache, cacheHit: true };
       }
 
       throw new Error(
@@ -72,16 +72,27 @@ export class SchemaResource implements McpResourceInterface {
     }
   }
 
-  async read(_context: McpContext): Promise<ReadResourceResult> {
-    const schemaContent = await this.getGraphQLSchema();
+  async read(_context: McpContext): Promise<McpResourceExecutionResult> {
+    const { schema: schemaContent, cacheHit } = await this.getGraphQLSchema();
     return {
-      contents: [
-        {
+      result: {
+        contents: [
+          {
+            uri: this.descriptor.uri,
+            mimeType: this.descriptor.mimeType,
+            text: schemaContent,
+          },
+        ],
+      },
+      accessLog: {
+        requestMetadata: {
           uri: this.descriptor.uri,
-          mimeType: this.descriptor.mimeType,
-          text: schemaContent,
         },
-      ],
+        responseMetadata: {
+          byteLength: Buffer.byteLength(schemaContent, 'utf8'),
+          cacheHit,
+        },
+      },
     };
   }
 }
