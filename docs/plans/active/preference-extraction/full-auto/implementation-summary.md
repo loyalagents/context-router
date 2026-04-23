@@ -126,7 +126,8 @@ Web GraphQL generated types were regenerated from the updated backend schema.
 - There is no combined define-and-set operation yet.
 - Definition shape-changing updates are allowed for the demo.
 - MCP active writes always use `sourceType: INFERRED` in this version.
-- Auth0 API scopes may need an out-of-band update to include `preferences:suggest` and `preferences:define`.
+- Auth0 API scope definitions and the `Context Router M2M` client grant were verified out of band. The API advertises and issues `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define` in both the token response `scope` and JWT `permissions` claims for the M2M smoke test.
+- Actual MCP connector app grants still need final demo verification: `claude` and `codex` should receive all four scopes, while `fallback` should receive only `preferences:read`.
 
 ## Verification
 
@@ -142,3 +143,9 @@ Run so far:
 - `pnpm --filter web codegen`
 - `pnpm --filter web lint`
 - `pnpm --filter web build`
+
+Out-of-band Auth0 verification:
+
+- MCP OAuth metadata endpoints returned all four preference scopes plus `offline_access`.
+- The Auth0 `Context Router API` resource defines all four preference scopes.
+- A client-credentials token for `Context Router M2M` was successfully issued with all four preference scopes in the token response and decoded JWT claims.

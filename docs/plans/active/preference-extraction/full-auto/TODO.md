@@ -19,7 +19,12 @@
 
 ## Authorization And Operations
 
-- Confirm Auth0 API scopes are updated out of band for `preferences:suggest` and `preferences:define`.
+- Confirm actual MCP connector app grants and token claims:
+  - API scope definitions and the `Context Router M2M` client grant have been verified out of band.
+  - Verify the `claude` and `codex` MCP connector applications are authorized for `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define`.
+  - Verify the `fallback` MCP connector application is authorized for `preferences:read` only.
+  - After refreshing/logging in real MCP clients, decode an actual MCP OAuth access token and confirm the expected grants appear in either the `scope` claim or the `permissions` claim.
+  - Current demo nuance: partial recognized token grants narrow MCP access, while a token with no recognized MCP grants falls back to local policy-only authorization. Decide before production whether explicit token scopes should be required.
 - Consider object-level MCP access-log details if a future audit workflow needs richer cross-linking between access events and domain audit events.
 - Revisit whether `DEFINE` should stay fully separate from read visibility when a production client wants schema-only management.
 
@@ -28,4 +33,3 @@
 - Add end-to-end smoke tests with an actual external MCP client once the demo client registrations are refreshed.
 - Add regression tests for any future combined define-and-set operation.
 - Add production-oriented migration tests if this stops being a demo-only cutover.
-
