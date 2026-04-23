@@ -127,7 +127,11 @@ Web GraphQL generated types were regenerated from the updated backend schema.
 - Definition shape-changing updates are allowed for the demo.
 - MCP active writes always use `sourceType: INFERRED` in this version.
 - Auth0 API scope definitions and the `Context Router M2M` client grant were verified out of band. The API advertises and issues `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define` in both the token response `scope` and JWT `permissions` claims for the M2M smoke test.
-- Actual MCP connector app grants still need final demo verification: `claude` and `codex` should receive all four scopes, while `fallback` should receive only `preferences:read`.
+- Auth0 access mode should match the OAuth flow:
+  - `Context Router M2M` uses `client_credentials`, so it should use Client Access with the needed scopes. User Access is not needed for that app.
+  - `Context Router MCP Connector - claude` and `Context Router MCP Connector - codex` use user OAuth login, so they should use User Access with `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define`. Client Access can stay unauthorized.
+  - `Context Router MCP Connector - fallback` also uses user OAuth login, so it should use User Access with `preferences:read` only. Client Access can stay unauthorized.
+- Actual MCP connector app token claims still need final demo verification after refreshing/logging in real clients.
 
 ## Verification
 
@@ -149,3 +153,4 @@ Out-of-band Auth0 verification:
 - MCP OAuth metadata endpoints returned all four preference scopes plus `offline_access`.
 - The Auth0 `Context Router API` resource defines all four preference scopes.
 - A client-credentials token for `Context Router M2M` was successfully issued with all four preference scopes in the token response and decoded JWT claims.
+- `Context Router M2M` was verified through Auth0 Client Access, which is the correct access mode for the `client_credentials` smoke test.

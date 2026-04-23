@@ -20,9 +20,10 @@
 ## Authorization And Operations
 
 - Confirm actual MCP connector app grants and token claims:
-  - API scope definitions and the `Context Router M2M` client grant have been verified out of band.
-  - Verify the `claude` and `codex` MCP connector applications are authorized for `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define`.
-  - Verify the `fallback` MCP connector application is authorized for `preferences:read` only.
+  - API scope definitions and the `Context Router M2M` Client Access grant have been verified out of band for the `client_credentials` smoke test.
+  - Keep `Context Router M2M` on Auth0 Client Access with the scopes needed for dev/admin smoke testing. User Access is not needed for that app.
+  - Verify the `claude` and `codex` MCP connector applications are authorized through Auth0 User Access for `preferences:read`, `preferences:suggest`, `preferences:write`, and `preferences:define`. Client Access can stay unauthorized for those apps.
+  - Verify the `fallback` MCP connector application is authorized through Auth0 User Access for `preferences:read` only. Client Access can stay unauthorized for that app.
   - After refreshing/logging in real MCP clients, decode an actual MCP OAuth access token and confirm the expected grants appear in either the `scope` claim or the `permissions` claim.
   - Current demo nuance: partial recognized token grants narrow MCP access, while a token with no recognized MCP grants falls back to local policy-only authorization. Decide before production whether explicit token scopes should be required.
 - Consider object-level MCP access-log details if a future audit workflow needs richer cross-linking between access events and domain audit events.
