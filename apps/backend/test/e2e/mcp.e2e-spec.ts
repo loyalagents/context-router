@@ -344,6 +344,157 @@ describe('MCP Integration (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.result?.isError).not.toBe(true);
     });
+
+    it('should return unknown-tool errors for old MCP mutation tool names', async () => {
+      for (const name of [
+        'suggestPreference',
+        'createPreferenceDefinition',
+        'deletePreference',
+      ]) {
+        const response = await mcpPost(
+          {
+            jsonrpc: '2.0',
+            id: 36,
+            method: 'tools/call',
+            params: {
+              name,
+              arguments: {},
+            },
+          },
+          mcpHeaders(TEST_CLIENT_IDS.codex),
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.body.result?.isError).toBe(true);
+        expect(
+          JSON.parse(response.body.result.content[0].text).error,
+        ).toContain(`Unknown tool: ${name}`);
+      }
+    });
+
+    it('should intersect token grants with policy capabilities for DEFINE-only clients', async () => {
+      const defineOnlyHeaders = mcpHeaders(TEST_CLIENT_IDS.claude, {
+        'x-test-mcp-grants': 'preferences:define',
+      });
+
+      const listResponse = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 37,
+          method: 'tools/list',
+          params: {},
+        },
+        defineOnlyHeaders,
+      );
+      const toolNames = listResponse.body.result.tools.map(
+        (tool: any) => tool.name,
+      );
+      expect(toolNames).toContain('mutatePreferences');
+
+      const createResponse = await mutatePreferences(
+        {
+          operation: 'CREATE_DEFINITION',
+          definition: {
+            slug: 'token.define_only',
+            description: 'Definition created with only DEFINE token grants',
+            valueType: 'STRING',
+            scope: 'GLOBAL',
+          },
+        },
+        defineOnlyHeaders,
+        38,
+      );
+      expect(createResponse.status).toBe(200);
+      expect(createResponse.body.result?.isError).not.toBe(true);
+
+      const suggestResponse = await mutatePreferences(
+        {
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'system.response_tone',
+            value: '"concise"',
+            confidence: 0.9,
+          },
+        },
+        defineOnlyHeaders,
+        39,
+      );
+      const suggestResult = JSON.parse(
+        suggestResponse.body.result.content[0].text,
+      );
+      expect(suggestResponse.body.result?.isError).toBe(true);
+      expect(suggestResult).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'MCP_PERMISSION_DENIED',
+        requiredPermission: 'SUGGEST',
+      });
+
+      const setResponse = await mutatePreferences(
+        {
+          operation: 'SET_PREFERENCE',
+          preference: {
+            slug: 'system.response_length',
+            value: '"brief"',
+          },
+        },
+        defineOnlyHeaders,
+        40,
+      );
+      const setResult = JSON.parse(setResponse.body.result.content[0].text);
+      expect(setResponse.body.result?.isError).toBe(true);
+      expect(setResult).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'MCP_PERMISSION_DENIED',
+        requiredPermission: 'WRITE',
+      });
+    });
+
+    it('should let WRITE token grants imply SUGGEST and READ but not DEFINE', async () => {
+      const writeOnlyHeaders = mcpHeaders(TEST_CLIENT_IDS.claude, {
+        'x-test-mcp-grants': 'preferences:write',
+      });
+
+      const suggestResponse = await mutatePreferences(
+        {
+          operation: 'SUGGEST_PREFERENCE',
+          preference: {
+            slug: 'system.response_tone',
+            value: '"concise"',
+            confidence: 0.9,
+          },
+        },
+        writeOnlyHeaders,
+        41,
+      );
+      expect(suggestResponse.status).toBe(200);
+      expect(suggestResponse.body.result?.isError).not.toBe(true);
+
+      const createResponse = await mutatePreferences(
+        {
+          operation: 'CREATE_DEFINITION',
+          definition: {
+            slug: 'token.write_cannot_define',
+            description: 'WRITE token grants should not define schema',
+            valueType: 'STRING',
+            scope: 'GLOBAL',
+          },
+        },
+        writeOnlyHeaders,
+        42,
+      );
+      const createResult = JSON.parse(
+        createResponse.body.result.content[0].text,
+      );
+      expect(createResponse.body.result?.isError).toBe(true);
+      expect(createResult).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'MCP_PERMISSION_DENIED',
+        requiredPermission: 'DEFINE',
+      });
+    });
   });
 
   describe('MCP resources', () => {
@@ -615,6 +766,31 @@ describe('MCP Integration (e2e)', () => {
       expect(auditRows[0].correlationId).toBeTruthy();
     });
 
+    it.each([
+      ['JSON string', '{"source":"ticket"}'],
+      ['array', [{ source: 'ticket' }]],
+      ['null', null],
+    ])('should reject %s evidence payloads', async (_label, evidence) => {
+      const response = await mutatePreferences({
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'system.response_length',
+          value: '"brief"',
+          evidence,
+        },
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).toBe(true);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'INVALID_MUTATION_INPUT',
+        error: 'preference.evidence must be a structured object',
+      });
+    });
+
     it('should update and archive a user-owned definition, then reject archived updates', async () => {
       const createResponse = await mutatePreferences({
         operation: 'CREATE_DEFINITION',
@@ -706,6 +882,68 @@ describe('MCP Integration (e2e)', () => {
         });
         expect(row.correlationId).toBeTruthy();
       }
+    });
+
+    it('should reject global-only definitions when updating or archiving by slug', async () => {
+      for (const operation of [
+        'UPDATE_DEFINITION',
+        'ARCHIVE_DEFINITION',
+      ] as const) {
+        const response = await mutatePreferences({
+          operation,
+          definition: {
+            slug: 'food.dietary_restrictions',
+            description: 'Should not mutate global definitions',
+          },
+        });
+        const result = JSON.parse(response.body.result.content[0].text);
+        expect(response.body.result?.isError).toBe(true);
+        expect(result).toMatchObject({
+          success: false,
+          changed: false,
+          code: 'PREFERENCE_DEFINITION_NOT_OWNED',
+          requiredPermission: 'DEFINE',
+          target: 'food.dietary_restrictions',
+        });
+      }
+    });
+
+    it('should not resolve another user definition by slug for update/archive', async () => {
+      const otherUser = await prisma.user.create({
+        data: {
+          email: 'other-definition-owner@example.com',
+          firstName: 'Other',
+          lastName: 'Owner',
+        },
+      });
+      await prisma.preferenceDefinition.create({
+        data: {
+          namespace: `USER:${otherUser.userId}`,
+          ownerUserId: otherUser.userId,
+          slug: 'private.other_user_definition',
+          description: 'Definition owned by another user',
+          valueType: 'STRING',
+          scope: 'GLOBAL',
+        },
+      });
+
+      const response = await mutatePreferences({
+        operation: 'UPDATE_DEFINITION',
+        definition: {
+          slug: 'private.other_user_definition',
+          description: 'Should not update definitions owned by another user',
+        },
+      });
+
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(response.body.result?.isError).toBe(true);
+      expect(result).toMatchObject({
+        success: false,
+        changed: false,
+        code: 'PREFERENCE_DEFINITION_NOT_FOUND',
+        requiredPermission: 'DEFINE',
+        target: 'private.other_user_definition',
+      });
     });
 
     it('should reject a duplicate user slug', async () => {

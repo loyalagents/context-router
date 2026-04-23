@@ -498,6 +498,89 @@ describe('MCP Access Log (e2e)', () => {
     expect(auditRows[0].correlationId).toBe(events[0].correlationId);
   });
 
+  it('records coarse dispatch denials for mutation clients with no mutation capability', async () => {
+    const response = await mutatePreferences(
+      {
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'system.response_length',
+          value: '"brief"',
+        },
+      },
+      mcpHeaders(TEST_CLIENT_IDS.fallback),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.result?.isError).toBe(true);
+
+    const event = await prisma.mcpAccessEvent.findFirstOrThrow({
+      where: {
+        userId: testUser.userId,
+        operationName: 'mutatePreferences',
+      },
+    });
+
+    expect(event).toMatchObject({
+      clientKey: 'fallback',
+      surface: McpAccessSurface.TOOLS_CALL,
+      outcome: McpAccessOutcome.DENY,
+      errorMetadata: expect.objectContaining({
+        source: 'AUTHORIZATION',
+        message: expect.stringContaining(
+          'is not allowed to call tool "mutatePreferences"',
+        ),
+      }),
+    });
+  });
+
+  it('sanitizes access-log metadata for definition mutation success', async () => {
+    const response = await mutatePreferences(
+      {
+        operation: 'CREATE_DEFINITION',
+        definition: {
+          slug: 'access_log.definition_sanitization',
+          description: 'raw definition description should not be copied',
+          valueType: 'ENUM',
+          scope: 'GLOBAL',
+          options: ['raw_option_one', 'raw_option_two'],
+        },
+      },
+      mcpHeaders(TEST_CLIENT_IDS.codex),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.result?.isError).not.toBe(true);
+
+    const event = await prisma.mcpAccessEvent.findFirstOrThrow({
+      where: {
+        userId: testUser.userId,
+        operationName: 'mutatePreferences',
+      },
+    });
+
+    expect(event).toMatchObject({
+      outcome: McpAccessOutcome.SUCCESS,
+      requestMetadata: {
+        operation: 'CREATE_DEFINITION',
+        target: 'access_log.definition_sanitization',
+        requiredPermission: 'DEFINE',
+      },
+      responseMetadata: expect.objectContaining({
+        success: true,
+        changed: true,
+        preferenceId: null,
+        definitionId: expect.any(String),
+      }),
+    });
+
+    const serializedEvent = JSON.stringify(event);
+    expect(serializedEvent).not.toContain(
+      'raw definition description should not be copied',
+    );
+    expect(serializedEvent).not.toContain('raw_option_one');
+    expect(serializedEvent).not.toContain('raw_option_two');
+  });
+
   it('does not fail the MCP response when access logging fails', async () => {
     const recordSpy = jest
       .spyOn(accessLogService, 'record')

@@ -123,7 +123,7 @@ export class PreferenceMutateTool implements McpToolInterface {
             value: {
               type: 'string',
               description:
-                'Preference value as a JSON string. Examples: \'["nuts"]\', \'"concise"\', \'true\'.',
+                "Preference value as a JSON string. Examples: '[\"nuts\"]', '\"concise\"', 'true'.",
             },
             locationId: {
               type: 'string',
@@ -334,6 +334,7 @@ export class PreferenceMutateTool implements McpToolInterface {
       'preference.value',
     );
     const confidence = this.requireConfidence(preference.confidence);
+    const evidence = this.optionalEvidence(preference.evidence);
 
     await this.assertTarget(context, 'suggest', slug);
 
@@ -344,11 +345,11 @@ export class PreferenceMutateTool implements McpToolInterface {
         value,
         locationId: preference.locationId,
         confidence,
-        evidence: preference.evidence,
+        evidence,
       },
       this.buildMutationContext(context, correlationId, SourceType.INFERRED, {
         confidence,
-        evidence: preference.evidence,
+        evidence,
       }),
     );
 
@@ -388,6 +389,7 @@ export class PreferenceMutateTool implements McpToolInterface {
       'preference.value',
     );
     const confidence = this.optionalConfidence(preference.confidence);
+    const evidence = this.optionalEvidence(preference.evidence);
 
     await this.assertTarget(context, 'write', slug);
 
@@ -400,7 +402,7 @@ export class PreferenceMutateTool implements McpToolInterface {
       },
       this.buildMutationContext(context, correlationId, SourceType.INFERRED, {
         confidence,
-        evidence: preference.evidence,
+        evidence,
       }),
     );
 
@@ -764,6 +766,19 @@ export class PreferenceMutateTool implements McpToolInterface {
       throw this.domainError(
         'INVALID_MUTATION_INPUT',
         'preference.confidence must be a number between 0 and 1',
+      );
+    }
+    return value;
+  }
+
+  private optionalEvidence(value: unknown): unknown {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      throw this.domainError(
+        'INVALID_MUTATION_INPUT',
+        'preference.evidence must be a structured object',
       );
     }
     return value;

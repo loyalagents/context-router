@@ -55,7 +55,7 @@ The dispatcher validates every declared access entry at module startup. This pre
 - `ARCHIVE_DEFINITION`, requiring `DEFINE`
 - `DELETE_PREFERENCE`, requiring `WRITE`
 
-The tool keeps MCP-compatible `preference.value` as a JSON string. `preference.evidence` is a structured object.
+The tool keeps MCP-compatible `preference.value` as a JSON string. `preference.evidence` is a structured object; runtime validation rejects JSON-encoded strings, arrays, and `null`.
 
 Successful responses include `success`, `changed`, `operation`, `requiredPermission`, `target`, optional `preference`, optional `definition`, and `audit`.
 
