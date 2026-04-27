@@ -23,6 +23,17 @@ test('parseCliArgs applies defaults and env token', () => {
   assert.match(command.options?.folder ?? '', /notes$/);
 });
 
+test('parseCliArgs ignores a standalone double-dash separator', () => {
+  const command = parseCliArgs(
+    ['--', '--folder', './notes', '--token', 'abc'],
+    {},
+  );
+
+  assert.equal(command.kind, 'run');
+  assert.equal(command.options?.token, 'abc');
+  assert.match(command.options?.folder ?? '', /notes$/);
+});
+
 test('parseCliArgs rejects missing folder', () => {
   assert.throws(
     () => parseCliArgs(['--token', 'abc'], {}),

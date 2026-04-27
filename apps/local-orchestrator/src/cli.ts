@@ -47,6 +47,8 @@ export function parseCliArgs(
     const arg = argv[index];
 
     switch (arg) {
+      case '--':
+        break;
       case '--folder':
         folder = requireValue(argv, ++index, '--folder');
         break;
