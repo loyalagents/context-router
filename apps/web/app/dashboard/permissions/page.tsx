@@ -6,6 +6,8 @@ import PermissionsClient from './PermissionsClient';
 
 export const dynamic = 'force-dynamic';
 
+type GrantAction = 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE';
+
 const MY_PERMISSION_GRANTS_QUERY = gql`
   query MyPermissionGrants {
     myPermissionGrants {
@@ -24,7 +26,7 @@ interface PermissionGrant {
   id: string;
   clientKey: string;
   target: string;
-  action: 'READ' | 'WRITE';
+  action: GrantAction;
   effect: 'ALLOW' | 'DENY';
   createdAt: string;
   updatedAt: string;
@@ -70,13 +72,18 @@ export default async function PermissionsPage() {
           <>
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold">Permission Grants</h1>
-              <a href="/dashboard" className="text-blue-600 hover:text-blue-800">
+              <a
+                href="/dashboard"
+                className="text-blue-600 hover:text-blue-800"
+              >
                 Back to Dashboard
               </a>
             </div>
             <div className="p-4 bg-red-100 text-red-700 rounded mb-6">
               <p>{error}</p>
-              <p className="text-sm mt-2">Ensure backend is running on port 3000.</p>
+              <p className="text-sm mt-2">
+                Ensure backend is running on port 3000.
+              </p>
             </div>
           </>
         ) : (

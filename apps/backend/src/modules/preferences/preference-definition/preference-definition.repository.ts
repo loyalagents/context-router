@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { PreferenceDefinition as PrismaPreferenceDefinition } from "@infrastructure/prisma/prisma-models";
-import { PrismaService } from "@infrastructure/prisma/prisma.service";
+import { Injectable, Logger } from '@nestjs/common';
+import type { PreferenceDefinition as PrismaPreferenceDefinition } from '@infrastructure/prisma/prisma-models';
+import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import {
   Prisma,
   PreferenceValueType,
   PreferenceScope,
-} from "@infrastructure/prisma/generated-client";
+} from '@infrastructure/prisma/generated-client';
 
 @Injectable()
 export class PreferenceDefinitionRepository {
@@ -22,7 +22,7 @@ export class PreferenceDefinitionRepository {
   }
 
   private namespaceFor(ownerUserId: string | null | undefined): string {
-    return ownerUserId ? this.userNamespace(ownerUserId) : "GLOBAL";
+    return ownerUserId ? this.userNamespace(ownerUserId) : 'GLOBAL';
   }
 
   // ──────────────────────────────────────────────
@@ -62,7 +62,20 @@ export class PreferenceDefinitionRepository {
     }
 
     return this.prisma.preferenceDefinition.findFirst({
-      where: { namespace: "GLOBAL", slug, archivedAt: null },
+      where: { namespace: 'GLOBAL', slug, archivedAt: null },
+    });
+  }
+
+  async getUserDefinitionBySlugIncludingArchived(
+    slug: string,
+    userId: string,
+  ): Promise<PrismaPreferenceDefinition | null> {
+    return this.prisma.preferenceDefinition.findFirst({
+      where: {
+        namespace: this.userNamespace(userId),
+        slug,
+      },
+      orderBy: { updatedAt: 'desc' },
     });
   }
 
@@ -80,17 +93,17 @@ export class PreferenceDefinitionRepository {
    * GLOBAL: system-owned only. PERSONAL: user-owned only. ALL: both.
    */
   async getByScope(
-    scope: "GLOBAL" | "PERSONAL" | "ALL",
+    scope: 'GLOBAL' | 'PERSONAL' | 'ALL',
     userId: string,
   ): Promise<PrismaPreferenceDefinition[]> {
     const namespaces: string[] = [];
-    if (scope === "GLOBAL" || scope === "ALL") namespaces.push("GLOBAL");
-    if (scope === "PERSONAL" || scope === "ALL")
+    if (scope === 'GLOBAL' || scope === 'ALL') namespaces.push('GLOBAL');
+    if (scope === 'PERSONAL' || scope === 'ALL')
       namespaces.push(this.userNamespace(userId));
 
     return this.prisma.preferenceDefinition.findMany({
       where: { namespace: { in: namespaces }, archivedAt: null },
-      orderBy: { slug: "asc" },
+      orderBy: { slug: 'asc' },
     });
   }
 
@@ -100,7 +113,7 @@ export class PreferenceDefinitionRepository {
    * Archived definitions are excluded.
    */
   async getAll(userId?: string | null): Promise<PrismaPreferenceDefinition[]> {
-    const namespaces: string[] = ["GLOBAL"];
+    const namespaces: string[] = ['GLOBAL'];
     if (userId) namespaces.push(this.userNamespace(userId));
 
     return this.prisma.preferenceDefinition.findMany({
@@ -108,7 +121,7 @@ export class PreferenceDefinitionRepository {
         namespace: { in: namespaces },
         archivedAt: null,
       },
-      orderBy: { slug: "asc" },
+      orderBy: { slug: 'asc' },
     });
   }
 
@@ -132,13 +145,13 @@ export class PreferenceDefinitionRepository {
   ): Promise<string[]> {
     const defs = await this.getAll(userId);
     return defs
-      .filter((d) => d.slug.split(".")[0] === category)
+      .filter((d) => d.slug.split('.')[0] === category)
       .map((d) => d.slug);
   }
 
   async getAllCategories(userId?: string | null): Promise<string[]> {
     const defs = await this.getAll(userId);
-    const categories = new Set(defs.map((d) => d.slug.split(".")[0]));
+    const categories = new Set(defs.map((d) => d.slug.split('.')[0]));
     return Array.from(categories).sort();
   }
 
@@ -153,7 +166,7 @@ export class PreferenceDefinitionRepository {
     const scored = defs.map((def) => {
       let score = 0;
       const slug = def.slug;
-      const category = slug.split(".")[0];
+      const category = slug.split('.')[0];
 
       if (normalized.startsWith(category)) score += 10;
       if (slug.startsWith(normalized)) score += 5;
@@ -179,17 +192,20 @@ export class PreferenceDefinitionRepository {
    * If ownerUserId is provided, namespace = "USER:<userId>".
    * Otherwise, namespace = "GLOBAL".
    */
-  async create(data: {
-    slug: string;
-    displayName?: string;
-    description: string;
-    valueType: PreferenceValueType | string;
-    scope: PreferenceScope | string;
-    options?: unknown;
-    isSensitive?: boolean;
-    isCore?: boolean;
-    ownerUserId?: string | null;
-  }, tx?: Prisma.TransactionClient): Promise<PrismaPreferenceDefinition> {
+  async create(
+    data: {
+      slug: string;
+      displayName?: string;
+      description: string;
+      valueType: PreferenceValueType | string;
+      scope: PreferenceScope | string;
+      options?: unknown;
+      isSensitive?: boolean;
+      isCore?: boolean;
+      ownerUserId?: string | null;
+    },
+    tx?: Prisma.TransactionClient,
+  ): Promise<PrismaPreferenceDefinition> {
     const client = tx ?? this.prisma;
     const namespace = this.namespaceFor(data.ownerUserId);
 
@@ -230,7 +246,8 @@ export class PreferenceDefinitionRepository {
   ): Promise<PrismaPreferenceDefinition> {
     const client = tx ?? this.prisma;
     const updateData: Record<string, unknown> = {};
-    if (data.displayName !== undefined) updateData.displayName = data.displayName;
+    if (data.displayName !== undefined)
+      updateData.displayName = data.displayName;
     if (data.description !== undefined)
       updateData.description = data.description;
     if (data.valueType !== undefined) updateData.valueType = data.valueType;

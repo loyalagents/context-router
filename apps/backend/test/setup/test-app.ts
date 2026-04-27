@@ -188,7 +188,12 @@ function createMcpMockAuthGuard(
         : { azp: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID };
 
       if (rawGrants === undefined) {
-        request.tokenGrants = ['preferences:read', 'preferences:write'];
+        request.tokenGrants = [
+          'preferences:read',
+          'preferences:suggest',
+          'preferences:write',
+          'preferences:define',
+        ];
       } else if (rawGrants === '__absent__') {
         request.tokenGrants = undefined;
       } else if (rawGrants === '') {
@@ -273,8 +278,7 @@ export async function createTestApp(
   const mockStructuredAi =
     options.mockStructuredAi || createMockStructuredAiService();
   const mockAuth0 = options.mockAuth0 || createMockAuth0Service();
-  const overrideGraphqlAuthGuards =
-    options.overrideGraphqlAuthGuards ?? true;
+  const overrideGraphqlAuthGuards = options.overrideGraphqlAuthGuards ?? true;
 
   // Mutable reference - guard always reads current value
   const userRef: UserRef = { current: null };

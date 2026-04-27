@@ -39,7 +39,9 @@ describe('PermissionGrantService', () => {
     });
 
     it('should include each parent prefix wildcard exactly once', () => {
-      expect(service.buildPrefixChain('dev.typescript.formatting.rules')).toEqual([
+      expect(
+        service.buildPrefixChain('dev.typescript.formatting.rules'),
+      ).toEqual([
         'dev.typescript.formatting.rules',
         'dev.typescript.formatting.*',
         'dev.typescript.*',
@@ -61,6 +63,19 @@ describe('PermissionGrantService', () => {
           'food.dietary_restrictions',
         ),
       ).resolves.toBe('no-grant');
+    });
+
+    it('should normalize lowercase action inputs for every grant action', async () => {
+      repository.findMatchingGrants.mockResolvedValue([]);
+
+      await service.evaluateAccess('user-1', 'claude', 'read', 'food.test');
+      await service.evaluateAccess('user-1', 'claude', 'suggest', 'food.test');
+      await service.evaluateAccess('user-1', 'claude', 'write', 'food.test');
+      await service.evaluateAccess('user-1', 'claude', 'define', 'food.test');
+
+      expect(
+        repository.findMatchingGrants.mock.calls.map((call) => call[2]),
+      ).toEqual(['READ', 'SUGGEST', 'WRITE', 'DEFINE']);
     });
 
     it('should use the most specific matching grant', async () => {
@@ -158,7 +173,12 @@ describe('PermissionGrantService', () => {
       ] as any);
 
       await expect(
-        service.evaluateAccess('user-1', 'claude', 'WRITE', 'system.response_tone'),
+        service.evaluateAccess(
+          'user-1',
+          'claude',
+          'WRITE',
+          'system.response_tone',
+        ),
       ).resolves.toBe('deny');
     });
 
@@ -204,10 +224,7 @@ describe('PermissionGrantService', () => {
           'system.response_tone',
           'dev.secret.token',
         ]),
-      ).resolves.toEqual([
-        'food.dietary_restrictions',
-        'system.response_tone',
-      ]);
+      ).resolves.toEqual(['food.dietary_restrictions', 'system.response_tone']);
     });
 
     it('should preserve short exact-slug allowlist exceptions over wildcard denies', async () => {
@@ -235,10 +252,7 @@ describe('PermissionGrantService', () => {
           'food.dietary_restrictions',
           'system.response_tone',
         ]),
-      ).resolves.toEqual([
-        'food.dietary_restrictions',
-        'system.response_tone',
-      ]);
+      ).resolves.toEqual(['food.dietary_restrictions', 'system.response_tone']);
     });
   });
 });

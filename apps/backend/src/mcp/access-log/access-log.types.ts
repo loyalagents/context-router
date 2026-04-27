@@ -16,6 +16,7 @@ export interface McpAccessLogMetadata {
 
 export interface McpToolExecutionResult {
   result: CallToolResult;
+  outcome?: McpAccessOutcome;
   accessLog?: McpAccessLogMetadata;
 }
 

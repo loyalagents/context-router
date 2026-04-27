@@ -1,10 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GrantAction, GrantEffect } from '@infrastructure/prisma/generated-client';
+import {
+  GrantAction,
+  GrantEffect,
+} from '@infrastructure/prisma/generated-client';
 import { MANAGED_MCP_CLIENT_KEYS } from '@/mcp/types/mcp-authorization.types';
 import { PermissionGrantRepository } from './permission-grant.repository';
 
 export type PermissionGrantDecision = 'allow' | 'deny' | 'no-grant';
-type PermissionGrantActionInput = GrantAction | 'read' | 'write';
+type PermissionGrantActionInput =
+  | GrantAction
+  | 'read'
+  | 'suggest'
+  | 'write'
+  | 'define';
 export const PERMISSION_GRANT_TARGET_PATTERN =
   /^\*$|^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*(?:\.\*)$|^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/;
 

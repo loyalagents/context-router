@@ -74,7 +74,9 @@ export class McpAuthGuard implements CanActivate {
     });
 
     this.issuer = this.configService.get<string>('auth.auth0.issuer');
-    this.expectedAudience = this.configService.get<string>('auth.auth0.audience');
+    this.expectedAudience = this.configService.get<string>(
+      'auth.auth0.audience',
+    );
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -109,7 +111,12 @@ export class McpAuthGuard implements CanActivate {
       }
 
       if (!user) {
-        this.sendAuthChallenge(response, 401, 'invalid_token', 'User not found');
+        this.sendAuthChallenge(
+          response,
+          401,
+          'invalid_token',
+          'User not found',
+        );
         return false;
       }
 
@@ -220,7 +227,7 @@ export class McpAuthGuard implements CanActivate {
 
     if (error === 'insufficient_scope') {
       parts.push(`error="insufficient_scope"`);
-      parts.push(`scope="preferences:write"`);
+      parts.push(`scope="preferences:write preferences:define"`);
     } else if (error !== 'missing_token') {
       parts.push(`error="${error}"`);
     }

@@ -3,7 +3,7 @@
 - Status: current
 - Read when: changing preference definitions, schema export, MCP schema tools, or document-analysis prompt inputs
 - Source of truth: `apps/backend/prisma/schema.prisma`, `apps/backend/src/modules/preferences/preference-definition/**`, `apps/backend/src/modules/preferences/preference/**`, `apps/backend/test/e2e/preference-catalog.e2e-spec.ts`, `apps/backend/test/e2e/preference-definition-mutations.e2e-spec.ts`
-- Last reviewed: 2026-04-18
+- Last reviewed: 2026-04-22
 
 ## Definitions Model
 
@@ -30,7 +30,7 @@ Category is derived from the slug prefix rather than stored separately.
 - `preferenceCatalog` returns global definitions plus the authenticated user's active definitions.
 - `exportPreferenceSchema` exports global, personal, or combined schema views.
 - GraphQL supports create, update, and archive operations for user-owned definitions.
-- MCP supports creating user-owned definitions via `createPreferenceDefinition`.
+- MCP supports creating, updating, and archiving user-owned definitions via `mutatePreferences`.
 - User-owned definitions cannot reuse a live global slug or the same user's live slug.
 - Archiving a user-owned definition frees that slug for future reuse by the same user.
 
@@ -40,7 +40,7 @@ The schema layer feeds multiple systems:
 
 - preference validation and enrichment
 - GraphQL catalog queries
-- MCP tools such as `listPreferenceSlugs` and `createPreferenceDefinition`
+- MCP tools such as `listPreferenceSlugs` and `mutatePreferences`
 - `PreferenceSchemaSnapshotService` for prompt-building and filtering
 - workflow inputs for `smartSearchPreferences` and `consolidateSchema`
 

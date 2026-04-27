@@ -3,7 +3,7 @@
 - Status: current
 - Read when: changing MCP auth, client policy, permission grants, or MCP tool access
 - Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/modules/permission-grant/**`, `apps/backend/test/e2e/mcp.e2e-spec.ts`, `apps/backend/test/e2e/permission-grants.e2e-spec.ts`
-- Last reviewed: 2026-04-18
+- Last reviewed: 2026-04-22
 
 ## Components
 
@@ -33,6 +33,13 @@ The DB layer can only narrow access. It never widens a denial from an earlier la
 - `action`
 - `effect`
 
+Current actions:
+
+- `READ`: read preference values and schema.
+- `SUGGEST`: create reviewable preference suggestions. Includes `READ`.
+- `WRITE`: create, update, or delete concrete preference values. Includes `SUGGEST` and `READ`.
+- `DEFINE`: create, update, or archive preference definitions. This is separate from the value-permission ladder.
+
 Current target grammar:
 
 - `*`
@@ -45,6 +52,8 @@ Evaluation rules:
 - Most specific match wins.
 - If multiple matches exist at the same specificity, deny wins.
 - No matching grant means allow at the DB-grant layer.
+- For value actions, grant checks follow the hierarchy. A `WRITE` operation is denied if any matching `READ`, `SUGGEST`, or `WRITE` grant denies the slug. A `SUGGEST` operation is denied if any matching `READ` or `SUGGEST` grant denies the slug.
+- `DEFINE` grants are evaluated independently of value grants.
 - Grants are slug-based, not namespace-aware.
 
 ## Current MCP Surface
@@ -53,15 +62,28 @@ Important tools and resources:
 
 - `listPreferenceSlugs`
 - `searchPreferences`
-- `suggestPreference`
-- `deletePreference`
-- `createPreferenceDefinition`
+- `mutatePreferences`
 - `smartSearchPreferences`
 - `consolidateSchema`
 - `listPermissionGrants`
 - `schema://graphql`
 
+`mutatePreferences` is the single MCP mutation tool. It supports:
+
+- `SUGGEST_PREFERENCE` requiring `SUGGEST`
+- `SET_PREFERENCE` requiring `WRITE`
+- `DELETE_PREFERENCE` requiring `WRITE`
+- `CREATE_DEFINITION` requiring `DEFINE`
+- `UPDATE_DEFINITION` requiring `DEFINE`
+- `ARCHIVE_DEFINITION` requiring `DEFINE`
+
 `listPermissionGrants` is read-only and scoped to the calling client bucket. Grant mutation stays in GraphQL and the web dashboard.
+
+## MCP Access Logging
+
+Read-only tools and resource reads are logged as before. `mutatePreferences` opts into always-on access logging, so every mutation-tool attempt creates an `McpAccessEvent` row for success, permission denial, validation error, and handler error.
+
+Mutation access-log metadata is sanitized. It stores operation, target slug when available, required permission, outcome, error code, and safe object ids/counts; it does not store raw preference values, raw evidence, or full returned objects.
 
 ## Related Product Surface
 
@@ -70,7 +92,8 @@ Important tools and resources:
 
 ## Known Constraints
 
-- MCP grant mutation tools are intentionally not exposed.
+- Old MCP mutation tools are no longer exposed in `tools/list`: `suggestPreference`, `deletePreference`, and `createPreferenceDefinition`.
+- A suggest-only client can see the full `mutatePreferences` input schema because visibility is based on any mutation capability; unauthorized operations return structured permission errors.
 - Static target rules with namespace matching are rejected at startup.
 - Grants are slug-based today, so a slug grant applies to both global and user-owned definitions with the same slug.
 - Setup details belong in `docs/useful/MCP_LOCAL_SETUP.md`, not here.

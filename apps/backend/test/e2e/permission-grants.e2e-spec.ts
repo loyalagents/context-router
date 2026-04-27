@@ -48,7 +48,9 @@ describe('Permission Grants (e2e)', () => {
     const prisma = getPrismaClient() as unknown as PrismaService;
     grantRepository = new PermissionGrantRepository(prisma);
     preferenceService = testApp.module.get(PreferenceService);
-    preferenceDefinitionService = testApp.module.get(PreferenceDefinitionService);
+    preferenceDefinitionService = testApp.module.get(
+      PreferenceDefinitionService,
+    );
   });
 
   beforeEach(async () => {
@@ -96,13 +98,18 @@ describe('Permission Grants (e2e)', () => {
     return response.body.result;
   };
 
-  const graphQlPost = async (query: string, variables?: Record<string, unknown>) =>
-    request(app.getHttpServer())
-      .post('/graphql')
-      .send({ query, variables });
+  const mutatePreferences = (
+    args: Record<string, unknown>,
+    clientId = TEST_CLIENT_IDS.claude,
+    userId = testUser.userId,
+  ) => mcpToolCall('mutatePreferences', args, clientId, userId);
 
-  const parseToolResult = (result: any) =>
-    JSON.parse(result.content[0].text);
+  const graphQlPost = async (
+    query: string,
+    variables?: Record<string, unknown>,
+  ) => request(app.getHttpServer()).post('/graphql').send({ query, variables });
+
+  const parseToolResult = (result: any) => JSON.parse(result.content[0].text);
 
   const buildUserMutationContext = () => ({
     actorType: AuditActorType.USER,
@@ -111,35 +118,43 @@ describe('Permission Grants (e2e)', () => {
     sourceType: SourceType.USER,
   });
 
-  it('denies suggestPreference for matching denied write grants and allows unmatched slugs', async () => {
+  it('denies SUGGEST_PREFERENCE for matching denied suggest grants and allows unmatched slugs', async () => {
     await grantRepository.upsert(
       testUser.userId,
       'claude',
       'food.*',
-      'WRITE',
+      'SUGGEST',
       'DENY',
     );
 
-    const denied = await mcpToolCall('suggestPreference', {
-      slug: 'food.dietary_restrictions',
-      value: '["nuts"]',
-      confidence: 0.9,
+    const denied = await mutatePreferences({
+      operation: 'SUGGEST_PREFERENCE',
+      preference: {
+        slug: 'food.dietary_restrictions',
+        value: '["nuts"]',
+        confidence: 0.9,
+      },
     });
 
     expect(denied.isError).toBe(true);
-    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+    expect(parseToolResult(denied).error).toContain(
+      'not allowed to suggest preferences',
+    );
 
-    const allowed = await mcpToolCall('suggestPreference', {
-      slug: 'system.response_tone',
-      value: '"concise"',
-      confidence: 0.9,
+    const allowed = await mutatePreferences({
+      operation: 'SUGGEST_PREFERENCE',
+      preference: {
+        slug: 'system.response_tone',
+        value: '"concise"',
+        confidence: 0.9,
+      },
     });
 
     expect(allowed.isError).not.toBe(true);
     expect(parseToolResult(allowed).success).toBe(true);
   });
 
-  it('denies deletePreference when the preference slug matches a denied write grant', async () => {
+  it('denies DELETE_PREFERENCE when the preference slug matches a denied write grant', async () => {
     const preference = await preferenceService.setPreference(
       testUser.userId,
       {
@@ -157,15 +172,20 @@ describe('Permission Grants (e2e)', () => {
       'DENY',
     );
 
-    const denied = await mcpToolCall('deletePreference', {
-      id: preference.id,
+    const denied = await mutatePreferences({
+      operation: 'DELETE_PREFERENCE',
+      preference: {
+        id: preference.id,
+      },
     });
 
     expect(denied.isError).toBe(true);
-    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+    expect(parseToolResult(denied).error).toContain(
+      'not allowed to write preferences',
+    );
   });
 
-  it('does not let read denies block writes for the same slug', async () => {
+  it('lets READ denies block WRITE operations for the same slug', async () => {
     await grantRepository.upsert(
       testUser.userId,
       'claude',
@@ -174,14 +194,18 @@ describe('Permission Grants (e2e)', () => {
       'DENY',
     );
 
-    const allowed = await mcpToolCall('suggestPreference', {
-      slug: 'food.dietary_restrictions',
-      value: '["nuts"]',
-      confidence: 0.9,
+    const denied = await mutatePreferences({
+      operation: 'SET_PREFERENCE',
+      preference: {
+        slug: 'food.dietary_restrictions',
+        value: '["nuts"]',
+      },
     });
 
-    expect(allowed.isError).not.toBe(true);
-    expect(parseToolResult(allowed).success).toBe(true);
+    expect(denied.isError).toBe(true);
+    expect(parseToolResult(denied).error).toContain(
+      'not allowed to write preferences',
+    );
   });
 
   it('does not let write denies block reads for the same slug', async () => {
@@ -211,9 +235,7 @@ describe('Permission Grants (e2e)', () => {
       'food.dietary_restrictions',
     );
 
-    const list = parseToolResult(
-      await mcpToolCall('listPreferenceSlugs', {}),
-    );
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
     expect(list.preferences.map((pref: any) => pref.slug)).toContain(
       'food.dietary_restrictions',
     );
@@ -254,10 +276,10 @@ describe('Permission Grants (e2e)', () => {
       'system.response_tone',
     ]);
 
-    const list = parseToolResult(
-      await mcpToolCall('listPreferenceSlugs', {}),
-    );
-    expect(list.preferences.some((pref: any) => pref.slug.startsWith('food.'))).toBe(false);
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    expect(
+      list.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(false);
     expect(list.categories).not.toContain('food');
   });
 
@@ -335,7 +357,13 @@ describe('Permission Grants (e2e)', () => {
       summary: 'No overlaps found',
     });
 
-    await grantRepository.upsert(testUser.userId, 'claude', '*', 'READ', 'DENY');
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      '*',
+      'READ',
+      'DENY',
+    );
 
     const search = parseToolResult(
       await mcpToolCall('searchPreferences', { includeSuggestions: false }),
@@ -355,7 +383,8 @@ describe('Permission Grants (e2e)', () => {
     expect(smartSearch.matchedActivePreferences).toEqual([]);
     expect(smartSearch.matchedSuggestedPreferences).toEqual([]);
 
-    const smartSearchPrompt = structuredAi.generateStructured.mock.calls[0][0] as string;
+    const smartSearchPrompt = structuredAi.generateStructured.mock
+      .calls[0][0] as string;
     expect(smartSearchPrompt).not.toContain('food.dietary_restrictions');
     expect(smartSearchPrompt).not.toContain('system.response_tone');
 
@@ -435,9 +464,9 @@ describe('Permission Grants (e2e)', () => {
     const search = parseToolResult(
       await mcpToolCall('searchPreferences', { includeSuggestions: false }),
     );
-    expect(search.active.preferences.map((pref: any) => pref.slug)).not.toContain(
-      'food.french.wine',
-    );
+    expect(
+      search.active.preferences.map((pref: any) => pref.slug),
+    ).not.toContain('food.french.wine');
     expect(search.active.preferences.map((pref: any) => pref.slug)).toContain(
       'food.italian.pasta',
     );
@@ -487,10 +516,17 @@ describe('Permission Grants (e2e)', () => {
     );
 
     const firstUserList = parseToolResult(
-      await mcpToolCall('listPreferenceSlugs', {}, TEST_CLIENT_IDS.claude, testUser.userId),
+      await mcpToolCall(
+        'listPreferenceSlugs',
+        {},
+        TEST_CLIENT_IDS.claude,
+        testUser.userId,
+      ),
     );
     expect(
-      firstUserList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+      firstUserList.preferences.some((pref: any) =>
+        pref.slug.startsWith('food.'),
+      ),
     ).toBe(false);
 
     const secondUserList = parseToolResult(
@@ -502,7 +538,9 @@ describe('Permission Grants (e2e)', () => {
       ),
     );
     expect(
-      secondUserList.preferences.some((pref: any) => pref.slug.startsWith('food.')),
+      secondUserList.preferences.some((pref: any) =>
+        pref.slug.startsWith('food.'),
+      ),
     ).toBe(true);
   });
 
@@ -524,7 +562,13 @@ describe('Permission Grants (e2e)', () => {
       buildUserMutationContext(),
     );
 
-    await grantRepository.upsert(testUser.userId, 'claude', '*', 'READ', 'DENY');
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      '*',
+      'READ',
+      'DENY',
+    );
     await grantRepository.upsert(
       testUser.userId,
       'claude',
@@ -534,9 +578,9 @@ describe('Permission Grants (e2e)', () => {
     );
 
     const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
-    expect(list.preferences.every((pref: any) => pref.slug.startsWith('food.'))).toBe(
-      true,
-    );
+    expect(
+      list.preferences.every((pref: any) => pref.slug.startsWith('food.')),
+    ).toBe(true);
     expect(list.categories).toEqual(['food']);
 
     const search = parseToolResult(
@@ -573,13 +617,29 @@ describe('Permission Grants (e2e)', () => {
       buildUserMutationContext(),
     );
 
-    await grantRepository.upsert(testUser.userId, 'claude', 'a.*', 'READ', 'DENY');
-    await grantRepository.upsert(testUser.userId, 'claude', 'a.b', 'READ', 'ALLOW');
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'a.*',
+      'READ',
+      'DENY',
+    );
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'a.b',
+      'READ',
+      'ALLOW',
+    );
 
-    const result = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    const result = parseToolResult(
+      await mcpToolCall('listPreferenceSlugs', {}),
+    );
 
     expect(result.preferences.map((pref: any) => pref.slug)).toContain('a.b');
-    expect(result.preferences.map((pref: any) => pref.slug)).not.toContain('a.c');
+    expect(result.preferences.map((pref: any) => pref.slug)).not.toContain(
+      'a.c',
+    );
   });
 
   it('filters denied slugs before consolidateSchema builds the AI prompt', async () => {
@@ -653,12 +713,13 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('lets codex write by default and still allows DB write denies to narrow it', async () => {
-    const allowed = await mcpToolCall(
-      'suggestPreference',
+    const allowed = await mutatePreferences(
       {
-        slug: 'system.response_tone',
-        value: '"concise"',
-        confidence: 0.9,
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'system.response_tone',
+          value: '"concise"',
+        },
       },
       TEST_CLIENT_IDS.codex,
     );
@@ -666,40 +727,74 @@ describe('Permission Grants (e2e)', () => {
     expect(allowed.isError).not.toBe(true);
     expect(parseToolResult(allowed).success).toBe(true);
 
-    await grantRepository.upsert(testUser.userId, 'codex', '*', 'WRITE', 'DENY');
+    await grantRepository.upsert(
+      testUser.userId,
+      'codex',
+      '*',
+      'WRITE',
+      'DENY',
+    );
 
-    const denied = await mcpToolCall(
-      'suggestPreference',
+    const denied = await mutatePreferences(
       {
-        slug: 'system.response_length',
-        value: '"detailed"',
-        confidence: 0.9,
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'system.response_length',
+          value: '"detailed"',
+        },
       },
       TEST_CLIENT_IDS.codex,
     );
 
     expect(denied.isError).toBe(true);
-    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+    expect(parseToolResult(denied).error).toContain(
+      'not allowed to write preferences',
+    );
   });
 
-  it('denies createPreferenceDefinition when the slug matches a denied write grant', async () => {
+  it('denies CREATE_DEFINITION on an exact define deny over a wildcard define allow', async () => {
     await grantRepository.upsert(
       testUser.userId,
       'claude',
       'food.*',
-      'WRITE',
+      'DEFINE',
+      'ALLOW',
+    );
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'food.secret_menu_note',
+      'DEFINE',
       'DENY',
     );
 
-    const denied = await mcpToolCall('createPreferenceDefinition', {
-      slug: 'food.secret_menu_note',
-      description: 'Secret menu note',
-      valueType: 'STRING',
-      scope: 'GLOBAL',
+    const denied = await mutatePreferences({
+      operation: 'CREATE_DEFINITION',
+      definition: {
+        slug: 'food.secret_menu_note',
+        description: 'Secret menu note',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      },
     });
 
     expect(denied.isError).toBe(true);
-    expect(parseToolResult(denied).error).toContain('not allowed to write preferences');
+    expect(parseToolResult(denied).error).toContain(
+      'not allowed to define preferences',
+    );
+
+    const allowed = await mutatePreferences({
+      operation: 'CREATE_DEFINITION',
+      definition: {
+        slug: 'food.public_menu_note',
+        description: 'Public menu note',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      },
+    });
+
+    expect(allowed.isError).not.toBe(true);
+    expect(parseToolResult(allowed).success).toBe(true);
   });
 
   it('scopes listPermissionGrants to the calling client key', async () => {
@@ -732,7 +827,8 @@ describe('Permission Grants (e2e)', () => {
   });
 
   it('supports GraphQL grant CRUD for the authenticated user', async () => {
-    const setMutation = await graphQlPost(`
+    const setMutation = await graphQlPost(
+      `
       mutation SetGrant($input: SetPermissionGrantInput!) {
         setPermissionGrant(input: $input) {
           clientKey
@@ -741,14 +837,16 @@ describe('Permission Grants (e2e)', () => {
           effect
         }
       }
-    `, {
-      input: {
-        clientKey: 'claude',
-        target: 'food.*',
-        action: 'READ',
-        effect: 'DENY',
+    `,
+      {
+        input: {
+          clientKey: 'claude',
+          target: 'food.*',
+          action: 'READ',
+          effect: 'DENY',
+        },
       },
-    });
+    );
 
     expect(setMutation.body.errors).toBeUndefined();
     expect(setMutation.body.data.setPermissionGrant).toMatchObject({

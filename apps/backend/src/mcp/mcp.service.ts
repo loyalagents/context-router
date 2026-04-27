@@ -47,7 +47,11 @@ export class McpService implements OnModuleInit {
       if (!tool.requiredAccess) {
         throw new Error(`MCP tool "${name}" is missing requiredAccess`);
       }
-      this.authorizationService.toCapability(tool.requiredAccess);
+      for (const access of this.authorizationService.normalizeAccessList(
+        tool.requiredAccess,
+      )) {
+        this.authorizationService.toCapability(access);
+      }
       this.toolMap.set(name, tool);
     }
 
@@ -73,8 +77,12 @@ export class McpService implements OnModuleInit {
 
   createServer(context: McpContext): Server {
     const serverConfig = this.configService.get('mcp.server');
-    const toolsEnabled = this.configService.get('mcp.tools.preferences.enabled');
-    const resourcesEnabled = this.configService.get('mcp.resources.schema.enabled');
+    const toolsEnabled = this.configService.get(
+      'mcp.tools.preferences.enabled',
+    );
+    const resourcesEnabled = this.configService.get(
+      'mcp.resources.schema.enabled',
+    );
 
     const server = new Server(
       {
@@ -94,7 +102,7 @@ export class McpService implements OnModuleInit {
         return {
           tools: [...this.toolMap.values()]
             .filter((tool) =>
-              this.authorizationService.canAccess(
+              this.authorizationService.canAccessAny(
                 context.client,
                 tool.requiredAccess,
                 context.grants,
@@ -122,7 +130,11 @@ export class McpService implements OnModuleInit {
             content: [
               {
                 type: 'text',
-                text: JSON.stringify({ error: `Unknown tool: ${name}` }, null, 2),
+                text: JSON.stringify(
+                  { error: `Unknown tool: ${name}` },
+                  null,
+                  2,
+                ),
               },
             ],
             isError: true,
@@ -144,6 +156,7 @@ export class McpService implements OnModuleInit {
         }
 
         const shouldLogAccess =
+          tool.accessLogPolicy === 'always' ||
           tool.descriptor.annotations?.readOnlyHint === true;
 
         if (tool.requiresAuth && !dispatchContext) {
@@ -180,12 +193,54 @@ export class McpService implements OnModuleInit {
         }
 
         try {
-          this.authorizationService.assertAccess(
-            dispatchContext.client,
-            tool.requiredAccess,
-            dispatchContext.grants,
-            'tools/call',
-          );
+          if (
+            !this.authorizationService.canAccessAny(
+              dispatchContext.client,
+              tool.requiredAccess,
+              dispatchContext.grants,
+            )
+          ) {
+            const capabilities = this.authorizationService
+              .normalizeAccessList(tool.requiredAccess)
+              .map((access) => this.authorizationService.toCapability(access));
+            const message = `Client "${dispatchContext.client.key}" is not allowed to call tool "${name}"`;
+            this.logger.warn(
+              JSON.stringify({
+                decision: 'deny',
+                clientKey: dispatchContext.client.key,
+                surface: 'tools/call',
+                toolName: name,
+                capabilities,
+              }),
+            );
+
+            const result = {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ error: message }, null, 2),
+                },
+              ],
+              isError: true,
+            };
+            if (shouldLogAccess) {
+              await this.recordMcpAccessEvent({
+                context: dispatchContext,
+                surface: McpAccessSurface.TOOLS_CALL,
+                operationName: name,
+                outcome: McpAccessOutcome.DENY,
+                latencyMs: this.elapsedMs(startedAt),
+                accessLog: {
+                  errorMetadata: {
+                    source: 'AUTHORIZATION',
+                    message,
+                    capabilities,
+                  },
+                },
+              });
+            }
+            return result;
+          }
         } catch (error) {
           if (error instanceof McpAuthorizationError) {
             const result = {
@@ -234,9 +289,11 @@ export class McpService implements OnModuleInit {
 
         try {
           const execution = await tool.execute(args, dispatchContext);
-          const outcome = execution.result.isError
-            ? McpAccessOutcome.ERROR
-            : McpAccessOutcome.SUCCESS;
+          const outcome =
+            execution.outcome ??
+            (execution.result.isError
+              ? McpAccessOutcome.ERROR
+              : McpAccessOutcome.SUCCESS);
 
           if (shouldLogAccess) {
             await this.recordMcpAccessEvent({
@@ -290,69 +347,66 @@ export class McpService implements OnModuleInit {
         };
       });
 
-      server.setRequestHandler(
-        ReadResourceRequestSchema,
-        async (request) => {
-          const { uri } = request.params;
-          const startedAt = performance.now();
-          const dispatchContext: McpContext = {
-            ...context,
-            correlationId: randomUUID(),
-          };
+      server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+        const { uri } = request.params;
+        const startedAt = performance.now();
+        const dispatchContext: McpContext = {
+          ...context,
+          correlationId: randomUUID(),
+        };
 
-          this.logger.log(`Resource requested: ${uri}`);
+        this.logger.log(`Resource requested: ${uri}`);
 
-          try {
-            const resource = this.resourceMap.get(uri);
-            if (!resource) {
-              throw new Error(`Unknown resource: ${uri}`);
-            }
-
-            this.authorizationService.assertAccess(
-              dispatchContext.client,
-              resource.requiredAccess,
-              dispatchContext.grants,
-              'resources/read',
-            );
-
-            const execution = await resource.read(dispatchContext);
-
-            await this.recordMcpAccessEvent({
-              context: dispatchContext,
-              surface: McpAccessSurface.RESOURCES_READ,
-              operationName: uri,
-              outcome: McpAccessOutcome.SUCCESS,
-              latencyMs: this.elapsedMs(startedAt),
-              accessLog: execution.accessLog,
-            });
-
-            return execution.result;
-          } catch (error) {
-            await this.recordMcpAccessEvent({
-              context: dispatchContext,
-              surface: McpAccessSurface.RESOURCES_READ,
-              operationName: uri,
-              outcome:
-                error instanceof McpAuthorizationError
-                  ? McpAccessOutcome.DENY
-                  : McpAccessOutcome.ERROR,
-              latencyMs: this.elapsedMs(startedAt),
-              accessLog: {
-                errorMetadata: {
-                  source:
-                    error instanceof McpAuthorizationError
-                      ? 'AUTHORIZATION'
-                      : uri && !this.resourceMap.has(uri)
-                        ? 'DISPATCH'
-                        : 'HANDLER_EXCEPTION',
-                  message: error.message,
-                },
-              },
-            });
-            throw error;
+        try {
+          const resource = this.resourceMap.get(uri);
+          if (!resource) {
+            throw new Error(`Unknown resource: ${uri}`);
           }
-        },
-      );
+
+          this.authorizationService.assertAccess(
+            dispatchContext.client,
+            resource.requiredAccess,
+            dispatchContext.grants,
+            'resources/read',
+          );
+
+          const execution = await resource.read(dispatchContext);
+
+          await this.recordMcpAccessEvent({
+            context: dispatchContext,
+            surface: McpAccessSurface.RESOURCES_READ,
+            operationName: uri,
+            outcome: McpAccessOutcome.SUCCESS,
+            latencyMs: this.elapsedMs(startedAt),
+            accessLog: execution.accessLog,
+          });
+
+          return execution.result;
+        } catch (error) {
+          await this.recordMcpAccessEvent({
+            context: dispatchContext,
+            surface: McpAccessSurface.RESOURCES_READ,
+            operationName: uri,
+            outcome:
+              error instanceof McpAuthorizationError
+                ? McpAccessOutcome.DENY
+                : McpAccessOutcome.ERROR,
+            latencyMs: this.elapsedMs(startedAt),
+            accessLog: {
+              errorMetadata: {
+                source:
+                  error instanceof McpAuthorizationError
+                    ? 'AUTHORIZATION'
+                    : uri && !this.resourceMap.has(uri)
+                      ? 'DISPATCH'
+                      : 'HANDLER_EXCEPTION',
+                message: error.message,
+              },
+            },
+          });
+          throw error;
+        }
+      });
     } else {
       this.logger.warn('Schema resources are disabled in configuration');
     }
@@ -368,14 +422,19 @@ export class McpService implements OnModuleInit {
     accessLog: McpAccessLogMetadata | undefined,
     source: string,
   ): McpAccessLogMetadata {
+    const existingErrorMetadata =
+      typeof accessLog?.errorMetadata === 'object' &&
+      accessLog.errorMetadata !== null &&
+      !Array.isArray(accessLog.errorMetadata)
+        ? (accessLog.errorMetadata as Record<string, unknown>)
+        : {};
+    const existingSource = existingErrorMetadata.source;
+
     return {
       ...accessLog,
       errorMetadata: {
-        ...(typeof accessLog?.errorMetadata === 'object' &&
-        accessLog.errorMetadata !== null
-          ? accessLog.errorMetadata
-          : {}),
-        source,
+        ...existingErrorMetadata,
+        source: typeof existingSource === 'string' ? existingSource : source,
       },
     };
   }
@@ -402,9 +461,7 @@ export class McpService implements OnModuleInit {
         errorMetadata: params.accessLog?.errorMetadata,
       });
     } catch (error) {
-      this.logger.warn(
-        `Failed to record MCP access event: ${error.message}`,
-      );
+      this.logger.warn(`Failed to record MCP access event: ${error.message}`);
     }
   }
 }

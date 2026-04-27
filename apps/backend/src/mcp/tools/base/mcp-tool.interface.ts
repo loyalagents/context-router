@@ -6,6 +6,7 @@ import { McpToolExecutionResult } from '../../access-log/access-log.types';
 export interface McpToolInterface {
   descriptor: Tool;
   requiresAuth: boolean;
-  requiredAccess: McpAccess;
+  requiredAccess: McpAccess | readonly McpAccess[];
+  accessLogPolicy?: 'default' | 'always';
   execute(args: unknown, context?: McpContext): Promise<McpToolExecutionResult>;
 }
