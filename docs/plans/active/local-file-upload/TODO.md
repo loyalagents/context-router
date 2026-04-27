@@ -14,6 +14,13 @@
 
 ## Local orchestrator follow-ups
 
+Current V1 behavior:
+
+- The local orchestrator does not call a local model or sub-agent yet.
+- File and suggestion filtering are both passthrough-only in V1.
+- Preference extraction currently happens on the backend via `POST /api/preferences/analysis`.
+- Persistence currently happens on the backend via GraphQL `applyPreferenceSuggestions`.
+
 - Add real local-agent file and suggestion filters (for example Ollama, Codex, Claude Code, or command-based adapters).
 - Add heuristic filters that can run without a model dependency.
 - Add hash-based dedupe/resume so repeated runs on the same folder can skip unchanged files.
