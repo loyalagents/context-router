@@ -16,6 +16,11 @@ The current backend already provides useful primitives:
 - GraphQL `setPreference` and `suggestPreference` can write values directly.
 - MCP `mutatePreferences` can perform machine-oriented value and definition mutations.
 
+There is also an important schema gate in the current system:
+
+- V1 can only import preferences for slugs that already exist in the preference catalog.
+- Unknown candidate slugs are filtered by the analysis path and surfaced in `filteredSuggestions`, not persisted.
+
 The planned future extension is local filtering:
 
 - a local sub-agent such as Codex, Claude Code, Ollama, or similar can decide whether a file is worth analyzing
