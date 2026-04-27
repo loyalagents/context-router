@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { PassthroughFileFilter } from '../src/filters/passthrough-file-filter';
 import { PassthroughSuggestionFilter } from '../src/filters/passthrough-suggestion-filter';
+import { writeManifest } from '../src/reporting/manifest';
 import { runImport } from '../src/run-import';
 import { RequestError } from '../src/server/request-error';
 import { CliOptions, DocumentAnalysisResult } from '../src/types';
@@ -206,4 +207,347 @@ test('runImport maps accepted suggestions into apply requests with evidence', as
   assert.equal(manifest.summary.applyRequested, 1);
   assert.equal(manifest.summary.applyMatched, 1);
   assert.equal(manifest.summary.hasFailures, false);
+});
+
+test('runImport records ambiguous apply reconciliation when multiple accepted suggestions share a slug', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-ambiguous-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief and concise');
+
+  const manifest = await runImport(
+    buildOptions({ folder: tempRoot, apply: true }),
+    {
+      analysisClient: {
+        analyzeFile: async () =>
+          ({
+            analysisId: 'analysis-ambiguous',
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 0,
+            suggestions: [
+              {
+                id: 'analysis-ambiguous:candidate:1',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.9,
+                sourceSnippet: 'brief',
+              },
+              {
+                id: 'analysis-ambiguous:candidate:2',
+                slug: 'system.response_tone',
+                operation: 'UPDATE',
+                newValue: 'concise',
+                confidence: 0.8,
+                sourceSnippet: 'concise',
+              },
+            ],
+            filteredSuggestions: [],
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async (batch) => ({
+          analysisId: batch.analysisId,
+          requestedCount: batch.suggestions.length,
+          appliedCount: 1,
+          matchedSuggestionIds: [],
+          unmatchedSuggestionIds: [],
+          ambiguousSuggestionIds: batch.suggestions.map(
+            (suggestion) => suggestion.suggestionId,
+          ),
+          appliedPreferences: [
+            {
+              id: 'pref-1',
+              slug: 'system.response_tone',
+              value: 'brief',
+              status: 'ACTIVE',
+              sourceType: 'INFERRED',
+            },
+          ],
+        }),
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: new PassthroughSuggestionFilter(),
+    },
+  );
+
+  assert.deepEqual(manifest.files[0].apply?.matchedSuggestionIds, []);
+  assert.deepEqual(manifest.files[0].apply?.unmatchedSuggestionIds, []);
+  assert.deepEqual(manifest.files[0].apply?.ambiguousSuggestionIds, [
+    'analysis-ambiguous:candidate:1',
+    'analysis-ambiguous:candidate:2',
+  ]);
+  assert.equal(manifest.summary.applyRequested, 2);
+  assert.equal(manifest.summary.applyAmbiguous, 2);
+  assert.equal(manifest.summary.hasFailures, true);
+});
+
+test('runImport records apply transport failures as unmatched suggestions', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-apply-error-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief responses');
+
+  const manifest = await runImport(
+    buildOptions({ folder: tempRoot, apply: true }),
+    {
+      analysisClient: {
+        analyzeFile: async () =>
+          ({
+            analysisId: 'analysis-transport',
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 0,
+            suggestions: [
+              {
+                id: 'analysis-transport:candidate:1',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.91,
+                sourceSnippet: 'brief responses',
+              },
+            ],
+            filteredSuggestions: [],
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new RequestError('Socket hang up', 'network');
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: new PassthroughSuggestionFilter(),
+    },
+  );
+
+  assert.equal(manifest.files[0].apply?.error, 'Socket hang up');
+  assert.deepEqual(manifest.files[0].apply?.matchedSuggestionIds, []);
+  assert.deepEqual(manifest.files[0].apply?.unmatchedSuggestionIds, [
+    'analysis-transport:candidate:1',
+  ]);
+  assert.equal(manifest.summary.applyRequested, 1);
+  assert.equal(manifest.summary.applyUnmatched, 1);
+  assert.equal(manifest.summary.hasFailures, true);
+});
+
+test('runImport produces a stable manifest shape for a mixed dry run', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-manifest-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief responses');
+  await writeFile(path.join(tempRoot, 'skip.docx'), 'unsupported');
+  await writeFile(path.join(tempRoot, '.prettierrc'), '{ "semi": false }');
+
+  const manifest = await runImport(
+    buildOptions({ folder: tempRoot }),
+    {
+      analysisClient: {
+        analyzeFile: async () =>
+          ({
+            analysisId: 'analysis-manifest',
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 1,
+            suggestions: [
+              {
+                id: 'analysis-manifest:candidate:1',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.77,
+                sourceSnippet: 'brief responses',
+              },
+            ],
+            filteredSuggestions: [
+              {
+                id: 'analysis-manifest:filtered:1',
+                slug: 'custom.unknown',
+                operation: 'CREATE',
+                newValue: 'x',
+                confidence: 0.1,
+                sourceSnippet: 'unknown',
+                filterReason: 'UNKNOWN_SLUG',
+              },
+            ],
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new Error('should not be called in dry-run mode');
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: new PassthroughSuggestionFilter(),
+    },
+  );
+
+  const stableManifest = JSON.parse(
+    JSON.stringify(manifest, (_key, value) => {
+      if (value === tempRoot) {
+        return '<folder>';
+      }
+      if (typeof value === 'string' && value.startsWith(tempRoot)) {
+        return value.replace(tempRoot, '<folder>');
+      }
+      return value;
+    }),
+  );
+
+  assert.deepEqual(stableManifest, {
+    version: 1,
+    startedAt: stableManifest.startedAt,
+    finishedAt: stableManifest.finishedAt,
+    config: {
+      folder: '<folder>',
+      backendUrl: 'http://localhost:3000',
+      apply: false,
+      concurrency: 1,
+      fileFilter: 'passthrough',
+      suggestionFilter: 'passthrough',
+    },
+    hiddenEntriesSkipped: 1,
+    files: [
+      {
+        path: '<folder>/prefs.txt',
+        relativePath: 'prefs.txt',
+        sizeBytes: 15,
+        extension: '.txt',
+        originalMimeType: 'text/plain',
+        uploadMimeType: 'text/plain',
+        file: {
+          path: '<folder>/prefs.txt',
+          relativePath: 'prefs.txt',
+          sizeBytes: 15,
+          extension: '.txt',
+          originalMimeType: 'text/plain',
+          uploadMimeType: 'text/plain',
+          uploadFileName: 'prefs.txt',
+          coercedToPlainText: false,
+        },
+        discovery: {
+          action: 'analyze',
+          reason: 'supported_extension',
+        },
+        fileFilter: {
+          action: 'analyze',
+          reason: 'passthrough',
+          score: 1,
+        },
+        analysis: {
+          attempted: true,
+          status: 'success',
+          statusReason: null,
+          analysisId: 'analysis-manifest',
+          documentSummary: 'Preference note',
+          suggestions: [
+            {
+              id: 'analysis-manifest:candidate:1',
+              slug: 'system.response_tone',
+              operation: 'CREATE',
+              newValue: 'brief',
+              confidence: 0.77,
+              sourceSnippet: 'brief responses',
+            },
+          ],
+          filteredSuggestions: [
+            {
+              id: 'analysis-manifest:filtered:1',
+              slug: 'custom.unknown',
+              operation: 'CREATE',
+              newValue: 'x',
+              confidence: 0.1,
+              sourceSnippet: 'unknown',
+              filterReason: 'UNKNOWN_SLUG',
+            },
+          ],
+          filteredCount: 1,
+        },
+        suggestionDecisions: [
+          {
+            suggestionId: 'analysis-manifest:candidate:1',
+            action: 'apply',
+            reason: 'passthrough',
+            score: 0.77,
+          },
+        ],
+      },
+      {
+        path: '<folder>/skip.docx',
+        relativePath: 'skip.docx',
+        sizeBytes: 11,
+        extension: '.docx',
+        originalMimeType: null,
+        uploadMimeType: null,
+        discovery: {
+          action: 'skip',
+          reason: 'unsupported_extension',
+          details: 'Unsupported extension ".docx"',
+        },
+      },
+    ],
+    summary: {
+      discoveredVisibleFiles: 2,
+      hiddenEntriesSkipped: 1,
+      unsupportedFilesSkipped: 1,
+      skippedByFileFilter: 0,
+      analysisAttempted: 1,
+      analysisSucceeded: 1,
+      analysisNoMatches: 0,
+      analysisParseErrors: 0,
+      analysisAiErrors: 0,
+      analysisRequestErrors: 0,
+      backendFilteredSuggestions: 1,
+      validSuggestionsFound: 1,
+      suggestionsAccepted: 1,
+      suggestionsSkippedByFilter: 0,
+      applyRequested: 0,
+      applyMatched: 0,
+      applyUnmatched: 0,
+      applyAmbiguous: 0,
+      hasFailures: false,
+    },
+  });
+});
+
+test('writeManifest writes stable JSON with version field', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-write-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const manifestPath = path.join(tempRoot, 'manifest.json');
+  const manifest = await runImport(
+    buildOptions({ folder: tempRoot }),
+    {
+      analysisClient: {
+        analyzeFile: async () => {
+          throw new Error('should not be called when folder is empty');
+        },
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new Error('should not be called when folder is empty');
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: new PassthroughSuggestionFilter(),
+    },
+  );
+
+  await writeManifest(manifest, manifestPath);
+
+  const content = await readFile(manifestPath, 'utf8');
+  assert.match(content, /"version": 1/);
+  assert.match(content, /"summary":/);
 });

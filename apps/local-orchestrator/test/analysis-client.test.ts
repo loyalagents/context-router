@@ -108,3 +108,74 @@ test('AnalysisClient raises auth request errors for non-OK responses', async (t)
       error.statusCode === 403,
   );
 });
+
+test('AnalysisClient raises invalid response errors for malformed JSON', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () =>
+    new Response('{"analysisId"', {
+      status: 201,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+
+  const client = new AnalysisClient({
+    backendUrl: 'http://localhost:3000',
+    token: 'secret-token',
+  });
+
+  await assert.rejects(
+    () =>
+      client.analyzeFile({
+        path: __filename,
+        relativePath: 'analysis-client.test.ts',
+        sizeBytes: 0,
+        extension: '.txt',
+        originalMimeType: 'text/plain',
+        uploadMimeType: 'text/plain',
+        uploadFileName: 'analysis-client.test.ts',
+        coercedToPlainText: false,
+      }),
+    (error: unknown) =>
+      error instanceof RequestError && error.kind === 'invalid_response',
+  );
+});
+
+test('AnalysisClient preserves JSON error messages for non-OK responses like size failures', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ message: 'File too large' }), {
+      status: 413,
+      headers: { 'content-type': 'application/json' },
+    })) as typeof fetch;
+
+  const client = new AnalysisClient({
+    backendUrl: 'http://localhost:3000',
+    token: 'secret-token',
+  });
+
+  await assert.rejects(
+    () =>
+      client.analyzeFile({
+        path: __filename,
+        relativePath: 'analysis-client.test.ts',
+        sizeBytes: 0,
+        extension: '.txt',
+        originalMimeType: 'text/plain',
+        uploadMimeType: 'text/plain',
+        uploadFileName: 'analysis-client.test.ts',
+        coercedToPlainText: false,
+      }),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'http' &&
+      error.statusCode === 413 &&
+      error.message === 'File too large',
+  );
+});

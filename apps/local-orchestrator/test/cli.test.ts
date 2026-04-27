@@ -23,6 +23,31 @@ test('parseCliArgs applies defaults and env token', () => {
   assert.match(command.options?.folder ?? '', /notes$/);
 });
 
+test('parseCliArgs rejects missing folder', () => {
+  assert.throws(
+    () => parseCliArgs(['--token', 'abc'], {}),
+    /Missing required --folder argument/,
+  );
+});
+
+test('parseCliArgs rejects missing token when env fallback is absent', () => {
+  assert.throws(
+    () => parseCliArgs(['--folder', './notes'], {}),
+    /Missing bearer token/,
+  );
+});
+
+test('parseCliArgs rejects invalid concurrency', () => {
+  assert.throws(
+    () =>
+      parseCliArgs(
+        ['--folder', './notes', '--token', 'abc', '--concurrency', '0'],
+        {},
+      ),
+    /--concurrency must be a positive integer/,
+  );
+});
+
 test('parseCliArgs rejects unsupported filter names', () => {
   assert.throws(
     () =>
