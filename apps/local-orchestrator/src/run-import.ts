@@ -9,15 +9,18 @@ import { toRequestErrorRecord } from './server/request-error';
 import { FileFilter } from './filters/file-filter';
 import { SuggestionFilter } from './filters/suggestion-filter';
 import {
+  AIFilterFailurePolicy,
   AnalysisRecord,
   ApplyInputSuggestion,
   CliOptions,
   DiscoveredFile,
   DocumentAnalysisResult,
   FileRunRecord,
+  FilterAuditRecord,
   PreferenceSuggestion,
   RunConfig,
   RunManifest,
+  SuggestionDecision,
 } from './types';
 
 export interface RunImportDependencies {
@@ -34,6 +37,12 @@ export async function runImport(
   const startedAt = new Date().toISOString();
   const discovery = await discoverFiles(options.folder);
   const files = discovery.files;
+  const useAIFileStage =
+    options.aiFilter &&
+    (options.aiFilterStage === 'file' || options.aiFilterStage === 'both');
+  const useAISuggestionStage =
+    options.aiFilter &&
+    (options.aiFilterStage === 'suggestion' || options.aiFilterStage === 'both');
 
   await mapWithConcurrency(
     files.filter((record) => record.discovery.action === 'analyze'),
@@ -43,7 +52,30 @@ export async function runImport(
         return;
       }
 
-      record.fileFilter = await dependencies.fileFilter.decide(record.file);
+      try {
+        record.fileFilter = await dependencies.fileFilter.decide(record.file);
+      } catch (error) {
+        if (!useAIFileStage) {
+          throw error;
+        }
+
+        const requestError = toRequestErrorRecord(error);
+        record.ai = {
+          ...(record.ai ?? {}),
+          fileStage: {
+            adapterError: requestError,
+            usedFallback: true,
+          },
+        };
+        record.fileFilter = {
+          action: 'analyze',
+          reason: 'ai_file_filter_failure_bypass',
+          details: requestError.message,
+          source: 'fallback',
+        };
+      }
+
+      applyFileStageMetadata(record);
       if (record.fileFilter.action === 'skip') {
         return;
       }
@@ -55,17 +87,38 @@ export async function runImport(
         return;
       }
 
-      record.suggestionDecisions = await Promise.all(
-        analysis.suggestions.map((suggestion) =>
-          dependencies.suggestionFilter.decide({
-            file: record.file as DiscoveredFile,
-            analysis: toDocumentAnalysisResult(analysis),
-            suggestion,
-          }),
-        ),
-      );
+      try {
+        record.suggestionDecisions = await dependencies.suggestionFilter.decide({
+          file: record.file as DiscoveredFile,
+          analysis: toDocumentAnalysisResult(analysis),
+          suggestions: analysis.suggestions,
+        });
+      } catch (error) {
+        if (!useAISuggestionStage) {
+          throw error;
+        }
+
+        const requestError = toRequestErrorRecord(error);
+        record.ai = {
+          ...(record.ai ?? {}),
+          suggestionStage: {
+            adapterError: requestError,
+            usedFallback: !options.apply,
+            applySkipped: options.apply,
+          },
+        };
+        record.suggestionDecisions = analysis.suggestions.map((suggestion) =>
+          toFallbackSuggestionDecision(suggestion, requestError.message),
+        );
+      }
+
+      applySuggestionStageMetadata(record);
 
       if (!options.apply) {
+        return;
+      }
+
+      if (record.ai?.suggestionStage?.applySkipped) {
         return;
       }
 
@@ -83,7 +136,12 @@ export async function runImport(
       const applyBatch: ApplySuggestionBatch = {
         analysisId: analysis.analysisId,
         suggestions: acceptedSuggestions.map((suggestion) =>
-          toApplyInputSuggestion(suggestion, record.file as DiscoveredFile),
+          toApplyInputSuggestion(
+            suggestion,
+            record.file as DiscoveredFile,
+            findSuggestionDecision(record.suggestionDecisions ?? [], suggestion.id),
+            options,
+          ),
         ),
       };
 
@@ -112,12 +170,20 @@ export async function runImport(
     backendUrl: options.backendUrl,
     apply: options.apply,
     concurrency: options.concurrency,
-    fileFilter: options.fileFilter,
-    suggestionFilter: options.suggestionFilter,
+    aiFilter: {
+      enabled: options.aiFilter,
+      stage: options.aiFilter ? options.aiFilterStage : null,
+      adapter: options.aiFilter ? options.aiAdapter : null,
+      command: options.aiFilter ? options.aiCommand ?? null : null,
+      goal: options.aiFilter ? options.aiGoal ?? null : null,
+      timeoutMs: options.aiFilter ? options.aiTimeoutMs : null,
+      promptVersion: derivePromptVersion(files),
+      failurePolicy: options.aiFilter ? AI_FAILURE_POLICY : null,
+    },
   };
 
   const partialManifest = {
-    version: 1 as const,
+    version: 2 as const,
     startedAt,
     finishedAt: new Date().toISOString(),
     config,
@@ -177,7 +243,21 @@ function toDocumentAnalysisResult(
 function toApplyInputSuggestion(
   suggestion: PreferenceSuggestion,
   file: DiscoveredFile,
+  decision: SuggestionDecision | undefined,
+  options: Pick<CliOptions, 'aiFilter' | 'aiAdapter' | 'aiGoal'>,
 ): ApplyInputSuggestion {
+  const filterAudit =
+    decision?.source === 'ai' && options.aiFilter && options.aiGoal
+      ? ({
+          stage: 'suggestion',
+          adapter: options.aiAdapter,
+          goal: options.aiGoal,
+          decision: decision.action,
+          score: decision.score,
+          reason: decision.reason,
+        } satisfies FilterAuditRecord)
+      : undefined;
+
   return {
     suggestionId: suggestion.id,
     slug: suggestion.slug,
@@ -190,8 +270,112 @@ function toApplyInputSuggestion(
       sourceMeta: suggestion.sourceMeta ?? null,
       filePath: file.path,
       relativePath: file.relativePath,
+      ...(filterAudit ? { filterAudit } : {}),
     },
   };
+}
+
+const AI_FAILURE_POLICY: AIFilterFailurePolicy =
+  'dry-run-passthrough_apply-skip';
+
+function toFallbackSuggestionDecision(
+  suggestion: PreferenceSuggestion,
+  details: string,
+): SuggestionDecision {
+  return {
+    suggestionId: suggestion.id,
+    action: 'apply',
+    reason: 'adapter_failure_passthrough_fallback',
+    score: suggestion.confidence,
+    details,
+    source: 'fallback',
+    promptVersion: null,
+  };
+}
+
+function findSuggestionDecision(
+  decisions: SuggestionDecision[],
+  suggestionId: string,
+): SuggestionDecision | undefined {
+  return decisions.find((decision) => decision.suggestionId === suggestionId);
+}
+
+function applyFileStageMetadata(record: FileRunRecord): void {
+  const decision = record.fileFilter;
+  if (!decision) {
+    return;
+  }
+
+  if (decision.source === 'ai') {
+    record.ai = {
+      ...(record.ai ?? {}),
+      fileStage: {
+        ...(record.ai?.fileStage ?? {}),
+        promptVersion: decision.promptVersion ?? null,
+      },
+    };
+    return;
+  }
+
+  if (decision.source === 'bypass') {
+    record.ai = {
+      ...(record.ai ?? {}),
+      fileStage: {
+        ...(record.ai?.fileStage ?? {}),
+        bypassReason: decision.reason,
+      },
+    };
+  }
+}
+
+function applySuggestionStageMetadata(record: FileRunRecord): void {
+  const decisions = record.suggestionDecisions;
+  if (!decisions || decisions.length === 0) {
+    return;
+  }
+
+  const promptVersion =
+    decisions.find((decision) => decision.promptVersion)?.promptVersion ?? null;
+  const usesFallback = decisions.some((decision) => decision.source === 'fallback');
+  const usesAI = decisions.some((decision) => decision.source === 'ai');
+
+  if (!usesFallback && !usesAI) {
+    return;
+  }
+
+  record.ai = {
+    ...(record.ai ?? {}),
+    suggestionStage: {
+      ...(record.ai?.suggestionStage ?? {}),
+      promptVersion,
+      usedFallback: record.ai?.suggestionStage?.usedFallback ?? usesFallback,
+    },
+  };
+}
+
+function derivePromptVersion(files: FileRunRecord[]): string | null {
+  const versions = new Set<string>();
+  for (const record of files) {
+    const fileStageVersion = record.ai?.fileStage?.promptVersion;
+    if (fileStageVersion) {
+      versions.add(fileStageVersion);
+    }
+
+    const suggestionStageVersion = record.ai?.suggestionStage?.promptVersion;
+    if (suggestionStageVersion) {
+      versions.add(suggestionStageVersion);
+    }
+  }
+
+  if (versions.size === 0) {
+    return null;
+  }
+
+  if (versions.size === 1) {
+    return Array.from(versions)[0];
+  }
+
+  return 'multiple';
 }
 
 async function mapWithConcurrency<T>(

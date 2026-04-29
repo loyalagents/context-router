@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { CliOptions } from './types';
+import { AIFilterAdapter, AIFilterStage, CliOptions } from './types';
 
 export interface ParsedCliCommand {
   kind: 'run' | 'help';
@@ -7,6 +7,7 @@ export interface ParsedCliCommand {
 }
 
 const DEFAULT_BACKEND_URL = 'http://localhost:3000';
+const DEFAULT_AI_TIMEOUT_MS = 30000;
 
 export function buildHelpText(): string {
   return [
@@ -20,8 +21,12 @@ export function buildHelpText(): string {
     '  --apply                      Persist accepted suggestions (default: dry-run)',
     '  --concurrency <n>            Analysis concurrency (default: 1)',
     '  --out <path>                 Write JSON manifest to this path',
-    '  --file-filter <name>         File filter implementation (default: passthrough)',
-    '  --suggestion-filter <name>   Suggestion filter implementation (default: passthrough)',
+    '  --ai-filter                  Enable local AI filtering',
+    '  --ai-filter-stage <name>     AI filter stage: suggestion|file|both (default: suggestion)',
+    '  --ai-adapter <name>          AI adapter implementation (default: command)',
+    '  --ai-command <path-or-name>  Command to execute for the command adapter',
+    '  --ai-goal <text>             Required filtering goal when AI filtering is enabled',
+    '  --ai-timeout-ms <n>          AI adapter timeout in milliseconds (default: 30000)',
     '  --help                       Show this help',
   ].join('\n');
 }
@@ -40,8 +45,13 @@ export function parseCliArgs(
   let apply = false;
   let concurrency = 1;
   let out: string | undefined;
-  let fileFilter: CliOptions['fileFilter'] = 'passthrough';
-  let suggestionFilter: CliOptions['suggestionFilter'] = 'passthrough';
+  let aiFilter = false;
+  let aiFilterStage: CliOptions['aiFilterStage'] = 'suggestion';
+  let aiAdapter: CliOptions['aiAdapter'] = 'command';
+  let aiCommand: string | undefined;
+  let aiGoal: string | undefined;
+  let aiTimeoutMs = DEFAULT_AI_TIMEOUT_MS;
+  let sawAIOption = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -70,16 +80,32 @@ export function parseCliArgs(
       case '--out':
         out = requireValue(argv, ++index, '--out');
         break;
-      case '--file-filter':
-        fileFilter = parseKnownFilter(
-          requireValue(argv, ++index, '--file-filter'),
-          '--file-filter',
+      case '--ai-filter':
+        aiFilter = true;
+        break;
+      case '--ai-filter-stage':
+        sawAIOption = true;
+        aiFilterStage = parseAIFilterStage(
+          requireValue(argv, ++index, '--ai-filter-stage'),
         );
         break;
-      case '--suggestion-filter':
-        suggestionFilter = parseKnownFilter(
-          requireValue(argv, ++index, '--suggestion-filter'),
-          '--suggestion-filter',
+      case '--ai-adapter':
+        sawAIOption = true;
+        aiAdapter = parseAIAdapter(requireValue(argv, ++index, '--ai-adapter'));
+        break;
+      case '--ai-command':
+        sawAIOption = true;
+        aiCommand = requireValue(argv, ++index, '--ai-command');
+        break;
+      case '--ai-goal':
+        sawAIOption = true;
+        aiGoal = requireValue(argv, ++index, '--ai-goal');
+        break;
+      case '--ai-timeout-ms':
+        sawAIOption = true;
+        aiTimeoutMs = parsePositiveInteger(
+          requireValue(argv, ++index, '--ai-timeout-ms'),
+          '--ai-timeout-ms',
         );
         break;
       default:
@@ -97,6 +123,22 @@ export function parseCliArgs(
     );
   }
 
+  if (!aiFilter && sawAIOption) {
+    throw new Error('AI options require --ai-filter.');
+  }
+
+  if (aiFilter && !aiGoal) {
+    throw new Error('--ai-goal is required when --ai-filter is enabled.');
+  }
+
+  if (aiFilter && aiAdapter === 'command' && !aiCommand) {
+    throw new Error('--ai-command is required when --ai-adapter is "command".');
+  }
+
+  if (aiCommand && aiAdapter !== 'command') {
+    throw new Error('--ai-command is only valid when --ai-adapter is "command".');
+  }
+
   return {
     kind: 'run',
     options: {
@@ -106,8 +148,12 @@ export function parseCliArgs(
       apply,
       concurrency,
       out: out ? path.resolve(out) : undefined,
-      fileFilter,
-      suggestionFilter,
+      aiFilter,
+      aiFilterStage,
+      aiAdapter,
+      aiCommand,
+      aiGoal,
+      aiTimeoutMs,
     },
   };
 }
@@ -130,14 +176,21 @@ function parsePositiveInteger(value: string, flag: string): number {
   return parsed;
 }
 
-function parseKnownFilter(
-  value: string,
-  flag: '--file-filter' | '--suggestion-filter',
-): 'passthrough' {
-  if (value !== 'passthrough') {
-    throw new Error(`${flag} only supports "passthrough" in V1`);
+function parseAIAdapter(value: string): AIFilterAdapter {
+  if (value !== 'command') {
+    throw new Error(`--ai-adapter only supports "command" in V1.`);
   }
-  return 'passthrough';
+  return 'command';
+}
+
+function parseAIFilterStage(value: string): AIFilterStage {
+  if (value === 'suggestion' || value === 'file' || value === 'both') {
+    return value;
+  }
+
+  throw new Error(
+    '--ai-filter-stage must be one of "suggestion", "file", or "both".',
+  );
 }
 
 function normalizeBackendUrl(input: string): string {

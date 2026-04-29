@@ -1,4 +1,7 @@
+import { CommandAIFilterAdapter } from './ai/command-adapter';
 import { buildHelpText, parseCliArgs } from './cli';
+import { AIFileFilter } from './filters/ai-file-filter';
+import { AISuggestionFilter } from './filters/ai-suggestion-filter';
 import { PassthroughFileFilter } from './filters/passthrough-file-filter';
 import { PassthroughSuggestionFilter } from './filters/passthrough-suggestion-filter';
 import { writeManifest } from './reporting/manifest';
@@ -33,12 +36,38 @@ async function main(): Promise<void> {
     backendUrl: options.backendUrl,
     token: options.token,
   });
+  const adapter =
+    options.aiFilter && options.aiAdapter === 'command' && options.aiCommand
+      ? new CommandAIFilterAdapter({
+          command: options.aiCommand,
+          timeoutMs: options.aiTimeoutMs,
+        })
+      : null;
+  const fileFilter =
+    adapter &&
+    (options.aiFilterStage === 'file' || options.aiFilterStage === 'both') &&
+    options.aiGoal
+      ? new AIFileFilter({
+          goal: options.aiGoal,
+          adapter,
+        })
+      : new PassthroughFileFilter();
+  const suggestionFilter =
+    adapter &&
+    (options.aiFilterStage === 'suggestion' ||
+      options.aiFilterStage === 'both') &&
+    options.aiGoal
+      ? new AISuggestionFilter({
+          goal: options.aiGoal,
+          adapter,
+        })
+      : new PassthroughSuggestionFilter();
 
   const manifest = await runImport(options, {
     analysisClient,
     applyClient,
-    fileFilter: new PassthroughFileFilter(),
-    suggestionFilter: new PassthroughSuggestionFilter(),
+    fileFilter,
+    suggestionFilter,
   });
 
   if (options.out) {
