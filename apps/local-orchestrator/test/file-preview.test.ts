@@ -35,6 +35,34 @@ test('buildTextPreview truncates large text files conservatively', async (t) => 
   assert.match(preview.text, /^line-1/);
 });
 
+test('buildTextPreview enforces the byte cap for long single-line files', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'file-preview-bytes-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const byteHeavyText = 'a'.repeat(9000);
+  const filePath = path.join(tempRoot, 'prefs.txt');
+  await writeFile(filePath, byteHeavyText, 'utf8');
+
+  const preview = await buildTextPreview({
+    path: filePath,
+    relativePath: 'prefs.txt',
+    sizeBytes: Buffer.byteLength(byteHeavyText),
+    extension: '.txt',
+    originalMimeType: 'text/plain',
+    uploadMimeType: 'text/plain',
+    uploadFileName: 'prefs.txt',
+    coercedToPlainText: false,
+  });
+
+  assert.ok(preview);
+  assert.equal(preview.truncated, true);
+  assert.equal(preview.byteCount, 8 * 1024);
+  assert.equal(preview.lineCount, 1);
+  assert.equal(preview.text.length, 8 * 1024);
+});
+
 test('AIFileFilter bypasses non-text-like files in V1 file-stage mode', async () => {
   const filter = new AIFileFilter({
     goal: 'Only keep durable communication preferences',

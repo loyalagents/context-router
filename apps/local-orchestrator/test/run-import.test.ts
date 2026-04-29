@@ -388,6 +388,359 @@ test('runImport includes filterAudit evidence for AI-accepted suggestions', asyn
   assert.equal(manifest.files[0].ai?.suggestionStage?.promptVersion, 'prompt-v1');
 });
 
+test('runImport does not attach filterAudit for passthrough or fallback decisions', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-no-filter-audit-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief and concise');
+
+  let capturedBatch:
+    | {
+        analysisId: string;
+        suggestions: Array<{ suggestionId: string; evidence?: Record<string, unknown> }>;
+      }
+    | undefined;
+
+  await runImport(
+    buildOptions({
+      folder: tempRoot,
+      apply: true,
+      aiFilter: true,
+      aiGoal: 'Only keep durable communication preferences',
+      aiCommand: 'fake-ai-command',
+    }),
+    {
+      analysisClient: {
+        analyzeFile: async () =>
+          ({
+            analysisId: 'analysis-no-filter-audit',
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 0,
+            suggestions: [
+              {
+                id: 'analysis-no-filter-audit:candidate:1',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.94,
+                sourceSnippet: 'brief',
+              },
+              {
+                id: 'analysis-no-filter-audit:candidate:2',
+                slug: 'system.response_style',
+                operation: 'CREATE',
+                newValue: 'concise',
+                confidence: 0.83,
+                sourceSnippet: 'concise',
+              },
+            ],
+            filteredSuggestions: [],
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async (batch) => {
+          capturedBatch = batch;
+          return {
+            analysisId: batch.analysisId,
+            requestedCount: batch.suggestions.length,
+            appliedCount: batch.suggestions.length,
+            matchedSuggestionIds: batch.suggestions.map(
+              (suggestion) => suggestion.suggestionId,
+            ),
+            unmatchedSuggestionIds: [],
+            ambiguousSuggestionIds: [],
+            appliedPreferences: [],
+          };
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: {
+        name: 'mixed',
+        decide: async (context) => [
+          {
+            suggestionId: context.suggestions[0].id,
+            action: 'apply',
+            reason: 'passthrough',
+            score: 0.94,
+            source: 'passthrough',
+          },
+          {
+            suggestionId: context.suggestions[1].id,
+            action: 'apply',
+            reason: 'fallback',
+            score: 0.83,
+            source: 'fallback',
+          },
+        ],
+      },
+    },
+  );
+
+  assert.ok(capturedBatch);
+  assert.equal(capturedBatch.suggestions.length, 2);
+  assert.equal(capturedBatch.suggestions[0].evidence?.filterAudit, undefined);
+  assert.equal(capturedBatch.suggestions[1].evidence?.filterAudit, undefined);
+});
+
+test('runImport handles both-stage AI filtering and keeps only AI-accepted suggestions', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-both-stage-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief and concise');
+
+  let analysisCalls = 0;
+  let applyCalls = 0;
+  let capturedBatch:
+    | {
+        analysisId: string;
+        suggestions: Array<{ suggestionId: string; evidence?: Record<string, unknown> }>;
+      }
+    | undefined;
+
+  const manifest = await runImport(
+    buildOptions({
+      folder: tempRoot,
+      apply: true,
+      aiFilter: true,
+      aiFilterStage: 'both',
+      aiGoal: 'Only keep durable communication preferences',
+      aiCommand: 'fake-ai-command',
+    }),
+    {
+      analysisClient: {
+        analyzeFile: async () => {
+          analysisCalls += 1;
+          return {
+            analysisId: 'analysis-both-stage',
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 0,
+            suggestions: [
+              {
+                id: 'analysis-both-stage:candidate:1',
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.92,
+                sourceSnippet: 'brief',
+              },
+              {
+                id: 'analysis-both-stage:candidate:2',
+                slug: 'system.response_style',
+                operation: 'CREATE',
+                newValue: 'concise',
+                confidence: 0.81,
+                sourceSnippet: 'concise',
+              },
+            ],
+            filteredSuggestions: [],
+          } satisfies DocumentAnalysisResult;
+        },
+      },
+      applyClient: {
+        applySuggestions: async (batch) => {
+          applyCalls += 1;
+          capturedBatch = batch;
+          return {
+            analysisId: batch.analysisId,
+            requestedCount: batch.suggestions.length,
+            appliedCount: batch.suggestions.length,
+            matchedSuggestionIds: batch.suggestions.map(
+              (suggestion) => suggestion.suggestionId,
+            ),
+            unmatchedSuggestionIds: [],
+            ambiguousSuggestionIds: [],
+            appliedPreferences: [],
+          };
+        },
+      },
+      fileFilter: {
+        name: 'ai',
+        decide: async () => ({
+          action: 'analyze',
+          reason: 'ai_relevant',
+          score: 0.97,
+          details: 'This file looks relevant to communication preferences.',
+          source: 'ai',
+          promptVersion: 'file-prompt-v1',
+        }),
+      },
+      suggestionFilter: {
+        name: 'ai',
+        decide: async (context) => [
+          {
+            suggestionId: context.suggestions[0].id,
+            action: 'apply',
+            reason: 'Stable communication preference',
+            score: 0.93,
+            source: 'ai',
+            promptVersion: 'suggestion-prompt-v1',
+          },
+          {
+            suggestionId: context.suggestions[1].id,
+            action: 'skip',
+            reason: 'Temporary project detail',
+            score: 0.14,
+            source: 'ai',
+            promptVersion: 'suggestion-prompt-v1',
+          },
+        ],
+      },
+    },
+  );
+
+  assert.equal(analysisCalls, 1);
+  assert.equal(applyCalls, 1);
+  assert.ok(capturedBatch);
+  assert.deepEqual(
+    capturedBatch.suggestions.map((suggestion) => suggestion.suggestionId),
+    ['analysis-both-stage:candidate:1'],
+  );
+  assert.equal(manifest.summary.aiFilesEvaluated, 1);
+  assert.equal(manifest.summary.aiSuggestionsAccepted, 1);
+  assert.equal(manifest.summary.aiSuggestionsSkipped, 1);
+  assert.equal(manifest.summary.applyRequested, 1);
+  assert.equal(manifest.files[0].ai?.fileStage?.promptVersion, 'file-prompt-v1');
+  assert.equal(
+    manifest.files[0].ai?.suggestionStage?.promptVersion,
+    'suggestion-prompt-v1',
+  );
+  assert.equal(manifest.config.aiFilter.promptVersion, 'multiple');
+});
+
+test('runImport skips analysis when file-stage AI rejects a file', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-file-skip-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'prefs.txt'), 'brief responses');
+
+  let analysisCalls = 0;
+  let suggestionCalls = 0;
+
+  const manifest = await runImport(
+    buildOptions({
+      folder: tempRoot,
+      aiFilter: true,
+      aiFilterStage: 'file',
+      aiGoal: 'Only keep durable communication preferences',
+      aiCommand: 'fake-ai-command',
+    }),
+    {
+      analysisClient: {
+        analyzeFile: async () => {
+          analysisCalls += 1;
+          throw new Error('analysis should not run when file-stage AI skips the file');
+        },
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new Error('should not be called in dry-run mode');
+        },
+      },
+      fileFilter: {
+        name: 'ai',
+        decide: async () => ({
+          action: 'skip',
+          reason: 'ai_irrelevant',
+          score: 0.03,
+          details: 'Build log with no stable user preferences.',
+          source: 'ai',
+          promptVersion: 'file-skip-prompt-v1',
+        }),
+      },
+      suggestionFilter: {
+        name: 'counting',
+        decide: async () => {
+          suggestionCalls += 1;
+          return [];
+        },
+      },
+    },
+  );
+
+  assert.equal(analysisCalls, 0);
+  assert.equal(suggestionCalls, 0);
+  assert.equal(manifest.summary.skippedByFileFilter, 1);
+  assert.equal(manifest.summary.aiFilesSkipped, 1);
+  assert.equal(manifest.summary.analysisAttempted, 0);
+  assert.equal(manifest.files[0].fileFilter?.action, 'skip');
+  assert.equal(manifest.files[0].ai?.fileStage?.promptVersion, 'file-skip-prompt-v1');
+  assert.equal(manifest.config.aiFilter.promptVersion, 'file-skip-prompt-v1');
+});
+
+test('runImport aggregates promptVersion as multiple when files use different AI prompts', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-prompt-versions-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'a.txt'), 'brief responses');
+  await writeFile(path.join(tempRoot, 'b.txt'), 'concise responses');
+
+  const manifest = await runImport(
+    buildOptions({
+      folder: tempRoot,
+      aiFilter: true,
+      aiGoal: 'Only keep durable communication preferences',
+      aiCommand: 'fake-ai-command',
+    }),
+    {
+      analysisClient: {
+        analyzeFile: async (file) =>
+          ({
+            analysisId: `analysis-${file.relativePath}`,
+            status: 'success',
+            statusReason: null,
+            documentSummary: 'Preference note',
+            filteredCount: 0,
+            suggestions: [
+              {
+                id: `analysis-${file.relativePath}:candidate:1`,
+                slug: 'system.response_tone',
+                operation: 'CREATE',
+                newValue: 'brief',
+                confidence: 0.9,
+                sourceSnippet: file.relativePath,
+              },
+            ],
+            filteredSuggestions: [],
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new Error('should not be called in dry-run mode');
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: {
+        name: 'ai',
+        decide: async (context) => [
+          {
+            suggestionId: context.suggestions[0].id,
+            action: 'apply',
+            reason: 'Stable communication preference',
+            score: 0.9,
+            source: 'ai',
+            promptVersion:
+              context.file.relativePath === 'a.txt' ? 'prompt-a' : 'prompt-b',
+          },
+        ],
+      },
+    },
+  );
+
+  assert.equal(manifest.config.aiFilter.promptVersion, 'multiple');
+});
+
 test('runImport records ambiguous apply reconciliation when multiple accepted suggestions share a slug', async (t) => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-ambiguous-'));
   t.after(async () => {

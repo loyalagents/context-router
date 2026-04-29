@@ -61,6 +61,30 @@ function buildSuggestionRequest() {
   };
 }
 
+function buildFileRequest() {
+  return {
+    stage: 'file' as const,
+    goal: 'Only keep communication preferences',
+    file: {
+      path: '/tmp/prefs.txt',
+      relativePath: 'prefs.txt',
+      extension: '.txt',
+      sizeBytes: 15,
+      originalMimeType: 'text/plain',
+      uploadMimeType: 'text/plain',
+      uploadFileName: 'prefs.txt',
+      coercedToPlainText: false,
+    },
+    preview: {
+      text: 'brief responses',
+      truncated: false,
+      lineCount: 1,
+      byteCount: 15,
+      encoding: 'utf-8' as const,
+    },
+  };
+}
+
 test('CommandAIFilterAdapter parses valid suggestion-stage responses', async (t) => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-valid-'));
   t.after(async () => {
@@ -287,27 +311,7 @@ process.stdout.write(JSON.stringify({
     timeoutMs: 30000,
   });
 
-  const response = await adapter.decideFile({
-    stage: 'file',
-    goal: 'Only keep durable communication preferences',
-    file: {
-      path: '/tmp/prefs.txt',
-      relativePath: 'prefs.txt',
-      extension: '.txt',
-      sizeBytes: 15,
-      originalMimeType: 'text/plain',
-      uploadMimeType: 'text/plain',
-      uploadFileName: 'prefs.txt',
-      coercedToPlainText: false,
-    },
-    preview: {
-      text: 'brief responses',
-      truncated: false,
-      lineCount: 1,
-      byteCount: 15,
-      encoding: 'utf-8',
-    },
-  });
+  const response = await adapter.decideFile(buildFileRequest());
 
   assert.deepEqual(response, {
     promptVersion: 'file-prompt-v1',
@@ -318,4 +322,162 @@ process.stdout.write(JSON.stringify({
       details: 'No durable personalization signal',
     },
   });
+});
+
+test('CommandAIFilterAdapter rejects invalid file-stage JSON', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-file-json-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'invalid-file-json.js',
+    `#!/usr/bin/env node
+process.stdout.write('{not-json');
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    timeoutMs: 30000,
+  });
+
+  await assert.rejects(
+    adapter.decideFile(buildFileRequest()),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'invalid_response' &&
+      error.message.includes('invalid JSON'),
+  );
+});
+
+test('CommandAIFilterAdapter rejects invalid file-stage actions', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-file-action-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'invalid-file-action.js',
+    `#!/usr/bin/env node
+process.stdout.write(JSON.stringify({
+  decision: {
+    action: 'review',
+    reason: 'not valid'
+  }
+}));
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    timeoutMs: 30000,
+  });
+
+  await assert.rejects(
+    adapter.decideFile(buildFileRequest()),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'invalid_response' &&
+      error.message.includes('action "analyze" or "skip"'),
+  );
+});
+
+test('CommandAIFilterAdapter rejects file-stage responses without a reason', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-file-reason-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'missing-file-reason.js',
+    `#!/usr/bin/env node
+process.stdout.write(JSON.stringify({
+  decision: {
+    action: 'skip'
+  }
+}));
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    timeoutMs: 30000,
+  });
+
+  await assert.rejects(
+    adapter.decideFile(buildFileRequest()),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'invalid_response' &&
+      error.message.includes('decision.reason'),
+  );
+});
+
+test('CommandAIFilterAdapter surfaces file-stage non-zero exits', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-file-exit-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'file-exit-3.js',
+    `#!/usr/bin/env node
+process.stderr.write('file stage exploded');
+process.exit(3);
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    timeoutMs: 30000,
+  });
+
+  await assert.rejects(
+    adapter.decideFile(buildFileRequest()),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'process' &&
+      error.message.includes('exited with code 3') &&
+      error.message.includes('file stage exploded'),
+  );
+});
+
+test('CommandAIFilterAdapter enforces file-stage timeouts', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-file-timeout-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'file-timeout.js',
+    `#!/usr/bin/env node
+setTimeout(() => {
+  process.stdout.write(JSON.stringify({
+    decision: {
+      action: 'analyze',
+      reason: 'late response'
+    }
+  }));
+}, 250);
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    timeoutMs: 25,
+  });
+
+  await assert.rejects(
+    adapter.decideFile(buildFileRequest()),
+    (error: unknown) =>
+      error instanceof RequestError &&
+      error.kind === 'timeout' &&
+      error.message.includes('timed out'),
+  );
 });
