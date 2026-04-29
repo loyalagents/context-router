@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import test from 'node:test';
+import { buildHelpText } from '../src/cli';
+
+test('README command examples stay aligned with the CLI surface', async () => {
+  const readmePath = path.resolve(
+    __dirname,
+    '..',
+    'README.md',
+  );
+  const readme = await readFile(readmePath, 'utf8');
+  const help = buildHelpText();
+
+  assert.match(readme, /pnpm --filter local-orchestrator start -- \\/);
+  assert.match(readme, /--folder \.\/my-files \\/);
+  assert.match(readme, /--token "\$CONTEXT_ROUTER_BEARER_TOKEN"/);
+  assert.match(readme, /--apply/);
+
+  assert.match(help, /--folder <path>/);
+  assert.match(help, /--token <token>/);
+  assert.match(help, /--apply/);
+});
