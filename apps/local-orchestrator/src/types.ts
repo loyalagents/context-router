@@ -8,6 +8,14 @@ export type AnalysisRecordStatus = AnalysisStatus | 'request_error';
 
 export type PreferenceOperation = 'CREATE' | 'UPDATE';
 
+export type AIFilterStage = 'suggestion' | 'file' | 'both';
+
+export type AIFilterAdapter = 'command';
+
+export type AIFilterFailurePolicy = 'dry-run-passthrough_apply-skip';
+
+export type DecisionSource = 'passthrough' | 'ai' | 'fallback' | 'bypass';
+
 export type FilterReason =
   | 'MISSING_FIELDS'
   | 'DUPLICATE_KEY'
@@ -70,6 +78,9 @@ export interface FileFilterDecision {
   action: 'analyze' | 'skip';
   reason: string;
   score?: number;
+  details?: string;
+  source?: DecisionSource;
+  promptVersion?: string | null;
 }
 
 export interface SuggestionDecision {
@@ -77,10 +88,20 @@ export interface SuggestionDecision {
   action: 'apply' | 'skip';
   reason: string;
   score?: number;
+  details?: string;
+  source?: Exclude<DecisionSource, 'bypass'>;
+  promptVersion?: string | null;
 }
 
 export interface RequestErrorRecord {
-  kind: 'http' | 'network' | 'timeout' | 'invalid_response' | 'auth' | 'graphql';
+  kind:
+    | 'http'
+    | 'network'
+    | 'timeout'
+    | 'invalid_response'
+    | 'auth'
+    | 'graphql'
+    | 'process';
   message: string;
   statusCode?: number;
 }
@@ -106,6 +127,15 @@ export interface ApplyInputSuggestion {
   evidence?: Record<string, unknown>;
 }
 
+export interface FilterAuditRecord {
+  stage: 'suggestion';
+  adapter: AIFilterAdapter;
+  goal: string;
+  decision: 'apply' | 'skip';
+  score?: number;
+  reason: string;
+}
+
 export interface AppliedPreferenceRecord {
   id: string;
   slug: string;
@@ -125,6 +155,19 @@ export interface ApplyBatchResult {
   error?: string;
 }
 
+export interface AIStageRecord {
+  promptVersion?: string | null;
+  adapterError?: RequestErrorRecord;
+  usedFallback?: boolean;
+  applySkipped?: boolean;
+  bypassReason?: string | null;
+}
+
+export interface FileAIRunRecord {
+  fileStage?: AIStageRecord;
+  suggestionStage?: AIStageRecord;
+}
+
 export interface FileRunRecord {
   file?: DiscoveredFile;
   path: string;
@@ -138,6 +181,18 @@ export interface FileRunRecord {
   analysis?: AnalysisRecord;
   suggestionDecisions?: SuggestionDecision[];
   apply?: ApplyBatchResult;
+  ai?: FileAIRunRecord;
+}
+
+export interface AIFilterConfig {
+  enabled: boolean;
+  stage: AIFilterStage | null;
+  adapter: AIFilterAdapter | null;
+  command: string | null;
+  goal: string | null;
+  timeoutMs: number | null;
+  promptVersion: string | null;
+  failurePolicy: AIFilterFailurePolicy | null;
 }
 
 export interface RunConfig {
@@ -145,8 +200,7 @@ export interface RunConfig {
   backendUrl: string;
   apply: boolean;
   concurrency: number;
-  fileFilter: string;
-  suggestionFilter: string;
+  aiFilter: AIFilterConfig;
 }
 
 export interface RunSummary {
@@ -168,11 +222,20 @@ export interface RunSummary {
   applyMatched: number;
   applyUnmatched: number;
   applyAmbiguous: number;
+  aiFilesEvaluated: number;
+  aiFilesSkipped: number;
+  aiFilesBypassed: number;
+  aiSuggestionsAccepted: number;
+  aiSuggestionsSkipped: number;
+  fallbackSuggestionsAccepted: number;
+  aiAdapterFailures: number;
+  aiApplySkippedFiles: number;
+  degradedByAiFallback: boolean;
   hasFailures: boolean;
 }
 
 export interface RunManifest {
-  version: 1;
+  version: 2;
   startedAt: string;
   finishedAt: string;
   config: RunConfig;
@@ -188,6 +251,16 @@ export interface CliOptions {
   apply: boolean;
   concurrency: number;
   out?: string;
-  fileFilter: 'passthrough';
-  suggestionFilter: 'passthrough';
+  aiFilter: boolean;
+  aiFilterStage: AIFilterStage;
+  aiAdapter: AIFilterAdapter;
+  aiCommand?: string;
+  aiGoal?: string;
+  aiTimeoutMs: number;
+}
+
+export interface BatchSuggestionFilterContext {
+  file: DiscoveredFile;
+  analysis: DocumentAnalysisResult;
+  suggestions: PreferenceSuggestion[];
 }

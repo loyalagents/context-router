@@ -1,17 +1,6 @@
-import {
-  DiscoveredFile,
-  DocumentAnalysisResult,
-  PreferenceSuggestion,
-  SuggestionDecision,
-} from '../types';
-
-export interface SuggestionFilterContext {
-  file: DiscoveredFile;
-  analysis: DocumentAnalysisResult;
-  suggestion: PreferenceSuggestion;
-}
+import { BatchSuggestionFilterContext, SuggestionDecision } from '../types';
 
 export interface SuggestionFilter {
   readonly name: string;
-  decide(context: SuggestionFilterContext): Promise<SuggestionDecision>;
+  decide(context: BatchSuggestionFilterContext): Promise<SuggestionDecision[]>;
 }
