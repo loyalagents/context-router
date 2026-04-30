@@ -20,12 +20,18 @@ test('operator command doc stays aligned with the shipped CLI surface', async ()
   assert.match(commandsDoc, /CONTEXT_ROUTER_BEARER_TOKEN/);
   assert.match(commandsDoc, /--include-hidden/);
   assert.match(commandsDoc, /--ai-filter-stage both/);
-  assert.match(commandsDoc, /--ai-command \.\/path\/to\/filter-preferences\.js/);
-  assert.equal(commandsDoc.includes('--ai-command-arg'), false);
-  assert.equal(commandsDoc.includes('claude-filter.mjs'), false);
-  assert.equal(commandsDoc.includes('codex-filter.mjs'), false);
+  assert.match(
+    commandsDoc,
+    /--ai-command \.\/apps\/local-orchestrator\/scripts\/claude-filter\.mjs/,
+  );
+  assert.match(
+    commandsDoc,
+    /--ai-command \.\/apps\/local-orchestrator\/scripts\/codex-filter\.mjs/,
+  );
+  assert.match(commandsDoc, /--ai-command-arg --model/);
+  assert.match(commandsDoc, /--ai-command-arg gpt-5\.4/);
 
   assert.match(help, /--include-hidden/);
   assert.match(help, /--ai-command <path-or-name>/);
-  assert.equal(help.includes('--ai-command-arg'), false);
+  assert.match(help, /--ai-command-arg <value>/);
 });

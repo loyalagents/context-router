@@ -178,6 +178,7 @@ export async function runImport(
       stage: options.aiFilter ? options.aiFilterStage : null,
       adapter: options.aiFilter ? options.aiAdapter : null,
       command: options.aiFilter ? options.aiCommand ?? null : null,
+      commandArgs: options.aiFilter ? options.aiCommandArgs : null,
       goal: options.aiFilter ? options.aiGoal ?? null : null,
       timeoutMs: options.aiFilter ? options.aiTimeoutMs : null,
       promptVersion: derivePromptVersion(files),
@@ -249,16 +250,16 @@ function toApplyInputSuggestion(
   decision: SuggestionDecision | undefined,
   options: Pick<CliOptions, 'aiFilter' | 'aiAdapter' | 'aiGoal'>,
 ): ApplyInputSuggestion {
-  const filterAudit =
+  const filterAudit: FilterAuditRecord | undefined =
     decision?.source === 'ai' && options.aiFilter && options.aiGoal
-      ? ({
+      ? {
           stage: 'suggestion',
           adapter: options.aiAdapter,
           goal: options.aiGoal,
           decision: decision.action,
           score: decision.score,
           reason: decision.reason,
-        } satisfies FilterAuditRecord)
+        }
       : undefined;
 
   return {

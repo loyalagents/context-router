@@ -22,7 +22,8 @@
   - `.toml`, `.ini`, `.cfg`, `.conf`, `.env`, and `.env.*` now upload through local `text/plain` mapping
   - hidden files and directories are still skipped by default, with opt-in traversal through `--include-hidden`
 
-- Add more adapter options beyond `command` such as Ollama or named wrappers for Codex and Claude Code.
+- Consider first-class native adapters beyond the current `command` plus wrapper-script approach, such as Ollama or built-in `codex` and `claude` modes.
+- Add richer wrapper configuration beyond the current `--model` passthrough, such as named provider presets, per-provider defaults, or config-backed profiles.
 - Add named built-in AI policies so common curation goals do not require raw prompt text every time.
 - Add heuristic filters that can run without a model dependency.
 - Add hash-based dedupe/resume so repeated runs on the same folder can skip unchanged files.

@@ -135,6 +135,43 @@ process.stdin.on('end', () => {
   ]);
 });
 
+test('CommandAIFilterAdapter forwards command args to the child process', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-args-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const scriptPath = await writeExecutableScript(
+    tempRoot,
+    'argv-adapter.js',
+    `#!/usr/bin/env node
+process.stdout.write(JSON.stringify({
+  decisions: [
+    {
+      suggestionId: 'analysis-1:candidate:1',
+      action: 'apply',
+      reason: 'ok',
+      details: JSON.stringify(process.argv.slice(2))
+    }
+  ]
+}));
+`,
+  );
+
+  const adapter = new CommandAIFilterAdapter({
+    command: scriptPath,
+    commandArgs: ['--model', 'sonnet', '--format', 'json'],
+    timeoutMs: 30000,
+  });
+
+  const response = await adapter.decideSuggestions(buildSuggestionRequest());
+
+  assert.equal(
+    response.decisions[0].details,
+    '["--model","sonnet","--format","json"]',
+  );
+});
+
 test('CommandAIFilterAdapter rejects invalid JSON', async (t) => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'command-adapter-json-'));
   t.after(async () => {

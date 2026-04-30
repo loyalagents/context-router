@@ -30,7 +30,23 @@ pnpm --filter local-orchestrator start -- \
   --include-hidden \
   --ai-filter \
   --ai-filter-stage both \
-  --ai-command ./scripts/filter-preferences.js \
+  --ai-command ./apps/local-orchestrator/scripts/claude-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg sonnet \
+  --ai-goal "Only keep durable communication, workflow, and tooling preferences"
+```
+
+To use Codex instead:
+
+```bash
+pnpm --filter local-orchestrator start -- \
+  --folder ./my-files \
+  --token "$CONTEXT_ROUTER_BEARER_TOKEN" \
+  --ai-filter \
+  --ai-filter-stage both \
+  --ai-command ./apps/local-orchestrator/scripts/codex-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg gpt-5.4 \
   --ai-goal "Only keep durable communication, workflow, and tooling preferences"
 ```
 
@@ -40,6 +56,7 @@ pnpm --filter local-orchestrator start -- \
 - `--ai-goal` is required whenever `--ai-filter` is enabled.
 - `--ai-filter-stage` supports `suggestion`, `file`, and `both`.
 - `--ai-command` must point to an executable that reads one JSON request from `stdin` and writes one JSON response to `stdout`.
+- `--ai-command-arg` can be repeated to pass raw arguments such as `--model sonnet` through to the adapter executable.
 - Suggestion-stage AI only narrows backend-accepted suggestions.
 - File-stage AI is text-first in V1. Non-text-like files bypass local file-stage AI and still follow normal backend analysis rules.
 
