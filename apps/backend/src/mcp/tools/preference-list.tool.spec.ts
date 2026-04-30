@@ -45,4 +45,44 @@ describe('PreferenceListTool', () => {
       'food.dietary_restrictions',
     ]);
   });
+
+  it('returns a structured MCP error when the catalog lookup throws', async () => {
+    const repository = {
+      getAll: jest.fn().mockRejectedValue(new Error('catalog exploded')),
+    };
+    const authorizationService = {
+      filterByTargetAccess: jest.fn(),
+    };
+    const tool = new PreferenceListTool(
+      repository as unknown as PreferenceDefinitionRepository,
+      authorizationService as unknown as McpAuthorizationService,
+    );
+
+    const result = await tool.execute(
+      { category: 'food' },
+      {
+        user: { userId: 'user-1' },
+        client: { key: 'claude' },
+        grants: [],
+      } as any,
+    );
+
+    expect(result.result.isError).toBe(true);
+    expect(result.result.content[0]).toMatchObject({
+      type: 'text',
+      text: 'listPreferenceSlugs: error — catalog exploded',
+    });
+    expect(result.result.structuredContent).toEqual({
+      success: false,
+      error: 'catalog exploded',
+    });
+    expect(result.accessLog).toMatchObject({
+      requestMetadata: {
+        category: 'food',
+      },
+      errorMetadata: {
+        message: 'catalog exploded',
+      },
+    });
+  });
 });
