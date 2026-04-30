@@ -483,9 +483,12 @@ process.stdin.on('data', (chunk) => {
 process.stdin.on('end', () => {
   const outputIndex = args.indexOf('-o');
   const outputPath = outputIndex >= 0 ? args[outputIndex + 1] : null;
+  const schemaIndex = args.indexOf('--output-schema');
+  const schemaPath = schemaIndex >= 0 ? args[schemaIndex + 1] : null;
   fs.writeFileSync(process.env.TRANSCRIPT_PATH, JSON.stringify({
     args,
-    prompt: input
+    prompt: input,
+    schema: schemaPath ? JSON.parse(fs.readFileSync(schemaPath, 'utf8')) : null
   }));
   fs.writeFileSync(outputPath, JSON.stringify({
     decisions: [
@@ -527,11 +530,28 @@ process.stdin.on('end', () => {
   assert.equal(transcript.args[0], 'exec');
   assert.equal(transcript.args[1], '--sandbox');
   assert.equal(transcript.args[2], 'read-only');
+  assert.ok(transcript.args.includes('--ignore-user-config'));
+  assert.ok(transcript.args.includes('--ignore-rules'));
   assert.ok(transcript.args.includes('--output-schema'));
   assert.ok(transcript.args.includes('-o'));
   assert.ok(transcript.args.includes('--model'));
   assert.ok(transcript.args.includes('gpt-5.4'));
   assert.match(transcript.prompt, /Only keep durable communication preferences/);
+  assert.deepEqual(transcript.schema.properties.decisions.items.required, [
+    'suggestionId',
+    'action',
+    'reason',
+    'score',
+    'details',
+  ]);
+  assert.deepEqual(transcript.schema.properties.decisions.items.properties.score.type, [
+    'number',
+    'null',
+  ]);
+  assert.deepEqual(transcript.schema.properties.decisions.items.properties.details.type, [
+    'string',
+    'null',
+  ]);
 });
 
 test('codex-filter handles file-stage responses', async (t) => {
@@ -555,9 +575,12 @@ process.stdin.on('data', (chunk) => {
 process.stdin.on('end', () => {
   const outputIndex = args.indexOf('-o');
   const outputPath = outputIndex >= 0 ? args[outputIndex + 1] : null;
+  const schemaIndex = args.indexOf('--output-schema');
+  const schemaPath = schemaIndex >= 0 ? args[schemaIndex + 1] : null;
   fs.writeFileSync(process.env.TRANSCRIPT_PATH, JSON.stringify({
     args,
-    prompt: input
+    prompt: input,
+    schema: schemaPath ? JSON.parse(fs.readFileSync(schemaPath, 'utf8')) : null
   }));
   fs.writeFileSync(outputPath, JSON.stringify({
     decision: {
@@ -588,6 +611,24 @@ process.stdin.on('end', () => {
       details: 'Preview reads like a build log.',
     },
   });
+
+  const transcript = JSON.parse(await readFile(transcriptPath, 'utf8'));
+  assert.ok(transcript.args.includes('--ignore-user-config'));
+  assert.ok(transcript.args.includes('--ignore-rules'));
+  assert.deepEqual(transcript.schema.properties.decision.required, [
+    'action',
+    'reason',
+    'score',
+    'details',
+  ]);
+  assert.deepEqual(transcript.schema.properties.decision.properties.score.type, [
+    'number',
+    'null',
+  ]);
+  assert.deepEqual(transcript.schema.properties.decision.properties.details.type, [
+    'string',
+    'null',
+  ]);
 });
 
 test('codex-filter fails on malformed provider output', async (t) => {

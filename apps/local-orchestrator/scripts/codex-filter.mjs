@@ -28,7 +28,7 @@ async function main() {
   try {
     await writeFile(
       schemaPath,
-      `${JSON.stringify(buildProviderSchema(request), null, 2)}\n`,
+      `${JSON.stringify(buildProviderSchema(request, { strictOptionalFields: true }), null, 2)}\n`,
       'utf8',
     );
 
@@ -39,6 +39,8 @@ async function main() {
       '--color',
       'never',
       '--ephemeral',
+      '--ignore-user-config',
+      '--ignore-rules',
       '--output-schema',
       schemaPath,
       '-o',

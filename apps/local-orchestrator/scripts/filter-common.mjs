@@ -36,7 +36,27 @@ export async function readRequestFromStdin() {
   return parsed;
 }
 
-export function buildProviderSchema(request) {
+export function buildProviderSchema(request, options = {}) {
+  const strictOptionalFields = options.strictOptionalFields === true;
+  const scoreSchema = strictOptionalFields
+    ? {
+        type: ['number', 'null'],
+        minimum: 0,
+        maximum: 1,
+      }
+    : {
+        type: 'number',
+        minimum: 0,
+        maximum: 1,
+      };
+  const detailsSchema = strictOptionalFields
+    ? {
+        type: ['string', 'null'],
+      }
+    : {
+        type: 'string',
+      };
+
   if (request.stage === 'suggestion') {
     return {
       type: 'object',
@@ -50,7 +70,9 @@ export function buildProviderSchema(request) {
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['suggestionId', 'action', 'reason'],
+            required: strictOptionalFields
+              ? ['suggestionId', 'action', 'reason', 'score', 'details']
+              : ['suggestionId', 'action', 'reason'],
             properties: {
               suggestionId: {
                 type: 'string',
@@ -64,14 +86,8 @@ export function buildProviderSchema(request) {
                 type: 'string',
                 minLength: 1,
               },
-              score: {
-                type: 'number',
-                minimum: 0,
-                maximum: 1,
-              },
-              details: {
-                type: 'string',
-              },
+              score: scoreSchema,
+              details: detailsSchema,
             },
           },
         },
@@ -87,7 +103,9 @@ export function buildProviderSchema(request) {
       decision: {
         type: 'object',
         additionalProperties: false,
-        required: ['action', 'reason'],
+        required: strictOptionalFields
+          ? ['action', 'reason', 'score', 'details']
+          : ['action', 'reason'],
         properties: {
           action: {
             type: 'string',
@@ -97,14 +115,8 @@ export function buildProviderSchema(request) {
             type: 'string',
             minLength: 1,
           },
-          score: {
-            type: 'number',
-            minimum: 0,
-            maximum: 1,
-          },
-          details: {
-            type: 'string',
-          },
+          score: scoreSchema,
+          details: detailsSchema,
         },
       },
     },
