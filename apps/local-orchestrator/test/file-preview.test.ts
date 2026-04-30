@@ -95,3 +95,42 @@ test('AIFileFilter bypasses non-text-like files in V1 file-stage mode', async ()
     source: 'bypass',
   });
 });
+
+test('buildTextPreview supports markdown and yaml upload MIME types', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'file-preview-markdown-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const markdownPath = path.join(tempRoot, 'prefs.md');
+  const yamlPath = path.join(tempRoot, 'prefs.yaml');
+  await writeFile(markdownPath, '# Preferences\n- brief\n', 'utf8');
+  await writeFile(yamlPath, 'tone: brief\n', 'utf8');
+
+  const markdownPreview = await buildTextPreview({
+    path: markdownPath,
+    relativePath: 'prefs.md',
+    sizeBytes: 22,
+    extension: '.md',
+    originalMimeType: 'text/markdown',
+    uploadMimeType: 'text/markdown',
+    uploadFileName: 'prefs.md',
+    coercedToPlainText: false,
+  });
+
+  const yamlPreview = await buildTextPreview({
+    path: yamlPath,
+    relativePath: 'prefs.yaml',
+    sizeBytes: 12,
+    extension: '.yaml',
+    originalMimeType: 'application/yaml',
+    uploadMimeType: 'application/yaml',
+    uploadFileName: 'prefs.yaml',
+    coercedToPlainText: false,
+  });
+
+  assert.ok(markdownPreview);
+  assert.match(markdownPreview.text, /^# Preferences/);
+  assert.ok(yamlPreview);
+  assert.match(yamlPreview.text, /^tone: brief/);
+});

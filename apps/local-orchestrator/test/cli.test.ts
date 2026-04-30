@@ -17,6 +17,7 @@ test('parseCliArgs applies defaults and env token', () => {
   assert.equal(command.options?.apply, false);
   assert.equal(command.options?.backendUrl, 'http://localhost:3000');
   assert.equal(command.options?.concurrency, 1);
+  assert.equal(command.options?.includeHidden, false);
   assert.equal(command.options?.aiFilter, false);
   assert.equal(command.options?.aiFilterStage, 'suggestion');
   assert.equal(command.options?.aiAdapter, 'command');
@@ -34,6 +35,16 @@ test('parseCliArgs ignores a standalone double-dash separator', () => {
   assert.equal(command.kind, 'run');
   assert.equal(command.options?.token, 'abc');
   assert.match(command.options?.folder ?? '', /notes$/);
+});
+
+test('parseCliArgs enables hidden traversal when requested', () => {
+  const command = parseCliArgs(
+    ['--folder', './notes', '--token', 'abc', '--include-hidden'],
+    {},
+  );
+
+  assert.equal(command.kind, 'run');
+  assert.equal(command.options?.includeHidden, true);
 });
 
 test('parseCliArgs rejects missing folder', () => {
@@ -140,6 +151,7 @@ test('buildHelpText includes basic usage', () => {
   const help = buildHelpText();
   assert.match(help, /--folder <path>/);
   assert.match(help, /--apply/);
+  assert.match(help, /--include-hidden/);
   assert.match(help, /--ai-filter/);
   assert.match(help, /--ai-command <path-or-name>/);
 });

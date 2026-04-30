@@ -5,7 +5,7 @@ export function renderSummary(manifest: RunManifest): string {
   const lines = [
     'Local orchestrator summary',
     `- Visible files discovered: ${summary.discoveredVisibleFiles}`,
-    `- Hidden entries skipped: ${summary.hiddenEntriesSkipped}`,
+    `- Hidden entries skipped: ${summary.hiddenEntriesSkipped} (include_hidden=${manifest.config.includeHidden ? 'yes' : 'no'})`,
     `- Unsupported visible files skipped: ${summary.unsupportedFilesSkipped}`,
     `- Skipped by file filter: ${summary.skippedByFileFilter}`,
     `- Analysis attempted: ${summary.analysisAttempted}`,

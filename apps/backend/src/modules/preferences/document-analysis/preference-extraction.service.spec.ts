@@ -1016,6 +1016,39 @@ describe("PreferenceExtractionService", () => {
 
         expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1");
       });
+
+      it.each([
+        "application/yaml",
+        "text/yaml",
+        "application/x-yaml",
+      ])(
+        "should normalize YAML MIME %s to text/plain before AI file extraction",
+        async (mimeType) => {
+          mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+          mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+            createAiResponse([]),
+          );
+
+          await service.extractPreferences(
+            "user-1",
+            mockFileBuffer,
+            mimeType,
+            "prefs.yaml",
+          );
+
+          expect(
+            mockAiStructuredService.generateStructuredWithFile,
+          ).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+              buffer: mockFileBuffer,
+              mimeType: "text/plain",
+            }),
+            expect.anything(),
+            { operationName: "preferenceExtraction" },
+          );
+        },
+      );
     });
   });
 });

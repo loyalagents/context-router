@@ -38,6 +38,79 @@ describe('Document Analysis API (e2e)', () => {
   });
 
   describe('analyzeDocument REST endpoint', () => {
+    it('should accept markdown uploads', async () => {
+      structuredAi.generateStructuredWithFile.mockResolvedValue({
+        suggestions: [],
+        documentSummary: 'Markdown preference notes',
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('# Preferences\n- Keep replies brief\n'), {
+          filename: 'preferences.md',
+          contentType: 'text/markdown',
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('no_matches');
+      expect(response.body.documentSummary).toBe('Markdown preference notes');
+      expect(structuredAi.generateStructuredWithFile).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          mimeType: 'text/markdown',
+        }),
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it.each([
+      ['application/yaml', 'preferences.yaml'],
+      ['text/yaml', 'preferences.yml'],
+      ['application/x-yaml', 'preferences.yaml'],
+    ])(
+      'should accept YAML uploads with MIME %s and normalize them for AI file extraction',
+      async (contentType, filename) => {
+      structuredAi.generateStructuredWithFile.mockResolvedValue({
+        suggestions: [],
+        documentSummary: 'YAML preference notes',
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('tone: brief\nlocale: en-US\n'), {
+          filename,
+          contentType,
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('no_matches');
+      expect(response.body.documentSummary).toBe('YAML preference notes');
+      expect(structuredAi.generateStructuredWithFile).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          mimeType: 'text/plain',
+        }),
+        expect.anything(),
+        expect.anything(),
+      );
+      },
+    );
+
+    it('should reject unsupported upload MIME types', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('binary-ish'), {
+          filename: 'preferences.docx',
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        })
+        .expect(400);
+
+      expect(response.body.message).toContain('Unsupported file type');
+      expect(response.body.message).toContain('text/markdown');
+      expect(response.body.message).toContain('application/yaml');
+    });
+
     it('should consolidate duplicate candidates and preserve stable IDs', async () => {
       structuredAi.generateStructuredWithFile.mockResolvedValue({
         suggestions: [

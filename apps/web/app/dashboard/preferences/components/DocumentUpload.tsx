@@ -43,13 +43,27 @@ interface DocumentUploadProps {
 
 const ALLOWED_TYPES = [
   'text/plain',
+  'text/markdown',
   'application/json',
   'application/pdf',
   'image/png',
   'image/jpeg',
+  'application/yaml',
+  'text/yaml',
+  'application/x-yaml',
 ];
+const EXTENSION_ALLOWED_TYPES = new Set(['.md', '.markdown', '.yml', '.yaml']);
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+function getFileExtension(fileName: string): string {
+  const lastDot = fileName.lastIndexOf('.');
+  if (lastDot <= 0) {
+    return '';
+  }
+
+  return fileName.slice(lastDot).toLowerCase();
+}
 
 export default function DocumentUpload({
   onAnalysisComplete,
@@ -61,8 +75,13 @@ export default function DocumentUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return `Unsupported file type: ${file.type}. Allowed: PDF, PNG, JPEG, TXT, JSON`;
+    const extension = getFileExtension(file.name);
+    const mimeAllowed = ALLOWED_TYPES.includes(file.type);
+    const extensionAllowed = EXTENSION_ALLOWED_TYPES.has(extension);
+
+    if (!mimeAllowed && !extensionAllowed) {
+      const fileType = file.type || extension || 'unknown';
+      return `Unsupported file type: ${fileType}. Allowed: PDF, PNG, JPEG, TXT, JSON, Markdown, YAML`;
     }
     if (file.size > MAX_FILE_SIZE) {
       return `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum: 10MB`;
@@ -159,7 +178,7 @@ export default function DocumentUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept={ALLOWED_TYPES.join(',')}
+          accept={[...ALLOWED_TYPES, ...EXTENSION_ALLOWED_TYPES].join(',')}
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -193,7 +212,7 @@ export default function DocumentUpload({
                 and drop
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                PDF, PNG, JPEG, TXT, or JSON (max 10MB)
+                PDF, PNG, JPEG, TXT, JSON, Markdown, or YAML (max 10MB)
               </p>
             </div>
           </div>

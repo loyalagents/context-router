@@ -50,6 +50,12 @@ type NormalizationResult =
   | { kind: 'accepted'; suggestion: PreferenceSuggestion }
   | { kind: 'filtered'; suggestion: FilteredSuggestion };
 
+const YAML_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
+  'application/yaml',
+  'text/yaml',
+  'application/x-yaml',
+]);
+
 @Injectable()
 export class PreferenceExtractionService {
   private readonly logger = new Logger(PreferenceExtractionService.name);
@@ -90,11 +96,18 @@ export class PreferenceExtractionService {
 
     this.logger.log(`Calling AI for preference extraction from ${filename}`);
 
+    const aiFileMimeType = this.normalizeMimeTypeForAiFileInput(mimeType);
+    if (aiFileMimeType !== mimeType) {
+      this.logger.debug(
+        `Normalizing MIME type ${mimeType} to ${aiFileMimeType} for AI file extraction`,
+      );
+    }
+
     // Call the AI with the file — port handles fence stripping, JSON parsing, Zod validation
     const aiResult: AiResponseSchemaType =
       await this.aiStructuredService.generateStructuredWithFile(
         prompt,
-        { buffer: fileBuffer, mimeType },
+        { buffer: fileBuffer, mimeType: aiFileMimeType },
         AiResponseSchema,
         { operationName: 'preferenceExtraction' },
       );
@@ -110,6 +123,14 @@ export class PreferenceExtractionService {
       })),
       userId,
     );
+  }
+
+  private normalizeMimeTypeForAiFileInput(mimeType: string): string {
+    if (YAML_MIME_TYPES_FOR_AI_FILE_INPUT.has(mimeType)) {
+      return 'text/plain';
+    }
+
+    return mimeType;
   }
 
   private async buildExtractionPrompt(

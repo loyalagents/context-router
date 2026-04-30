@@ -10,6 +10,7 @@ function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
     token: 'secret-token',
     apply: false,
     concurrency: 1,
+    includeHidden: false,
     aiFilter: false,
     aiFilterStage: 'suggestion',
     aiAdapter: 'command',
