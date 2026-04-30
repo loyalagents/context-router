@@ -109,7 +109,8 @@ describe('Permission Grants (e2e)', () => {
     variables?: Record<string, unknown>,
   ) => request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
-  const parseToolResult = (result: any) => JSON.parse(result.content[0].text);
+  const parseToolResult = (result: any) =>
+    result.structuredContent ?? JSON.parse(result.content[0].text);
 
   const buildUserMutationContext = () => ({
     actorType: AuditActorType.USER,

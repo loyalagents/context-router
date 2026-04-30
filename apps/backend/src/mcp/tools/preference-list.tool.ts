@@ -5,6 +5,10 @@ import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 import { McpToolExecutionResult } from '../access-log/access-log.types';
+import {
+  buildReadToolErrorResult,
+  buildReadToolSuccessResult,
+} from './base/read-tool-result.helper';
 
 interface ListPreferencesParams {
   category?: string;
@@ -26,7 +30,7 @@ export class PreferenceListTool implements McpToolInterface {
   readonly descriptor: Tool = {
     name: 'listPreferenceSlugs',
     description:
-      'List all valid preference slugs from the catalog. Use this to discover what preferences exist before suggesting new values. Returns slug, category, description, valueType, and scope for each preference.',
+      'List visible preference definitions from the catalog. Use this for schema discovery only, not stored user values. Returns slug, category, description, valueType, and scope for each visible preference definition.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -40,6 +44,42 @@ export class PreferenceListTool implements McpToolInterface {
     annotations: {
       readOnlyHint: true,
       openWorldHint: false,
+    },
+    outputSchema: {
+      type: 'object',
+      required: ['success'],
+      properties: {
+        success: {
+          type: 'boolean',
+        },
+        error: {
+          type: 'string',
+        },
+        categories: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+        },
+        count: {
+          type: 'integer',
+        },
+        preferences: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              slug: { type: 'string' },
+              category: { type: 'string' },
+              description: { type: 'string' },
+              valueType: { type: 'string' },
+              options: {},
+              scope: { type: 'string' },
+            },
+          },
+        },
+      },
+      additionalProperties: true,
     },
   };
 
@@ -56,9 +96,11 @@ export class PreferenceListTool implements McpToolInterface {
     try {
       const result = await this.list(params, context);
       return {
-        result: {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        },
+        result: buildReadToolSuccessResult(
+          this.descriptor.name,
+          `${result.count} visible preference definitions across ${result.categories.length} categories`,
+          result,
+        ),
         accessLog: {
           requestMetadata: {
             category: params.category ?? null,
@@ -70,19 +112,15 @@ export class PreferenceListTool implements McpToolInterface {
         },
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
-        result: {
-          content: [
-            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-          ],
-          isError: true,
-        },
+        result: buildReadToolErrorResult(this.descriptor.name, message),
         accessLog: {
           requestMetadata: {
             category: params.category ?? null,
           },
           errorMetadata: {
-            message: error.message,
+            message,
           },
         },
       };
@@ -95,49 +133,44 @@ export class PreferenceListTool implements McpToolInterface {
       `Listing preference catalog${params.category ? ` for category: ${params.category}` : ''}${userId ? ` for user: ${userId}` : ' (global only)'}`,
     );
 
-    try {
-      const allDefs = await this.defRepo.getAll(userId);
+    const allDefs = await this.defRepo.getAll(userId);
 
-      const filtered = params.category
-        ? allDefs.filter((d) => d.slug.split('.')[0] === params.category)
-        : allDefs;
+    const filtered = params.category
+      ? allDefs.filter((d) => d.slug.split('.')[0] === params.category)
+      : allDefs;
 
-      const entries: CatalogEntry[] = filtered.map((def) => ({
-        slug: def.slug,
-        category: def.slug.split('.')[0],
-        description: def.description,
-        valueType: def.valueType,
-        options: def.options,
-        scope: def.scope,
-      }));
+    const entries: CatalogEntry[] = filtered.map((def) => ({
+      slug: def.slug,
+      category: def.slug.split('.')[0],
+      description: def.description,
+      valueType: def.valueType,
+      options: def.options,
+      scope: def.scope,
+    }));
 
-      let visibleEntries = entries;
-      if (context?.user && context?.client) {
-        const allowedSlugs = new Set(
-          await this.authorizationService.filterByTargetAccess(
-            context.client,
-            this.requiredAccess,
-            context.grants,
-            context.user.userId,
-            entries.map((entry) => entry.slug),
-          ),
-        );
-        visibleEntries = entries.filter((entry) => allowedSlugs.has(entry.slug));
-      }
-
-      const categories = Array.from(
-        new Set(visibleEntries.map((entry) => entry.category)),
-      ).sort();
-
-      return {
-        success: true,
-        categories,
-        count: visibleEntries.length,
-        preferences: visibleEntries,
-      };
-    } catch (error) {
-      this.logger.error(`Error listing preference catalog: ${error.message}`);
-      return { success: false, error: error.message };
+    let visibleEntries = entries;
+    if (context?.user && context?.client) {
+      const allowedSlugs = new Set(
+        await this.authorizationService.filterByTargetAccess(
+          context.client,
+          this.requiredAccess,
+          context.grants,
+          context.user.userId,
+          entries.map((entry) => entry.slug),
+        ),
+      );
+      visibleEntries = entries.filter((entry) => allowedSlugs.has(entry.slug));
     }
+
+    const categories = Array.from(
+      new Set(visibleEntries.map((entry) => entry.category)),
+    ).sort();
+
+    return {
+      success: true as const,
+      categories,
+      count: visibleEntries.length,
+      preferences: visibleEntries,
+    };
   }
 }

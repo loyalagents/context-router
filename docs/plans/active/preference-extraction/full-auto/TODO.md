@@ -1,14 +1,16 @@
 # Full-Auto MCP Mutation TODO
 
 - Status: follow-up
-- Last reviewed: 2026-04-22
+- Last reviewed: 2026-04-29
 
 ## Product Follow-Ups
 
 - Add `UPSERT_DEFINITION_AND_SET_PREFERENCE` or an equivalent combined flow for the common "define this missing slug and immediately set a value" path.
 - Run model smoke tests against the `mutatePreferences` descriptor and JSON Schema to confirm agents choose the right operation and shape arguments correctly.
-- Consider client-specific tool descriptions or capability hints so suggest-only clients are less likely to attempt write or define operations.
-- Verify external MCP client registrations do not still expose stale remote mutation names such as `applyPreference`.
+- Consider client-specific MCP descriptor variants only if real clients still misroute between preference read or write surfaces after the generic descriptor cleanup.
+- Consider adding a dedicated MCP guide resource if initialize instructions and tool descriptions still are not enough for agents.
+- Consider a higher-level MCP wrapper tool if clients still need server-side routing between literal lookup and natural-language preference retrieval.
+- Verify external MCP client registrations do not preserve stale cached metadata or outdated tool names after the `2.0.0` read-contract change.
 
 ## Safety And Semantics
 
@@ -32,5 +34,6 @@
 ## Testing Follow-Ups
 
 - Add end-to-end smoke tests with an actual external MCP client once the demo client registrations are refreshed.
+- Extend that smoke coverage to verify `structuredContent` parsing, initialize instructions, and `tools/list` `outputSchema` metadata on refreshed external clients.
 - Add regression tests for any future combined define-and-set operation.
 - Add production-oriented migration tests if this stops being a demo-only cutover.

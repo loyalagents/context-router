@@ -29,9 +29,16 @@ describe('PreferenceListTool', () => {
         user: { userId: 'user-1' },
       } as any,
     );
-    const payload = JSON.parse((result.result.content[0] as { text: string }).text);
+    const payload = result.result.structuredContent as {
+      success: boolean;
+      preferences: Array<{ slug: string }>;
+    };
 
     expect(result.result.isError).not.toBe(true);
+    expect(result.result.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('listPreferenceSlugs:'),
+    });
     expect(authorizationService.filterByTargetAccess).not.toHaveBeenCalled();
     expect(payload.success).toBe(true);
     expect(payload.preferences.map((pref: any) => pref.slug)).toEqual([

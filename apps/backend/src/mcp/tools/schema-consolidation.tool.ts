@@ -5,6 +5,10 @@ import { McpToolInterface } from './base/mcp-tool.interface';
 import { SchemaConsolidationWorkflow } from '@modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 import { McpToolExecutionResult } from '../access-log/access-log.types';
+import {
+  buildReadToolErrorResult,
+  buildReadToolSuccessResult,
+} from './base/read-tool-result.helper';
 
 @Injectable()
 export class SchemaConsolidationTool implements McpToolInterface {
@@ -13,7 +17,7 @@ export class SchemaConsolidationTool implements McpToolInterface {
   readonly descriptor: Tool = {
     name: 'consolidateSchema',
     description:
-      'Identifies duplicate or overlapping personal preference definitions. Advisory only — no changes made.',
+      'Analyze visible preference definitions for duplicate or overlapping schema entries. Advisory schema analysis only; it does not retrieve stored preference values or make changes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -27,6 +31,45 @@ export class SchemaConsolidationTool implements McpToolInterface {
     },
     annotations: {
       readOnlyHint: true,
+      openWorldHint: false,
+    },
+    outputSchema: {
+      type: 'object',
+      required: ['success'],
+      properties: {
+        success: {
+          type: 'boolean',
+        },
+        error: {
+          type: 'string',
+        },
+        totalDefinitionsAnalyzed: {
+          type: 'integer',
+        },
+        consolidationGroups: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              slugs: {
+                type: 'array',
+                items: { type: 'string' },
+              },
+              reason: { type: 'string' },
+              suggestion: { type: 'string' },
+              recommendedSlug: { type: 'string' },
+              slugScopes: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+              },
+            },
+          },
+        },
+        summary: {
+          type: 'string',
+        },
+      },
+      additionalProperties: true,
     },
   };
 
@@ -57,11 +100,17 @@ export class SchemaConsolidationTool implements McpToolInterface {
         filterAccessibleSlugs,
         scope: params.scope ?? 'PERSONAL',
       });
+      const structuredContent = {
+        success: true as const,
+        ...result,
+      };
 
       return {
-        result: {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        },
+        result: buildReadToolSuccessResult(
+          this.descriptor.name,
+          `${result.consolidationGroups.length} consolidation groups from ${result.totalDefinitionsAnalyzed} definitions`,
+          structuredContent,
+        ),
         accessLog: {
           requestMetadata: {
             scope: params.scope ?? 'PERSONAL',
@@ -73,23 +122,19 @@ export class SchemaConsolidationTool implements McpToolInterface {
         },
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Schema consolidation failed for user ${context?.user?.userId}: ${error.message}`,
-        error.stack,
+        `Schema consolidation failed for user ${context?.user?.userId}: ${message}`,
+        error instanceof Error ? error.stack : undefined,
       );
       return {
-        result: {
-          content: [
-            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-          ],
-          isError: true,
-        },
+        result: buildReadToolErrorResult(this.descriptor.name, message),
         accessLog: {
           requestMetadata: {
             scope: params.scope ?? 'PERSONAL',
           },
           errorMetadata: {
-            message: error.message,
+            message,
           },
         },
       };

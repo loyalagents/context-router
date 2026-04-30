@@ -73,7 +73,12 @@ describe('SmartSearchTool', () => {
 
   it('passes an access filter into the workflow and post-filters matched definitions', async () => {
     const result = await tool.execute({ query: 'tone' }, context);
-    const payload = JSON.parse((result.result.content[0] as { text: string }).text);
+    const payload = result.result.structuredContent as {
+      success: boolean;
+      matchedDefinitions: Array<{ slug: string }>;
+      matchedActivePreferences: Array<{ slug: string }>;
+      matchedSuggestedPreferences: Array<{ slug: string }>;
+    };
 
     expect(workflow.run).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,6 +100,11 @@ describe('SmartSearchTool', () => {
         'system.response_tone',
       ],
     );
+    expect(result.result.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('smartSearchPreferences:'),
+    });
+    expect(payload.success).toBe(true);
     expect(payload.matchedDefinitions.map((definition: any) => definition.slug)).toEqual([
       'system.response_tone',
     ]);

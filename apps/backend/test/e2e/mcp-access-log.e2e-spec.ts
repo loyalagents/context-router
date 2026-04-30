@@ -120,6 +120,10 @@ describe('MCP Access Log (e2e)', () => {
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
     request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
+  const parseToolResult = (response: any) =>
+    response.body.result.structuredContent ??
+    JSON.parse(response.body.result.content[0].text);
+
   it('records searchPreferences success with sanitized metadata', async () => {
     const definition = await prisma.preferenceDefinition.findFirstOrThrow({
       where: { slug: 'food.dietary_restrictions' },
@@ -351,6 +355,7 @@ describe('MCP Access Log (e2e)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.result?.isError).toBe(true);
+    expect(parseToolResult(response).success).toBe(false);
 
     const event = await prisma.mcpAccessEvent.findFirstOrThrow({
       where: { userId: testUser.userId },
