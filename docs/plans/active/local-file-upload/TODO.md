@@ -29,6 +29,7 @@
 - Add broader hidden-file allowlists beyond `.env` and `.env.*` for meaningful dotfiles such as `.gitconfig`, `.npmrc`, or user-selected patterns.
 - Add token refresh or improved auth ergonomics for long-running imports.
 - Add retry and pacing policies for analysis/apply requests.
+- Add a repeated-apply smoke check for the local orchestrator so we explicitly validate what happens when `--apply` is run multiple times against the same folder and user.
 - Improve file-stage AI triage for borderline text-like or mislabeled binary files.
 - Add content sniffing or better filename heuristics so support is not purely extension/basename driven.
 - Consider more easy text-like formats such as CSV, TSV, XML, or HTML if real import data suggests they are valuable.
