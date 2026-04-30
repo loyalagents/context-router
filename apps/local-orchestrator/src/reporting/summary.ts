@@ -15,6 +15,17 @@ export function renderSummary(manifest: RunManifest): string {
     `- Suggestion decisions: accepted=${summary.suggestionsAccepted}, skipped=${summary.suggestionsSkippedByFilter}`,
   ];
 
+  if (manifest.config.aiFilter.enabled) {
+    lines.push(
+      `- AI filtering: enabled stage=${manifest.config.aiFilter.stage ?? 'n/a'}, adapter=${manifest.config.aiFilter.adapter ?? 'n/a'}, degraded=${summary.degradedByAiFallback ? 'yes' : 'no'}, adapter_failures=${summary.aiAdapterFailures}`,
+    );
+    lines.push(
+      `- AI decision counts: file_skips=${summary.aiFilesSkipped}, file_bypasses=${summary.aiFilesBypassed}, ai_applied=${summary.aiSuggestionsAccepted}, ai_skipped=${summary.aiSuggestionsSkipped}, fallback_accepted=${summary.fallbackSuggestionsAccepted}, apply_skipped_files=${summary.aiApplySkippedFiles}`,
+    );
+  } else {
+    lines.push('- AI filtering: disabled');
+  }
+
   if (manifest.config.apply) {
     lines.push(
       `- Apply results: requested=${summary.applyRequested}, matched=${summary.applyMatched}, unmatched=${summary.applyUnmatched}, ambiguous=${summary.applyAmbiguous}`,

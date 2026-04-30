@@ -19,8 +19,40 @@ export function buildSummary(manifest: Omit<RunManifest, 'summary'>): RunSummary
   let applyMatched = 0;
   let applyUnmatched = 0;
   let applyAmbiguous = 0;
+  let aiFilesEvaluated = 0;
+  let aiFilesSkipped = 0;
+  let aiFilesBypassed = 0;
+  let aiSuggestionsAccepted = 0;
+  let aiSuggestionsSkipped = 0;
+  let fallbackSuggestionsAccepted = 0;
+  let aiAdapterFailures = 0;
+  let aiApplySkippedFiles = 0;
+  let degradedByAiFallback = false;
 
   for (const record of manifest.files) {
+    if (record.ai?.fileStage || record.ai?.suggestionStage) {
+      aiFilesEvaluated += 1;
+    }
+
+    if (record.ai?.fileStage?.adapterError) {
+      aiAdapterFailures += 1;
+      degradedByAiFallback = degradedByAiFallback || Boolean(record.ai.fileStage.usedFallback);
+    }
+
+    if (record.ai?.fileStage?.usedFallback) {
+      degradedByAiFallback = true;
+    }
+
+    if (record.ai?.suggestionStage?.adapterError) {
+      aiAdapterFailures += 1;
+      degradedByAiFallback =
+        degradedByAiFallback || Boolean(record.ai.suggestionStage.usedFallback);
+    }
+
+    if (record.ai?.suggestionStage?.applySkipped) {
+      aiApplySkippedFiles += 1;
+    }
+
     if (record.discovery.action === 'skip') {
       if (record.discovery.reason === 'unsupported_extension') {
         unsupportedFilesSkipped += 1;
@@ -30,7 +62,14 @@ export function buildSummary(manifest: Omit<RunManifest, 'summary'>): RunSummary
 
     if (record.fileFilter?.action === 'skip') {
       skippedByFileFilter += 1;
+      if (record.fileFilter.source === 'ai') {
+        aiFilesSkipped += 1;
+      }
       continue;
+    }
+
+    if (record.fileFilter?.source === 'bypass') {
+      aiFilesBypassed += 1;
     }
 
     if (record.analysis) {
@@ -64,6 +103,18 @@ export function buildSummary(manifest: Omit<RunManifest, 'summary'>): RunSummary
         } else {
           suggestionsSkippedByFilter += 1;
         }
+
+        if (decision.source === 'ai') {
+          if (decision.action === 'apply') {
+            aiSuggestionsAccepted += 1;
+          } else {
+            aiSuggestionsSkipped += 1;
+          }
+        }
+
+        if (decision.source === 'fallback' && decision.action === 'apply') {
+          fallbackSuggestionsAccepted += 1;
+        }
       }
     }
 
@@ -80,6 +131,7 @@ export function buildSummary(manifest: Omit<RunManifest, 'summary'>): RunSummary
     analysisParseErrors > 0 ||
     analysisAiErrors > 0 ||
     analysisRequestErrors > 0 ||
+    aiAdapterFailures > 0 ||
     applyUnmatched > 0 ||
     applyAmbiguous > 0 ||
     manifest.files.some((record) => Boolean(record.apply?.error));
@@ -103,6 +155,15 @@ export function buildSummary(manifest: Omit<RunManifest, 'summary'>): RunSummary
     applyMatched,
     applyUnmatched,
     applyAmbiguous,
+    aiFilesEvaluated,
+    aiFilesSkipped,
+    aiFilesBypassed,
+    aiSuggestionsAccepted,
+    aiSuggestionsSkipped,
+    fallbackSuggestionsAccepted,
+    aiAdapterFailures,
+    aiApplySkippedFiles,
+    degradedByAiFallback,
     hasFailures,
   };
 }

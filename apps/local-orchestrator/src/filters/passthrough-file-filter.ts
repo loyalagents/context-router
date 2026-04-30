@@ -9,6 +9,7 @@ export class PassthroughFileFilter implements FileFilter {
       action: 'analyze',
       reason: 'passthrough',
       score: 1,
+      source: 'passthrough',
     };
   }
 }

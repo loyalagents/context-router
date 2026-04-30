@@ -1,6 +1,5 @@
 import { buildHelpText, parseCliArgs } from './cli';
-import { PassthroughFileFilter } from './filters/passthrough-file-filter';
-import { PassthroughSuggestionFilter } from './filters/passthrough-suggestion-filter';
+import { buildRuntimeFilters } from './filter-runtime';
 import { writeManifest } from './reporting/manifest';
 import { renderSummary } from './reporting/summary';
 import { runImport } from './run-import';
@@ -33,12 +32,13 @@ async function main(): Promise<void> {
     backendUrl: options.backendUrl,
     token: options.token,
   });
+  const { fileFilter, suggestionFilter } = buildRuntimeFilters(options);
 
   const manifest = await runImport(options, {
     analysisClient,
     applyClient,
-    fileFilter: new PassthroughFileFilter(),
-    suggestionFilter: new PassthroughSuggestionFilter(),
+    fileFilter,
+    suggestionFilter,
   });
 
   if (options.out) {
