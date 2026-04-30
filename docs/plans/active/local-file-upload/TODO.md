@@ -2,7 +2,7 @@
 
 - Status: follow-up
 - Read when: planning work beyond the initial local orchestrator build
-- Last reviewed: 2026-04-29
+- Last reviewed: 2026-04-30
 
 ## Backend and API follow-ups
 
@@ -10,7 +10,7 @@
 - Add request pacing or rate limiting around the document-analysis upload path to better control Vertex AI cost and quota usage for batch imports.
 - Add a server-owned batch import/orchestrator mode for UI-driven or durable runs.
 - Define a hybrid handoff mode where the local side prefilters files and the server owns the rest of the run.
-- Consider first-class backend MIME or parser support for additional config-like formats that currently flow through the local orchestrator as `text/plain`.
+- Consider first-class backend MIME or parser support for additional config-like formats that currently flow through the local orchestrator as `text/plain`, and keep provider-aware MIME normalization in mind for types that the API accepts but Vertex file ingestion does not.
 
 ## Local orchestrator follow-ups
 

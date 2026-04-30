@@ -68,7 +68,9 @@ describe('Document Analysis API (e2e)', () => {
       ['application/yaml', 'preferences.yaml'],
       ['text/yaml', 'preferences.yml'],
       ['application/x-yaml', 'preferences.yaml'],
-    ])('should accept YAML uploads with MIME %s', async (contentType, filename) => {
+    ])(
+      'should accept YAML uploads with MIME %s and normalize them for AI file extraction',
+      async (contentType, filename) => {
       structuredAi.generateStructuredWithFile.mockResolvedValue({
         suggestions: [],
         documentSummary: 'YAML preference notes',
@@ -87,12 +89,13 @@ describe('Document Analysis API (e2e)', () => {
       expect(structuredAi.generateStructuredWithFile).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          mimeType: contentType,
+          mimeType: 'text/plain',
         }),
         expect.anything(),
         expect.anything(),
       );
-    });
+      },
+    );
 
     it('should reject unsupported upload MIME types', async () => {
       const response = await request(app.getHttpServer())
