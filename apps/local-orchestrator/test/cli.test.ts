@@ -20,6 +20,7 @@ test('parseCliArgs applies defaults and env token', () => {
   assert.equal(command.options?.aiFilter, false);
   assert.equal(command.options?.aiFilterStage, 'suggestion');
   assert.equal(command.options?.aiAdapter, 'command');
+  assert.deepEqual(command.options?.aiCommandArgs, []);
   assert.equal(command.options?.aiTimeoutMs, 30000);
   assert.equal(command.options?.token, 'env-token');
   assert.match(command.options?.folder ?? '', /notes$/);
@@ -91,6 +92,27 @@ test('parseCliArgs requires --ai-command for the command adapter', () => {
   );
 });
 
+test('parseCliArgs rejects --ai-command-arg without --ai-command', () => {
+  assert.throws(
+    () =>
+      parseCliArgs(
+        [
+          '--folder',
+          './notes',
+          '--token',
+          'abc',
+          '--ai-filter',
+          '--ai-command-arg',
+          '--model',
+          '--ai-goal',
+          'Only keep communication preferences',
+        ],
+        {},
+      ),
+    /--ai-command is required/,
+  );
+});
+
 test('parseCliArgs rejects AI options when AI filtering is disabled', () => {
   assert.throws(
     () =>
@@ -116,6 +138,10 @@ test('parseCliArgs accepts AI options with command adapter and stage', () => {
       'command',
       '--ai-command',
       './filter-command',
+      '--ai-command-arg',
+      '--model',
+      '--ai-command-arg',
+      'sonnet',
       '--ai-goal',
       'Only keep communication preferences',
       '--ai-timeout-ms',
@@ -129,6 +155,7 @@ test('parseCliArgs accepts AI options with command adapter and stage', () => {
   assert.equal(command.options?.aiFilterStage, 'both');
   assert.equal(command.options?.aiAdapter, 'command');
   assert.equal(command.options?.aiCommand, './filter-command');
+  assert.deepEqual(command.options?.aiCommandArgs, ['--model', 'sonnet']);
   assert.equal(
     command.options?.aiGoal,
     'Only keep communication preferences',
@@ -142,4 +169,5 @@ test('buildHelpText includes basic usage', () => {
   assert.match(help, /--apply/);
   assert.match(help, /--ai-filter/);
   assert.match(help, /--ai-command <path-or-name>/);
+  assert.match(help, /--ai-command-arg <value>/);
 });

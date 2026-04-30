@@ -28,6 +28,7 @@ function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
     aiFilterStage: 'suggestion',
     aiAdapter: 'command',
     aiCommand: undefined,
+    aiCommandArgs: [],
     aiGoal: undefined,
     aiTimeoutMs: 30000,
     ...overrides,
@@ -321,6 +322,7 @@ test('runImport includes filterAudit evidence for AI-accepted suggestions', asyn
       aiFilter: true,
       aiGoal: 'Only keep durable communication preferences',
       aiCommand: 'fake-ai-command',
+      aiCommandArgs: ['--model', 'sonnet'],
     }),
     {
       analysisClient: {
@@ -384,6 +386,7 @@ test('runImport includes filterAudit evidence for AI-accepted suggestions', asyn
     score: 0.94,
     reason: 'Stable communication preference',
   });
+  assert.deepEqual(manifest.config.aiFilter.commandArgs, ['--model', 'sonnet']);
   assert.equal(manifest.summary.aiSuggestionsAccepted, 1);
   assert.equal(manifest.files[0].ai?.suggestionStage?.promptVersion, 'prompt-v1');
 });
@@ -1140,6 +1143,7 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
         stage: null,
         adapter: null,
         command: null,
+        commandArgs: null,
         goal: null,
         timeoutMs: null,
         promptVersion: null,

@@ -59,13 +59,20 @@ export interface FileStageAdapterResponse {
 
 interface CommandAIFilterAdapterOptions {
   command: string;
+  commandArgs?: string[];
   timeoutMs: number;
 }
 
 export class CommandAIFilterAdapter {
   readonly name = 'command';
+  private readonly options: Required<CommandAIFilterAdapterOptions>;
 
-  constructor(private readonly options: CommandAIFilterAdapterOptions) {}
+  constructor(options: CommandAIFilterAdapterOptions) {
+    this.options = {
+      ...options,
+      commandArgs: options.commandArgs ?? [],
+    };
+  }
 
   async decideSuggestions(
     request: SuggestionStageAdapterRequest,
@@ -86,6 +93,7 @@ export class CommandAIFilterAdapter {
   ): Promise<unknown> {
     const output = await executeCommand(
       this.options.command,
+      this.options.commandArgs,
       JSON.stringify(payload),
       this.options.timeoutMs,
     );
@@ -105,6 +113,7 @@ export class CommandAIFilterAdapter {
 
 async function executeCommand(
   command: string,
+  commandArgs: string[],
   input: string,
   timeoutMs: number,
 ): Promise<string> {
@@ -113,7 +122,7 @@ async function executeCommand(
     let stdout = '';
     let stderr = '';
 
-    const child = spawn(command, [], {
+    const child = spawn(command, commandArgs, {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

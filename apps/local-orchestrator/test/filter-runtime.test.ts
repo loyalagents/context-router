@@ -14,6 +14,7 @@ function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
     aiFilterStage: 'suggestion',
     aiAdapter: 'command',
     aiCommand: undefined,
+    aiCommandArgs: [],
     aiGoal: undefined,
     aiTimeoutMs: 30000,
     ...overrides,

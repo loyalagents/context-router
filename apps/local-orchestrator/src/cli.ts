@@ -25,6 +25,7 @@ export function buildHelpText(): string {
     '  --ai-filter-stage <name>     AI filter stage: suggestion|file|both (default: suggestion)',
     '  --ai-adapter <name>          AI adapter implementation (default: command)',
     '  --ai-command <path-or-name>  Command to execute for the command adapter',
+    '  --ai-command-arg <value>     Additional command adapter argument (repeatable)',
     '  --ai-goal <text>             Required filtering goal when AI filtering is enabled',
     '  --ai-timeout-ms <n>          AI adapter timeout in milliseconds (default: 30000)',
     '  --help                       Show this help',
@@ -49,6 +50,7 @@ export function parseCliArgs(
   let aiFilterStage: CliOptions['aiFilterStage'] = 'suggestion';
   let aiAdapter: CliOptions['aiAdapter'] = 'command';
   let aiCommand: string | undefined;
+  let aiCommandArgs: string[] = [];
   let aiGoal: string | undefined;
   let aiTimeoutMs = DEFAULT_AI_TIMEOUT_MS;
   let sawAIOption = false;
@@ -97,6 +99,10 @@ export function parseCliArgs(
         sawAIOption = true;
         aiCommand = requireValue(argv, ++index, '--ai-command');
         break;
+      case '--ai-command-arg':
+        sawAIOption = true;
+        aiCommandArgs.push(requireRawValue(argv, ++index, '--ai-command-arg'));
+        break;
       case '--ai-goal':
         sawAIOption = true;
         aiGoal = requireValue(argv, ++index, '--ai-goal');
@@ -139,6 +145,10 @@ export function parseCliArgs(
     throw new Error('--ai-command is only valid when --ai-adapter is "command".');
   }
 
+  if (aiCommandArgs.length > 0 && !aiCommand) {
+    throw new Error('--ai-command-arg requires --ai-command.');
+  }
+
   return {
     kind: 'run',
     options: {
@@ -152,6 +162,7 @@ export function parseCliArgs(
       aiFilterStage,
       aiAdapter,
       aiCommand,
+      aiCommandArgs,
       aiGoal,
       aiTimeoutMs,
     },
@@ -162,6 +173,16 @@ function requireValue(argv: string[], index: number, flag: string): string {
   const value = argv[index];
 
   if (!value || value.startsWith('--')) {
+    throw new Error(`Missing value for ${flag}`);
+  }
+
+  return value;
+}
+
+function requireRawValue(argv: string[], index: number, flag: string): string {
+  const value = argv[index];
+
+  if (value == null) {
     throw new Error(`Missing value for ${flag}`);
   }
 

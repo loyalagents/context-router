@@ -18,6 +18,7 @@ export function buildRuntimeFilters(options: CliOptions): RuntimeFilters {
     options.aiFilter && options.aiAdapter === 'command' && options.aiCommand
       ? new CommandAIFilterAdapter({
           command: options.aiCommand,
+          commandArgs: options.aiCommandArgs,
           timeoutMs: options.aiTimeoutMs,
         })
       : null;

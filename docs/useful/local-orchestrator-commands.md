@@ -71,6 +71,40 @@ pnpm --filter local-orchestrator start -- \
   --out /tmp/local-orchestrator-manifest.json
 ```
 
+## Dry-run import with Claude filtering
+
+This runs both local AI stages through the repo-owned Claude wrapper:
+
+```fish
+pnpm --filter local-orchestrator start -- \
+  --folder /tmp/local-orchestrator-smoke \
+  --backend-url http://localhost:3000 \
+  --ai-filter \
+  --ai-filter-stage both \
+  --ai-command ./apps/local-orchestrator/scripts/claude-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg sonnet \
+  --ai-goal "Only keep durable communication, workflow, and tooling preferences" \
+  --out /tmp/local-orchestrator-claude-manifest.json
+```
+
+## Dry-run import with Codex filtering
+
+This runs both local AI stages through the repo-owned Codex wrapper:
+
+```fish
+pnpm --filter local-orchestrator start -- \
+  --folder /tmp/local-orchestrator-smoke \
+  --backend-url http://localhost:3000 \
+  --ai-filter \
+  --ai-filter-stage both \
+  --ai-command ./apps/local-orchestrator/scripts/codex-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg gpt-5.4 \
+  --ai-goal "Only keep durable communication, workflow, and tooling preferences" \
+  --out /tmp/local-orchestrator-codex-manifest.json
+```
+
 ## Inspect the dry-run suggestions
 
 Show the extracted suggestions per file:
@@ -95,6 +129,38 @@ pnpm --filter local-orchestrator start -- \
   --backend-url http://localhost:3000 \
   --apply \
   --out /tmp/local-orchestrator-apply.json
+```
+
+## Apply suggestions with Claude filtering
+
+```fish
+pnpm --filter local-orchestrator start -- \
+  --folder /tmp/local-orchestrator-smoke \
+  --backend-url http://localhost:3000 \
+  --apply \
+  --ai-filter \
+  --ai-filter-stage both \
+  --ai-command ./apps/local-orchestrator/scripts/claude-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg sonnet \
+  --ai-goal "Only keep durable communication, workflow, and tooling preferences" \
+  --out /tmp/local-orchestrator-claude-apply.json
+```
+
+## Apply suggestions with Codex filtering
+
+```fish
+pnpm --filter local-orchestrator start -- \
+  --folder /tmp/local-orchestrator-smoke \
+  --backend-url http://localhost:3000 \
+  --apply \
+  --ai-filter \
+  --ai-filter-stage both \
+  --ai-command ./apps/local-orchestrator/scripts/codex-filter.mjs \
+  --ai-command-arg --model \
+  --ai-command-arg gpt-5.4 \
+  --ai-goal "Only keep durable communication, workflow, and tooling preferences" \
+  --out /tmp/local-orchestrator-codex-apply.json
 ```
 
 ## Inspect what was applied
@@ -128,3 +194,5 @@ curl -s http://localhost:3000/graphql \
 - if you omit `--apply`, the run is dry-run only
 - if `CONTEXT_ROUTER_BEARER_TOKEN` is already set, you do not need to pass `--token`
 - avoiding `--token ...` on the command line is preferable because it prevents the token from being echoed in terminal command output
+- `--ai-command-arg` is repeatable and can pass raw provider flags such as `--model sonnet`
+- the wrapper scripts assume the local `claude` or `codex` CLI is installed and already authenticated

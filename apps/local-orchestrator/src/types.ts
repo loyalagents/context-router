@@ -189,6 +189,7 @@ export interface AIFilterConfig {
   stage: AIFilterStage | null;
   adapter: AIFilterAdapter | null;
   command: string | null;
+  commandArgs: string[] | null;
   goal: string | null;
   timeoutMs: number | null;
   promptVersion: string | null;
@@ -255,6 +256,7 @@ export interface CliOptions {
   aiFilterStage: AIFilterStage;
   aiAdapter: AIFilterAdapter;
   aiCommand?: string;
+  aiCommandArgs: string[];
   aiGoal?: string;
   aiTimeoutMs: number;
 }
