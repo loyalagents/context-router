@@ -19,7 +19,7 @@ describe('SchemaConsolidationTool', () => {
       authorizationService as unknown as McpAuthorizationService,
     );
 
-    await tool.execute(
+    const result = await tool.execute(
       { scope: 'PERSONAL' },
       {
         user: { userId: 'user-1' },
@@ -44,5 +44,14 @@ describe('SchemaConsolidationTool', () => {
         filterAccessibleSlugs: expect.any(Function),
       }),
     );
+    expect(result.result.structuredContent).toMatchObject({
+      success: true,
+      totalDefinitionsAnalyzed: 2,
+      consolidationGroups: [],
+    });
+    expect(result.result.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('consolidateSchema:'),
+    });
   });
 });

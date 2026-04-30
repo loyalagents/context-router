@@ -52,7 +52,7 @@ describe('Workflow MCP Tools (e2e)', () => {
     );
 
   const parseToolResult = (response: any) =>
-    JSON.parse(response.body.result.content[0].text);
+    response.body.result.structuredContent;
 
   // ─── smartSearchPreferences ───────────────────────────────────────
 
@@ -221,7 +221,7 @@ describe('Workflow MCP Tools (e2e)', () => {
       expect(response.status).toBe(200);
       const body = response.body.result;
       expect(body.isError).toBe(true);
-      const result = JSON.parse(body.content[0].text);
+      const result = body.structuredContent;
       expect(result.error).toContain('Zod validation failed');
     });
 

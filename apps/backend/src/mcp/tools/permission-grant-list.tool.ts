@@ -4,6 +4,10 @@ import { PermissionGrantRepository } from '@modules/permission-grant/permission-
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
 import { McpToolExecutionResult } from '../access-log/access-log.types';
+import {
+  buildReadToolErrorResult,
+  buildReadToolSuccessResult,
+} from './base/read-tool-result.helper';
 
 @Injectable()
 export class PermissionGrantListTool implements McpToolInterface {
@@ -14,7 +18,7 @@ export class PermissionGrantListTool implements McpToolInterface {
   readonly descriptor: Tool = {
     name: 'listPermissionGrants',
     description:
-      'List permission grants for the calling MCP client only. Read-only introspection for debugging access.',
+      'List permission grants for the calling MCP client only. Use this when expected preference or schema results may be hidden by MCP grant filtering.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -22,6 +26,34 @@ export class PermissionGrantListTool implements McpToolInterface {
     annotations: {
       readOnlyHint: true,
       openWorldHint: false,
+    },
+    outputSchema: {
+      type: 'object',
+      required: ['success'],
+      properties: {
+        success: {
+          type: 'boolean',
+        },
+        error: {
+          type: 'string',
+        },
+        grants: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              clientKey: { type: 'string' },
+              target: { type: 'string' },
+              action: { type: 'string' },
+              effect: { type: 'string' },
+              createdAt: { type: 'string' },
+              updatedAt: { type: 'string' },
+            },
+          },
+        },
+      },
+      additionalProperties: true,
     },
   };
 
@@ -36,31 +68,25 @@ export class PermissionGrantListTool implements McpToolInterface {
         context!.user.userId,
         context!.client.key,
       );
+      const structuredContent = {
+        success: true as const,
+        grants: grants.map((grant) => ({
+          id: grant.id,
+          clientKey: grant.clientKey,
+          target: grant.target,
+          action: grant.action,
+          effect: grant.effect,
+          createdAt: grant.createdAt,
+          updatedAt: grant.updatedAt,
+        })),
+      };
 
       return {
-        result: {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  grants: grants.map((grant) => ({
-                    id: grant.id,
-                    clientKey: grant.clientKey,
-                    target: grant.target,
-                    action: grant.action,
-                    effect: grant.effect,
-                    createdAt: grant.createdAt,
-                    updatedAt: grant.updatedAt,
-                  })),
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        },
+        result: buildReadToolSuccessResult(
+          this.descriptor.name,
+          `${grants.length} grants for client ${context!.client.key}`,
+          structuredContent,
+        ),
         accessLog: {
           responseMetadata: {
             grantCount: grants.length,
@@ -68,16 +94,12 @@ export class PermissionGrantListTool implements McpToolInterface {
         },
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
-        result: {
-          content: [
-            { type: 'text', text: JSON.stringify({ error: error.message }, null, 2) },
-          ],
-          isError: true,
-        },
+        result: buildReadToolErrorResult(this.descriptor.name, message),
         accessLog: {
           errorMetadata: {
-            message: error.message,
+            message,
           },
         },
       };

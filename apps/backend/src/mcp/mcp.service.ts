@@ -24,6 +24,9 @@ import {
   McpAccessSurface,
 } from '@infrastructure/prisma/generated-client';
 
+const MCP_SERVER_INSTRUCTIONS =
+  'Available tools vary by permissions. Use searchPreferences for known slugs/categories or all active preferences. Use smartSearchPreferences to map a natural-language task to relevant preference slugs. Use listPreferenceSlugs for schema discovery only. Use listPermissionGrants when grants may hide results. schema://graphql is for API introspection only.';
+
 @Injectable()
 export class McpService implements OnModuleInit {
   private readonly logger = new Logger(McpService.name);
@@ -90,6 +93,7 @@ export class McpService implements OnModuleInit {
         version: serverConfig.version,
       },
       {
+        instructions: MCP_SERVER_INSTRUCTIONS,
         capabilities: {
           tools: {},
           resources: {},

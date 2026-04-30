@@ -19,7 +19,7 @@ export class SchemaResource implements McpResourceInterface {
     uri: 'schema://graphql',
     name: 'GraphQL Schema',
     description:
-      'The GraphQL schema for the Context Router API, showing available types, queries, and mutations.',
+      'GraphQL schema for the Context Router API. Use this for API introspection and direct GraphQL integration, not for preference lookup; use searchPreferences or smartSearchPreferences for preference retrieval.',
     mimeType: 'text/plain',
   };
 

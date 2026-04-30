@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { ConfigService } from '@nestjs/config';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { McpService } from '../../src/mcp/mcp.service';
 import { getPrismaClient, seedPreferenceDefinitions } from '../setup/test-db';
@@ -35,6 +37,9 @@ const TEST_CLAUDE_CLIENT: ResolvedMcpClient = {
     targetRules: [],
   },
 };
+
+const parseReadToolResult = (result: any) =>
+  result.structuredContent ?? JSON.parse(result.content[0].text);
 
 describe('MCP Integration (e2e)', () => {
   let app: INestApplication;
@@ -108,6 +113,37 @@ describe('MCP Integration (e2e)', () => {
       const serverB = mcpService.createServer(context);
       expect(serverA).not.toBe(serverB);
     });
+
+    it('should expose initialize instructions and the bumped server version', async () => {
+      const context = {
+        user: testUser,
+        client: TEST_CLAUDE_CLIENT,
+        grants: ['preferences:read'],
+      };
+      const server = mcpService.createServer(context as any);
+      const client = new Client(
+        { name: 'mcp-contract-test', version: '1.0.0' },
+        { capabilities: {} },
+      );
+      const [clientTransport, serverTransport] =
+        InMemoryTransport.createLinkedPair();
+
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+
+      expect(client.getServerVersion()).toMatchObject({
+        name: 'context-router-mcp',
+        version: '2.0.0',
+      });
+      expect(client.getInstructions()).toContain(
+        'Available tools vary by permissions.',
+      );
+      expect(client.getInstructions()).toContain('searchPreferences');
+      expect(client.getInstructions()).toContain('smartSearchPreferences');
+
+      await client.close();
+      await server.close();
+    });
   });
 
   describe('MCP Configuration', () => {
@@ -117,7 +153,7 @@ describe('MCP Integration (e2e)', () => {
       expect(mcpConfig).toBeDefined();
       expect(mcpConfig.server).toBeDefined();
       expect(mcpConfig.server.name).toBe('context-router-mcp');
-      expect(mcpConfig.server.version).toBe('1.0.0');
+      expect(mcpConfig.server.version).toBe('2.0.0');
     });
 
     it('should have HTTP transport enabled by default', () => {
@@ -152,9 +188,28 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.tools).toBeDefined();
-      const toolNames = response.body.result.tools.map((t: any) => t.name);
+      const tools = response.body.result.tools;
+      const toolNames = tools.map((t: any) => t.name);
       expect(toolNames).toContain('searchPreferences');
       expect(toolNames).toContain('listPreferenceSlugs');
+
+      for (const toolName of [
+        'listPreferenceSlugs',
+        'searchPreferences',
+        'smartSearchPreferences',
+        'listPermissionGrants',
+        'consolidateSchema',
+      ]) {
+        const tool = tools.find((candidate: any) => candidate.name === toolName);
+        expect(tool.outputSchema).toBeDefined();
+        expect(tool.outputSchema.type).toBe('object');
+        expect(tool.outputSchema.properties.success).toBeDefined();
+      }
+
+      const mutatePreferencesTool = tools.find(
+        (tool: any) => tool.name === 'mutatePreferences',
+      );
+      expect(mutatePreferencesTool.outputSchema).toBeUndefined();
     });
 
     it('should execute listPreferenceSlugs tool', async () => {
@@ -170,6 +225,7 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.content).toBeDefined();
+      expect(response.body.result?.structuredContent).toBeDefined();
     });
   });
 
@@ -645,7 +701,7 @@ describe('MCP Integration (e2e)', () => {
       });
 
       expect(response.status).toBe(200);
-      const result = JSON.parse(response.body.result.content[0].text);
+      const result = parseReadToolResult(response.body.result);
       const slugs = result.preferences.map((p: any) => p.slug);
       expect(slugs).toContain('custom.test_pref');
     });
@@ -1064,7 +1120,7 @@ describe('MCP Integration (e2e)', () => {
         { 'x-test-user-id': userB.userId },
       );
 
-      const result = JSON.parse(response.body.result.content[0].text);
+      const result = parseReadToolResult(response.body.result);
       const slugs = result.preferences.map((p: any) => p.slug);
       expect(slugs).not.toContain('private.user_a_only');
     });
@@ -1344,8 +1400,8 @@ describe('MCP Integration (e2e)', () => {
       expect(responseA.status).toBe(200);
       expect(responseB.status).toBe(200);
 
-      const textA = responseA.body.result?.content?.[0]?.text ?? '';
-      const textB = responseB.body.result?.content?.[0]?.text ?? '';
+      const textA = JSON.stringify(parseReadToolResult(responseA.body.result));
+      const textB = JSON.stringify(parseReadToolResult(responseB.body.result));
 
       // User A's response contains A's value and not B's
       expect(textA).toContain(uniqueValueA);
