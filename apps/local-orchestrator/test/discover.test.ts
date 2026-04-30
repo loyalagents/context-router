@@ -152,3 +152,81 @@ test('discoverFiles can include hidden entries and recognize .env patterns', asy
   assert.equal(unsupportedDotfile?.discovery.action, 'skip');
   assert.equal(unsupportedDotfile?.discovery.reason, 'unsupported_extension');
 });
+
+test('discoverFiles matches supported extensions case-insensitively', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'local-orchestrator-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, 'GUIDE.MD'), '# preferences\n');
+  await writeFile(path.join(tempRoot, 'CONFIG.YAML'), 'tone: brief\n');
+  await writeFile(path.join(tempRoot, 'SETTINGS.TOML'), 'tone = "brief"\n');
+  await writeFile(path.join(tempRoot, 'SERVICE.CONF'), 'locale=en-US\n');
+
+  const discovery = await discoverFiles(tempRoot);
+
+  const markdownRecord = discovery.files.find(
+    (record) => record.relativePath === 'GUIDE.MD',
+  );
+  assert.equal(markdownRecord?.extension, '.md');
+  assert.equal(markdownRecord?.file?.uploadMimeType, 'text/markdown');
+  assert.equal(markdownRecord?.file?.coercedToPlainText, false);
+
+  const yamlRecord = discovery.files.find(
+    (record) => record.relativePath === 'CONFIG.YAML',
+  );
+  assert.equal(yamlRecord?.extension, '.yaml');
+  assert.equal(yamlRecord?.file?.uploadMimeType, 'application/yaml');
+  assert.equal(yamlRecord?.file?.coercedToPlainText, false);
+
+  const tomlRecord = discovery.files.find(
+    (record) => record.relativePath === 'SETTINGS.TOML',
+  );
+  assert.equal(tomlRecord?.extension, '.toml');
+  assert.equal(tomlRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(tomlRecord?.file?.coercedToPlainText, true);
+
+  const confRecord = discovery.files.find(
+    (record) => record.relativePath === 'SERVICE.CONF',
+  );
+  assert.equal(confRecord?.extension, '.conf');
+  assert.equal(confRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(confRecord?.file?.coercedToPlainText, true);
+});
+
+test('discoverFiles does not over-match hidden .env lookalikes', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'local-orchestrator-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, '.env.local'), 'LOCALE=en-US\n');
+  await writeFile(path.join(tempRoot, '.envrc'), 'export TONE=brief\n');
+  await writeFile(path.join(tempRoot, '.env-example'), 'TONE=brief\n');
+
+  const discovery = await discoverFiles(tempRoot, { includeHidden: true });
+
+  const envLocalRecord = discovery.files.find(
+    (record) => record.relativePath === '.env.local',
+  );
+  assert.equal(envLocalRecord?.discovery.action, 'analyze');
+  assert.equal(envLocalRecord?.file?.uploadMimeType, 'text/plain');
+
+  const envrcRecord = discovery.files.find(
+    (record) => record.relativePath === '.envrc',
+  );
+  assert.equal(envrcRecord?.discovery.action, 'skip');
+  assert.equal(envrcRecord?.discovery.reason, 'unsupported_extension');
+  assert.equal(envrcRecord?.discovery.details, 'Unsupported extension "[none]"');
+
+  const envExampleRecord = discovery.files.find(
+    (record) => record.relativePath === '.env-example',
+  );
+  assert.equal(envExampleRecord?.discovery.action, 'skip');
+  assert.equal(envExampleRecord?.discovery.reason, 'unsupported_extension');
+  assert.equal(
+    envExampleRecord?.discovery.details,
+    'Unsupported extension "[none]"',
+  );
+});
