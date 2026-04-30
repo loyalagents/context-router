@@ -39,6 +39,11 @@ export async function buildTextPreview(
 
 export function isPreviewableTextFile(file: DiscoveredFile): boolean {
   return (
-    file.uploadMimeType === 'text/plain' || file.uploadMimeType === 'application/json'
+    file.uploadMimeType === 'text/plain' ||
+    file.uploadMimeType === 'application/json' ||
+    file.uploadMimeType === 'text/markdown' ||
+    file.uploadMimeType === 'application/yaml' ||
+    file.uploadMimeType === 'text/yaml' ||
+    file.uploadMimeType === 'application/x-yaml'
   );
 }

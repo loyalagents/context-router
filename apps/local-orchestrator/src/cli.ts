@@ -20,6 +20,7 @@ export function buildHelpText(): string {
     '  --token <token>              Bearer token for backend auth',
     '  --apply                      Persist accepted suggestions (default: dry-run)',
     '  --concurrency <n>            Analysis concurrency (default: 1)',
+    '  --include-hidden             Traverse hidden files and directories (default: skip hidden entries)',
     '  --out <path>                 Write JSON manifest to this path',
     '  --ai-filter                  Enable local AI filtering',
     '  --ai-filter-stage <name>     AI filter stage: suggestion|file|both (default: suggestion)',
@@ -45,6 +46,7 @@ export function parseCliArgs(
   let token = env.CONTEXT_ROUTER_BEARER_TOKEN ?? '';
   let apply = false;
   let concurrency = 1;
+  let includeHidden = false;
   let out: string | undefined;
   let aiFilter = false;
   let aiFilterStage: CliOptions['aiFilterStage'] = 'suggestion';
@@ -78,6 +80,9 @@ export function parseCliArgs(
           requireValue(argv, ++index, '--concurrency'),
           '--concurrency',
         );
+        break;
+      case '--include-hidden':
+        includeHidden = true;
         break;
       case '--out':
         out = requireValue(argv, ++index, '--out');
@@ -157,6 +162,7 @@ export function parseCliArgs(
       token,
       apply,
       concurrency,
+      includeHidden,
       out: out ? path.resolve(out) : undefined,
       aiFilter,
       aiFilterStage,

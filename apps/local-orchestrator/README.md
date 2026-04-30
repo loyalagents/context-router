@@ -27,6 +27,7 @@ To enable local AI filtering with the `command` adapter:
 pnpm --filter local-orchestrator start -- \
   --folder ./my-files \
   --token "$CONTEXT_ROUTER_BEARER_TOKEN" \
+  --include-hidden \
   --ai-filter \
   --ai-filter-stage both \
   --ai-command ./apps/local-orchestrator/scripts/claude-filter.mjs \
@@ -101,8 +102,10 @@ File-stage responses must return one decision:
 
 - Dry-run is the default.
 - Hidden files and directories are skipped by default.
-- Common local text-like files such as `.md`, `.markdown`, `.yml`, and `.yaml` are uploaded as `text/plain` in V1.
-- All runs emit manifest schema `version: 2`, even when AI filtering is disabled.
+- Use `--include-hidden` to traverse hidden files and directories, including supported `.env` files.
+- Native upload types include `.txt`, `.json`, `.pdf`, `.png`, `.jpg`, `.jpeg`, `.md`, `.markdown`, `.yml`, and `.yaml`.
+- Easy local text-like files such as `.toml`, `.ini`, `.cfg`, `.conf`, `.env`, and `.env.*` are uploaded as `text/plain`.
+- All runs emit manifest schema `version: 3`, even when AI filtering is disabled.
 - Accepted AI-filtered suggestions add `filterAudit` metadata to the apply evidence payload so local decisions can be correlated with backend audit history by `analysisId`.
 - Re-running the orchestrator on the same folder is safe, but V1 does not deduplicate by file hash or prior run state.
 - The bearer token is not refreshed automatically during long runs.

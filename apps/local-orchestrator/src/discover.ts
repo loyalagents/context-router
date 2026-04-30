@@ -8,6 +8,10 @@ interface UploadMimeInfo {
   coercedToPlainText: boolean;
 }
 
+export interface DiscoveryOptions {
+  includeHidden?: boolean;
+}
+
 export interface DiscoveryResult {
   hiddenEntriesSkipped: number;
   files: FileRunRecord[];
@@ -44,32 +48,66 @@ const DIRECT_MIME_BY_EXTENSION: Record<string, UploadMimeInfo> = {
     uploadMimeType: 'image/jpeg',
     coercedToPlainText: false,
   },
-};
-
-const COERCED_TEXT_MIME_BY_EXTENSION: Record<string, UploadMimeInfo> = {
   '.md': {
     originalMimeType: 'text/markdown',
-    uploadMimeType: 'text/plain',
-    coercedToPlainText: true,
+    uploadMimeType: 'text/markdown',
+    coercedToPlainText: false,
   },
   '.markdown': {
     originalMimeType: 'text/markdown',
-    uploadMimeType: 'text/plain',
-    coercedToPlainText: true,
+    uploadMimeType: 'text/markdown',
+    coercedToPlainText: false,
   },
   '.yml': {
     originalMimeType: 'application/yaml',
-    uploadMimeType: 'text/plain',
-    coercedToPlainText: true,
+    uploadMimeType: 'application/yaml',
+    coercedToPlainText: false,
   },
   '.yaml': {
     originalMimeType: 'application/yaml',
+    uploadMimeType: 'application/yaml',
+    coercedToPlainText: false,
+  },
+};
+
+const COERCED_TEXT_MIME_BY_EXTENSION: Record<string, UploadMimeInfo> = {
+  '.toml': {
+    originalMimeType: 'application/toml',
+    uploadMimeType: 'text/plain',
+    coercedToPlainText: true,
+  },
+  '.ini': {
+    originalMimeType: null,
+    uploadMimeType: 'text/plain',
+    coercedToPlainText: true,
+  },
+  '.cfg': {
+    originalMimeType: null,
+    uploadMimeType: 'text/plain',
+    coercedToPlainText: true,
+  },
+  '.conf': {
+    originalMimeType: null,
     uploadMimeType: 'text/plain',
     coercedToPlainText: true,
   },
 };
 
-export async function discoverFiles(rootFolder: string): Promise<DiscoveryResult> {
+const BASENAME_MATCHERS: Array<(fileName: string) => UploadMimeInfo | null> = [
+  (fileName) =>
+    fileName === '.env' || fileName.startsWith('.env.')
+      ? {
+          originalMimeType: null,
+          uploadMimeType: 'text/plain',
+          coercedToPlainText: true,
+        }
+      : null,
+];
+
+export async function discoverFiles(
+  rootFolder: string,
+  options: DiscoveryOptions = {},
+): Promise<DiscoveryResult> {
   const files: FileRunRecord[] = [];
   let hiddenEntriesSkipped = 0;
 
@@ -87,7 +125,7 @@ export async function discoverFiles(rootFolder: string): Promise<DiscoveryResult
     for (const entry of entries) {
       const absolutePath = path.join(currentFolder, entry.name);
 
-      if (entry.name.startsWith('.')) {
+      if (!options.includeHidden && entry.name.startsWith('.')) {
         hiddenEntriesSkipped += 1;
         continue;
       }
@@ -103,7 +141,7 @@ export async function discoverFiles(rootFolder: string): Promise<DiscoveryResult
 
       const relativePath = path.relative(rootFolder, absolutePath) || entry.name;
       const extension = path.extname(entry.name).toLowerCase();
-      const mimeInfo = getUploadMimeInfo(extension);
+      const mimeInfo = getUploadMimeInfo(entry.name, extension);
       const stats = await fs.stat(absolutePath);
 
       if (!mimeInfo) {
@@ -150,7 +188,17 @@ export async function discoverFiles(rootFolder: string): Promise<DiscoveryResult
   }
 }
 
-function getUploadMimeInfo(extension: string): UploadMimeInfo | null {
+function getUploadMimeInfo(
+  fileName: string,
+  extension: string,
+): UploadMimeInfo | null {
+  for (const matcher of BASENAME_MATCHERS) {
+    const match = matcher(fileName);
+    if (match) {
+      return match;
+    }
+  }
+
   return (
     DIRECT_MIME_BY_EXTENSION[extension] ??
     COERCED_TEXT_MIME_BY_EXTENSION[extension] ??

@@ -201,6 +201,7 @@ export interface RunConfig {
   backendUrl: string;
   apply: boolean;
   concurrency: number;
+  includeHidden: boolean;
   aiFilter: AIFilterConfig;
 }
 
@@ -236,7 +237,7 @@ export interface RunSummary {
 }
 
 export interface RunManifest {
-  version: 2;
+  version: 3;
   startedAt: string;
   finishedAt: string;
   config: RunConfig;
@@ -251,6 +252,7 @@ export interface CliOptions {
   token: string;
   apply: boolean;
   concurrency: number;
+  includeHidden: boolean;
   out?: string;
   aiFilter: boolean;
   aiFilterStage: AIFilterStage;

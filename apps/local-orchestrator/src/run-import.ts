@@ -35,7 +35,9 @@ export async function runImport(
   dependencies: RunImportDependencies,
 ): Promise<RunManifest> {
   const startedAt = new Date().toISOString();
-  const discovery = await discoverFiles(options.folder);
+  const discovery = await discoverFiles(options.folder, {
+    includeHidden: options.includeHidden,
+  });
   const files = discovery.files;
   const useAIFileStage =
     options.aiFilter &&
@@ -170,6 +172,7 @@ export async function runImport(
     backendUrl: options.backendUrl,
     apply: options.apply,
     concurrency: options.concurrency,
+    includeHidden: options.includeHidden,
     aiFilter: {
       enabled: options.aiFilter,
       stage: options.aiFilter ? options.aiFilterStage : null,
@@ -184,7 +187,7 @@ export async function runImport(
   };
 
   const partialManifest = {
-    version: 2 as const,
+    version: 3 as const,
     startedAt,
     finishedAt: new Date().toISOString(),
     config,

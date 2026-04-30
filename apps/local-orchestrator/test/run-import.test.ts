@@ -24,6 +24,7 @@ function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
     token: 'secret-token',
     apply: false,
     concurrency: 1,
+    includeHidden: false,
     aiFilter: false,
     aiFilterStage: 'suggestion',
     aiAdapter: 'command',
@@ -90,7 +91,7 @@ test('runImport records analysis request failures and continues', async (t) => {
     },
   );
 
-  assert.equal(manifest.version, 2);
+  assert.equal(manifest.version, 3);
   assert.equal(manifest.config.aiFilter.enabled, false);
   assert.equal(manifest.summary.analysisAttempted, 2);
   assert.equal(manifest.summary.analysisRequestErrors, 1);
@@ -100,6 +101,49 @@ test('runImport records analysis request failures and continues', async (t) => {
   const failedRecord = manifest.files.find((record) => record.relativePath === 'a.txt');
   assert.equal(failedRecord?.analysis?.status, 'request_error');
   assert.equal(failedRecord?.analysis?.error?.kind, 'network');
+});
+
+test('runImport persists includeHidden when hidden traversal is enabled', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'run-import-hidden-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeFile(path.join(tempRoot, '.env'), 'TONE=brief\n');
+
+  const manifest = await runImport(
+    buildOptions({ folder: tempRoot, includeHidden: true }),
+    {
+      analysisClient: {
+        analyzeFile: async () =>
+          ({
+            analysisId: 'analysis-hidden',
+            suggestions: [],
+            filteredSuggestions: [],
+            documentSummary: 'Environment preferences',
+            status: 'no_matches',
+            statusReason: 'No durable preferences found',
+            filteredCount: 0,
+          }) satisfies DocumentAnalysisResult,
+      },
+      applyClient: {
+        applySuggestions: async () => {
+          throw new Error('should not be called in dry-run mode');
+        },
+      },
+      fileFilter: new PassthroughFileFilter(),
+      suggestionFilter: new PassthroughSuggestionFilter(),
+    },
+  );
+
+  assert.equal(manifest.config.includeHidden, true);
+  assert.equal(manifest.hiddenEntriesSkipped, 0);
+  assert.equal(manifest.summary.hiddenEntriesSkipped, 0);
+
+  const envRecord = manifest.files.find((record) => record.relativePath === '.env');
+  assert.equal(envRecord?.discovery.action, 'analyze');
+  assert.equal(envRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(envRecord?.analysis?.status, 'no_matches');
 });
 
 test('runImport records filtered suggestions and summary counts in dry-run mode', async (t) => {
@@ -1130,7 +1174,7 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
   );
 
   assert.deepEqual(stableManifest, {
-    version: 2,
+    version: 3,
     startedAt: stableManifest.startedAt,
     finishedAt: stableManifest.finishedAt,
     config: {
@@ -1138,6 +1182,7 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
       backendUrl: 'http://localhost:3000',
       apply: false,
       concurrency: 1,
+      includeHidden: false,
       aiFilter: {
         enabled: false,
         stage: null,
@@ -1293,7 +1338,8 @@ test('writeManifest writes stable JSON with version field', async (t) => {
   await writeManifest(manifest, manifestPath);
 
   const content = await readFile(manifestPath, 'utf8');
-  assert.match(content, /"version": 2/);
+  assert.match(content, /"version": 3/);
+  assert.match(content, /"includeHidden": false/);
   assert.match(content, /"enabled": false/);
   assert.match(content, /"summary":/);
 });
