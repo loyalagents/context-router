@@ -154,20 +154,24 @@ export function parseCliArgs(
     throw new Error('--ai-command-arg requires --ai-command.');
   }
 
+  const invocationCwd = env.INIT_CWD ?? process.cwd();
+
   return {
     kind: 'run',
     options: {
-      folder: path.resolve(folder),
+      folder: path.resolve(invocationCwd, folder),
       backendUrl: normalizeBackendUrl(backendUrl),
       token,
       apply,
       concurrency,
       includeHidden,
-      out: out ? path.resolve(out) : undefined,
+      out: out ? path.resolve(invocationCwd, out) : undefined,
       aiFilter,
       aiFilterStage,
       aiAdapter,
-      aiCommand,
+      aiCommand: aiCommand
+        ? resolveCommandPath(aiCommand, invocationCwd)
+        : undefined,
       aiCommandArgs,
       aiGoal,
       aiTimeoutMs,
@@ -222,4 +226,20 @@ function parseAIFilterStage(value: string): AIFilterStage {
 
 function normalizeBackendUrl(input: string): string {
   return input.replace(/\/+$/, '');
+}
+
+function resolveCommandPath(command: string, cwd: string): string {
+  if (path.isAbsolute(command)) {
+    return command;
+  }
+
+  if (hasPathSeparator(command) || command.startsWith('.')) {
+    return path.resolve(cwd, command);
+  }
+
+  return command;
+}
+
+function hasPathSeparator(value: string): boolean {
+  return value.includes('/') || value.includes('\\');
 }

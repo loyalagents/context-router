@@ -21,10 +21,15 @@ async function main() {
 
   const args = [
     '-p',
-    '--bare',
     '--no-session-persistence',
     '--tools',
     '',
+    '--disable-slash-commands',
+    '--strict-mcp-config',
+    '--mcp-config',
+    '{"mcpServers":{}}',
+    '--output-format',
+    'json',
     '--json-schema',
     schema,
   ];
@@ -34,7 +39,7 @@ async function main() {
   }
 
   const output = await runProviderCommand('claude', args, prompt);
-  const parsed = parseProviderJson(output, 'Claude');
+  const parsed = normalizeClaudeResponse(output);
   const validated = validateProviderResponse(request, parsed);
 
   writeWrapperResponse({
@@ -48,3 +53,46 @@ main().catch((error) => {
     `Claude filter failed: ${error instanceof Error ? error.message : 'unknown error'}`,
   );
 });
+
+function normalizeClaudeResponse(output) {
+  const candidate = parseProviderJson(output, 'Claude');
+
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    throw new Error('Claude returned an invalid JSON response');
+  }
+
+  if ('decision' in candidate || 'decisions' in candidate) {
+    return candidate;
+  }
+
+  if (
+    'structured_output' in candidate &&
+    candidate.structured_output &&
+    typeof candidate.structured_output === 'object' &&
+    !Array.isArray(candidate.structured_output)
+  ) {
+    return candidate.structured_output;
+  }
+
+  if (candidate.is_error) {
+    throw new Error(
+      typeof candidate.result === 'string' && candidate.result.length > 0
+        ? candidate.result
+        : 'Claude returned an error result',
+    );
+  }
+
+  if (typeof candidate.result === 'string' && candidate.result.trim().length > 0) {
+    return parseProviderJson(candidate.result, 'Claude');
+  }
+
+  if (candidate.result && typeof candidate.result === 'object' && !Array.isArray(candidate.result)) {
+    return candidate.result;
+  }
+
+  if (candidate.subtype === 'error_max_structured_output_retries') {
+    throw new Error('Claude could not produce valid structured output');
+  }
+
+  throw new Error('Claude returned an unsupported JSON response shape');
+}

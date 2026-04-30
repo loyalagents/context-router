@@ -164,15 +164,21 @@ process.stdin.on('end', () => {
     prompt: input
   }));
   process.stdout.write(JSON.stringify({
-    decisions: [
-      {
-        suggestionId: 'analysis-1:candidate:1',
-        action: 'apply',
-        reason: 'Stable communication preference',
-        score: 0.94,
-        details: 'Durable personalization signal'
-      }
-    ]
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    structured_output: {
+      decisions: [
+        {
+          suggestionId: 'analysis-1:candidate:1',
+          action: 'apply',
+          reason: 'Stable communication preference',
+          score: 0.94,
+          details: 'Durable personalization signal'
+        }
+      ]
+    },
+    result: 'done'
   }));
 });
 `,
@@ -201,10 +207,24 @@ process.stdin.on('end', () => {
 
   const transcript = JSON.parse(await readFile(transcriptPath, 'utf8'));
   assert.deepEqual(
-    transcript.args.slice(0, 8),
-    ['-p', '--bare', '--no-session-persistence', '--tools', '', '--json-schema', transcript.args[6], '--model'],
+    transcript.args.slice(0, 13),
+    [
+      '-p',
+      '--no-session-persistence',
+      '--tools',
+      '',
+      '--disable-slash-commands',
+      '--strict-mcp-config',
+      '--mcp-config',
+      '{"mcpServers":{}}',
+      '--output-format',
+      'json',
+      '--json-schema',
+      transcript.args[11],
+      '--model',
+    ],
   );
-  assert.equal(transcript.args[8], 'sonnet');
+  assert.equal(transcript.args[13], 'sonnet');
   assert.match(transcript.prompt, /Only keep durable communication preferences/);
   assert.match(transcript.prompt, /filteredSuggestions/);
 });
@@ -232,12 +252,18 @@ process.stdin.on('end', () => {
     prompt: input
   }));
   process.stdout.write(JSON.stringify({
-    decision: {
-      action: 'analyze',
-      reason: 'Possible durable preference signal',
-      score: 0.72,
-      details: 'Preview looks user-authored.'
-    }
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    structured_output: {
+      decision: {
+        action: 'analyze',
+        reason: 'Possible durable preference signal',
+        score: 0.72,
+        details: 'Preview looks user-authored.'
+      }
+    },
+    result: 'done'
   }));
 });
 `,
@@ -259,6 +285,126 @@ process.stdin.on('end', () => {
       score: 0.72,
       details: 'Preview looks user-authored.',
     },
+  });
+});
+
+test('claude-filter accepts direct structured JSON responses', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'claude-filter-direct-'));
+  const transcriptPath = path.join(tempRoot, 'claude-direct.json');
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeExecutableScript(
+    tempRoot,
+    'claude',
+    `#!/usr/bin/env node
+const fs = require('node:fs');
+let input = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => {
+  input += chunk;
+});
+process.stdin.on('end', () => {
+  fs.writeFileSync(process.env.TRANSCRIPT_PATH, JSON.stringify({
+    args: process.argv.slice(2),
+    prompt: input
+  }));
+  process.stdout.write(JSON.stringify({
+    decisions: [
+      {
+        suggestionId: 'analysis-1:candidate:1',
+        action: 'skip',
+        reason: 'Not durable enough',
+        score: 0.15
+      }
+    ]
+  }));
+});
+`,
+  );
+
+  const result = await runExecutable({
+    command: CLAUDE_WRAPPER,
+    args: [],
+    input: JSON.stringify(buildSuggestionRequest()),
+    env: buildEnv(tempRoot, transcriptPath),
+  });
+
+  assert.equal(result.code, 0);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    promptVersion: 'claude-filter-suggestion-v1',
+    decisions: [
+      {
+        suggestionId: 'analysis-1:candidate:1',
+        action: 'skip',
+        reason: 'Not durable enough',
+        score: 0.15,
+      },
+    ],
+  });
+});
+
+test('claude-filter accepts documented structured_output envelopes', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'claude-filter-structured-output-'));
+  const transcriptPath = path.join(tempRoot, 'claude-structured-output.json');
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await writeExecutableScript(
+    tempRoot,
+    'claude',
+    `#!/usr/bin/env node
+const fs = require('node:fs');
+let input = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => {
+  input += chunk;
+});
+process.stdin.on('end', () => {
+  fs.writeFileSync(process.env.TRANSCRIPT_PATH, JSON.stringify({
+    args: process.argv.slice(2),
+    prompt: input
+  }));
+  process.stdout.write(JSON.stringify({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    result: 'summary text',
+    structured_output: {
+      decisions: [
+        {
+          suggestionId: 'analysis-1:candidate:1',
+          action: 'apply',
+          reason: 'Durable preference',
+          score: 0.88
+        }
+      ]
+    }
+  }));
+});
+`,
+  );
+
+  const result = await runExecutable({
+    command: CLAUDE_WRAPPER,
+    args: [],
+    input: JSON.stringify(buildSuggestionRequest()),
+    env: buildEnv(tempRoot, transcriptPath),
+  });
+
+  assert.equal(result.code, 0);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    promptVersion: 'claude-filter-suggestion-v1',
+    decisions: [
+      {
+        suggestionId: 'analysis-1:candidate:1',
+        action: 'apply',
+        reason: 'Durable preference',
+        score: 0.88,
+      },
+    ],
   });
 });
 

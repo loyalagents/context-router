@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import test from 'node:test';
 import { buildHelpText, parseCliArgs } from '../src/cli';
 
@@ -46,6 +47,39 @@ test('parseCliArgs enables hidden traversal when requested', () => {
 
   assert.equal(command.kind, 'run');
   assert.equal(command.options?.includeHidden, true);
+});
+
+test('parseCliArgs resolves folder, out, and ai command from INIT_CWD', () => {
+  const command = parseCliArgs(
+    [
+      '--folder',
+      './notes',
+      '--token',
+      'abc',
+      '--out',
+      './tmp/manifest.json',
+      '--ai-filter',
+      '--ai-command',
+      './apps/local-orchestrator/scripts/claude-filter.mjs',
+      '--ai-command-arg',
+      '--model',
+      '--ai-command-arg',
+      'sonnet',
+      '--ai-goal',
+      'Only keep communication preferences',
+    ],
+    {
+      INIT_CWD: '/repo-root',
+    },
+  );
+
+  assert.equal(command.kind, 'run');
+  assert.equal(command.options?.folder, '/repo-root/notes');
+  assert.equal(command.options?.out, '/repo-root/tmp/manifest.json');
+  assert.equal(
+    command.options?.aiCommand,
+    '/repo-root/apps/local-orchestrator/scripts/claude-filter.mjs',
+  );
 });
 
 test('parseCliArgs rejects missing folder', () => {
@@ -165,7 +199,10 @@ test('parseCliArgs accepts AI options with command adapter and stage', () => {
   assert.equal(command.options?.aiFilter, true);
   assert.equal(command.options?.aiFilterStage, 'both');
   assert.equal(command.options?.aiAdapter, 'command');
-  assert.equal(command.options?.aiCommand, './filter-command');
+  assert.equal(
+    command.options?.aiCommand,
+    path.resolve('./filter-command'),
+  );
   assert.deepEqual(command.options?.aiCommandArgs, ['--model', 'sonnet']);
   assert.equal(
     command.options?.aiGoal,
