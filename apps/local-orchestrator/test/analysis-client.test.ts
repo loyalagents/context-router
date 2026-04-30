@@ -23,9 +23,9 @@ test('AnalysisClient sends multipart file upload with auth header', async (t) =>
     sizeBytes: '# dietary notes\n'.length,
     extension: '.md',
     originalMimeType: 'text/markdown',
-    uploadMimeType: 'text/plain',
+    uploadMimeType: 'text/markdown',
     uploadFileName: 'notes.md',
-    coercedToPlainText: true,
+    coercedToPlainText: false,
   };
 
   let seenRequest: RequestInit | undefined;
@@ -68,7 +68,7 @@ test('AnalysisClient sends multipart file upload with auth header', async (t) =>
   const formData = seenRequest?.body as FormData;
   const uploaded = formData.get('file');
   assert.ok(uploaded instanceof Blob);
-  assert.equal(uploaded.type, 'text/plain');
+  assert.equal(uploaded.type, 'text/markdown');
   assert.equal((uploaded as unknown as { name?: string }).name, 'notes.md');
   assert.equal(await uploaded.text(), '# dietary notes\n');
 });

@@ -5,7 +5,7 @@ import os from 'node:os';
 import test from 'node:test';
 import { discoverFiles } from '../src/discover';
 
-test('discoverFiles recurses visible files, skips hidden entries, and coerces markdown', async (t) => {
+test('discoverFiles recurses visible files, skips hidden entries by default, and supports markdown natively', async (t) => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'local-orchestrator-'));
   t.after(async () => {
     await rm(tempRoot, { recursive: true, force: true });
@@ -29,8 +29,8 @@ test('discoverFiles recurses visible files, skips hidden entries, and coerces ma
     (record) => record.relativePath === 'notes.md',
   );
   assert.ok(noteRecord?.file);
-  assert.equal(noteRecord.file.uploadMimeType, 'text/plain');
-  assert.equal(noteRecord.file.coercedToPlainText, true);
+  assert.equal(noteRecord.file.uploadMimeType, 'text/markdown');
+  assert.equal(noteRecord.file.coercedToPlainText, false);
 
   const jsonRecord = discovery.files.find(
     (record) => record.relativePath === 'prefs.json',
@@ -53,7 +53,7 @@ test('discoverFiles recurses visible files, skips hidden entries, and coerces ma
   assert.equal(noteRecord?.sizeBytes, noteStats.size);
 });
 
-test('discoverFiles recognizes markdown yaml jpeg variants and skips dotfiles', async (t) => {
+test('discoverFiles recognizes native markdown/yaml and local text-like config formats', async (t) => {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'local-orchestrator-'));
   t.after(async () => {
     await rm(tempRoot, { recursive: true, force: true });
@@ -62,6 +62,8 @@ test('discoverFiles recognizes markdown yaml jpeg variants and skips dotfiles', 
   await writeFile(path.join(tempRoot, 'guide.markdown'), '## preferences\n');
   await writeFile(path.join(tempRoot, 'config.yml'), 'tone: brief\n');
   await writeFile(path.join(tempRoot, 'config.yaml'), 'locale: us\n');
+  await writeFile(path.join(tempRoot, 'settings.toml'), 'tone = "brief"\n');
+  await writeFile(path.join(tempRoot, 'service.conf'), 'locale=en-US\n');
   await writeFile(path.join(tempRoot, 'image.jpeg'), 'jpeg-bytes');
   await writeFile(path.join(tempRoot, '.prettierrc'), '{ "semi": false }\n');
 
@@ -76,24 +78,77 @@ test('discoverFiles recognizes markdown yaml jpeg variants and skips dotfiles', 
   const markdownRecord = discovery.files.find(
     (record) => record.relativePath === 'guide.markdown',
   );
-  assert.equal(markdownRecord?.file?.uploadMimeType, 'text/plain');
-  assert.equal(markdownRecord?.file?.coercedToPlainText, true);
+  assert.equal(markdownRecord?.file?.uploadMimeType, 'text/markdown');
+  assert.equal(markdownRecord?.file?.coercedToPlainText, false);
 
   const ymlRecord = discovery.files.find(
     (record) => record.relativePath === 'config.yml',
   );
-  assert.equal(ymlRecord?.file?.uploadMimeType, 'text/plain');
-  assert.equal(ymlRecord?.file?.coercedToPlainText, true);
+  assert.equal(ymlRecord?.file?.uploadMimeType, 'application/yaml');
+  assert.equal(ymlRecord?.file?.coercedToPlainText, false);
 
   const yamlRecord = discovery.files.find(
     (record) => record.relativePath === 'config.yaml',
   );
-  assert.equal(yamlRecord?.file?.uploadMimeType, 'text/plain');
-  assert.equal(yamlRecord?.file?.coercedToPlainText, true);
+  assert.equal(yamlRecord?.file?.uploadMimeType, 'application/yaml');
+  assert.equal(yamlRecord?.file?.coercedToPlainText, false);
+
+  const tomlRecord = discovery.files.find(
+    (record) => record.relativePath === 'settings.toml',
+  );
+  assert.equal(tomlRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(tomlRecord?.file?.coercedToPlainText, true);
+
+  const confRecord = discovery.files.find(
+    (record) => record.relativePath === 'service.conf',
+  );
+  assert.equal(confRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(confRecord?.file?.coercedToPlainText, true);
 
   const jpegRecord = discovery.files.find(
     (record) => record.relativePath === 'image.jpeg',
   );
   assert.equal(jpegRecord?.file?.uploadMimeType, 'image/jpeg');
   assert.equal(jpegRecord?.file?.coercedToPlainText, false);
+});
+
+test('discoverFiles can include hidden entries and recognize .env patterns', async (t) => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'local-orchestrator-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  await mkdir(path.join(tempRoot, '.config'));
+  await writeFile(path.join(tempRoot, '.env'), 'TONE=brief\n');
+  await writeFile(path.join(tempRoot, '.env.local'), 'LOCALE=en-US\n');
+  await writeFile(path.join(tempRoot, '.config', 'service.ini'), 'tone=brief\n');
+  await writeFile(path.join(tempRoot, '.prettierrc'), '{ "semi": false }\n');
+
+  const discovery = await discoverFiles(tempRoot, { includeHidden: true });
+
+  assert.equal(discovery.hiddenEntriesSkipped, 0);
+
+  const envRecord = discovery.files.find(
+    (record) => record.relativePath === '.env',
+  );
+  assert.equal(envRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(envRecord?.file?.coercedToPlainText, true);
+
+  const envLocalRecord = discovery.files.find(
+    (record) => record.relativePath === '.env.local',
+  );
+  assert.equal(envLocalRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(envLocalRecord?.file?.coercedToPlainText, true);
+
+  const iniRecord = discovery.files.find(
+    (record) => record.relativePath === path.join('.config', 'service.ini'),
+  );
+  assert.equal(iniRecord?.file?.uploadMimeType, 'text/plain');
+  assert.equal(iniRecord?.file?.coercedToPlainText, true);
+
+  const unsupportedDotfile = discovery.files.find(
+    (record) => record.relativePath === '.prettierrc',
+  );
+  assert.equal(unsupportedDotfile?.discovery.action, 'skip');
+  assert.equal(unsupportedDotfile?.discovery.reason, 'unsupported_extension');
 });

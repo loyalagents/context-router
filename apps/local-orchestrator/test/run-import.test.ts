@@ -24,6 +24,7 @@ function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
     token: 'secret-token',
     apply: false,
     concurrency: 1,
+    includeHidden: false,
     aiFilter: false,
     aiFilterStage: 'suggestion',
     aiAdapter: 'command',
@@ -89,7 +90,7 @@ test('runImport records analysis request failures and continues', async (t) => {
     },
   );
 
-  assert.equal(manifest.version, 2);
+  assert.equal(manifest.version, 3);
   assert.equal(manifest.config.aiFilter.enabled, false);
   assert.equal(manifest.summary.analysisAttempted, 2);
   assert.equal(manifest.summary.analysisRequestErrors, 1);
@@ -1127,7 +1128,7 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
   );
 
   assert.deepEqual(stableManifest, {
-    version: 2,
+    version: 3,
     startedAt: stableManifest.startedAt,
     finishedAt: stableManifest.finishedAt,
     config: {
@@ -1135,6 +1136,7 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
       backendUrl: 'http://localhost:3000',
       apply: false,
       concurrency: 1,
+      includeHidden: false,
       aiFilter: {
         enabled: false,
         stage: null,
@@ -1289,7 +1291,8 @@ test('writeManifest writes stable JSON with version field', async (t) => {
   await writeManifest(manifest, manifestPath);
 
   const content = await readFile(manifestPath, 'utf8');
-  assert.match(content, /"version": 2/);
+  assert.match(content, /"version": 3/);
+  assert.match(content, /"includeHidden": false/);
   assert.match(content, /"enabled": false/);
   assert.match(content, /"summary":/);
 });

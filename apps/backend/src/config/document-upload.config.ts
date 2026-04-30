@@ -6,6 +6,18 @@ export interface DocumentUploadConfig {
   maxSuggestions: number;
 }
 
+const ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES = [
+  'text/plain',
+  'text/markdown',
+  'application/json',
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'application/yaml',
+  'text/yaml',
+  'application/x-yaml',
+];
+
 export default registerAs(
   'documentUpload',
   (): DocumentUploadConfig => ({
@@ -13,13 +25,7 @@ export default registerAs(
       process.env.DOC_UPLOAD_MAX_BYTES || '10485760', // 10MB default
       10,
     ),
-    allowedMimeTypes: [
-      'text/plain',
-      'application/json',
-      'application/pdf',
-      'image/png',
-      'image/jpeg',
-    ],
+    allowedMimeTypes: ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES,
     maxSuggestions: parseInt(process.env.DOC_UPLOAD_MAX_SUGGESTIONS || '25', 10),
   }),
 );
@@ -29,12 +35,6 @@ export const getDocumentUploadConfig = (): DocumentUploadConfig => ({
     process.env.DOC_UPLOAD_MAX_BYTES || '10485760',
     10,
   ),
-  allowedMimeTypes: [
-    'text/plain',
-    'application/json',
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-  ],
+  allowedMimeTypes: ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES,
   maxSuggestions: parseInt(process.env.DOC_UPLOAD_MAX_SUGGESTIONS || '25', 10),
 });
