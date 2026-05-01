@@ -12,76 +12,17 @@ import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
 import SuggestionInbox from './components/SuggestionInbox';
 import ManualPreferenceForm from './components/ManualPreferenceForm';
-
-interface Preference {
-  id: string;
-  slug: string;
-  definitionId: string;
-  value: any;
-  status: string;
-  sourceType: string;
-  confidence: number | null;
-  locationId: string | null;
-  category?: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-type FilterReason = 'MISSING_FIELDS' | 'DUPLICATE_KEY' | 'NO_CHANGE' | 'UNKNOWN_SLUG';
-
-interface PreferenceSuggestion {
-  id: string;
-  slug: string;
-  operation: 'CREATE' | 'UPDATE';
-  oldValue: any;
-  newValue: any;
-  confidence: number;
-  sourceSnippet: string;
-  sourceMeta?: {
-    page?: number;
-    line?: number;
-  };
-  wasCorrected?: boolean;
-  category?: string;
-  description?: string;
-}
-
-interface FilteredSuggestion extends PreferenceSuggestion {
-  filterReason: FilterReason;
-  filterDetails?: string;
-}
-
-interface DocumentAnalysisResult {
-  analysisId: string;
-  suggestions: PreferenceSuggestion[];
-  filteredSuggestions: FilteredSuggestion[];
-  documentSummary: string | null;
-  status: 'success' | 'no_matches' | 'parse_error' | 'ai_error';
-  statusReason: string | null;
-  filteredCount?: number;
-}
+import type {
+  Preference,
+  PreferenceDefinition,
+  UploadBatchResult,
+} from './types';
 
 interface PreferencesClientProps {
   initialActivePreferences: Preference[];
   initialSuggestedPreferences: Preference[];
   initialPreferenceDefinitions: PreferenceDefinition[];
   accessToken: string;
-}
-
-interface PreferenceDefinition {
-  id: string;
-  slug: string;
-  namespace: string;
-  displayName?: string | null;
-  ownerUserId?: string | null;
-  description: string;
-  valueType: 'STRING' | 'BOOLEAN' | 'ENUM' | 'ARRAY';
-  scope: 'GLOBAL' | 'LOCATION';
-  options: string[] | null;
-  isSensitive: boolean;
-  isCore: boolean;
-  category: string;
 }
 
 function createApolloClient(accessToken: string) {
@@ -107,18 +48,18 @@ function PreferencesContent({
   const [preferenceDefinitions, setPreferenceDefinitions] = useState<PreferenceDefinition[]>(
     initialPreferenceDefinitions,
   );
-  const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
+  const [uploadBatch, setUploadBatch] = useState<UploadBatchResult | null>(null);
 
-  const handleAnalysisComplete = (result: DocumentAnalysisResult) => {
-    setAnalysisResult(result);
+  const handleAnalysisComplete = (result: UploadBatchResult) => {
+    setUploadBatch(result);
   };
 
   const handleClose = () => {
-    setAnalysisResult(null);
+    setUploadBatch(null);
   };
 
   const handleApplied = () => {
-    setAnalysisResult(null);
+    setUploadBatch(null);
     // Refresh the page to get updated preferences
     window.location.reload();
   };
@@ -217,14 +158,14 @@ function PreferencesContent({
 
         {/* Document Upload Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Import from Document</h2>
+          <h2 className="text-lg font-semibold mb-4">Import from Documents</h2>
           <p className="text-gray-600 text-sm mb-4">
-            Upload a document (PDF, image, or text file) and we&apos;ll extract preferences
+            Upload documents (PDFs, images, or text files) and we&apos;ll extract preferences
             for you to review.
           </p>
-          {analysisResult ? (
+          {uploadBatch ? (
             <SuggestionsList
-              result={analysisResult}
+              batch={uploadBatch}
               onClose={handleClose}
               onApplied={handleApplied}
               accessToken={accessToken}
@@ -256,7 +197,7 @@ function PreferencesContent({
           </div>
           {activePreferences.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              No preferences yet. Upload a document to get started!
+              No preferences yet. Upload documents to get started!
             </p>
           ) : (
             <div className="space-y-6">

@@ -1,23 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-interface PreferenceSuggestion {
-  id: string;
-  slug: string;
-  operation: 'CREATE' | 'UPDATE';
-  oldValue: any;
-  newValue: any;
-  confidence: number;
-  sourceSnippet: string;
-  sourceMeta?: {
-    page?: number;
-    line?: number;
-  };
-  wasCorrected?: boolean;
-  category?: string;
-  description?: string;
-}
+import type { PreferenceSuggestion } from '../types';
 
 interface SuggestionItemProps {
   suggestion: PreferenceSuggestion;
