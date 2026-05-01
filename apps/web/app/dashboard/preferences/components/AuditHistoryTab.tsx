@@ -37,6 +37,7 @@ const AUDIT_HISTORY_QUERY = gql`
 const AUDIT_HISTORY_QUERY_TEXT = print(AUDIT_HISTORY_QUERY);
 
 const EVENT_LABELS: Record<string, string> = {
+  PREFERENCES_RESET: 'Preferences reset',
   PREFERENCE_SET: 'Preference set',
   PREFERENCE_SUGGESTED_UPSERTED: 'Suggestion created',
   PREFERENCE_SUGGESTION_ACCEPTED: 'Suggestion accepted',
@@ -69,6 +70,7 @@ const ACTOR_TYPE_LABELS: Record<string, string> = {
 };
 
 const EVENT_TYPE_OPTIONS = [
+  { value: 'PREFERENCES_RESET', label: 'Preferences reset' },
   { value: 'PREFERENCE_SET', label: 'Preference set' },
   { value: 'PREFERENCE_SUGGESTED_UPSERTED', label: 'Suggestion created' },
   { value: 'PREFERENCE_SUGGESTION_ACCEPTED', label: 'Suggestion accepted' },

@@ -27,6 +27,7 @@ enum AuditEventType {
   DEFINITION_ARCHIVED
   DEFINITION_CREATED
   DEFINITION_UPDATED
+  PREFERENCES_RESET
   PREFERENCE_DELETED
   PREFERENCE_SET
   PREFERENCE_SUGGESTED_UPSERTED
@@ -227,6 +228,9 @@ type Mutation {
 
   """Remove a permission grant for the current user."""
   removePermissionGrant(action: GrantAction!, clientKey: String!, target: String!): Boolean!
+
+  """Reset current-user preference/demo data."""
+  resetMyMemory(mode: ResetMemoryMode!): ResetMyMemoryPayload!
 
   """Create or update a permission grant for the current user."""
   setPermissionGrant(input: SetPermissionGrantInput!): PermissionGrant!
@@ -468,6 +472,23 @@ type Query {
 
   """Get a user by ID"""
   user(id: ID!): User!
+}
+
+"""Current-user data reset mode."""
+enum ResetMemoryMode {
+  DEMO_DATA
+  FULL_USER_DATA
+  MEMORY_ONLY
+}
+
+type ResetMyMemoryPayload {
+  locationsDeleted: Int!
+  mcpAccessEventsDeleted: Int!
+  mode: ResetMemoryMode!
+  permissionGrantsDeleted: Int!
+  preferenceAuditEventsDeleted: Int!
+  preferenceDefinitionsDeleted: Int!
+  preferencesDeleted: Int!
 }
 
 input SetPermissionGrantInput {

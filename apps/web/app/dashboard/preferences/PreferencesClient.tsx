@@ -12,6 +12,7 @@ import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
 import SuggestionInbox from './components/SuggestionInbox';
 import ManualPreferenceForm from './components/ManualPreferenceForm';
+import MemoryResetPanel from './components/MemoryResetPanel';
 import type {
   Preference,
   PreferenceDefinition,
@@ -23,6 +24,7 @@ interface PreferencesClientProps {
   initialSuggestedPreferences: Preference[];
   initialPreferenceDefinitions: PreferenceDefinition[];
   accessToken: string;
+  allowDemoReset: boolean;
 }
 
 function createApolloClient(accessToken: string) {
@@ -42,6 +44,7 @@ function PreferencesContent({
   initialSuggestedPreferences,
   initialPreferenceDefinitions,
   accessToken,
+  allowDemoReset,
 }: PreferencesClientProps) {
   const [activePreferences, setActivePreferences] = useState<Preference[]>(initialActivePreferences);
   const [suggestedPreferences, setSuggestedPreferences] = useState<Preference[]>(initialSuggestedPreferences);
@@ -222,6 +225,11 @@ function PreferencesContent({
             </div>
           )}
         </div>
+
+        <MemoryResetPanel
+          accessToken={accessToken}
+          allowDemoReset={allowDemoReset}
+        />
       </div>
     </div>
   );
