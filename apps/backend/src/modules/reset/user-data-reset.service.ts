@@ -5,7 +5,14 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from '@infrastructure/prisma/generated-client';
+import { randomUUID } from 'crypto';
+import {
+  AuditActorType,
+  AuditEventType,
+  AuditOrigin,
+  AuditTargetType,
+  Prisma,
+} from '@infrastructure/prisma/generated-client';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { ResetMemoryMode } from './models/reset-memory-mode.enum';
 import { ResetMyMemoryPayload } from './models/reset-my-memory-payload.model';
@@ -41,6 +48,27 @@ export class UserDataResetService {
       let preferenceDefinitionsDeleted = { count: 0 };
       let locationsDeleted = { count: 0 };
       let permissionGrantsDeleted = { count: 0 };
+
+      if (mode === ResetMemoryMode.MEMORY_ONLY) {
+        await tx.preferenceAuditEvent.create({
+          data: {
+            userId,
+            subjectSlug: '*',
+            targetType: AuditTargetType.PREFERENCE,
+            targetId: userId,
+            eventType: AuditEventType.PREFERENCES_RESET,
+            actorType: AuditActorType.USER,
+            origin: AuditOrigin.GRAPHQL,
+            correlationId: randomUUID(),
+            beforeState: null,
+            afterState: null,
+            metadata: {
+              mode,
+              preferencesDeleted: preferencesDeleted.count,
+            },
+          },
+        });
+      }
 
       if (mode !== ResetMemoryMode.MEMORY_ONLY) {
         preferenceAuditEventsDeleted =

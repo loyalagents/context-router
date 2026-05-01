@@ -6,7 +6,7 @@ Implement a current-user-only reset feature with a Preferences-page UI and three
 
 Modes:
 
-- `MEMORY_ONLY`: delete all current user's preference rows across `ACTIVE`, `SUGGESTED`, and `REJECTED`.
+- `MEMORY_ONLY`: delete all current user's preference rows across `ACTIVE`, `SUGGESTED`, and `REJECTED`, then write one aggregate `PREFERENCES_RESET` audit event.
 - `DEMO_DATA`: delete current user's preferences, locations, user-owned preference definitions, preference audit rows, and MCP access logs. Preserve profile, Auth0 identity, and permission grants.
 - `FULL_USER_DATA`: delete everything from `DEMO_DATA` plus current user's permission grants. Preserve `User` and `ExternalIdentity` rows so the active session keeps working.
 
@@ -27,6 +27,7 @@ Modes:
   - Add the flag to `apps/backend/.env.example` and `apps/web/.env.example`, defaulted to false/commented.
 - Implement deletion order inside one Prisma transaction:
   - Delete `Preference` rows for the current user first.
+  - For `MEMORY_ONLY`, record one `PREFERENCES_RESET` audit event with `subjectSlug = "*"`, `targetType = PREFERENCE`, `targetId = <current user id>`, and metadata containing the reset mode and deleted preference count.
   - Delete `PreferenceAuditEvent` rows for the current user.
   - Delete `McpAccessEvent` rows for the current user.
   - For `DEMO_DATA` and `FULL_USER_DATA`, preflight user-owned definitions with `namespace = USER:<userId>`.
@@ -66,6 +67,7 @@ Modes:
 
 - Backend e2e:
   - `MEMORY_ONLY` deletes only current user's preference rows.
+  - `MEMORY_ONLY` writes one aggregate `PREFERENCES_RESET` audit event.
   - `DEMO_DATA` deletes preferences, locations, user-owned definitions, audit rows, and MCP logs, while preserving grants/profile/login.
   - `FULL_USER_DATA` also deletes permission grants while preserving profile/login.
   - Advanced modes fail unless `ENABLE_DEMO_RESET=true`.
@@ -80,6 +82,6 @@ Modes:
 
 - The reset UI belongs on the Preferences page.
 - "Full user data" means all app-owned child data, not deleting `User` or `ExternalIdentity`.
-- No database migration is needed.
+- A database migration is needed to add `PREFERENCES_RESET` to `AuditEventType`.
 - `DEMO_DATA` and `FULL_USER_DATA` intentionally destroy audit/MCP history for the user; this is acceptable for demo/testing and must be called out in the implementation summary.
-- No reset-specific audit event type is added in v1.
+- `DEMO_DATA` and `FULL_USER_DATA` do not write a final reset audit event, so their audit logs remain completely removed.

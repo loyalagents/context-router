@@ -59,6 +59,20 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     }
   `;
 
+  const AUDIT_HISTORY_QUERY = `
+    query PreferenceAuditHistory($input: PreferenceAuditHistoryInput!) {
+      preferenceAuditHistory(input: $input) {
+        items {
+          eventType
+          subjectSlug
+          targetType
+          targetId
+          metadata
+        }
+      }
+    }
+  `;
+
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
     request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
@@ -242,11 +256,48 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       preferences: 0,
       locations: 1,
       preferenceDefinitions: 1,
-      preferenceAuditEvents: 1,
+      preferenceAuditEvents: 2,
       mcpAccessEvents: 1,
       permissionGrants: 1,
       users: 1,
     });
+    const resetAuditEvent = await prisma.preferenceAuditEvent.findFirst({
+      where: {
+        userId: testUser.userId,
+        eventType: AuditEventType.PREFERENCES_RESET,
+      },
+    });
+    expect(resetAuditEvent).toMatchObject({
+      subjectSlug: '*',
+      targetType: AuditTargetType.PREFERENCE,
+      targetId: testUser.userId,
+      actorType: AuditActorType.USER,
+      origin: AuditOrigin.GRAPHQL,
+      beforeState: null,
+      afterState: null,
+      metadata: {
+        mode: 'MEMORY_ONLY',
+        preferencesDeleted: 3,
+      },
+    });
+    const auditHistoryResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
+      input: { eventType: 'PREFERENCES_RESET' },
+    }).expect(200);
+    expect(auditHistoryResponse.body.errors).toBeUndefined();
+    expect(
+      auditHistoryResponse.body.data.preferenceAuditHistory.items,
+    ).toContainEqual(
+      expect.objectContaining({
+        eventType: 'PREFERENCES_RESET',
+        subjectSlug: '*',
+        targetType: 'PREFERENCE',
+        targetId: testUser.userId,
+        metadata: {
+          mode: 'MEMORY_ONLY',
+          preferencesDeleted: 3,
+        },
+      }),
+    );
     await expect(countsFor(otherUser)).resolves.toMatchObject({
       preferences: 3,
       locations: 1,

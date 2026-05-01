@@ -12,8 +12,10 @@
 - Added a dedicated backend reset module under `apps/backend/src/modules/reset/`.
   - The reset service uses one Prisma transaction.
   - It deletes preference rows before user-owned definitions to respect the restrictive preference-definition FK.
+  - `MEMORY_ONLY` now writes one aggregate `PREFERENCES_RESET` audit event with the deleted preference count.
   - It rejects advanced resets if a user-owned definition is still referenced by another user's preference.
   - `DEMO_DATA` and `FULL_USER_DATA` require `ENABLE_DEMO_RESET=true`.
+- Added a Prisma migration for `AuditEventType.PREFERENCES_RESET`.
 - Added a Preferences-page reset panel.
   - The default UI shows "Reset Preferences".
   - The demo/full reset buttons only render when the web server has `ENABLE_DEMO_RESET=true`.
@@ -23,13 +25,14 @@
 
 ## Important Tradeoffs
 
-- `DEMO_DATA` and `FULL_USER_DATA` intentionally delete the user's preference audit history and MCP access logs. This is acceptable for demo/testing cleanup, but it removes investigation history for that user.
+- `MEMORY_ONLY` leaves audit history in place and records the reset as `PREFERENCES_RESET`.
+- `DEMO_DATA` and `FULL_USER_DATA` intentionally delete the user's preference audit history and MCP access logs. They do not write a final reset event, so the audit log is completely removed for those modes.
 - `FULL_USER_DATA` preserves `User` and `ExternalIdentity` rows so the active Auth0 login remains usable.
-- No reset-specific audit event type was added in this version.
 
 ## Verification
 
 - `env NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@localhost:5433/context_router_test pnpm --filter backend exec jest --selectProjects e2e --runInBand test/e2e/reset.e2e-spec.ts`
+- `env NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@localhost:5433/context_router_test pnpm --filter backend exec jest --selectProjects integration --runInBand test/integration/preference-audit.repository.spec.ts`
 - `pnpm --filter backend build`
 - `pnpm --filter web build`
 
