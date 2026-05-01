@@ -2,6 +2,8 @@
   "fullName": "Alex Rivera",
   "badgeName": "Alex",
   "email": "alex.rivera@example.test",
+  "company": "Northstar Labs",
+  "title": "Senior Product Engineer",
   "preferredContact": "email, slack",
   "technicalInterests": "TypeScript, Next.js, NestJS, PostgreSQL, AI tooling",
   "dietaryRestrictions": "peanuts, shellfish",

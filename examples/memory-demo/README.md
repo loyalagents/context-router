@@ -7,3 +7,5 @@ Static fixtures for demoing and testing MCP memory retrieval, local fallback, an
 - `scenarios/` ties a form, user, prompt, and expected outputs into one demo contract.
 
 The intended agent behavior is: retrieve relevant preferences from MCP first, read local fallback memory only for missing values, backfill durable preferences through MCP, then fill the form without inventing values.
+
+Quick manual test: seed MCP from `users/alex-rivera/simple/seed-preferences.json`, open `forms/conference-registration/form.html`, give an MCP-enabled agent `scenarios/conference-registration/start/prompt.md`, then compare against `scenarios/conference-registration/expected/`.

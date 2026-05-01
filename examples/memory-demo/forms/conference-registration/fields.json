@@ -26,6 +26,22 @@
       "required": true
     },
     {
+      "id": "company",
+      "label": "Organization",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "company",
+      "required": true
+    },
+    {
+      "id": "title",
+      "label": "Role",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "title",
+      "required": true
+    },
+    {
       "id": "preferredContact",
       "label": "Preferred contact channels",
       "inputType": "textarea",

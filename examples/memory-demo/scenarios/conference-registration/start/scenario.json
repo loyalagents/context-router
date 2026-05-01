@@ -8,9 +8,5 @@
   "userVariant": "simple",
   "seedPreferences": "../../../users/alex-rivera/simple/seed-preferences.json",
   "localMemory": "../../../users/alex-rivera/simple/local-memory.md",
-  "expected": {
-    "filledForm": "../expected/filled-form.json",
-    "writtenPreferences": "../expected/written-preferences.json",
-    "finalPreferences": "../expected/final-preferences.json"
-  }
+  "prompt": "prompt.md"
 }
