@@ -1,0 +1,13 @@
+{
+  "fullName": "Alex Rivera",
+  "badgeName": "Alex",
+  "email": "alex.rivera@example.test",
+  "preferredContact": "email, slack",
+  "technicalInterests": "TypeScript, Next.js, NestJS, PostgreSQL, AI tooling",
+  "dietaryRestrictions": "peanuts, shellfish",
+  "mealPreference": "vegetarian",
+  "cuisinePreferences": "Japanese, Mediterranean",
+  "spiceTolerance": "medium",
+  "seatPreference": "aisle",
+  "notes": ""
+}
