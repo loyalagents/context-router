@@ -1,0 +1,16 @@
+{
+  "id": "conference-registration",
+  "description": "Fill a conference registration form for Alex Rivera using MCP memory first and local fallback memory only for missing values.",
+  "form": "../../../forms/conference-registration/form.html",
+  "fields": "../../../forms/conference-registration/fields.json",
+  "user": "alex-rivera",
+  "userProfile": "../../../users/alex-rivera/profile.json",
+  "userVariant": "simple",
+  "seedPreferences": "../../../users/alex-rivera/simple/seed-preferences.json",
+  "localMemory": "../../../users/alex-rivera/simple/local-memory.md",
+  "expected": {
+    "filledForm": "../expected/filled-form.json",
+    "writtenPreferences": "../expected/written-preferences.json",
+    "finalPreferences": "../expected/final-preferences.json"
+  }
+}

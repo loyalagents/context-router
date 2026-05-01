@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "food.dietary_restrictions",
+    "value": ["peanuts", "shellfish"]
+  },
+  {
+    "slug": "communication.preferred_channels",
+    "value": ["email", "slack"]
+  },
+  {
+    "slug": "travel.seat_preference",
+    "value": "aisle"
+  }
+]

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Conference Registration</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+        margin: 0;
+        padding: 32px;
+      }
+
+      main {
+        max-width: 760px;
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+      }
+
+      label {
+        display: grid;
+        font-weight: 600;
+        gap: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font: inherit;
+        padding: 10px 12px;
+      }
+
+      textarea {
+        min-height: 84px;
+      }
+
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 6px;
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        justify-self: start;
+        padding: 10px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Conference Registration</h1>
+      <form id="conference-registration-form" name="conferenceRegistration">
+        <label for="fullName">
+          Full name
+          <input id="fullName" name="fullName" type="text" autocomplete="name" required>
+        </label>
+
+        <label for="badgeName">
+          Badge name
+          <input id="badgeName" name="badgeName" type="text" required>
+        </label>
+
+        <label for="email">
+          Email
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </label>
+
+        <label for="preferredContact">
+          Preferred contact channels
+          <textarea id="preferredContact" name="preferredContact" required></textarea>
+        </label>
+
+        <label for="technicalInterests">
+          Technical interests
+          <textarea id="technicalInterests" name="technicalInterests" required></textarea>
+        </label>
+
+        <label for="dietaryRestrictions">
+          Dietary restrictions
+          <textarea id="dietaryRestrictions" name="dietaryRestrictions" required></textarea>
+        </label>
+
+        <label for="mealPreference">
+          Meal preference
+          <input id="mealPreference" name="mealPreference" type="text" required>
+        </label>
+
+        <label for="cuisinePreferences">
+          Cuisine preferences
+          <textarea id="cuisinePreferences" name="cuisinePreferences" required></textarea>
+        </label>
+
+        <label for="spiceTolerance">
+          Spice tolerance
+          <select id="spiceTolerance" name="spiceTolerance" required>
+            <option value="">Select one</option>
+            <option value="none">none</option>
+            <option value="mild">mild</option>
+            <option value="medium">medium</option>
+            <option value="hot">hot</option>
+            <option value="extra_hot">extra_hot</option>
+          </select>
+        </label>
+
+        <label for="seatPreference">
+          Travel seat preference
+          <select id="seatPreference" name="seatPreference" required>
+            <option value="">Select one</option>
+            <option value="window">window</option>
+            <option value="middle">middle</option>
+            <option value="aisle">aisle</option>
+          </select>
+        </label>
+
+        <label for="notes">
+          Additional notes
+          <textarea id="notes" name="notes"></textarea>
+        </label>
+
+        <button id="submitRegistration" name="submitRegistration" type="submit">
+          Submit registration
+        </button>
+      </form>
+    </main>
+  </body>
+</html>

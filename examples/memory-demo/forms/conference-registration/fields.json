@@ -1,0 +1,92 @@
+{
+  "id": "conference-registration",
+  "fields": [
+    {
+      "id": "fullName",
+      "label": "Full name",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "fullName",
+      "required": true
+    },
+    {
+      "id": "badgeName",
+      "label": "Badge name",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "badgeName",
+      "required": true
+    },
+    {
+      "id": "email",
+      "label": "Email",
+      "inputType": "email",
+      "source": "profile",
+      "profilePath": "email",
+      "required": true
+    },
+    {
+      "id": "preferredContact",
+      "label": "Preferred contact channels",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["communication.preferred_channels"],
+      "required": true
+    },
+    {
+      "id": "technicalInterests",
+      "label": "Technical interests",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["dev.tech_stack"],
+      "required": true
+    },
+    {
+      "id": "dietaryRestrictions",
+      "label": "Dietary restrictions",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.dietary_restrictions"],
+      "required": true
+    },
+    {
+      "id": "mealPreference",
+      "label": "Meal preference",
+      "inputType": "text",
+      "source": "mcp-memory",
+      "memorySlugs": ["travel.meal_preference"],
+      "required": true
+    },
+    {
+      "id": "cuisinePreferences",
+      "label": "Cuisine preferences",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.cuisine_preferences"],
+      "required": true
+    },
+    {
+      "id": "spiceTolerance",
+      "label": "Spice tolerance",
+      "inputType": "select",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.spice_tolerance"],
+      "required": true
+    },
+    {
+      "id": "seatPreference",
+      "label": "Travel seat preference",
+      "inputType": "select",
+      "source": "mcp-memory",
+      "memorySlugs": ["travel.seat_preference"],
+      "required": true
+    },
+    {
+      "id": "notes",
+      "label": "Additional notes",
+      "inputType": "textarea",
+      "source": "freeform",
+      "required": false
+    }
+  ]
+}

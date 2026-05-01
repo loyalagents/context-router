@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "food.dietary_restrictions",
+    "value": ["peanuts", "shellfish"]
+  },
+  {
+    "slug": "communication.preferred_channels",
+    "value": ["email", "slack"]
+  },
+  {
+    "slug": "travel.seat_preference",
+    "value": "aisle"
+  },
+  {
+    "slug": "travel.meal_preference",
+    "value": "vegetarian"
+  },
+  {
+    "slug": "food.cuisine_preferences",
+    "value": ["Japanese", "Mediterranean"]
+  },
+  {
+    "slug": "food.spice_tolerance",
+    "value": "medium"
+  },
+  {
+    "slug": "dev.tech_stack",
+    "value": ["TypeScript", "Next.js", "NestJS", "PostgreSQL", "AI tooling"]
+  }
+]
