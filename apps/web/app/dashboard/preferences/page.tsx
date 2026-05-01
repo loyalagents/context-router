@@ -157,6 +157,7 @@ export default async function PreferencesPage() {
       initialSuggestedPreferences={suggestedPreferences}
       initialPreferenceDefinitions={preferenceDefinitions}
       accessToken={accessToken || ''}
+      allowDemoReset={process.env.ENABLE_DEMO_RESET === 'true'}
     />
   );
 }
