@@ -1,0 +1,29 @@
+{
+  "$schema": "../../schemas/fields.schema.json",
+  "id": "REPLACE_WITH_FORM_ID",
+  "fields": [
+    {
+      "id": "profileField",
+      "label": "Profile field",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "REPLACE_WITH_PROFILE_KEY",
+      "required": true
+    },
+    {
+      "id": "memoryField",
+      "label": "Memory field",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["REPLACE_WITH_VALID_PREFERENCE_SLUG"],
+      "required": true
+    },
+    {
+      "id": "optionalNotes",
+      "label": "Optional notes",
+      "inputType": "textarea",
+      "source": "freeform",
+      "required": false
+    }
+  ]
+}

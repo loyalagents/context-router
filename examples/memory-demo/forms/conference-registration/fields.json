@@ -1,4 +1,5 @@
 {
+  "$schema": "../../schemas/fields.schema.json",
   "id": "conference-registration",
   "fields": [
     {

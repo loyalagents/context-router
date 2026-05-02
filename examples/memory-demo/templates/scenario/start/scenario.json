@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../schemas/scenario.schema.json",
+  "description": "REPLACE_WITH_SCENARIO_DESCRIPTION",
+  "formId": "REPLACE_WITH_FORM_ID",
+  "userId": "REPLACE_WITH_USER_ID",
+  "userVariant": "REPLACE_WITH_USER_VARIANT"
+}

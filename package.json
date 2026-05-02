@@ -18,6 +18,7 @@
     "test:backend:integration": "pnpm --filter backend test:integration",
     "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
+    "demo:memory:verify": "node examples/memory-demo/scripts/verify.mjs",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
