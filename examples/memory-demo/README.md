@@ -2,6 +2,8 @@
 
 Static fixtures for demoing and testing MCP memory retrieval, local fallback memory, durable preference backfill, and form filling.
 
+If you only want to dump rough user or form ideas without this structure, use `examples/memory-demo-simple/` instead.
+
 The intended agent behavior is:
 
 1. Read user profile data from the fixture.
@@ -31,6 +33,17 @@ Scenario manifests use stable IDs, not relative paths:
 ```
 
 The scenario directory name is the scenario ID. The prompt is always `scenarios/<scenarioId>/start/prompt.md`. `userVariant` must be `simple` for now. The verifier resolves all other paths from `formId` and `userId`.
+
+## Rules
+
+- Keep all fixture data synthetic and non-sensitive.
+- Prefer existing preference slugs from `apps/backend/src/config/preferences.catalog.ts`.
+- Do not edit backend or web app code for fixture-only changes.
+- Do not add MCP seed automation, browser automation, scaffolding, catalogs, or generated forms unless the task explicitly asks for that.
+- Use the documented conventions: scenario IDs come from directory names, scenario manifests use `formId`, `userId`, and `userVariant: "simple"`, and prompts live at `scenarios/<scenarioId>/start/prompt.md`.
+- Every user must have `profile.json` and `simple/` with only `local-memory.md` and `seed-preferences.json`. Ignore system dotfiles such as `.DS_Store`.
+- `realistic/` is optional and can contain arbitrary synthetic source data, but scenarios should not point at it yet.
+- Run `pnpm demo:memory:verify` after changing fixtures and fix all verifier errors.
 
 ## Add A Form
 
@@ -112,7 +125,7 @@ Full demo automation is intentionally not part of this fixture pass. Today, a ma
 ## Example Coding-Agent Prompt
 
 ```md
-Read `examples/memory-demo/README.md` and `examples/memory-demo/AGENTS.md`.
+Read `examples/memory-demo/README.md`.
 
 Add a new memory-demo scenario for: <describe the scenario>.
 

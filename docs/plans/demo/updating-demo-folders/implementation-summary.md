@@ -13,11 +13,12 @@
   - expected output rules
   - manual scenario run steps
   - a copyable coding-agent prompt
-- Added local agent instructions through `examples/memory-demo/AGENTS.md` and a short Claude pointer.
+- Moved folder-specific agent rules into the README and kept `examples/memory-demo/AGENTS.md` and `examples/memory-demo/CLAUDE.md` as minimal README pointers.
 - Added reusable templates for forms, users, the required `simple/` baseline, optional `realistic/` source data, and scenarios.
 - Added lightweight JSON schemas for scenario and field manifests.
 - Added `pnpm demo:memory:verify` backed by a dependency-free verifier script.
 - Tightened user validation so scenarios use `simple`, every user has a `simple/` baseline, and `simple/` contains only `local-memory.md` and `seed-preferences.json`.
+- Added `examples/memory-demo-simple/` as a Markdown-only loose dump area for quick hand-authored user and form ideas.
 - Updated demo planning TODOs with deferred follow-up work.
 
 ## Verification
