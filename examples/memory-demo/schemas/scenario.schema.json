@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.example.test/memory-demo/scenario.schema.json",
+  "title": "Memory Demo Scenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["description", "formId", "userId", "userVariant"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "formId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "userId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "userVariant": {
+      "type": "string",
+      "const": "simple"
+    }
+  }
+}
