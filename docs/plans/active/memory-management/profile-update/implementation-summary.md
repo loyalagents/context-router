@@ -22,6 +22,7 @@
 ## Backend Changes
 
 - Added migration `20260502120000_profile_slugs_memory` to insert profile definitions, backfill active global profile preference rows from existing users, and drop `users.first_name` / `users.last_name`.
+- Added follow-up migration `20260502130000_collapse_users_account_identity` to reconcile legacy user-table columns from older migration paths with the collapsed account-identity model.
 - Removed profile names from Prisma `User`, GraphQL `User`, MCP context, local model types, seeds, and tests.
 - Removed the legacy GraphQL `updateUser` mutation.
 - Updated auth sync to seed initial `profile.full_name`, `profile.first_name`, `profile.last_name`, and `profile.email` preferences for newly created users without blocking login if seeding fails.
@@ -58,4 +59,5 @@
 Notes:
 
 - Prisma migrate deploy applied the profile migration successfully in the test database without explicit SQL transaction wrapping.
-- `pnpm --filter web build` passes, with existing Auth0 environment warnings because build-time Auth0 variables are not set in this local environment.
+- After merging `origin/main`, targeted profile/search/user-identity tests were rerun along with backend build, web build, and the memory demo verifier.
+- `pnpm --filter web build` passes; the post-merge run only emitted stale browser-data warnings.

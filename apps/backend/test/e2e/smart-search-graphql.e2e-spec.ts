@@ -399,8 +399,6 @@ describe('Smart Search GraphQL API (e2e)', () => {
     const otherUser = await prisma.user.create({
       data: {
         email: 'smart-search-other@example.com',
-        firstName: 'Other',
-        lastName: 'User',
       },
     });
 
