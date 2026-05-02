@@ -1,0 +1,38 @@
+exported_at: "2026-04-16T08:30:00-07:00"
+owner:
+  display_name: Maya
+  email: maya.chen@example.test
+workspace:
+  organization: Signal Harbor
+  default_project: platform-assistant-pilot
+editor:
+  theme: system
+  font_size: 14
+  format_on_save: true
+  terminal_profile: zsh
+tools:
+  package_manager: pnpm
+  issue_tracker: linear
+  docs: markdown
+  diagrams: mermaid
+assistant_preferences:
+  reply_tone_hint: concise
+  examples:
+    include_runnable_examples: true
+    explain_tradeoffs: true
+    avoid_intro_ceremony: true
+  code_context:
+    frequent_languages:
+      - TypeScript
+      - SQL
+    frequent_frameworks:
+      - React
+      - Node.js
+noise:
+  last_open_files:
+    - apps/web/app/dashboard/page.tsx
+    - docs/plans/platform/TODO.md
+    - scripts/release-notes.mjs
+  disabled_extensions:
+    - legacy-snippet-helper
+    - old-theme-pack

@@ -1,0 +1,26 @@
+[2026-04-18 09:14] Maya Chen:
+The draft release summary was useful, but the first version was too short. It
+skipped the reason we changed the rollout order.
+
+[2026-04-18 09:16] Assistant Pilot:
+Would you prefer more detailed release summaries by default?
+
+[2026-04-18 09:18] Maya Chen:
+Moderate length is usually best for me. Brief answers are good for direct
+status checks, but planning and code questions need enough context to act on.
+
+[2026-04-18 09:20] Jonah Price:
+Can we make the summary mention test coverage when it exists?
+
+[2026-04-18 09:21] Maya Chen:
+Yes, but only if it is based on the PR or CI output. Do not guess.
+
+[2026-04-18 09:28] Elena Ruiz:
+Do we want action items at the top?
+
+[2026-04-18 09:31] Maya Chen:
+For launch planning, yes. For normal code review help, start with the direct
+answer and then give the reasoning.
+
+[2026-04-18 09:35] Assistant Pilot:
+Noted for the next assistant settings pass.
