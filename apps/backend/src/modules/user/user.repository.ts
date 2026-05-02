@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { User } from "@infrastructure/prisma/prisma-models";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import { CreateUserInput } from "./dto/create-user.input";
-import { UpdateUserInput } from "./dto/update-user.input";
 
 @Injectable()
 export class UserRepository {
@@ -15,8 +14,6 @@ export class UserRepository {
     return this.prisma.user.create({
       data: {
         email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
       },
     });
   }
@@ -44,14 +41,12 @@ export class UserRepository {
     });
   }
 
-  async update(userId: string, data: Partial<UpdateUserInput>): Promise<User> {
+  async update(userId: string, data: { email?: string }): Promise<User> {
     this.logger.log(`Updating user with ID: ${userId}`);
     return this.prisma.user.update({
       where: { userId },
       data: {
         ...(data.email && { email: data.email }),
-        ...(data.firstName && { firstName: data.firstName }),
-        ...(data.lastName && { lastName: data.lastName }),
       },
     });
   }

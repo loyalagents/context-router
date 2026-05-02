@@ -3,20 +3,36 @@ import { auth0 } from '@/lib/auth0';
 import ProfileForm from './ProfileForm';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
-import { MeQuery } from '@/lib/generated/graphql';
 
 export const dynamic = 'force-dynamic';
 
-const ME_QUERY = gql`
-  query Me {
+const PROFILE_QUERY = gql`
+  query ProfilePageData {
     me {
       userId
       email
-      firstName
-      lastName
+    }
+    activePreferences {
+      id
+      slug
+      value
     }
   }
 `;
+
+interface ProfilePreference {
+  id: string;
+  slug: string;
+  value: unknown;
+}
+
+interface ProfilePageDataQuery {
+  me: {
+    userId: string;
+    email: string;
+  };
+  activePreferences: ProfilePreference[];
+}
 
 export default async function ProfilePage() {
   const session = await auth0.getSession();
@@ -31,16 +47,20 @@ export default async function ProfilePage() {
   }
 
   let userData = null;
+  let profilePreferences: ProfilePreference[] = [];
   try {
-    const { data } = await getClient().query<MeQuery>({
-      query: ME_QUERY,
+    const { data } = await getClient().query<ProfilePageDataQuery>({
+      query: PROFILE_QUERY,
       context: {
         headers: { Authorization: `Bearer ${accessToken}` }
       }
     });
     userData = data?.me;
+    profilePreferences = (data?.activePreferences || []).filter((preference) =>
+      preference.slug.startsWith('profile.'),
+    );
   } catch (e) {
-    console.error("Failed to fetch user data:", e);
+    console.error('Failed to fetch profile data:', e);
   }
 
   return (
@@ -49,9 +69,9 @@ export default async function ProfilePage() {
         <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
 
         <ProfileForm
-          userId={userData?.userId}
-          initialFirstName={userData?.firstName || ''}
-          initialLastName={userData?.lastName || ''}
+          accessToken={accessToken || ''}
+          accountEmail={userData?.email || session.user.email || ''}
+          initialPreferences={profilePreferences}
         />
 
         <a

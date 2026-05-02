@@ -230,7 +230,7 @@ describe('Workflow MCP Tools (e2e)', () => {
       await seedPreferenceDefinitions(prisma);
 
       const userB = await prisma.user.create({
-        data: { email: 'workflow-user-b@example.com', firstName: 'Workflow', lastName: 'B' },
+        data: { email: 'workflow-user-b@example.com' },
       });
 
       const def = await prisma.preferenceDefinition.findFirst({

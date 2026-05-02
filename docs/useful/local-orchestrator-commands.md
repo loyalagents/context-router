@@ -55,7 +55,7 @@ Run this before applying anything:
 curl -s http://localhost:3000/graphql \
   -H 'content-type: application/json' \
   -H "authorization: Bearer $CONTEXT_ROUTER_BEARER_TOKEN" \
-  --data '{"query":"query { me { userId email firstName lastName } }"}' | jq
+  --data '{"query":"query { me { userId email } }"}' | jq
 ```
 
 If the returned user is wrong, stop and get a different token.

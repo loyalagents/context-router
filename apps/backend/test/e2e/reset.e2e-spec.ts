@@ -80,19 +80,20 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     return prisma.user.create({
       data: {
         email,
-        firstName: 'Reset',
-        lastName: 'Other',
       },
     });
   }
 
   async function seedResetData(user: TestUser, slugSuffix: string) {
-    const [foodDefinition, toneDefinition] = await Promise.all([
+    const [foodDefinition, toneDefinition, profileDefinition] = await Promise.all([
       prisma.preferenceDefinition.findFirstOrThrow({
         where: { namespace: 'GLOBAL', slug: 'food.dietary_restrictions' },
       }),
       prisma.preferenceDefinition.findFirstOrThrow({
         where: { namespace: 'GLOBAL', slug: 'system.response_tone' },
+      }),
+      prisma.preferenceDefinition.findFirstOrThrow({
+        where: { namespace: 'GLOBAL', slug: 'profile.full_name' },
       }),
     ]);
 
@@ -139,6 +140,17 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
         status: PreferenceStatus.SUGGESTED,
         sourceType: SourceType.INFERRED,
         confidence: 0.8,
+      },
+    });
+
+    await prisma.preference.create({
+      data: {
+        userId: user.userId,
+        definitionId: profileDefinition.id,
+        contextKey: 'GLOBAL',
+        value: `Reset User ${slugSuffix}`,
+        status: PreferenceStatus.ACTIVE,
+        sourceType: SourceType.USER,
       },
     });
 
@@ -244,7 +256,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.resetMyMemory).toEqual({
       mode: 'MEMORY_ONLY',
-      preferencesDeleted: 3,
+      preferencesDeleted: 4,
       preferenceDefinitionsDeleted: 0,
       locationsDeleted: 0,
       preferenceAuditEventsDeleted: 0,
@@ -277,7 +289,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       afterState: null,
       metadata: {
         mode: 'MEMORY_ONLY',
-        preferencesDeleted: 3,
+        preferencesDeleted: 4,
       },
     });
     const auditHistoryResponse = await graphqlRequest(AUDIT_HISTORY_QUERY, {
@@ -294,12 +306,12 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
         targetId: testUser.userId,
         metadata: {
           mode: 'MEMORY_ONLY',
-          preferencesDeleted: 3,
+          preferencesDeleted: 4,
         },
       }),
     );
     await expect(countsFor(otherUser)).resolves.toMatchObject({
-      preferences: 3,
+      preferences: 4,
       locations: 1,
       preferenceDefinitions: 1,
       preferenceAuditEvents: 1,
@@ -322,7 +334,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
         'Demo reset modes are disabled',
       );
       await expect(countsFor(testUser)).resolves.toMatchObject({
-        preferences: 3,
+        preferences: 4,
         locations: 1,
         preferenceDefinitions: 1,
         preferenceAuditEvents: 1,
@@ -346,7 +358,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.resetMyMemory).toEqual({
       mode: 'DEMO_DATA',
-      preferencesDeleted: 3,
+      preferencesDeleted: 4,
       preferenceDefinitionsDeleted: 1,
       locationsDeleted: 1,
       preferenceAuditEventsDeleted: 1,
@@ -364,7 +376,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       users: 1,
     });
     await expect(countsFor(otherUser)).resolves.toMatchObject({
-      preferences: 3,
+      preferences: 4,
       locations: 1,
       preferenceDefinitions: 1,
       preferenceAuditEvents: 1,
@@ -387,7 +399,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     expect(response.body.errors).toBeUndefined();
     expect(response.body.data.resetMyMemory).toEqual({
       mode: 'FULL_USER_DATA',
-      preferencesDeleted: 3,
+      preferencesDeleted: 4,
       preferenceDefinitionsDeleted: 1,
       locationsDeleted: 1,
       preferenceAuditEventsDeleted: 1,
@@ -405,7 +417,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       users: 1,
     });
     await expect(countsFor(otherUser)).resolves.toMatchObject({
-      preferences: 3,
+      preferences: 4,
       locations: 1,
       preferenceDefinitions: 1,
       preferenceAuditEvents: 1,
@@ -489,7 +501,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     );
 
     await expect(countsFor(testUser)).resolves.toMatchObject({
-      preferences: 3,
+      preferences: 4,
       locations: 1,
       preferenceDefinitions: 1,
       preferenceAuditEvents: 1,

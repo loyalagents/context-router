@@ -2,20 +2,42 @@ import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import { auth0 } from '@/lib/auth0';
-import { MeQuery } from '@/lib/generated/graphql';
 
 export const dynamic = 'force-dynamic';
 
-const ME_QUERY = gql`
-  query Me {
+const DASHBOARD_QUERY = gql`
+  query DashboardPageData {
     me {
       userId
       email
-      firstName
-      lastName
+    }
+    activePreferences {
+      slug
+      value
     }
   }
 `;
+
+interface DashboardPreference {
+  slug: string;
+  value: unknown;
+}
+
+interface DashboardPageDataQuery {
+  me: {
+    userId: string;
+    email: string;
+  };
+  activePreferences: DashboardPreference[];
+}
+
+function getPreferenceValue(
+  preferences: DashboardPreference[],
+  slug: string,
+): string | null {
+  const value = preferences.find((preference) => preference.slug === slug)?.value;
+  return typeof value === 'string' && value.trim() ? value : null;
+}
 
 export default async function Dashboard() {
   // 1. Check Auth0 Session
@@ -33,20 +55,27 @@ export default async function Dashboard() {
 
   // 3. Call Backend
   let userData = null;
+  let activePreferences: DashboardPreference[] = [];
   let error = null;
 
   try {
-    const { data } = await getClient().query<MeQuery>({
-      query: ME_QUERY,
+    const { data } = await getClient().query<DashboardPageDataQuery>({
+      query: DASHBOARD_QUERY,
       context: {
         headers: { Authorization: `Bearer ${accessToken}` }
       }
     });
     userData = data?.me;
+    activePreferences = data?.activePreferences || [];
   } catch (e) {
     console.error("Backend Error:", e);
     error = "Failed to connect to backend.";
   }
+
+  const fullName = getPreferenceValue(activePreferences, 'profile.full_name');
+  const contactEmail = getPreferenceValue(activePreferences, 'profile.email');
+  const company = getPreferenceValue(activePreferences, 'profile.company');
+  const title = getPreferenceValue(activePreferences, 'profile.title');
 
   return (
     <div className="p-10">
@@ -62,10 +91,18 @@ export default async function Dashboard() {
           <div className="p-6 border rounded-lg bg-white shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Account Information</h2>
             <div className="space-y-2">
-              <p><strong>Email:</strong> {userData?.email || session.user.email}</p>
-              <p><strong>First Name:</strong> {userData?.firstName || 'Not set'}</p>
-              <p><strong>Last Name:</strong> {userData?.lastName || 'Not set'}</p>
+              <p><strong>Account Email:</strong> {userData?.email || session.user.email}</p>
               <p className="text-sm text-gray-500"><strong>User ID:</strong> {userData?.userId}</p>
+            </div>
+          </div>
+
+          <div className="p-6 border rounded-lg bg-white shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">Profile Memory</h2>
+            <div className="space-y-2">
+              <p><strong>Full Name:</strong> {fullName || 'Not set'}</p>
+              <p><strong>Contact Email:</strong> {contactEmail || 'Not set'}</p>
+              <p><strong>Company:</strong> {company || 'Not set'}</p>
+              <p><strong>Title:</strong> {title || 'Not set'}</p>
             </div>
           </div>
 

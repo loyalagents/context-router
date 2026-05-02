@@ -155,6 +155,73 @@ describe('PreferenceSearchWorkflow', () => {
     expect(result.matchedActivePreferences).toHaveLength(0);
   });
 
+  it('should return profile preferences for natural-language identity queries', async () => {
+    mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValueOnce({
+      definitions: [
+        {
+          slug: 'profile.full_name',
+          category: 'profile',
+          description: "The user's preferred full name",
+          valueType: 'STRING',
+          namespace: 'GLOBAL',
+          scope: 'GLOBAL',
+        },
+        {
+          slug: 'profile.email',
+          category: 'profile',
+          description: "The user's contact email",
+          valueType: 'STRING',
+          namespace: 'GLOBAL',
+          scope: 'GLOBAL',
+        },
+      ],
+      promptJson: JSON.stringify([
+        {
+          slug: 'profile.full_name',
+          description: "The user's preferred full name",
+        },
+        {
+          slug: 'profile.email',
+          description: "The user's contact email",
+        },
+      ]),
+    });
+    mockAiPort.generateStructured.mockResolvedValue({
+      relevantSlugs: ['profile.full_name', 'profile.email'],
+      queryInterpretation: 'Identity and contact profile fields',
+    });
+    mockPreferenceService.getActivePreferences.mockResolvedValue([
+      {
+        ...createMockPreference('profile.full_name'),
+        value: 'Ada Lovelace',
+      },
+      {
+        ...createMockPreference('profile.email'),
+        value: 'ada@example.test',
+      },
+    ]);
+
+    const result = await workflow.run({
+      ...baseInput,
+      naturalLanguageQuery: "what is the user's name and form email?",
+    });
+
+    const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
+    expect(prompt).toContain('profile.full_name');
+    expect(prompt).toContain('profile.email');
+    expect(result.matchedDefinitions.map((definition) => definition.slug)).toEqual([
+      'profile.full_name',
+      'profile.email',
+    ]);
+    expect(result.matchedActivePreferences.map((preference) => preference.slug)).toEqual([
+      'profile.full_name',
+      'profile.email',
+    ]);
+    expect(result.queryInterpretation).toBe(
+      'Identity and contact profile fields',
+    );
+  });
+
   it('should silently discard hallucinated slugs', async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [

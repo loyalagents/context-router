@@ -8,6 +8,7 @@ describe('PreferenceListTool', () => {
       getAll: jest.fn().mockResolvedValue([
         {
           slug: 'food.dietary_restrictions',
+          displayName: 'Dietary Restrictions',
           description: 'Dietary restrictions',
           valueType: 'ARRAY',
           options: null,
@@ -31,7 +32,7 @@ describe('PreferenceListTool', () => {
     );
     const payload = result.result.structuredContent as {
       success: boolean;
-      preferences: Array<{ slug: string }>;
+      preferences: Array<{ slug: string; displayName?: string | null }>;
     };
 
     expect(result.result.isError).not.toBe(true);
@@ -44,6 +45,7 @@ describe('PreferenceListTool', () => {
     expect(payload.preferences.map((pref: any) => pref.slug)).toEqual([
       'food.dietary_restrictions',
     ]);
+    expect(payload.preferences[0].displayName).toBe('Dietary Restrictions');
   });
 
   it('returns a structured MCP error when the catalog lookup throws', async () => {

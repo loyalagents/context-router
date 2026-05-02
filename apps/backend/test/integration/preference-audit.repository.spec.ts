@@ -26,8 +26,6 @@ describe("PreferenceAuditService (integration)", () => {
     const user = await prisma.user.create({
       data: {
         email: "audit-test@example.com",
-        firstName: "Audit",
-        lastName: "Test",
       },
     });
 

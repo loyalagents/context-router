@@ -741,8 +741,6 @@ describe('MCP Access Log (e2e)', () => {
     const otherUser = await prisma.user.create({
       data: {
         email: 'other-mcp-access-user@example.com',
-        firstName: 'Other',
-        lastName: 'User',
       },
     });
 

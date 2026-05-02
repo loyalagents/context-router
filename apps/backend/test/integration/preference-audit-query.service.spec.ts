@@ -24,15 +24,11 @@ describe("PreferenceAuditQueryService (integration)", () => {
       prisma.user.create({
         data: {
           email: "audit-query-primary@example.com",
-          firstName: "Primary",
-          lastName: "User",
         },
       }),
       prisma.user.create({
         data: {
           email: "audit-query-secondary@example.com",
-          firstName: "Secondary",
-          lastName: "User",
         },
       }),
     ]);

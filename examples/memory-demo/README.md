@@ -6,8 +6,8 @@ If you only want to dump rough user or form ideas without this structure, use `e
 
 The intended agent behavior is:
 
-1. Read user profile data from the fixture.
-2. Retrieve relevant durable preferences from MCP before reading local fallback memory.
+1. Retrieve relevant durable preferences from MCP, including `profile.*` memory, before reading local fallback memory.
+2. Use `profile.*` preferences for identity and profile-backed form fields.
 3. Read local fallback memory only for values that MCP does not already contain.
 4. Backfill durable missing preferences through MCP before using them in the form.
 5. Fill the form without inventing unsupported values.
@@ -18,7 +18,7 @@ The intended agent behavior is:
 The demo scales by keeping reusable parts separate:
 
 - `forms/<formId>/` contains one browser form and its field manifest.
-- `users/<userId>/` contains one synthetic profile, one required `simple/` memory baseline, and an optional unconstrained `realistic/` folder.
+- `users/<userId>/` contains one required `simple/` memory baseline and an optional unconstrained `realistic/` folder.
 - `scenarios/<scenarioId>/` composes one form, one user, the user's `simple/` baseline, a prompt, and expected outputs.
 
 Scenario manifests use stable IDs, not relative paths:
@@ -41,7 +41,7 @@ The scenario directory name is the scenario ID. The prompt is always `scenarios/
 - Do not edit backend or web app code for fixture-only changes.
 - Do not add MCP seed automation, browser automation, scaffolding, catalogs, or generated forms unless the task explicitly asks for that.
 - Use the documented conventions: scenario IDs come from directory names, scenario manifests use `formId`, `userId`, and `userVariant: "simple"`, and prompts live at `scenarios/<scenarioId>/start/prompt.md`.
-- Every user must have `profile.json` and `simple/` with only `local-memory.md` and `seed-preferences.json`. Ignore system dotfiles such as `.DS_Store`.
+- Every user must have `simple/` with only `local-memory.md` and `seed-preferences.json`. Profile data belongs in `simple/seed-preferences.json` as `profile.*` slugs. Ignore system dotfiles such as `.DS_Store`.
 - `realistic/` is optional and can contain arbitrary synthetic source data, but scenarios should not point at it yet.
 - Run `pnpm demo:memory:verify` after changing fixtures and fix all verifier errors.
 
@@ -54,16 +54,14 @@ The scenario directory name is the scenario ID. The prompt is always `scenarios/
 
 Field sources:
 
-- `profile`: value comes from `users/<userId>/profile.json`; include `profilePath`.
-- `mcp-memory`: value comes from MCP or local fallback memory; include `memorySlugs`.
+- `mcp-memory`: value comes from MCP or local fallback memory; include `memorySlugs`. Profile-backed fields should use `profile.*` slugs.
 - `freeform`: optional value supplied by the scenario or left blank.
 
 ## Add A User
 
-1. Create or reuse `users/<userId>/profile.json`.
-2. Create `users/<userId>/simple/seed-preferences.json`.
-3. Create `users/<userId>/simple/local-memory.md`.
-4. Do not add other files to `simple/`. The verifier treats `simple/` as the canonical machine-checkable baseline.
+1. Create `users/<userId>/simple/seed-preferences.json` with any profile values as `profile.*` preferences.
+2. Create `users/<userId>/simple/local-memory.md`.
+3. Do not add other files to `simple/`. The verifier treats `simple/` as the canonical machine-checkable baseline.
 
 Keep all user data synthetic and non-sensitive.
 
@@ -117,7 +115,7 @@ Full demo automation is intentionally not part of this fixture pass. Today, a ma
 2. Seed MCP for the test user from `users/<userId>/simple/seed-preferences.json`. This is currently manual; there is no repo-owned seed runner yet.
 3. Open `forms/<formId>/form.html` in a browser.
 4. Give the MCP-enabled agent `scenarios/<scenarioId>/start/prompt.md`.
-5. Let the agent read the scenario manifest, profile, field manifest, and local memory only as instructed.
+5. Let the agent read the scenario manifest, field manifest, and local memory only as instructed.
 6. Compare the filled form to `expected/filled-form.json`.
 7. Compare MCP writes to `expected/written-preferences.json`.
 8. Compare final durable preferences to `expected/final-preferences.json`.
@@ -129,7 +127,7 @@ Read `examples/memory-demo/README.md`.
 
 Add a new memory-demo scenario for: <describe the scenario>.
 
-Reuse existing forms and users where reasonable. If new fixtures are needed, create only synthetic, non-sensitive data using the documented folder conventions and templates. Every new user needs `profile.json`, `simple/local-memory.md`, and `simple/seed-preferences.json`; `realistic/` is optional and can contain arbitrary synthetic source data. Prefer existing preference slugs from `apps/backend/src/config/preferences.catalog.ts`.
+Reuse existing forms and users where reasonable. If new fixtures are needed, create only synthetic, non-sensitive data using the documented folder conventions and templates. Every new user needs `simple/local-memory.md` and `simple/seed-preferences.json`, with profile data represented as `profile.*` preferences; `realistic/` is optional and can contain arbitrary synthetic source data. Prefer existing preference slugs from `apps/backend/src/config/preferences.catalog.ts`.
 
 Do not edit backend or web app code. Do not add MCP seeding, browser automation, scaffolding, catalogs, or generated forms.
 

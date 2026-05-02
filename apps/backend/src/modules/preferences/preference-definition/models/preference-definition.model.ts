@@ -40,7 +40,7 @@ export class PreferenceDefinitionModel {
   slug: string;
 
   @Field({ nullable: true, description: "Optional human-readable display name" })
-  displayName?: string;
+  displayName?: string | null;
 
   @Field({ nullable: true, description: "Owner user ID (null for global definitions)" })
   ownerUserId?: string;

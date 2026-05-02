@@ -284,6 +284,48 @@ describe('Permission Grants (e2e)', () => {
     expect(list.categories).not.toContain('food');
   });
 
+  it('can deny profile.email while allowing other profile memory slugs', async () => {
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'profile.full_name',
+        value: 'Profile Grant User',
+      },
+      buildUserMutationContext(),
+    );
+    await preferenceService.setPreference(
+      testUser.userId,
+      {
+        slug: 'profile.email',
+        value: 'profile-grant@example.test',
+      },
+      buildUserMutationContext(),
+    );
+
+    await grantRepository.upsert(
+      testUser.userId,
+      'claude',
+      'profile.email',
+      'READ',
+      'DENY',
+    );
+
+    const search = parseToolResult(
+      await mcpToolCall('searchPreferences', {
+        query: 'profile',
+        includeSuggestions: false,
+      }),
+    );
+    const searchSlugs = search.active.preferences.map((pref: any) => pref.slug);
+    expect(searchSlugs).toContain('profile.full_name');
+    expect(searchSlugs).not.toContain('profile.email');
+
+    const list = parseToolResult(await mcpToolCall('listPreferenceSlugs', {}));
+    const listSlugs = list.preferences.map((pref: any) => pref.slug);
+    expect(listSlugs).toContain('profile.full_name');
+    expect(listSlugs).not.toContain('profile.email');
+  });
+
   it('filters denied slugs before smartSearchPreferences builds the AI prompt', async () => {
     await preferenceService.setPreference(
       testUser.userId,
@@ -502,8 +544,6 @@ describe('Permission Grants (e2e)', () => {
     const otherUser = await prisma.user.create({
       data: {
         email: 'other-permission-user@example.com',
-        firstName: 'Other',
-        lastName: 'User',
       },
     });
     registerMcpUser(otherUser);

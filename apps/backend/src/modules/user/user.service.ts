@@ -7,7 +7,6 @@ import {
 import type { User } from "@infrastructure/prisma/prisma-models";
 import { UserRepository } from "./user.repository";
 import { CreateUserInput } from "./dto/create-user.input";
-import { UpdateUserInput } from "./dto/update-user.input";
 
 @Injectable()
 export class UserService {
@@ -46,28 +45,6 @@ export class UserService {
     }
 
     return user;
-  }
-
-  async update(updateUserInput: UpdateUserInput): Promise<User> {
-    this.logger.log(`Updating user: ${updateUserInput.userId}`);
-
-    // Verify user exists
-    await this.findOne(updateUserInput.userId);
-
-    // If email is being updated, check it's not already taken
-    if (updateUserInput.email) {
-      const existingUser = await this.userRepository.findByEmail(
-        updateUserInput.email,
-      );
-
-      if (existingUser && existingUser.userId !== updateUserInput.userId) {
-        throw new ConflictException(
-          `Email ${updateUserInput.email} is already in use`,
-        );
-      }
-    }
-
-    return this.userRepository.update(updateUserInput.userId, updateUserInput);
   }
 
   async remove(userId: string): Promise<User> {

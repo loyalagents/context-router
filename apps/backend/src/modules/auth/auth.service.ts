@@ -4,6 +4,10 @@ import { UserService } from "@modules/user/user.service";
 import { Auth0Service } from "@infrastructure/auth0/auth0.service";
 import { ExternalIdentityService } from "@modules/external-identity/external-identity.service";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
+import {
+  PreferenceStatus,
+  SourceType,
+} from "@infrastructure/prisma/generated-client";
 
 export interface JwtPayload {
   sub: string; // Auth0 user ID (auth0|xxxxx or google-oauth2|xxxxx)
@@ -21,6 +25,13 @@ export interface JwtPayload {
 }
 
 type AuthTransactionClient = Pick<PrismaService, "user" | "externalIdentity">;
+
+interface InitialProfileValues {
+  email?: string | null;
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}
 
 @Injectable()
 export class AuthService {
@@ -146,16 +157,22 @@ export class AuthService {
           );
         }
 
+        const auth0Profile = auth0User?.data ?? auth0User;
+        const accountEmail =
+          email || auth0Profile?.email || "unknown@example.com";
+        const firstName = jwtPayload.given_name || auth0Profile?.given_name;
+        const lastName = jwtPayload.family_name || auth0Profile?.family_name;
+        const fullName =
+          jwtPayload.name ||
+          auth0Profile?.name ||
+          [firstName, lastName].filter(Boolean).join(" ");
+
         // Use transaction to atomically create user and link identity
         const user = await this.prisma.$transaction(
           async (tx: AuthTransactionClient) => {
             const newUser = await tx.user.create({
               data: {
-                email: email || auth0User?.email || "unknown@example.com",
-                firstName:
-                  jwtPayload.given_name || auth0User?.given_name || "Unknown",
-                lastName:
-                  jwtPayload.family_name || auth0User?.family_name || "User",
+                email: accountEmail,
               },
             });
 
@@ -171,6 +188,13 @@ export class AuthService {
             return newUser;
           },
         );
+
+        await this.seedInitialProfileMemory(user.userId, {
+          email: accountEmail,
+          fullName,
+          firstName,
+          lastName,
+        });
 
         this.logger.log(`Successfully created user: ${user.userId}`);
         return user;
@@ -268,8 +292,6 @@ export class AuthService {
 
         user = await this.userService.create({
           email,
-          firstName: "M2M",
-          lastName: "Client",
         });
 
         return user;
@@ -313,5 +335,80 @@ export class AuthService {
   private isUniqueConstraintError(error: any): boolean {
     // Prisma unique constraint error code
     return error?.code === "P2002";
+  }
+
+  private async seedInitialProfileMemory(
+    userId: string,
+    values: InitialProfileValues,
+  ): Promise<void> {
+    const profileEntries = [
+      { slug: "profile.full_name", value: values.fullName },
+      { slug: "profile.first_name", value: values.firstName },
+      { slug: "profile.last_name", value: values.lastName },
+      { slug: "profile.email", value: values.email },
+    ];
+
+    const normalizedEntries = profileEntries.flatMap(({ slug, value }) => {
+      const normalizedValue = value?.trim();
+      return normalizedValue ? [{ slug, value: normalizedValue }] : [];
+    });
+
+    if (normalizedEntries.length === 0) {
+      return;
+    }
+
+    try {
+      const definitions = await this.prisma.preferenceDefinition.findMany({
+        where: {
+          namespace: "GLOBAL",
+          slug: { in: normalizedEntries.map(({ slug }) => slug) },
+          archivedAt: null,
+        },
+        select: { id: true, slug: true },
+      });
+      const definitionBySlug = new Map(
+        definitions.map((definition) => [definition.slug, definition.id]),
+      );
+
+      for (const { slug, value } of normalizedEntries) {
+        const definitionId = definitionBySlug.get(slug);
+        if (!definitionId) {
+          continue;
+        }
+
+        const existing = await this.prisma.preference.findFirst({
+          where: {
+            userId,
+            contextKey: "GLOBAL",
+            definitionId,
+            status: PreferenceStatus.ACTIVE,
+          },
+          select: { id: true },
+        });
+
+        if (existing) {
+          continue;
+        }
+
+        await this.prisma.preference.create({
+          data: {
+            userId,
+            locationId: null,
+            contextKey: "GLOBAL",
+            definitionId,
+            value,
+            status: PreferenceStatus.ACTIVE,
+            sourceType: SourceType.IMPORTED,
+            confidence: null,
+            evidence: { source: "auth_sync" },
+          },
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Could not seed initial profile preferences for user ${userId}: ${message}`,
+      );
+    }
   }
 }

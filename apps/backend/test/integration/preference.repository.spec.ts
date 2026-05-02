@@ -44,8 +44,6 @@ describe("PreferenceRepository (integration)", () => {
     const user = await prisma.user.create({
       data: {
         email: "preftest@example.com",
-        firstName: "Preference",
-        lastName: "Test",
       },
     });
     testUserId = user.userId;
@@ -465,8 +463,6 @@ describe("PreferenceRepository (integration)", () => {
       const otherUser = await prisma.user.create({
         data: {
           email: "other@example.com",
-          firstName: "Other",
-          lastName: "User",
         },
       });
       await repository.upsertActive(

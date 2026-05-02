@@ -35,8 +35,6 @@ import { getPrismaClient } from './test-db';
  */
 export const DEFAULT_TEST_USER_DATA = {
   email: 'test@example.com',
-  firstName: 'Test',
-  lastName: 'User',
 };
 
 /**
@@ -45,8 +43,6 @@ export const DEFAULT_TEST_USER_DATA = {
 export interface TestUser {
   userId: string;
   email: string;
-  firstName: string;
-  lastName: string;
   createdAt: Date;
   updatedAt: Date;
 }

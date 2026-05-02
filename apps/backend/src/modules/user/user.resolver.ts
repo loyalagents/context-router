@@ -1,8 +1,7 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
+import { Resolver, Query, Args, ID } from '@nestjs/graphql';
 import { UseGuards, ForbiddenException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './models/user.model';
-import { UpdateUserInput } from './dto/update-user.input';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 
@@ -16,26 +15,12 @@ export class UserResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
-    // Users can only view their own profile
+    // Users can only view their own account identity.
     if (currentUser.userId !== id) {
-      throw new ForbiddenException('You can only view your own profile');
+      throw new ForbiddenException('You can only view your own account');
     }
 
     return this.userService.findOne(id);
-  }
-
-  @Mutation(() => User, { description: 'Update an existing user' })
-  @UseGuards(GqlAuthGuard)
-  async updateUser(
-    @Args('updateUserInput') updateUserInput: UpdateUserInput,
-    @CurrentUser() currentUser: User,
-  ): Promise<User> {
-    // Users can only update their own profile
-    if (currentUser.userId !== updateUserInput.userId) {
-      throw new ForbiddenException('You can only update your own profile');
-    }
-
-    return this.userService.update(updateUserInput);
   }
 
   // TODO: Add admin role support to enable the following operations:

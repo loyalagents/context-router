@@ -1,5 +1,9 @@
 [
   {
+    "slug": "profile.full_name",
+    "value": "REPLACE_WITH_SYNTHETIC_FULL_NAME"
+  },
+  {
     "slug": "REPLACE_WITH_VALID_PREFERENCE_SLUG",
     "value": "REPLACE_WITH_FINAL_VALUE"
   }

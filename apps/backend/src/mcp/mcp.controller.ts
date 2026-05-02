@@ -74,8 +74,6 @@ export class McpController {
       user: {
         userId: user.userId,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
       },
       client,
       grants: tokenGrants,

@@ -144,14 +144,8 @@ async function listUserIds() {
 async function validateUser(userId) {
   const userDir = join(demoRoot, 'users', userId);
   const simpleDir = join(userDir, 'simple');
-  const profilePath = join(userDir, 'profile.json');
   const simpleMemoryPath = join(simpleDir, 'local-memory.md');
   const simpleSeedPath = join(simpleDir, 'seed-preferences.json');
-
-  const profile = await readJson(profilePath, `user "${userId}" profile`);
-  if (profile && (typeof profile !== 'object' || Array.isArray(profile))) {
-    addError(`user "${userId}" profile must be a JSON object`);
-  }
 
   if (!requireFile(simpleDir, `user "${userId}" simple directory`)) {
     return;
@@ -229,7 +223,6 @@ async function validateScenario(scenarioId) {
   const formDir = join(demoRoot, 'forms', scenario.formId);
   const formHtmlPath = join(formDir, 'form.html');
   const fieldsPath = join(formDir, 'fields.json');
-  const profilePath = join(demoRoot, 'users', scenario.userId, 'profile.json');
   const variantDir = join(demoRoot, 'users', scenario.userId, scenario.userVariant);
   const seedPreferencesPath = join(variantDir, 'seed-preferences.json');
   const localMemoryPath = join(variantDir, 'local-memory.md');
@@ -251,7 +244,6 @@ async function validateScenario(scenarioId) {
     fieldsPath,
     `scenario "${scenarioId}" fields manifest`,
   );
-  const profile = await readJson(profilePath, `scenario "${scenarioId}" profile`);
   const seedPreferences = await readJson(
     seedPreferencesPath,
     `scenario "${scenarioId}" seed preferences`,
@@ -322,20 +314,7 @@ async function validateScenario(scenarioId) {
     seenFieldIds.add(field.id);
     fieldIds.push(field.id);
 
-    if (field.source === 'profile') {
-      if (!isNonEmptyString(field.profilePath)) {
-        addError(`${fieldLabel} with source "profile" requires profilePath`);
-      } else if (
-        profile &&
-        typeof profile === 'object' &&
-        !Array.isArray(profile) &&
-        !Object.prototype.hasOwnProperty.call(profile, field.profilePath)
-      ) {
-        addError(
-          `${fieldLabel} references missing profile key "${field.profilePath}"`,
-        );
-      }
-    } else if (field.source === 'mcp-memory') {
+    if (field.source === 'mcp-memory') {
       if (
         !Array.isArray(field.memorySlugs) ||
         field.memorySlugs.length === 0 ||
@@ -346,7 +325,7 @@ async function validateScenario(scenarioId) {
         );
       }
     } else if (field.source !== 'freeform') {
-      addError(`${fieldLabel}.source must be profile, mcp-memory, or freeform`);
+      addError(`${fieldLabel}.source must be mcp-memory or freeform`);
     }
   }
 

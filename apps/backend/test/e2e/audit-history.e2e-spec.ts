@@ -705,8 +705,6 @@ describe('Preference Audit History GraphQL API (e2e)', () => {
     const secondaryUser = await prisma.user.create({
       data: {
         email: 'audit-history-secondary@example.com',
-        firstName: 'Secondary',
-        lastName: 'User',
       },
     });
 
