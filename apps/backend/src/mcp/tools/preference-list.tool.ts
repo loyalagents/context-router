@@ -17,6 +17,7 @@ interface ListPreferencesParams {
 interface CatalogEntry {
   slug: string;
   category: string;
+  displayName?: string | null;
   description: string;
   valueType: string;
   options?: unknown;
@@ -71,6 +72,9 @@ export class PreferenceListTool implements McpToolInterface {
             properties: {
               slug: { type: 'string' },
               category: { type: 'string' },
+              displayName: {
+                anyOf: [{ type: 'string' }, { type: 'null' }],
+              },
               description: { type: 'string' },
               valueType: { type: 'string' },
               options: {},
@@ -142,6 +146,7 @@ export class PreferenceListTool implements McpToolInterface {
     const entries: CatalogEntry[] = filtered.map((def) => ({
       slug: def.slug,
       category: def.slug.split('.')[0],
+      displayName: def.displayName,
       description: def.description,
       valueType: def.valueType,
       options: def.options,

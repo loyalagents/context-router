@@ -6,32 +6,32 @@
       "id": "fullName",
       "label": "Full name",
       "inputType": "text",
-      "source": "profile",
-      "profilePath": "fullName",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.full_name"],
       "required": true
     },
     {
       "id": "email",
       "label": "Email",
       "inputType": "email",
-      "source": "profile",
-      "profilePath": "email",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.email"],
       "required": true
     },
     {
       "id": "company",
       "label": "Organization",
       "inputType": "text",
-      "source": "profile",
-      "profilePath": "company",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.company"],
       "required": true
     },
     {
       "id": "title",
       "label": "Role",
       "inputType": "text",
-      "source": "profile",
-      "profilePath": "title",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.title"],
       "required": true
     },
     {

@@ -3,11 +3,11 @@
   "id": "REPLACE_WITH_FORM_ID",
   "fields": [
     {
-      "id": "profileField",
-      "label": "Profile field",
+      "id": "profileMemoryField",
+      "label": "Profile memory field",
       "inputType": "text",
-      "source": "profile",
-      "profilePath": "REPLACE_WITH_PROFILE_KEY",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.REPLACE_WITH_PROFILE_SLUG"],
       "required": true
     },
     {

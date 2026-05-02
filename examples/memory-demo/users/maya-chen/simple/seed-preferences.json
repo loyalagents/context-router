@@ -1,5 +1,29 @@
 [
   {
+    "slug": "profile.full_name",
+    "value": "Maya Chen"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Maya"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Chen"
+  },
+  {
+    "slug": "profile.email",
+    "value": "maya.chen@example.test"
+  },
+  {
+    "slug": "profile.company",
+    "value": "Signal Harbor"
+  },
+  {
+    "slug": "profile.title",
+    "value": "Engineering Manager"
+  },
+  {
     "slug": "system.response_tone",
     "value": "concise"
   },

@@ -226,6 +226,16 @@ describe('MCP Integration (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.result?.content).toBeDefined();
       expect(response.body.result?.structuredContent).toBeDefined();
+
+      const result = parseReadToolResult(response.body.result);
+      const profileFullName = result.preferences.find(
+        (pref: any) => pref.slug === 'profile.full_name',
+      );
+      expect(profileFullName).toMatchObject({
+        displayName: 'Full Name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      });
     });
   });
 
@@ -769,6 +779,42 @@ describe('MCP Integration (e2e)', () => {
       expect(auditRows[0].correlationId).toBeTruthy();
     });
 
+    it('should set and search profile preferences through the normal MCP surface', async () => {
+      const setResponse = await mutatePreferences({
+        operation: 'SET_PREFERENCE',
+        preference: {
+          slug: 'profile.full_name',
+          value: '"Test Profile User"',
+        },
+      });
+
+      expect(setResponse.status).toBe(200);
+      const setResult = JSON.parse(setResponse.body.result.content[0].text);
+      expect(setResult.success).toBe(true);
+      expect(setResult.preference.slug).toBe('profile.full_name');
+
+      const searchResponse = await mcpPost({
+        jsonrpc: '2.0',
+        id: 41,
+        method: 'tools/call',
+        params: {
+          name: 'searchPreferences',
+          arguments: { query: 'profile' },
+        },
+      });
+
+      expect(searchResponse.status).toBe(200);
+      const searchResult = parseReadToolResult(searchResponse.body.result);
+      expect(searchResult.active.preferences).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            slug: 'profile.full_name',
+            value: 'Test Profile User',
+          }),
+        ]),
+      );
+    });
+
     it('should set an active preference with MCP provenance and inferred source', async () => {
       const response = await mutatePreferences(
         {
@@ -968,8 +1014,6 @@ describe('MCP Integration (e2e)', () => {
       const otherUser = await prisma.user.create({
         data: {
           email: 'other-definition-owner@example.com',
-          firstName: 'Other',
-          lastName: 'Owner',
         },
       });
       await prisma.preferenceDefinition.create({
@@ -1092,8 +1136,6 @@ describe('MCP Integration (e2e)', () => {
       const userB = await prisma.user.create({
         data: {
           email: 'user-b-def@example.com',
-          firstName: 'User',
-          lastName: 'B',
         },
       });
 
@@ -1304,8 +1346,6 @@ describe('MCP Integration (e2e)', () => {
       const userB = await prisma.user.create({
         data: {
           email: 'user-b@example.com',
-          firstName: 'User',
-          lastName: 'B',
         },
       });
 

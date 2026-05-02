@@ -37,6 +37,7 @@ export async function seedPreferenceDefinitions() {
       await prisma.preferenceDefinition.update({
         where: { id: existing.id },
         data: {
+          displayName: catalogDef.displayName ?? null,
           description: catalogDef.description,
           valueType: VALUE_TYPE_MAP[catalogDef.valueType],
           scope: SCOPE_MAP[catalogDef.scope],
@@ -61,6 +62,7 @@ export async function seedPreferenceDefinitions() {
           namespace: "GLOBAL",
           slug,
           ownerUserId: null,
+          displayName: catalogDef.displayName ?? null,
           description: catalogDef.description,
           valueType: VALUE_TYPE_MAP[catalogDef.valueType],
           scope: SCOPE_MAP[catalogDef.scope],
@@ -89,8 +91,6 @@ async function main() {
     update: {},
     create: {
       email: "john.doe@example.com",
-      firstName: "John",
-      lastName: "Doe",
     },
   });
 
@@ -99,8 +99,6 @@ async function main() {
     update: {},
     create: {
       email: "jane.smith@example.com",
-      firstName: "Jane",
-      lastName: "Smith",
     },
   });
 

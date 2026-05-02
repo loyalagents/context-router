@@ -37,11 +37,7 @@
           },
           "source": {
             "type": "string",
-            "enum": ["profile", "mcp-memory", "freeform"]
-          },
-          "profilePath": {
-            "type": "string",
-            "minLength": 1
+            "enum": ["mcp-memory", "freeform"]
           },
           "memorySlugs": {
             "type": "array",

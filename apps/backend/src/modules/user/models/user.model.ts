@@ -9,12 +9,6 @@ export class User {
   email: string;
 
   @Field()
-  firstName: string;
-
-  @Field()
-  lastName: string;
-
-  @Field()
   createdAt: Date;
 
   @Field()

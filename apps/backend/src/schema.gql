@@ -252,9 +252,6 @@ type Mutation {
 
   """Update an existing preference definition by id."""
   updatePreferenceDefinition(id: ID!, input: UpdatePreferenceDefinitionInput!): PreferenceDefinition!
-
-  """Update an existing user"""
-  updateUser(updateUserInput: UpdateUserInput!): User!
 }
 
 type PermissionGrant {
@@ -598,18 +595,9 @@ input UpdatePreferenceDefinitionInput {
   valueType: PreferenceValueType
 }
 
-input UpdateUserInput {
-  email: String
-  firstName: String
-  lastName: String
-  userId: ID!
-}
-
 type User {
   createdAt: DateTime!
   email: String!
-  firstName: String!
-  lastName: String!
   updatedAt: DateTime!
   userId: ID!
 }

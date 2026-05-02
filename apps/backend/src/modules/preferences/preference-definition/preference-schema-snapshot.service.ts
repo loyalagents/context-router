@@ -5,6 +5,7 @@ import { PermissionGrantService } from '@modules/permission-grant/permission-gra
 export interface PreferenceDefinitionSnapshot {
   slug: string;
   category: string;
+  displayName?: string | null;
   description: string;
   valueType: string;
   options?: string[];
@@ -40,6 +41,7 @@ export class PreferenceSchemaSnapshotService {
     const definitions: PreferenceDefinitionSnapshot[] = defs.map((def) => ({
       slug: def.slug,
       category: def.slug.split('.')[0],
+      displayName: def.displayName,
       description: def.description,
       valueType: def.valueType,
       options: Array.isArray(def.options)

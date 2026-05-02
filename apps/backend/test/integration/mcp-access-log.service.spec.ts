@@ -20,8 +20,6 @@ describe('McpAccessLogService (integration)', () => {
     const user = await prisma.user.create({
       data: {
         email: 'mcp-access-log@example.com',
-        firstName: 'Mcp',
-        lastName: 'Access',
       },
     });
 

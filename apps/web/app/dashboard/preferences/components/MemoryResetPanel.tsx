@@ -46,7 +46,7 @@ const RESET_OPTIONS: ResetOption[] = [
     label: 'Reset Preferences',
     tone: 'normal',
     confirmation:
-      'Reset your active preferences and pending/rejected suggestions? This cannot be undone.',
+      'Reset your active preferences, profile memory, and pending/rejected suggestions? This cannot be undone.',
   },
   {
     mode: 'DEMO_DATA',
@@ -60,7 +60,7 @@ const RESET_OPTIONS: ResetOption[] = [
     label: 'Full User Data Reset',
     tone: 'danger',
     confirmation:
-      'Reset all app-owned data for this user, including permission grants? Your login and profile will remain. This cannot be undone.',
+      'Reset all app-owned data for this user, including profile memory and permission grants? Your login will remain. This cannot be undone.',
   },
 ];
 
@@ -152,10 +152,10 @@ export default function MemoryResetPanel({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            Reset Preferences
+            Reset Memory
           </h2>
           <p className="mt-1 text-sm text-gray-600">
-            Clear the current account&apos;s saved preference data.
+            Clear the current account&apos;s saved memory, including profile fields.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

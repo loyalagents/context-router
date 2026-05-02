@@ -2,7 +2,7 @@
  * PreferenceDefinitionRepository Integration Tests (namespace-aware)
  *
  * Tests the repository against a real test database.
- * Global beforeEach (jest.after-env.ts) resets DB and seeds 12 GLOBAL definitions.
+ * Global beforeEach (jest.after-env.ts) resets DB and seeds GLOBAL definitions.
  */
 import { PreferenceDefinitionRepository } from '../../src/modules/preferences/preference-definition/preference-definition.repository';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -23,8 +23,6 @@ describe('PreferenceDefinitionRepository (integration)', () => {
     const user = await prisma.user.create({
       data: {
         email: 'deftest@example.com',
-        firstName: 'Def',
-        lastName: 'Test',
       },
     });
     testUserId = user.userId;
@@ -34,9 +32,9 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   // getAll
   // ──────────────────────────────────────────────
   describe('getAll', () => {
-    it('should return all 12 seeded GLOBAL definitions when no userId given', async () => {
+    it('should return all seeded GLOBAL definitions when no userId given', async () => {
       const defs = await repository.getAll();
-      expect(defs).toHaveLength(12);
+      expect(defs).toHaveLength(19);
       expect(defs.every((d) => d.namespace === 'GLOBAL')).toBe(true);
     });
 
@@ -50,7 +48,7 @@ describe('PreferenceDefinitionRepository (integration)', () => {
       });
 
       const defs = await repository.getAll(testUserId);
-      expect(defs.length).toBe(13); // 12 GLOBAL + 1 user
+      expect(defs.length).toBe(20); // 19 GLOBAL + 1 user
 
       const userDef = defs.find((d) => d.slug === 'custom.user_pref');
       expect(userDef).toBeDefined();
@@ -458,14 +456,14 @@ describe('PreferenceDefinitionRepository (integration)', () => {
   // getAllCategories / getSlugsByCategory
   // ──────────────────────────────────────────────
   describe('getAllCategories', () => {
-    it('should return 6 sorted categories for GLOBAL defs', async () => {
+    it('should return sorted categories for GLOBAL defs', async () => {
       const categories = await repository.getAllCategories();
-      expect(categories).toHaveLength(6);
       expect(categories).toEqual([
         'communication',
         'dev',
         'food',
         'location',
+        'profile',
         'system',
         'travel',
       ]);

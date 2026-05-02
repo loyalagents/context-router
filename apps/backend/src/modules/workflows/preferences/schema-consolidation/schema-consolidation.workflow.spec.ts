@@ -132,6 +132,51 @@ describe('SchemaConsolidationWorkflow', () => {
         'food.diet_requirements': 'USER',
       });
     });
+
+    it('should drop groups that include core profile definitions', async () => {
+      mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue(
+        makeSnapshot([
+          {
+            slug: 'profile.full_name',
+            description: 'User full name',
+          },
+          {
+            slug: 'profile.first_name',
+            description: 'User first name',
+          },
+          {
+            slug: 'custom.display_name',
+            namespace: 'USER:user-1',
+            description: 'Preferred display name',
+          },
+        ]),
+      );
+
+      mockAiPort.generateStructured.mockResolvedValue({
+        consolidationGroups: [
+          {
+            slugs: ['profile.full_name', 'profile.first_name'],
+            reason: 'Both are user names',
+            suggestion: 'MERGE',
+            recommendedSlug: 'profile.full_name',
+          },
+          {
+            slugs: ['profile.full_name', 'custom.display_name'],
+            reason: 'Both are display names',
+            suggestion: 'REVIEW',
+            recommendedSlug: 'profile.full_name',
+          },
+        ],
+        summary: 'Found overlapping profile fields',
+      });
+
+      const result = await workflow.run(baseInput);
+
+      expect(result.consolidationGroups).toHaveLength(0);
+      expect(result.summary).toBe(
+        'No overlapping or duplicate definitions found after validation.',
+      );
+    });
   });
 
   describe('slug validation', () => {

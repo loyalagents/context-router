@@ -22,15 +22,11 @@ describe('McpAccessLogQueryService (integration)', () => {
       prisma.user.create({
         data: {
           email: 'mcp-access-query-primary@example.com',
-          firstName: 'Primary',
-          lastName: 'Access',
         },
       }),
       prisma.user.create({
         data: {
           email: 'mcp-access-query-secondary@example.com',
-          firstName: 'Secondary',
-          lastName: 'Access',
         },
       }),
     ]);

@@ -39,7 +39,7 @@ echo ""
 echo -e "${YELLOW}2. Testing protected query WITHOUT token (should fail):${NC}"
 RESPONSE=$(curl -s $API_URL \
   -H 'Content-Type: application/json' \
-  -d '{"query":"{ users { userId email } }"}')
+  -d '{"query":"{ me { userId email } }"}')
 
 if echo "$RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
   echo -e "${GREEN}✓ Correctly rejected unauthenticated request${NC}"
@@ -55,7 +55,7 @@ echo -e "${YELLOW}3. Testing 'me' query with token:${NC}"
 RESPONSE=$(curl -s $API_URL \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"query":"{ me { userId email firstName lastName auth0Id createdAt } }"}')
+  -d '{"query":"{ me { userId email createdAt updatedAt } }"}')
 
 if echo "$RESPONSE" | jq -e '.data.me' > /dev/null 2>&1; then
   echo -e "${GREEN}✓ Successfully authenticated${NC}"
@@ -67,35 +67,36 @@ else
 fi
 echo ""
 
-# Test 4: Query all users with token
-echo -e "${YELLOW}4. Testing 'users' query with token:${NC}"
+USER_ID=$(echo "$RESPONSE" | jq -r '.data.me.userId')
+
+# Test 4: Query current user by ID with token
+echo -e "${YELLOW}4. Testing 'user(id)' query with token:${NC}"
 RESPONSE=$(curl -s $API_URL \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"query":"{ users { userId email firstName lastName } }"}')
+  -d "{\"query\":\"{ user(id: \\\"$USER_ID\\\") { userId email createdAt updatedAt } }\"}")
 
-if echo "$RESPONSE" | jq -e '.data.users' > /dev/null 2>&1; then
-  echo -e "${GREEN}✓ Successfully fetched users${NC}"
-  echo "$RESPONSE" | jq '.data.users'
+if echo "$RESPONSE" | jq -e '.data.user' > /dev/null 2>&1; then
+  echo -e "${GREEN}✓ Successfully fetched current user${NC}"
+  echo "$RESPONSE" | jq '.data.user'
 else
-  echo -e "${RED}✗ Failed to fetch users${NC}"
+  echo -e "${RED}✗ Failed to fetch current user${NC}"
   echo "$RESPONSE" | jq '.'
 fi
 echo ""
 
-# Test 5: Create a user (protected mutation)
-echo -e "${YELLOW}5. Testing createUser mutation (protected):${NC}"
-RANDOM_EMAIL="test-$(date +%s)@example.com"
+# Test 5: Query active preferences
+echo -e "${YELLOW}5. Testing activePreferences query (protected):${NC}"
 RESPONSE=$(curl -s $API_URL \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TOKEN" \
-  -d "{\"query\":\"mutation { createUser(createUserInput: { email: \\\"$RANDOM_EMAIL\\\", firstName: \\\"Test\\\", lastName: \\\"User\\\" }) { userId email firstName lastName } }\"}")
+  -d '{"query":"{ activePreferences { id slug value } }"}')
 
-if echo "$RESPONSE" | jq -e '.data.createUser' > /dev/null 2>&1; then
-  echo -e "${GREEN}✓ Successfully created user${NC}"
-  echo "$RESPONSE" | jq '.data.createUser'
+if echo "$RESPONSE" | jq -e '.data.activePreferences' > /dev/null 2>&1; then
+  echo -e "${GREEN}✓ Successfully fetched active preferences${NC}"
+  echo "$RESPONSE" | jq '.data.activePreferences'
 else
-  echo -e "${RED}✗ Failed to create user${NC}"
+  echo -e "${RED}✗ Failed to fetch active preferences${NC}"
   echo "$RESPONSE" | jq '.'
 fi
 echo ""

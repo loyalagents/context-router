@@ -16,8 +16,6 @@ describe('PermissionGrantRepository (integration)', () => {
     const user = await prisma.user.create({
       data: {
         email: 'perm-repo@example.com',
-        firstName: 'Perm',
-        lastName: 'Repo',
       },
     });
     userId = user.userId;

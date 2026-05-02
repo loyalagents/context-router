@@ -535,7 +535,7 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
 
       // Switch to user B
       const userB = await getPrismaClient().user.create({
-        data: { email: 'userb@example.com', firstName: 'User', lastName: 'B' },
+        data: { email: 'userb@example.com' },
       });
       setTestUser(userB);
 
@@ -564,7 +564,7 @@ describe('PreferenceDefinition Mutations (e2e)', () => {
 
       // Switch to user B
       const userB = await getPrismaClient().user.create({
-        data: { email: 'userb2@example.com', firstName: 'User', lastName: 'B2' },
+        data: { email: 'userb2@example.com' },
       });
       setTestUser(userB);
 

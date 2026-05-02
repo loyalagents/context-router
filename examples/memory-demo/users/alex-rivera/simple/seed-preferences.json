@@ -1,5 +1,33 @@
 [
   {
+    "slug": "profile.full_name",
+    "value": "Alex Rivera"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Alex"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Rivera"
+  },
+  {
+    "slug": "profile.email",
+    "value": "alex.rivera@example.test"
+  },
+  {
+    "slug": "profile.badge_name",
+    "value": "Alex"
+  },
+  {
+    "slug": "profile.company",
+    "value": "Northstar Labs"
+  },
+  {
+    "slug": "profile.title",
+    "value": "Senior Product Engineer"
+  },
+  {
     "slug": "food.dietary_restrictions",
     "value": ["peanuts", "shellfish"]
   },

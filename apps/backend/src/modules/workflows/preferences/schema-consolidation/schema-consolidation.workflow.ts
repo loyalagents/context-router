@@ -10,6 +10,8 @@ import {
 import { ConsolidationResponseSchema } from './schema-consolidation.schema';
 import { buildSchemaConsolidationPrompt } from './schema-consolidation.prompt';
 
+const PROTECTED_SCHEMA_PREFIXES = ['profile.'];
+
 export interface SchemaConsolidationWorkflowInput extends WorkflowInput {
   clientKey: string;
   filterAccessibleSlugs?: PreferenceSlugAccessFilter;
@@ -121,6 +123,14 @@ export class SchemaConsolidationWorkflow
 
           // Drop groups with < 2 valid unique slugs
           if (validSlugs.length < 2) {
+            continue;
+          }
+
+          if (
+            validSlugs.some((slug) =>
+              PROTECTED_SCHEMA_PREFIXES.some((prefix) => slug.startsWith(prefix)),
+            )
+          ) {
             continue;
           }
 

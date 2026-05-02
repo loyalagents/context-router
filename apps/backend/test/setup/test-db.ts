@@ -101,6 +101,7 @@ export async function seedPreferenceDefinitions(
       namespace: "GLOBAL",
       slug,
       ownerUserId: null,
+      displayName: catalogDef.displayName ?? null,
       description: catalogDef.description,
       valueType: VALUE_TYPE_MAP[catalogDef.valueType],
       scope: SCOPE_MAP[catalogDef.scope],

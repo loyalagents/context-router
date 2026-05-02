@@ -33,6 +33,7 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         id
         slug
         namespace
+        displayName
         ownerUserId
         description
         valueType
@@ -66,19 +67,20 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
   `;
 
   describe('preferenceCatalog query', () => {
-    it('should return all 12 core preference definitions', async () => {
+    it('should return core preference definitions including profile memory slugs', async () => {
       const response = await graphqlRequest(CATALOG_QUERY).expect(200);
 
       expect(response.body.errors).toBeUndefined();
       const catalog = response.body.data.preferenceCatalog;
       expect(catalog).toBeInstanceOf(Array);
-      expect(catalog.length).toBeGreaterThanOrEqual(12);
+      expect(catalog.length).toBeGreaterThanOrEqual(19);
 
       // Every entry should have all required fields
       catalog.forEach((def: Record<string, unknown>) => {
         expect(def.id).toBeDefined();
         expect(def.slug).toBeDefined();
         expect(def.namespace).toBeDefined();
+        expect(def).toHaveProperty('displayName');
         expect(def.description).toBeDefined();
         expect(def.valueType).toBeDefined();
         expect(def.scope).toBeDefined();
@@ -87,9 +89,15 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
         expect(def.category).toBeDefined();
       });
 
-      // Verify all 12 core slugs are present
       const slugs = catalog.map((d: { slug: string }) => d.slug);
       const coreSlugs = [
+        'profile.full_name',
+        'profile.first_name',
+        'profile.last_name',
+        'profile.email',
+        'profile.badge_name',
+        'profile.company',
+        'profile.title',
         'system.response_tone',
         'system.response_length',
         'food.dietary_restrictions',
@@ -106,6 +114,30 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
       for (const slug of coreSlugs) {
         expect(slugs).toContain(slug);
       }
+
+      const profileEmail = catalog.find(
+        (d: { slug: string }) => d.slug === 'profile.email',
+      );
+      expect(profileEmail).toMatchObject({
+        displayName: 'Contact Email',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isCore: true,
+        isSensitive: true,
+        category: 'profile',
+      });
+
+      const fullName = catalog.find(
+        (d: { slug: string }) => d.slug === 'profile.full_name',
+      );
+      expect(fullName).toMatchObject({
+        displayName: 'Full Name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        isCore: true,
+        isSensitive: false,
+        category: 'profile',
+      });
     });
 
     it('should filter by category', async () => {
@@ -185,7 +217,7 @@ describe('PreferenceCatalog GraphQL API (e2e)', () => {
       const response = await graphqlRequest(CATALOG_QUERY).expect(200);
       const catalog = response.body.data.preferenceCatalog;
       const globalDefs = catalog.filter((d: { ownerUserId: string | null }) => d.ownerUserId === null);
-      expect(globalDefs.length).toBeGreaterThanOrEqual(12);
+      expect(globalDefs.length).toBeGreaterThanOrEqual(19);
       globalDefs.forEach((def: { namespace: string }) => {
         expect(def.namespace).toBe('GLOBAL');
       });
