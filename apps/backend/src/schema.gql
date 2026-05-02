@@ -159,6 +159,12 @@ enum LocationType {
   WORK
 }
 
+type MatchedPreferenceDefinition {
+  category: String!
+  description: String!
+  slug: String!
+}
+
 type McpAccessEvent {
   clientKey: String!
   correlationId: String!
@@ -463,6 +469,11 @@ type Query {
   preferenceCatalog(category: String): [PreferenceDefinition!]!
 
   """
+  Map a natural-language task to relevant preference slugs, then return matching stored preferences for the authenticated user.
+  """
+  smartSearchPreferences(input: SmartPreferenceSearchInput!): SmartPreferenceSearchResult!
+
+  """
   Get suggested preferences (inbox). With locationId: union of global + location. Without: global only.
   """
   suggestedPreferences(locationId: ID): [Preference!]!
@@ -504,6 +515,24 @@ input SetPreferenceInput {
 
   """The preference value (type depends on slug definition)"""
   value: JSON!
+}
+
+input SmartPreferenceSearchInput {
+  """If true, include SUGGESTED preferences in the result"""
+  includeSuggestions: Boolean
+
+  """Optional location ID for merged location-scoped preferences"""
+  locationId: ID
+
+  """Natural-language task or question to map to relevant preference slugs"""
+  query: String!
+}
+
+type SmartPreferenceSearchResult {
+  matchedActivePreferences: [Preference!]!
+  matchedDefinitions: [MatchedPreferenceDefinition!]!
+  matchedSuggestedPreferences: [Preference!]!
+  queryInterpretation: String!
 }
 
 type SourceMeta {

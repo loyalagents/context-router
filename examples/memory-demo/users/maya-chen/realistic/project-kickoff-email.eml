@@ -1,0 +1,37 @@
+From: Elena Ruiz <elena.ruiz@example.test>
+To: Maya Chen <maya.chen@example.test>, Platform Pilot Team <platform-pilot@example.test>
+Subject: Kickoff notes for assistant setup pilot
+Date: Mon, 20 Apr 2026 10:12:00 -0700
+Message-ID: <assistant-pilot-kickoff-0420@example.test>
+
+Hi team,
+
+Thanks for joining the kickoff. Capturing the notes here so we can keep the
+pilot moving.
+
+Maya Chen is the Engineering Manager sponsor from Signal Harbor's platform
+engineering group. The pilot will focus on code review assistance, release note
+drafting, and triage summaries for internal services. We are not including
+customer-facing automation in this phase.
+
+Known project context:
+
+- Most examples should use TypeScript or React snippets.
+- Backend examples can assume Node.js service conventions.
+- Data examples can use PostgreSQL terminology.
+- The assistant should not update incident docs without human approval.
+
+Open items:
+
+- Elena will gather feedback after the first five trial runs.
+- Jonah will prepare sample PRs.
+- Maya will approve the assistant setup form once the memory fields are filled.
+
+Unrelated notes:
+
+- The Q2 planning review moved to Friday.
+- Design systems office hours are paused next week.
+- The staging environment maintenance window is still Wednesday evening.
+
+Thanks,
+Elena

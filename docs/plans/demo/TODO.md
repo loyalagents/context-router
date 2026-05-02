@@ -1,6 +1,8 @@
 # Demo TODO
 
 - Add a reset-and-seed demo scenario once the desired demo dataset is stable.
+- Add stable Search Lab demo presets backed by seeded preference values once the desired demo dataset is stable.
+- Consider location-aware exact-search snapshot refresh in Search Lab if location-specific comparison becomes important.
 - Add a memory-demo seed runner for `seed-preferences.json`.
 - Add browser automation for static memory-demo forms.
 - Add a second-run memory-demo scenario where MCP already has all values and local fallback is not needed.
