@@ -16,8 +16,8 @@ The intended agent behavior is:
 The demo scales by keeping reusable parts separate:
 
 - `forms/<formId>/` contains one browser form and its field manifest.
-- `users/<userId>/` contains one synthetic profile and one or more memory variants.
-- `scenarios/<scenarioId>/` composes one form, one user, one variant, a prompt, and expected outputs.
+- `users/<userId>/` contains one synthetic profile, one required `simple/` memory baseline, and an optional unconstrained `realistic/` folder.
+- `scenarios/<scenarioId>/` composes one form, one user, the user's `simple/` baseline, a prompt, and expected outputs.
 
 Scenario manifests use stable IDs, not relative paths:
 
@@ -30,7 +30,7 @@ Scenario manifests use stable IDs, not relative paths:
 }
 ```
 
-The scenario directory name is the scenario ID. The prompt is always `scenarios/<scenarioId>/start/prompt.md`. The verifier resolves all other paths from `formId`, `userId`, and `userVariant`.
+The scenario directory name is the scenario ID. The prompt is always `scenarios/<scenarioId>/start/prompt.md`. `userVariant` must be `simple` for now. The verifier resolves all other paths from `formId` and `userId`.
 
 ## Add A Form
 
@@ -45,14 +45,20 @@ Field sources:
 - `mcp-memory`: value comes from MCP or local fallback memory; include `memorySlugs`.
 - `freeform`: optional value supplied by the scenario or left blank.
 
-## Add A User Or Variant
+## Add A User
 
 1. Create or reuse `users/<userId>/profile.json`.
-2. Create `users/<userId>/<variant>/seed-preferences.json`.
-3. Create `users/<userId>/<variant>/local-memory.md`.
-4. Add a short `README.md` to explain what the variant represents.
+2. Create `users/<userId>/simple/seed-preferences.json`.
+3. Create `users/<userId>/simple/local-memory.md`.
+4. Do not add other files to `simple/`. The verifier treats `simple/` as the canonical machine-checkable baseline.
 
 Keep all user data synthetic and non-sensitive.
+
+## Add Realistic Source Data
+
+`users/<userId>/realistic/` is optional and intentionally unconstrained. It can contain any synthetic client-like source material: notes, emails, exports, snippets, or other files a future agent should parse through.
+
+Use `realistic/` to make messy examples derived from the user's `simple/` baseline. Do not point scenarios at `realistic/` yet; scenarios use `simple` until a realistic scenario mode exists.
 
 ## Add A Scenario
 
@@ -95,7 +101,7 @@ If the same slug appears in both files, the value from `written-preferences.json
 Full demo automation is intentionally not part of this fixture pass. Today, a manual run is:
 
 1. Start the backend and any MCP-enabled client you want to test.
-2. Seed MCP for the test user from `users/<userId>/<variant>/seed-preferences.json`. This is currently manual; there is no repo-owned seed runner yet.
+2. Seed MCP for the test user from `users/<userId>/simple/seed-preferences.json`. This is currently manual; there is no repo-owned seed runner yet.
 3. Open `forms/<formId>/form.html` in a browser.
 4. Give the MCP-enabled agent `scenarios/<scenarioId>/start/prompt.md`.
 5. Let the agent read the scenario manifest, profile, field manifest, and local memory only as instructed.
@@ -110,7 +116,7 @@ Read `examples/memory-demo/README.md` and `examples/memory-demo/AGENTS.md`.
 
 Add a new memory-demo scenario for: <describe the scenario>.
 
-Reuse existing forms and users where reasonable. If new fixtures are needed, create only synthetic, non-sensitive data using the documented folder conventions and templates. Prefer existing preference slugs from `apps/backend/src/config/preferences.catalog.ts`.
+Reuse existing forms and users where reasonable. If new fixtures are needed, create only synthetic, non-sensitive data using the documented folder conventions and templates. Every new user needs `profile.json`, `simple/local-memory.md`, and `simple/seed-preferences.json`; `realistic/` is optional and can contain arbitrary synthetic source data. Prefer existing preference slugs from `apps/backend/src/config/preferences.catalog.ts`.
 
 Do not edit backend or web app code. Do not add MCP seeding, browser automation, scaffolding, catalogs, or generated forms.
 

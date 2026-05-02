@@ -13,12 +13,13 @@ Update `examples/memory-demo` so a colleague or coding agent can add scenarios w
     "userVariant": "simple"
   }
   ```
-  The scenario directory name is the canonical scenario ID. The prompt is always `start/prompt.md`. Form, profile, seed preferences, and local memory paths are resolved from `formId`, `userId`, and `userVariant`.
+  The scenario directory name is the canonical scenario ID. The prompt is always `start/prompt.md`. `userVariant` must be `simple` for now. Form, profile, seed preferences, and local memory paths are resolved from `formId` and `userId`.
 
 - Rewrite `examples/memory-demo/README.md` as the human-facing guide:
   - explain what the demo proves: MCP memory first, local fallback only for missing values, durable backfill, no invented values
   - explain how `forms/`, `users/`, and `scenarios/` scale independently
-  - include step-by-step “how to add a form/user/variant/scenario”
+  - include step-by-step “how to add a form/user/scenario”
+  - document the user contract: every user has `profile.json` and required `simple/` files only; optional `realistic/` can contain arbitrary synthetic source material and is not runnable yet
   - document valid preference slug provenance: prefer existing backend catalog slugs from `apps/backend/src/config/preferences.catalog.ts`; do not invent new slugs unless the demo explicitly needs future user-defined schema behavior
   - document expected output relationship: `final-preferences = seed-preferences + written-preferences`, with written values replacing seed values for duplicate slugs
   - add a concrete “how to manually run a scenario” section that describes current manual steps and clearly labels any MCP seeding/browser steps that are not automated yet
@@ -30,7 +31,7 @@ Update `examples/memory-demo` so a colleague or coding agent can add scenarios w
 
 - Add minimal templates under `examples/memory-demo/templates/`:
   - form template with `form.html` and `fields.json`
-  - user template with `profile.json`, one variant, `seed-preferences.json`, `local-memory.md`, and a short variant `README.md`
+  - user template with `profile.json`, required `simple/seed-preferences.json`, required `simple/local-memory.md`, and optional unconstrained `realistic/` source-data notes
   - scenario template with `start/scenario.json`, `start/prompt.md`, and placeholder expected JSON files
   - templates must use obvious placeholders like `REPLACE_WITH_FORM_ID`, and `fields.json` should show examples of `profile`, `mcp-memory`, and `freeform`
 
@@ -46,7 +47,8 @@ Update `examples/memory-demo` so a colleague or coding agent can add scenarios w
 
 ## Verifier Behavior
 - Discover real scenarios from `scenarios/*/start/scenario.json`; ignore `templates/`.
-- Validate required scenario fields: `description`, `formId`, `userId`, `userVariant`.
+- Validate required scenario fields: `description`, `formId`, `userId`, `userVariant`, and require `userVariant: "simple"`.
+- Validate every user has `profile.json` and `simple/` with only `local-memory.md` and `seed-preferences.json`, ignoring system dotfiles.
 - Resolve and check conventional paths for form HTML, fields manifest, profile, seed preferences, local memory, prompt, and expected outputs.
 - Check every `fields.json` field ID exists as an HTML element ID in `form.html`.
 - Check `filled-form.json` has exactly the form field IDs.
@@ -81,5 +83,6 @@ Update `examples/memory-demo` so a colleague or coding agent can add scenarios w
 - Conventions are preferred over path configuration for v1.
 - The first pass should optimize for colleague and coding-agent authoring, not full demo automation.
 - README remains the human guide; local agent files are short instruction entrypoints.
+- `simple/` is the runnable, machine-checkable user baseline; `realistic/` is optional arbitrary synthetic source data for future parsing scenarios.
 - Valid demo slugs should come from the backend preference catalog by default, but enforcement is deferred.
 - All demo data remains synthetic and non-sensitive.

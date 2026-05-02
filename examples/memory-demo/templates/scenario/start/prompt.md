@@ -2,7 +2,7 @@
 
 Fill the REPLACE_WITH_FORM_NAME form for REPLACE_WITH_SYNTHETIC_USER_NAME.
 
-Use the scenario manifest to find the form, field manifest, user profile, seed preferences, and local memory file.
+Use the scenario manifest to find the form, field manifest, user profile, seed preferences, and local memory file. Scenarios currently use the user's `simple/` memory baseline.
 
 The expected files under `../expected/` are verifier outputs. Do not read or use expected files while filling the form.
 

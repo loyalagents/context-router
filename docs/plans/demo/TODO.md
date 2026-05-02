@@ -5,6 +5,7 @@
 - Add browser automation for static memory-demo forms.
 - Add a second-run memory-demo scenario where MCP already has all values and local fallback is not needed.
 - Add a memory-demo permission-denied scenario to prove hidden MCP preferences are not used.
+- Define a future realistic memory-demo scenario mode for arbitrary synthetic client-like source data.
 - Consider a memory-demo scenario scaffolding script once multiple examples exist.
 - Consider a `CATALOG.md` or generated inventory after more forms, users, and scenarios exist.
 - Consider generating form HTML from `fields.json` if form/field drift becomes common.

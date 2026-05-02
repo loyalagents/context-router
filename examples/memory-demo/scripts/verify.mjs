@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const demoRoot = resolve(scriptDir, '..');
 const errors = [];
+const requiredSimpleFiles = new Set(['local-memory.md', 'seed-preferences.json']);
 
 function displayPath(filePath) {
   return relative(demoRoot, filePath);
@@ -127,6 +128,64 @@ async function listScenarioIds() {
     .sort();
 }
 
+async function listUserIds() {
+  const usersDir = join(demoRoot, 'users');
+  if (!requireFile(usersDir, 'users directory')) {
+    return [];
+  }
+
+  const entries = await readdir(usersDir, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+async function validateUser(userId) {
+  const userDir = join(demoRoot, 'users', userId);
+  const simpleDir = join(userDir, 'simple');
+  const profilePath = join(userDir, 'profile.json');
+  const simpleMemoryPath = join(simpleDir, 'local-memory.md');
+  const simpleSeedPath = join(simpleDir, 'seed-preferences.json');
+
+  const profile = await readJson(profilePath, `user "${userId}" profile`);
+  if (profile && (typeof profile !== 'object' || Array.isArray(profile))) {
+    addError(`user "${userId}" profile must be a JSON object`);
+  }
+
+  if (!requireFile(simpleDir, `user "${userId}" simple directory`)) {
+    return;
+  }
+
+  const simpleEntries = await readdir(simpleDir, { withFileTypes: true });
+  const visibleEntries = simpleEntries.filter((entry) => !entry.name.startsWith('.'));
+  const visibleNames = new Set(visibleEntries.map((entry) => entry.name));
+
+  for (const requiredFile of requiredSimpleFiles) {
+    if (!visibleNames.has(requiredFile)) {
+      addError(`user "${userId}" simple/ is missing ${requiredFile}`);
+    }
+  }
+
+  for (const entry of visibleEntries) {
+    if (!requiredSimpleFiles.has(entry.name)) {
+      addError(
+        `user "${userId}" simple/ has unsupported entry "${entry.name}"; only local-memory.md and seed-preferences.json are allowed`,
+      );
+    }
+  }
+
+  await readText(simpleMemoryPath, `user "${userId}" simple local memory`);
+  const seedPreferences = await readJson(
+    simpleSeedPath,
+    `user "${userId}" simple seed preferences`,
+  );
+  validatePreferenceArray(
+    seedPreferences,
+    `user "${userId}" simple seed-preferences.json`,
+  );
+}
+
 async function validateScenario(scenarioId) {
   const scenarioDir = join(demoRoot, 'scenarios', scenarioId);
   const scenarioPath = join(scenarioDir, 'start', 'scenario.json');
@@ -150,6 +209,13 @@ async function validateScenario(scenarioId) {
     if (!isNonEmptyString(scenario[field])) {
       addError(`scenario "${scenarioId}" requires non-empty "${field}"`);
     }
+  }
+
+  if (isNonEmptyString(scenario.userVariant) && scenario.userVariant !== 'simple') {
+    addError(
+      `scenario "${scenarioId}" userVariant must be "simple"; realistic/ is optional source data and is not runnable yet`,
+    );
+    return;
   }
 
   if (
@@ -307,9 +373,14 @@ async function validateScenario(scenarioId) {
 }
 
 const scenarioIds = await listScenarioIds();
+const userIds = await listUserIds();
 
 if (scenarioIds.length === 0) {
   addError('No scenarios found under scenarios/*/start/scenario.json');
+}
+
+for (const userId of userIds) {
+  await validateUser(userId);
 }
 
 for (const scenarioId of scenarioIds) {
@@ -324,4 +395,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Memory demo verification passed for ${scenarioIds.length} scenario(s).`);
+console.log(
+  `Memory demo verification passed for ${scenarioIds.length} scenario(s) and ${userIds.length} user(s).`,
+);
