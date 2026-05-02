@@ -24,6 +24,7 @@ import { PermissionGrantModule } from './modules/permission-grant/permission-gra
 import { McpModule } from './mcp/mcp.module';
 import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
 import { ResetModule } from './modules/reset/reset.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { ResetModule } from './modules/reset/reset.module';
     PermissionGrantModule,
     McpModule,
     VertexAiModule,
+    WorkflowsModule,
     ResetModule,
   ],
 })
