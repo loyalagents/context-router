@@ -1,0 +1,37 @@
+{
+  "exportedAt": "2026-04-15T17:42:00Z",
+  "source": "signal-harbor-identity-demo",
+  "account": {
+    "id": "usr_demo_maya_chen",
+    "status": "active",
+    "locale": "en-US",
+    "timezone": "America/Los_Angeles",
+    "marketingOptIn": false
+  },
+  "person": {
+    "legalName": "Maya Chen",
+    "displayName": "Maya",
+    "primaryEmail": "maya.chen@example.test",
+    "alternateEmails": ["maya.c@example.test"],
+    "phone": null
+  },
+  "employment": {
+    "organization": "Signal Harbor",
+    "department": "Platform Engineering",
+    "title": "Engineering Manager",
+    "manager": "Riley Patel",
+    "office": "Remote - Pacific"
+  },
+  "productSettings": {
+    "theme": "system",
+    "defaultDashboard": "engineering",
+    "sendWeeklyDigest": true,
+    "showBetaFeatures": true,
+    "dashboardWidgets": ["build-health", "review-load", "incident-watch"]
+  },
+  "staleFields": {
+    "previousCompany": "North Pier Analytics",
+    "previousTitle": "Staff Software Engineer",
+    "previousEmail": "maya.chen-old@example.test"
+  }
+}

@@ -1,0 +1,17 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Context Router Demo//Synthetic Calendar//EN
+BEGIN:VEVENT
+UID:assistant-setup-review-20260422@example.test
+DTSTAMP:20260420T170000Z
+DTSTART:20260422T180000Z
+DTEND:20260422T183000Z
+SUMMARY:Assistant setup review
+ORGANIZER;CN=Elena Ruiz:MAILTO:elena.ruiz@example.test
+ATTENDEE;CN=Maya Chen;ROLE=REQ-PARTICIPANT:MAILTO:maya.chen@example.test
+ATTENDEE;CN=Jonah Price;ROLE=REQ-PARTICIPANT:MAILTO:jonah.price@example.test
+DESCRIPTION:Maya Chen is joining as Engineering Manager for Signal Harbor platform engineering. Review assistant setup form, confirm memory fields, and note follow-up tasks. This event also covers rollout timing, sample PR selection, and enablement notes.
+LOCATION:Video Call
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,6 @@
+participant_id,full_name,email,company,title,preferred_update_channel,assistant_tone,response_length,primary_stack,notes
+demo-101,Noah Patel,noah.patel@example.test,Harbor Finch,Product Designer,email,professional,brief,Figma; React,"Needs design review examples"
+demo-102,Maya Chen,maya.chen@example.test,Signal Harbor,Engineering Manager,slack and email,concise,moderate,TypeScript; React; Node.js; PostgreSQL,"Wants coding help that is direct and grounded in repo context"
+demo-103,Leah Stone,leah.stone@example.test,Northline Labs,Data Lead,email,professional,detailed,Python; dbt; BigQuery,"Interested in dashboard narrative summaries"
+demo-104,Arun Mehta,arun.mehta@example.test,Civic Grove,Support Ops Manager,slack,casual,brief,Zendesk; SQL,"Focused on support queue triage"
+demo-105,Iris Blake,iris.blake@example.test,Blue Orchard,QA Manager,email,concise,moderate,Playwright; TypeScript,"Asked for flaky-test reporting examples"
