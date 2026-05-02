@@ -1,0 +1,85 @@
+{
+  "$schema": "../../schemas/fields.schema.json",
+  "id": "ai-assistant-setup",
+  "fields": [
+    {
+      "id": "fullName",
+      "label": "Full name",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "fullName",
+      "required": true
+    },
+    {
+      "id": "email",
+      "label": "Email",
+      "inputType": "email",
+      "source": "profile",
+      "profilePath": "email",
+      "required": true
+    },
+    {
+      "id": "company",
+      "label": "Organization",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "company",
+      "required": true
+    },
+    {
+      "id": "title",
+      "label": "Role",
+      "inputType": "text",
+      "source": "profile",
+      "profilePath": "title",
+      "required": true
+    },
+    {
+      "id": "responseTone",
+      "label": "Preferred response tone",
+      "inputType": "select",
+      "source": "mcp-memory",
+      "memorySlugs": ["system.response_tone"],
+      "required": true
+    },
+    {
+      "id": "responseLength",
+      "label": "Preferred response length",
+      "inputType": "select",
+      "source": "mcp-memory",
+      "memorySlugs": ["system.response_length"],
+      "required": true
+    },
+    {
+      "id": "preferredChannels",
+      "label": "Preferred contact channels",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["communication.preferred_channels"],
+      "required": true
+    },
+    {
+      "id": "technicalStack",
+      "label": "Technical stack",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["dev.tech_stack"],
+      "required": true
+    },
+    {
+      "id": "codingStyle",
+      "label": "Coding style preferences",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["dev.coding_style"],
+      "required": true
+    },
+    {
+      "id": "setupNotes",
+      "label": "Setup notes",
+      "inputType": "textarea",
+      "source": "freeform",
+      "required": false
+    }
+  ]
+}

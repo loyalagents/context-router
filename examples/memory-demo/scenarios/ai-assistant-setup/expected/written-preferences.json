@@ -1,0 +1,10 @@
+[
+  {
+    "slug": "system.response_length",
+    "value": "moderate"
+  },
+  {
+    "slug": "dev.coding_style",
+    "value": "direct explanations with runnable examples, explicit tradeoffs, and minimal ceremony"
+  }
+]

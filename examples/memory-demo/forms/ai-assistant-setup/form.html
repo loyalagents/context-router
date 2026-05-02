@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Assistant Setup</title>
+    <style>
+      body {
+        color: #1f2937;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+        margin: 0;
+        padding: 32px;
+      }
+
+      main {
+        max-width: 760px;
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+      }
+
+      label {
+        display: grid;
+        font-weight: 600;
+        gap: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font: inherit;
+        padding: 10px 12px;
+      }
+
+      textarea {
+        min-height: 84px;
+      }
+
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 6px;
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        justify-self: start;
+        padding: 10px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AI Assistant Setup</h1>
+      <form id="ai-assistant-setup-form" name="aiAssistantSetup">
+        <label for="fullName">
+          Full name
+          <input id="fullName" name="fullName" type="text" autocomplete="name" required>
+        </label>
+
+        <label for="email">
+          Email
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </label>
+
+        <label for="company">
+          Organization
+          <input id="company" name="company" type="text" autocomplete="organization" required>
+        </label>
+
+        <label for="title">
+          Role
+          <input id="title" name="title" type="text" autocomplete="organization-title" required>
+        </label>
+
+        <label for="responseTone">
+          Preferred response tone
+          <select id="responseTone" name="responseTone" required>
+            <option value="">Select one</option>
+            <option value="casual">casual</option>
+            <option value="professional">professional</option>
+            <option value="concise">concise</option>
+            <option value="enthusiastic">enthusiastic</option>
+          </select>
+        </label>
+
+        <label for="responseLength">
+          Preferred response length
+          <select id="responseLength" name="responseLength" required>
+            <option value="">Select one</option>
+            <option value="brief">brief</option>
+            <option value="moderate">moderate</option>
+            <option value="detailed">detailed</option>
+          </select>
+        </label>
+
+        <label for="preferredChannels">
+          Preferred contact channels
+          <textarea id="preferredChannels" name="preferredChannels" required></textarea>
+        </label>
+
+        <label for="technicalStack">
+          Technical stack
+          <textarea id="technicalStack" name="technicalStack" required></textarea>
+        </label>
+
+        <label for="codingStyle">
+          Coding style preferences
+          <textarea id="codingStyle" name="codingStyle" required></textarea>
+        </label>
+
+        <label for="setupNotes">
+          Setup notes
+          <textarea id="setupNotes" name="setupNotes"></textarea>
+        </label>
+
+        <button id="saveAssistantSetup" name="saveAssistantSetup" type="submit">
+          Save setup
+        </button>
+      </form>
+    </main>
+  </body>
+</html>

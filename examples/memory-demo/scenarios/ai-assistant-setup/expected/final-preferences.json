@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "system.response_tone",
+    "value": "concise"
+  },
+  {
+    "slug": "communication.preferred_channels",
+    "value": ["slack", "email"]
+  },
+  {
+    "slug": "dev.tech_stack",
+    "value": ["TypeScript", "React", "Node.js", "PostgreSQL"]
+  },
+  {
+    "slug": "system.response_length",
+    "value": "moderate"
+  },
+  {
+    "slug": "dev.coding_style",
+    "value": "direct explanations with runnable examples, explicit tradeoffs, and minimal ceremony"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "fullName": "Maya Chen",
+  "email": "maya.chen@example.test",
+  "company": "Signal Harbor",
+  "title": "Engineering Manager",
+  "responseTone": "concise",
+  "responseLength": "moderate",
+  "preferredChannels": "slack, email",
+  "technicalStack": "TypeScript, React, Node.js, PostgreSQL",
+  "codingStyle": "direct explanations with runnable examples, explicit tradeoffs, and minimal ceremony",
+  "setupNotes": ""
+}

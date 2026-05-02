@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../schemas/scenario.schema.json",
+  "description": "Fill an AI assistant setup form for Maya Chen using MCP memory first and local fallback memory only for missing values.",
+  "formId": "ai-assistant-setup",
+  "userId": "maya-chen",
+  "userVariant": "simple"
+}
