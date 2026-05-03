@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eventProfile exportedAt="2026-04-21T13:40:00-07:00" source="partner-registration-demo">
+  <identity>
+    <fullName>Alex Rivera</fullName>
+    <firstName>Alex</firstName>
+    <lastName>Rivera</lastName>
+    <badgeName>Alex</badgeName>
+    <email>alex.rivera@example.test</email>
+  </identity>
+  <work>
+    <company>Northstar Labs</company>
+    <title>Senior Product Engineer</title>
+    <department>Product Engineering</department>
+  </work>
+  <communication>
+    <channel priority="1">email</channel>
+    <channel priority="2">slack</channel>
+  </communication>
+  <food>
+    <meal>vegetarian</meal>
+    <restriction>peanuts</restriction>
+    <restriction>shellfish</restriction>
+    <cuisine>Japanese</cuisine>
+    <cuisine>Mediterranean</cuisine>
+    <spiceTolerance>medium</spiceTolerance>
+  </food>
+  <travel>
+    <seatPreference>aisle</seatPreference>
+  </travel>
+  <technicalInterests>
+    <topic>TypeScript</topic>
+    <topic>Next.js</topic>
+    <topic>NestJS</topic>
+    <topic>PostgreSQL</topic>
+    <topic>AI tooling</topic>
+  </technicalInterests>
+  <noise>
+    <oldCompany>Brightline Systems</oldCompany>
+    <oldTitle>Product Engineer</oldTitle>
+  </noise>
+</eventProfile>

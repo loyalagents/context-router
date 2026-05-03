@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Alex Rivera
+N:Rivera;Alex;;;
+NICKNAME:Alex
+ORG:Northstar Labs;Product Engineering
+TITLE:Senior Product Engineer
+EMAIL;TYPE=work:alex.rivera@example.test
+NOTE:Badge name Alex. Preferred channels email and Slack. Vegetarian meals; avoid peanuts and shellfish. Prefers aisle seat for travel.
+END:VCARD

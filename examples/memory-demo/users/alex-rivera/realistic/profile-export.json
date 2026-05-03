@@ -1,0 +1,49 @@
+{
+  "exportedAt": "2026-04-21T16:18:00Z",
+  "source": "northstar-labs-profile-demo",
+  "account": {
+    "id": "usr_demo_alex_rivera",
+    "status": "active",
+    "locale": "en-US",
+    "timezone": "America/Los_Angeles",
+    "marketingOptIn": false
+  },
+  "person": {
+    "legalName": "Alex Rivera",
+    "displayName": "Alex",
+    "badgeName": "Alex",
+    "primaryEmail": "alex.rivera@example.test",
+    "alternateEmails": ["a.rivera@example.test"],
+    "phone": null
+  },
+  "employment": {
+    "organization": "Northstar Labs",
+    "department": "Product Engineering",
+    "title": "Senior Product Engineer",
+    "office": "Remote - Pacific",
+    "manager": "Jordan Ellis"
+  },
+  "preferences": {
+    "communication": {
+      "preferredChannels": ["email", "slack"],
+      "sameDayChannel": "slack",
+      "summaryChannel": "email"
+    },
+    "travel": {
+      "seatPreference": "aisle",
+      "hotelLoyaltyNumber": null
+    },
+    "food": {
+      "dietaryRestrictions": ["peanuts", "shellfish"],
+      "eventMealPreference": "vegetarian",
+      "favoriteCuisines": ["Japanese", "Mediterranean"],
+      "spiceTolerance": "medium"
+    },
+    "conferenceTopics": ["TypeScript", "Next.js", "NestJS", "PostgreSQL", "AI tooling"]
+  },
+  "staleFields": {
+    "previousCompany": "Brightline Systems",
+    "previousTitle": "Product Engineer",
+    "previousEmail": "alex.rivera-old@example.test"
+  }
+}

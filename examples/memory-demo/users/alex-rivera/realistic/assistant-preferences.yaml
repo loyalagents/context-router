@@ -1,0 +1,40 @@
+exported_at: "2026-04-21T09:05:00-07:00"
+owner:
+  display_name: Alex
+  full_name: Alex Rivera
+  email: alex.rivera@example.test
+workspace:
+  organization: Northstar Labs
+  department: Product Engineering
+  role: Senior Product Engineer
+assistant_defaults:
+  communication_channels:
+    - email
+    - slack
+  event_badge_name: Alex
+  travel:
+    preferred_seat: aisle
+  food:
+    allergies:
+      - peanuts
+      - shellfish
+    event_meal: vegetarian
+    cuisines:
+      - Japanese
+      - Mediterranean
+    spice_tolerance: medium
+technical_interests:
+  conference_topics:
+    - TypeScript
+    - Next.js
+    - NestJS
+    - PostgreSQL
+    - AI tooling
+noise:
+  recent_forms:
+    - vendor-risk-questionnaire
+    - team-onsite-rsvp
+    - ai-tooling-summit-registration
+  disabled_notifications:
+    - weekly-product-digest
+    - old-beta-invite

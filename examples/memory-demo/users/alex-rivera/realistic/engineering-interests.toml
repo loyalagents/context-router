@@ -1,0 +1,31 @@
+exported_at = "2026-04-21T12:10:00-07:00"
+source = "conference-topic-picker-demo"
+
+[identity]
+full_name = "Alex Rivera"
+badge_name = "Alex"
+email = "alex.rivera@example.test"
+
+[work]
+company = "Northstar Labs"
+title = "Senior Product Engineer"
+department = "Product Engineering"
+
+[communication]
+preferred_channels = ["email", "slack"]
+formal_updates = "email"
+same_day_questions = "slack"
+
+[travel]
+seat_preference = "aisle"
+
+[food]
+meal_preference = "vegetarian"
+dietary_restrictions = ["peanuts", "shellfish"]
+favorite_cuisines = ["Japanese", "Mediterranean"]
+spice_tolerance = "medium"
+
+[conference]
+primary_topics = ["TypeScript", "Next.js", "NestJS", "PostgreSQL", "AI tooling"]
+avoid_topics = ["generic executive leadership", "sales enablement"]
+notes = "Alex prefers technical sessions with concrete implementation details."
