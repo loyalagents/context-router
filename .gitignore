@@ -67,7 +67,7 @@ apps/web/lib/generated/
 .git
 
 # cloud
-cloudrun.env
-cloudrun.prod.env
+cloudrun*.env
+!cloudrun.env.example
 
 scratchpad.txt

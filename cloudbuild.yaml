@@ -9,5 +9,4 @@ steps:
 images:
   - '$_IMAGE_TAG'
 
-
-# gcloud builds submit --config cloudbuild.yaml --substitutions=_IMAGE_TAG=$IMAGE_URI .
+# See docs/useful/CLOUD_RUN_DEPLOY.md for the zsh/bash deploy flow.

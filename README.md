@@ -89,6 +89,7 @@ Important backend env notes:
 - `apps/backend/.env` is the container-oriented baseline file used by `docker compose`
 - The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides
 - Authenticated flows require valid `AUTH0_*` values in both apps
+- Invite-only login and signup gating is configured in Auth0 Actions; see [`docs/useful/AUTH0_LOGIN_GATING.md`](docs/useful/AUTH0_LOGIN_GATING.md)
 - Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
 - MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs
 
