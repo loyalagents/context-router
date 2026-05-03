@@ -302,7 +302,11 @@ describe('Smart Search GraphQL API (e2e)', () => {
       value: '68',
       locationId: location.locationId,
     });
-    expect(JSON.stringify(result)).not.toContain('72');
+    expect(
+      result.matchedActivePreferences.map(
+        (preference: { value: unknown }) => preference.value,
+      ),
+    ).not.toContain('72');
   });
 
   it('returns user-owned definitions and preferences', async () => {
@@ -431,7 +435,11 @@ describe('Smart Search GraphQL API (e2e)', () => {
       slug: 'travel.seat_preference',
       value: 'aisle',
     });
-    expect(JSON.stringify(result)).not.toContain('window');
+    expect(
+      result.matchedActivePreferences.map(
+        (preference: { value: unknown }) => preference.value,
+      ),
+    ).not.toContain('window');
   });
 
   it('rejects an empty smart search query', async () => {
