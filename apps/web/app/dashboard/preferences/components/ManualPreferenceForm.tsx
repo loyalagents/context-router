@@ -9,6 +9,11 @@ interface Preference {
   value: any;
   status: string;
   sourceType: string;
+  lastModifiedBy?: {
+    actorType: string;
+    actorClientKey: string | null;
+    origin: string;
+  } | null;
   confidence: number | null;
   locationId: string | null;
   category?: string;
@@ -47,6 +52,11 @@ const SET_PREFERENCE_MUTATION = `
       value
       status
       sourceType
+      lastModifiedBy {
+        actorType
+        actorClientKey
+        origin
+      }
       confidence
       locationId
       category

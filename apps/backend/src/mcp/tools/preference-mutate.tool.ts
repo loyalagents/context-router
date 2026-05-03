@@ -851,6 +851,7 @@ export class PreferenceMutateTool implements McpToolInterface {
       value: pref.value,
       status: pref.status,
       sourceType: pref.sourceType,
+      lastModifiedBy: pref.lastModifiedBy ?? null,
       confidence: pref.confidence,
       locationId: pref.locationId,
       category: pref.category ?? pref.slug?.split('.')[0],

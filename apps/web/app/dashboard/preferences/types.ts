@@ -1,3 +1,9 @@
+export interface PreferenceAttribution {
+  actorType: string;
+  actorClientKey: string | null;
+  origin: string;
+}
+
 export interface Preference {
   id: string;
   slug: string;
@@ -5,6 +11,7 @@ export interface Preference {
   value: any;
   status: string;
   sourceType: string;
+  lastModifiedBy?: PreferenceAttribution | null;
   confidence: number | null;
   locationId: string | null;
   category?: string;

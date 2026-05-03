@@ -264,6 +264,11 @@ describe("PreferenceAuditService (integration)", () => {
       sourceType: "INFERRED",
       confidence: 0.91,
       evidence: { snippets: ["peanut allergy"] },
+      lastModifiedBy: {
+        actorType: "MCP_CLIENT",
+        actorClientKey: "codex",
+        origin: "MCP",
+      },
       createdAt: new Date("2026-04-18T01:00:00.000Z"),
       updatedAt: new Date("2026-04-18T02:00:00.000Z"),
       category: "food",
@@ -299,6 +304,11 @@ describe("PreferenceAuditService (integration)", () => {
       sourceType: "INFERRED",
       confidence: 0.91,
       evidence: { snippets: ["peanut allergy"] },
+      lastModifiedBy: {
+        actorType: "MCP_CLIENT",
+        actorClientKey: "codex",
+        origin: "MCP",
+      },
       createdAt: "2026-04-18T01:00:00.000Z",
       updatedAt: "2026-04-18T02:00:00.000Z",
     });

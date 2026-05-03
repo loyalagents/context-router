@@ -33,6 +33,12 @@ export interface MutationContext {
   evidence?: unknown;
 }
 
+export interface PreferenceMutationAttribution {
+  actorType: AuditActorType;
+  actorClientKey?: string | null;
+  origin: AuditOrigin;
+}
+
 export interface PreferenceWriteResult<T> {
   result: T;
   beforeState: T | null;

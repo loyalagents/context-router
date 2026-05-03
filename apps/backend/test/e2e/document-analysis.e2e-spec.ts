@@ -396,6 +396,11 @@ describe('Document Analysis API (e2e)', () => {
                 id
                 slug
                 value
+                lastModifiedBy {
+                  actorType
+                  actorClientKey
+                  origin
+                }
               }
             }
           `,
@@ -418,6 +423,11 @@ describe('Document Analysis API (e2e)', () => {
       expect(response.body.data.applyPreferenceSuggestions[0].value).toBe(
         'professional',
       );
+      expect(response.body.data.applyPreferenceSuggestions[0].lastModifiedBy).toEqual({
+        actorType: 'USER',
+        actorClientKey: null,
+        origin: 'DOCUMENT_ANALYSIS',
+      });
 
       // Verify the preference was updated by querying for it
       const getResponse = await request(app.getHttpServer())
@@ -429,6 +439,11 @@ describe('Document Analysis API (e2e)', () => {
                 id
                 slug
                 value
+                lastModifiedBy {
+                  actorType
+                  actorClientKey
+                  origin
+                }
               }
             }
           `,
@@ -439,6 +454,11 @@ describe('Document Analysis API (e2e)', () => {
         (p: any) => p.slug === 'system.response_tone',
       );
       expect(tonePref.value).toBe('professional');
+      expect(tonePref.lastModifiedBy).toEqual({
+        actorType: 'USER',
+        actorClientKey: null,
+        origin: 'DOCUMENT_ANALYSIS',
+      });
     });
 
     it('should handle mixed CREATE and UPDATE operations', async () => {

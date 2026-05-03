@@ -28,7 +28,10 @@ import {
   validateConfidence,
 } from "./preference.validation";
 import { canonicalizePreferenceValue } from "./preference-value-normalization";
-import { MutationContext } from "../audit/audit.types";
+import {
+  MutationContext,
+  PreferenceMutationAttribution,
+} from "../audit/audit.types";
 import { PreferenceAuditService } from "../audit/preference-audit.service";
 import { buildPreferenceAuditSnapshot } from "../audit/snapshot-builders";
 
@@ -43,6 +46,16 @@ export class PreferenceService {
     private prisma: PrismaService,
     private preferenceAuditService: PreferenceAuditService,
   ) {}
+
+  private lastModifiedBy(
+    context: MutationContext,
+  ): PreferenceMutationAttribution {
+    return {
+      actorType: context.actorType,
+      actorClientKey: context.actorClientKey ?? null,
+      origin: context.origin,
+    };
+  }
 
   /**
    * Validates a slug and throws appropriate errors if invalid.
@@ -157,6 +170,7 @@ export class PreferenceService {
             confidence: context.confidence,
             evidence: context.evidence,
           },
+          this.lastModifiedBy(context),
           tx,
         )
         .then(async (result) => {
@@ -242,6 +256,7 @@ export class PreferenceService {
             confidence: input.confidence,
             evidence: input.evidence,
           },
+          this.lastModifiedBy(context),
           tx,
         )
         .then(async (result) => {
@@ -376,6 +391,7 @@ export class PreferenceService {
           confidence: suggestion.confidence,
           evidence: suggestion.evidence,
         },
+        this.lastModifiedBy(context),
         tx,
       );
 

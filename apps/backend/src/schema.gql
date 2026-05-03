@@ -281,6 +281,9 @@ type Preference {
   """Evidence/provenance metadata"""
   evidence: JSON
   id: ID!
+
+  """Actor that most recently modified the preference row"""
+  lastModifiedBy: PreferenceAttribution
   locationId: String
 
   """The preference slug (e.g., "food.dietary_restrictions")"""
@@ -296,6 +299,12 @@ type Preference {
 
   """The preference value"""
   value: JSON!
+}
+
+type PreferenceAttribution {
+  actorClientKey: String
+  actorType: AuditActorType!
+  origin: AuditOrigin!
 }
 
 type PreferenceAuditEvent {

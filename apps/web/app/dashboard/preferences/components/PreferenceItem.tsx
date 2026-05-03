@@ -9,6 +9,11 @@ interface Preference {
   value: any;
   status: string;
   sourceType: string;
+  lastModifiedBy?: {
+    actorType: string;
+    actorClientKey: string | null;
+    origin: string;
+  } | null;
   confidence: number | null;
   locationId: string | null;
   category?: string;
@@ -33,6 +38,11 @@ const SET_PREFERENCE_MUTATION = `
       value
       status
       sourceType
+      lastModifiedBy {
+        actorType
+        actorClientKey
+        origin
+      }
       confidence
       locationId
       category
@@ -50,6 +60,28 @@ const DELETE_PREFERENCE_MUTATION = `
     }
   }
 `;
+
+function formatLastModifiedBy(
+  attribution: Preference['lastModifiedBy'],
+): string | null {
+  if (!attribution) {
+    return null;
+  }
+
+  if (attribution.origin === 'DOCUMENT_ANALYSIS') {
+    return 'Modified by document analysis';
+  }
+
+  if (attribution.actorClientKey) {
+    return `Modified by ${attribution.actorClientKey}`;
+  }
+
+  if (attribution.actorType === 'USER' && attribution.origin === 'GRAPHQL') {
+    return 'Modified by you';
+  }
+
+  return `Modified by ${attribution.actorType.toLowerCase().replace(/_/g, ' ')}`;
+}
 
 export default function PreferenceItem({
   preference,
@@ -157,6 +189,7 @@ export default function PreferenceItem({
 
   // Extract the key part from slug (e.g., "food.dietary_restrictions" -> "dietary_restrictions")
   const displayName = preference.slug.split('.').pop() || preference.slug;
+  const lastModifiedLabel = formatLastModifiedBy(preference.lastModifiedBy);
 
   return (
     <div className="border rounded-lg p-3">
@@ -172,6 +205,11 @@ export default function PreferenceItem({
             {preference.sourceType === 'INFERRED' && (
               <span className="px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700">
                 AI
+              </span>
+            )}
+            {lastModifiedLabel && (
+              <span className="text-xs text-gray-500">
+                {lastModifiedLabel}
               </span>
             )}
           </div>
