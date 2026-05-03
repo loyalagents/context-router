@@ -182,6 +182,10 @@ Important: this is not a hot-reload backend workflow. The backend image is built
 - Document analysis upload endpoint: `POST http://localhost:3000/api/preferences/analysis`
 - MCP HTTP endpoint: `POST http://localhost:3000/mcp`
 
+## MCP Client Setup
+
+Copy/paste setup commands for Claude Code and Codex, with both local and Cloud Run remote server entries, live in [`docs/useful/MCP_LOCAL_SETUP.md`](docs/useful/MCP_LOCAL_SETUP.md).
+
 ## Common Commands
 
 From the repo root:
