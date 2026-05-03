@@ -49,9 +49,13 @@ describe('SchemaConsolidationTool', () => {
       totalDefinitionsAnalyzed: 2,
       consolidationGroups: [],
     });
-    expect(result.result.content[0]).toMatchObject({
-      type: 'text',
-      text: expect.stringContaining('consolidateSchema:'),
-    });
+    const textContent = result.result.content[0] as {
+      type: 'text';
+      text: string;
+    };
+    expect(textContent.type).toBe('text');
+    expect(JSON.parse(textContent.text)).toEqual(
+      result.result.structuredContent,
+    );
   });
 });

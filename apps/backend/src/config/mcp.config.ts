@@ -69,7 +69,7 @@ export default registerAs('mcp', () => {
     // Server Identity
     server: {
       name: 'context-router-mcp',
-      version: '2.0.0',
+      version: '2.0.1',
       description: 'MCP server for user preferences management',
     },
 

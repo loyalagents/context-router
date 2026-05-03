@@ -36,10 +36,14 @@ describe('PreferenceListTool', () => {
     };
 
     expect(result.result.isError).not.toBe(true);
-    expect(result.result.content[0]).toMatchObject({
-      type: 'text',
-      text: expect.stringContaining('listPreferenceSlugs:'),
-    });
+    const textContent = result.result.content[0] as {
+      type: 'text';
+      text: string;
+    };
+    expect(textContent.type).toBe('text');
+    expect(JSON.parse(textContent.text)).toEqual(
+      result.result.structuredContent,
+    );
     expect(authorizationService.filterByTargetAccess).not.toHaveBeenCalled();
     expect(payload.success).toBe(true);
     expect(payload.preferences.map((pref: any) => pref.slug)).toEqual([
@@ -70,14 +74,18 @@ describe('PreferenceListTool', () => {
     );
 
     expect(result.result.isError).toBe(true);
-    expect(result.result.content[0]).toMatchObject({
-      type: 'text',
-      text: 'listPreferenceSlugs: error — catalog exploded',
-    });
     expect(result.result.structuredContent).toEqual({
       success: false,
       error: 'catalog exploded',
     });
+    const textContent = result.result.content[0] as {
+      type: 'text';
+      text: string;
+    };
+    expect(textContent.type).toBe('text');
+    expect(JSON.parse(textContent.text)).toEqual(
+      result.result.structuredContent,
+    );
     expect(result.accessLog).toMatchObject({
       requestMetadata: {
         category: 'food',
