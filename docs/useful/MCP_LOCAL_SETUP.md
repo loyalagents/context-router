@@ -12,9 +12,18 @@ Use these commands to add the backend as an MCP server. The server name conventi
 - `context-router-local`: local backend at `http://localhost:3000/mcp`
 - `context-router-remote`: Cloud Run backend at `https://context-router-tvvjziqt3a-uc.a.run.app/mcp`
 
+## Authentication Required
+
+Adding the MCP server only registers the server URL with the client. You still need to authenticate before protected tools can work.
+
+- Claude Code: there is no separate `mcp login` command. Add the server with `--callback-port 8081`, then use it in Claude; Claude should start the browser/Auth0 login flow when the server needs auth.
+- Codex: run `codex mcp login <server-name>` after `codex mcp add <server-name>`.
+
 ## Claude Code
 
 Claude Code does not have a separate `mcp login` command. Add the server with the OAuth callback port, then use it in Claude; Claude will start the browser/Auth0 flow when needed.
+
+If Claude does not prompt automatically, run `/mcp` inside Claude Code, select the `context-router-local` or `context-router-remote` server, and choose the authenticate option.
 
 ### Claude Local
 
@@ -97,7 +106,7 @@ codex mcp remove context-router-local
 codex mcp remove context-router-remote
 ```
 
-Plain `codex mcp login` works for the current setup. If a future Auth0/client config starts returning narrower tokens and tools fail with authorization errors, log out and request scopes explicitly:
+Plain `codex mcp login <server-name>` works for the current setup. If a future Auth0/client config starts returning narrower tokens and tools fail with authorization errors, log out and request scopes explicitly:
 
 ```bash
 codex mcp logout context-router-remote
