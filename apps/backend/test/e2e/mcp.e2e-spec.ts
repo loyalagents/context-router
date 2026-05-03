@@ -283,6 +283,25 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.isError).not.toBe(true);
+      const result = JSON.parse(response.body.result.content[0].text);
+      expect(result.preference).toMatchObject({
+        slug: 'food.dietary_restrictions',
+        status: 'SUGGESTED',
+        lastModifiedBy: {
+          actorType: 'MCP_CLIENT',
+          actorClientKey: 'codex',
+          origin: 'MCP',
+        },
+      });
+
+      const stored = await prisma.preference.findUniqueOrThrow({
+        where: { id: result.preference.id },
+      });
+      expect(stored).toMatchObject({
+        lastActorType: AuditActorType.MCP_CLIENT,
+        lastActorClientKey: 'codex',
+        lastOrigin: AuditOrigin.MCP,
+      });
 
       const auditRows = await prisma.preferenceAuditEvent.findMany({
         where: {
@@ -842,11 +861,21 @@ describe('MCP Integration (e2e)', () => {
         value: 'brief',
         status: 'ACTIVE',
         sourceType: 'INFERRED',
+        lastModifiedBy: {
+          actorType: 'MCP_CLIENT',
+          actorClientKey: 'codex',
+          origin: 'MCP',
+        },
         confidence: 0.87,
       });
 
       const stored = await prisma.preference.findUniqueOrThrow({
         where: { id: result.preference.id },
+      });
+      expect(stored).toMatchObject({
+        lastActorType: AuditActorType.MCP_CLIENT,
+        lastActorClientKey: 'codex',
+        lastOrigin: AuditOrigin.MCP,
       });
       expect(stored.evidence).toEqual({
         source: 'mcp-test',
@@ -866,6 +895,109 @@ describe('MCP Integration (e2e)', () => {
         origin: AuditOrigin.MCP,
       });
       expect(auditRows[0].correlationId).toBeTruthy();
+    });
+
+    it('should replace GraphQL last modifier with MCP client attribution and snapshot the transition', async () => {
+      const setMutation = `
+        mutation SetPreference($input: SetPreferenceInput!) {
+          setPreference(input: $input) {
+            id
+            value
+            lastModifiedBy {
+              actorType
+              actorClientKey
+              origin
+            }
+          }
+        }
+      `;
+
+      const graphqlResponse = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: setMutation,
+          variables: {
+            input: {
+              slug: 'system.response_length',
+              value: 'brief',
+            },
+          },
+        })
+        .expect(200);
+
+      expect(graphqlResponse.body.errors).toBeUndefined();
+      expect(graphqlResponse.body.data.setPreference).toMatchObject({
+        value: 'brief',
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
+      });
+
+      const mcpResponse = await mutatePreferences(
+        {
+          operation: 'SET_PREFERENCE',
+          preference: {
+            slug: 'system.response_length',
+            value: '"detailed"',
+          },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+
+      expect(mcpResponse.status).toBe(200);
+      const result = JSON.parse(mcpResponse.body.result.content[0].text);
+      expect(result.preference).toMatchObject({
+        id: graphqlResponse.body.data.setPreference.id,
+        value: 'detailed',
+        lastModifiedBy: {
+          actorType: 'MCP_CLIENT',
+          actorClientKey: 'codex',
+          origin: 'MCP',
+        },
+      });
+
+      const stored = await prisma.preference.findUniqueOrThrow({
+        where: { id: graphqlResponse.body.data.setPreference.id },
+      });
+      expect(stored).toMatchObject({
+        lastActorType: AuditActorType.MCP_CLIENT,
+        lastActorClientKey: 'codex',
+        lastOrigin: AuditOrigin.MCP,
+      });
+
+      const auditRows = await prisma.preferenceAuditEvent.findMany({
+        where: {
+          userId: testUser.userId,
+          eventType: AuditEventType.PREFERENCE_SET,
+        },
+      });
+
+      expect(auditRows).toHaveLength(2);
+      const mcpAudit = auditRows.find(
+        (auditRow) =>
+          (auditRow.afterState as { value?: unknown } | null)?.value ===
+          'detailed',
+      );
+
+      expect(mcpAudit).toBeDefined();
+      expect(mcpAudit?.beforeState).toMatchObject({
+        value: 'brief',
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
+      });
+      expect(mcpAudit?.afterState).toMatchObject({
+        value: 'detailed',
+        lastModifiedBy: {
+          actorType: 'MCP_CLIENT',
+          actorClientKey: 'codex',
+          origin: 'MCP',
+        },
+      });
     });
 
     it.each([

@@ -67,6 +67,9 @@ export interface Preference {
   sourceType: SourceType;
   confidence: number | null;
   evidence: unknown | null;
+  lastActorType: AuditActorType | null;
+  lastActorClientKey: string | null;
+  lastOrigin: AuditOrigin | null;
   createdAt: Date;
   updatedAt: Date;
 }

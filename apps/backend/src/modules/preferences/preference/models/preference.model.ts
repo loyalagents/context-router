@@ -1,5 +1,9 @@
 import { ObjectType, Field, ID, Float, registerEnumType } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
+import {
+  AuditActorType,
+  AuditOrigin,
+} from '@infrastructure/prisma/generated-client';
 
 // Register enums for GraphQL
 export enum PreferenceStatus {
@@ -24,6 +28,18 @@ registerEnumType(SourceType, {
   name: 'SourceType',
   description: 'The source/origin of a preference',
 });
+
+@ObjectType()
+export class PreferenceAttribution {
+  @Field(() => AuditActorType)
+  actorType: AuditActorType;
+
+  @Field({ nullable: true })
+  actorClientKey?: string | null;
+
+  @Field(() => AuditOrigin)
+  origin: AuditOrigin;
+}
 
 @ObjectType()
 export class Preference {
@@ -56,6 +72,12 @@ export class Preference {
 
   @Field(() => GraphQLJSON, { nullable: true, description: 'Evidence/provenance metadata' })
   evidence?: any;
+
+  @Field(() => PreferenceAttribution, {
+    nullable: true,
+    description: 'Actor that most recently modified the preference row',
+  })
+  lastModifiedBy?: PreferenceAttribution | null;
 
   @Field()
   createdAt: Date;

@@ -15,6 +15,11 @@ const ACTIVE_PREFERENCES_QUERY = gql`
       value
       status
       sourceType
+      lastModifiedBy {
+        actorType
+        actorClientKey
+        origin
+      }
       confidence
       locationId
       category
@@ -34,6 +39,11 @@ const SUGGESTED_PREFERENCES_QUERY = gql`
       value
       status
       sourceType
+      lastModifiedBy {
+        actorType
+        actorClientKey
+        origin
+      }
       confidence
       evidence
       locationId
@@ -64,6 +74,12 @@ const PREFERENCE_CATALOG_QUERY = gql`
   }
 `;
 
+interface PreferenceAttribution {
+  actorType: string;
+  actorClientKey: string | null;
+  origin: string;
+}
+
 interface Preference {
   id: string;
   slug: string;
@@ -71,6 +87,7 @@ interface Preference {
   value: any;
   status: string;
   sourceType: string;
+  lastModifiedBy?: PreferenceAttribution | null;
   confidence: number | null;
   locationId: string | null;
   category?: string;

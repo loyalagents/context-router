@@ -8,6 +8,7 @@ import {
 import { PreferenceDefinitionRepository } from "../preference-definition/preference-definition.repository";
 import {
   PreferenceProvenanceOptions,
+  PreferenceMutationAttribution,
   PreferenceWriteResult,
 } from "../audit/audit.types";
 
@@ -17,6 +18,7 @@ export interface EnrichedPreference extends PrismaPreference {
   slug: string;
   category: string;
   description?: string;
+  lastModifiedBy: PreferenceMutationAttribution | null;
 }
 
 type PrefWithDefinition = PrismaPreference & {
@@ -47,6 +49,7 @@ export class PreferenceRepository {
       slug,
       category: slug.split(".")[0],
       description: pref.definition?.description,
+      lastModifiedBy: this.toLastModifiedBy(pref),
     };
   }
 
@@ -60,6 +63,35 @@ export class PreferenceRepository {
 
   private toJsonValue(value: unknown) {
     return value == null ? Prisma.DbNull : (value as Prisma.InputJsonValue);
+  }
+
+  private toLastModifiedBy(
+    pref: Pick<
+      PrismaPreference,
+      "lastActorType" | "lastActorClientKey" | "lastOrigin"
+    >,
+  ): PreferenceMutationAttribution | null {
+    if (!pref.lastActorType || !pref.lastOrigin) {
+      return null;
+    }
+
+    return {
+      actorType: pref.lastActorType,
+      actorClientKey: pref.lastActorClientKey,
+      origin: pref.lastOrigin,
+    };
+  }
+
+  private lastModifiedData(attribution?: PreferenceMutationAttribution) {
+    if (!attribution) {
+      return {};
+    }
+
+    return {
+      lastActorType: attribution.actorType,
+      lastActorClientKey: attribution.actorClientKey ?? null,
+      lastOrigin: attribution.origin,
+    };
   }
 
   // ──────────────────────────────────────────────
@@ -77,6 +109,7 @@ export class PreferenceRepository {
     value: any,
     locationId?: string | null,
     provenance?: PreferenceProvenanceOptions,
+    mutationAttribution?: PreferenceMutationAttribution,
     tx?: Prisma.TransactionClient,
   ): Promise<PreferenceWriteResult<EnrichedPreference>> {
     if (!provenance) {
@@ -103,6 +136,7 @@ export class PreferenceRepository {
           sourceType: provenance.sourceType,
           confidence: provenance.confidence ?? null,
           evidence: this.toJsonValue(provenance.evidence),
+          ...this.lastModifiedData(mutationAttribution),
         },
         include: this.includeDefinition,
       });
@@ -118,6 +152,7 @@ export class PreferenceRepository {
           sourceType: provenance.sourceType,
           confidence: provenance.confidence ?? null,
           evidence: this.toJsonValue(provenance.evidence),
+          ...this.lastModifiedData(mutationAttribution),
         },
         include: this.includeDefinition,
       });
@@ -135,6 +170,7 @@ export class PreferenceRepository {
     value: any,
     locationId?: string | null,
     provenance?: PreferenceProvenanceOptions,
+    mutationAttribution?: PreferenceMutationAttribution,
     tx?: Prisma.TransactionClient,
   ): Promise<PreferenceWriteResult<EnrichedPreference>> {
     if (!provenance) {
@@ -161,6 +197,7 @@ export class PreferenceRepository {
           confidence: provenance.confidence ?? null,
           evidence: this.toJsonValue(provenance.evidence),
           sourceType: provenance.sourceType,
+          ...this.lastModifiedData(mutationAttribution),
         },
         include: this.includeDefinition,
       });
@@ -176,6 +213,7 @@ export class PreferenceRepository {
           sourceType: provenance.sourceType,
           confidence: provenance.confidence ?? null,
           evidence: this.toJsonValue(provenance.evidence),
+          ...this.lastModifiedData(mutationAttribution),
         },
         include: this.includeDefinition,
       });

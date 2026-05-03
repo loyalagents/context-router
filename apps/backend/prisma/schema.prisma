@@ -188,6 +188,9 @@ model Preference {
   sourceType   SourceType       @default(USER)
   confidence   Float?
   evidence     Json?
+  lastActorType      AuditActorType? @map("last_actor_type")
+  lastActorClientKey String?         @map("last_actor_client_key")
+  lastOrigin         AuditOrigin?    @map("last_origin")
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 

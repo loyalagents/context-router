@@ -3,7 +3,7 @@
 - Status: active-plan
 - Read when: planning follow-up audit history, audit UI, rollback, or future workflow/system mutation work
 - Source of truth: `apps/backend/prisma/schema.prisma`, `apps/backend/src/modules/preferences/**`, `apps/backend/test/**`, and the historical docs in `initial-implementation/`
-- Last reviewed: 2026-04-21
+- Last reviewed: 2026-05-02
 
 ## Current State
 
@@ -30,6 +30,8 @@ Shipped behavior:
 - sanitized MCP request, response, and error metadata for representative tools/resources
 - user-scoped GraphQL `mcpAccessHistory` query with cursor pagination and filters
 - `/dashboard/history` now has separate Audit and MCP Access tabs
+- live preference rows now store nullable last-modifier attribution (`lastModifiedBy`) using audit actor/origin enums
+- the preferences dashboard shows last-modifier labels for dashboard edits, document-analysis applies, and MCP clients
 
 Covered mutation paths today:
 
@@ -43,6 +45,7 @@ Current gaps:
 
 - no rollback or revert mechanism exists yet
 - no audit backfill exists for pre-audit rows
+- no source-detail attribution exists beyond broad `sourceType`; labels such as `AI · codex` remain a future follow-up
 - `SYSTEM`, `WORKFLOW`, and `IMPORT` actors are schema-ready but not yet wired into real mutation producers
 - rejected-suggestion suppression behavior remains unchanged
 - archived or deleted definitions may lose sensitivity masking in the history UI because MR2 only uses the live catalog
@@ -58,6 +61,8 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 - `initial-implementation/audit-log-rough-plan.md`
 - `initial-implementation/implementation-plan.md`
 - `initial-implementation/implementation-summary.md`
+- `preference-last-modified/implementation-plan.md`
+- `preference-last-modified/implementation-summary.md`
 
 ## Next Planned Work
 
@@ -73,6 +78,7 @@ Historical initial-implementation docs now live under `initial-implementation/`.
 2. MR6-MR7: producer expansion and operational hardening
 - add workflow/system-originated mutation paths and shared context conventions
 - revisit pagination tuning, retention, and storage strategy only after real usage data exists
+- decide whether to add source-detail attribution for generated values, for example `AI · codex`
 
 ### Much Later
 

@@ -16,6 +16,11 @@ interface PreferenceAuditSnapshotInput {
   sourceType: string;
   confidence: number | null;
   evidence: unknown | null;
+  lastModifiedBy?: {
+    actorType: string;
+    actorClientKey?: string | null;
+    origin: string;
+  } | null;
   createdAt: TimestampLike;
   updatedAt: TimestampLike;
 }
@@ -63,6 +68,10 @@ export function buildPreferenceAuditSnapshot(
       preference.evidence == null
         ? null
         : (preference.evidence as Prisma.InputJsonValue),
+    lastModifiedBy:
+      preference.lastModifiedBy == null
+        ? null
+        : (preference.lastModifiedBy as Prisma.InputJsonObject),
     createdAt: serializeTimestamp(preference.createdAt),
     updatedAt: serializeTimestamp(preference.updatedAt),
   };

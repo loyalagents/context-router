@@ -49,6 +49,11 @@ describe('Preferences GraphQL API (e2e)', () => {
             value
             status
             sourceType
+            lastModifiedBy {
+              actorType
+              actorClientKey
+              origin
+            }
             locationId
             category
             description
@@ -70,6 +75,11 @@ describe('Preferences GraphQL API (e2e)', () => {
         value: ['peanuts', 'shellfish'],
         status: 'ACTIVE',
         sourceType: 'USER',
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
         locationId: null,
         category: 'food',
       });
@@ -94,6 +104,11 @@ describe('Preferences GraphQL API (e2e)', () => {
         value: ['peanuts', 'shellfish'],
         status: 'ACTIVE',
         sourceType: 'USER',
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
       });
     });
 
@@ -433,6 +448,11 @@ describe('Preferences GraphQL API (e2e)', () => {
             value
             status
             confidence
+            lastModifiedBy {
+              actorType
+              actorClientKey
+              origin
+            }
           }
         }
       `;
@@ -445,6 +465,11 @@ describe('Preferences GraphQL API (e2e)', () => {
 
       response.body.data.suggestedPreferences.forEach((pref: { status: string }) => {
         expect(pref.status).toBe('SUGGESTED');
+      });
+      expect(response.body.data.suggestedPreferences[0].lastModifiedBy).toEqual({
+        actorType: 'USER',
+        actorClientKey: null,
+        origin: 'GRAPHQL',
       });
 
       const auditRows = await prisma.preferenceAuditEvent.findMany({
@@ -463,6 +488,11 @@ describe('Preferences GraphQL API (e2e)', () => {
         slug: 'food.cuisine_preferences',
         value: ['Italian', 'Japanese'],
         sourceType: 'INFERRED',
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
       });
     });
 
@@ -584,6 +614,14 @@ describe('Preferences GraphQL API (e2e)', () => {
             id
             status
             value
+            sourceType
+            confidence
+            evidence
+            lastModifiedBy {
+              actorType
+              actorClientKey
+              origin
+            }
           }
         }
       `;
@@ -598,6 +636,14 @@ describe('Preferences GraphQL API (e2e)', () => {
       expect(response.body.data.acceptSuggestedPreference).toMatchObject({
         status: 'ACTIVE',
         value: ['TypeScript', 'Node.js'],
+        sourceType: 'INFERRED',
+        confidence: 0.9,
+        evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
+        },
       });
       expect(response.body.data.acceptSuggestedPreference.id).toBeDefined();
 
@@ -610,6 +656,9 @@ describe('Preferences GraphQL API (e2e)', () => {
         sourceType: 'INFERRED',
         confidence: 0.9,
         evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+        lastActorType: AuditActorType.USER,
+        lastActorClientKey: null,
+        lastOrigin: AuditOrigin.GRAPHQL,
       });
 
       const acceptedAuditRows = await prisma.preferenceAuditEvent.findMany({
@@ -626,6 +675,13 @@ describe('Preferences GraphQL API (e2e)', () => {
           sourceType: 'INFERRED',
           confidence: 0.9,
           evidence: { source: 'chat', snippet: 'Uses TS and Node.js daily' },
+        },
+      });
+      expect(acceptedAuditRows[0].afterState).toMatchObject({
+        lastModifiedBy: {
+          actorType: 'USER',
+          actorClientKey: null,
+          origin: 'GRAPHQL',
         },
       });
     });
@@ -800,6 +856,9 @@ describe('Preferences GraphQL API (e2e)', () => {
         sourceType: 'INFERRED',
         confidence: 0.7,
         evidence: { source: 'ticket', snippet: 'Prefers email follow-up' },
+        lastActorType: null,
+        lastActorClientKey: null,
+        lastOrigin: null,
       });
 
       const rejectedAuditRows = await prisma.preferenceAuditEvent.findMany({

@@ -10,6 +10,8 @@ import { PreferenceDefinitionRepository } from "../../src/modules/preferences/pr
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { getPrismaClient } from "../setup/test-db";
 import {
+  AuditActorType,
+  AuditOrigin,
   PreferenceStatus,
   SourceType,
 } from "@infrastructure/prisma/generated-client";
@@ -32,6 +34,15 @@ describe("PreferenceRepository (integration)", () => {
   let techStackDefId: string;
   const userProvenance = { sourceType: SourceType.USER } as const;
   const inferredProvenance = { sourceType: SourceType.INFERRED } as const;
+  const userMutationAttribution = {
+    actorType: AuditActorType.USER,
+    origin: AuditOrigin.GRAPHQL,
+  } as const;
+  const codexMutationAttribution = {
+    actorType: AuditActorType.MCP_CLIENT,
+    actorClientKey: "codex",
+    origin: AuditOrigin.MCP,
+  } as const;
 
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
@@ -186,6 +197,50 @@ describe("PreferenceRepository (integration)", () => {
       expect(count).toBe(1);
     });
 
+    it("should persist last modifier attribution for created and updated ACTIVE preferences", async () => {
+      const created = await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "brief",
+        undefined,
+        userProvenance,
+        userMutationAttribution,
+      );
+
+      expect((created.result as any).lastModifiedBy).toEqual({
+        actorType: AuditActorType.USER,
+        actorClientKey: null,
+        origin: AuditOrigin.GRAPHQL,
+      });
+
+      const updated = await repository.upsertActive(
+        testUserId,
+        responseLengthDefId,
+        "detailed",
+        undefined,
+        inferredProvenance,
+        codexMutationAttribution,
+      );
+
+      expect((updated.result as any).lastModifiedBy).toEqual({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: "codex",
+        origin: AuditOrigin.MCP,
+      });
+      expect((updated.beforeState as any).lastModifiedBy).toEqual({
+        actorType: AuditActorType.USER,
+        actorClientKey: null,
+        origin: AuditOrigin.GRAPHQL,
+      });
+
+      const stored = await repository.findById(updated.result.id);
+      expect((stored as any).lastModifiedBy).toEqual({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: "codex",
+        origin: AuditOrigin.MCP,
+      });
+    });
+
     it("should handle global and location-scoped as separate preferences for same definition", async () => {
       const global = await repository.upsertActive(
         testUserId,
@@ -297,6 +352,23 @@ describe("PreferenceRepository (integration)", () => {
         PreferenceStatus.SUGGESTED,
       );
       expect(count).toBe(1);
+    });
+
+    it("should persist last modifier attribution for SUGGESTED preferences", async () => {
+      const created = await repository.upsertSuggested(
+        testUserId,
+        dietaryRestrictionsDefId,
+        ["vegetarian"],
+        undefined,
+        inferredProvenance,
+        codexMutationAttribution,
+      );
+
+      expect((created.result as any).lastModifiedBy).toEqual({
+        actorType: AuditActorType.MCP_CLIENT,
+        actorClientKey: "codex",
+        origin: AuditOrigin.MCP,
+      });
     });
   });
 

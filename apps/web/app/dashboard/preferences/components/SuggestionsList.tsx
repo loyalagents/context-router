@@ -22,6 +22,11 @@ const APPLY_SUGGESTIONS_MUTATION = `
       value
       status
       sourceType
+      lastModifiedBy {
+        actorType
+        actorClientKey
+        origin
+      }
     }
   }
 `;
