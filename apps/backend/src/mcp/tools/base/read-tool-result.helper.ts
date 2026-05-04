@@ -6,15 +6,18 @@ type ReadToolSuccessPayload = {
 };
 
 export function buildReadToolSuccessResult<T extends ReadToolSuccessPayload>(
-  toolName: string,
-  summary: string,
+  _toolName: string,
+  _summary: string,
   structuredContent: T,
 ): CallToolResult {
+  // Duplicate structuredContent into text for MCP clients that only surface
+  // content blocks, while keeping structuredContent as the preferred payload.
+  const text = JSON.stringify(structuredContent, null, 2);
   return {
     content: [
       {
         type: 'text',
-        text: `${toolName}: ${summary}`,
+        text,
       },
     ],
     structuredContent,
@@ -22,20 +25,23 @@ export function buildReadToolSuccessResult<T extends ReadToolSuccessPayload>(
 }
 
 export function buildReadToolErrorResult(
-  toolName: string,
+  _toolName: string,
   message: string,
 ): CallToolResult {
+  const structuredContent = {
+    success: false,
+    error: message,
+  };
+  const text = JSON.stringify(structuredContent, null, 2);
+
   return {
     content: [
       {
         type: 'text',
-        text: `${toolName}: error — ${message}`,
+        text,
       },
     ],
-    structuredContent: {
-      success: false,
-      error: message,
-    },
+    structuredContent,
     isError: true,
   };
 }

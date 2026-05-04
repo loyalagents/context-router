@@ -68,6 +68,15 @@ Important tools and resources:
 - `listPermissionGrants`
 - `schema://graphql`
 
+## Read Tool Result Contract
+
+Read-only MCP tools return the same machine-readable payload in two places:
+
+- `structuredContent` is the preferred structured result for clients that support it.
+- `content[0].text` is serialized JSON of the same payload for MCP clients that only surface text content blocks.
+
+Access logs remain sanitized. They store request metadata and response counts, not returned preference values or full response bodies.
+
 `mutatePreferences` is the single MCP mutation tool. It supports:
 
 - `SUGGEST_PREFERENCE` requiring `SUGGEST`

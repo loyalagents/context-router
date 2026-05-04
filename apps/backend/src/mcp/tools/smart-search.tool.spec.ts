@@ -100,10 +100,14 @@ describe('SmartSearchTool', () => {
         'system.response_tone',
       ],
     );
-    expect(result.result.content[0]).toMatchObject({
-      type: 'text',
-      text: expect.stringContaining('smartSearchPreferences:'),
-    });
+    const textContent = result.result.content[0] as {
+      type: 'text';
+      text: string;
+    };
+    expect(textContent.type).toBe('text');
+    expect(JSON.parse(textContent.text)).toEqual(
+      result.result.structuredContent,
+    );
     expect(payload.success).toBe(true);
     expect(payload.matchedDefinitions.map((definition: any) => definition.slug)).toEqual([
       'system.response_tone',

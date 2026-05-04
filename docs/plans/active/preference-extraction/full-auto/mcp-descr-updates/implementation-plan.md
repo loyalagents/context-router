@@ -1,5 +1,7 @@
 # MCP Preference Discovery Contract Cleanup
 
+> Superseded note: this plan originally specified summary-only text content. The shipped `2.0.1` compatibility correction restores serialized JSON in `content[0].text` while keeping `structuredContent` canonical. See `docs/current/MCP_AUTHORIZATION.md` for the current read-tool result contract.
+
 ## Summary
 
 Ship a breaking-but-contained upgrade to the MCP preference-read surface so agents can choose the right retrieval path and parse results from `structuredContent` instead of scraping JSON text.
@@ -157,7 +159,7 @@ This pass also broadens the structured-output upgrade to include `consolidateSch
   - `listPermissionGrants` still scopes to the calling client
 - Confirm access-log behavior is unchanged:
   - dispatch outcome still keys off `isError`
-  - existing `requestMetadata` and `responseMetadata` assertions still pass with summary-only text content
+  - existing `requestMetadata` and `responseMetadata` assertions still pass with JSON text compatibility content
 
 ## Assumptions And Defaults
 

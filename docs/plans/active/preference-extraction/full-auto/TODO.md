@@ -10,7 +10,7 @@
 - Consider client-specific MCP descriptor variants only if real clients still misroute between preference read or write surfaces after the generic descriptor cleanup.
 - Consider adding a dedicated MCP guide resource if initialize instructions and tool descriptions still are not enough for agents.
 - Consider a higher-level MCP wrapper tool if clients still need server-side routing between literal lookup and natural-language preference retrieval.
-- Verify external MCP client registrations do not preserve stale cached metadata or outdated tool names after the `2.0.0` read-contract change.
+- Verify external MCP client registrations do not preserve stale cached metadata or outdated tool names after the `2.0.1` read-contract compatibility correction.
 
 ## Safety And Semantics
 

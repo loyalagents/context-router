@@ -133,7 +133,7 @@ describe('MCP Integration (e2e)', () => {
 
       expect(client.getServerVersion()).toMatchObject({
         name: 'context-router-mcp',
-        version: '2.0.0',
+        version: '2.0.1',
       });
       expect(client.getInstructions()).toContain(
         'Available tools vary by permissions.',
@@ -153,7 +153,7 @@ describe('MCP Integration (e2e)', () => {
       expect(mcpConfig).toBeDefined();
       expect(mcpConfig.server).toBeDefined();
       expect(mcpConfig.server.name).toBe('context-router-mcp');
-      expect(mcpConfig.server.version).toBe('2.0.0');
+      expect(mcpConfig.server.version).toBe('2.0.1');
     });
 
     it('should have HTTP transport enabled by default', () => {
@@ -226,6 +226,9 @@ describe('MCP Integration (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.result?.content).toBeDefined();
       expect(response.body.result?.structuredContent).toBeDefined();
+      expect(JSON.parse(response.body.result.content[0].text)).toEqual(
+        response.body.result.structuredContent,
+      );
 
       const result = parseReadToolResult(response.body.result);
       const profileFullName = result.preferences.find(
