@@ -1,0 +1,94 @@
+{
+  "exportedAt": "2026-04-21T16:18:00Z",
+  "source": "crestline-software-profile-demo",
+  "account": {
+    "id": "usr_demo_diana_mercer",
+    "status": "active",
+    "locale": "en-US",
+    "timezone": "America/New_York",
+    "marketingOptIn": false
+  },
+  "person": {
+    "legalName": "Diana Mercer",
+    "displayName": "Diana",
+    "badgeName": "Diana",
+    "primaryEmail": "diana.mercer@example.test",
+    "alternateEmails": ["d.mercer@example.test"],
+    "phone": null
+  },
+  "employment": {
+    "organization": "Crestline Software",
+    "department": "Cloud Platform Engineering",
+    "title": "VP, Cloud Architecture",
+    "office": "Remote - Eastern",
+    "manager": "Priya Natarajan"
+  },
+  "preferences": {
+    "communication": {
+      "preferredChannels": ["email", "slack"],
+      "sameDayChannel": "slack",
+      "summaryChannel": "email"
+    },
+    "travel": {
+      "seatPreference": "aisle",
+      "checkedBags": false,
+      "trustedTraveler": "TSA PreCheck / Global Entry",
+      "preferredAirlines": ["JetBlue", "Delta"],
+      "frequentFlyerNumbers": {
+        "JetBlue": null,
+        "Delta": null
+      },
+      "preferredBookingSites": ["Hotels.com"],
+      "hotelLoyaltyProgram": "Marriott Bonvoy",
+      "hotelLoyaltyNumber": null,
+      "typicalRoutes": ["BOS-LAX", "BOS-SFO", "BOS-SEA"],
+      "travelFrequency": "frequent",
+      "notes": "Travels East-to-West Coast multiple times per month for conferences and customer visits. Books all travel via AI assistant (Claude.ai preferred, Perplexity as fallback)."
+    },
+    "food": {
+      "dietaryRestrictions": ["gluten"],
+      "eventMealPreference": "pescatarian",
+      "favoriteCuisines": ["Japanese", "Mediterranean", "Vietnamese"],
+      "spiceTolerance": "medium",
+      "avoidances": ["heavy red meat", "fried foods"],
+      "notes": "Gluten-sensitive but not celiac; cross-contamination is a caution, not a hard stop. Pescatarian at events."
+    },
+    "shopping": {
+      "preferredMode": "online",
+      "inStoreFrequency": "rarely",
+      "preferredResearchTools": ["Claude.ai", "Perplexity", "Google Search"],
+      "notes": "Uses LLM assistants to research and purchase personal items. Does not prefer specific retailers; assistant selects based on best fit, reviews, and delivery speed."
+    },
+    "conferenceTopics": [
+      "cloud-native architecture",
+      "Kubernetes",
+      "platform engineering",
+      "FinOps",
+      "AI/ML infrastructure",
+      "multi-cloud strategy",
+      "developer experience"
+    ],
+    "wellbeing": {
+      "regularActivities": ["yoga", "gardening"],
+      "notes": "Attends studio yoga classes regularly; maintains a home vegetable and herb garden."
+    }
+  },
+  "aiAssistantUsage": {
+    "primaryTools": ["Claude.ai", "Perplexity", "Google Search"],
+    "useCases": [
+      "personal shopping research and purchasing",
+      "travel booking (personal and professional)",
+      "conference session selection",
+      "vendor evaluation"
+    ],
+    "dataSharePreferences": {
+      "model": "selective-minimum",
+      "notes": "Prefers to share only the minimum data needed for a given request. Uses a preference store and context server for portable, consent-gated sharing across services and agents."
+    }
+  },
+  "staleFields": {
+    "previousCompany": "Stratosphere Solutions",
+    "previousTitle": "Senior Director, Cloud Infrastructure",
+    "previousEmail": "diana.mercer-old@example.test"
+  }
+}

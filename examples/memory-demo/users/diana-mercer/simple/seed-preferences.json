@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "profile.full_name",
+    "value": "Diana Mercer"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Diana"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Mercer"
+  },
+  {
+    "slug": "profile.email",
+    "value": "diana.mercer@example.test"
+  },
+  {
+    "slug": "profile.badge_name",
+    "value": "Diana"
+  },
+  {
+    "slug": "profile.company",
+    "value": "Crestline Software"
+  },
+  {
+    "slug": "profile.title",
+    "value": "VP, Cloud Architecture"
+  },
+  {
+    "slug": "food.dietary_restrictions",
+    "value": ["gluten"]
+  },
+  {
+    "slug": "communication.preferred_channels",
+    "value": ["email", "slack"]
+  },
+  {
+    "slug": "travel.seat_preference",
+    "value": "aisle"
+  }
+]

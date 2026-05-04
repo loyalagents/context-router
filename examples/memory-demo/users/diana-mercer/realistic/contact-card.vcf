@@ -1,0 +1,36 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Diana Mercer
+N:Mercer;Diana;;;
+NICKNAME:Diana
+ORG:Crestline Software;Cloud Platform Engineering
+TITLE:VP\, Cloud Architecture
+EMAIL;TYPE=WORK,PREF:diana.mercer@example.test
+EMAIL;TYPE=WORK:d.mercer@example.test
+TEL;TYPE=WORK,VOICE:
+ADR;TYPE=WORK:;;Remote - Eastern;;;US;
+TZ:America/New_York
+X-BADGE-NAME:Diana
+X-PREV-ORG:Stratosphere Solutions
+X-PREV-TITLE:Senior Director\, Cloud Infrastructure
+X-EVENT-MEAL:pescatarian
+X-DIETARY-RESTRICTIONS:gluten
+X-DIETARY-NOTES:Gluten-sensitive (not celiac). Cross-contamination is a caution\, not a hard stop. No heavy red meat or fried foods.
+X-CUISINE-PREFERENCE:Japanese; Mediterranean; Vietnamese
+X-SPICE-TOLERANCE:medium
+X-TRAVEL-AIRLINES:JetBlue; Delta
+X-TRAVEL-SEAT:aisle
+X-TRAVEL-BAGS:no checked bags
+X-TRAVEL-TRUSTED:TSA PreCheck / Global Entry
+X-HOTEL-BOOKING:Hotels.com
+X-HOTEL-LOYALTY:Marriott Bonvoy
+X-TRAVEL-ROUTES:BOS-LAX; BOS-SFO; BOS-SEA
+X-CONFERENCE-TOPICS:cloud-native architecture; Kubernetes; platform engineering; FinOps; AI/ML infrastructure; multi-cloud strategy; developer experience
+X-COMM-FORMAL:email
+X-COMM-SAMEDAY:slack
+X-AI-TOOLS:Claude.ai; Perplexity; Google Search
+X-AI-USECASES:personal shopping; travel booking; conference session selection; vendor evaluation
+X-DATA-SHARING:selective-minimum
+NOTE:All travel booked via AI assistant (Claude.ai preferred). Online shopping only — no preferred retailers\, agent selects. Yoga and gardening in personal time. Previous company Stratosphere Solutions is stale — use Crestline Software.
+REV:20260421T160000Z
+END:VCARD

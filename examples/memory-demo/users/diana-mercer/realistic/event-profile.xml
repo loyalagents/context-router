@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Partner system profile export
+  Source: cloudnativecon-registration-partner-demo
+  Exported: 2026-04-21T16:30:00Z
+  Note: previousEmployer fields are retained for audit purposes and are stale.
+        Canonical employer is Crestline Software.
+-->
+<registrantProfile exportedAt="2026-04-21T16:30:00Z" source="cloudnativecon-partner-demo">
+
+  <identity>
+    <legalName>Diana Mercer</legalName>
+    <displayName>Diana</displayName>
+    <badgeName>Diana</badgeName>
+    <primaryEmail>diana.mercer@example.test</primaryEmail>
+    <alternateEmail>d.mercer@example.test</alternateEmail>
+    <timezone>America/New_York</timezone>
+    <locale>en-US</locale>
+  </identity>
+
+  <employment current="true">
+    <organization>Crestline Software</organization>
+    <department>Cloud Platform Engineering</department>
+    <title>VP, Cloud Architecture</title>
+    <officeType>Remote - Eastern</officeType>
+    <manager>Priya Natarajan</manager>
+  </employment>
+
+  <employment current="false" stale="true">
+    <organization>Stratosphere Solutions</organization>
+    <department>Infrastructure</department>
+    <title>Senior Director, Cloud Infrastructure</title>
+    <note>Stale — do not use for current registrations</note>
+  </employment>
+
+  <communication>
+    <channels>
+      <channel type="email" preferred="true" useCase="formal confirmations and summaries" />
+      <channel type="slack" preferred="true" useCase="same-day coordination" />
+    </channels>
+  </communication>
+
+  <travel>
+    <seatPreference>aisle</seatPreference>
+    <checkedBags>false</checkedBags>
+    <trustedTraveler>TSA PreCheck / Global Entry</trustedTraveler>
+    <airlines>
+      <airline rank="1">JetBlue</airline>
+      <airline rank="2">Delta</airline>
+    </airlines>
+    <hotelBookingSite>Hotels.com</hotelBookingSite>
+    <hotelLoyalty>Marriott Bonvoy</hotelLoyalty>
+    <typicalRoutes>
+      <route>BOS-LAX</route>
+      <route>BOS-SFO</route>
+      <route>BOS-SEA</route>
+    </typicalRoutes>
+    <bookingMethod>
+      AI assistant preferred (Claude.ai). All travel — personal and professional —
+      booked via AI assistant. Agent should search Hotels.com for hotel options and
+      prefer JetBlue or Delta for flights. Confirm with Diana before booking
+      connections if direct + aisle is unavailable.
+    </bookingMethod>
+  </travel>
+
+  <foodAndDining>
+    <eventMealPreference>pescatarian</eventMealPreference>
+    <dietaryRestrictions>
+      <restriction type="gluten" severity="sensitivity">
+        Gluten-sensitive, not celiac. Cross-contamination is a caution, not a
+        hard stop. Mention in catering notes even if only one free-text field is
+        available.
+      </restriction>
+    </dietaryRestrictions>
+    <avoidances>
+      <item>heavy red meat</item>
+      <item>fried foods</item>
+    </avoidances>
+    <favoriteCuisines>
+      <cuisine rank="1">Japanese</cuisine>
+      <cuisine rank="2">Mediterranean</cuisine>
+      <cuisine rank="3">Vietnamese</cuisine>
+    </favoriteCuisines>
+    <spiceTolerance>medium</spiceTolerance>
+  </foodAndDining>
+
+  <conferenceTopics>
+    <primary>
+      <topic>cloud-native architecture</topic>
+      <topic>Kubernetes</topic>
+      <topic>platform engineering</topic>
+      <topic>FinOps</topic>
+      <topic>AI/ML infrastructure</topic>
+      <topic>multi-cloud strategy</topic>
+      <topic>developer experience</topic>
+    </primary>
+    <avoid>
+      <topic>generic executive keynotes</topic>
+      <topic>sales enablement</topic>
+      <topic>analyst-only panels</topic>
+    </avoid>
+    <notes>
+      Diana prefers sessions with concrete implementation depth and practitioner
+      speakers. Panels are acceptable when speakers are practitioners, not analysts.
+    </notes>
+  </conferenceTopics>
+
+  <aiAssistant>
+    <tools>
+      <tool rank="1">Claude.ai</tool>
+      <tool rank="2">Perplexity</tool>
+      <tool rank="3">Google Search</tool>
+    </tools>
+    <useCases>
+      <useCase>personal shopping research and purchasing</useCase>
+      <useCase>travel booking (personal and professional)</useCase>
+      <useCase>conference session selection</useCase>
+      <useCase>vendor evaluation</useCase>
+    </useCases>
+    <dataSharing>
+      <model>selective-minimum</model>
+      <contextServerEnabled>true</contextServerEnabled>
+      <notes>
+        Agents should request only the minimum fields required for each task.
+        Full profile is available via preference store. Consent required before
+        sharing profile data with any third-party service.
+      </notes>
+    </dataSharing>
+  </aiAssistant>
+
+  <wellbeing>
+    <activities>
+      <activity>yoga (studio classes)</activity>
+      <activity>gardening (home vegetable and herb garden)</activity>
+    </activities>
+    <notes>
+      Occasionally uses AI assistant to research gardening supplies and yoga gear.
+      Online purchase only — no preferred retailers.
+    </notes>
+  </wellbeing>
+
+</registrantProfile>

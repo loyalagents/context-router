@@ -1,0 +1,55 @@
+[2026-04-21 09:42] Marcus Webb:
+Putting together the CloudNativeCon registration packet. Can someone
+confirm Diana's current title and company? I have an old Stratosphere
+Solutions entry in the system.
+
+[2026-04-21 09:45] Keiko Tanaka:
+She's VP, Cloud Architecture at Crestline Software now. Stratosphere is stale,
+she moved over about eighteen months ago.
+
+[2026-04-21 09:47] Diana Mercer:
+That's right. Use diana.mercer@example.test and badge name Diana.
+
+[2026-04-21 09:49] Marcus Webb:
+Meal preferences? I see pescatarian from the last conference but want to
+confirm the dietary notes.
+
+[2026-04-21 09:51] Diana Mercer:
+Pescatarian is correct. Gluten-sensitive — please note that in the catering
+field even if there's only one free-text box. Japanese or Mediterranean are
+usually the safest options. Medium spice is fine.
+
+[2026-04-21 09:53] Keiko Tanaka:
+Travel preferences for the hotel block and flight reimbursement form?
+
+[2026-04-21 09:55] Diana Mercer:
+JetBlue or Delta, aisle seat, no checked bags. I have TSA PreCheck and
+Global Entry. For hotels I usually check Hotels.com first; Marriott Bonvoy
+properties when the rate is competitive. I book everything through Claude.ai
+typically — just pull from the preference store if the form allows it.
+
+[2026-04-21 09:57] Marcus Webb:
+Session interest tags for the topic-matching widget?
+
+[2026-04-21 09:58] Diana Mercer:
+Cloud-native architecture, Kubernetes, platform engineering, FinOps,
+AI/ML infrastructure, multi-cloud strategy, developer experience. Skip
+anything that looks like a keynote or sales track.
+
+[2026-04-21 10:00] Marcus Webb:
+Communication preferences — email for the confirmation, or Slack?
+
+[2026-04-21 10:01] Diana Mercer:
+Formal confirmations and itineraries by email. Same-day questions on Slack
+are fine.
+
+[2026-04-21 10:04] Keiko Tanaka:
+Unrelated: the Q2 infra cost review moved to Thursday and the FinOps
+working group still needs two more reviewers.
+
+[2026-04-21 10:06] Marcus Webb:
+Got it. Diana, I'll send the registration summary to your primary email
+for review before submitting.
+
+[2026-04-21 10:07] Diana Mercer:
+Perfect, thanks.

@@ -1,0 +1,90 @@
+{
+  "$schema": "../../schemas/fields.schema.json",
+  "id": "catering-accommodation-request",
+  "fields": [
+    {
+      "id": "fullName",
+      "label": "Full name",
+      "inputType": "text",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.full_name"],
+      "required": true
+    },
+    {
+      "id": "email",
+      "label": "Email",
+      "inputType": "email",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.email"],
+      "required": true
+    },
+    {
+      "id": "company",
+      "label": "Organization",
+      "inputType": "text",
+      "source": "mcp-memory",
+      "memorySlugs": ["profile.company"],
+      "required": true
+    },
+    {
+      "id": "mealPreference",
+      "label": "Meal preference",
+      "inputType": "text",
+      "source": "mcp-memory",
+      "memorySlugs": ["travel.meal_preference"],
+      "required": true
+    },
+    {
+      "id": "dietaryRestrictions",
+      "label": "Dietary restrictions",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.dietary_restrictions"],
+      "required": true
+    },
+    {
+      "id": "cuisinePreferences",
+      "label": "Cuisine preferences",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.cuisine_preferences"],
+      "required": true
+    },
+    {
+      "id": "spiceTolerance",
+      "label": "Spice tolerance",
+      "inputType": "select",
+      "source": "mcp-memory",
+      "memorySlugs": ["food.spice_tolerance"],
+      "required": true
+    },
+    {
+      "id": "cateringNotes",
+      "label": "Caterer-facing accommodation notes",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": [
+        "travel.meal_preference",
+        "food.dietary_restrictions",
+        "food.cuisine_preferences",
+        "food.spice_tolerance"
+      ],
+      "required": true
+    },
+    {
+      "id": "preferredContact",
+      "label": "Preferred contact channels",
+      "inputType": "textarea",
+      "source": "mcp-memory",
+      "memorySlugs": ["communication.preferred_channels"],
+      "required": true
+    },
+    {
+      "id": "additionalNotes",
+      "label": "Additional notes",
+      "inputType": "textarea",
+      "source": "freeform",
+      "required": false
+    }
+  ]
+}

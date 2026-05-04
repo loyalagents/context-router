@@ -1,0 +1,11 @@
+registrant_id,full_name,badge_name,organization,dietary_preference,allergens,cuisine_notes,spice_tolerance,catering_notes
+REG-0041,Jordan Patel,Jordan,Wavefront Analytics,vegan,tree nuts; soy,no preference,mild,Strict vegan — no dairy or eggs in any dish
+REG-0042,Diana Mercer,Diana,Crestline Software,pescatarian,gluten,Japanese; Mediterranean; Vietnamese,medium,Gluten-sensitive (not celiac); cross-contamination is a caution not a hard stop; no heavy red meat or fried foods
+REG-0043,Samuel Okafor,Sam,Brightpath Tech,omnivore,none,no preference,hot,No restrictions; prefers spicy options when available
+REG-0044,Miriam Cho,Miriam,Lakeview Partners,vegetarian,dairy,Mediterranean,mild,Lactose intolerant; vegetarian; avoid all dairy including hidden dairy in sauces
+REG-0045,Tobias Reiner,Toby,Crestline Software,omnivore,shellfish,no preference,medium,Shellfish allergy — hard stop; everything else is fine
+REG-0046,Priya Subramaniam,Priya,Northgate Cloud,vegan,peanuts; sesame,South Asian; Mediterranean,medium,Vegan; severe peanut and sesame allergy — strict avoidance required
+REG-0047,Chris Halvorsen,Chris,Meridian Systems,omnivore,none,no preference,mild,No dietary restrictions; prefers milder options
+REG-0048,Leila Ahmadi,Leila,Vantage IO,pescatarian,none,Japanese; Middle Eastern,medium,Pescatarian; no allergies; enjoys raw fish options when available
+REG-0049,Marcus Webb,Marcus,Crestline Software,omnivore,gluten,no preference,hot,Celiac — strict gluten-free required; cross-contamination is a hard stop
+REG-0050,Yuki Tanaka,Yuki,Stratum Labs,vegetarian,eggs,Japanese; Vietnamese,mild,Vegetarian and egg-free; note this is stricter than standard vegetarian
