@@ -126,6 +126,12 @@ export default async function Dashboard() {
               Search Lab
             </a>
             <a
+              href="/dashboard/form-fill"
+              className="inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+            >
+              Form Fill
+            </a>
+            <a
               href="/dashboard/history"
               className="inline-block px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 transition"
             >
