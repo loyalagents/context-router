@@ -1,0 +1,34 @@
+[2026-04-21 09:42] Riley Hart:
+I am putting together the AI Tooling Summit registration packet. Can someone
+confirm Alex's current title and company?
+
+[2026-04-21 09:45] Priya Shah:
+Alex Rivera is still Senior Product Engineer at Northstar Labs. The old
+Brightline Systems profile is stale.
+
+[2026-04-21 09:47] Alex Rivera:
+Correct. Please use alex.rivera@example.test and badge name Alex.
+
+[2026-04-21 09:49] Riley Hart:
+Meal preferences from the last event showed vegetarian, avoid peanuts, avoid
+shellfish. Still accurate?
+
+[2026-04-21 09:50] Alex Rivera:
+Yes. Japanese or Mediterranean options are usually safe. Medium spice is fine.
+
+[2026-04-21 09:52] Priya Shah:
+For topic matching, Alex usually picks TypeScript, Next.js, NestJS,
+PostgreSQL, and AI tooling.
+
+[2026-04-21 09:54] Alex Rivera:
+That list works. Also aisle seat if travel preferences are part of the form.
+
+[2026-04-21 09:55] Riley Hart:
+Official updates by email, quick internal questions by Slack?
+
+[2026-04-21 09:56] Alex Rivera:
+Yes, email and Slack are both fine.
+
+[2026-04-21 10:03] Priya Shah:
+Unrelated: the staging deploy moved to 2pm and the analytics review is still
+waiting on Finance.

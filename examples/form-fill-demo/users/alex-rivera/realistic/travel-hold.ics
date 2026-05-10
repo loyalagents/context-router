@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Context Router Demo//Synthetic Calendar//EN
+BEGIN:VEVENT
+UID:ai-tooling-summit-alex-rivera-20260429@example.test
+DTSTAMP:20260421T180000Z
+DTSTART:20260429T160000Z
+DTEND:20260429T163000Z
+SUMMARY:Review AI Tooling Summit registration
+ORGANIZER;CN=Riley Hart:MAILTO:riley.hart@example.test
+ATTENDEE;CN=Alex Rivera;ROLE=REQ-PARTICIPANT:MAILTO:alex.rivera@example.test
+DESCRIPTION:Alex Rivera is a Senior Product Engineer at Northstar Labs. Badge name Alex. Confirm vegetarian meal request, avoid peanuts and shellfish, note aisle seat preference, and list TypeScript, Next.js, NestJS, PostgreSQL, and AI tooling as technical interests.
+LOCATION:Video Call
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

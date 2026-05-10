@@ -1,0 +1,6 @@
+participant_id,full_name,email,company,title,meal_preference,dietary_restrictions,preferred_cuisines,spice_tolerance,travel_seat,notes
+demo-201,Jordan Ellis,jordan.ellis@example.test,Northstar Labs,Director of Product,standard,,Italian; Thai,medium,window,"Needs early check-in"
+demo-202,Alex Rivera,alex.rivera@example.test,Northstar Labs,Senior Product Engineer,vegetarian,peanuts; shellfish,Japanese; Mediterranean,medium,aisle,"Badge name Alex; interested in TypeScript and AI tooling"
+demo-203,Samir Khan,samir.khan@example.test,Northstar Labs,Data Scientist,halal,,Indian; Korean,hot,aisle,"Prefers afternoon workshops"
+demo-204,Taylor Brooks,taylor.brooks@example.test,Northstar Labs,Product Manager,standard,tree nuts,Mediterranean,mild,window,"Needs invoice copy by email"
+demo-205,Leah Morgan,leah.morgan@example.test,Orbit Finch,Engineering Lead,vegan,soy,Mexican; Japanese,medium,aisle,"Asked about accessibility seating"
