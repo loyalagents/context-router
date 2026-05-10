@@ -10,6 +10,7 @@ import graphqlConfig from './config/graphql.config';
 import authConfig from './config/auth.config';
 import mcpConfig from './config/mcp.config';
 import documentUploadConfig from './config/document-upload.config';
+import formFillConfig from './config/form-fill.config';
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -31,7 +32,14 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, graphqlConfig, authConfig, mcpConfig, documentUploadConfig],
+      load: [
+        appConfig,
+        graphqlConfig,
+        authConfig,
+        mcpConfig,
+        documentUploadConfig,
+        formFillConfig,
+      ],
       envFilePath: ['.env.local', '.env'],
     }),
 

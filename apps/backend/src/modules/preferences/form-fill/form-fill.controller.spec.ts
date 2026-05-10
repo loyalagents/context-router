@@ -1,0 +1,83 @@
+import { BadRequestException } from '@nestjs/common';
+import { FormFillController } from './form-fill.controller';
+
+describe('FormFillController', () => {
+  let service: { fillPdfForm: jest.Mock };
+  let controller: FormFillController;
+
+  beforeEach(() => {
+    service = {
+      fillPdfForm: jest.fn().mockResolvedValue({
+        fillId: 'fill-1',
+        status: 'success',
+      }),
+    };
+    controller = new FormFillController(service as any);
+  });
+
+  it('rejects missing uploads', async () => {
+    await expect(
+      controller.fillPdf(undefined as any, { user: { userId: 'user-1' } }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects non-PDF uploads', async () => {
+    await expect(
+      controller.fillPdf(
+        {
+          mimetype: 'text/plain',
+          size: 10,
+          originalname: 'form.txt',
+          buffer: Buffer.from('not pdf'),
+        } as Express.Multer.File,
+        { user: { userId: 'user-1' } },
+      ),
+    ).rejects.toThrow('Unsupported file type');
+  });
+
+  it('rejects oversized uploads', async () => {
+    await expect(
+      controller.fillPdf(
+        {
+          mimetype: 'application/pdf',
+          size: 10 * 1024 * 1024 + 1,
+          originalname: 'large.pdf',
+          buffer: Buffer.from('pdf'),
+        } as Express.Multer.File,
+        { user: { userId: 'user-1' } },
+      ),
+    ).rejects.toThrow('File too large');
+  });
+
+  it('rejects requests without a user id', async () => {
+    await expect(
+      controller.fillPdf(
+        {
+          mimetype: 'application/pdf',
+          size: 10,
+          originalname: 'form.pdf',
+          buffer: Buffer.from('pdf'),
+        } as Express.Multer.File,
+        { user: {} },
+      ),
+    ).rejects.toThrow('User ID not found');
+  });
+
+  it('delegates valid PDF uploads to the service', async () => {
+    await controller.fillPdf(
+      {
+        mimetype: 'application/pdf',
+        size: 10,
+        originalname: 'form.pdf',
+        buffer: Buffer.from('pdf'),
+      } as Express.Multer.File,
+      { user: { userId: 'user-1' } },
+    );
+
+    expect(service.fillPdfForm).toHaveBeenCalledWith(
+      'user-1',
+      Buffer.from('pdf'),
+      'form.pdf',
+    );
+  });
+});
