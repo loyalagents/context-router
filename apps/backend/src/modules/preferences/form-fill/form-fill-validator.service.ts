@@ -144,6 +144,10 @@ export class FormFillValidatorService {
       }
     }
 
+    if (typeof action.confidence !== 'number') {
+      return 'missing confidence';
+    }
+
     if (action.confidence < confidenceThreshold) {
       return 'confidence below threshold';
     }

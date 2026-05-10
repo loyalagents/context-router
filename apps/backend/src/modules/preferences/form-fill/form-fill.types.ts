@@ -46,8 +46,8 @@ export const FillActionSchema = z.object({
   fieldName: z.string(),
   action: z.enum(['SET_TEXT', 'CHECK', 'UNCHECK', 'SELECT_OPTION', 'SKIP']),
   value: z.string().optional(),
-  sourceSlugs: z.array(z.string()),
-  confidence: z.number().min(0).max(1),
+  sourceSlugs: z.array(z.string()).optional().default([]),
+  confidence: z.number().min(0).max(1).optional(),
   skipReason: z.string().optional(),
 });
 

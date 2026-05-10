@@ -249,4 +249,53 @@ describe('FormFillValidatorService', () => {
       ]),
     );
   });
+
+  it('skips non-SKIP actions missing source slugs or confidence from permissive AI parsing', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: [],
+          confidence: 0.95,
+        },
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['communication.preferred_channels'],
+        } as AiFillAction,
+        {
+          fieldName: 'food.spice_tolerance',
+          action: 'SKIP',
+          sourceSlugs: [],
+          skipReason: 'missing memory',
+        } as AiFillAction,
+      ],
+      fields,
+      new Set(['communication.preferred_channels']),
+      0.75,
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'profile.full_name',
+          reason: 'missing source slug',
+        }),
+        expect.objectContaining({
+          pdfFieldName: 'newsletter_opt_in',
+          reason: 'missing confidence',
+        }),
+        expect.objectContaining({
+          pdfFieldName: 'food.spice_tolerance',
+          reason: 'missing memory',
+        }),
+      ]),
+    );
+    expect(result.filledFields.length + result.skippedFields.length).toBe(
+      fields.length,
+    );
+  });
 });

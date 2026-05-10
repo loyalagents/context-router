@@ -32,11 +32,14 @@
 - Flat PDFs with no AcroForm fields return `no_fillable_fields`.
 - Unknown, low-confidence, invalid, or omitted AI actions are converted into skipped-field summaries.
 - Filled PDFs stay editable and are not flattened.
+- Partially filled uploaded PDFs are not treated specially in v1.
+  - Validated fill actions overwrite existing values for those fields.
+  - Skipped fields are not mutated, so any existing values in skipped fields remain as-is.
 
 ## Verification
 
 - `pnpm --filter backend exec jest --selectProjects unit --runInBand src/modules/preferences/form-fill`
-  - 6 suites, 18 tests passed.
+  - 6 suites, 19 tests passed.
 - `pnpm --filter backend exec jest --selectProjects e2e --runInBand test/e2e/form-fill.e2e-spec.ts`
   - 1 suite, 2 tests passed.
 - `pnpm --filter backend build`

@@ -11,6 +11,10 @@
 - Add a draft/review flow before rendering the final PDF.
 - Add an ask-user-later flow for required values that memory cannot fill.
 - Add saved reusable form templates derived from previously uploaded forms.
+- Add explicit partially-filled PDF behavior.
+  - Prefer preserving existing values by default.
+  - Detect conflicts where the uploaded PDF value differs from memory.
+  - Consider a review UI for choosing between existing PDF values and memory values.
 - Add PDF flattening as an optional export mode.
 - Add stronger sensitive-field policy for legal, tax, medical, signature, citizenship, and certification fields.
 - Add more core memory slugs for practical forms, such as address, phone, emergency contact, pronouns, locale, and timezone.

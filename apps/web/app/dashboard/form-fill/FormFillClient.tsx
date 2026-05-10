@@ -85,6 +85,7 @@ function blobUrlFromBase64(base64: string, mimeType: string): string {
 
 export default function FormFillClient({ accessToken }: FormFillClientProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FormFillResult | null>(null);
@@ -110,10 +111,38 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
+    selectFile(file);
+  };
+
+  const selectFile = (file: File | null) => {
     setSelectedFile(file);
     setResult(null);
     replaceDownloadUrl(null);
     setError(null);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    if (!isUploading) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    if (isUploading) {
+      return;
+    }
+
+    const file = event.dataTransfer.files?.[0] ?? null;
+    selectFile(file);
   };
 
   const upload = async () => {
@@ -177,19 +206,31 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
       <div className="p-6 border rounded-lg bg-white shadow-sm">
         <div className="space-y-4">
           <div>
-            <label
-              htmlFor="form-file"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Fillable PDF
-            </label>
             <input
               id="form-file"
               type="file"
               accept="application/pdf,.pdf"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-700 file:mr-4 file:rounded file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700"
+              className="sr-only"
             />
+            <label
+              htmlFor="form-file"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`block cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+                isDragging
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
+            >
+              <span className="block text-sm font-medium text-gray-900">
+                Drop a fillable PDF here
+              </span>
+              <span className="mt-1 block text-sm text-gray-500">
+                or click to choose one from your computer
+              </span>
+            </label>
             {selectedFile && (
               <p className="mt-2 text-sm text-gray-500">
                 {selectedFile.name} ({fileSizeLabel(selectedFile.size)})
@@ -243,6 +284,32 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
               {result.summary.warnings.map((warning) => (
                 <p key={warning}>{warning}</p>
               ))}
+            </div>
+          )}
+
+          {result.summary.filledFields.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                Filled fields
+              </h3>
+              <div className="divide-y border rounded">
+                {result.summary.filledFields.map((field) => (
+                  <div
+                    key={field.pdfFieldName}
+                    className="p-3 text-sm grid gap-1 sm:grid-cols-[1fr_2fr]"
+                  >
+                    <span className="font-medium text-gray-900">
+                      {field.pdfFieldName}
+                    </span>
+                    <span className="text-gray-600">
+                      {field.sourceSlugs.length > 0
+                        ? `From ${field.sourceSlugs.join(', ')}`
+                        : 'Filled from memory'}{' '}
+                      ({Math.round(field.confidence * 100)}% confidence)
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

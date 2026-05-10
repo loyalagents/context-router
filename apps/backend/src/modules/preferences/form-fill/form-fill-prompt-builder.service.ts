@@ -18,7 +18,8 @@ export class FormFillPromptBuilderService {
 Return JSON only. Return exactly one fill action for every PDF field in the metadata list.
 Use exact case-sensitive fieldName values from the field metadata. Do not invent field names.
 For dropdown, radio, and option-list fields, use exact option value strings from the metadata.
-Use SKIP with sourceSlugs: [] when memory is missing, confidence is low, a field is unsupported, or a field should not be filled.
+Every action must include sourceSlugs and confidence. Use sourceSlugs: [] only for SKIP actions.
+Use SKIP with sourceSlugs: [] and confidence: 0 when memory is missing, confidence is low, a field is unsupported, or a field should not be filled.
 Do not fill signatures, certification/declaration fields, submit buttons, or fields that require unsupported personal/legal assertions.
 
 Allowed response shape:
