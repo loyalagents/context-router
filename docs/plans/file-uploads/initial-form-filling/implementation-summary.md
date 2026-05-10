@@ -37,7 +37,9 @@
 
 - `pnpm --filter backend exec jest --selectProjects unit --runInBand src/modules/preferences/form-fill`
   - 6 suites, 18 tests passed.
+- `pnpm --filter backend exec jest --selectProjects e2e --runInBand test/e2e/form-fill.e2e-spec.ts`
+  - 1 suite, 2 tests passed.
 - `pnpm --filter backend build`
 - `pnpm --filter web build`
 
-The targeted e2e test was added and invoked with `pnpm --filter backend exec jest --selectProjects e2e --runInBand test/e2e/form-fill.e2e-spec.ts`, but it could not complete because Docker was not running and the test database could not be started/reset. The web build completed successfully while still printing the existing ESLint plugin-resolution warning.
+The web build completed successfully while still printing the existing ESLint plugin-resolution warning.
