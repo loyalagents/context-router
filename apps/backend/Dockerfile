@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Enable Corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
 
 # Copy package files from monorepo root and backend
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -29,7 +29,7 @@ FROM node:20-alpine AS production
 WORKDIR /app
 
 # Enable Corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
 
 # Copy package files from monorepo root and backend
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
