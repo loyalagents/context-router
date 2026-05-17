@@ -1,0 +1,1674 @@
+{
+  "schemaVersion": 2,
+  "userId": "elena-marquez",
+  "purpose": "Synthetic realistic document corpus for an I-9 Section 1 form-fill demo.",
+  "formId": "i-9",
+  "generatedDocumentCount": 100,
+  "intentionallyMissing": [
+    {
+      "field": "Telephone Number",
+      "reason": "The I-9 telephone field should be skipped or left blank when memory is missing.",
+      "expectedBehavior": "Do not guess, synthesize, or write a placeholder value."
+    }
+  ],
+  "fillPolicy": {
+    "employeeSection1": "extract candidate facts from realistic documents, then fill only high-confidence active memories",
+    "signaturesAndDates": "manual; skip by default",
+    "employerSection2": "skip for this employee-memory demo"
+  },
+  "canonicalFactsForReview": {
+    "legalName": "Elena Sofia Marquez",
+    "firstName": "Elena",
+    "middleInitial": "S",
+    "lastName": "Marquez",
+    "otherLastNamesUsed": "Ruiz",
+    "dateOfBirth": "07/18/1994",
+    "syntheticSsn": "000-00-0194",
+    "email": "elena.marquez@example.test",
+    "address": {
+      "street": "418 Cedar Glen Avenue",
+      "apartment": "Apt 12B",
+      "city": "Sacramento",
+      "state": "CA",
+      "zip": "95819"
+    },
+    "citizenshipStatus": "U.S. citizen",
+    "omittedTelephoneValue": true
+  },
+  "documents": [
+    {
+      "id": "001",
+      "path": "documents/identity/001-driver-license-transcript.md",
+      "category": "identity",
+      "title": "California Driver License Transcript",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "002",
+      "path": "documents/identity/002-state-id-card-notes.json",
+      "category": "identity",
+      "title": "State ID Card Notes",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "003",
+      "path": "documents/identity/003-passport-application-draft.md",
+      "category": "identity",
+      "title": "Passport Application Draft",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "citizenship",
+        "address",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "004",
+      "path": "documents/identity/004-birth-record-summary.txt",
+      "category": "identity",
+      "title": "Birth Record Summary",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "citizenship"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "005",
+      "path": "documents/identity/005-name-change-note.md",
+      "category": "identity",
+      "title": "Name History Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "006",
+      "path": "documents/identity/006-ssn-card-transcript.md",
+      "category": "identity",
+      "title": "Social Security Card Transcript",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "ssn"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "007",
+      "path": "documents/identity/007-employee-identity-affidavit.md",
+      "category": "identity",
+      "title": "Employee Identity Affidavit Draft",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "date_of_birth"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "008",
+      "path": "documents/identity/008-background-check-profile.json",
+      "category": "identity",
+      "title": "Background Check Profile Export",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "date_of_birth",
+        "email",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "009",
+      "path": "documents/identity/009-school-transcript-request.md",
+      "category": "identity",
+      "title": "Transcript Request",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "date_of_birth",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "010",
+      "path": "documents/identity/010-notary-intake-summary.yml",
+      "category": "identity",
+      "title": "Notary Intake Summary",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "date_of_birth"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "011",
+      "path": "documents/identity/011-library-card-profile.md",
+      "category": "identity",
+      "title": "Library Card Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email",
+        "city"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "012",
+      "path": "documents/identity/012-health-portal-demographics.json",
+      "category": "identity",
+      "title": "Health Portal Demographics",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "email",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "013",
+      "path": "documents/identity/013-student-loan-profile.md",
+      "category": "identity",
+      "title": "Student Loan Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "014",
+      "path": "documents/identity/014-credit-freeze-letter.txt",
+      "category": "identity",
+      "title": "Credit Freeze Letter",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "015",
+      "path": "documents/identity/015-citizenship-note.md",
+      "category": "identity",
+      "title": "Citizenship Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "citizenship"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "016",
+      "path": "documents/address-contact/016-current-lease-summary.md",
+      "category": "address-contact",
+      "title": "Current Lease Summary",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "017",
+      "path": "documents/address-contact/017-utility-account-header.txt",
+      "category": "address-contact",
+      "title": "Utility Account Header",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "018",
+      "path": "documents/address-contact/018-bank-statement-header.md",
+      "category": "address-contact",
+      "title": "Bank Statement Header",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "019",
+      "path": "documents/address-contact/019-renters-insurance-declarations.json",
+      "category": "address-contact",
+      "title": "Renters Insurance Declarations",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "020",
+      "path": "documents/address-contact/020-usps-address-confirmation.md",
+      "category": "address-contact",
+      "title": "USPS Address Confirmation",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "021",
+      "path": "documents/address-contact/021-voter-registration-reminder.txt",
+      "category": "address-contact",
+      "title": "Voter Registration Reminder",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "city",
+        "state"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "022",
+      "path": "documents/address-contact/022-shipping-profile-export.json",
+      "category": "address-contact",
+      "title": "Shipping Profile Export",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "mixed",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "023",
+      "path": "documents/address-contact/023-apartment-maintenance-ticket.md",
+      "category": "address-contact",
+      "title": "Apartment Maintenance Ticket",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "024",
+      "path": "documents/address-contact/024-campus-alumni-record.yaml",
+      "category": "address-contact",
+      "title": "Campus Alumni Record",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "025",
+      "path": "documents/address-contact/025-personal-crm-export.json",
+      "category": "address-contact",
+      "title": "Personal CRM Export",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email",
+        "city",
+        "state"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "026",
+      "path": "documents/hr-onboarding/026-offer-letter.md",
+      "category": "hr-onboarding",
+      "title": "Offer Letter",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name",
+        "company",
+        "title",
+        "start_date",
+        "work_email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "027",
+      "path": "documents/hr-onboarding/027-offer-acceptance-email.txt",
+      "category": "hr-onboarding",
+      "title": "Offer Acceptance Email",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "email",
+        "title",
+        "company",
+        "start_date",
+        "full_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "028",
+      "path": "documents/hr-onboarding/028-hris-profile-export.json",
+      "category": "hr-onboarding",
+      "title": "HRIS Profile Export",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "email",
+        "work_email",
+        "title",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "029",
+      "path": "documents/hr-onboarding/029-new-hire-data-sheet.md",
+      "category": "hr-onboarding",
+      "title": "New Hire Data Sheet",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "first_name",
+        "date_of_birth",
+        "address",
+        "email",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "030",
+      "path": "documents/hr-onboarding/030-i9-section1-prep-checklist.md",
+      "category": "hr-onboarding",
+      "title": "I-9 Section 1 Prep Checklist",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "other_last_names",
+        "address",
+        "date_of_birth",
+        "ssn",
+        "citizenship"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "031",
+      "path": "documents/hr-onboarding/031-remote-onboarding-instructions.md",
+      "category": "hr-onboarding",
+      "title": "Remote Onboarding Instructions",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "guardrail"
+    },
+    {
+      "id": "032",
+      "path": "documents/hr-onboarding/032-badge-request.md",
+      "category": "hr-onboarding",
+      "title": "Badge Request",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name",
+        "last_name",
+        "full_name",
+        "company",
+        "title"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "033",
+      "path": "documents/hr-onboarding/033-laptop-pickup-form.txt",
+      "category": "hr-onboarding",
+      "title": "Laptop Pickup Form",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "034",
+      "path": "documents/hr-onboarding/034-manager-welcome-note.md",
+      "category": "hr-onboarding",
+      "title": "Manager Welcome Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name",
+        "title",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "035",
+      "path": "documents/hr-onboarding/035-people-ops-profile.yaml",
+      "category": "hr-onboarding",
+      "title": "People Ops Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "first_name",
+        "middle_initial",
+        "last_name",
+        "other_last_names",
+        "email",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "036",
+      "path": "documents/hr-onboarding/036-emergency-contact-form-blank.md",
+      "category": "hr-onboarding",
+      "title": "Emergency Contact Form Blank",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "037",
+      "path": "documents/hr-onboarding/037-workplace-location-assignment.md",
+      "category": "hr-onboarding",
+      "title": "Workplace Location Assignment",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "company"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "038",
+      "path": "documents/hr-onboarding/038-everify-notice-draft.md",
+      "category": "hr-onboarding",
+      "title": "E-Verify Notice Draft",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "ssn"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "039",
+      "path": "documents/hr-onboarding/039-section2-skip-policy.md",
+      "category": "hr-onboarding",
+      "title": "Section 2 Skip Policy",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "guardrail"
+    },
+    {
+      "id": "040",
+      "path": "documents/hr-onboarding/040-benefits-eligibility-note.txt",
+      "category": "hr-onboarding",
+      "title": "Benefits Eligibility Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "start_date",
+        "work_email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "041",
+      "path": "documents/payroll-tax/041-w4-draft-header.md",
+      "category": "payroll-tax",
+      "title": "W-4 Draft Header",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "ssn"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "042",
+      "path": "documents/payroll-tax/042-payroll-profile.json",
+      "category": "payroll-tax",
+      "title": "Payroll Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "address",
+        "ssn",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "043",
+      "path": "documents/payroll-tax/043-direct-deposit-redacted.md",
+      "category": "payroll-tax",
+      "title": "Direct Deposit Redacted",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "044",
+      "path": "documents/payroll-tax/044-state-tax-intake.yaml",
+      "category": "payroll-tax",
+      "title": "State Tax Intake",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "state",
+        "zip"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "045",
+      "path": "documents/payroll-tax/045-pay-schedule-memo.md",
+      "category": "payroll-tax",
+      "title": "Pay Schedule Memo",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "046",
+      "path": "documents/payroll-tax/046-compensation-letter.md",
+      "category": "payroll-tax",
+      "title": "Compensation Letter",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "title",
+        "start_date"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "047",
+      "path": "documents/payroll-tax/047-retirement-enrollment-header.txt",
+      "category": "payroll-tax",
+      "title": "Retirement Enrollment Header",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "048",
+      "path": "documents/payroll-tax/048-health-plan-election-header.md",
+      "category": "payroll-tax",
+      "title": "Health Plan Election Header",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "049",
+      "path": "documents/payroll-tax/049-expense-profile.json",
+      "category": "payroll-tax",
+      "title": "Expense Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "work_email",
+        "title"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "050",
+      "path": "documents/payroll-tax/050-payroll-address-correction.md",
+      "category": "payroll-tax",
+      "title": "Payroll Address Correction",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name",
+        "address"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "051",
+      "path": "documents/work-authorization/051-i9-acceptable-documents-note.md",
+      "category": "work-authorization",
+      "title": "I-9 Acceptable Documents Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "citizenship",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "052",
+      "path": "documents/work-authorization/052-list-b-driver-license-summary.md",
+      "category": "work-authorization",
+      "title": "List B Driver License Summary",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "date_of_birth",
+        "address",
+        "list_b"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "053",
+      "path": "documents/work-authorization/053-list-c-ss-card-summary.md",
+      "category": "work-authorization",
+      "title": "List C Social Security Card Summary",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "ssn",
+        "list_c"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "054",
+      "path": "documents/work-authorization/054-us-passport-card-placeholder.md",
+      "category": "work-authorization",
+      "title": "U.S. Passport Card Placeholder",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "055",
+      "path": "documents/work-authorization/055-document-choice-email.txt",
+      "category": "work-authorization",
+      "title": "Document Choice Email",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "email",
+        "list_b",
+        "list_c",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "056",
+      "path": "documents/work-authorization/056-everify-case-note.md",
+      "category": "work-authorization",
+      "title": "E-Verify Case Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "ssn",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "057",
+      "path": "documents/work-authorization/057-citizenship-attestation-draft.md",
+      "category": "work-authorization",
+      "title": "Citizenship Attestation Draft",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "citizenship"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "058",
+      "path": "documents/work-authorization/058-no-uscis-number-note.md",
+      "category": "work-authorization",
+      "title": "No USCIS Number Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "citizenship",
+        "skip_uscis",
+        "skip_i94",
+        "skip_foreign_passport"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "059",
+      "path": "documents/work-authorization/059-identity-document-index.json",
+      "category": "work-authorization",
+      "title": "Identity Document Index",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "list_b",
+        "list_c",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "060",
+      "path": "documents/work-authorization/060-authorization-expiration-note.md",
+      "category": "work-authorization",
+      "title": "Authorization Expiration Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "skip_authorization_expiration"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "061",
+      "path": "documents/employer-context/061-company-profile.md",
+      "category": "employer-context",
+      "title": "Company Profile",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "company"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "062",
+      "path": "documents/employer-context/062-office-address-card.md",
+      "category": "employer-context",
+      "title": "Office Address Card",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "company",
+        "employer_address_noise"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "guardrail"
+    },
+    {
+      "id": "063",
+      "path": "documents/employer-context/063-people-ops-roster.json",
+      "category": "employer-context",
+      "title": "People Ops Roster",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "company",
+        "employer_context"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "064",
+      "path": "documents/employer-context/064-authorized-representative-note.md",
+      "category": "employer-context",
+      "title": "Authorized Representative Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "065",
+      "path": "documents/employer-context/065-work-location-email.txt",
+      "category": "employer-context",
+      "title": "Work Location Email",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "work_email",
+        "company",
+        "employer_address_noise"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "066",
+      "path": "documents/employer-context/066-employee-first-day-confirmation.md",
+      "category": "employer-context",
+      "title": "Employee First Day Confirmation",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "start_date",
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "067",
+      "path": "documents/employer-context/067-section2-document-review-reminder.md",
+      "category": "employer-context",
+      "title": "Section 2 Document Review Reminder",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "guardrail"
+    },
+    {
+      "id": "068",
+      "path": "documents/employer-context/068-remote-verifier-template.md",
+      "category": "employer-context",
+      "title": "Remote Verifier Template",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "069",
+      "path": "documents/employer-context/069-hr-policy-excerpt.md",
+      "category": "employer-context",
+      "title": "HR Policy Excerpt",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "070",
+      "path": "documents/employer-context/070-business-entity-record.txt",
+      "category": "employer-context",
+      "title": "Business Entity Record",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "company"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "071",
+      "path": "documents/partial-conflicting/071-old-apartment-bill.md",
+      "category": "partial-conflicting",
+      "title": "Old Apartment Bill",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "old_address_conflict"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "072",
+      "path": "documents/partial-conflicting/072-old-driver-license-note.md",
+      "category": "partial-conflicting",
+      "title": "Old Driver License Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "old_name_conflict",
+        "old_address_conflict"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "073",
+      "path": "documents/partial-conflicting/073-former-email-signature.txt",
+      "category": "partial-conflicting",
+      "title": "Former Email Signature",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "old_name_conflict",
+        "old_email_conflict"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "074",
+      "path": "documents/partial-conflicting/074-outdated-resume.md",
+      "category": "partial-conflicting",
+      "title": "Outdated Resume",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "old_name_conflict"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "075",
+      "path": "documents/partial-conflicting/075-background-check-invite.md",
+      "category": "partial-conflicting",
+      "title": "Background Check Invite",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "076",
+      "path": "documents/partial-conflicting/076-recruiting-profile-export.json",
+      "category": "partial-conflicting",
+      "title": "Recruiting Profile Export",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email",
+        "title"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "077",
+      "path": "documents/partial-conflicting/077-missing-address-note.md",
+      "category": "partial-conflicting",
+      "title": "Missing Address Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "078",
+      "path": "documents/partial-conflicting/078-partial-tax-note.txt",
+      "category": "partial-conflicting",
+      "title": "Partial Tax Note",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "079",
+      "path": "documents/partial-conflicting/079-blank-contact-card.json",
+      "category": "partial-conflicting",
+      "title": "Blank Contact Card",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "full_name",
+        "email"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "080",
+      "path": "documents/partial-conflicting/080-do-not-use-sample-id.md",
+      "category": "partial-conflicting",
+      "title": "Do Not Use Sample ID",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "081",
+      "path": "documents/noise/081-recipe-notes.md",
+      "category": "noise",
+      "title": "Recipe Notes",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "082",
+      "path": "documents/noise/082-grocery-list.txt",
+      "category": "noise",
+      "title": "Grocery List",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "083",
+      "path": "documents/noise/083-book-highlights.md",
+      "category": "noise",
+      "title": "Book Highlights",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "084",
+      "path": "documents/noise/084-workout-plan.yaml",
+      "category": "noise",
+      "title": "Workout Plan",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "085",
+      "path": "documents/noise/085-playlist-export.json",
+      "category": "noise",
+      "title": "Playlist Export",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "086",
+      "path": "documents/noise/086-product-warranty.md",
+      "category": "noise",
+      "title": "Product Warranty",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "087",
+      "path": "documents/noise/087-package-tracking.txt",
+      "category": "noise",
+      "title": "Package Tracking",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "088",
+      "path": "documents/noise/088-restaurant-reservation.md",
+      "category": "noise",
+      "title": "Restaurant Reservation",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name_only_noise"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "089",
+      "path": "documents/noise/089-newsletter.md",
+      "category": "noise",
+      "title": "Newsletter",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "090",
+      "path": "documents/noise/090-travel-itinerary-redacted.md",
+      "category": "noise",
+      "title": "Travel Itinerary Redacted",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "091",
+      "path": "documents/noise/091-conference-badge.md",
+      "category": "noise",
+      "title": "Conference Badge",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name_only_noise"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "092",
+      "path": "documents/noise/092-expense-receipt.md",
+      "category": "noise",
+      "title": "Expense Receipt",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "093",
+      "path": "documents/noise/093-project-kickoff-notes.md",
+      "category": "noise",
+      "title": "Project Kickoff Notes",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name_only_noise"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "094",
+      "path": "documents/noise/094-code-review-notes.md",
+      "category": "noise",
+      "title": "Code Review Notes",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "095",
+      "path": "documents/noise/095-github-profile-snippet.json",
+      "category": "noise",
+      "title": "GitHub Profile Snippet",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "096",
+      "path": "documents/noise/096-training-completion.md",
+      "category": "noise",
+      "title": "Training Completion",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "first_name",
+        "last_name"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "097",
+      "path": "documents/noise/097-blank-template.md",
+      "category": "noise",
+      "title": "Blank Template",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "098",
+      "path": "documents/noise/098-phishing-simulation.md",
+      "category": "noise",
+      "title": "Phishing Simulation",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "099",
+      "path": "documents/noise/099-redacted-id-image-description.md",
+      "category": "noise",
+      "title": "Redacted ID Image Description",
+      "containsI9UsefulInfo": false,
+      "factHints": [],
+      "containsTelephoneValue": false,
+      "detailTier": "noise",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    },
+    {
+      "id": "100",
+      "path": "documents/noise/100-manual-signature-reminder.md",
+      "category": "noise",
+      "title": "Manual Signature Reminder",
+      "containsI9UsefulInfo": true,
+      "factHints": [
+        "section_policy"
+      ],
+      "containsTelephoneValue": false,
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "guardrail"
+    }
+  ],
+  "corpusStyle": {
+    "strategy": "mixed realistic corpus",
+    "detailTiers": {
+      "hero": "multi-section records with redactions, stale/current cues, null fields, or thread context",
+      "medium": "single-purpose records with enough clutter to feel plausible",
+      "noise": "short unrelated files that should not produce I-9 facts"
+    },
+    "authorityModel": {
+      "authority": [
+        "high",
+        "medium",
+        "low",
+        "none"
+      ],
+      "freshness": [
+        "current",
+        "stale",
+        "mixed",
+        "unknown"
+      ],
+      "expectedUse": [
+        "extract",
+        "corroborate",
+        "guardrail",
+        "ignore"
+      ]
+    }
+  }
+}

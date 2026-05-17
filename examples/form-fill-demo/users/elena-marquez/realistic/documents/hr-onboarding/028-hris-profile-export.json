@@ -1,0 +1,44 @@
+{
+  "exportType": "hris_employee_profile",
+  "system": "Workstream Demo HRIS",
+  "exportedAt": "2026-05-13T11:26:39-07:00",
+  "employee": {
+    "id": "EMP-DEMO-1842",
+    "legalName": "Elena Sofia Marquez",
+    "preferredName": "Elena",
+    "nameHistory": [
+      {
+        "field": "last_name",
+        "previousValue": "Ruiz",
+        "currentValue": "Marquez",
+        "changedOn": "2026-02-14"
+      }
+    ],
+    "personalEmail": "elena.marquez@example.test",
+    "workEmail": "elena.marquez@cedarcoast.example.test",
+    "phone": null,
+    "title": "Data Operations Analyst",
+    "department": "Data Operations",
+    "startDate": "06/03/2026"
+  },
+  "homeAddress": {
+    "line1": "418 Cedar Glen Avenue",
+    "line2": "Apt 12B",
+    "city": "Sacramento",
+    "state": "CA",
+    "postalCode": "95819",
+    "effectiveDate": "2026-03-01"
+  },
+  "auditTrail": [
+    {
+      "timestamp": "2026-05-12T16:24:03-07:00",
+      "actor": "candidate",
+      "action": "confirmed_start_date"
+    },
+    {
+      "timestamp": "2026-05-13T11:20:17-07:00",
+      "actor": "people_ops",
+      "action": "phone_left_blank"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+profile:
+  record_id: EMP-DEMO-1842
+  legal_name:
+    first: Elena
+    middle: Sofia
+    middle_initial: S
+    last: Marquez
+    full: Elena Sofia Marquez
+  name_history:
+    - type: prior_last_name
+      value: Ruiz
+      current: false
+  contact:
+    personal_email: elena.marquez@example.test
+    work_email: elena.marquez@cedarcoast.example.test
+    telephone: null
+    note: Candidate has not supplied a telephone number.
+  address:
+    line1: 418 Cedar Glen Avenue
+    line2: Apt 12B
+    city: Sacramento
+    state: CA
+    zip: "95819"
+  employment:
+    company: Cedar & Coast Analytics
+    title: Data Operations Analyst
+    start_date: "06/03/2026"
+  i9_scope:
+    section1_candidate: true
+    section2_employer_owned: true

@@ -1,0 +1,11 @@
+{
+  "candidateName": "Elena Sofia Marquez",
+  "email": "elena.marquez@example.test",
+  "desiredRole": "Data Operations Analyst",
+  "locationPreference": "Sacramento hybrid",
+  "missing": [
+    "home address",
+    "date of birth",
+    "SSN"
+  ]
+}

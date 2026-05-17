@@ -1,0 +1,27 @@
+{
+  "payrollSystem": "Ledgerline Demo Payroll",
+  "employeeKey": "pay-cc-1842",
+  "legalName": "Elena Sofia Marquez",
+  "mailingAddress": {
+    "street": "418 Cedar Glen Avenue",
+    "unit": "Apt 12B",
+    "city": "Sacramento",
+    "state": "CA",
+    "zip": "95819"
+  },
+  "ssnTokenForDemo": "000-00-0194",
+  "email": "elena.marquez@example.test",
+  "telephone": null,
+  "bankAccount": "REDACTED",
+  "taxWithholding": "not included",
+  "audit": [
+    {
+      "date": "2026-05-13",
+      "change": "address confirmed from lease packet"
+    },
+    {
+      "date": "2026-05-13",
+      "change": "phone intentionally left empty"
+    }
+  ]
+}

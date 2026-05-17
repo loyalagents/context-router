@@ -1,0 +1,30 @@
+{
+  "source": "personal_shipping_profiles_export",
+  "exportedAt": "2026-05-01T08:15:00-07:00",
+  "profiles": [
+    {
+      "label": "home-current",
+      "recipient": "Elena Sofia Marquez",
+      "address1": "418 Cedar Glen Avenue",
+      "address2": "Apt 12B",
+      "city": "Sacramento",
+      "region": "CA",
+      "postal": "95819",
+      "country": "US",
+      "email": "elena.marquez@example.test",
+      "phone": null,
+      "default": true
+    },
+    {
+      "label": "old-oakland-do-not-use",
+      "recipient": "Elena Ruiz",
+      "address1": "72 Harbor Walk",
+      "city": "Oakland",
+      "region": "CA",
+      "postal": "94607",
+      "country": "US",
+      "default": false,
+      "archivedAt": "2026-03-05"
+    }
+  ]
+}

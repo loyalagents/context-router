@@ -1,0 +1,27 @@
+{
+  "document": "renters_insurance_declarations_page",
+  "carrier": "Pacific Demo Mutual",
+  "policyNumber": "RENTERS-DEMO-REDACTED",
+  "effective": {
+    "from": "2026-03-01",
+    "to": "2027-03-01"
+  },
+  "namedInsured": "Elena Sofia Marquez",
+  "insuredLocation": {
+    "line1": "418 Cedar Glen Avenue",
+    "unit": "Apt 12B",
+    "city": "Sacramento",
+    "state": "CA",
+    "zip": "95819"
+  },
+  "delivery": {
+    "email": "elena.marquez@example.test",
+    "telephone": null,
+    "paperless": true
+  },
+  "redactions": [
+    "premium",
+    "policy_number_suffix",
+    "payment_method"
+  ]
+}

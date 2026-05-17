@@ -1,0 +1,20 @@
+{
+  "schema": "personal-crm/v2",
+  "person": {
+    "displayName": "Elena Sofia Marquez",
+    "preferredEmail": "elena.marquez@example.test",
+    "alternateEmails": [
+      "elena.marquez@cedarcoast.example.test"
+    ],
+    "phoneNumbers": [],
+    "city": "Sacramento",
+    "state": "CA"
+  },
+  "reminders": [
+    {
+      "date": "2026-06-03",
+      "text": "First day at Cedar & Coast Analytics"
+    }
+  ],
+  "extractionWarning": "No telephone number is present in this CRM export."
+}

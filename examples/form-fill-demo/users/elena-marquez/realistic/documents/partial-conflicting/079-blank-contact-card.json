@@ -1,0 +1,13 @@
+{
+  "kind": "contact_card_export",
+  "version": 3,
+  "fn": "Elena Sofia Marquez",
+  "email": [
+    {
+      "type": "personal",
+      "value": "elena.marquez@example.test"
+    }
+  ],
+  "tel": [],
+  "note": "No telephone value was exported. The absence is intentional for the I-9 demo."
+}
