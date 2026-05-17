@@ -43,6 +43,8 @@ Before implementing a batch:
 
 Do not use this orchestration plan as the detailed implementation plan for a batch. It is intentionally smaller and higher-level.
 
+Script names for this initiative should use the `eval:<verb>` namespace.
+
 ## Status Legend
 
 - `not-started`: no implementation subdir exists yet
@@ -55,30 +57,33 @@ Do not use this orchestration plan as the detailed implementation plan for a bat
 
 | Batch | Status | Plan Folder | Summary |
 | --- | --- | --- | --- |
-| 0. Canonical eval tree cleanup | not-started | `00-canonical-eval-tree/` | Consolidate old demo trees into one eval home. |
-| 1. Schema and fixture contract | not-started | `01-schema-contract/` | Define profile, manifest, scenario, and mapping contracts. |
-| 2. Validator | not-started | `02-validator/` | Build deterministic fixture validation against migrated Elena. |
-| 3. Templates and scaffold | not-started | `03-templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
-| 4. Eval runner | not-started | `04-eval-runner/` | Run scenario fixtures and compare snapshots. |
-| 5. Polish and playbook | deferred | `05-polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
+| 0. Canonical eval tree cleanup | complete | `eval-tree-cleanup/` | Consolidated old demo trees into one eval home. |
+| 1. Schema and fixture contract | not-started | `schema-contract/` | Define profile, manifest, scenario, and mapping contracts. |
+| 2. Validator | not-started | `validator/` | Build deterministic fixture validation against migrated Elena. |
+| 3. Templates and scaffold | not-started | `templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
+| 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
+| 5. Polish and playbook | deferred | `polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
 
 Current implemented state:
 
 - Brainstorming docs exist in this directory.
-- No implementation batch has been planned or executed yet.
-- Existing examples still live in their current pre-cleanup locations.
+- Batch 0 is complete.
+- `examples/eval/` is the canonical fixture home.
+- Old `examples/form-fill-demo/`, `examples/memory-demo/`, and `examples/memory-demo-simple/` trees have been removed.
+- Only form-fill PDF fixtures, generated field manifests, form notes, the manifest generator, and Elena Marquez were migrated.
+- Validation, schemas, templates, scaffold generation, scenarios, and the eval runner are still future batches.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/00-canonical-eval-tree/
+docs/plans/evaluation/user-generation-forms/eval-tree-cleanup/
 ```
 
 Goal:
 
-- Establish one canonical fixture home, likely `examples/eval/`.
+- Establish one canonical fixture home at `examples/eval/`.
 - Remove the immediate confusion between `examples/form-fill-demo/`, `examples/memory-demo/`, and `examples/memory-demo-simple/`.
 
 Work worth planning and executing together:
@@ -87,8 +92,7 @@ Work worth planning and executing together:
 - Move form-fill form fixtures and generated field manifests into `examples/eval/forms/`.
 - Move `generate-field-manifests.mjs` into `examples/eval/scripts/`.
 - Move the Elena corpus as the first realistic user/corpus example.
-- Migrate only useful memory-demo ideas if they clearly fit the new shape.
-- Delete `examples/memory-demo/` and `examples/memory-demo-simple/`.
+- Delete the old form-fill and memory demo trees.
 - Update package scripts that reference old paths.
 
 Non-goals:
@@ -104,12 +108,16 @@ Exit criteria:
 - Package scripts do not point at removed paths.
 - An `implementation-summary.md` documents exactly what moved, what was deleted, and what remains.
 
+Status:
+
+- Complete. See `eval-tree-cleanup/implementation-summary.md`.
+
 ## Batch 1: Schema And Fixture Contract
 
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/01-schema-contract/
+docs/plans/evaluation/user-generation-forms/schema-contract/
 ```
 
 Goal:
@@ -143,7 +151,7 @@ Exit criteria:
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/02-validator/
+docs/plans/evaluation/user-generation-forms/validator/
 ```
 
 Goal:
@@ -177,7 +185,7 @@ Exit criteria:
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/03-templates-scaffold/
+docs/plans/evaluation/user-generation-forms/templates-scaffold/
 ```
 
 Goal:
@@ -210,7 +218,7 @@ Exit criteria:
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/04-eval-runner/
+docs/plans/evaluation/user-generation-forms/eval-runner/
 ```
 
 Goal:
@@ -244,7 +252,7 @@ Exit criteria:
 Recommended plan folder:
 
 ```text
-docs/plans/evaluation/user-generation-forms/05-polish-playbook/
+docs/plans/evaluation/user-generation-forms/polish-playbook/
 ```
 
 Status:

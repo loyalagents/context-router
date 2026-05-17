@@ -1,7 +1,0 @@
-{
-  "$schema": "../../../schemas/scenario.schema.json",
-  "description": "Fill a conference registration form for Alex Rivera using MCP memory first and local fallback memory only for missing values.",
-  "formId": "conference-registration",
-  "userId": "alex-rivera",
-  "userVariant": "simple"
-}

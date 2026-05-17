@@ -18,8 +18,7 @@
     "test:backend:integration": "pnpm --filter backend test:integration",
     "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
-    "demo:memory:verify": "node examples/memory-demo/scripts/verify.mjs",
-    "demo:form-fill:manifests": "node examples/form-fill-demo/scripts/generate-field-manifests.mjs",
+    "eval:manifests": "node examples/eval/scripts/generate-field-manifests.mjs",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

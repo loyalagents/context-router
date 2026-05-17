@@ -23,4 +23,4 @@
 
 ## Tooling
 
-- Add a small fixture helper for constructing `profile.*` seed preferences if memory-demo user fixtures grow.
+- Add a small fixture helper for constructing `profile.*` seed preferences if eval user fixtures need it.
