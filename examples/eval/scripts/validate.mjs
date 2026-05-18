@@ -686,7 +686,7 @@ async function validateScenario(ctx, scenarioId, { transitive }) {
     ctx,
     path.join(scenarioRoot, 'start/prompt.md'),
     scenarioPath,
-    '/start/prompt.md',
+    '',
     {
       code: 'SCENARIO_PROMPT_MISSING',
       fix: 'Add start/prompt.md for the scenario.',
@@ -732,7 +732,10 @@ async function validateScenario(ctx, scenarioId, { transitive }) {
     });
   }
 
-  if (isFixtureId(scenario.formId)) {
+  const formValidatedThroughCorpus = Boolean(
+    transitiveResult?.formMaps?.has(scenario.formId),
+  );
+  if (isFixtureId(scenario.formId) && !formValidatedThroughCorpus) {
     await validateForm(ctx, scenario.formId, { requireFieldMap: true });
   }
 

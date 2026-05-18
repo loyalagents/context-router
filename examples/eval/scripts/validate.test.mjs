@@ -160,6 +160,23 @@ test('scenario scope performs transitive validation', async (t) => {
   assertHasCode(result, 'FIELD_MAP_FACT_MISSING');
 });
 
+test('scenario scope reports structural field-map errors once', async (t) => {
+  const root = await copyRepo(t);
+  const fieldMapPath = path.join(
+    root,
+    'examples/eval/forms/i-9/field-map.json',
+  );
+  const fieldMap = await readJson(fieldMapPath);
+  fieldMap.fields[1].pdfFieldName = 'Wrong Field Name';
+  await writeJson(fieldMapPath, fieldMap);
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-section1'],
+  });
+  assert.equal(countIssueCode(result, 'FIELD_MAP_NAME_MISMATCH'), 1);
+});
+
 test('form-only scope skips profile fact resolution', async (t) => {
   const root = await copyRepo(t);
   const fieldMapPath = path.join(
@@ -181,6 +198,14 @@ test('form-only scope skips profile fact resolution', async (t) => {
 test('write-report is limited to single-corpus scope and writes corpus report', async (t) => {
   const parsed = parseArgs(['--user', 'elena-marquez', '--write-report']);
   assert.equal(parsed.kind, 'usage-error');
+  assert.equal(
+    parseArgs([
+      '--scenario',
+      'elena-marquez-i9-section1',
+      '--write-report',
+    ]).kind,
+    'usage-error',
+  );
 
   const root = await copyRepo(t);
   const result = await runValidation({
@@ -198,6 +223,23 @@ test('write-report is limited to single-corpus scope and writes corpus report', 
   );
   const report = await readJson(result.reportPath);
   assert.equal(report.status, 'pass');
+});
+
+test('validation reports are byte-deterministic across repeated runs', async (t) => {
+  const root = await copyRepo(t);
+  const args = [
+    '--user',
+    'elena-marquez',
+    '--corpus',
+    'realistic',
+    '--write-report',
+  ];
+  const first = await runValidation({ repoRoot: root, args });
+  const firstReport = await readFile(first.reportPath, 'utf8');
+  const second = await runValidation({ repoRoot: root, args });
+  const secondReport = await readFile(second.reportPath, 'utf8');
+
+  assert.equal(firstReport, secondReport);
 });
 
 test('unsupported CLI combinations return usage errors', async () => {
@@ -276,4 +318,8 @@ function assertNoCode(result, code) {
     !result.issues.some((issue) => issue.code === code),
     `Did not expect issue code ${code}.`,
   );
+}
+
+function countIssueCode(result, code) {
+  return result.issues.filter((issue) => issue.code === code).length;
 }

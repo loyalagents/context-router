@@ -10,7 +10,7 @@
 - Added `ajv` as a root dev dependency for JSON Schema validation.
 - Added focused `node:test` coverage for validator success, reference failures,
   stale generated seeds, catalog checks, field-map errors, report writing,
-  CLI usage errors, and transitive scenario validation.
+  report determinism, CLI usage errors, and transitive scenario validation.
 - Added deterministic corpus report output at
   `examples/eval/users/elena-marquez/corpora/realistic/validation-report.json`.
 
@@ -31,7 +31,8 @@
 - Moved noise semantics to document `category` and `expectedUse`.
 - Fixed seed preference generation to use ordinal slug sorting.
 - Cleaned Elena's noise metadata so ignored documents do not declare facts and
-  the manual-signature guardrail is no longer categorized as noise.
+  the manual-signature guardrail is no longer categorized or located under
+  noise.
 
 ## Validator Behavior
 
@@ -50,6 +51,8 @@
   profile is in scope.
 - Failure output is grouped by fixture area and reports remain deterministic
   with repo-relative files and no timestamps.
+- V1 emits only error-level issues; warning-level reporting is reserved for a
+  future rule that is genuinely non-blocking.
 
 ## Verification
 
