@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "communication.preferred_channels",
+    "value": [
+      "email"
+    ]
+  },
+  {
+    "slug": "profile.company",
+    "value": "Cedar & Coast Analytics"
+  },
+  {
+    "slug": "profile.email",
+    "value": "elena.marquez@example.test"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Elena"
+  },
+  {
+    "slug": "profile.full_name",
+    "value": "Elena Sofia Marquez"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Marquez"
+  },
+  {
+    "slug": "profile.title",
+    "value": "Data Operations Analyst"
+  }
+]

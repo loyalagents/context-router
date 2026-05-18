@@ -13,6 +13,8 @@ Generated field manifests live beside each PDF:
 - `forms/<formId>/fields.generated.json` tracks raw PDF field names, types,
   option sets, inferred labels, data keys, fake-data hints, fill policy, and
   sensitivity.
+- `forms/<formId>/field-map.json`, when present, is the machine-readable mapping
+  from PDF fields to local eval fact keys or intentional skip reasons.
 - `forms/<formId>/fake-user-requirements.generated.md` summarizes the inferred
   fake-user requirements for quick review.
 
@@ -20,9 +22,9 @@ Run `pnpm eval:manifests` after adding or replacing PDFs.
 
 ## Current Eval Fixture Coverage
 
-The current canonical user fixture is Elena Marquez. Her migrated realistic
-corpus is focused on I-9 Section 1 and intentionally remains legacy-shaped until
-the schema contract batch normalizes it.
+The current canonical user fixture is Elena Marquez. Her realistic corpus is
+focused on I-9 Section 1 and uses the V1 eval profile, manifest, scenario, and
+field-map contracts.
 
 For evaluation and demos, signatures, certifications, legal attestations,
 consent checkboxes, and anything requiring a current legal assertion should be

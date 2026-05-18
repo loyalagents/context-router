@@ -58,7 +58,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | Batch | Status | Plan Folder | Summary |
 | --- | --- | --- | --- |
 | 0. Canonical eval tree cleanup | complete | `eval-tree-cleanup/` | Consolidated old demo trees into one eval home. |
-| 1. Schema and fixture contract | not-started | `schema-contract/` | Define profile, manifest, scenario, and mapping contracts. |
+| 1. Schema and fixture contract | complete | `schema-contract/` | Defined profile, manifest, scenario, field-map, and seed projection contracts. |
 | 2. Validator | not-started | `validator/` | Build deterministic fixture validation against migrated Elena. |
 | 3. Templates and scaffold | not-started | `templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
 | 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
@@ -70,8 +70,11 @@ Current implemented state:
 - Batch 0 is complete.
 - `examples/eval/` is the canonical fixture home.
 - Old `examples/form-fill-demo/`, `examples/memory-demo/`, and `examples/memory-demo-simple/` trees have been removed.
-- Only form-fill PDF fixtures, generated field manifests, form notes, the manifest generator, and Elena Marquez were migrated.
-- Validation, schemas, templates, scaffold generation, scenarios, and the eval runner are still future batches.
+- Batch 1 is complete.
+- `examples/eval/schemas/` defines V1 profile, corpus manifest, scenario, and field-map contracts.
+- Elena Marquez has a canonical `profile.yaml`, generated seed preferences, a V1 realistic corpus manifest under `users/elena-marquez/corpora/realistic/`, and an I-9 Section 1 scenario fixture.
+- `pnpm eval:derive-seeds` derives committed seed preference JSON from profiles.
+- Validation, templates, scaffold generation, and the eval runner are still future batches.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -145,6 +148,10 @@ Exit criteria:
 - Other engineers can review the data shape without reading future scripts.
 - Elena has enough migrated shape to serve as the first validator target.
 - The summary records any schema decisions and open questions.
+
+Status:
+
+- Complete. See `schema-contract/implementation-summary.md`.
 
 ## Batch 2: Validator
 

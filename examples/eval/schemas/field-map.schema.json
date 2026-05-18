@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/field-map.schema.json",
+  "title": "Eval Form Field Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "formId", "fields"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "formId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fieldIndex", "pdfFieldName", "mode", "factKey"],
+            "properties": {
+              "fieldIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pdfFieldName": {
+                "type": "string"
+              },
+              "mode": {
+                "const": "fact"
+              },
+              "factKey": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fieldIndex", "pdfFieldName", "mode", "reason"],
+            "properties": {
+              "fieldIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pdfFieldName": {
+                "type": "string"
+              },
+              "mode": {
+                "const": "skip"
+              },
+              "reason": {
+                "enum": [
+                  "manual_attestation",
+                  "out_of_scope",
+                  "not_applicable",
+                  "unmapped"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
