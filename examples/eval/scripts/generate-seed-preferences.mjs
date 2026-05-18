@@ -42,7 +42,9 @@ function deriveSeedPreferences(profile) {
     rows.push({ slug: entry.slug, value });
   }
 
-  return rows.sort((left, right) => left.slug.localeCompare(right.slug));
+  return rows.sort((left, right) =>
+    left.slug < right.slug ? -1 : left.slug > right.slug ? 1 : 0,
+  );
 }
 
 function getFactValue(facts, factKey) {

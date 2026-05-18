@@ -16,11 +16,13 @@ workflows only; they are not backend product behavior.
 - `scripts/generate-field-manifests.mjs` regenerates form field manifests.
 - `scripts/generate-seed-preferences.mjs` derives generated seed preferences
   from user profiles.
+- `scripts/validate.mjs` validates fixture schemas, references, field maps,
+  seed determinism, and corpus coverage.
 - `users/elena-marquez/` is the first normalized synthetic user fixture.
 - `scenarios/elena-marquez-i9-section1/` is the first scenario-shaped fixture.
 
-There is no `eval:validate` command yet. Fixture validation, templates, scaffold
-generation, and an eval runner are planned for later batches.
+Templates, scaffold generation, and an eval runner are planned for later
+batches.
 
 ## Contract Shape
 
@@ -37,6 +39,11 @@ Seed projection is strict: `seedPreferences[]` supports one `slug` and one
 generated seed preferences; empty arrays are emitted because they are explicit
 data. Form-fill rendering is separate runner behavior and may render array
 facts as scalar field values when a PDF field is scalar.
+
+Corpus manifest `documents[].factKeys` entries must be concrete profile fact
+leaves. Area markers such as `address.current` are intentionally invalid.
+`detailTier` describes richness only: `hero`, `medium`, or `brief`. Noise
+semantics live in `category` and `expectedUse`.
 
 Corpus manifests live at:
 
@@ -69,6 +76,26 @@ Regenerate seed preferences from profiles:
 
 ```bash
 pnpm eval:derive-seeds
+```
+
+Validate all local eval fixtures:
+
+```bash
+pnpm eval:validate
+```
+
+Useful focused validation commands:
+
+```bash
+pnpm eval:validate --user elena-marquez --corpus realistic
+pnpm eval:validate --scenario elena-marquez-i9-section1
+pnpm eval:validate --form i-9
+```
+
+Write the deterministic corpus report:
+
+```bash
+pnpm eval:validate --user elena-marquez --corpus realistic --write-report
 ```
 
 ## Manual Smoke Check

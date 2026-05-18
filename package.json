@@ -20,10 +20,13 @@
     "test:web": "pnpm --filter web test",
     "eval:manifests": "node examples/eval/scripts/generate-field-manifests.mjs",
     "eval:derive-seeds": "node examples/eval/scripts/generate-seed-preferences.mjs",
+    "eval:validate": "node examples/eval/scripts/validate.mjs",
+    "eval:validate:test": "node --test examples/eval/scripts/*.test.mjs",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "concurrently": "^8.0.0"
   },
   "dependencies": {

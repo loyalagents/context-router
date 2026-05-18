@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "summary": {
+    "profiles": 1,
+    "corpora": 1,
+    "forms": 1,
+    "scenarios": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "issues": []
+}

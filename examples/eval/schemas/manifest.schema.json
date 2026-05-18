@@ -114,7 +114,7 @@
             }
           },
           "detailTier": {
-            "enum": ["hero", "medium", "noise"]
+            "enum": ["hero", "medium", "brief"]
           },
           "authority": {
             "enum": ["high", "medium", "low", "none"]

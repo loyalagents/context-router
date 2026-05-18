@@ -7,7 +7,7 @@
 
 // Shared config for all projects
 const baseConfig = {
-  moduleFileExtensions: ['js', 'json', 'ts'],
+  moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },

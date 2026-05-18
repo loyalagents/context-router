@@ -123,7 +123,7 @@ This remains fixture/script infrastructure: no templates, scaffold generation, t
    - Run `pnpm eval:derive-seeds` and confirm no seed diff.
    - Run `pnpm --filter backend build`.
    - Run `pnpm test:backend:unit`.
-   - Run `pnpm --filter backend test:db:up`, `pnpm --filter backend test:db:migrate`, and `pnpm --filter backend test:integration -- --testPathPattern=seed`.
+   - Run `pnpm --filter backend test:db:up`, `pnpm --filter backend test:db:migrate`, and `pnpm --filter backend test:integration --testPathPattern=seed`.
 
 2. Structural validator:
    - Add `validate.mjs`, Ajv schema loading, CLI scope parsing, root script, and exit-code behavior.
@@ -162,7 +162,7 @@ pnpm --filter backend build
 pnpm test:backend:unit
 pnpm --filter backend test:db:up
 pnpm --filter backend test:db:migrate
-pnpm --filter backend test:integration -- --testPathPattern=seed
+pnpm --filter backend test:integration --testPathPattern=seed
 ```
 
 Focused validator tests should cover passing Elena, stale seed output, invalid catalog slug, catalog value-type mismatch, missing document path, actual unlisted document file, area fact ref rejection, `detailTier: "noise"` rejection, field-map mode pre-pass errors, field-map index/name mismatch, missing profile fact, null fact acceptance, array fact coverage, invalid intentional-missing form reference, noise/ignore violations, unsupported CLI flag combinations, exit codes, report path, and transitive scenario validation.

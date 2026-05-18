@@ -59,7 +59,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | --- | --- | --- | --- |
 | 0. Canonical eval tree cleanup | complete | `eval-tree-cleanup/` | Consolidated old demo trees into one eval home. |
 | 1. Schema and fixture contract | complete | `schema-contract/` | Defined profile, manifest, scenario, field-map, and seed projection contracts. |
-| 2. Validator | not-started | `validator/` | Build deterministic fixture validation against migrated Elena. |
+| 2. Validator | complete | `validator/` | Added deterministic fixture validation and corpus report generation. |
 | 3. Templates and scaffold | not-started | `templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
 | 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
 | 5. Polish and playbook | deferred | `polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
@@ -76,7 +76,16 @@ Current implemented state:
 - The I-9 field map keeps user-specific inapplicability in profile null facts
   rather than encoding Elena-specific skip reasons in the form-scoped map.
 - `pnpm eval:derive-seeds` derives committed seed preference JSON from profiles.
-- Validation, templates, scaffold generation, and the eval runner are still future batches.
+- `pnpm eval:validate` validates schemas, seed determinism, corpus document
+  inventory, scenario references, field-map exhaustiveness, fact references,
+  intentional missingness, and form coverage.
+- Manifest document `factKeys[]` are now leaf-only profile fact keys.
+- `detailTier` is now a pure richness field (`hero`, `medium`, `brief`);
+  noise semantics live in `category` and `expectedUse`.
+- Static backend preference catalog data lives in
+  `apps/backend/src/config/preferences.catalog.json`, with the existing TS
+  wrapper preserving backend exports.
+- Templates, scaffold generation, and the eval runner are still future batches.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -178,8 +187,7 @@ Work worth planning and executing together:
 - Check intentionally missing facts.
 - Cross-check `intentionallyMissing[].forms` against top-level `manifest.forms[]`.
 - Check corpus distribution basics.
-- Warn on thin or repetitive docs using configurable or tier-aware thresholds.
-- Write `validation-report.json`.
+- Write `validation-report.json` for a single corpus when requested.
 
 Design inputs to settle before or during this batch:
 
@@ -187,10 +195,10 @@ Design inputs to settle before or during this batch:
   scenario-scoped maps. The current I-9 map keeps user-specific
   inapplicability in `profile.yaml` null facts, while Section 2 remains
   `out_of_scope` for the employee-memory scenario.
-- Decide whether manifest document `factKeys` should remain a mixed leaf/area
-  content marker or be renamed to `mentionedFacts` or `factAreas`.
-- Decide whether `detailTier` should be a pure richness scale, with document
-  category carrying noise semantics.
+- Manifest document `factKeys` remain named `factKeys`, but are leaf-only
+  profile fact references.
+- `detailTier` is a pure richness scale; document category carries noise
+  semantics.
 
 Non-goals:
 
@@ -202,6 +210,10 @@ Exit criteria:
 - `pnpm eval:validate --user elena-marquez --corpus realistic` or the chosen equivalent runs.
 - Validator output gives actionable repair targets.
 - Useful old `verify.mjs` behavior, if any, has been replaced or intentionally dropped.
+
+Status:
+
+- Complete. See `validator/implementation-summary.md`.
 
 ## Batch 3: Templates And Scaffold
 
