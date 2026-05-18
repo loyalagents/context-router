@@ -1,5 +1,11 @@
 # Profile Slugs As First-Class Memory
 
+Status note, 2026-05-18: the profile-memory backend work described here has
+shipped, but the demo fixture paths in this historical plan are superseded. The
+current eval fixture contract lives in
+`docs/plans/evaluation/user-generation-forms/orchestration-plan.md` and
+`examples/eval/README.md`.
+
 ## Summary
 
 Implement the full unification: account identity remains on `User`; user-editable profile data becomes normal `profile.*` memory. No new MCP profile resource/tool. Existing MCP preference tools become the profile surface. This intentionally breaks old profile GraphQL/web APIs while migrating existing name/email values into preference rows.

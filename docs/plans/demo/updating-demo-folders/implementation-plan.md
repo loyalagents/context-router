@@ -1,5 +1,11 @@
 # Memory Demo Scaling Update
 
+Status note, 2026-05-18: this historical demo-folder plan is superseded. The
+old `examples/memory-demo` fixture shape was removed, and the current local eval
+fixture contract lives under `examples/eval/`. See
+`docs/plans/evaluation/user-generation-forms/orchestration-plan.md` and
+`examples/eval/README.md`.
+
 ## Summary
 Update `examples/memory-demo` so a colleague or coding agent can add scenarios without reverse-engineering the fixture. This pass should stay small: conventions, docs, templates, lightweight schema/help, and a simple offline verifier. Do not add MCP seed automation, browser automation, scaffolding, catalogs, or generated forms yet.
 
