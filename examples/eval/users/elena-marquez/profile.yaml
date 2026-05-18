@@ -1,0 +1,54 @@
+schemaVersion: 1
+userId: elena-marquez
+displayName: Elena Marquez
+facts:
+  identity:
+    legalName: Elena Sofia Marquez
+    firstName: Elena
+    middleName: Sofia
+    middleInitial: S
+    lastName: Marquez
+    otherLastNames:
+      - Ruiz
+    dateOfBirth: 1994-07-18
+    ssn: 000-00-0194
+  contact:
+    email: elena.marquez@example.test
+    phone: null
+  address:
+    current:
+      street: 418 Cedar Glen Avenue
+      unit: Apt 12B
+      city: Sacramento
+      state: CA
+      postalCode: "95819"
+  workAuthorization:
+    citizenshipStatus: U.S. citizen
+    uscisANumber: null
+    workAuthorizationExpirationDate: null
+    i94AdmissionNumber: null
+    foreignPassportNumber: null
+    foreignPassportCountry: null
+  employment:
+    company: Cedar & Coast Analytics
+    title: Data Operations Analyst
+    startDate: 2026-06-03
+    workEmail: elena.marquez@cedarcoast.example.test
+  communication:
+    preferredChannels:
+      - email
+seedPreferences:
+  - slug: communication.preferred_channels
+    factKey: communication.preferredChannels
+  - slug: profile.company
+    factKey: employment.company
+  - slug: profile.email
+    factKey: contact.email
+  - slug: profile.first_name
+    factKey: identity.firstName
+  - slug: profile.full_name
+    factKey: identity.legalName
+  - slug: profile.last_name
+    factKey: identity.lastName
+  - slug: profile.title
+    factKey: employment.title

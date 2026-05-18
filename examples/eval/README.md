@@ -2,20 +2,60 @@
 
 This directory is the canonical home for local evaluation fixtures.
 
+All fixture data is synthetic. These files support local scripts and evaluation
+workflows only; they are not backend product behavior.
+
 ## Current Contents
 
-- `forms/` contains fillable PDF fixtures, generated field manifests, and generated fake-user requirement notes.
-- `forms-notes.md` records human notes about the information each form asks for.
-- `scripts/generate-field-manifests.mjs` regenerates the form field manifests.
-- `users/elena-marquez/` is the first migrated synthetic user fixture.
+- `forms/` contains fillable PDF fixtures, generated field manifests, generated
+  fake-user requirement notes, and hand-authored field maps for
+  evaluation-ready forms.
+- `forms-notes.md` records human context about what each form asks for.
+- `schemas/` contains the V1 local fixture contracts for profiles, corpus
+  manifests, scenarios, and field maps.
+- `scripts/generate-field-manifests.mjs` regenerates form field manifests.
+- `scripts/generate-seed-preferences.mjs` derives generated seed preferences
+  from user profiles.
+- `users/elena-marquez/` is the first normalized synthetic user fixture.
+- `scenarios/elena-marquez-i9-section1/` is the first scenario-shaped fixture.
 
-Elena is migrated as-is from the legacy form-fill demo shape. Her `simple/` seed
-data and `realistic/manifest.json` are not the final eval contract yet. The
-schema contract batch will normalize her into the canonical profile, manifest,
-scenario, and mapping shapes.
+There is no `eval:validate` command yet. Fixture validation, templates, scaffold
+generation, and an eval runner are planned for later batches.
 
-This cleanup batch does not add schemas, a validator, templates, scaffold
-generation, scenarios, or an eval runner.
+## Contract Shape
+
+User facts live in `users/<userId>/profile.yaml`. Fact keys are local fixture
+paths such as `identity.legalName` and `address.current.postalCode`.
+
+MCP preference slugs are separate backend memory identifiers such as
+`profile.full_name`. The only current bridge between local fact keys and MCP
+slugs is `profile.yaml` `seedPreferences[]`, which is projected into
+`users/<userId>/seed-preferences.generated.json`.
+
+Seed projection is strict: `seedPreferences[]` supports one `slug` and one
+`factKey` per entry, with no joining or coercion. Null facts are omitted from
+generated seed preferences; empty arrays are emitted because they are explicit
+data. Form-fill rendering is separate runner behavior and may render array
+facts as scalar field values when a PDF field is scalar.
+
+Corpus manifests live at:
+
+```text
+users/<userId>/corpora/<corpusId>/manifest.json
+```
+
+Scenario fixtures live at:
+
+```text
+scenarios/<scenarioId>/scenario.json
+scenarios/<scenarioId>/start/prompt.md
+```
+
+Form field maps live beside forms:
+
+```text
+forms/<formId>/field-map.json
+```
 
 ## Commands
 
@@ -25,17 +65,21 @@ Regenerate form field manifests after adding or replacing PDFs:
 pnpm eval:manifests
 ```
 
-There is no `eval:validate` command yet. Fixture validation is planned for the
-validator batch.
+Regenerate seed preferences from profiles:
+
+```bash
+pnpm eval:derive-seeds
+```
 
 ## Manual Smoke Check
 
-Until the eval runner exists, the I-9 fixture can still be checked manually:
+Until the eval runner exists, the I-9 fixture can be checked manually:
 
-1. Seed memory from `users/elena-marquez/simple/seed-preferences.json`.
-2. Analyze or import files from `users/elena-marquez/realistic/documents/`.
-3. Open `/dashboard/form-fill`.
-4. Upload `forms/i-9/form.pdf`.
-5. Compare the filled and skipped fields against `forms-notes.md` and Elena's README.
-
-All fixture data is synthetic and non-sensitive.
+1. Seed memory from `users/elena-marquez/seed-preferences.generated.json`.
+2. Analyze or import files from
+   `users/elena-marquez/corpora/realistic/documents/`.
+3. Use `scenarios/elena-marquez-i9-section1/start/prompt.md` as the scenario
+   prompt context.
+4. Open `/dashboard/form-fill`.
+5. Upload `forms/i-9/form.pdf`.
+6. Compare filled and skipped fields against `forms/i-9/field-map.json`.

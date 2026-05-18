@@ -19,6 +19,7 @@
     "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
     "eval:manifests": "node examples/eval/scripts/generate-field-manifests.mjs",
+    "eval:derive-seeds": "node examples/eval/scripts/generate-seed-preferences.mjs",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
@@ -26,6 +27,7 @@
     "concurrently": "^8.0.0"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.10.0"
+    "@google-cloud/vertexai": "^1.10.0",
+    "yaml": "^2.8.1"
   }
 }

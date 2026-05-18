@@ -58,7 +58,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | Batch | Status | Plan Folder | Summary |
 | --- | --- | --- | --- |
 | 0. Canonical eval tree cleanup | complete | `eval-tree-cleanup/` | Consolidated old demo trees into one eval home. |
-| 1. Schema and fixture contract | not-started | `schema-contract/` | Define profile, manifest, scenario, and mapping contracts. |
+| 1. Schema and fixture contract | complete | `schema-contract/` | Defined profile, manifest, scenario, field-map, and seed projection contracts. |
 | 2. Validator | not-started | `validator/` | Build deterministic fixture validation against migrated Elena. |
 | 3. Templates and scaffold | not-started | `templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
 | 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
@@ -70,8 +70,13 @@ Current implemented state:
 - Batch 0 is complete.
 - `examples/eval/` is the canonical fixture home.
 - Old `examples/form-fill-demo/`, `examples/memory-demo/`, and `examples/memory-demo-simple/` trees have been removed.
-- Only form-fill PDF fixtures, generated field manifests, form notes, the manifest generator, and Elena Marquez were migrated.
-- Validation, schemas, templates, scaffold generation, scenarios, and the eval runner are still future batches.
+- Batch 1 is complete.
+- `examples/eval/schemas/` defines V1 profile, corpus manifest, scenario, and field-map contracts.
+- Elena Marquez has a canonical `profile.yaml`, generated seed preferences, a V1 realistic corpus manifest under `users/elena-marquez/corpora/realistic/`, and an I-9 Section 1 scenario fixture.
+- The I-9 field map keeps user-specific inapplicability in profile null facts
+  rather than encoding Elena-specific skip reasons in the form-scoped map.
+- `pnpm eval:derive-seeds` derives committed seed preference JSON from profiles.
+- Validation, templates, scaffold generation, and the eval runner are still future batches.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -146,6 +151,10 @@ Exit criteria:
 - Elena has enough migrated shape to serve as the first validator target.
 - The summary records any schema decisions and open questions.
 
+Status:
+
+- Complete. See `schema-contract/implementation-summary.md`.
+
 ## Batch 2: Validator
 
 Recommended plan folder:
@@ -164,10 +173,24 @@ Work worth planning and executing together:
 - Validate profile, manifest, scenario, and field schema versions.
 - Check referenced files exist.
 - Check form coverage from `fields.generated.json` and form-field-to-fact mappings.
+- Check every field-map, manifest, scenario, and intentionally-missing fact key
+  resolves against `profile.yaml`, allowing null values.
 - Check intentionally missing facts.
+- Cross-check `intentionallyMissing[].forms` against top-level `manifest.forms[]`.
 - Check corpus distribution basics.
 - Warn on thin or repetitive docs using configurable or tier-aware thresholds.
 - Write `validation-report.json`.
+
+Design inputs to settle before or during this batch:
+
+- Decide whether field maps are strictly form-scoped neutral maps or
+  scenario-scoped maps. The current I-9 map keeps user-specific
+  inapplicability in `profile.yaml` null facts, while Section 2 remains
+  `out_of_scope` for the employee-memory scenario.
+- Decide whether manifest document `factKeys` should remain a mixed leaf/area
+  content marker or be renamed to `mentionedFacts` or `factAreas`.
+- Decide whether `detailTier` should be a pure richness scale, with document
+  category carrying noise semantics.
 
 Non-goals:
 
@@ -235,6 +258,7 @@ Work worth planning and executing together:
 - Run the form-fill flow.
 - Diff against conventional expected snapshots.
 - Produce per-field classifications such as `correct`, `skipped-correctly`, `hallucinated`, and `missing`.
+- Define fill-time rendering for array facts mapped to scalar PDF fields.
 
 Non-goals:
 

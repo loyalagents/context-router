@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "formId": "i-9",
+  "fields": [
+    {
+      "fieldIndex": 0,
+      "pdfFieldName": "3 A lawful permanent resident Enter USCIS or ANumber",
+      "mode": "fact",
+      "factKey": "workAuthorization.uscisANumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+    },
+    {
+      "fieldIndex": 1,
+      "pdfFieldName": "Signature of Employee",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Employee signature requires explicit action for the current form run."
+    },
+    {
+      "fieldIndex": 2,
+      "pdfFieldName": "First Name Given Name",
+      "mode": "fact",
+      "factKey": "identity.firstName"
+    },
+    {
+      "fieldIndex": 3,
+      "pdfFieldName": "Employee Middle Initial (if any)",
+      "mode": "fact",
+      "factKey": "identity.middleInitial"
+    },
+    {
+      "fieldIndex": 4,
+      "pdfFieldName": "Employee Other Last Names Used (if any)",
+      "mode": "fact",
+      "factKey": "identity.otherLastNames"
+    },
+    {
+      "fieldIndex": 5,
+      "pdfFieldName": "Today's Date mmddyyy",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Employee signature date is part of the attestation and should not be filled from stored memory."
+    },
+    {
+      "fieldIndex": 6,
+      "pdfFieldName": "List B Document 1 Title",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 List B document fields are employer or authorized-representative review fields."
+    },
+    {
+      "fieldIndex": 7,
+      "pdfFieldName": "Additional Information",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Additional Information has no canonical Section 1 profile fact in this scenario."
+    },
+    {
+      "fieldIndex": 8,
+      "pdfFieldName": "CB_1",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+    },
+    {
+      "fieldIndex": 9,
+      "pdfFieldName": "CB_2",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+    },
+    {
+      "fieldIndex": 10,
+      "pdfFieldName": "CB_3",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+    },
+    {
+      "fieldIndex": 11,
+      "pdfFieldName": "CB_4",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+    },
+    {
+      "fieldIndex": 12,
+      "pdfFieldName": "CB_Alt",
+      "mode": "skip",
+      "reason": "unmapped",
+      "note": "Alternative procedure checkbox is not mapped in the V1 employee-memory scenario."
+    },
+    {
+      "fieldIndex": 13,
+      "pdfFieldName": "State",
+      "mode": "fact",
+      "factKey": "address.current.state"
+    },
+    {
+      "fieldIndex": 14,
+      "pdfFieldName": "ZIP Code",
+      "mode": "fact",
+      "factKey": "address.current.postalCode"
+    },
+    {
+      "fieldIndex": 15,
+      "pdfFieldName": "Date of Birth mmddyyyy",
+      "mode": "fact",
+      "factKey": "identity.dateOfBirth"
+    },
+    {
+      "fieldIndex": 16,
+      "pdfFieldName": "US Social Security Number",
+      "mode": "fact",
+      "factKey": "identity.ssn"
+    },
+    {
+      "fieldIndex": 17,
+      "pdfFieldName": "Telephone Number",
+      "mode": "fact",
+      "factKey": "contact.phone",
+      "note": "Elena declares this fact as null in profile.yaml; the corpus manifest marks it intentionally missing."
+    },
+    {
+      "fieldIndex": 18,
+      "pdfFieldName": "Last Name (Family Name)",
+      "mode": "fact",
+      "factKey": "identity.lastName"
+    },
+    {
+      "fieldIndex": 19,
+      "pdfFieldName": "Address Street Number and Name",
+      "mode": "fact",
+      "factKey": "address.current.street"
+    },
+    {
+      "fieldIndex": 20,
+      "pdfFieldName": "Apt Number (if any)",
+      "mode": "fact",
+      "factKey": "address.current.unit"
+    },
+    {
+      "fieldIndex": 21,
+      "pdfFieldName": "City or Town",
+      "mode": "fact",
+      "factKey": "address.current.city"
+    },
+    {
+      "fieldIndex": 22,
+      "pdfFieldName": "Employees E-mail Address",
+      "mode": "fact",
+      "factKey": "contact.email"
+    },
+    {
+      "fieldIndex": 23,
+      "pdfFieldName": "Exp Date mmddyyyy",
+      "mode": "fact",
+      "factKey": "workAuthorization.workAuthorizationExpirationDate",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+    },
+    {
+      "fieldIndex": 24,
+      "pdfFieldName": "USCIS ANumber",
+      "mode": "fact",
+      "factKey": "workAuthorization.uscisANumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+    },
+    {
+      "fieldIndex": 25,
+      "pdfFieldName": "Form I94 Admission Number",
+      "mode": "fact",
+      "factKey": "workAuthorization.i94AdmissionNumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+    },
+    {
+      "fieldIndex": 26,
+      "pdfFieldName": "Foreign Passport Number and Country of IssuanceRow1",
+      "mode": "fact",
+      "factKey": "workAuthorization.foreignPassportNumber",
+      "note": "Elena declares foreign passport number and country facts as null in profile.yaml because she is a U.S. citizen."
+    },
+    {
+      "fieldIndex": 27,
+      "pdfFieldName": "Document Title 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 28,
+      "pdfFieldName": "Issuing Authority 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 29,
+      "pdfFieldName": "Document Number 0 (if any)",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 30,
+      "pdfFieldName": "Document Title 2 If any",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 31,
+      "pdfFieldName": "Issuing Authority_2",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 32,
+      "pdfFieldName": "Document Number If any_2",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 33,
+      "pdfFieldName": "Document Number if any_3",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 34,
+      "pdfFieldName": "List C Expiration Date 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 35,
+      "pdfFieldName": "List C Document Number 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 36,
+      "pdfFieldName": "List C Issuing Authority 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 37,
+      "pdfFieldName": "List C Document Title 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document review fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 38,
+      "pdfFieldName": "FirstDayEmployed mmddyyyy",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employee first day of employment is a Section 2 employer field in this fixture."
+    },
+    {
+      "fieldIndex": 39,
+      "pdfFieldName": "S2 Todays Date mmddyyyy",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 date is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 40,
+      "pdfFieldName": "Last Name First Name and Title of Employer or Authorized Representative",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employer or authorized representative identity is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 41,
+      "pdfFieldName": "Signature of Employer or AR",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employer or authorized representative signature is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 42,
+      "pdfFieldName": "Employers Business or Org Name",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employer business information is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 43,
+      "pdfFieldName": "Employers Business or Org Address",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employer business address is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 44,
+      "pdfFieldName": "Expiration Date if any",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 document expiration field is outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 45,
+      "pdfFieldName": "List B Issuing Authority 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 List B document fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 46,
+      "pdfFieldName": "List B Document Number 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 List B document fields are outside the employee-memory scenario."
+    },
+    {
+      "fieldIndex": 47,
+      "pdfFieldName": "List B Expiration Date 1",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Section 2 List B document fields are outside the employee-memory scenario."
+    }
+  ]
+}
