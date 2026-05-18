@@ -24,6 +24,11 @@ is made more reliable.
 listed in the corpus manifest's `intentionallyMissing` array. The I-9 telephone
 field should be left blank rather than guessed or filled with a placeholder.
 
+Work-authorization identifiers that do not apply to Elena's U.S. citizen status
+are also declared as `null` in `profile.yaml`. Those fields remain mapped in
+the form-scoped I-9 field map so a future non-citizen fixture can reuse the same
+map with concrete values.
+
 Employee signature/date and all Section 2 employer review fields are outside
 the employee-memory scenario and should be skipped.
 

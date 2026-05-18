@@ -19,7 +19,7 @@
     },
     "facts": {
       "type": "object",
-      "description": "Authoritative local fixture facts. Nested paths form canonical fact keys; null declares an intentionally absent fact.",
+      "description": "Authoritative local fixture facts. Nested paths form canonical fact keys; null declares an intentionally absent or user-inapplicable fact.",
       "additionalProperties": true
     },
     "seedPreferences": {

@@ -40,8 +40,9 @@ makes the future contract simpler.
 - Dates use ISO `YYYY-MM-DD`.
 - Denormalized facts are allowed when they are canonical form-fill values.
   Elena should include both `identity.legalName` and name parts.
-- Purposefully absent facts are declared in `profile.yaml` with `null`.
-  Elena should include `contact.phone: null`.
+- Purposefully absent or user-inapplicable facts are declared in `profile.yaml`
+  with `null`. Elena should include `contact.phone: null` plus null
+  work-authorization identifiers that do not apply to a U.S. citizen.
 - `seedPreferences[]` supports only `{ slug, factKey }`. No joins, coercion,
   wrapping, or splitting.
 - Array MCP slugs project from array facts.
@@ -107,12 +108,19 @@ Legacy hint rewrite table:
   `not_applicable`, or `unmapped`.
 - Use `out_of_scope` for fields outside the scenario role or intent, such as
   I-9 employer Section 2 in an employee-memory scenario.
-- Use `not_applicable` for fields inside the scenario intent that do not apply
-  to the user, such as USCIS/A-number for a U.S. citizen.
+- Keep form-scoped field maps neutral when a field can apply to another
+  synthetic user. User-specific non-applicability should usually be expressed
+  as `mode: "fact"` plus a null fact in `profile.yaml`, such as USCIS/A-number
+  for a U.S. citizen.
+- Reserve `not_applicable` for fields that the scenario contract intentionally
+  treats as inapplicable without depending on a specific user's fact values.
 - I-9 `unmapped.needs_review` fields use `mode: "skip", reason: "unmapped"`
   with a note.
 - `contact.phone` maps as `mode: "fact"`; Elena's profile declares it as
   `null`, and the corpus manifest marks it intentionally missing.
+- I-9 work-authorization identifier fields map as `mode: "fact"`; Elena's
+  profile declares them as null because they do not apply to her citizenship
+  status.
 - Scenario fixtures live at `examples/eval/scenarios/<scenarioId>/`.
 - `scenario.json` shape: `schemaVersion`, `scenarioId`, `userId`,
   `corpusId`, `formId`, optional `description`, optional

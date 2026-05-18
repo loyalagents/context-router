@@ -32,6 +32,12 @@ MCP preference slugs are separate backend memory identifiers such as
 slugs is `profile.yaml` `seedPreferences[]`, which is projected into
 `users/<userId>/seed-preferences.generated.json`.
 
+Seed projection is strict: `seedPreferences[]` supports one `slug` and one
+`factKey` per entry, with no joining or coercion. Null facts are omitted from
+generated seed preferences; empty arrays are emitted because they are explicit
+data. Form-fill rendering is separate runner behavior and may render array
+facts as scalar field values when a PDF field is scalar.
+
 Corpus manifests live at:
 
 ```text

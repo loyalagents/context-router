@@ -5,9 +5,9 @@
     {
       "fieldIndex": 0,
       "pdfFieldName": "3 A lawful permanent resident Enter USCIS or ANumber",
-      "mode": "skip",
-      "reason": "not_applicable",
-      "note": "Elena is a U.S. citizen, so the lawful permanent resident USCIS/A-number subfield does not apply."
+      "mode": "fact",
+      "factKey": "workAuthorization.uscisANumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
     },
     {
       "fieldIndex": 1,
@@ -154,30 +154,30 @@
     {
       "fieldIndex": 23,
       "pdfFieldName": "Exp Date mmddyyyy",
-      "mode": "skip",
-      "reason": "not_applicable",
-      "note": "Work authorization expiration date does not apply to Elena as a U.S. citizen."
+      "mode": "fact",
+      "factKey": "workAuthorization.workAuthorizationExpirationDate",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
     },
     {
       "fieldIndex": 24,
       "pdfFieldName": "USCIS ANumber",
-      "mode": "skip",
-      "reason": "not_applicable",
-      "note": "USCIS/A-number does not apply to Elena as a U.S. citizen."
+      "mode": "fact",
+      "factKey": "workAuthorization.uscisANumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
     },
     {
       "fieldIndex": 25,
       "pdfFieldName": "Form I94 Admission Number",
-      "mode": "skip",
-      "reason": "not_applicable",
-      "note": "Form I-94 admission number does not apply to Elena as a U.S. citizen."
+      "mode": "fact",
+      "factKey": "workAuthorization.i94AdmissionNumber",
+      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
     },
     {
       "fieldIndex": 26,
       "pdfFieldName": "Foreign Passport Number and Country of IssuanceRow1",
-      "mode": "skip",
-      "reason": "not_applicable",
-      "note": "Foreign passport fields do not apply to Elena as a U.S. citizen."
+      "mode": "fact",
+      "factKey": "workAuthorization.foreignPassportNumber",
+      "note": "Elena declares foreign passport number and country facts as null in profile.yaml because she is a U.S. citizen."
     },
     {
       "fieldIndex": 27,

@@ -24,6 +24,11 @@ facts:
       postalCode: "95819"
   workAuthorization:
     citizenshipStatus: U.S. citizen
+    uscisANumber: null
+    workAuthorizationExpirationDate: null
+    i94AdmissionNumber: null
+    foreignPassportNumber: null
+    foreignPassportCountry: null
   employment:
     company: Cedar & Coast Analytics
     title: Data Operations Analyst

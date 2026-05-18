@@ -33,6 +33,9 @@
   `profile.yaml` `seedPreferences[]`; null facts are omitted.
 - Field maps map form fields to facts or skip reasons. Intentional missingness
   lives in the corpus manifest, not in field maps.
+- The I-9 field map stays form-scoped. User-specific inapplicability is
+  represented by null facts in `profile.yaml`, including Elena's non-applicable
+  work-authorization identifiers.
 - `identity.ssn` is the canonical fact key; fixture docs explain the value is
   synthetic.
 - Scenario fixtures use `scenario.json` plus `start/prompt.md`; the old
@@ -117,10 +120,23 @@ All passed.
 ## Follow-Ups
 
 - Batch 2 should promote the one-off checks into `pnpm eval:validate`.
+- Batch 2 should validate every field-map, manifest, scenario, and
+  intentionally-missing `factKey` reference against `profile.yaml`, allowing
+  null values.
 - Batch 2 should validate profile fact types against MCP preference slug value
   types where seed preferences are emitted.
+- Batch 2 should cross-check `intentionallyMissing[].forms` values against each
+  manifest's top-level `forms[]`.
+- Batch 2 should decide whether manifest `documents[].factKeys` remains a
+  mixed leaf-or-area marker or is renamed to something like `mentionedFacts` or
+  `factAreas`.
+- Batch 2 should revisit whether `detailTier` should be a pure richness scale
+  instead of mixing richness with noise/category semantics.
+- Batch 4 should document fill-time rendering for array facts mapped into
+  scalar PDF fields.
 - Future runner work should decide expected snapshot shape for
   `elena-marquez-i9-section1`.
 - Future field-map work should decide whether unlabeled I-9 citizenship
   checkboxes can be mapped safely from widget position or improved field
-  extraction.
+  extraction, including whether the field-map schema needs conditional or
+  discriminator-style mappings.
