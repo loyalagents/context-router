@@ -119,19 +119,14 @@ All passed.
 
 ## Follow-Ups
 
-- Batch 2 should promote the one-off checks into `pnpm eval:validate`.
-- Batch 2 should validate every field-map, manifest, scenario, and
-  intentionally-missing `factKey` reference against `profile.yaml`, allowing
-  null values.
-- Batch 2 should validate profile fact types against MCP preference slug value
-  types where seed preferences are emitted.
-- Batch 2 should cross-check `intentionallyMissing[].forms` values against each
-  manifest's top-level `forms[]`.
-- Batch 2 should decide whether manifest `documents[].factKeys` remains a
-  mixed leaf-or-area marker or is renamed to something like `mentionedFacts` or
-  `factAreas`.
-- Batch 2 should revisit whether `detailTier` should be a pure richness scale
-  instead of mixing richness with noise/category semantics.
+- Batch 2 resolved the validator follow-ups by adding `pnpm eval:validate`,
+  validating profile-backed field-map, manifest, scenario, intentional-missing,
+  and seed references, and checking seed values against the real backend
+  preference catalog.
+- Batch 2 kept manifest `documents[].factKeys` named `factKeys`, but made the
+  entries leaf-only profile fact references.
+- Batch 2 made `detailTier` a pure richness scale (`hero`, `medium`, `brief`);
+  noise semantics now live in document `category` and `expectedUse`.
 - Batch 4 should document fill-time rendering for array facts mapped into
   scalar PDF fields.
 - Future runner work should decide expected snapshot shape for
