@@ -36,6 +36,8 @@ export interface PreferenceDefinition {
  * The canonical catalog of all valid preference slugs.
  * Used by seed.ts and test-db.ts to populate the preference_definitions table.
  */
+// Keep the unwrap defensive because JSON module interop differs across
+// ts-jest, ts-node, and compiled CommonJS consumers.
 const catalogData =
   'default' in rawCatalogData ? rawCatalogData.default : rawCatalogData;
 

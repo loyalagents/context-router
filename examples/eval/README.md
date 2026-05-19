@@ -98,6 +98,9 @@ Write the deterministic corpus report:
 pnpm eval:validate --user elena-marquez --corpus realistic --write-report
 ```
 
+Validator exit codes are `0` for pass, `1` for validation failures, and `2`
+for unsupported CLI usage.
+
 ## Manual Smoke Check
 
 Until the eval runner exists, the I-9 fixture can be checked manually:

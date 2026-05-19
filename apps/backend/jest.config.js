@@ -7,6 +7,8 @@
 
 // Shared config for all projects
 const baseConfig = {
+  // Keep ts before json so extensionless imports resolve typed wrappers before
+  // same-basename data files, e.g. preferences.catalog.ts over .json.
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',

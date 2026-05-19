@@ -41,6 +41,7 @@ export async function runValidation({
   if (parsed.kind === 'usage-error') {
     return {
       exitCode: 2,
+      repoRoot,
       usageError: parsed.message,
       usage: usage(),
       summary: emptySummary(),
@@ -110,6 +111,7 @@ export async function runValidation({
 
   return {
     exitCode: summary.errors > 0 ? 1 : 0,
+    repoRoot: ctx.repoRoot,
     summary,
     issues: ctx.issues,
     report,
@@ -229,8 +231,9 @@ export function formatResult(result) {
   );
 
   if (result.reportPath) {
+    const repoRoot = result.repoRoot ?? defaultRepoRoot;
     lines.push(
-      `report=${toPosixPath(path.relative(defaultRepoRoot, result.reportPath))}`,
+      `report=${toPosixPath(path.relative(repoRoot, result.reportPath))}`,
     );
   }
 
@@ -320,7 +323,7 @@ async function validateUserCorpus(ctx, userId, corpusId) {
   const profile = await validateProfile(ctx, userId, profilePath);
   const profileFacts = profile
     ? collectFactKeys(profile.facts ?? {})
-    : { leaves: new Map(), areas: new Set() };
+    : null;
 
   if (profile) {
     await validateSeedPreferences(ctx, userRoot, profile, profileFacts);
@@ -479,12 +482,13 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
   const listedPaths = new Set();
   const ids = new Set();
 
-  if ((manifest.distribution?.documentCount ?? null) !== manifest.documents?.length) {
+  const documentCount = manifest.documents?.length ?? 0;
+  if ((manifest.distribution?.documentCount ?? null) !== documentCount) {
     addIssue(ctx, {
       code: 'MANIFEST_DOCUMENT_COUNT_MISMATCH',
       file: manifestPath,
       pointer: '/distribution/documentCount',
-      message: `distribution.documentCount is ${manifest.distribution?.documentCount}, but documents has ${manifest.documents?.length ?? 0} entries.`,
+      message: `distribution.documentCount is ${manifest.distribution?.documentCount}, but documents has ${documentCount} entries.`,
       fix: 'Update distribution.documentCount to match documents.length.',
     });
   }
@@ -551,21 +555,23 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
       });
     }
 
-    for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
-      const factState = classifyFactKey(profileFacts, factKey);
-      if (factState.kind !== 'leaf' || factState.value == null) {
-        addIssue(ctx, {
-          code:
-            factState.kind === 'area'
-              ? 'DOCUMENT_FACT_AREA'
-              : factState.kind === 'leaf'
-                ? 'DOCUMENT_FACT_NULL'
-                : 'DOCUMENT_FACT_MISSING',
-          file: manifestPath,
-          pointer: `${pointer}/factKeys/${factIndex}`,
-          message: `Document factKey ${factKey} must resolve to a non-null profile leaf fact.`,
-          fix: 'Use a concrete non-null profile fact leaf or remove the factKey.',
-        });
+    if (profileFacts) {
+      for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
+        const factState = classifyFactKey(profileFacts, factKey);
+        if (factState.kind !== 'leaf' || factState.value == null) {
+          addIssue(ctx, {
+            code:
+              factState.kind === 'area'
+                ? 'DOCUMENT_FACT_AREA'
+                : factState.kind === 'leaf'
+                  ? 'DOCUMENT_FACT_NULL'
+                  : 'DOCUMENT_FACT_MISSING',
+            file: manifestPath,
+            pointer: `${pointer}/factKeys/${factIndex}`,
+            message: `Document factKey ${factKey} must resolve to a non-null profile leaf fact.`,
+            fix: 'Use a concrete non-null profile fact leaf or remove the factKey.',
+          });
+        }
       }
     }
   }
@@ -761,26 +767,28 @@ async function validateScenario(ctx, scenarioId, { transitive }) {
 function validateIntentionallyMissing(ctx, manifest, manifestPath, profileFacts, formMaps) {
   for (const [index, missing] of (manifest.intentionallyMissing ?? []).entries()) {
     const pointer = `/intentionallyMissing/${index}`;
-    const factState = classifyFactKey(profileFacts, missing.factKey);
-    if (factState.kind !== 'leaf') {
-      addIssue(ctx, {
-        code:
-          factState.kind === 'area'
-            ? 'MISSING_FACT_AREA'
-            : 'MISSING_FACT_NOT_IN_PROFILE',
-        file: manifestPath,
-        pointer: `${pointer}/factKey`,
-        message: `Intentionally missing factKey ${missing.factKey} must resolve to a profile leaf fact.`,
-        fix: 'Use a concrete nullable profile fact leaf.',
-      });
-    } else if (factState.value !== null) {
-      addIssue(ctx, {
-        code: 'MISSING_FACT_NOT_NULL',
-        file: manifestPath,
-        pointer: `${pointer}/factKey`,
-        message: `Intentionally missing factKey ${missing.factKey} must be null in profile.yaml.`,
-        fix: 'Set the profile fact to null or remove the intentionallyMissing entry.',
-      });
+    if (profileFacts) {
+      const factState = classifyFactKey(profileFacts, missing.factKey);
+      if (factState.kind !== 'leaf') {
+        addIssue(ctx, {
+          code:
+            factState.kind === 'area'
+              ? 'MISSING_FACT_AREA'
+              : 'MISSING_FACT_NOT_IN_PROFILE',
+          file: manifestPath,
+          pointer: `${pointer}/factKey`,
+          message: `Intentionally missing factKey ${missing.factKey} must resolve to a profile leaf fact.`,
+          fix: 'Use a concrete nullable profile fact leaf.',
+        });
+      } else if (factState.value !== null) {
+        addIssue(ctx, {
+          code: 'MISSING_FACT_NOT_NULL',
+          file: manifestPath,
+          pointer: `${pointer}/factKey`,
+          message: `Intentionally missing factKey ${missing.factKey} must be null in profile.yaml.`,
+          fix: 'Set the profile fact to null or remove the intentionallyMissing entry.',
+        });
+      }
     }
 
     for (const [formIndex, formId] of (missing.forms ?? []).entries()) {
@@ -811,17 +819,16 @@ function validateIntentionallyMissing(ctx, manifest, manifestPath, profileFacts,
       });
     }
 
-    const declaringDocIndex = (manifest.documents ?? []).findIndex((doc) =>
-      (doc.factKeys ?? []).includes(missing.factKey),
-    );
-    if (declaringDocIndex !== -1) {
-      addIssue(ctx, {
-        code: 'MISSING_FACT_DECLARED_BY_DOCUMENT',
-        file: manifestPath,
-        pointer: `/documents/${declaringDocIndex}/factKeys`,
-        message: `Intentionally missing factKey ${missing.factKey} must not appear in document factKeys[].`,
-        fix: 'Remove the factKey from documents or remove the intentionallyMissing entry.',
-      });
+    for (const [docIndex, doc] of (manifest.documents ?? []).entries()) {
+      if ((doc.factKeys ?? []).includes(missing.factKey)) {
+        addIssue(ctx, {
+          code: 'MISSING_FACT_DECLARED_BY_DOCUMENT',
+          file: manifestPath,
+          pointer: `/documents/${docIndex}/factKeys`,
+          message: `Intentionally missing factKey ${missing.factKey} must not appear in document factKeys[].`,
+          fix: 'Remove the factKey from documents or remove the intentionallyMissing entry.',
+        });
+      }
     }
   }
 }
@@ -838,7 +845,7 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
     (manifest.documents ?? []).flatMap((doc) => doc.factKeys ?? []),
   );
 
-  for (const formId of manifest.forms ?? []) {
+  for (const [formIndex, formId] of (manifest.forms ?? []).entries()) {
     const fieldMap = formMaps.get(formId);
     if (!fieldMap) continue;
     for (const [index, field] of (fieldMap.fields ?? []).entries()) {
@@ -851,7 +858,7 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
       addIssue(ctx, {
         code: 'FIELD_FACT_UNCOVERED',
         file: manifestPath,
-        pointer: `/forms/${manifest.forms.indexOf(formId)}`,
+        pointer: `/forms/${formIndex}`,
         message: `Form ${formId} field ${field.fieldIndex} (${field.pdfFieldName}) maps to ${field.factKey}, but no seed preference or document factKeys[] covers it.`,
         fix: `Add ${field.factKey} to a document factKeys[] entry or seedPreferences[].`,
       });

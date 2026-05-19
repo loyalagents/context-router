@@ -10,7 +10,8 @@
 - Added `ajv` as a root dev dependency for JSON Schema validation.
 - Added focused `node:test` coverage for validator success, reference failures,
   stale generated seeds, catalog checks, field-map errors, report writing,
-  report determinism, CLI usage errors, and transitive scenario validation.
+  committed-report freshness, report determinism, CLI usage errors, and
+  transitive scenario validation.
 - Added deterministic corpus report output at
   `examples/eval/users/elena-marquez/corpora/realistic/validation-report.json`.
 
@@ -39,18 +40,23 @@
 - Validates profile, manifest, scenario, and field-map schemas.
 - Checks seed preference determinism against committed generated JSON.
 - Checks seed preference slugs and non-null value types against the real backend
-  catalog JSON.
+  catalog JSON for the current backend catalog types:
+  `string | boolean | enum | array`.
 - Checks corpus document inventory, path safety, listed-vs-actual files,
   distribution document count, noise/ignore metadata, and document fact keys.
 - Checks field-map exhaustiveness against `fields.generated.json`.
 - Checks profile fact references in field maps, corpus documents,
   intentionally missing entries, and coverage.
+- If `profile.yaml` cannot be loaded, profile-dependent semantic checks are
+  skipped so the output stays focused on the root profile problem.
 - `--scenario` performs transitive validation of the referenced user, corpus,
   form, field map, seed output, and coverage.
 - `--form` performs only form and field-map structural validation because no
   profile is in scope.
 - Failure output is grouped by fixture area and reports remain deterministic
   with repo-relative files and no timestamps.
+- Formatted `report=` paths are relative to the runtime repo root, including
+  temp fixture copies used by tests.
 - V1 emits only error-level issues; warning-level reporting is reserved for a
   future rule that is genuinely non-blocking.
 

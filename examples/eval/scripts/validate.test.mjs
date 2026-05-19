@@ -223,6 +223,10 @@ test('write-report is limited to single-corpus scope and writes corpus report', 
   );
   const report = await readJson(result.reportPath);
   assert.equal(report.status, 'pass');
+  assert.match(
+    formatResult(result),
+    /report=examples\/eval\/users\/elena-marquez\/corpora\/realistic\/validation-report\.json/,
+  );
 });
 
 test('validation reports are byte-deterministic across repeated runs', async (t) => {
@@ -240,6 +244,50 @@ test('validation reports are byte-deterministic across repeated runs', async (t)
   const secondReport = await readFile(second.reportPath, 'utf8');
 
   assert.equal(firstReport, secondReport);
+});
+
+test('committed validation report matches a fresh single-corpus report', async () => {
+  const result = await runValidation({
+    repoRoot,
+    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--write-report'],
+    writeReport: false,
+  });
+  const committedReport = await readFile(
+    path.join(
+      repoRoot,
+      'examples/eval/users/elena-marquez/corpora/realistic/validation-report.json',
+    ),
+    'utf8',
+  );
+
+  assert.equal(result.reportPath, null);
+  assert.equal(committedReport, `${JSON.stringify(result.report, null, 2)}\n`);
+});
+
+test('reports every document that declares an intentionally missing fact', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  manifest.documents[0].factKeys.push('contact.phone');
+  manifest.documents[1].factKeys.push('contact.phone');
+  await writeJson(manifestPath, manifest);
+
+  const result = await validateElena(root);
+  assert.equal(countIssueCode(result, 'MISSING_FACT_DECLARED_BY_DOCUMENT'), 2);
+});
+
+test('missing profile does not flood profile-dependent semantic errors', async (t) => {
+  const root = await copyRepo(t);
+  await rm(
+    path.join(root, 'examples/eval/users/elena-marquez/profile.yaml'),
+    { force: true },
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'FILE_READ_FAILED');
+  assertNoCode(result, 'DOCUMENT_FACT_MISSING');
+  assertNoCode(result, 'FIELD_MAP_FACT_MISSING');
+  assertNoCode(result, 'MISSING_FACT_NOT_IN_PROFILE');
 });
 
 test('unsupported CLI combinations return usage errors', async () => {
