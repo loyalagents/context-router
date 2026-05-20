@@ -60,7 +60,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 0. Canonical eval tree cleanup | complete | `eval-tree-cleanup/` | Consolidated old demo trees into one eval home. |
 | 1. Schema and fixture contract | complete | `schema-contract/` | Defined profile, manifest, scenario, field-map, and seed projection contracts. |
 | 2. Validator | complete | `validator/` | Added deterministic fixture validation and corpus report generation. |
-| 3. Templates and scaffold | not-started | `templates-scaffold/` | Add deterministic templates and scaffold/render flow. |
+| 3. Templates and scaffold | complete | `templates-scaffold/` | Added deterministic templates, scaffold generation, and template-smoke fixtures. |
 | 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
 | 5. Polish and playbook | deferred | `polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
 
@@ -79,13 +79,27 @@ Current implemented state:
 - `pnpm eval:validate` validates schemas, seed determinism, corpus document
   inventory, scenario references, field-map exhaustiveness, fact references,
   intentional missingness, and form coverage.
+- `pnpm eval:test` runs the eval fixture script test suite.
 - Manifest document `factKeys[]` are now leaf-only profile fact keys.
+- Corpus manifests now carry a required deterministic `seed`; document count is
+  derived from `documents.length`; scaffold-generated documents use optional
+  `documents[].template` references; legacy `distribution` and document `note`
+  metadata have been removed.
 - `detailTier` is now a pure richness field (`hero`, `medium`, `brief`);
   noise semantics live in `category` and `expectedUse`.
 - Static backend preference catalog data lives in
   `apps/backend/src/config/preferences.catalog.json`, with the existing TS
   wrapper preserving backend exports.
-- Templates, scaffold generation, and the eval runner are still future batches.
+- Batch 3 is complete.
+- `examples/eval/templates/` contains trusted repo-local `.mjs` template
+  modules with deterministic helper-based rendering.
+- `pnpm eval:scaffold` can initialize profile skeletons, render deterministic
+  template corpora, write target-user seed preferences, run validation, and
+  optionally write scenario skeletons.
+- Elena Marquez now has both the hand-authored `realistic` corpus and the
+  generated `template-smoke` corpus, plus
+  `elena-marquez-i9-template-smoke` as a generated scenario skeleton.
+- The eval runner is still a future batch.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -186,7 +200,7 @@ Work worth planning and executing together:
   resolves against `profile.yaml`, allowing null values.
 - Check intentionally missing facts.
 - Cross-check `intentionallyMissing[].forms` against top-level `manifest.forms[]`.
-- Check corpus distribution basics.
+- Check corpus document inventory and coverage basics.
 - Write `validation-report.json` for a single corpus when requested.
 
 Design inputs to settle before or during this batch:
@@ -233,7 +247,7 @@ Work worth planning and executing together:
 - Implement deterministic seeded rendering, defaulting to `userId + corpusId`.
 - Add `eval:scaffold` or the chosen equivalent.
 - Have scaffold create or require `profile.yaml`.
-- Select templates from form requirements and distribution policy.
+- Select templates from form requirements and deterministic metadata.
 - Render documents and `manifest.json`.
 - Run validation after generation.
 
@@ -247,6 +261,10 @@ Exit criteria:
 - A new synthetic user/corpus can be created without asking an agent to write bulk documents.
 - Re-running with the same seed produces the same output.
 - Generated docs pass validation or produce clear failures.
+
+Status:
+
+- Complete. See `templates-scaffold/implementation-summary.md`.
 
 ## Batch 4: Eval Runner
 

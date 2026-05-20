@@ -12,6 +12,16 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
+import {
+  classifyFactKey,
+  collectFactKeys,
+  deriveSeedPreferences,
+  getFactValue,
+  isFixtureId,
+  jsonText,
+  toPosixPath,
+} from './shared.mjs';
+import { discoverTemplates } from './template-renderer.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +32,7 @@ const SCHEMA_FILES = {
   manifest: 'manifest.schema.json',
   scenario: 'scenario.schema.json',
   fieldMap: 'field-map.schema.json',
+  template: 'template.schema.json',
 };
 
 const SNAPSHOT_FILES = {
@@ -29,8 +40,6 @@ const SNAPSHOT_FILES = {
   'written-preferences': 'written-preferences.json',
   'final-preferences': 'final-preferences.json',
 };
-
-const FIXTURE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export async function runValidation({
   repoRoot = defaultRepoRoot,
@@ -50,6 +59,7 @@ export async function runValidation({
   }
 
   const ctx = await createContext(repoRoot, parsed.options);
+  await validateTemplates(ctx);
 
   if (parsed.options.scope === 'all') {
     const userIds = await listDirectories(path.join(ctx.evalRoot, 'users'));
@@ -106,7 +116,7 @@ export async function runValidation({
       parsed.options.corpusId,
       'validation-report.json',
     );
-    await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+    await writeFile(reportPath, jsonText(report));
   }
 
   return {
@@ -227,7 +237,7 @@ export function formatResult(result) {
 
   if (lines.at(-1) !== '') lines.push('');
   lines.push(
-    `profiles=${result.summary.profiles} corpora=${result.summary.corpora} forms=${result.summary.forms} scenarios=${result.summary.scenarios} errors=${result.summary.errors} warnings=${result.summary.warnings}`,
+    `profiles=${result.summary.profiles} corpora=${result.summary.corpora} forms=${result.summary.forms} scenarios=${result.summary.scenarios} templates=${result.summary.templates} errors=${result.summary.errors} warnings=${result.summary.warnings}`,
   );
 
   if (result.reportPath) {
@@ -246,6 +256,7 @@ function groupIssuesByArea(issues) {
     ['corpora', 'corpora'],
     ['forms', 'forms'],
     ['scenarios', 'scenarios'],
+    ['templates', 'templates'],
     ['other', 'other'],
   ]);
   const groups = new Map([...labels.keys()].map((area) => [area, []]));
@@ -266,6 +277,7 @@ function issueArea(file) {
   if (file.includes('/corpora/')) return 'corpora';
   if (file.includes('/forms/')) return 'forms';
   if (file.includes('/scenarios/')) return 'scenarios';
+  if (file.includes('/templates/')) return 'templates';
   return 'other';
 }
 
@@ -310,7 +322,9 @@ async function createContext(repoRoot, options) {
       corpora: new Set(),
       forms: new Set(),
       scenarios: new Set(),
+      templates: new Set(),
     },
+    templates: new Map(),
   };
 }
 
@@ -398,6 +412,84 @@ async function validateProfile(ctx, userId, profilePath) {
   return profile;
 }
 
+async function validateTemplates(ctx) {
+  let templates;
+  try {
+    templates = await discoverTemplates({ evalRoot: ctx.evalRoot });
+  } catch (error) {
+    addIssue(ctx, {
+      code: 'TEMPLATE_DISCOVERY_FAILED',
+      file: path.join(ctx.evalRoot, 'templates'),
+      pointer: '',
+      message: `Could not discover templates: ${error.message}.`,
+      fix: 'Fix template module syntax or exports.',
+    });
+    return;
+  }
+
+  for (const template of templates) {
+    const templateFile = template.filePath;
+    const meta = template.meta;
+    const expectedCategory = template.expectedTemplateId.split('/')[0];
+    ctx.visited.templates.add(template.expectedTemplateId);
+
+    if (!meta || typeof meta !== 'object') {
+      addIssue(ctx, {
+        code: 'TEMPLATE_META_MISSING',
+        file: templateFile,
+        pointer: 'meta',
+        message: 'Template module must export a meta object.',
+        fix: 'Export const meta = {...} from the template module.',
+      });
+      continue;
+    }
+
+    validateSchema(ctx, 'template', meta, templateFile);
+
+    if (ctx.templates.has(meta.templateId)) {
+      addIssue(ctx, {
+        code: 'TEMPLATE_DUPLICATE_ID',
+        file: templateFile,
+        pointer: 'templateId',
+        message: `Duplicate templateId ${meta.templateId}.`,
+        fix: 'Use one template module per templateId.',
+      });
+    } else if (typeof meta.templateId === 'string') {
+      ctx.templates.set(meta.templateId, template);
+    }
+
+    if (meta.templateId !== template.expectedTemplateId) {
+      addIssue(ctx, {
+        code: 'TEMPLATE_ID_PATH_MISMATCH',
+        file: templateFile,
+        pointer: 'templateId',
+        message: `Template id ${JSON.stringify(meta.templateId)} does not match path ${JSON.stringify(template.expectedTemplateId)}.`,
+        fix: 'Update meta.templateId or move the template file.',
+      });
+    }
+
+    if (meta.category !== expectedCategory) {
+      addIssue(ctx, {
+        code: 'TEMPLATE_CATEGORY_PATH_MISMATCH',
+        file: templateFile,
+        pointer: 'category',
+        message: `Template category ${JSON.stringify(meta.category)} does not match path category ${JSON.stringify(expectedCategory)}.`,
+        fix: 'Update meta.category or move the template file.',
+      });
+    }
+
+    if (typeof template.render !== 'function') {
+      addIssue(ctx, {
+        code: 'TEMPLATE_RENDER_MISSING',
+        file: templateFile,
+        pointer: 'render',
+        message: 'Template module must export render().',
+        fix: 'Export function render(helpers) from the template module.',
+      });
+    }
+  }
+}
+
 async function validateSeedPreferences(ctx, userRoot, profile, profileFacts) {
   const profilePath = path.join(userRoot, 'profile.yaml');
   const generatedPath = path.join(userRoot, 'seed-preferences.generated.json');
@@ -452,7 +544,7 @@ async function validateSeedPreferences(ctx, userRoot, profile, profileFacts) {
   }
 
   const rows = deriveSeedPreferences(profile);
-  const expected = `${JSON.stringify(rows, null, 2)}\n`;
+  const expected = jsonText(rows);
   let actual = null;
   try {
     actual = await readFile(generatedPath, 'utf8');
@@ -481,17 +573,6 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
   const documentsRoot = path.join(corpusRoot, 'documents');
   const listedPaths = new Set();
   const ids = new Set();
-
-  const documentCount = manifest.documents?.length ?? 0;
-  if ((manifest.distribution?.documentCount ?? null) !== documentCount) {
-    addIssue(ctx, {
-      code: 'MANIFEST_DOCUMENT_COUNT_MISMATCH',
-      file: manifestPath,
-      pointer: '/distribution/documentCount',
-      message: `distribution.documentCount is ${manifest.distribution?.documentCount}, but documents has ${documentCount} entries.`,
-      fix: 'Update distribution.documentCount to match documents.length.',
-    });
-  }
 
   for (const [index, doc] of (manifest.documents ?? []).entries()) {
     const pointer = `/documents/${index}`;
@@ -552,6 +633,16 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
         pointer: `${pointer}/factKeys`,
         message: `Ignored document ${doc.id} must not declare factKeys.`,
         fix: 'Clear factKeys or change expectedUse.',
+      });
+    }
+
+    if (doc.template && !ctx.templates.has(doc.template)) {
+      addIssue(ctx, {
+        code: 'DOCUMENT_TEMPLATE_MISSING',
+        file: manifestPath,
+        pointer: `${pointer}/template`,
+        message: `Document template ${doc.template} does not exist in examples/eval/templates.`,
+        fix: 'Use an existing templateId or omit template for hand-authored documents.',
       });
     }
 
@@ -1018,52 +1109,6 @@ function schemaPointer(schemaName, error) {
     .join('.');
 }
 
-function collectFactKeys(value, prefix = '') {
-  const leaves = new Map();
-  const areas = new Set();
-
-  function visit(current, currentPath) {
-    if (isPlainObject(current)) {
-      if (currentPath) areas.add(currentPath);
-      for (const [key, child] of Object.entries(current)) {
-        visit(child, currentPath ? `${currentPath}.${key}` : key);
-      }
-      return;
-    }
-    if (currentPath) leaves.set(currentPath, current);
-  }
-
-  visit(value, prefix);
-  return { leaves, areas };
-}
-
-function classifyFactKey(profileFacts, factKey) {
-  if (profileFacts.leaves.has(factKey)) {
-    return { kind: 'leaf', value: profileFacts.leaves.get(factKey) };
-  }
-  if (profileFacts.areas.has(factKey)) return { kind: 'area' };
-  return { kind: 'missing' };
-}
-
-function deriveSeedPreferences(profile) {
-  const rows = [];
-  for (const entry of profile.seedPreferences ?? []) {
-    const value = getFactValue(profile.facts, entry.factKey);
-    if (value == null) continue;
-    rows.push({ slug: entry.slug, value });
-  }
-  return rows.sort((left, right) =>
-    left.slug < right.slug ? -1 : left.slug > right.slug ? 1 : 0,
-  );
-}
-
-function getFactValue(facts, factKey) {
-  return factKey.split('.').reduce((value, segment) => {
-    if (!isPlainObject(value)) return undefined;
-    return value[segment];
-  }, facts);
-}
-
 function checkUnique(ctx, values, filePath, pointer, code) {
   const seen = new Set();
   for (const [index, value] of values.entries()) {
@@ -1275,6 +1320,7 @@ function buildSummary(ctx) {
     corpora: ctx.visited.corpora.size,
     forms: ctx.visited.forms.size,
     scenarios: ctx.visited.scenarios.size,
+    templates: ctx.visited.templates.size,
     errors,
     warnings,
   };
@@ -1286,31 +1332,15 @@ function emptySummary() {
     corpora: 0,
     forms: 0,
     scenarios: 0,
+    templates: 0,
     errors: 0,
     warnings: 0,
   };
 }
 
-function isPlainObject(value) {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.getPrototypeOf(value) === Object.prototype
-  );
-}
-
-function isFixtureId(value) {
-  return typeof value === 'string' && FIXTURE_ID_PATTERN.test(value);
-}
-
 function repoRelative(ctx, absolutePath) {
   if (!absolutePath) return '';
   return toPosixPath(path.relative(ctx.repoRoot, absolutePath));
-}
-
-function toPosixPath(value) {
-  return value.split(path.sep).join(path.posix.sep);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

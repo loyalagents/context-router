@@ -9,8 +9,12 @@ Synthetic form-fill evaluation user for the I-9 fixture at
 - `seed-preferences.generated.json` is generated from `profile.yaml`.
 - `corpora/realistic/manifest.json` inventories the realistic document corpus.
 - `corpora/realistic/documents/` contains the synthetic source documents.
+- `corpora/template-smoke/` is the deterministic scaffold-generated corpus
+  used to smoke-test template rendering.
 - `../../scenarios/elena-marquez-i9-section1/` contains the first I-9 scenario
   fixture for this user.
+- `../../scenarios/elena-marquez-i9-template-smoke/` contains the generated
+  scenario skeleton for the template-smoke corpus.
 
 ## Expected I-9 Behavior
 

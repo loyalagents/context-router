@@ -2,13 +2,11 @@
   "schemaVersion": 1,
   "userId": "elena-marquez",
   "corpusId": "realistic",
+  "seed": "elena-marquez__realistic",
   "forms": [
     "i-9"
   ],
   "purpose": "Synthetic realistic document corpus for an I-9 Section 1 form-fill evaluation fixture.",
-  "distribution": {
-    "documentCount": 100
-  },
   "intentionallyMissing": [
     {
       "factKey": "contact.phone",
@@ -37,8 +35,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "002",
@@ -57,8 +54,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "003",
@@ -79,8 +75,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "004",
@@ -95,8 +90,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "005",
@@ -110,8 +104,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "006",
@@ -125,8 +118,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "007",
@@ -141,8 +133,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "008",
@@ -163,8 +154,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "009",
@@ -180,8 +170,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "010",
@@ -196,8 +185,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "011",
@@ -216,8 +204,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "012",
@@ -237,8 +224,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "013",
@@ -257,8 +243,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "014",
@@ -276,8 +261,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "015",
@@ -291,8 +275,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "016",
@@ -311,8 +294,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "017",
@@ -331,8 +313,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "018",
@@ -350,8 +331,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "019",
@@ -370,8 +350,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "020",
@@ -389,8 +368,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "021",
@@ -408,8 +386,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "022",
@@ -428,8 +405,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "mixed",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "023",
@@ -447,8 +423,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "024",
@@ -467,8 +442,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "025",
@@ -487,8 +461,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "026",
@@ -505,8 +478,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "027",
@@ -523,8 +495,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "028",
@@ -542,8 +513,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "029",
@@ -565,8 +535,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "030",
@@ -588,8 +557,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "031",
@@ -602,9 +570,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "guardrail",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "guardrail"
     },
     {
       "id": "032",
@@ -621,8 +587,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "033",
@@ -636,8 +601,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "034",
@@ -652,8 +616,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "035",
@@ -672,8 +635,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "036",
@@ -686,8 +648,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "037",
@@ -701,8 +662,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "038",
@@ -716,8 +676,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "039",
@@ -728,9 +687,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "guardrail",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "guardrail"
     },
     {
       "id": "040",
@@ -745,8 +702,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "041",
@@ -765,8 +721,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "042",
@@ -786,8 +741,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "043",
@@ -801,8 +755,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "044",
@@ -820,8 +773,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "045",
@@ -835,8 +787,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "046",
@@ -851,8 +802,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "047",
@@ -866,8 +816,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "048",
@@ -882,8 +831,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "049",
@@ -898,8 +846,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "050",
@@ -917,8 +864,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "051",
@@ -931,9 +877,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "052",
@@ -952,9 +896,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: list_b."
+      "expectedUse": "extract"
     },
     {
       "id": "053",
@@ -968,9 +910,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: list_c."
+      "expectedUse": "extract"
     },
     {
       "id": "054",
@@ -983,8 +923,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "055",
@@ -997,9 +936,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: list_b, list_c, section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "056",
@@ -1013,9 +950,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "057",
@@ -1029,8 +964,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "058",
@@ -1043,9 +977,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: skip_uscis, skip_i94, skip_foreign_passport."
+      "expectedUse": "extract"
     },
     {
       "id": "059",
@@ -1058,9 +990,7 @@
       "detailTier": "hero",
       "authority": "high",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: list_b, list_c, section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "060",
@@ -1071,9 +1001,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: skip_authorization_expiration."
+      "expectedUse": "extract"
     },
     {
       "id": "061",
@@ -1086,8 +1014,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "062",
@@ -1100,9 +1027,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "guardrail",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: employer_address_noise."
+      "expectedUse": "guardrail"
     },
     {
       "id": "063",
@@ -1115,9 +1040,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: employer_context."
+      "expectedUse": "extract"
     },
     {
       "id": "064",
@@ -1128,9 +1051,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "065",
@@ -1144,9 +1065,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: employer_address_noise."
+      "expectedUse": "extract"
     },
     {
       "id": "066",
@@ -1160,9 +1079,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "067",
@@ -1173,9 +1090,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "guardrail",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "guardrail"
     },
     {
       "id": "068",
@@ -1186,8 +1101,7 @@
       "detailTier": "medium",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "069",
@@ -1198,9 +1112,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "extract"
     },
     {
       "id": "070",
@@ -1213,8 +1125,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "071",
@@ -1227,9 +1138,7 @@
       "detailTier": "hero",
       "authority": "low",
       "freshness": "stale",
-      "expectedUse": "corroborate",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: old_address_conflict."
+      "expectedUse": "corroborate"
     },
     {
       "id": "072",
@@ -1240,9 +1149,7 @@
       "detailTier": "hero",
       "authority": "low",
       "freshness": "stale",
-      "expectedUse": "corroborate",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: old_name_conflict, old_address_conflict."
+      "expectedUse": "corroborate"
     },
     {
       "id": "073",
@@ -1253,9 +1160,7 @@
       "detailTier": "hero",
       "authority": "low",
       "freshness": "stale",
-      "expectedUse": "corroborate",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: old_name_conflict, old_email_conflict."
+      "expectedUse": "corroborate"
     },
     {
       "id": "074",
@@ -1266,9 +1171,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: old_name_conflict."
+      "expectedUse": "extract"
     },
     {
       "id": "075",
@@ -1282,8 +1185,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "076",
@@ -1298,8 +1200,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "077",
@@ -1312,8 +1213,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "078",
@@ -1326,8 +1226,7 @@
       "detailTier": "medium",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "079",
@@ -1341,8 +1240,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "extract",
-      "template": null
+      "expectedUse": "extract"
     },
     {
       "id": "080",
@@ -1353,8 +1251,7 @@
       "detailTier": "medium",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "081",
@@ -1365,8 +1262,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "082",
@@ -1377,8 +1273,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "083",
@@ -1389,8 +1284,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "084",
@@ -1401,8 +1295,7 @@
       "detailTier": "hero",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "085",
@@ -1413,8 +1306,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "086",
@@ -1425,8 +1317,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "087",
@@ -1437,8 +1328,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "088",
@@ -1449,9 +1339,7 @@
       "detailTier": "brief",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "ignore",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: first_name_only_noise."
+      "expectedUse": "ignore"
     },
     {
       "id": "089",
@@ -1462,8 +1350,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "090",
@@ -1474,8 +1361,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "091",
@@ -1486,9 +1372,7 @@
       "detailTier": "brief",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "ignore",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: first_name_only_noise."
+      "expectedUse": "ignore"
     },
     {
       "id": "092",
@@ -1499,8 +1383,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "093",
@@ -1511,9 +1394,7 @@
       "detailTier": "brief",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "ignore",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: first_name_only_noise."
+      "expectedUse": "ignore"
     },
     {
       "id": "094",
@@ -1524,8 +1405,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "095",
@@ -1536,8 +1416,7 @@
       "detailTier": "hero",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "096",
@@ -1548,8 +1427,7 @@
       "detailTier": "brief",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "097",
@@ -1560,8 +1438,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "098",
@@ -1572,8 +1449,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "099",
@@ -1584,8 +1460,7 @@
       "detailTier": "brief",
       "authority": "none",
       "freshness": "unknown",
-      "expectedUse": "ignore",
-      "template": null
+      "expectedUse": "ignore"
     },
     {
       "id": "100",
@@ -1596,9 +1471,7 @@
       "detailTier": "hero",
       "authority": "medium",
       "freshness": "current",
-      "expectedUse": "guardrail",
-      "template": null,
-      "note": "Legacy non-profile hints preserved as context only: section_policy."
+      "expectedUse": "guardrail"
     }
   ]
 }

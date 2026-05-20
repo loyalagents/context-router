@@ -1,0 +1,9 @@
+USPS Address Confirmation
+
+Recipient: Elena Sofia Marquez
+Delivery line: 418 Cedar Glen Avenue, Apt 12B
+City: Sacramento
+State: CA
+ZIP Code: 95819
+
+Address verification note: current delivery point confirmed for ordinary mail routing.

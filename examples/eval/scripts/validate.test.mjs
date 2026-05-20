@@ -30,6 +30,50 @@ test('passes the canonical Elena corpus', async () => {
   assert.equal(result.summary.errors, 0);
 });
 
+test('validates template metadata schema and manifest template references', async (t) => {
+  const root = await copyRepo(t);
+  const templatePath = path.join(
+    root,
+    'examples/eval/templates/identity/name-history-note.mjs',
+  );
+  const templateText = await readFile(templatePath, 'utf8');
+  await writeFile(
+    templatePath,
+    templateText.replace("outputExtension: 'md'", "outputExtension: 'pdf'"),
+  );
+
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  manifest.documents[0].template = 'identity/not-real';
+  await writeJson(manifestPath, manifest);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+  assertHasCode(result, 'DOCUMENT_TEMPLATE_MISSING');
+});
+
+test('validates template id and category path parity', async (t) => {
+  const root = await copyRepo(t);
+  const templatePath = path.join(
+    root,
+    'examples/eval/templates/identity/name-history-note.mjs',
+  );
+  const templateText = await readFile(templatePath, 'utf8');
+  await writeFile(
+    templatePath,
+    templateText
+      .replace(
+        "templateId: 'identity/name-history-note'",
+        "templateId: 'identity/wrong-note'",
+      )
+      .replace("category: 'identity'", "category: 'address-contact'"),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'TEMPLATE_ID_PATH_MISMATCH');
+  assertHasCode(result, 'TEMPLATE_CATEGORY_PATH_MISMATCH');
+});
+
 test('rejects stale generated seed preferences', async (t) => {
   const root = await copyRepo(t);
   await writeFile(
