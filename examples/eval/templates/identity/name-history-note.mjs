@@ -9,7 +9,7 @@ export const meta = {
     'identity.middleInitial',
     'identity.otherLastNames',
   ],
-  optionalFactKeys: ['identity.firstName', 'identity.lastName'],
+  optionalFactKeys: [],
   detailTier: 'medium',
   authority: 'medium',
   freshness: 'current',

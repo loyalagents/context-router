@@ -5,7 +5,7 @@ export const meta = {
   title: 'Birth Record Summary',
   outputExtension: 'txt',
   requiredFactKeys: ['identity.legalName', 'identity.dateOfBirth'],
-  optionalFactKeys: ['identity.firstName', 'identity.lastName'],
+  optionalFactKeys: [],
   detailTier: 'medium',
   authority: 'medium',
   freshness: 'current',

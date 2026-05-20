@@ -260,35 +260,40 @@ async function renderCorpus(repoRoot, options) {
     profileFacts,
   });
 
-  if (options.force) {
-    await rm(corpusRoot, { recursive: true, force: true });
-    if (scenarioRoot) await rm(scenarioRoot, { recursive: true, force: true });
-  }
-
-  const documents = [];
-  for (const [index, template] of selection.selected.entries()) {
+  const renderedDocuments = selection.selected.map((template, index) => {
     const meta = template.meta;
     const number = String(index + 1).padStart(3, '0');
     const templateSlug = meta.templateId.split('/').at(-1);
     const documentPath = `documents/${meta.category}/${number}-${templateSlug}.${meta.outputExtension}`;
     const rendered = renderTemplate({ template, profileFacts, seed });
-    const absolutePath = path.join(corpusRoot, documentPath);
 
+    return {
+      content: rendered.content,
+      document: {
+        id: number,
+        path: documentPath,
+        category: meta.category,
+        title: meta.title,
+        factKeys: rendered.factKeys,
+        detailTier: meta.detailTier,
+        authority: meta.authority,
+        freshness: meta.freshness,
+        expectedUse: meta.expectedUse,
+        template: meta.templateId,
+      },
+    };
+  });
+  const documents = renderedDocuments.map((rendered) => rendered.document);
+
+  if (options.force) {
+    await rm(corpusRoot, { recursive: true, force: true });
+    if (scenarioRoot) await rm(scenarioRoot, { recursive: true, force: true });
+  }
+
+  for (const rendered of renderedDocuments) {
+    const absolutePath = path.join(corpusRoot, rendered.document.path);
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, rendered.content);
-
-    documents.push({
-      id: number,
-      path: documentPath,
-      category: meta.category,
-      title: meta.title,
-      factKeys: rendered.factKeys,
-      detailTier: meta.detailTier,
-      authority: meta.authority,
-      freshness: meta.freshness,
-      expectedUse: meta.expectedUse,
-      template: meta.templateId,
-    });
   }
 
   const manifest = {
@@ -349,6 +354,17 @@ async function renderCorpus(repoRoot, options) {
   lines.push(formatValidationResult(validation));
   if (validation.exitCode !== 0) {
     throw new Error(formatValidationResult(validation));
+  }
+
+  if (scenarioRoot) {
+    const scenarioValidation = await runValidation({
+      repoRoot,
+      args: ['--scenario', options.scenarioId],
+    });
+    lines.push(formatValidationResult(scenarioValidation));
+    if (scenarioValidation.exitCode !== 0) {
+      throw new Error(formatValidationResult(scenarioValidation));
+    }
   }
 
   return lines;

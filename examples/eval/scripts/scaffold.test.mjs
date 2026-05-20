@@ -149,6 +149,24 @@ test('renderer rejects declared required facts that are not accessed', async () 
   );
 });
 
+test('every discovered template renders against the Elena reference profile', async () => {
+  const profile = await readElenaProfile(repoRoot);
+  const profileFacts = collectFactKeys(profile.facts);
+  const templates = await discoverTemplates({
+    evalRoot: path.join(repoRoot, 'examples/eval'),
+  });
+
+  assert.ok(templates.length > 0);
+  for (const template of templates) {
+    const rendered = renderTemplate({
+      template,
+      profileFacts,
+      seed: 'elena-marquez__template-smoke',
+    });
+    assert.ok(rendered.content.length > 0, template.meta.templateId);
+  }
+});
+
 test('scaffold without count renders exactly the required coverage set', async (t) => {
   const root = await copyRepo(t);
   const result = await runScaffold({
@@ -166,6 +184,10 @@ test('scaffold without count renders exactly the required coverage set', async (
   });
 
   assert.equal(result.exitCode, 0, result.errorMessage);
+  assert.equal(
+    result.lines.filter((line) => line.startsWith('eval validation passed')).length,
+    2,
+  );
   const manifest = await readJson(
     path.join(
       root,
@@ -429,6 +451,57 @@ test('scaffold seed changes deterministic template choices and remains stable', 
   });
   assert.equal(secondA.exitCode, 0, secondA.errorMessage);
   assert.equal(await readFile(seedAPath, 'utf8'), firstAText);
+});
+
+test('scaffold does not write a partial corpus when template rendering fails', async (t) => {
+  const root = await copyRepo(t);
+  const templatePath = path.join(
+    root,
+    'examples/eval/templates/identity/name-history-note.mjs',
+  );
+  const templateText = await readFile(templatePath, 'utf8');
+  await writeFile(
+    templatePath,
+    templateText.replace(
+      "Middle initial used on abbreviated forms: ${fact('identity.middleInitial')}",
+      "Middle initial used on abbreviated forms: ${fact('identity.middleInitial')}\nUndeclared value: ${fact('identity.ssn')}",
+    ),
+  );
+
+  const result = await runScaffold({
+    repoRoot: root,
+    args: [
+      '--user',
+      'elena-marquez',
+      '--corpus',
+      'template-render-failure',
+      '--form',
+      'i-9',
+    ],
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.errorMessage, /accessed undeclared fact identity\.ssn/);
+  await assert.rejects(
+    readFile(
+      path.join(
+        root,
+        'examples/eval/users/elena-marquez/corpora/template-render-failure/manifest.json',
+      ),
+      'utf8',
+    ),
+    /ENOENT/,
+  );
+  await assert.rejects(
+    readFile(
+      path.join(
+        root,
+        'examples/eval/users/elena-marquez/corpora/template-render-failure/documents/address-contact/001-usps-address-confirmation.txt',
+      ),
+      'utf8',
+    ),
+    /ENOENT/,
+  );
 });
 
 test('scaffold fails clearly when no eligible template covers a required fact', async (t) => {
