@@ -8,9 +8,9 @@
     "schemaVersion",
     "userId",
     "corpusId",
+    "seed",
     "forms",
     "purpose",
-    "distribution",
     "intentionallyMissing",
     "documents"
   ],
@@ -26,6 +26,10 @@
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
+    "seed": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$"
+    },
     "forms": {
       "type": "array",
       "minItems": 1,
@@ -37,17 +41,6 @@
     "purpose": {
       "type": "string",
       "minLength": 1
-    },
-    "distribution": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["documentCount"],
-      "properties": {
-        "documentCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
     },
     "intentionallyMissing": {
       "type": "array",
@@ -91,8 +84,7 @@
           "detailTier",
           "authority",
           "freshness",
-          "expectedUse",
-          "template"
+          "expectedUse"
         ],
         "properties": {
           "id": {
@@ -102,7 +94,16 @@
             "type": "string"
           },
           "category": {
-            "type": "string"
+            "enum": [
+              "identity",
+              "address-contact",
+              "hr-onboarding",
+              "payroll-tax",
+              "work-authorization",
+              "employer-context",
+              "partial-conflicting",
+              "noise"
+            ]
           },
           "title": {
             "type": "string"
@@ -126,9 +127,6 @@
             "enum": ["extract", "corroborate", "guardrail", "ignore"]
           },
           "template": {
-            "type": ["string", "null"]
-          },
-          "note": {
             "type": "string"
           }
         }

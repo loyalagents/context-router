@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "elena-marquez-i9-template-smoke",
+  "description": "Generated template-scaffold scenario for Elena Marquez using i-9.",
+  "userId": "elena-marquez",
+  "corpusId": "template-smoke",
+  "formId": "i-9",
+  "expectedSnapshots": []
+}

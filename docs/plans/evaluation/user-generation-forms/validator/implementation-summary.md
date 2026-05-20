@@ -5,8 +5,8 @@
 
 ## What Changed
 
-- Added `examples/eval/scripts/validate.mjs` and root scripts
-  `pnpm eval:validate` and `pnpm eval:validate:test`.
+- Added `examples/eval/scripts/validate.mjs` and root validation scripts.
+  Batch 3 later renamed the script test command to `pnpm eval:test`.
 - Added `ajv` as a root dev dependency for JSON Schema validation.
 - Added focused `node:test` coverage for validator success, reference failures,
   stale generated seeds, catalog checks, field-map errors, report writing,
@@ -43,7 +43,7 @@
   catalog JSON for the current backend catalog types:
   `string | boolean | enum | array`.
 - Checks corpus document inventory, path safety, listed-vs-actual files,
-  distribution document count, noise/ignore metadata, and document fact keys.
+  noise/ignore metadata, and document fact keys.
 - Checks field-map exhaustiveness against `fields.generated.json`.
 - Checks profile fact references in field maps, corpus documents,
   intentionally missing entries, and coverage.
@@ -67,7 +67,7 @@ Ran:
 ```bash
 pnpm eval:derive-seeds
 git diff -- examples/eval/users/elena-marquez/seed-preferences.generated.json
-pnpm eval:validate:test
+pnpm eval:test
 pnpm eval:validate --user elena-marquez --corpus realistic
 pnpm eval:validate --scenario elena-marquez-i9-section1
 pnpm eval:validate --form i-9
@@ -99,5 +99,5 @@ pnpm --filter backend test:integration --testPathPattern=seed
 - No employer-vs-employee fact ownership taxonomy.
 - No eval runner or snapshot comparison beyond declared snapshot file existence
   and JSON parsing.
-- CI wiring for `pnpm eval:validate` and `pnpm eval:validate:test` remains a
+- CI wiring for `pnpm eval:validate` and `pnpm eval:test` remains a
   follow-up.

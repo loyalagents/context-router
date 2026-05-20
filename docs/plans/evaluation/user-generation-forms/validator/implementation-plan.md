@@ -10,7 +10,7 @@ This remains fixture/script infrastructure: no templates, scaffold generation, t
 
 - Add root scripts:
   - `"eval:validate": "node examples/eval/scripts/validate.mjs"`
-  - `"eval:validate:test": "node --test examples/eval/scripts/*.test.mjs"`
+  - `"eval:test": "node --test examples/eval/scripts/*.test.mjs"`
 - Use `ajv` for JSON Schema validation and hand-written checks for cross-file semantics.
 - Add `ajv` as a root dev dependency; keep `yaml`.
 - Extract only `PREFERENCE_CATALOG` data from `apps/backend/src/config/preferences.catalog.ts` to sibling `preferences.catalog.json`.
@@ -141,7 +141,7 @@ This remains fixture/script infrastructure: no templates, scaffold generation, t
 
 5. Reports and docs:
    - Add `--write-report`.
-   - Add focused `node:test` coverage and root `eval:validate:test`.
+   - Add focused `node:test` coverage and root `eval:test`.
    - Update `examples/eval/README.md`.
    - Write `validator/implementation-summary.md`.
    - Update `orchestration-plan.md`.
@@ -152,7 +152,7 @@ This remains fixture/script infrastructure: no templates, scaffold generation, t
 Run:
 
 ```bash
-pnpm eval:validate:test
+pnpm eval:test
 pnpm eval:validate --user elena-marquez --corpus realistic
 pnpm eval:validate --scenario elena-marquez-i9-section1
 pnpm eval:validate --form i-9
@@ -177,4 +177,4 @@ Backend tests should confirm existing catalog consumers still work after JSON ex
 - No requirement that every corpus contain noise documents unless the manifest contract later declares a noise expectation.
 - No runner snapshot semantics beyond existence and parse checks for declared expected snapshots.
 - No compatibility path for old area-style `factKeys` or `detailTier: "noise"`.
-- Wiring `pnpm eval:validate` and `pnpm eval:validate:test` into CI is deferred to a follow-up batch.
+- Wiring `pnpm eval:validate` and `pnpm eval:test` into CI is deferred to a follow-up batch.

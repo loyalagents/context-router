@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/template.schema.json",
+  "title": "Eval Document Template Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "templateId",
+    "category",
+    "title",
+    "outputExtension",
+    "requiredFactKeys",
+    "optionalFactKeys",
+    "detailTier",
+    "authority",
+    "freshness",
+    "expectedUse",
+    "defaultOrder"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "templateId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "category": {
+      "enum": [
+        "identity",
+        "address-contact",
+        "hr-onboarding",
+        "payroll-tax",
+        "work-authorization",
+        "employer-context",
+        "partial-conflicting",
+        "noise"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputExtension": {
+      "enum": ["md", "txt", "json", "yaml"]
+    },
+    "requiredFactKeys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "optionalFactKeys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "detailTier": {
+      "enum": ["hero", "medium", "brief"]
+    },
+    "authority": {
+      "enum": ["high", "medium", "low", "none"]
+    },
+    "freshness": {
+      "enum": ["current", "stale", "mixed", "unknown"]
+    },
+    "expectedUse": {
+      "enum": ["extract", "corroborate", "guardrail", "ignore"]
+    },
+    "defaultOrder": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

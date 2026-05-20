@@ -17,8 +17,12 @@
 - Moved Elena's realistic corpus to
   `examples/eval/users/elena-marquez/corpora/realistic/`.
 - Rewrote Elena's corpus manifest to the V1 inventory contract, including
-  `corpusId`, `forms`, minimal `distribution`, per-document `factKeys`, and
-  `intentionallyMissing` for `contact.phone`.
+  `corpusId`, `forms`, per-document `factKeys`, and `intentionallyMissing` for
+  `contact.phone`.
+- Batch 3 later simplified this contract further by adding required manifest
+  `seed`, removing `distribution`, deriving document count from
+  `documents.length`, and making `documents[].template` optional for generated
+  docs.
 - Added an exhaustive I-9 field map at `examples/eval/forms/i-9/field-map.json`.
 - Added the first scenario fixture at
   `examples/eval/scenarios/elena-marquez-i9-section1/`.
