@@ -116,7 +116,7 @@ export async function runValidation({
       parsed.options.corpusId,
       'validation-report.json',
     );
-    await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+    await writeFile(reportPath, jsonText(report));
   }
 
   return {

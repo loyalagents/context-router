@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "userId": "elena-marquez",
   "corpusId": "realistic",
+  "seed": "elena-marquez__realistic",
   "forms": [
     "i-9"
   ],
@@ -1472,6 +1473,5 @@
       "freshness": "current",
       "expectedUse": "guardrail"
     }
-  ],
-  "seed": "elena-marquez__realistic"
+  ]
 }

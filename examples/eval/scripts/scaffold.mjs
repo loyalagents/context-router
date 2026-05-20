@@ -228,10 +228,10 @@ async function renderCorpus(repoRoot, options) {
     ? path.join(evalRoot, 'scenarios', options.scenarioId)
     : null;
 
-  if (!options.force && (await pathExists(corpusRoot))) {
+  if (!options.force && (await fileExists(corpusRoot))) {
     throw new Error(`Corpus already exists: ${repoRelative(repoRoot, corpusRoot)}. Use --force to overwrite.`);
   }
-  if (scenarioRoot && !options.force && (await pathExists(scenarioRoot))) {
+  if (scenarioRoot && !options.force && (await fileExists(scenarioRoot))) {
     throw new Error(`Scenario already exists: ${repoRelative(repoRoot, scenarioRoot)}. Use --force to overwrite.`);
   }
 
@@ -496,10 +496,6 @@ async function fileExists(filePath) {
   }
 }
 
-async function pathExists(filePath) {
-  return fileExists(filePath);
-}
-
 function repoRelative(repoRoot, absolutePath) {
   return toPosixPath(path.relative(repoRoot, absolutePath));
 }
@@ -507,7 +503,7 @@ function repoRelative(repoRoot, absolutePath) {
 function usage() {
   return [
     'Usage:',
-    '  pnpm eval:scaffold --user <userId> --corpus <corpusId> --form <formId> [--force]',
+    '  pnpm eval:scaffold --user <userId> --corpus <corpusId> --form <formId> [--form <formId>] [--count <n>] [--seed <seed>] [--missing <factKey>] [--scenario <scenarioId>] [--force]',
     '  pnpm eval:scaffold --init-user --user <userId> --display-name "<Name>" --form <formId>',
   ].join('\n');
 }

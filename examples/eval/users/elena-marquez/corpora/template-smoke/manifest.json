@@ -88,7 +88,7 @@
         "identity.legalName",
         "identity.ssn"
       ],
-      "detailTier": "hero",
+      "detailTier": "medium",
       "authority": "high",
       "freshness": "current",
       "expectedUse": "extract",

@@ -51,8 +51,9 @@
   skipped so the output stays focused on the root profile problem.
 - `--scenario` performs transitive validation of the referenced user, corpus,
   form, field map, seed output, and coverage.
-- `--form` performs only form and field-map structural validation because no
-  profile is in scope.
+- `--form` performs form and field-map structural validation without
+  profile-dependent semantic checks; global template metadata validation still
+  runs for every validator invocation.
 - Failure output is grouped by fixture area and reports remain deterministic
   with repo-relative files and no timestamps.
 - Formatted `report=` paths are relative to the runtime repo root, including

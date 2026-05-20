@@ -6,7 +6,7 @@ export const meta = {
   outputExtension: 'md',
   requiredFactKeys: ['identity.legalName', 'identity.ssn'],
   optionalFactKeys: [],
-  detailTier: 'hero',
+  detailTier: 'medium',
   authority: 'high',
   freshness: 'current',
   expectedUse: 'extract',
