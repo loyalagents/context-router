@@ -112,7 +112,8 @@
       "fieldIndex": 16,
       "pdfFieldName": "US Social Security Number",
       "mode": "fact",
-      "factKey": "identity.ssn"
+      "factKey": "identity.ssn",
+      "render": "digits-only"
     },
     {
       "fieldIndex": 17,

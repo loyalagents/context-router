@@ -204,6 +204,73 @@ test('scenario scope performs transitive validation', async (t) => {
   assertHasCode(result, 'FIELD_MAP_FACT_MISSING');
 });
 
+test('scenario scope validates filled-form expected snapshot schema', async (t) => {
+  const root = await copyRepo(t);
+  const scenarioPath = path.join(
+    root,
+    'examples/eval/scenarios/elena-marquez-i9-template-smoke/scenario.json',
+  );
+  const scenario = await readJson(scenarioPath);
+  scenario.expectedSnapshots = ['filled-form'];
+  await writeJson(scenarioPath, scenario);
+
+  const expectedRoot = path.join(
+    root,
+    'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected',
+  );
+  await mkdir(expectedRoot, { recursive: true });
+  await writeFile(path.join(expectedRoot, 'filled-form.json'), '{}\n');
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
+  });
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+
+  const updateMode = await runValidation({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
+    skipExpectedSnapshots: true,
+  });
+  assert.equal(updateMode.exitCode, 0);
+});
+
+test('filled-form snapshot schema rejects nondeterministic transport fields', async (t) => {
+  const root = await copyRepo(t);
+  const snapshotPath = path.join(
+    root,
+    'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+  );
+  const snapshot = await readJson(snapshotPath);
+  snapshot.fillId = 'fill-runtime-id';
+  snapshot.response.fillId = 'fill-runtime-id';
+  snapshot.response.filledPdfBase64 = 'JVBERi0xLjQ=';
+  snapshot.response.httpStatus = 201;
+  await writeJson(snapshotPath, snapshot);
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
+  });
+
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'SCHEMA_VALIDATION_FAILED' && issue.pointer === '/',
+    ),
+    'Expected the top-level fillId to be rejected.',
+  );
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'SCHEMA_VALIDATION_FAILED' &&
+        issue.pointer === '/response',
+    ),
+    'Expected response runtime fields to be rejected.',
+  );
+});
+
 test('scenario scope reports structural field-map errors once', async (t) => {
   const root = await copyRepo(t);
   const fieldMapPath = path.join(

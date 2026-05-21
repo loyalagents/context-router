@@ -5,5 +5,7 @@
   "userId": "elena-marquez",
   "corpusId": "template-smoke",
   "formId": "i-9",
-  "expectedSnapshots": []
+  "expectedSnapshots": [
+    "filled-form"
+  ]
 }

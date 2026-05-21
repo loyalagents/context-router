@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/filled-form-snapshot.schema.json",
+  "title": "Eval Filled Form Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "snapshotType",
+    "scenarioId",
+    "userId",
+    "corpusId",
+    "formId",
+    "response",
+    "summary",
+    "fields"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "snapshotType": {
+      "const": "filled-form"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "corpusId": {
+      "type": "string"
+    },
+    "formId": {
+      "type": "string"
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "originalFilename",
+        "outputFilename",
+        "outputMimeType"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "success",
+            "partial",
+            "no_fillable_fields",
+            "unsupported_format",
+            "failed"
+          ]
+        },
+        "originalFilename": {
+          "type": "string"
+        },
+        "outputFilename": {
+          "type": "string"
+        },
+        "outputMimeType": {
+          "const": "application/pdf"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalFields",
+        "filledCount",
+        "skippedCount",
+        "plannedActionCounts",
+        "warnings"
+      ],
+      "properties": {
+        "totalFields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filledCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skippedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "plannedActionCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "SET_TEXT",
+            "CHECK",
+            "UNCHECK",
+            "SELECT_OPTION",
+            "SKIP"
+          ],
+          "properties": {
+            "SET_TEXT": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "CHECK": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "UNCHECK": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "SELECT_OPTION": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "SKIP": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fieldIndex",
+          "pdfFieldName",
+          "fieldType",
+          "generated",
+          "fieldMap",
+          "expected",
+          "actual",
+          "classification"
+        ],
+        "properties": {
+          "fieldIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pdfFieldName": {
+            "type": "string"
+          },
+          "fieldType": {
+            "type": "string"
+          },
+          "generated": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "fieldMap": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "expected": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "actual": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "classification": {
+            "enum": [
+              "correct",
+              "skipped-correctly",
+              "missing",
+              "hallucinated",
+              "incorrect",
+              "unsupported"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

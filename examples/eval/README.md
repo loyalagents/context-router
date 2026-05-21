@@ -12,22 +12,23 @@ workflows only; they are not backend product behavior.
   evaluation-ready forms.
 - `forms-notes.md` records human context about what each form asks for.
 - `schemas/` contains the V1 local fixture contracts for profiles, corpus
-  manifests, scenarios, field maps, and template metadata.
+  manifests, scenarios, field maps, template metadata, and filled-form
+  snapshots.
 - `scripts/generate-field-manifests.mjs` regenerates form field manifests.
 - `scripts/generate-seed-preferences.mjs` derives generated seed preferences
   from user profiles.
 - `scripts/scaffold.mjs` renders deterministic template corpora and optional
-  scenario skeletons.
+  first-time scenario skeletons.
 - `scripts/validate.mjs` validates fixture schemas, references, field maps,
   seed determinism, and corpus coverage.
+- `scripts/run.mjs` runs local deterministic backend form-fill eval scenarios
+  and compares or updates expected snapshots.
 - `templates/` contains trusted repo-local `.mjs` document archetypes for
   deterministic fixture generation.
 - `users/elena-marquez/` is the first normalized synthetic user fixture.
 - `scenarios/elena-marquez-i9-section1/` is the first scenario-shaped fixture.
-- `scenarios/elena-marquez-i9-template-smoke/` is the first scaffold-generated
-  scenario skeleton.
-
-An eval runner is planned for a later batch.
+- `scenarios/elena-marquez-i9-template-smoke/` is the first runner-owned
+  scenario with an expected `filled-form` snapshot.
 
 ## Contract Shape
 
@@ -66,13 +67,22 @@ Scenario fixtures live at:
 ```text
 scenarios/<scenarioId>/scenario.json
 scenarios/<scenarioId>/start/prompt.md
+scenarios/<scenarioId>/expected/*.json
 ```
+
+Scaffold may create a scenario skeleton the first time, but it refuses to
+overwrite an existing scenario even with `--force`. Once a scenario has expected
+snapshots, update it through `pnpm eval:run --update-snapshots`, not scaffold.
 
 Form field maps live beside forms:
 
 ```text
 forms/<formId>/field-map.json
 ```
+
+Fact field maps may include an explicit `render` hint when the PDF field
+requires a representation different from the raw profile value. V1 supports
+`digits-only` for fields such as a fixed-width SSN box.
 
 Template modules live at:
 
@@ -111,6 +121,18 @@ Run eval fixture tests:
 pnpm eval:test
 ```
 
+Run the deterministic local eval runner:
+
+```bash
+pnpm eval:run --scenario elena-marquez-i9-template-smoke
+```
+
+Update expected snapshots deliberately:
+
+```bash
+pnpm eval:run --scenario elena-marquez-i9-template-smoke --update-snapshots
+```
+
 Useful focused validation commands:
 
 ```bash
@@ -127,10 +149,10 @@ Write the deterministic corpus report:
 pnpm eval:validate --user elena-marquez --corpus realistic --write-report
 ```
 
-Render a deterministic template corpus and scenario skeleton:
+Render or refresh a deterministic template corpus:
 
 ```bash
-pnpm eval:scaffold --user elena-marquez --corpus template-smoke --form i-9 --scenario elena-marquez-i9-template-smoke --force
+pnpm eval:scaffold --user elena-marquez --corpus template-smoke --form i-9 --force
 ```
 
 Initialize a new user profile skeleton from a form field map:
@@ -142,15 +164,18 @@ pnpm eval:scaffold --init-user --user nina-patel --display-name "Nina Patel" --f
 Validator exit codes are `0` for pass, `1` for validation failures, and `2`
 for unsupported CLI usage.
 
-## Manual Smoke Check
+## Automated Smoke Check
 
-Until the eval runner exists, the I-9 fixture can be checked manually:
+The I-9 template-smoke scenario exercises the backend form-fill API through the
+test-app harness. It validates fixture integrity, hydrates active preferences
+from `profile.yaml`, injects deterministic AI fill actions, posts
+`forms/i-9/form.pdf` to `/api/form-fill/pdf`, and compares
+`expected/filled-form.json`.
 
-1. Seed memory from `users/elena-marquez/seed-preferences.generated.json`.
-2. Analyze or import files from
-   `users/elena-marquez/corpora/realistic/documents/`.
-3. Use `scenarios/elena-marquez-i9-section1/start/prompt.md` as the scenario
-   prompt context.
-4. Open `/dashboard/form-fill`.
-5. Upload `forms/i-9/form.pdf`.
-6. Compare filled and skipped fields against `forms/i-9/field-map.json`.
+The backend test database must be running and migrated:
+
+```bash
+pnpm --filter backend test:db:up
+pnpm --filter backend test:db:migrate
+pnpm eval:run --scenario elena-marquez-i9-template-smoke
+```

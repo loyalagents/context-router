@@ -97,18 +97,61 @@ export const createMockAuth0Service = () => ({
   getAuthClient: jest.fn(),
 });
 
+export interface MockVertexAiService {
+  generateText: (...args: any[]) => any;
+  generateTextWithFile: (...args: any[]) => any;
+}
+
+export interface MockStructuredAiService {
+  generateStructured: (...args: any[]) => any;
+  generateStructuredWithFile: (...args: any[]) => any;
+}
+
+export interface MockAuth0Service {
+  getUserInfo: (...args: any[]) => any;
+  updateUserMetadata: (...args: any[]) => any;
+  getManagementClient: (...args: any[]) => any;
+  getAuthClient: (...args: any[]) => any;
+}
+
+type DefaultMockVertexAiService = ReturnType<typeof createMockVertexAiService>;
+type DefaultMockStructuredAiService = ReturnType<
+  typeof createMockStructuredAiService
+>;
+type DefaultMockAuth0Service = ReturnType<typeof createMockAuth0Service>;
+
 /**
  * Options for createTestApp
  */
-export interface CreateTestAppOptions {
+export interface CreateTestAppOptions<
+  TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
+  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
+  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+> {
   /** Custom mock for VertexAiService */
-  mockVertexAi?: ReturnType<typeof createMockVertexAiService>;
+  mockVertexAi?: TVertexAi;
   /** Custom mock for AiStructuredOutputPort */
-  mockStructuredAi?: ReturnType<typeof createMockStructuredAiService>;
+  mockStructuredAi?: TStructuredAi;
   /** Custom mock for Auth0Service */
-  mockAuth0?: ReturnType<typeof createMockAuth0Service>;
+  mockAuth0?: TAuth0;
   /** Whether to override GraphQL/JWT auth guards with the test user injector */
   overrideGraphqlAuthGuards?: boolean;
+}
+
+interface CreateTestAppResult<
+  TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
+  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
+  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+> {
+  app: INestApplication;
+  module: TestingModule;
+  setTestUser: (user: TestUser) => void;
+  registerMcpUser: (user: TestUser) => void;
+  mocks: {
+    vertexAi: TVertexAi;
+    structuredAi: TStructuredAi;
+    auth0: TAuth0;
+  };
 }
 
 /**
@@ -257,19 +300,27 @@ export async function createTestUser(): Promise<TestUser> {
  * });
  * ```
  */
+export function createTestApp(): Promise<CreateTestAppResult>;
+export function createTestApp<
+  TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
+  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
+  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+>(
+  options: CreateTestAppOptions<TVertexAi, TStructuredAi, TAuth0>,
+): Promise<CreateTestAppResult<TVertexAi, TStructuredAi, TAuth0>>;
 export async function createTestApp(
-  options: CreateTestAppOptions = {},
-): Promise<{
-  app: INestApplication;
-  module: TestingModule;
-  setTestUser: (user: TestUser) => void;
-  registerMcpUser: (user: TestUser) => void;
-  mocks: {
-    vertexAi: ReturnType<typeof createMockVertexAiService>;
-    structuredAi: ReturnType<typeof createMockStructuredAiService>;
-    auth0: ReturnType<typeof createMockAuth0Service>;
-  };
-}> {
+  options: CreateTestAppOptions<
+    MockVertexAiService,
+    MockStructuredAiService,
+    MockAuth0Service
+  > = {},
+): Promise<
+  CreateTestAppResult<
+    MockVertexAiService,
+    MockStructuredAiService,
+    MockAuth0Service
+  >
+> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
   const mockStructuredAi =
     options.mockStructuredAi || createMockStructuredAiService();

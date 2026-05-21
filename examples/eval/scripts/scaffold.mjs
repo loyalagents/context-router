@@ -231,8 +231,8 @@ async function renderCorpus(repoRoot, options) {
   if (!options.force && (await fileExists(corpusRoot))) {
     throw new Error(`Corpus already exists: ${repoRelative(repoRoot, corpusRoot)}. Use --force to overwrite.`);
   }
-  if (scenarioRoot && !options.force && (await fileExists(scenarioRoot))) {
-    throw new Error(`Scenario already exists: ${repoRelative(repoRoot, scenarioRoot)}. Use --force to overwrite.`);
+  if (scenarioRoot && (await fileExists(scenarioRoot))) {
+    throw new Error(`Scenario already exists: ${repoRelative(repoRoot, scenarioRoot)}. Existing scenarios are runner-owned and cannot be overwritten by scaffold.`);
   }
 
   const profilePath = path.join(userRoot, 'profile.yaml');
@@ -287,7 +287,6 @@ async function renderCorpus(repoRoot, options) {
 
   if (options.force) {
     await rm(corpusRoot, { recursive: true, force: true });
-    if (scenarioRoot) await rm(scenarioRoot, { recursive: true, force: true });
   }
 
   for (const rendered of renderedDocuments) {
