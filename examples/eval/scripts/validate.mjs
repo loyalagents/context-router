@@ -33,6 +33,7 @@ const SCHEMA_FILES = {
   scenario: 'scenario.schema.json',
   fieldMap: 'field-map.schema.json',
   template: 'template.schema.json',
+  filledFormSnapshot: 'filled-form-snapshot.schema.json',
 };
 
 const SNAPSHOT_FILES = {
@@ -45,6 +46,7 @@ export async function runValidation({
   repoRoot = defaultRepoRoot,
   args = [],
   writeReport = true,
+  skipExpectedSnapshots = false,
 } = {}) {
   const parsed = parseArgs(args);
   if (parsed.kind === 'usage-error') {
@@ -58,7 +60,10 @@ export async function runValidation({
     };
   }
 
-  const ctx = await createContext(repoRoot, parsed.options);
+  const ctx = await createContext(repoRoot, {
+    ...parsed.options,
+    skipExpectedSnapshots,
+  });
   await validateTemplates(ctx);
 
   if (parsed.options.scope === 'all') {
@@ -836,6 +841,10 @@ async function validateScenario(ctx, scenarioId, { transitive }) {
     await validateForm(ctx, scenario.formId, { requireFieldMap: true });
   }
 
+  if (ctx.options.skipExpectedSnapshots) {
+    return scenario;
+  }
+
   for (const [index, snapshot] of (scenario.expectedSnapshots ?? []).entries()) {
     const fileName = SNAPSHOT_FILES[snapshot];
     if (!fileName) continue;
@@ -849,6 +858,11 @@ async function validateScenario(ctx, scenarioId, { transitive }) {
         message: `Expected snapshot ${snapshot} could not be read from expected/${fileName}.`,
         fix: 'Create the expected snapshot JSON file or remove it from expectedSnapshots.',
       });
+      continue;
+    }
+
+    if (snapshot === 'filled-form') {
+      validateSchema(ctx, 'filledFormSnapshot', parsed, snapshotPath);
     }
   }
 
