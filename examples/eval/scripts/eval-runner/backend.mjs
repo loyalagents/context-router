@@ -118,7 +118,7 @@ function waitForChild(child) {
   });
 }
 
-export function formatHarnessFailure({ exitCode, stdout, stderr }) {
+function formatHarnessFailure({ exitCode, stdout, stderr }) {
   const lines = [`backend eval harness failed with exit code ${exitCode}`];
   if (/ECONNREFUSED|P1001/i.test(stderr)) {
     lines.push(
