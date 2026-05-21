@@ -39,57 +39,51 @@ export async function runBackendHarness({
 
     const { exitCode, stdout, stderr } = await waitForChild(child);
     if (exitCode !== 0) {
-      throw new Error(formatHarnessFailure({ exitCode, stdout, stderr }));
+      throw harnessError({ exitCode, stdout, stderr });
     }
 
     let resultText;
     try {
       resultText = await readFile(outputPath, 'utf8');
     } catch (error) {
-      throw new Error(
-        formatHarnessFailure({
-          exitCode,
-          stdout,
-          stderr: [
-            stderr,
-            `Backend eval harness completed but did not write output JSON: ${error.message}`,
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        }),
-      );
+      throw harnessError({
+        exitCode,
+        stdout,
+        stderr: [
+          stderr,
+          `Backend eval harness completed but did not write output JSON: ${error.message}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
     }
 
     let result;
     try {
       result = JSON.parse(resultText);
     } catch (error) {
-      throw new Error(
-        formatHarnessFailure({
-          exitCode,
-          stdout,
-          stderr: [
-            stderr,
-            `Backend eval harness wrote invalid output JSON: ${error.message}`,
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        }),
-      );
+      throw harnessError({
+        exitCode,
+        stdout,
+        stderr: [
+          stderr,
+          `Backend eval harness wrote invalid output JSON: ${error.message}`,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
     }
     if (result.response?.status === 'failed') {
-      throw new Error(
-        formatHarnessFailure({
-          exitCode: 0,
-          stdout,
-          stderr: [
-            stderr,
-            'Form-fill response status was failed. The backend returned a failed form-fill artifact instead of exercising the expected pipeline.',
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        }),
-      );
+      throw harnessError({
+        exitCode: 0,
+        stdout,
+        stderr: [
+          stderr,
+          'Form-fill response status was failed. The backend returned a failed form-fill artifact instead of exercising the expected pipeline.',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
     }
     return result;
   } finally {
@@ -138,6 +132,12 @@ export function formatHarnessFailure({ exitCode, stdout, stderr }) {
     lines.push('', 'stderr:', trimLog(stderr));
   }
   return lines.join('\n');
+}
+
+export function harnessError(parts) {
+  const error = new Error(formatHarnessFailure(parts));
+  error.isHarnessFailure = true;
+  return error;
 }
 
 function trimLog(value) {

@@ -15,7 +15,7 @@ import {
   renderFactValue,
   valueTypeFor,
 } from './actions.mjs';
-import { runBackendHarness } from './backend.mjs';
+import { harnessError, runBackendHarness } from './backend.mjs';
 import { loadScenarioFixture } from './fixtures.mjs';
 import {
   buildFilledFormSnapshot,
@@ -40,6 +40,22 @@ test('run arg parser accepts scenario and explicit snapshot updates', () => {
       options: {
         scenarioId: 'elena-marquez-i9-template-smoke',
         updateSnapshots: true,
+        verbose: false,
+      },
+    },
+  );
+  assert.deepEqual(
+    parseRunArgs([
+      '--verbose',
+      '--scenario',
+      'elena-marquez-i9-template-smoke',
+    ]),
+    {
+      kind: 'ok',
+      options: {
+        scenarioId: 'elena-marquez-i9-template-smoke',
+        updateSnapshots: false,
+        verbose: true,
       },
     },
   );
@@ -221,6 +237,54 @@ test('runEval updates then compares declared filled-form snapshot', async (t) =>
   const usage = await runEval({ repoRoot: root, args: ['--unknown'], backendHarness });
   assert.equal(usage.exitCode, 2);
   assert.match(usage.lines.join('\n'), /Unsupported argument: --unknown/);
+});
+
+test('runEval verbose output shows plain stacks but not harness stacks', async (t) => {
+  const root = await copyRepo(t);
+  const plainError = new Error('plain runner failure');
+  plainError.stack = [
+    'Error: plain runner failure',
+    '    at plainRunnerFrame (eval-runner.test.mjs:1:1)',
+  ].join('\n');
+
+  const concise = await runEval({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
+    backendHarness: async () => {
+      throw plainError;
+    },
+  });
+  assert.equal(concise.exitCode, 1);
+  assert.match(concise.lines.join('\n'), /plain runner failure/);
+  assert.doesNotMatch(concise.lines.join('\n'), /plainRunnerFrame/);
+
+  const verbose = await runEval({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke', '--verbose'],
+    backendHarness: async () => {
+      throw plainError;
+    },
+  });
+  assert.equal(verbose.exitCode, 1);
+  assert.match(verbose.lines.join('\n'), /plainRunnerFrame/);
+
+  const taggedHarnessError = harnessError({
+    exitCode: 1,
+    stdout: 'harness stdout tail',
+    stderr: 'harness stderr tail',
+  });
+  const harnessVerbose = await runEval({
+    repoRoot: root,
+    args: ['--scenario', 'elena-marquez-i9-template-smoke', '--verbose'],
+    backendHarness: async () => {
+      throw taggedHarnessError;
+    },
+  });
+  const harnessOutput = harnessVerbose.lines.join('\n');
+  assert.equal(harnessVerbose.exitCode, 1);
+  assert.match(harnessOutput, /harness stdout tail/);
+  assert.match(harnessOutput, /harness stderr tail/);
+  assert.doesNotMatch(harnessOutput, /at harnessError/);
 });
 
 test('snapshot update writes only declared snapshots and preserves unrelated files', async (t) => {

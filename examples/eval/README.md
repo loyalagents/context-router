@@ -5,6 +5,9 @@ This directory is the canonical home for local evaluation fixtures.
 All fixture data is synthetic. These files support local scripts and evaluation
 workflows only; they are not backend product behavior.
 
+For contributor workflows and snapshot review guidance, see
+[`PLAYBOOK.md`](PLAYBOOK.md).
+
 ## Current Contents
 
 - `forms/` contains fillable PDF fixtures, generated field manifests, generated
@@ -97,6 +100,12 @@ the path without `.mjs`, for example
 
 ## Commands
 
+Command distinction:
+
+- `pnpm eval:test` runs script tests.
+- `pnpm eval:validate` validates committed fixture integrity.
+- `pnpm eval:verify` runs both and is the local non-DB gate.
+
 Regenerate form field manifests after adding or replacing PDFs:
 
 ```bash
@@ -121,10 +130,22 @@ Run eval fixture tests:
 pnpm eval:test
 ```
 
+Run the local non-DB gate:
+
+```bash
+pnpm eval:verify
+```
+
 Run the deterministic local eval runner:
 
 ```bash
 pnpm eval:run --scenario elena-marquez-i9-template-smoke
+```
+
+Show runner-internal stacks for unexpected failures:
+
+```bash
+pnpm eval:run --scenario elena-marquez-i9-template-smoke --verbose
 ```
 
 Update expected snapshots deliberately:
