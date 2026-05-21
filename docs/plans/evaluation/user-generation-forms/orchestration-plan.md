@@ -3,7 +3,7 @@
 - Status: orchestration
 - Read when: coordinating implementation work for reusable synthetic users, document corpora, and form-fill evaluation
 - Source of truth: `docs/plans/evaluation/user-generation-forms/brainstorm.md`
-- Last reviewed: 2026-05-17
+- Last reviewed: 2026-05-20
 
 ## Purpose
 
@@ -61,7 +61,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 1. Schema and fixture contract | complete | `schema-contract/` | Defined profile, manifest, scenario, field-map, and seed projection contracts. |
 | 2. Validator | complete | `validator/` | Added deterministic fixture validation and corpus report generation. |
 | 3. Templates and scaffold | complete | `templates-scaffold/` | Added deterministic templates, scaffold generation, and template-smoke fixtures. |
-| 4. Eval runner | not-started | `eval-runner/` | Run scenario fixtures and compare snapshots. |
+| 4. Eval runner | complete | `eval-runner/` | Added deterministic local backend eval runs and filled-form snapshots. |
 | 5. Polish and playbook | deferred | `polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
 
 Current implemented state:
@@ -99,7 +99,22 @@ Current implemented state:
 - Elena Marquez now has both the hand-authored `realistic` corpus and the
   generated `template-smoke` corpus, plus
   `elena-marquez-i9-template-smoke` as a generated scenario skeleton.
-- The eval runner is still a future batch.
+- Batch 4 is complete.
+- `pnpm eval:run --scenario <scenarioId>` validates a scenario, boots the
+  backend test-app harness against the isolated backend test DB, hydrates
+  active preferences from `profile.yaml` and generated seed preferences, calls
+  `/api/form-fill/pdf`, and compares deterministic filled-form snapshots.
+- `pnpm eval:run --scenario <scenarioId> --update-snapshots` is the only
+  supported snapshot update path; normal runs never update snapshots.
+- The runner uses deterministic structured-AI actions and never calls a real
+  LLM, Auth0, browser, UI automation, deployed backend, or document-analysis
+  ingestion path.
+- `examples/eval/schemas/filled-form-snapshot.schema.json` validates
+  `expected/filled-form.json` snapshots through `pnpm eval:validate`.
+- `elena-marquez-i9-template-smoke` is now runner-owned and carries the first
+  committed `filled-form` expected snapshot.
+- `pnpm eval:scaffold` may still create first-time scenario skeletons, but it
+  refuses to overwrite existing scenario directories even with `--force`.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -284,7 +299,7 @@ Work worth planning and executing together:
 - Implement `eval:run` or the chosen equivalent.
 - Resolve user, corpus, and form references.
 - Reset or seed memory.
-- Import or analyze corpus documents.
+- Hydrate deterministic active preferences from profile facts.
 - Run the form-fill flow.
 - Diff against conventional expected snapshots.
 - Produce per-field classifications such as `correct`, `skipped-correctly`, `hallucinated`, and `missing`.
@@ -300,6 +315,10 @@ Exit criteria:
 - At least one scenario runs end to end for the canonical example user.
 - Failures are explainable as snapshot diffs or field-level misses.
 - The summary records how to run the scenario and how to interpret output.
+
+Status:
+
+- Complete. See `eval-runner/implementation-summary.md`.
 
 ## Batch 5: Polish And Playbook
 

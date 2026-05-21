@@ -1,0 +1,1651 @@
+{
+  "schemaVersion": 1,
+  "snapshotType": "filled-form",
+  "scenarioId": "elena-marquez-i9-template-smoke",
+  "userId": "elena-marquez",
+  "corpusId": "template-smoke",
+  "formId": "i-9",
+  "response": {
+    "status": "partial",
+    "originalFilename": "form.pdf",
+    "outputFilename": "filled-form.pdf",
+    "outputMimeType": "application/pdf"
+  },
+  "summary": {
+    "totalFields": 48,
+    "filledCount": 12,
+    "skippedCount": 36,
+    "actionCounts": {
+      "SET_TEXT": 11,
+      "CHECK": 0,
+      "UNCHECK": 0,
+      "SELECT_OPTION": 1,
+      "SKIP": 36
+    },
+    "warnings": []
+  },
+  "fields": [
+    {
+      "fieldIndex": 0,
+      "pdfFieldName": "3 A lawful permanent resident Enter USCIS or ANumber",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Citizenship or immigration status",
+        "inferredDataKey": "identity.citizenship_status",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "workAuthorization.uscisANumber",
+        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact workAuthorization.uscisANumber is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact workAuthorization.uscisANumber is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 1,
+      "pdfFieldName": "Signature of Employee",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Signature, consent, or attestation",
+        "inferredDataKey": "legal.signature_or_attestation",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "manual_attestation",
+        "note": "Employee signature requires explicit action for the current form run."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:manual_attestation"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:manual_attestation",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 2,
+      "pdfFieldName": "First Name Given Name",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "First name",
+        "inferredDataKey": "identity.first_name",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.firstName"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "Elena",
+        "sourceSlugs": [
+          "profile.first_name"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "Elena",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "profile.first_name"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 3,
+      "pdfFieldName": "Employee Middle Initial (if any)",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Middle name or initial",
+        "inferredDataKey": "identity.middle_name_or_initial",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.middleInitial"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "S",
+        "sourceSlugs": [
+          "eval.identity.middle_initial"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "S",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.identity.middle_initial"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 4,
+      "pdfFieldName": "Employee Other Last Names Used (if any)",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Last name",
+        "inferredDataKey": "identity.last_name",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.otherLastNames"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "Ruiz",
+        "sourceSlugs": [
+          "eval.identity.other_last_names"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "Ruiz",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.identity.other_last_names"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 5,
+      "pdfFieldName": "Today's Date mmddyyy",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Date",
+        "inferredDataKey": "date.generic",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "manual_attestation",
+        "note": "Employee signature date is part of the attestation and should not be filled from stored memory."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:manual_attestation"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:manual_attestation",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 6,
+      "pdfFieldName": "List B Document 1 Title",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 List B document fields are employer or authorized-representative review fields."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 7,
+      "pdfFieldName": "Additional Information",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Additional Information",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Additional Information has no canonical Section 1 profile fact in this scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 8,
+      "pdfFieldName": "CB_1",
+      "fieldType": "checkbox",
+      "generated": {
+        "inferredLabel": "CB 1",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": null,
+        "selected": [],
+        "checked": false,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 9,
+      "pdfFieldName": "CB_2",
+      "fieldType": "checkbox",
+      "generated": {
+        "inferredLabel": "CB 2",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": null,
+        "selected": [],
+        "checked": false,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 10,
+      "pdfFieldName": "CB_3",
+      "fieldType": "checkbox",
+      "generated": {
+        "inferredLabel": "CB 3",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": null,
+        "selected": [],
+        "checked": false,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 11,
+      "pdfFieldName": "CB_4",
+      "fieldType": "checkbox",
+      "generated": {
+        "inferredLabel": "CB 4",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": null,
+        "selected": [],
+        "checked": false,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 12,
+      "pdfFieldName": "CB_Alt",
+      "fieldType": "checkbox",
+      "generated": {
+        "inferredLabel": "CB Alt",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "unmapped",
+        "note": "Alternative procedure checkbox is not mapped in the V1 employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:unmapped"
+      },
+      "actual": {
+        "value": null,
+        "selected": [],
+        "checked": false,
+        "filled": false,
+        "skippedReason": "field-map:unmapped",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 13,
+      "pdfFieldName": "State",
+      "fieldType": "dropdown",
+      "generated": {
+        "inferredLabel": "State",
+        "inferredDataKey": "address.state",
+        "optionSetId": "optionSet1",
+        "optionCount": 59
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "address.current.state"
+      },
+      "expected": {
+        "action": "SELECT_OPTION",
+        "value": "CA",
+        "sourceSlugs": [
+          "eval.address.current.state"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": null,
+        "selected": [
+          "CA"
+        ],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.address.current.state"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 14,
+      "pdfFieldName": "ZIP Code",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "ZIP code",
+        "inferredDataKey": "address.zip",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "address.current.postalCode"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "95819",
+        "sourceSlugs": [
+          "eval.address.current.postal_code"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "95819",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.address.current.postal_code"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 15,
+      "pdfFieldName": "Date of Birth mmddyyyy",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Date of birth",
+        "inferredDataKey": "identity.date_of_birth",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.dateOfBirth"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "07/18/1994",
+        "sourceSlugs": [
+          "eval.identity.date_of_birth"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "07/18/1994",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.identity.date_of_birth"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 16,
+      "pdfFieldName": "US Social Security Number",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Social Security number",
+        "inferredDataKey": "identity.ssn",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.ssn"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "000000194",
+        "sourceSlugs": [
+          "eval.identity.ssn"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "000000194",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.identity.ssn"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 17,
+      "pdfFieldName": "Telephone Number",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Phone number",
+        "inferredDataKey": "contact.phone",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "contact.phone",
+        "note": "Elena declares this fact as null in profile.yaml; the corpus manifest marks it intentionally missing."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact contact.phone is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact contact.phone is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 18,
+      "pdfFieldName": "Last Name (Family Name)",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Last name",
+        "inferredDataKey": "identity.last_name",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "identity.lastName"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "Marquez",
+        "sourceSlugs": [
+          "profile.last_name"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "Marquez",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "profile.last_name"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 19,
+      "pdfFieldName": "Address Street Number and Name",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Street address",
+        "inferredDataKey": "address.street",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "address.current.street"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "418 Cedar Glen Avenue",
+        "sourceSlugs": [
+          "eval.address.current.street"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "418 Cedar Glen Avenue",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.address.current.street"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 20,
+      "pdfFieldName": "Apt Number (if any)",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Apt Number (if any)",
+        "inferredDataKey": "unmapped.needs_review",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "address.current.unit"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "Apt 12B",
+        "sourceSlugs": [
+          "eval.address.current.unit"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "Apt 12B",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.address.current.unit"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 21,
+      "pdfFieldName": "City or Town",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "City",
+        "inferredDataKey": "address.city",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "address.current.city"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "Sacramento",
+        "sourceSlugs": [
+          "eval.address.current.city"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "Sacramento",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.address.current.city"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 22,
+      "pdfFieldName": "Employees E-mail Address",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Street address",
+        "inferredDataKey": "address.street",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "contact.email"
+      },
+      "expected": {
+        "action": "SET_TEXT",
+        "value": "elena.marquez@example.test",
+        "sourceSlugs": [
+          "profile.email"
+        ],
+        "confidence": 0.99,
+        "skipReason": null
+      },
+      "actual": {
+        "value": "elena.marquez@example.test",
+        "selected": [],
+        "checked": null,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "profile.email"
+        ],
+        "confidence": 0.99
+      },
+      "classification": "correct"
+    },
+    {
+      "fieldIndex": 23,
+      "pdfFieldName": "Exp Date mmddyyyy",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Date",
+        "inferredDataKey": "date.generic",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "workAuthorization.workAuthorizationExpirationDate",
+        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact workAuthorization.workAuthorizationExpirationDate is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact workAuthorization.workAuthorizationExpirationDate is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 24,
+      "pdfFieldName": "USCIS ANumber",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "USCIS or A-number",
+        "inferredDataKey": "identity.uscis_or_anumber",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "workAuthorization.uscisANumber",
+        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact workAuthorization.uscisANumber is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact workAuthorization.uscisANumber is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 25,
+      "pdfFieldName": "Form I94 Admission Number",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Public benefits or program status",
+        "inferredDataKey": "public_benefits.program_status",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "workAuthorization.i94AdmissionNumber",
+        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact workAuthorization.i94AdmissionNumber is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact workAuthorization.i94AdmissionNumber is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 26,
+      "pdfFieldName": "Foreign Passport Number and Country of IssuanceRow1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Country",
+        "inferredDataKey": "address.country",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "fact",
+        "factKey": "workAuthorization.foreignPassportNumber",
+        "note": "Elena declares foreign passport number and country facts as null in profile.yaml because she is a U.S. citizen."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "profile fact workAuthorization.foreignPassportNumber is null"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "profile fact workAuthorization.foreignPassportNumber is null",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 27,
+      "pdfFieldName": "Document Title 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 28,
+      "pdfFieldName": "Issuing Authority 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 29,
+      "pdfFieldName": "Document Number 0 (if any)",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 30,
+      "pdfFieldName": "Document Title 2 If any",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 31,
+      "pdfFieldName": "Issuing Authority_2",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 32,
+      "pdfFieldName": "Document Number If any_2",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 33,
+      "pdfFieldName": "Document Number if any_3",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 34,
+      "pdfFieldName": "List C Expiration Date 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 35,
+      "pdfFieldName": "List C Document Number 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 36,
+      "pdfFieldName": "List C Issuing Authority 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 37,
+      "pdfFieldName": "List C Document Title 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document review fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 38,
+      "pdfFieldName": "FirstDayEmployed mmddyyyy",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Date",
+        "inferredDataKey": "date.generic",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Employee first day of employment is a Section 2 employer field in this fixture."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 39,
+      "pdfFieldName": "S2 Todays Date mmddyyyy",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Date",
+        "inferredDataKey": "date.generic",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 date is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 40,
+      "pdfFieldName": "Last Name First Name and Title of Employer or Authorized Representative",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "First name",
+        "inferredDataKey": "identity.first_name",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Employer or authorized representative identity is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 41,
+      "pdfFieldName": "Signature of Employer or AR",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employer information",
+        "inferredDataKey": "employment.employer",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Employer or authorized representative signature is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 42,
+      "pdfFieldName": "Employers Business or Org Name",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employer information",
+        "inferredDataKey": "employment.employer",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Employer business information is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 43,
+      "pdfFieldName": "Employers Business or Org Address",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Street address",
+        "inferredDataKey": "address.street",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Employer business address is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 44,
+      "pdfFieldName": "Expiration Date if any",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 document expiration field is outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 45,
+      "pdfFieldName": "List B Issuing Authority 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 List B document fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 46,
+      "pdfFieldName": "List B Document Number 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 List B document fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    },
+    {
+      "fieldIndex": 47,
+      "pdfFieldName": "List B Expiration Date 1",
+      "fieldType": "text",
+      "generated": {
+        "inferredLabel": "Employment authorization document",
+        "inferredDataKey": "employment.document",
+        "optionSetId": null,
+        "optionCount": 0
+      },
+      "fieldMap": {
+        "mode": "skip",
+        "reason": "out_of_scope",
+        "note": "Section 2 List B document fields are outside the employee-memory scenario."
+      },
+      "expected": {
+        "action": "SKIP",
+        "value": null,
+        "sourceSlugs": [],
+        "confidence": 0.99,
+        "skipReason": "field-map:out_of_scope"
+      },
+      "actual": {
+        "value": "",
+        "selected": [],
+        "checked": null,
+        "filled": false,
+        "skippedReason": "field-map:out_of_scope",
+        "sourceSlugs": [],
+        "confidence": 0.99
+      },
+      "classification": "skipped-correctly"
+    }
+  ]
+}

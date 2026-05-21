@@ -673,6 +673,26 @@ test('init user refuses orphaned generated seed file', async (t) => {
   assert.match(result.errorMessage, /Refusing to overwrite existing generated seeds/);
 });
 
+test('scaffold refuses to overwrite existing scenarios even with force', async (t) => {
+  const root = await copyRepo(t);
+  const args = [
+    '--user',
+    'elena-marquez',
+    '--corpus',
+    'template-smoke',
+    '--form',
+    'i-9',
+    '--scenario',
+    'elena-marquez-i9-template-smoke',
+  ];
+  const first = await runScaffold({ repoRoot: root, args });
+  assert.equal(first.exitCode, 0, first.errorMessage);
+
+  const forced = await runScaffold({ repoRoot: root, args: [...args, '--force'] });
+  assert.equal(forced.exitCode, 1);
+  assert.match(forced.errorMessage, /Existing scenarios are runner-owned/);
+});
+
 test('scenario skeleton rejects multiple forms', () => {
   const parsed = parseArgs([
     '--user',

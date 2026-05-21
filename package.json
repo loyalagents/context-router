@@ -22,7 +22,8 @@
     "eval:derive-seeds": "node examples/eval/scripts/generate-seed-preferences.mjs",
     "eval:scaffold": "node examples/eval/scripts/scaffold.mjs",
     "eval:validate": "node examples/eval/scripts/validate.mjs",
-    "eval:test": "node --test examples/eval/scripts/*.test.mjs",
+    "eval:run": "node examples/eval/scripts/run.mjs",
+    "eval:test": "node --test examples/eval/scripts",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
