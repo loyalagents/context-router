@@ -1,0 +1,9 @@
+USPS Address Confirmation
+
+Recipient: Samir Arun Desai
+Delivery line: 1268 Lakeview Terrace, Unit 4C
+City: Madison
+State: WI
+ZIP Code: 53703
+
+Address verification note: current delivery point confirmed for ordinary mail routing.

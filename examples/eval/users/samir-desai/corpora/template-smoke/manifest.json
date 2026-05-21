@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "userId": "samir-desai",
+  "corpusId": "template-smoke",
+  "seed": "samir-desai__template-smoke",
+  "forms": [
+    "i-9"
+  ],
+  "purpose": "Generated template-scaffold corpus for i-9 form-fill evaluation.",
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
+      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
+    },
+    {
+      "factKey": "workAuthorization.foreignPassportNumber",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
+      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
+    },
+    {
+      "factKey": "workAuthorization.i94AdmissionNumber",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
+      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
+    },
+    {
+      "factKey": "workAuthorization.workAuthorizationExpirationDate",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
+      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
+    }
+  ],
+  "documents": [
+    {
+      "id": "001",
+      "path": "documents/address-contact/001-usps-address-confirmation.txt",
+      "category": "address-contact",
+      "title": "USPS Address Confirmation",
+      "factKeys": [
+        "address.current.city",
+        "address.current.postalCode",
+        "address.current.state",
+        "address.current.street",
+        "address.current.unit",
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "address-contact/usps-address-confirmation"
+    },
+    {
+      "id": "002",
+      "path": "documents/identity/002-name-history-note.md",
+      "category": "identity",
+      "title": "Name History Note",
+      "factKeys": [
+        "identity.legalName",
+        "identity.middleInitial",
+        "identity.otherLastNames"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "identity/name-history-note"
+    },
+    {
+      "id": "003",
+      "path": "documents/address-contact/003-current-lease-summary.md",
+      "category": "address-contact",
+      "title": "Current Lease Summary",
+      "factKeys": [
+        "address.current.city",
+        "address.current.postalCode",
+        "address.current.state",
+        "address.current.street",
+        "address.current.unit",
+        "contact.email",
+        "identity.legalName"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "address-contact/current-lease-summary"
+    },
+    {
+      "id": "004",
+      "path": "documents/identity/004-birth-record-summary.txt",
+      "category": "identity",
+      "title": "Birth Record Summary",
+      "factKeys": [
+        "identity.dateOfBirth",
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "identity/birth-record-summary"
+    },
+    {
+      "id": "005",
+      "path": "documents/identity/005-ssn-card-transcript.md",
+      "category": "identity",
+      "title": "Social Security Card Transcript",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "identity/ssn-card-transcript"
+    },
+    {
+      "id": "006",
+      "path": "documents/work-authorization/006-lawful-permanent-resident-note.md",
+      "category": "work-authorization",
+      "title": "Lawful Permanent Resident Note",
+      "factKeys": [
+        "identity.legalName",
+        "workAuthorization.citizenshipStatus",
+        "workAuthorization.uscisANumber"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "template": "work-authorization/lawful-permanent-resident-note"
+    }
+  ]
+}

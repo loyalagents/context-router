@@ -1,0 +1,54 @@
+schemaVersion: 1
+userId: samir-desai
+displayName: Samir Desai
+facts:
+  identity:
+    legalName: Samir Arun Desai
+    firstName: Samir
+    middleName: Arun
+    middleInitial: A
+    lastName: Desai
+    otherLastNames:
+      - Mehta
+    dateOfBirth: 1989-11-04
+    ssn: 000-00-0389
+  contact:
+    email: samir.desai@example.test
+    phone: null
+  address:
+    current:
+      street: 1268 Lakeview Terrace
+      unit: Unit 4C
+      city: Madison
+      state: WI
+      postalCode: "53703"
+  workAuthorization:
+    citizenshipStatus: lawful permanent resident
+    uscisANumber: "123456789"
+    workAuthorizationExpirationDate: null
+    i94AdmissionNumber: null
+    foreignPassportNumber: null
+    foreignPassportCountry: null
+  employment:
+    company: Northstar Civic Labs
+    title: Product Operations Coordinator
+    startDate: 2026-06-10
+    workEmail: samir.desai@northstarcivic.example.test
+  communication:
+    preferredChannels:
+      - email
+seedPreferences:
+  - slug: communication.preferred_channels
+    factKey: communication.preferredChannels
+  - slug: profile.company
+    factKey: employment.company
+  - slug: profile.email
+    factKey: contact.email
+  - slug: profile.first_name
+    factKey: identity.firstName
+  - slug: profile.full_name
+    factKey: identity.legalName
+  - slug: profile.last_name
+    factKey: identity.lastName
+  - slug: profile.title
+    factKey: employment.title

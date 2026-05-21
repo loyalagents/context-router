@@ -149,21 +149,38 @@ test('renderer rejects declared required facts that are not accessed', async () 
   );
 });
 
-test('every discovered template renders against the Elena reference profile', async () => {
-  const profile = await readElenaProfile(repoRoot);
-  const profileFacts = collectFactKeys(profile.facts);
+test('every discovered template renders against at least one committed profile', async () => {
+  const profiles = await Promise.all(
+    ['elena-marquez', 'samir-desai'].map(async (userId) => ({
+      userId,
+      profile: await readProfile(repoRoot, userId),
+    })),
+  );
   const templates = await discoverTemplates({
     evalRoot: path.join(repoRoot, 'examples/eval'),
   });
 
   assert.ok(templates.length > 0);
   for (const template of templates) {
-    const rendered = renderTemplate({
-      template,
-      profileFacts,
-      seed: 'elena-marquez__template-smoke',
-    });
-    assert.ok(rendered.content.length > 0, template.meta.templateId);
+    const errors = [];
+    let rendered = null;
+    for (const { userId, profile } of profiles) {
+      try {
+        rendered = renderTemplate({
+          template,
+          profileFacts: collectFactKeys(profile.facts),
+          seed: `${userId}__template-smoke`,
+        });
+        break;
+      } catch (error) {
+        errors.push(`${userId}: ${error.message}`);
+      }
+    }
+
+    assert.ok(
+      rendered?.content.length > 0,
+      `${template.meta.templateId} did not render against any committed profile: ${errors.join('; ')}`,
+    );
   }
 });
 
@@ -745,9 +762,13 @@ async function copyRepo(t) {
 }
 
 async function readElenaProfile(root) {
+  return readProfile(root, 'elena-marquez');
+}
+
+async function readProfile(root, userId) {
   return parseYaml(
     await readFile(
-      path.join(root, 'examples/eval/users/elena-marquez/profile.yaml'),
+      path.join(root, 'examples/eval/users', userId, 'profile.yaml'),
       'utf8',
     ),
   );

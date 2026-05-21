@@ -29,9 +29,13 @@ For contributor workflows and snapshot review guidance, see
 - `templates/` contains trusted repo-local `.mjs` document archetypes for
   deterministic fixture generation.
 - `users/elena-marquez/` is the first normalized synthetic user fixture.
+- `users/samir-desai/` is the second I-9 fixture user, with a lawful permanent
+  resident work-authorization profile.
 - `scenarios/elena-marquez-i9-section1/` is the first scenario-shaped fixture.
 - `scenarios/elena-marquez-i9-template-smoke/` is the first runner-owned
   scenario with an expected `filled-form` snapshot.
+- `scenarios/samir-desai-i9-template-smoke/` is a second runner-owned I-9
+  scenario that exercises non-null USCIS/A-number fields.
 
 ## Contract Shape
 
@@ -140,6 +144,7 @@ Run the deterministic local eval runner:
 
 ```bash
 pnpm eval:run --scenario elena-marquez-i9-template-smoke
+pnpm eval:run --scenario samir-desai-i9-template-smoke
 ```
 
 Show runner-internal stacks for unexpected failures:
@@ -159,8 +164,10 @@ Useful focused validation commands:
 ```bash
 pnpm eval:validate --user elena-marquez --corpus realistic
 pnpm eval:validate --user elena-marquez --corpus template-smoke
+pnpm eval:validate --user samir-desai --corpus template-smoke
 pnpm eval:validate --scenario elena-marquez-i9-section1
 pnpm eval:validate --scenario elena-marquez-i9-template-smoke
+pnpm eval:validate --scenario samir-desai-i9-template-smoke
 pnpm eval:validate --form i-9
 ```
 
@@ -191,7 +198,9 @@ The I-9 template-smoke scenario exercises the backend form-fill API through the
 test-app harness. It validates fixture integrity, hydrates active preferences
 from `profile.yaml`, injects deterministic AI fill actions, posts
 `forms/i-9/form.pdf` to `/api/form-fill/pdf`, and compares
-`expected/filled-form.json`.
+`expected/filled-form.json`. Elena's scenario covers a U.S. citizen profile;
+Samir's covers a lawful permanent resident profile with non-null USCIS/A-number
+fields.
 
 The backend test database must be running and migrated:
 
@@ -199,4 +208,5 @@ The backend test database must be running and migrated:
 pnpm --filter backend test:db:up
 pnpm --filter backend test:db:migrate
 pnpm eval:run --scenario elena-marquez-i9-template-smoke
+pnpm eval:run --scenario samir-desai-i9-template-smoke
 ```

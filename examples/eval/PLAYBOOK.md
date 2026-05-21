@@ -101,7 +101,9 @@ pnpm eval:validate
 ```
 
 The renderer tests and validator enforce declared fact access, deterministic
-rerenders, template metadata, and manifest template references.
+rerenders, template metadata, and manifest template references. Templates may
+be profile-specific, but each committed template must render against at least
+one committed profile with matching non-null required facts.
 
 ## Adding A Field Map
 
@@ -236,7 +238,6 @@ the backend test database. See the "Automated Smoke Check" section in
   hardening task because current generated field metadata does not expose
   reliable labels.
 
-Recommended next expansion: add a second I-9 user, likely with a different
-work-authorization profile, before adding W-4 for Elena. That tests repeatable
-user/corpus/scenario mechanics without first authoring a new form map and tax
-template set.
+Current repeatability coverage uses two I-9 users against the same form map:
+Elena Marquez as a U.S. citizen profile and Samir Desai as a lawful permanent
+resident profile with non-null USCIS/A-number fields.

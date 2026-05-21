@@ -3,7 +3,7 @@
 - Status: orchestration
 - Read when: coordinating implementation work for reusable synthetic users, document corpora, and form-fill evaluation
 - Source of truth: `docs/plans/evaluation/user-generation-forms/brainstorm.md`
-- Last reviewed: 2026-05-20
+- Last reviewed: 2026-05-21
 
 ## Purpose
 
@@ -63,6 +63,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 3. Templates and scaffold | complete | `templates-scaffold/` | Added deterministic templates, scaffold generation, and template-smoke fixtures. |
 | 4. Eval runner | complete | `eval-runner/` | Added deterministic local backend eval runs and filled-form snapshots. |
 | 5. Polish and playbook | complete | `polish-playbook/` | Added no-DB verify/CI, runner diagnostics, and contributor playbook. |
+| 6. Second I-9 user | complete | `second-i9-user/` | Added a second I-9 user, generated corpus, and runner snapshot. |
 
 Current implemented state:
 
@@ -124,10 +125,20 @@ Current implemented state:
   unexpected runner-internal failures while preserving concise backend harness
   diagnostics.
 - `examples/eval/PLAYBOOK.md` documents contributor workflows, ownership rules,
-  report-driven repair, snapshot review, V1 limitations, and the recommended
-  next expansion target.
+  report-driven repair, snapshot review, V1 limitations, and fixture
+  repeatability coverage.
 - Optional LLM polish and archetypes/factories were intentionally excluded from
   Batch 5 and remain deferred future expansion work.
+- Batch 6 is complete.
+- Samir Desai is the second normalized synthetic I-9 user fixture, using a
+  lawful permanent resident work-authorization profile with non-null
+  `workAuthorization.uscisANumber`.
+- `examples/eval/templates/work-authorization/` contains a narrow
+  lawful-permanent-resident note template so scaffold can cover non-null
+  USCIS/A-number facts without adding a broader archetype system.
+- `samir-desai-i9-template-smoke` is runner-owned and carries a committed
+  `filled-form` snapshot that exercises the same I-9 field map as Elena with
+  different null and non-null work-authorization facts.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -367,6 +378,39 @@ Exit criteria:
 - The playbook improves workflow without becoming load-bearing.
 - Existing deterministic fixtures are protected from drift by no-DB local and
   CI checks.
+
+## Batch 6: Second I-9 User
+
+Recommended plan folder:
+
+```text
+docs/plans/evaluation/user-generation-forms/second-i9-user/
+```
+
+Status:
+
+- Complete. See `second-i9-user/implementation-summary.md`.
+
+Goal:
+
+- Add a second I-9 fixture user and runner-owned scenario before expanding to a
+  new form.
+
+Outcome:
+
+- Added Samir Desai as a lawful permanent resident I-9 profile.
+- Added one narrow work-authorization template for USCIS/A-number coverage.
+- Generated Samir's `template-smoke` corpus, seed preferences, validation
+  report, scenario, and filled-form snapshot through the existing workflow.
+- Kept W-4, document-analysis ingestion, UI/browser automation, real LLM calls,
+  and I-9 field-map changes out of scope.
+
+Exit criteria:
+
+- Samir's corpus and scenario validate.
+- The runner snapshot shows the expected classification change from Elena:
+  14 correct fields and 34 skipped-correctly fields.
+- Existing no-DB eval gates remain green.
 
 ## Update Checklist
 

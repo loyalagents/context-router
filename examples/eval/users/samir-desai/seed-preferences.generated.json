@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "communication.preferred_channels",
+    "value": [
+      "email"
+    ]
+  },
+  {
+    "slug": "profile.company",
+    "value": "Northstar Civic Labs"
+  },
+  {
+    "slug": "profile.email",
+    "value": "samir.desai@example.test"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Samir"
+  },
+  {
+    "slug": "profile.full_name",
+    "value": "Samir Arun Desai"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Desai"
+  },
+  {
+    "slug": "profile.title",
+    "value": "Product Operations Coordinator"
+  }
+]
