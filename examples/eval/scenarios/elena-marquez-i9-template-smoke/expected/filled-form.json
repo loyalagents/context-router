@@ -15,7 +15,7 @@
     "totalFields": 48,
     "filledCount": 12,
     "skippedCount": 36,
-    "actionCounts": {
+    "plannedActionCounts": {
       "SET_TEXT": 11,
       "CHECK": 0,
       "UNCHECK": 0,
@@ -585,7 +585,8 @@
       },
       "fieldMap": {
         "mode": "fact",
-        "factKey": "identity.ssn"
+        "factKey": "identity.ssn",
+        "render": "digits-only"
       },
       "expected": {
         "action": "SET_TEXT",

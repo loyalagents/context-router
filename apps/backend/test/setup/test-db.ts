@@ -11,10 +11,8 @@ import {
   PreferenceValueType,
   PreferenceScope,
 } from "@infrastructure/prisma/generated-client";
-import {
-  PREFERENCE_CATALOG,
-  PreferenceDefinition,
-} from "../../src/config/preferences.catalog";
+import { PREFERENCE_CATALOG } from "../../src/config/preferences-catalog-data";
+import type { PreferenceDefinition } from "../../src/config/preferences-catalog-data";
 import { buildPrismaClientOptions } from "../../src/infrastructure/prisma/prisma-client-options";
 
 let prismaClient: PrismaClient | null = null;

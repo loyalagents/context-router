@@ -96,7 +96,7 @@ export function renderFactValue(value) {
 
 export function renderFieldValue(value, fieldMap) {
   const rendered = renderFactValue(value);
-  if (fieldMap.factKey === 'identity.ssn') {
+  if (fieldMap.render === 'digits-only') {
     return rendered.replace(/\D/g, '');
   }
   return rendered;
@@ -187,6 +187,7 @@ function buildActionPlan({ fieldMap, generated, fixture, seedSlugs, factPlans })
         expectedValue: renderedValue,
         factKey: fieldMap.factKey,
         sourceSlug,
+        expectedClassification: 'unsupported',
       });
   }
 }
@@ -233,6 +234,7 @@ function skippedAction({
   expectedValue,
   factKey,
   sourceSlug,
+  expectedClassification = 'skipped-correctly',
 }) {
   return {
     fieldIndex: fieldMap.fieldIndex,
@@ -241,6 +243,7 @@ function skippedAction({
     factKey,
     expectedValue,
     sourceSlug,
+    expectedClassification,
     fillAction: {
       fieldName: fieldMap.pdfFieldName,
       action: 'SKIP',

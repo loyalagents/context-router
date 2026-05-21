@@ -16,10 +16,9 @@ import {
 } from '../setup/test-app';
 import {
   disconnectPrisma,
-  getPrismaClient,
   resetDb,
+  seedPreferenceDefinitions,
 } from '../setup/test-db';
-import catalogJson from '../../src/config/preferences.catalog.json';
 import {
   AuditActorType,
   AuditOrigin,
@@ -53,7 +52,7 @@ async function main() {
   let testApp: Awaited<ReturnType<typeof createTestApp>> | null = null;
   try {
     await resetDb();
-    await seedGlobalPreferenceDefinitions();
+    await seedPreferenceDefinitions();
 
     testApp = await createTestApp({
       mockVertexAi: {
@@ -113,41 +112,6 @@ async function main() {
     if (testApp) await testApp.app.close();
     await disconnectPrisma();
   }
-}
-
-async function seedGlobalPreferenceDefinitions() {
-  const prisma = getPrismaClient();
-  const entries = Object.entries(catalogJson).map(([slug, definition]: any) => ({
-    namespace: 'GLOBAL',
-    slug,
-    ownerUserId: null,
-    displayName: definition.displayName ?? null,
-    description: definition.description,
-    valueType: valueTypeFromCatalog(definition.valueType),
-    scope: scopeFromCatalog(definition.scope),
-    options: definition.options ?? undefined,
-    isSensitive: definition.isSensitive ?? false,
-    isCore: true,
-  }));
-
-  await prisma.preferenceDefinition.createMany({
-    data: entries,
-    skipDuplicates: true,
-  });
-}
-
-function valueTypeFromCatalog(value: string) {
-  if (value === 'string') return PreferenceValueType.STRING;
-  if (value === 'boolean') return PreferenceValueType.BOOLEAN;
-  if (value === 'enum') return PreferenceValueType.ENUM;
-  if (value === 'array') return PreferenceValueType.ARRAY;
-  throw new Error(`Unsupported catalog value type ${value}`);
-}
-
-function scopeFromCatalog(value: string) {
-  if (value === 'global') return PreferenceScope.GLOBAL;
-  if (value === 'location') return PreferenceScope.LOCATION;
-  throw new Error(`Unsupported catalog scope ${value}`);
 }
 
 async function hydratePreferences({

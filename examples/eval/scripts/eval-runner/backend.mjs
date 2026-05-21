@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { jsonText } from '../shared.mjs';
@@ -15,7 +15,6 @@ export async function runBackendHarness({
 
   try {
     await writeFile(inputPath, jsonText(toHarnessInput(runPlan)));
-    await mkdir(path.dirname(outputPath), { recursive: true });
 
     const backendRoot = path.join(repoRoot, 'apps/backend');
     const child = spawnProcess(
@@ -127,7 +126,7 @@ function waitForChild(child) {
 
 export function formatHarnessFailure({ exitCode, stdout, stderr }) {
   const lines = [`backend eval harness failed with exit code ${exitCode}`];
-  if (/ECONNREFUSED|P1001|connect/i.test(stderr)) {
+  if (/ECONNREFUSED|P1001/i.test(stderr)) {
     lines.push(
       'The backend test database may be down or unmigrated. Run pnpm --filter backend test:db:up and pnpm --filter backend test:db:migrate.',
     );

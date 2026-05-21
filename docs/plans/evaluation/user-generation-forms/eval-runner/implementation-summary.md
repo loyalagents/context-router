@@ -15,11 +15,16 @@
   discovery so nested runner tests are included.
 - Added `apps/backend/test/eval-runner/harness.ts`, a standalone backend
   test-app harness that boots outside Jest, resets and seeds the isolated test
-  DB, creates a test user, hydrates active preferences, calls
+  DB through shared test seeding, creates a test user, hydrates active
+  preferences, calls
   `/api/form-fill/pdf`, decodes the returned PDF, and writes a deterministic
   JSON result file.
-- Widened backend test-app mock option types so the harness can pass plain
-  mocks without introducing Jest globals into the standalone process.
+- Added a distinct shared backend catalog data module so Jest and standalone
+  `ts-node` test helpers use the same JSON interop unwrap without importing the
+  ambiguous `preferences.catalog` basename.
+- Widened backend test-app mock option types while preserving the concrete mock
+  type returned to callers, so the harness can pass plain mocks without
+  introducing Jest globals into the standalone process.
 - Added `examples/eval/schemas/filled-form-snapshot.schema.json` and wired it
   into fixture validation.
 - Updated `elena-marquez-i9-template-smoke` to declare `filled-form` as its
@@ -83,8 +88,9 @@
 - Null facts are omitted from hydration and produce explicit `SKIP` actions.
 - Arrays render with `", "` in profile order. ISO dates matching
   `YYYY-MM-DD` render as `MM/DD/YYYY`.
-- For the I-9 SSN field, the runner renders Elena's SSN as digits only because
-  the generated PDF field metadata constrains that field to nine characters.
+- The I-9 SSN field uses an explicit field-map `render: "digits-only"` hint so
+  the runner fills the nine-character PDF field from Elena's formatted
+  synthetic SSN without hardcoding the fact key.
 - Deterministic AI returns exactly `{ fillActions: [...] }`. Filled actions use
   non-empty source slugs and confidence `0.99`.
 
@@ -95,6 +101,8 @@
   `schemaVersion`, `snapshotType`, `scenarioId`, `userId`, `corpusId`,
   `formId`, `response`, `summary`, and `fields`.
 - The snapshot omits nondeterministic `fillId` and raw `filledPdfBase64`.
+- The summary separates actual backend response counts from
+  `plannedActionCounts`, which are derived from the deterministic action plan.
 - Fields are sorted by generated field index and include generated field
   metadata, field-map expectations, expected rendered values, decoded actual
   PDF values, source slugs, confidence, skip reasons, and classifications.

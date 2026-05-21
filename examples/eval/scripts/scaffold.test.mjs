@@ -534,6 +534,7 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
   const fieldMap = await readJson(fieldMapPath);
   const ssnField = fieldMap.fields.find((field) => field.factKey === 'identity.ssn');
   delete ssnField.factKey;
+  delete ssnField.render;
   ssnField.mode = 'skip';
   ssnField.reason = 'out_of_scope';
   await writeJson(fieldMapPath, fieldMap);

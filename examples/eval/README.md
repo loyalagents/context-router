@@ -80,6 +80,10 @@ Form field maps live beside forms:
 forms/<formId>/field-map.json
 ```
 
+Fact field maps may include an explicit `render` hint when the PDF field
+requires a representation different from the raw profile value. V1 supports
+`digits-only` for fields such as a fixed-width SSN box.
+
 Template modules live at:
 
 ```text

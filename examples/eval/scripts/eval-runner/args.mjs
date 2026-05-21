@@ -13,7 +13,7 @@ export function parseRunArgs(args) {
       continue;
     }
     if (arg === '--help' || arg === '-h') {
-      return { kind: 'usage-error', message: usage() };
+      return { kind: 'help', usage: usage() };
     }
     if (arg !== '--scenario') {
       return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };

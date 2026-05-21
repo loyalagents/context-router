@@ -46,7 +46,7 @@ export function buildFilledFormSnapshot({ fixture, runPlan, harnessResult }) {
       totalFields: response.summary.totalFields,
       filledCount: response.summary.filledCount,
       skippedCount: response.summary.skippedCount,
-      actionCounts: countActions(runPlan.fillActions),
+      plannedActionCounts: countActions(runPlan.fillActions),
       warnings: response.summary.warnings ?? [],
     },
     fields: fixture.joinedFields.map(({ fieldMap, generated }) => {
@@ -151,6 +151,7 @@ function buildFieldSnapshot({
       ? {
           mode: fieldMap.mode,
           factKey: fieldMap.factKey,
+          render: fieldMap.render,
           note: fieldMap.note,
         }
       : {
@@ -169,7 +170,7 @@ function buildFieldSnapshot({
         filledSummary?.sourceSlugs ?? skippedSummary?.sourceSlugs ?? [],
       confidence: filledSummary?.confidence ?? skippedSummary?.confidence ?? null,
     },
-    classification: classifyField({ expected, actual, filledSummary }),
+    classification: classifyField({ expected, actual, filledSummary, plan }),
   };
 }
 
@@ -184,7 +185,10 @@ function expectedFromPlan(plan) {
   };
 }
 
-function classifyField({ expected, actual, filledSummary }) {
+function classifyField({ expected, actual, filledSummary, plan }) {
+  if (plan.expectedClassification === 'unsupported') {
+    return 'unsupported';
+  }
   if (expected.action === 'SKIP') {
     return filledSummary ? 'hallucinated' : 'skipped-correctly';
   }
@@ -204,7 +208,7 @@ function classifyField({ expected, actual, filledSummary }) {
   if (expected.action === 'UNCHECK') {
     return actual.checked === false ? 'correct' : 'incorrect';
   }
-  return 'unsupported';
+  throw new Error(`Unsupported expected action ${expected.action}`);
 }
 
 function countActions(actions) {

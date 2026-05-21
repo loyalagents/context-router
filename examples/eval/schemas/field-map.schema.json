@@ -35,6 +35,9 @@
               "factKey": {
                 "type": "string"
               },
+              "render": {
+                "enum": ["digits-only"]
+              },
               "note": {
                 "type": "string"
               }

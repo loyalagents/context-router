@@ -31,9 +31,9 @@ const repoRoot = path.resolve(__dirname, '../../../..');
 test('run arg parser accepts scenario and explicit snapshot updates', () => {
   assert.deepEqual(
     parseRunArgs([
+      '--update-snapshots',
       '--scenario',
       'elena-marquez-i9-template-smoke',
-      '--update-snapshots',
     ]),
     {
       kind: 'ok',
@@ -45,6 +45,8 @@ test('run arg parser accepts scenario and explicit snapshot updates', () => {
   );
   assert.equal(parseRunArgs([]).kind, 'usage-error');
   assert.equal(parseRunArgs(['--scenario', 'Bad_ID']).kind, 'usage-error');
+  assert.equal(parseRunArgs(['--unknown']).kind, 'usage-error');
+  assert.equal(parseRunArgs(['--help']).kind, 'help');
 });
 
 test('run plan prefers seed slugs and creates only Elena eval-only facts', async () => {
@@ -93,7 +95,7 @@ test('runner value rendering and eval slug derivation are deterministic', () => 
   assert.equal(renderFactValue(['Ruiz']), 'Ruiz');
   assert.equal(renderFactValue('1994-07-18'), '07/18/1994');
   assert.equal(
-    renderFieldValue('000-00-0194', { factKey: 'identity.ssn' }),
+    renderFieldValue('000-00-0194', { render: 'digits-only' }),
     '000000194',
   );
 });
@@ -133,7 +135,7 @@ test('filled-form snapshot normalization records expected counts and classificat
   assert.equal(snapshot.summary.totalFields, 48);
   assert.equal(snapshot.summary.filledCount, 12);
   assert.equal(snapshot.summary.skippedCount, 36);
-  assert.deepEqual(snapshot.summary.actionCounts, {
+  assert.deepEqual(snapshot.summary.plannedActionCounts, {
     SET_TEXT: 11,
     CHECK: 0,
     UNCHECK: 0,
@@ -150,6 +152,30 @@ test('filled-form snapshot normalization records expected counts and classificat
       .classification,
     'correct',
   );
+});
+
+test('unsupported generated field types are classified as unsupported', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+  const joined = fixture.joinedFields.find(
+    ({ fieldMap }) => fieldMap.pdfFieldName === 'First Name Given Name',
+  );
+  joined.generated.type = 'not_supported_by_runner';
+
+  const runPlan = buildRunPlan(fixture);
+  const snapshot = buildFilledFormSnapshot({
+    fixture,
+    runPlan,
+    harnessResult: fakeHarnessResult(runPlan),
+  });
+  const field = snapshot.fields.find(
+    (candidate) => candidate.pdfFieldName === 'First Name Given Name',
+  );
+
+  assert.equal(field.expected.action, 'SKIP');
+  assert.equal(field.classification, 'unsupported');
 });
 
 test('runEval updates then compares declared filled-form snapshot', async (t) => {
@@ -187,6 +213,14 @@ test('runEval updates then compares declared filled-form snapshot', async (t) =>
   });
   assert.equal(stale.exitCode, 1);
   assert.match(stale.lines.join('\n'), /snapshot mismatch/);
+
+  const help = await runEval({ repoRoot: root, args: ['--help'], backendHarness });
+  assert.equal(help.exitCode, 0);
+  assert.match(help.lines.join('\n'), /pnpm eval:run --scenario <scenarioId>/);
+
+  const usage = await runEval({ repoRoot: root, args: ['--unknown'], backendHarness });
+  assert.equal(usage.exitCode, 2);
+  assert.match(usage.lines.join('\n'), /Unsupported argument: --unknown/);
 });
 
 test('snapshot update writes only declared snapshots and preserves unrelated files', async (t) => {

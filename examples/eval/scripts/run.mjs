@@ -4,10 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseRunArgs, usage } from './eval-runner/args.mjs';
 import { loadScenarioFixture } from './eval-runner/fixtures.mjs';
-import {
-  assertElenaTemplateSmokeEvalFacts,
-  buildRunPlan,
-} from './eval-runner/actions.mjs';
+import { buildRunPlan } from './eval-runner/actions.mjs';
 import { runBackendHarness } from './eval-runner/backend.mjs';
 import {
   buildFilledFormSnapshot,
@@ -25,13 +22,18 @@ export async function runEval({
   backendHarness = runBackendHarness,
 } = {}) {
   const parsed = parseRunArgs(args);
+  if (parsed.kind === 'help') {
+    return {
+      exitCode: 0,
+      repoRoot,
+      lines: [parsed.usage],
+    };
+  }
   if (parsed.kind === 'usage-error') {
     return {
       exitCode: 2,
       repoRoot,
-      usageError: parsed.message,
-      usage: usage(),
-      lines: [],
+      lines: [parsed.message, '', usage()],
     };
   }
 
@@ -53,11 +55,8 @@ export async function runEval({
 
     const fixture = await loadScenarioFixture({ repoRoot, scenarioId });
     const runPlan = buildRunPlan(fixture);
-    if (scenarioId === 'elena-marquez-i9-template-smoke') {
-      assertElenaTemplateSmokeEvalFacts(runPlan.evalDefinitions);
-    }
 
-    const harnessResult = await backendHarness({ repoRoot, runPlan, fixture });
+    const harnessResult = await backendHarness({ repoRoot, runPlan });
     const snapshots = {
       'filled-form': buildFilledFormSnapshot({
         fixture,
@@ -91,7 +90,6 @@ export async function runEval({
 }
 
 export function formatRunResult(result) {
-  if (result.usageError) return `${result.usageError}\n\n${result.usage}`;
   return result.lines.join('\n');
 }
 

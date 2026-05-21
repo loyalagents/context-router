@@ -123,13 +123,17 @@ type DefaultMockAuth0Service = ReturnType<typeof createMockAuth0Service>;
 /**
  * Options for createTestApp
  */
-export interface CreateTestAppOptions {
+export interface CreateTestAppOptions<
+  TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
+  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
+  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+> {
   /** Custom mock for VertexAiService */
-  mockVertexAi?: MockVertexAiService;
+  mockVertexAi?: TVertexAi;
   /** Custom mock for AiStructuredOutputPort */
-  mockStructuredAi?: MockStructuredAiService;
+  mockStructuredAi?: TStructuredAi;
   /** Custom mock for Auth0Service */
-  mockAuth0?: MockAuth0Service;
+  mockAuth0?: TAuth0;
   /** Whether to override GraphQL/JWT auth guards with the test user injector */
   overrideGraphqlAuthGuards?: boolean;
 }
@@ -297,18 +301,26 @@ export async function createTestUser(): Promise<TestUser> {
  * ```
  */
 export function createTestApp(): Promise<CreateTestAppResult>;
-export function createTestApp(
-  options: CreateTestAppOptions,
+export function createTestApp<
+  TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
+  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
+  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+>(
+  options: CreateTestAppOptions<TVertexAi, TStructuredAi, TAuth0>,
+): Promise<CreateTestAppResult<TVertexAi, TStructuredAi, TAuth0>>;
+export async function createTestApp(
+  options: CreateTestAppOptions<
+    MockVertexAiService,
+    MockStructuredAiService,
+    MockAuth0Service
+  > = {},
 ): Promise<
   CreateTestAppResult<
     MockVertexAiService,
     MockStructuredAiService,
     MockAuth0Service
   >
->;
-export async function createTestApp(
-  options: CreateTestAppOptions = {},
-): Promise<CreateTestAppResult<any, any, any>> {
+> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
   const mockStructuredAi =
     options.mockStructuredAi || createMockStructuredAiService();
