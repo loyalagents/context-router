@@ -37,7 +37,7 @@ export async function runEval({
     };
   }
 
-  const { scenarioId, updateSnapshots } = parsed.options;
+  const { scenarioId, updateSnapshots, verbose } = parsed.options;
   try {
     const validation = await runValidation({
       repoRoot,
@@ -83,10 +83,16 @@ export async function runEval({
     return {
       exitCode: 1,
       repoRoot,
-      lines: ['eval run failed', '', error.message],
+      lines: ['eval run failed', '', formatRunError(error, { verbose })],
       error,
     };
   }
+}
+
+function formatRunError(error, { verbose }) {
+  if (error?.isHarnessFailure) return error.message;
+  if (verbose && error?.stack) return error.stack;
+  return error?.message ?? String(error);
 }
 
 export function formatRunResult(result) {

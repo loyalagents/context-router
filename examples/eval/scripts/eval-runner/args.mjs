@@ -4,12 +4,17 @@ export function parseRunArgs(args) {
   const options = {
     scenarioId: null,
     updateSnapshots: false,
+    verbose: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--update-snapshots') {
       options.updateSnapshots = true;
+      continue;
+    }
+    if (arg === '--verbose') {
+      options.verbose = true;
       continue;
     }
     if (arg === '--help' || arg === '-h') {
@@ -40,7 +45,7 @@ export function parseRunArgs(args) {
 export function usage() {
   return [
     'Usage:',
-    '  pnpm eval:run --scenario <scenarioId>',
-    '  pnpm eval:run --scenario <scenarioId> --update-snapshots',
+    '  pnpm eval:run --scenario <scenarioId> [--verbose]',
+    '  pnpm eval:run --scenario <scenarioId> --update-snapshots [--verbose]',
   ].join('\n');
 }

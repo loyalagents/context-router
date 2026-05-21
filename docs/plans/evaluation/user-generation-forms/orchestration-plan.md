@@ -62,7 +62,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 2. Validator | complete | `validator/` | Added deterministic fixture validation and corpus report generation. |
 | 3. Templates and scaffold | complete | `templates-scaffold/` | Added deterministic templates, scaffold generation, and template-smoke fixtures. |
 | 4. Eval runner | complete | `eval-runner/` | Added deterministic local backend eval runs and filled-form snapshots. |
-| 5. Polish and playbook | deferred | `polish-playbook/` | Optional LLM polish and contributor/agent workflow guidance. |
+| 5. Polish and playbook | complete | `polish-playbook/` | Added no-DB verify/CI, runner diagnostics, and contributor playbook. |
 
 Current implemented state:
 
@@ -115,6 +115,19 @@ Current implemented state:
   committed `filled-form` expected snapshot.
 - `pnpm eval:scaffold` may still create first-time scenario skeletons, but it
   refuses to overwrite existing scenario directories even with `--force`.
+- Batch 5 is complete.
+- `pnpm eval:verify` is the local non-DB eval gate, running eval script tests
+  and full fixture validation.
+- CI includes a dedicated no-DB `eval-fixture-checks` job that runs
+  `pnpm eval:test` and `pnpm eval:validate` from the repo root.
+- `pnpm eval:run --scenario <scenarioId> --verbose` surfaces stack traces for
+  unexpected runner-internal failures while preserving concise backend harness
+  diagnostics.
+- `examples/eval/PLAYBOOK.md` documents contributor workflows, ownership rules,
+  report-driven repair, snapshot review, V1 limitations, and the recommended
+  next expansion target.
+- Optional LLM polish and archetypes/factories were intentionally excluded from
+  Batch 5 and remain deferred future expansion work.
 
 ## Batch 0: Canonical Eval Tree Cleanup
 
@@ -330,7 +343,7 @@ docs/plans/evaluation/user-generation-forms/polish-playbook/
 
 Status:
 
-- Deferred until the deterministic path is useful.
+- Complete. See `polish-playbook/implementation-summary.md`.
 
 Goal:
 
@@ -338,10 +351,12 @@ Goal:
 
 Possible work:
 
-- Add optional LLM polish gated by validation.
-- Add an Agent Skill or repo playbook.
-- Add archetypes or factories for more users.
-- Add snapshot update workflow.
+- Added a repo playbook for contributor and agent workflows.
+- Added local and CI non-DB verification coverage.
+- Added small runner diagnostic hardening.
+- Deferred optional LLM polish and archetypes/factories to future expansion
+  work.
+- Kept DB-backed eval runs manual/optional for this batch.
 
 Non-goals:
 
@@ -349,7 +364,9 @@ Non-goals:
 
 Exit criteria:
 
-- Optional polish or playbook improves workflow without becoming load-bearing.
+- The playbook improves workflow without becoming load-bearing.
+- Existing deterministic fixtures are protected from drift by no-DB local and
+  CI checks.
 
 ## Update Checklist
 

@@ -24,6 +24,7 @@
     "eval:validate": "node examples/eval/scripts/validate.mjs",
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:test": "node --test examples/eval/scripts",
+    "eval:verify": "pnpm eval:test && pnpm eval:validate",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

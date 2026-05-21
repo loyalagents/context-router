@@ -98,6 +98,30 @@ jobs:
       - name: Build local-orchestrator
         run: pnpm build
 
+  eval-fixture-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run eval fixture tests
+        run: pnpm eval:test
+
+      - name: Validate eval fixtures
+        run: pnpm eval:validate
+
   frontend-build:
     runs-on: ubuntu-latest
 
