@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "samir-desai-i9-template-smoke",
+  "description": "Generated template-scaffold scenario for Samir Desai using i-9.",
+  "userId": "samir-desai",
+  "corpusId": "template-smoke",
+  "formId": "i-9",
+  "expectedSnapshots": [
+    "filled-form"
+  ]
+}
