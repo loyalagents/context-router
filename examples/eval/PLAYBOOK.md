@@ -69,6 +69,44 @@ pnpm eval:scaffold --user <userId> --corpus <corpusId> --form i-9 --scenario <sc
 
 It will not overwrite an existing scenario, even with `--force`.
 
+## Adding A 100-Doc Realistic Corpus
+
+For large realistic corpora, author `corpus-plan.json` first. Treat it as the
+source of truth for per-document ids, paths, categories, fact keys, challenge
+tags, and briefs. `manifest.json` is generated from that plan and should not be
+hand-edited.
+
+Before bodies exist, validate the plan only:
+
+```bash
+pnpm eval:validate --user <userId> --corpus realistic --plan-only
+```
+
+Preview a few AI-generated documents outside the committed corpus:
+
+```bash
+EVAL_GENERATION_MODEL=<model> \
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --limit 5 --out /private/tmp/<userId>-preview
+```
+
+Review the preview for realism, fact accuracy, noise behavior, and stale or
+conflicting cues before generating the committed corpus. For committed
+generation, use an explicit `EVAL_GENERATION_MODEL`; do not rely on backend
+product defaults.
+
+Then generate the corpus and validate:
+
+```bash
+EVAL_GENERATION_MODEL=<model> \
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex
+
+pnpm eval:validate --user <userId> --corpus realistic --write-report
+```
+
+The generated documents are fixture artifacts. They become an extraction
+benchmark only after a later ingestion runner analyzes the documents and
+compares extracted facts to expected snapshots.
+
 ## Adding Or Editing Templates
 
 Templates live at:
@@ -230,7 +268,9 @@ the backend test database. See the "Automated Smoke Check" section in
   the local backend harness.
 - Corpus documents are validated for coverage but are not ingested through the
   document-analysis path.
-- No real LLM calls.
+- `eval:test`, `eval:validate`, `eval:verify`, and `eval:run` do not make real
+  LLM calls. `eval:generate` is the local maintainer command that calls Vertex
+  AI to draft realistic committed fixture documents.
 - No UI or browser automation.
 - Only `filled-form` snapshots exist today.
 - Only I-9 has a field map today.

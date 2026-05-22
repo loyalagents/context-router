@@ -17,8 +17,10 @@ import {
   collectFactKeys,
   deriveSeedPreferences,
   getFactValue,
+  isHighConfidenceFactKey,
   isFixtureId,
   jsonText,
+  textContainsFactValue,
   toPosixPath,
 } from './shared.mjs';
 import { discoverTemplates } from './template-renderer.mjs';
@@ -30,6 +32,7 @@ const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const SCHEMA_FILES = {
   profile: 'profile.schema.json',
   manifest: 'manifest.schema.json',
+  corpusPlan: 'corpus-plan.schema.json',
   scenario: 'scenario.schema.json',
   fieldMap: 'field-map.schema.json',
   template: 'template.schema.json',
@@ -142,12 +145,17 @@ export function parseArgs(args) {
     scenarioId: null,
     formId: null,
     writeReport: false,
+    planOnly: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--write-report') {
       options.writeReport = true;
+      continue;
+    }
+    if (arg === '--plan-only') {
+      options.planOnly = true;
       continue;
     }
     if (arg === '--help' || arg === '-h') {
@@ -205,6 +213,13 @@ export function parseArgs(args) {
     return {
       kind: 'usage-error',
       message: '--write-report requires --user <userId> --corpus <corpusId>.',
+    };
+  }
+
+  if (options.planOnly && !(options.userId && options.corpusId)) {
+    return {
+      kind: 'usage-error',
+      message: '--plan-only requires --user <userId> --corpus <corpusId>.',
     };
   }
 
@@ -293,6 +308,7 @@ function usage() {
     '  pnpm eval:validate --user <userId> [--corpus <corpusId>]',
     '  pnpm eval:validate --scenario <scenarioId>',
     '  pnpm eval:validate --form <formId>',
+    '  pnpm eval:validate --user <userId> --corpus <corpusId> --plan-only',
     '  pnpm eval:validate --user <userId> --corpus <corpusId> --write-report',
   ].join('\n');
 }
@@ -337,6 +353,7 @@ async function validateUserCorpus(ctx, userId, corpusId) {
   const userRoot = path.join(ctx.evalRoot, 'users', userId);
   const corpusRoot = path.join(userRoot, 'corpora', corpusId);
   const profilePath = path.join(userRoot, 'profile.yaml');
+  const corpusPlanPath = path.join(corpusRoot, 'corpus-plan.json');
   const manifestPath = path.join(corpusRoot, 'manifest.json');
 
   const profile = await validateProfile(ctx, userId, profilePath);
@@ -348,11 +365,56 @@ async function validateUserCorpus(ctx, userId, corpusId) {
     await validateSeedPreferences(ctx, userRoot, profile, profileFacts);
   }
 
+  let corpusPlan = null;
+  if (await fileExists(corpusPlanPath)) {
+    corpusPlan = await readJsonFile(ctx, corpusPlanPath);
+    if (corpusPlan) {
+      ctx.visited.corpora.add(`${userId}/${corpusId}`);
+      validateCorpusPlan(ctx, {
+        userId,
+        corpusId,
+        corpusPlan,
+        corpusPlanPath,
+        profileFacts,
+      });
+      if (ctx.options.planOnly) {
+        for (const formId of corpusPlan.forms ?? []) {
+          await validateForm(ctx, formId, {
+            requireFieldMap: true,
+            profileFacts,
+            profileFile: profilePath,
+          });
+        }
+      }
+    }
+  }
+
+  if (ctx.options.planOnly) {
+    if (!corpusPlan) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_MISSING',
+        file: corpusPlanPath,
+        pointer: '',
+        message: 'Plan-only validation requires corpus-plan.json.',
+        fix: 'Create corpus-plan.json or run normal corpus validation.',
+      });
+    }
+    return { profile, manifest: null, corpusPlan, profileFacts, formMaps: new Map() };
+  }
+
   const manifest = await readJsonFile(ctx, manifestPath);
   if (!manifest) return null;
 
   ctx.visited.corpora.add(`${userId}/${corpusId}`);
   validateSchema(ctx, 'manifest', manifest, manifestPath);
+  if (corpusPlan) {
+    validateManifestMatchesPlan(ctx, {
+      manifest,
+      manifestPath,
+      corpusPlan,
+      corpusPlanPath,
+    });
+  }
 
   if (manifest.userId !== userId) {
     addIssue(ctx, {
@@ -574,6 +636,264 @@ async function validateSeedPreferences(ctx, userRoot, profile, profileFacts) {
   }
 }
 
+function validateCorpusPlan(ctx, {
+  userId,
+  corpusId,
+  corpusPlan,
+  corpusPlanPath,
+  profileFacts,
+}) {
+  validateSchema(ctx, 'corpusPlan', corpusPlan, corpusPlanPath);
+
+  if (corpusPlan.userId !== userId) {
+    addIssue(ctx, {
+      code: 'CORPUS_PLAN_USER_ID_MISMATCH',
+      file: corpusPlanPath,
+      pointer: '/userId',
+      message: `Corpus plan userId ${JSON.stringify(corpusPlan.userId)} does not match folder ${JSON.stringify(userId)}.`,
+      fix: 'Update corpus-plan.json userId or move the corpus folder.',
+    });
+  }
+  if (corpusPlan.corpusId !== corpusId) {
+    addIssue(ctx, {
+      code: 'CORPUS_PLAN_CORPUS_ID_MISMATCH',
+      file: corpusPlanPath,
+      pointer: '/corpusId',
+      message: `Corpus plan corpusId ${JSON.stringify(corpusPlan.corpusId)} does not match folder ${JSON.stringify(corpusId)}.`,
+      fix: 'Update corpus-plan.json corpusId or move the corpus folder.',
+    });
+  }
+
+  checkUnique(ctx, corpusPlan.forms ?? [], corpusPlanPath, '/forms', 'CORPUS_PLAN_DUPLICATE_FORM');
+  checkUnique(
+    ctx,
+    corpusPlan.challengeTags ?? [],
+    corpusPlanPath,
+    '/challengeTags',
+    'CORPUS_PLAN_DUPLICATE_CHALLENGE_TAG',
+  );
+
+  const documents = corpusPlan.documents ?? [];
+  if (corpusPlan.targetDocumentCount !== documents.length) {
+    addIssue(ctx, {
+      code: 'CORPUS_PLAN_DOCUMENT_COUNT_MISMATCH',
+      file: corpusPlanPath,
+      pointer: '/targetDocumentCount',
+      message: `Corpus plan targetDocumentCount ${corpusPlan.targetDocumentCount} does not match ${documents.length} documents.`,
+      fix: 'Update targetDocumentCount or planned documents[].',
+    });
+  }
+
+  const categoryCounts = new Map();
+  const ids = new Set();
+  const paths = new Set();
+  const allowedTags = new Set(corpusPlan.challengeTags ?? []);
+
+  for (const [index, doc] of documents.entries()) {
+    const pointer = `/documents/${index}`;
+    categoryCounts.set(doc.category, (categoryCounts.get(doc.category) ?? 0) + 1);
+
+    if (ids.has(doc.id)) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_DUPLICATE_DOCUMENT_ID',
+        file: corpusPlanPath,
+        pointer: `${pointer}/id`,
+        message: `Duplicate planned document id ${doc.id}.`,
+        fix: 'Give every planned document a unique id.',
+      });
+    }
+    ids.add(doc.id);
+
+    const normalized = normalizeDocumentPath(doc.path);
+    if (!normalized.ok) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_INVALID_DOCUMENT_PATH',
+        file: corpusPlanPath,
+        pointer: `${pointer}/path`,
+        message: normalized.message,
+        fix: 'Use a repo-stable relative path under documents/.',
+      });
+    } else {
+      if (paths.has(normalized.path)) {
+        addIssue(ctx, {
+          code: 'CORPUS_PLAN_DUPLICATE_DOCUMENT_PATH',
+          file: corpusPlanPath,
+          pointer: `${pointer}/path`,
+          message: `Duplicate planned document path ${normalized.path}.`,
+          fix: 'List each planned path once.',
+        });
+      }
+      paths.add(normalized.path);
+      const extension = path.posix.extname(normalized.path).slice(1);
+      if (doc.outputExtension && extension !== doc.outputExtension) {
+        addIssue(ctx, {
+          code: 'CORPUS_PLAN_EXTENSION_MISMATCH',
+          file: corpusPlanPath,
+          pointer: `${pointer}/outputExtension`,
+          message: `Planned outputExtension ${doc.outputExtension} does not match path extension ${extension}.`,
+          fix: 'Update outputExtension or the planned path extension.',
+        });
+      }
+    }
+
+    for (const [tagIndex, tag] of (doc.challengeTags ?? []).entries()) {
+      if (!allowedTags.has(tag)) {
+        addIssue(ctx, {
+          code: 'CORPUS_PLAN_UNKNOWN_CHALLENGE_TAG',
+          file: corpusPlanPath,
+          pointer: `${pointer}/challengeTags/${tagIndex}`,
+          message: `Document uses challenge tag ${tag}, but it is not listed in top-level challengeTags[].`,
+          fix: 'Add the tag to top-level challengeTags[] or remove it from the document.',
+        });
+      }
+    }
+
+    if (doc.category === 'noise' && doc.expectedUse !== 'ignore') {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_NOISE_EXPECTED_USE',
+        file: corpusPlanPath,
+        pointer: `${pointer}/expectedUse`,
+        message: `Noise document ${doc.id} must have expectedUse "ignore".`,
+        fix: 'Set expectedUse to "ignore" or change the category.',
+      });
+    }
+
+    if (doc.expectedUse === 'ignore' && (doc.factKeys ?? []).length > 0) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_IGNORE_FACT_KEYS',
+        file: corpusPlanPath,
+        pointer: `${pointer}/factKeys`,
+        message: `Ignored planned document ${doc.id} must not declare factKeys.`,
+        fix: 'Clear factKeys or change expectedUse.',
+      });
+    }
+
+    if (
+      doc.category === 'partial-conflicting' &&
+      doc.authority === 'high' &&
+      doc.freshness === 'current' &&
+      doc.expectedUse === 'extract'
+    ) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_CONFLICTING_HIGH_AUTHORITY_EXTRACT',
+        file: corpusPlanPath,
+        pointer,
+        message: `Partial/conflicting document ${doc.id} should not be high-authority current extract material.`,
+        fix: 'Lower authority, mark stale/mixed, or change expectedUse.',
+      });
+    }
+
+    if (profileFacts) {
+      for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
+        const factState = classifyFactKey(profileFacts, factKey);
+        if (factState.kind !== 'leaf') {
+          addIssue(ctx, {
+            code:
+              factState.kind === 'area'
+                ? 'CORPUS_PLAN_FACT_AREA'
+                : 'CORPUS_PLAN_FACT_MISSING',
+            file: corpusPlanPath,
+            pointer: `${pointer}/factKeys/${factIndex}`,
+            message: `Planned document factKey ${factKey} must resolve to a profile leaf fact.`,
+            fix: 'Use a concrete profile fact leaf or remove the factKey.',
+          });
+        }
+      }
+    }
+  }
+
+  for (const [category, plannedCount] of Object.entries(corpusPlan.categoryCounts ?? {})) {
+    const actual = categoryCounts.get(category) ?? 0;
+    if (plannedCount !== actual) {
+      addIssue(ctx, {
+        code: 'CORPUS_PLAN_CATEGORY_COUNT_MISMATCH',
+        file: corpusPlanPath,
+        pointer: `/categoryCounts/${category}`,
+        message: `Category ${category} planned ${plannedCount} documents but documents[] contains ${actual}.`,
+        fix: 'Update categoryCounts or planned documents[].',
+      });
+    }
+  }
+
+  const totalCategoryCount = Object.values(corpusPlan.categoryCounts ?? {}).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  if (totalCategoryCount !== corpusPlan.targetDocumentCount) {
+    addIssue(ctx, {
+      code: 'CORPUS_PLAN_CATEGORY_TOTAL_MISMATCH',
+      file: corpusPlanPath,
+      pointer: '/categoryCounts',
+      message: `categoryCounts total ${totalCategoryCount} does not match targetDocumentCount ${corpusPlan.targetDocumentCount}.`,
+      fix: 'Update categoryCounts so the total matches targetDocumentCount.',
+    });
+  }
+}
+
+function validateManifestMatchesPlan(ctx, {
+  manifest,
+  manifestPath,
+  corpusPlan,
+  corpusPlanPath,
+}) {
+  const projected = manifestFromCorpusPlan(corpusPlan, { includeOnlyExistingDocs: false });
+  const actual = {
+    schemaVersion: manifest.schemaVersion,
+    userId: manifest.userId,
+    corpusId: manifest.corpusId,
+    forms: manifest.forms,
+    purpose: manifest.purpose,
+    intentionallyMissing: manifest.intentionallyMissing,
+    documents: (manifest.documents ?? []).map((doc) => ({
+      id: doc.id,
+      path: doc.path,
+      category: doc.category,
+      title: doc.title,
+      factKeys: doc.factKeys,
+      detailTier: doc.detailTier,
+      authority: doc.authority,
+      freshness: doc.freshness,
+      expectedUse: doc.expectedUse,
+    })),
+  };
+
+  if (JSON.stringify(actual) !== JSON.stringify(projected)) {
+    addIssue(ctx, {
+      code: 'MANIFEST_PLAN_MISMATCH',
+      file: manifestPath,
+      pointer: '',
+      message: `Manifest metadata does not match ${repoRelative(ctx, corpusPlanPath)}.`,
+      fix: 'Regenerate manifest.json from corpus-plan.json.',
+    });
+  }
+}
+
+export function manifestFromCorpusPlan(corpusPlan, { includeOnlyExistingDocs = false } = {}) {
+  const documents = (corpusPlan.documents ?? [])
+    .filter((doc) => !includeOnlyExistingDocs || doc.exists)
+    .map((doc) => ({
+      id: doc.id,
+      path: doc.path,
+      category: doc.category,
+      title: doc.title,
+      factKeys: doc.factKeys ?? [],
+      detailTier: doc.detailTier,
+      authority: doc.authority,
+      freshness: doc.freshness,
+      expectedUse: doc.expectedUse,
+    }));
+
+  return {
+    schemaVersion: 1,
+    userId: corpusPlan.userId,
+    corpusId: corpusPlan.corpusId,
+    forms: corpusPlan.forms ?? [],
+    purpose: corpusPlan.purpose,
+    intentionallyMissing: corpusPlan.intentionallyMissing ?? [],
+    documents,
+  };
+}
+
 async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manifestPath) {
   const documentsRoot = path.join(corpusRoot, 'documents');
   const listedPaths = new Set();
@@ -670,6 +990,18 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
         }
       }
     }
+
+    if (profileFacts && (await fileExists(absoluteDocPath))) {
+      const body = await readFile(absoluteDocPath, 'utf8');
+      validateDocumentProse(ctx, {
+        doc,
+        body,
+        manifest,
+        manifestPath,
+        pointer,
+        profileFacts,
+      });
+    }
   }
 
   const actualPaths = await listDocumentFiles(ctx, documentsRoot, manifestPath);
@@ -684,6 +1016,68 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
       });
     }
   }
+}
+
+function validateDocumentProse(ctx, {
+  doc,
+  body,
+  manifest,
+  manifestPath,
+  pointer,
+  profileFacts,
+}) {
+  const checksBodyForDeclaredFacts = ['extract', 'corroborate'].includes(
+    doc.expectedUse,
+  );
+
+  if (checksBodyForDeclaredFacts) {
+    for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
+      if (!isHighConfidenceFactKey(factKey)) continue;
+      const factState = classifyFactKey(profileFacts, factKey);
+      if (factState.kind !== 'leaf' || factState.value == null) continue;
+      if (textContainsFactValue(body, factKey, factState.value)) continue;
+      addIssue(ctx, {
+        code: 'DOCUMENT_FACT_VALUE_MISSING',
+        file: manifestPath,
+        pointer: `${pointer}/factKeys/${factIndex}`,
+        message: `Document ${doc.id} declares ${factKey}, but a high-confidence value variant was not found in the document body.`,
+        fix: 'Add the declared fact value to the document body or remove the factKey.',
+      });
+    }
+  }
+
+  for (const missing of manifest.intentionallyMissing ?? []) {
+    if (missing.factKey !== 'contact.phone') continue;
+    if (doc.expectedUse === 'ignore' || ['stale', 'mixed'].includes(doc.freshness)) {
+      continue;
+    }
+    if (!containsPhoneLikeText(body)) continue;
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_MISSING_FACT_PRESENT',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} may contain phone-like text even though contact.phone is intentionally missing.`,
+      fix: 'Remove the phone-like value or mark the document stale, mixed, guardrail, or third-party if appropriate.',
+    });
+  }
+
+  const nonWhitespaceLength = body.replace(/\s/g, '').length;
+  const minimumByTier = { hero: 120, medium: 60, brief: 20 };
+  if (nonWhitespaceLength < minimumByTier[doc.detailTier]) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_THIN',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} is short for detailTier ${doc.detailTier}.`,
+      fix: 'Add realistic surrounding text or lower the detailTier.',
+    });
+  }
+}
+
+function containsPhoneLikeText(text) {
+  return /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/.test(text);
 }
 
 async function validateForm(ctx, formId, options = {}) {

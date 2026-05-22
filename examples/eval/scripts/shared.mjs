@@ -15,6 +15,10 @@ export const CATEGORY_VALUES = [
 ];
 
 export const OUTPUT_EXTENSION_VALUES = ['md', 'txt', 'json', 'yaml'];
+export const DETAIL_TIER_VALUES = ['hero', 'medium', 'brief'];
+export const AUTHORITY_VALUES = ['high', 'medium', 'low', 'none'];
+export const FRESHNESS_VALUES = ['current', 'stale', 'mixed', 'unknown'];
+export const EXPECTED_USE_VALUES = ['extract', 'corroborate', 'guardrail', 'ignore'];
 
 export function deriveSeedPreferences(profile) {
   const rows = [];
@@ -101,4 +105,50 @@ export function isFixtureId(value) {
 
 export function toPosixPath(value) {
   return value.split(/[\\/]+/).join('/');
+}
+
+export function factValueVariants(factKey, value) {
+  if (value == null || isPlainObject(value) || Array.isArray(value)) return [];
+  const raw = String(value).trim();
+  if (!raw) return [];
+
+  const variants = new Set([raw]);
+  const digits = raw.replace(/\D/g, '');
+
+  if (factKey === 'identity.ssn' && digits.length === 9) {
+    variants.add(digits);
+    variants.add(`${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`);
+  }
+
+  if (factKey === 'workAuthorization.uscisANumber' && digits.length > 0) {
+    variants.add(digits);
+    variants.add(`A${digits}`);
+    variants.add(`A-${digits}`);
+  }
+
+  return [...variants];
+}
+
+export function isHighConfidenceFactKey(factKey) {
+  return (
+    factKey === 'contact.email' ||
+    factKey === 'identity.ssn' ||
+    factKey === 'workAuthorization.uscisANumber' ||
+    factKey === 'employment.workEmail'
+  );
+}
+
+export function textContainsFactValue(text, factKey, value) {
+  const normalizedText = normalizeSearchText(text);
+  return factValueVariants(factKey, value).some((variant) =>
+    normalizedText.includes(normalizeSearchText(variant)),
+  );
+}
+
+function normalizeSearchText(value) {
+  return String(value)
+    .normalize('NFKC')
+    .replace(/[ \t\r\n]+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
