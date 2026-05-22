@@ -1,0 +1,5 @@
+ADDRESS FORWARDING ORIGIN
+Source type: partial-conflicting
+Expected use: guardrail
+
+Mail forwarding origin lists 1180 Riverbend Court, Unit 2, Plano, TX 75024. The destination appears in another document; this origin should not be used as current address.

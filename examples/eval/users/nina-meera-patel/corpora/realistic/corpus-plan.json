@@ -1,0 +1,1937 @@
+{
+  "schemaVersion": 1,
+  "userId": "nina-meera-patel",
+  "corpusId": "realistic",
+  "forms": [
+    "i-9"
+  ],
+  "purpose": "Committed deterministic 100-document realistic corpus for exercising high-volume I-9 fixture generation and validation without live AI calls.",
+  "targetDocumentCount": 100,
+  "categoryCounts": {
+    "address-contact": 15,
+    "employer-context": 8,
+    "hr-onboarding": 12,
+    "identity": 15,
+    "noise": 20,
+    "partial-conflicting": 18,
+    "work-authorization": 12
+  },
+  "challengeTags": [
+    "alias-name",
+    "citizen-work-authorization",
+    "email-vs-work-email",
+    "intentionally-missing-phone",
+    "stale-address",
+    "partial-or-conflicting",
+    "noise",
+    "intentionally-missing-work-auth-numbers",
+    "work-email-vs-personal-email",
+    "employer-context-not-identity-authority"
+  ],
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "Nina does not provide a phone number in the committed fixture.",
+      "expectedBehavior": "Leave the telephone field blank; do not guess or synthesize a phone number."
+    },
+    {
+      "factKey": "workAuthorization.uscisANumber",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "Nina uses the U.S. citizen I-9 path, so no USCIS A-number applies.",
+      "expectedBehavior": "Leave the alien registration number field blank for this fixture."
+    },
+    {
+      "factKey": "workAuthorization.i94AdmissionNumber",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "Nina uses the U.S. citizen I-9 path, so no I-94 number applies.",
+      "expectedBehavior": "Leave the I-94 admission number field blank for this fixture."
+    },
+    {
+      "factKey": "workAuthorization.foreignPassportNumber",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "Nina uses the U.S. citizen I-9 path, so no foreign passport number applies.",
+      "expectedBehavior": "Leave the foreign passport number field blank for this fixture."
+    }
+  ],
+  "documents": [
+    {
+      "id": "nina-meera-patel-realistic-001",
+      "path": "documents/identity/001-driver-license-transcript.md",
+      "category": "identity",
+      "title": "Driver License Transcript",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Driver License Transcript: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-002",
+      "path": "documents/identity/002-state-id-renewal-note.md",
+      "category": "identity",
+      "title": "State ID Renewal Note",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "identity.middleInitial",
+        "address.current.street",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "State ID Renewal Note: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, identity.middleInitial, address.current.street, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-003",
+      "path": "documents/identity/003-passport-application-draft.md",
+      "category": "identity",
+      "title": "Passport Application Draft",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "contact.email",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Passport Application Draft: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, contact.email, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-004",
+      "path": "documents/identity/004-birth-record-summary.md",
+      "category": "identity",
+      "title": "Birth Record Summary",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Birth Record Summary: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-005",
+      "path": "documents/identity/005-name-history-declaration.md",
+      "category": "identity",
+      "title": "Name History Declaration",
+      "factKeys": [
+        "identity.legalName",
+        "identity.otherLastNames",
+        "identity.middleInitial"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [
+        "alias-name"
+      ],
+      "outputExtension": "md",
+      "brief": "Name History Declaration: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.otherLastNames, identity.middleInitial. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-006",
+      "path": "documents/identity/006-ssn-card-transcript.md",
+      "category": "identity",
+      "title": "SSN Card Transcript",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "SSN Card Transcript: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.ssn. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-007",
+      "path": "documents/identity/007-identity-affidavit.md",
+      "category": "identity",
+      "title": "Identity Affidavit",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "identity.otherLastNames",
+        "address.current.city",
+        "address.current.state"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Identity Affidavit: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, identity.otherLastNames, address.current.city, address.current.state. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-008",
+      "path": "documents/identity/008-background-check-intake.txt",
+      "category": "identity",
+      "title": "Background Check Intake",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "identity.ssn",
+        "contact.email",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Background Check Intake: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as identity evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, identity.ssn, contact.email, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-009",
+      "path": "documents/identity/009-transcript-request.txt",
+      "category": "identity",
+      "title": "Transcript Request",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Transcript Request: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-010",
+      "path": "documents/identity/010-notary-intake.txt",
+      "category": "identity",
+      "title": "Notary Intake Sheet",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Notary Intake Sheet: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-011",
+      "path": "documents/identity/011-library-card-profile.json",
+      "category": "identity",
+      "title": "Library Card Profile",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Library Card Profile: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-012",
+      "path": "documents/identity/012-clinic-demographics.json",
+      "category": "identity",
+      "title": "Clinic Demographics",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Clinic Demographics: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-013",
+      "path": "documents/identity/013-student-loan-profile.json",
+      "category": "identity",
+      "title": "Student Loan Profile",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn",
+        "contact.email",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Student Loan Profile: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.ssn, contact.email, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-014",
+      "path": "documents/identity/014-credit-freeze-letter.yaml",
+      "category": "identity",
+      "title": "Credit Freeze Letter",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Credit Freeze Letter: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.ssn, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-015",
+      "path": "documents/identity/015-citizenship-attestation-note.yaml",
+      "category": "identity",
+      "title": "Citizenship Attestation Note",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Citizenship Attestation Note: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as identity evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-016",
+      "path": "documents/address-contact/016-lease-summary.md",
+      "category": "address-contact",
+      "title": "Lease Summary",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Lease Summary: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as address or contact evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-017",
+      "path": "documents/address-contact/017-utility-account.md",
+      "category": "address-contact",
+      "title": "Electric Utility Account",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Electric Utility Account: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as address or contact evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-018",
+      "path": "documents/address-contact/018-bank-mailing-profile.md",
+      "category": "address-contact",
+      "title": "Bank Mailing Profile",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Bank Mailing Profile: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as address or contact evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-019",
+      "path": "documents/address-contact/019-voter-registration.md",
+      "category": "address-contact",
+      "title": "Voter Registration Confirmation",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Voter Registration Confirmation: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as address or contact evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-020",
+      "path": "documents/address-contact/020-insurance-contact.md",
+      "category": "address-contact",
+      "title": "Renters Insurance Contact",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Renters Insurance Contact: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as address or contact evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-021",
+      "path": "documents/address-contact/021-package-delivery.txt",
+      "category": "address-contact",
+      "title": "Package Delivery Profile",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Package Delivery Profile: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-022",
+      "path": "documents/address-contact/022-mobile-carrier-email-only.txt",
+      "category": "address-contact",
+      "title": "Mobile Carrier Email Contact",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [
+        "intentionally-missing-phone"
+      ],
+      "outputExtension": "txt",
+      "brief": "Mobile Carrier Email Contact: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-023",
+      "path": "documents/address-contact/023-apartment-portal.txt",
+      "category": "address-contact",
+      "title": "Apartment Portal Snapshot",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Apartment Portal Snapshot: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-024",
+      "path": "documents/address-contact/024-dmv-address-change.txt",
+      "category": "address-contact",
+      "title": "DMV Address Change Receipt",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "DMV Address Change Receipt: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-025",
+      "path": "documents/address-contact/025-emergency-contact-card.json",
+      "category": "address-contact",
+      "title": "Emergency Contact Card",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "address.current.city",
+        "address.current.state"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Emergency Contact Card: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email, address.current.city, address.current.state. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-026",
+      "path": "documents/address-contact/026-mail-forward-confirmation.json",
+      "category": "address-contact",
+      "title": "Mail Forward Confirmation",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Mail Forward Confirmation: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-027",
+      "path": "documents/address-contact/027-benefits-mailing-address.json",
+      "category": "address-contact",
+      "title": "Benefits Mailing Address",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Benefits Mailing Address: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-028",
+      "path": "documents/address-contact/028-parking-permit.json",
+      "category": "address-contact",
+      "title": "Parking Permit Receipt",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Parking Permit Receipt: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, address.current.unit, address.current.city, address.current.state. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-029",
+      "path": "documents/address-contact/029-credit-union-address.yaml",
+      "category": "address-contact",
+      "title": "Credit Union Address Confirmation",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Credit Union Address Confirmation: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-030",
+      "path": "documents/address-contact/030-campus-alumni-contact.yaml",
+      "category": "address-contact",
+      "title": "Alumni Contact Update",
+      "factKeys": [
+        "identity.legalName",
+        "identity.otherLastNames",
+        "contact.email",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Alumni Contact Update: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as address or contact evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.otherLastNames, contact.email, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-031",
+      "path": "documents/work-authorization/031-i9-section-one-draft.md",
+      "category": "work-authorization",
+      "title": "I-9 Section 1 Draft",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "identity.ssn",
+        "contact.email",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "I-9 Section 1 Draft: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, identity.ssn, contact.email, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-032",
+      "path": "documents/work-authorization/032-citizenship-checkbox-note.md",
+      "category": "work-authorization",
+      "title": "Citizenship Checkbox Note",
+      "factKeys": [
+        "identity.legalName",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Citizenship Checkbox Note: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-033",
+      "path": "documents/work-authorization/033-hr-identity-review.md",
+      "category": "work-authorization",
+      "title": "HR Identity Review",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "HR Identity Review: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-034",
+      "path": "documents/work-authorization/034-passport-card-inventory.md",
+      "category": "work-authorization",
+      "title": "Passport Card Inventory",
+      "factKeys": [
+        "identity.legalName",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Passport Card Inventory: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-035",
+      "path": "documents/work-authorization/035-work-eligibility-email.md",
+      "category": "work-authorization",
+      "title": "Work Eligibility Email",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Work Eligibility Email: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, contact.email, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-036",
+      "path": "documents/work-authorization/036-employment-authorization-checklist.txt",
+      "category": "work-authorization",
+      "title": "Employment Authorization Checklist",
+      "factKeys": [
+        "identity.legalName",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [
+        "intentionally-missing-work-auth-numbers"
+      ],
+      "outputExtension": "txt",
+      "brief": "Employment Authorization Checklist: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as I-9 work authorization evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-037",
+      "path": "documents/work-authorization/037-self-attestation.txt",
+      "category": "work-authorization",
+      "title": "Self Attestation",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Self Attestation: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-038",
+      "path": "documents/work-authorization/038-compliance-review-ticket.txt",
+      "category": "work-authorization",
+      "title": "Compliance Review Ticket",
+      "factKeys": [
+        "identity.legalName",
+        "workAuthorization.citizenshipStatus",
+        "employment.company"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Compliance Review Ticket: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, workAuthorization.citizenshipStatus, employment.company. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-039",
+      "path": "documents/work-authorization/039-eligibility-training-roster.json",
+      "category": "work-authorization",
+      "title": "Eligibility Training Roster",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Eligibility Training Roster: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-040",
+      "path": "documents/work-authorization/040-document-review-cover-sheet.json",
+      "category": "work-authorization",
+      "title": "Document Review Cover Sheet",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Document Review Cover Sheet: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.ssn, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-041",
+      "path": "documents/work-authorization/041-policy-acknowledgment.yaml",
+      "category": "work-authorization",
+      "title": "Eligibility Policy Acknowledgment",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Eligibility Policy Acknowledgment: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-042",
+      "path": "documents/work-authorization/042-prehire-audit-summary.yaml",
+      "category": "work-authorization",
+      "title": "Prehire Audit Summary",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Prehire Audit Summary: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as I-9 work authorization evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, workAuthorization.citizenshipStatus. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-043",
+      "path": "documents/hr-onboarding/043-offer-letter.md",
+      "category": "hr-onboarding",
+      "title": "Offer Letter",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate",
+        "contact.email"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Offer Letter: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as HR onboarding evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.startDate, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-044",
+      "path": "documents/hr-onboarding/044-onboarding-profile.md",
+      "category": "hr-onboarding",
+      "title": "Onboarding Profile",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate",
+        "employment.workEmail"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [
+        "work-email-vs-personal-email"
+      ],
+      "outputExtension": "md",
+      "brief": "Onboarding Profile: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as HR onboarding evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.startDate, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-045",
+      "path": "documents/hr-onboarding/045-background-consent-hr.md",
+      "category": "hr-onboarding",
+      "title": "Background Consent HR Copy",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "identity.ssn",
+        "employment.company"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Background Consent HR Copy: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as HR onboarding evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, identity.ssn, employment.company. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-046",
+      "path": "documents/hr-onboarding/046-payroll-precheck.md",
+      "category": "hr-onboarding",
+      "title": "Payroll Precheck",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn",
+        "employment.company",
+        "employment.startDate"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Payroll Precheck: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as HR onboarding evidence with authority high, freshness current, and expected use extract. Naturally include only these supported current fact keys: identity.legalName, identity.ssn, employment.company, employment.startDate. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make this current enough to extract from, with realistic source headers, dates, labels, omissions, or export artifacts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-047",
+      "path": "documents/hr-onboarding/047-equipment-request.md",
+      "category": "hr-onboarding",
+      "title": "Equipment Request",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Equipment Request: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-048",
+      "path": "documents/hr-onboarding/048-welcome-email.txt",
+      "category": "hr-onboarding",
+      "title": "Welcome Email",
+      "factKeys": [
+        "identity.legalName",
+        "contact.email",
+        "employment.company",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Welcome Email: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, contact.email, employment.company, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-049",
+      "path": "documents/hr-onboarding/049-benefits-election-draft.txt",
+      "category": "hr-onboarding",
+      "title": "Benefits Election Draft",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.startDate",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Benefits Election Draft: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.startDate, contact.email. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-050",
+      "path": "documents/hr-onboarding/050-employee-directory-preview.json",
+      "category": "hr-onboarding",
+      "title": "Employee Directory Preview",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Employee Directory Preview: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-051",
+      "path": "documents/hr-onboarding/051-tax-onboarding-note.json",
+      "category": "hr-onboarding",
+      "title": "Tax Onboarding Note",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "employment.company"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Tax Onboarding Note: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.ssn, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, employment.company. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-052",
+      "path": "documents/hr-onboarding/052-security-badge-request.json",
+      "category": "hr-onboarding",
+      "title": "Security Badge Request",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Security Badge Request: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.startDate. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-053",
+      "path": "documents/hr-onboarding/053-manager-intake.yaml",
+      "category": "hr-onboarding",
+      "title": "Manager Intake",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Manager Intake: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-054",
+      "path": "documents/hr-onboarding/054-hris-current-record.yaml",
+      "category": "hr-onboarding",
+      "title": "HRIS Current Record",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "contact.email",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "employment.company",
+        "employment.title",
+        "employment.startDate",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "HRIS Current Record: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as HR onboarding evidence with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, identity.dateOfBirth, contact.email, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, employment.company, employment.title, employment.startDate, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-055",
+      "path": "documents/employer-context/055-company-roster-snippet.md",
+      "category": "employer-context",
+      "title": "Company Roster Snippet",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [
+        "employer-context-not-identity-authority"
+      ],
+      "outputExtension": "md",
+      "brief": "Company Roster Snippet: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-056",
+      "path": "documents/employer-context/056-team-introduction.md",
+      "category": "employer-context",
+      "title": "Team Introduction",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Team Introduction: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-057",
+      "path": "documents/employer-context/057-org-chart-draft.md",
+      "category": "employer-context",
+      "title": "Org Chart Draft",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "md",
+      "brief": "Org Chart Draft: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-058",
+      "path": "documents/employer-context/058-calendar-invite.txt",
+      "category": "employer-context",
+      "title": "Orientation Calendar Invite",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.startDate",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Orientation Calendar Invite: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.startDate, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-059",
+      "path": "documents/employer-context/059-slack-provisioning.txt",
+      "category": "employer-context",
+      "title": "Slack Provisioning Ticket",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "txt",
+      "brief": "Slack Provisioning Ticket: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-060",
+      "path": "documents/employer-context/060-asset-tag-record.json",
+      "category": "employer-context",
+      "title": "Asset Tag Record",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Asset Tag Record: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-061",
+      "path": "documents/employer-context/061-department-headcount.json",
+      "category": "employer-context",
+      "title": "Department Headcount Plan",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "json",
+      "brief": "Department Headcount Plan: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.title, employment.startDate. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-062",
+      "path": "documents/employer-context/062-account-activation.yaml",
+      "category": "employer-context",
+      "title": "Account Activation Notice",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate",
+      "challengeTags": [],
+      "outputExtension": "yaml",
+      "brief": "Account Activation Notice: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as employer context with authority medium, freshness current, and expected use corroborate. Naturally include only these supported current fact keys: identity.legalName, employment.company, employment.workEmail. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email) unless listed above. Make it corroborating rather than the sole authority, with some context and natural omissions."
+    },
+    {
+      "id": "nina-meera-patel-realistic-063",
+      "path": "documents/partial-conflicting/063-old-apartment-lease.md",
+      "category": "partial-conflicting",
+      "title": "Old Apartment Lease",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Old Apartment Lease: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-064",
+      "path": "documents/partial-conflicting/064-former-email-note.md",
+      "category": "partial-conflicting",
+      "title": "Former Email Note",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Former Email Note: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-065",
+      "path": "documents/partial-conflicting/065-name-only-conference-badge.md",
+      "category": "partial-conflicting",
+      "title": "Name-only Conference Badge",
+      "factKeys": [
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Name-only Conference Badge: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-066",
+      "path": "documents/partial-conflicting/066-old-tax-envelope.md",
+      "category": "partial-conflicting",
+      "title": "Old Tax Envelope",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Old Tax Envelope: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-067",
+      "path": "documents/partial-conflicting/067-draft-profile-with-missing-unit.md",
+      "category": "partial-conflicting",
+      "title": "Draft Profile With Missing Unit",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Draft Profile With Missing Unit: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName, address.current.street, address.current.city, address.current.state, address.current.postalCode. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-068",
+      "path": "documents/partial-conflicting/068-recruiting-sponsorship-question.md",
+      "category": "partial-conflicting",
+      "title": "Recruiting Sponsorship Question",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Recruiting Sponsorship Question: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-069",
+      "path": "documents/partial-conflicting/069-payroll-phone-placeholder.md",
+      "category": "partial-conflicting",
+      "title": "Payroll Phone Placeholder",
+      "factKeys": [
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Payroll Phone Placeholder: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-070",
+      "path": "documents/partial-conflicting/070-partial-ssn-note.md",
+      "category": "partial-conflicting",
+      "title": "Partial SSN Note",
+      "factKeys": [
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Partial SSN Note: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-071",
+      "path": "documents/partial-conflicting/071-wrong-nina-email.md",
+      "category": "partial-conflicting",
+      "title": "Wrong Nina Email",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Wrong Nina Email: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-072",
+      "path": "documents/partial-conflicting/072-old-company-profile.md",
+      "category": "partial-conflicting",
+      "title": "Old Company Profile",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "md",
+      "brief": "Old Company Profile: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-073",
+      "path": "documents/partial-conflicting/073-address-forwarding-origin.txt",
+      "category": "partial-conflicting",
+      "title": "Address Forwarding Origin",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "Address Forwarding Origin: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-074",
+      "path": "documents/partial-conflicting/074-short-id-card-note.txt",
+      "category": "partial-conflicting",
+      "title": "Short ID Card Note",
+      "factKeys": [
+        "identity.legalName"
+      ],
+      "detailTier": "brief",
+      "authority": "low",
+      "freshness": "mixed",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "Short ID Card Note: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness mixed, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-075",
+      "path": "documents/partial-conflicting/075-benefits-draft-no-email.txt",
+      "category": "partial-conflicting",
+      "title": "Benefits Draft No Email",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "mixed",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "Benefits Draft No Email: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness mixed, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName, employment.company. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-076",
+      "path": "documents/partial-conflicting/076-city-only-address.txt",
+      "category": "partial-conflicting",
+      "title": "City-only Address Snippet",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.city",
+        "address.current.state"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "mixed",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "City-only Address Snippet: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness mixed, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName, address.current.city, address.current.state. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-077",
+      "path": "documents/partial-conflicting/077-old-married-name-card.txt",
+      "category": "partial-conflicting",
+      "title": "Old Married Name Card",
+      "factKeys": [
+        "identity.otherLastNames"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "mixed",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "Old Married Name Card: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness mixed, and expected use guardrail. Naturally include only these supported current fact keys: identity.otherLastNames. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-078",
+      "path": "documents/partial-conflicting/078-conflicting-start-date.txt",
+      "category": "partial-conflicting",
+      "title": "Conflicting Start Date Draft",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "txt",
+      "brief": "Conflicting Start Date Draft: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName, employment.company. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-079",
+      "path": "documents/partial-conflicting/079-missing-citizenship-checklist.json",
+      "category": "partial-conflicting",
+      "title": "Missing Citizenship Checklist",
+      "factKeys": [
+        "identity.legalName"
+      ],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "json",
+      "brief": "Missing Citizenship Checklist: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Naturally include only these supported current fact keys: identity.legalName. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-080",
+      "path": "documents/partial-conflicting/080-personal-email-typo.yaml",
+      "category": "partial-conflicting",
+      "title": "Personal Email Typo",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail",
+      "challengeTags": [
+        "partial-or-conflicting"
+      ],
+      "outputExtension": "yaml",
+      "brief": "Personal Email Typo: Return valid YAML with realistic checklist or record keys and no Markdown fences. Write it as stale, partial, or conflicting guardrail context with authority low, freshness stale, and expected use guardrail. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make the stale, partial, typo, or conflict signal explicit so it cannot override current authoritative facts."
+    },
+    {
+      "id": "nina-meera-patel-realistic-081",
+      "path": "documents/noise/081-apartment-newsletter.md",
+      "category": "noise",
+      "title": "Apartment Newsletter",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Apartment Newsletter: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-082",
+      "path": "documents/noise/082-coffee-shop-receipt.md",
+      "category": "noise",
+      "title": "Coffee Shop Receipt",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Coffee Shop Receipt: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-083",
+      "path": "documents/noise/083-generic-security-policy.md",
+      "category": "noise",
+      "title": "Generic Security Policy",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Generic Security Policy: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-084",
+      "path": "documents/noise/084-office-lunch-menu.md",
+      "category": "noise",
+      "title": "Office Lunch Menu",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Office Lunch Menu: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-085",
+      "path": "documents/noise/085-weather-alert.md",
+      "category": "noise",
+      "title": "Weather Alert",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Weather Alert: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-086",
+      "path": "documents/noise/086-conference-sponsor-flyer.md",
+      "category": "noise",
+      "title": "Conference Sponsor Flyer",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Conference Sponsor Flyer: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-087",
+      "path": "documents/noise/087-parking-garage-rules.md",
+      "category": "noise",
+      "title": "Parking Garage Rules",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Parking Garage Rules: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-088",
+      "path": "documents/noise/088-software-license-notice.md",
+      "category": "noise",
+      "title": "Software License Notice",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Software License Notice: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-089",
+      "path": "documents/noise/089-building-maintenance-notice.md",
+      "category": "noise",
+      "title": "Building Maintenance Notice",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Building Maintenance Notice: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-090",
+      "path": "documents/noise/090-product-survey.md",
+      "category": "noise",
+      "title": "Product Survey",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "md",
+      "brief": "Product Survey: Return natural Markdown-compatible text, but avoid a generic field/value template unless the source document requires it. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-091",
+      "path": "documents/noise/091-training-catalog.txt",
+      "category": "noise",
+      "title": "Training Catalog",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "txt",
+      "brief": "Training Catalog: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-092",
+      "path": "documents/noise/092-benefits-vendor-brochure.txt",
+      "category": "noise",
+      "title": "Benefits Vendor Brochure",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "txt",
+      "brief": "Benefits Vendor Brochure: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-093",
+      "path": "documents/noise/093-travel-packing-checklist.txt",
+      "category": "noise",
+      "title": "Travel Packing Checklist",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "txt",
+      "brief": "Travel Packing Checklist: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-094",
+      "path": "documents/noise/094-printer-supply-invoice.txt",
+      "category": "noise",
+      "title": "Printer Supply Invoice",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "txt",
+      "brief": "Printer Supply Invoice: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-095",
+      "path": "documents/noise/095-community-event-flyer.txt",
+      "category": "noise",
+      "title": "Community Event Flyer",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "txt",
+      "brief": "Community Event Flyer: Return plain text with OCR-like or raw-export line breaks, not Markdown. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-096",
+      "path": "documents/noise/096-unrelated-resume-template.json",
+      "category": "noise",
+      "title": "Unrelated Resume Template",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "json",
+      "brief": "Unrelated Resume Template: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-097",
+      "path": "documents/noise/097-sample-i-9-instructions.json",
+      "category": "noise",
+      "title": "Sample I-9 Instructions",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "json",
+      "brief": "Sample I-9 Instructions: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-098",
+      "path": "documents/noise/098-vendor-soc-summary.json",
+      "category": "noise",
+      "title": "Vendor SOC Summary",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "json",
+      "brief": "Vendor SOC Summary: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-099",
+      "path": "documents/noise/099-generic-payroll-faq.json",
+      "category": "noise",
+      "title": "Generic Payroll FAQ",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "json",
+      "brief": "Generic Payroll FAQ: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    },
+    {
+      "id": "nina-meera-patel-realistic-100",
+      "path": "documents/noise/100-office-move-announcement.json",
+      "category": "noise",
+      "title": "Office Move Announcement",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore",
+      "challengeTags": [
+        "noise"
+      ],
+      "outputExtension": "json",
+      "brief": "Office Move Announcement: Return valid JSON with realistic exported-field names and no Markdown fences. Write it as unrelated noise with authority none, freshness unknown, and expected use ignore. Do not include any current canonical Nina facts or high-confidence identifiers. Do not invent missing values (contact.phone, workAuthorization.uscisANumber, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber). Avoid unrelated sensitive facts (identity.ssn, contact.email, employment.workEmail) unless listed above. Make it clearly unrelated to the user, with no names, emails, SSNs, addresses, or work accounts from the profile."
+    }
+  ]
+}

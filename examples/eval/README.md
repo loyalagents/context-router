@@ -22,6 +22,8 @@ For contributor workflows and snapshot review guidance, see
   from user profiles.
 - `scripts/scaffold.mjs` renders deterministic template corpora and optional
   first-time scenario skeletons.
+- `scripts/generate.mjs` generates AI-authored realistic corpus document bodies
+  from a reviewed `corpus-plan.json`.
 - `scripts/validate.mjs` validates fixture schemas, references, field maps,
   seed determinism, and corpus coverage.
 - `scripts/run.mjs` runs local deterministic backend form-fill eval scenarios
@@ -128,6 +130,12 @@ Validate all local eval fixtures:
 pnpm eval:validate
 ```
 
+Validate a planned corpus before document bodies exist:
+
+```bash
+pnpm eval:validate --user samir-desai --corpus realistic --plan-only
+```
+
 Run eval fixture tests:
 
 ```bash
@@ -181,6 +189,26 @@ Render or refresh a deterministic template corpus:
 
 ```bash
 pnpm eval:scaffold --user elena-marquez --corpus template-smoke --form i-9 --force
+```
+
+Generate realistic corpus documents from a reviewed corpus plan:
+
+```bash
+EVAL_GENERATION_MODEL=gemini-2.5-pro \
+  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --overwrite
+```
+
+Preview selected generated documents outside the committed corpus:
+
+```bash
+EVAL_GENERATION_MODEL=gemini-2.5-pro \
+  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --ids 001,017,031 --out /private/tmp/nina-preview
+```
+
+Regenerate `manifest.json` from `corpus-plan.json` without AI calls:
+
+```bash
+pnpm eval:manifest --user nina-meera-patel --corpus realistic
 ```
 
 Initialize a new user profile skeleton from a form field map:

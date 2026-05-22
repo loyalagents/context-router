@@ -187,6 +187,191 @@ test('rejects noise and ignore metadata violations', async (t) => {
   assertHasCode(result, 'DOCUMENT_IGNORE_FACT_KEYS');
 });
 
+test('plan-only validates corpus plans without manifest or document bodies', async (t) => {
+  const root = await copyRepo(t);
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/realistic',
+  );
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 1,
+    userId: 'samir-desai',
+    corpusId: 'realistic',
+    forms: ['i-9'],
+    purpose: 'Unit-test plan.',
+    targetDocumentCount: 2,
+    categoryCounts: {
+      identity: 1,
+      noise: 1,
+    },
+    challengeTags: ['current-fact', 'noise'],
+    intentionallyMissing: [
+      {
+        factKey: 'contact.phone',
+        forms: ['i-9'],
+        reason: 'Phone intentionally missing.',
+        expectedBehavior: 'Leave phone blank.',
+      },
+    ],
+    documents: [
+      {
+        id: '001',
+        path: 'documents/identity/001-id.md',
+        category: 'identity',
+        title: 'Identity Note',
+        outputExtension: 'md',
+        factKeys: ['identity.ssn'],
+        detailTier: 'brief',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['current-fact'],
+        brief: 'Include the SSN in a short identity note.',
+      },
+      {
+        id: '002',
+        path: 'documents/noise/002-noise.txt',
+        category: 'noise',
+        title: 'Noise Note',
+        outputExtension: 'txt',
+        factKeys: [],
+        detailTier: 'brief',
+        authority: 'none',
+        freshness: 'unknown',
+        expectedUse: 'ignore',
+        challengeTags: ['noise'],
+        brief: 'Write an unrelated note.',
+      },
+    ],
+  });
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.summary.errors, 0);
+});
+
+test('corpus plan validation reports distribution and manifest drift', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 1,
+    userId: 'elena-marquez',
+    corpusId: 'realistic',
+    forms: ['i-9'],
+    purpose: manifest.purpose,
+    targetDocumentCount: 1,
+    categoryCounts: {
+      identity: 0,
+    },
+    challengeTags: ['current-fact'],
+    intentionallyMissing: manifest.intentionallyMissing,
+    documents: [
+      {
+        id: manifest.documents[0].id,
+        path: manifest.documents[0].path,
+        category: manifest.documents[0].category,
+        title: manifest.documents[0].title,
+        outputExtension: 'md',
+        factKeys: manifest.documents[0].factKeys,
+        detailTier: manifest.documents[0].detailTier,
+        authority: manifest.documents[0].authority,
+        freshness: manifest.documents[0].freshness,
+        expectedUse: manifest.documents[0].expectedUse,
+        challengeTags: ['missing-tag'],
+        brief: 'A plan entry that intentionally drifts from the manifest.',
+      },
+    ],
+  });
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'CORPUS_PLAN_CATEGORY_COUNT_MISMATCH');
+  assertHasCode(result, 'CORPUS_PLAN_UNKNOWN_CHALLENGE_TAG');
+  assertHasCode(result, 'MANIFEST_PLAN_MISMATCH');
+});
+
+test('prose checks require high-confidence declared values in document bodies', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  manifest.documents[0].factKeys = ['identity.ssn'];
+  manifest.documents[0].expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(
+      root,
+      'examples/eval/users/elena-marquez/corpora/realistic',
+      manifest.documents[0].path,
+    ),
+    'This document does not include the sensitive identifier.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+});
+
+test('document body format checks validate structured and plain text files', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const docs = manifest.documents.slice(0, 4);
+
+  const rewrites = [
+    {
+      doc: docs[0],
+      nextPath: 'documents/identity/001-driver-license-transcript.json',
+      body: '{ not json }\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[1],
+      nextPath: 'documents/identity/002-state-id-card-notes.yaml',
+      body: 'broken: [\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[2],
+      nextPath: 'documents/identity/003-passport-application-draft.json',
+      body: '```json\n{"ok": true}\n```\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[3],
+      nextPath: 'documents/identity/004-birth-record-summary.txt',
+      body: '# Markdown Heading\nplain text below\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+  ];
+
+  for (const rewrite of rewrites) {
+    const oldPath = path.join(corpusRoot, rewrite.doc.path);
+    const nextPath = path.join(corpusRoot, rewrite.nextPath);
+    await rm(oldPath, { force: true });
+    await writeFile(nextPath, rewrite.body);
+    rewrite.doc.path = rewrite.nextPath;
+    rewrite.doc.factKeys = rewrite.factKeys;
+    rewrite.doc.expectedUse = rewrite.expectedUse;
+  }
+  await writeJson(manifestPath, manifest);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_JSON_INVALID');
+  assertHasCode(result, 'DOCUMENT_YAML_INVALID');
+  assertHasCode(result, 'DOCUMENT_MARKDOWN_FENCE');
+  assertHasCode(result, 'DOCUMENT_TXT_MARKDOWN_STYLE');
+});
+
 test('scenario scope performs transitive validation', async (t) => {
   const root = await copyRepo(t);
   const fieldMapPath = path.join(
@@ -403,6 +588,7 @@ test('missing profile does not flood profile-dependent semantic errors', async (
 
 test('unsupported CLI combinations return usage errors', async () => {
   assert.equal(parseArgs(['--corpus', 'realistic']).kind, 'usage-error');
+  assert.equal(parseArgs(['--plan-only']).kind, 'usage-error');
   assert.equal(parseArgs(['--user', '../outside']).kind, 'usage-error');
   assert.equal(
     parseArgs(['--scenario', 'elena-marquez-i9-section1', '--form', 'i-9'])

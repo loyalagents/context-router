@@ -1,0 +1,5 @@
+CONFLICTING START DATE DRAFT
+Source type: partial-conflicting
+Expected use: guardrail
+
+Early offer draft for Nina Meera Patel at Hill Country Data Cooperative mentioned a tentative June start date. Final HRIS and offer documents should override this draft.

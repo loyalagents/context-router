@@ -178,6 +178,34 @@ would answer "can the system extract the right memory from documents?"
 - Keep profile facts authoritative; do not duplicate canonical facts into the
   manifest.
 
+### Realistic Corpus Generation
+
+- Use `corpus-plan.json` as the authored source for large AI-authored
+  realistic corpora.
+- Keep `manifest.json` as a deterministic generated projection for those
+  corpora.
+- Generate and review a small preview set before producing a committed
+  100-document corpus.
+- Record the generation model, call count, validation status, and snapshot
+  review notes in the implementation summary for any AI-authored corpus.
+- Consider adding a command-backed generation provider after the first Vertex
+  path proves useful. The provider should use a stable stdin/stdout contract so
+  Claude CLI, Codex CLI, or another local tool can be swapped in without
+  changing corpus-plan semantics.
+
+### File Format Expansion
+
+- Consider richer text-like fixture formats after the first 100-document corpus
+  works, such as `.ics`, `.eml`, `.csv`, `.tsv`, `.vcf`, `.toml`, `.ini`, and
+  HTML-like exports.
+- Before those formats become ingestion eval fixtures, update all relevant
+  surfaces deliberately: eval schemas, validator text extraction, generator
+  output rules, local-orchestrator discovery, backend upload MIME allow-list,
+  and document-analysis MIME normalization.
+- If visual or binary formats are added later, treat them as a separate OCR or
+  scanned-document tier rather than mixing them into the first text fixture
+  corpus.
+
 ### Validation
 
 - Add optional warnings for thin documents by category and detail tier.
@@ -211,12 +239,13 @@ would answer "can the system extract the right memory from documents?"
 
 ## Suggested Future Batch Order
 
-1. Add a second I-9 user with a different work-authorization profile.
-2. Add more I-9-oriented templates to reduce samey generated corpora.
-3. Add an adversarial I-9 corpus tier for one existing user.
-4. Design an extraction snapshot contract.
-5. Add a document-ingestion eval runner that compares extracted facts to
+1. Generate and validate the first 100-document realistic corpus for Samir.
+2. Design an extraction snapshot contract.
+3. Add a document-ingestion eval runner that compares extracted facts to
    profile-backed ground truth.
+4. Add richer text-like file formats once the first text corpus is stable.
+5. Add a command-backed generation provider if Vertex-only generation is too
+   limiting.
 6. Add W-4 field mapping and tax templates after the I-9 path is less brittle.
 
 ## Open Questions
@@ -229,6 +258,10 @@ would answer "can the system extract the right memory from documents?"
   metadata?
 - Should LLM-polished documents be one-off committed artifacts, or should there
   eventually be a repeatable polish command?
+- Should Vertex remain the only first-party generation backend, or should a
+  command adapter become a supported alternative?
+- Which non-`md`/`txt`/`json`/`yaml` file formats are worth supporting before
+  the document-ingestion runner exists?
 - What is the first extraction snapshot shape that is useful without becoming a
   full scoring framework?
 - Should extraction evaluation score profile facts directly, backend preference

@@ -1,0 +1,1 @@
+Affidavit signed by Nina Meera Patel, previously known in some records as Shah. Date of birth 1992-03-14. Current city and state are Austin, TX. The affidavit is recent and should supersede older name-only lists.

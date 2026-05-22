@@ -1,0 +1,8 @@
+SLACK PROVISIONING TICKET
+Source type: employer-context
+Expected use: corroborate
+
+workspace: Hill Country Data Cooperative
+display_name: Nina Meera Patel
+email: nina.patel@hillcountrydata.example.test
+status: pending start date

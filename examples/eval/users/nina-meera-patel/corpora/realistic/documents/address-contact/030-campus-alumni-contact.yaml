@@ -1,0 +1,6 @@
+title: "Alumni Contact Update"
+source_type: "address-contact"
+expected_use: "corroborate"
+freshness: "current"
+record_text: |-
+  Alumni contact update: Nina Meera Patel, formerly Shah, email nina.patel@example.test, address city Austin, TX 78704. This record omits street details but corroborates the current metro area.

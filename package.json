@@ -21,6 +21,8 @@
     "eval:manifests": "node examples/eval/scripts/generate-field-manifests.mjs",
     "eval:derive-seeds": "node examples/eval/scripts/generate-seed-preferences.mjs",
     "eval:scaffold": "node examples/eval/scripts/scaffold.mjs",
+    "eval:generate": "node examples/eval/scripts/generate.mjs",
+    "eval:manifest": "node examples/eval/scripts/manifest.mjs",
     "eval:validate": "node examples/eval/scripts/validate.mjs",
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:test": "node --test examples/eval/scripts",
