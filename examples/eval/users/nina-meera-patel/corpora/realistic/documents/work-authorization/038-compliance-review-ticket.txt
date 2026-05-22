@@ -1,0 +1,13 @@
+COMPLIANCE REVIEW TICKET
+Source type: work-authorization
+Expected use: corroborate
+
+{
+  "company": "Hill Country Data Cooperative",
+  "employee": "Nina Meera Patel",
+  "i9Category": "U.S. citizen",
+  "action": "send Section 1 completion link",
+  "missing": [
+    "phone only"
+  ]
+}

@@ -1,0 +1,5 @@
+SHORT ID CARD NOTE
+Source type: partial-conflicting
+Expected use: guardrail
+
+ID reviewed for Nina Meera Patel. No other values captured.

@@ -1,0 +1,5 @@
+BENEFITS DRAFT NO EMAIL
+Source type: partial-conflicting
+Expected use: guardrail
+
+Benefits draft names Nina Meera Patel and Hill Country Data Cooperative but has no personal email, work email, SSN, or address fields. It can corroborate employer only.

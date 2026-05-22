@@ -316,6 +316,62 @@ test('prose checks require high-confidence declared values in document bodies', 
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
 });
 
+test('document body format checks validate structured and plain text files', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const docs = manifest.documents.slice(0, 4);
+
+  const rewrites = [
+    {
+      doc: docs[0],
+      nextPath: 'documents/identity/001-driver-license-transcript.json',
+      body: '{ not json }\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[1],
+      nextPath: 'documents/identity/002-state-id-card-notes.yaml',
+      body: 'broken: [\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[2],
+      nextPath: 'documents/identity/003-passport-application-draft.json',
+      body: '```json\n{"ok": true}\n```\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+    {
+      doc: docs[3],
+      nextPath: 'documents/identity/004-birth-record-summary.txt',
+      body: '# Markdown Heading\nplain text below\n',
+      factKeys: [],
+      expectedUse: 'corroborate',
+    },
+  ];
+
+  for (const rewrite of rewrites) {
+    const oldPath = path.join(corpusRoot, rewrite.doc.path);
+    const nextPath = path.join(corpusRoot, rewrite.nextPath);
+    await rm(oldPath, { force: true });
+    await writeFile(nextPath, rewrite.body);
+    rewrite.doc.path = rewrite.nextPath;
+    rewrite.doc.factKeys = rewrite.factKeys;
+    rewrite.doc.expectedUse = rewrite.expectedUse;
+  }
+  await writeJson(manifestPath, manifest);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_JSON_INVALID');
+  assertHasCode(result, 'DOCUMENT_YAML_INVALID');
+  assertHasCode(result, 'DOCUMENT_MARKDOWN_FENCE');
+  assertHasCode(result, 'DOCUMENT_TXT_MARKDOWN_STYLE');
+});
+
 test('scenario scope performs transitive validation', async (t) => {
   const root = await copyRepo(t);
   const fieldMapPath = path.join(

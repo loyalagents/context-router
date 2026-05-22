@@ -64,6 +64,7 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 4. Eval runner | complete | `eval-runner/` | Added deterministic local backend eval runs and filled-form snapshots. |
 | 5. Polish and playbook | complete | `polish-playbook/` | Added no-DB verify/CI, runner diagnostics, and contributor playbook. |
 | 6. Second I-9 user | complete | `second-i9-user/` | Added a second I-9 user, generated corpus, and runner snapshot. |
+| 7. 100-document realistic generation | in-progress | `100-doc-goal/` | Added a Nina 100-document fixture, corpus-plan generation rails, mixed file types, and Vertex generation tooling; live Vertex full regeneration and extraction scoring remain pending. |
 
 Current implemented state:
 
@@ -119,6 +120,15 @@ Current implemented state:
 - Batch 5 is complete.
 - `pnpm eval:verify` is the local non-DB eval gate, running eval script tests
   and full fixture validation.
+- Batch 7 is in progress.
+- `examples/eval/users/nina-meera-patel/corpora/realistic/` contains a
+  validated 100-document mixed-file corpus with `md`, `txt`, `json`, and
+  `yaml` bodies.
+- `pnpm eval:manifest` projects a corpus plan to a manifest without AI calls.
+- `pnpm eval:generate` supports Vertex generation previews with `--ids`,
+  short-id regeneration, and explicit full replacement with `--overwrite`.
+- The validator now checks JSON/YAML body parseability and flags structured
+  files wrapped in Markdown fences.
 - CI includes a dedicated no-DB `eval-fixture-checks` job that runs
   `pnpm eval:test` and `pnpm eval:validate` from the repo root.
 - `pnpm eval:run --scenario <scenarioId> --verbose` surfaces stack traces for

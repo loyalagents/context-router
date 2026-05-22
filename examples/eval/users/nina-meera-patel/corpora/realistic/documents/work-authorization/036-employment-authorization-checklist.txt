@@ -1,0 +1,9 @@
+EMPLOYMENT AUTHORIZATION CHECKLIST
+Source type: work-authorization
+Expected use: extract
+
+employee: Nina Meera Patel
+selected_status: U.S. citizen
+uscis_a_number: intentionally blank
+i94_number: intentionally blank
+foreign_passport_number: intentionally blank

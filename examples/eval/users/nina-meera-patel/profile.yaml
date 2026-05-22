@@ -1,0 +1,54 @@
+schemaVersion: 1
+userId: nina-meera-patel
+displayName: Nina Patel
+facts:
+  identity:
+    legalName: Nina Meera Patel
+    firstName: Nina
+    middleName: Meera
+    middleInitial: M
+    lastName: Patel
+    otherLastNames:
+      - Shah
+    dateOfBirth: 1992-03-14
+    ssn: 000-00-0392
+  contact:
+    email: nina.patel@example.test
+    phone: null
+  address:
+    current:
+      street: 742 Maple Ridge Lane
+      unit: Apt 5D
+      city: Austin
+      state: TX
+      postalCode: "78704"
+  workAuthorization:
+    citizenshipStatus: U.S. citizen
+    uscisANumber: null
+    workAuthorizationExpirationDate: null
+    i94AdmissionNumber: null
+    foreignPassportNumber: null
+    foreignPassportCountry: null
+  employment:
+    company: Hill Country Data Cooperative
+    title: Data Quality Analyst
+    startDate: 2026-07-06
+    workEmail: nina.patel@hillcountrydata.example.test
+  communication:
+    preferredChannels:
+      - email
+seedPreferences:
+  - slug: communication.preferred_channels
+    factKey: communication.preferredChannels
+  - slug: profile.company
+    factKey: employment.company
+  - slug: profile.email
+    factKey: contact.email
+  - slug: profile.first_name
+    factKey: identity.firstName
+  - slug: profile.full_name
+    factKey: identity.legalName
+  - slug: profile.last_name
+    factKey: identity.lastName
+  - slug: profile.title
+    factKey: employment.title

@@ -1,0 +1,1 @@
+Stale lease for Nina Shah at 1180 Riverbend Court, Unit 2, Plano, TX 75024. The record predates the current Austin address and should be used as guardrail context only, not as current address evidence.

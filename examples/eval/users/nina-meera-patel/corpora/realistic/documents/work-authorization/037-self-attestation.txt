@@ -1,0 +1,5 @@
+SELF ATTESTATION
+Source type: work-authorization
+Expected use: corroborate
+
+Self-attestation by Nina Meera Patel, born 1992-03-14: I am a U.S. citizen. The attestation is current and should override old recruiting notes that mentioned sponsorship questions.

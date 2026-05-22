@@ -86,7 +86,7 @@ Preview a few AI-generated documents outside the committed corpus:
 
 ```bash
 EVAL_GENERATION_MODEL=<model> \
-  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --limit 5 --out /private/tmp/<userId>-preview
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --ids 001,017,031 --out /private/tmp/<userId>-preview
 ```
 
 Review the preview for realism, fact accuracy, noise behavior, and stale or
@@ -98,9 +98,15 @@ Then generate the corpus and validate:
 
 ```bash
 EVAL_GENERATION_MODEL=<model> \
-  pnpm eval:generate --user <userId> --corpus realistic --backend vertex
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --overwrite
 
 pnpm eval:validate --user <userId> --corpus realistic --write-report
+```
+
+If only plan metadata changed, regenerate the manifest without any AI calls:
+
+```bash
+pnpm eval:manifest --user <userId> --corpus realistic
 ```
 
 The generated documents are fixture artifacts. They become an extraction

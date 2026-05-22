@@ -195,14 +195,20 @@ Generate realistic corpus documents from a reviewed corpus plan:
 
 ```bash
 EVAL_GENERATION_MODEL=gemini-2.5-pro \
-  pnpm eval:generate --user samir-desai --corpus realistic --backend vertex
+  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --overwrite
 ```
 
-Preview generated documents outside the committed corpus:
+Preview selected generated documents outside the committed corpus:
 
 ```bash
 EVAL_GENERATION_MODEL=gemini-2.5-pro \
-  pnpm eval:generate --user samir-desai --corpus realistic --backend vertex --limit 5 --out /private/tmp/samir-preview
+  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --ids 001,017,031 --out /private/tmp/nina-preview
+```
+
+Regenerate `manifest.json` from `corpus-plan.json` without AI calls:
+
+```bash
+pnpm eval:manifest --user nina-meera-patel --corpus realistic
 ```
 
 Initialize a new user profile skeleton from a form field map:

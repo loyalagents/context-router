@@ -1,0 +1,5 @@
+ORIENTATION CALENDAR INVITE
+Source type: employer-context
+Expected use: corroborate
+
+Orientation invite for Nina Meera Patel at Hill Country Data Cooperative; invitee account nina.patel@hillcountrydata.example.test; date 2026-07-06.

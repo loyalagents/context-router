@@ -1,0 +1,1 @@
+Conference badge says Nina Meera Patel. It has no date of birth, SSN, address, email, or employer data. It is too thin for extraction and should only corroborate that the name appears in external material.

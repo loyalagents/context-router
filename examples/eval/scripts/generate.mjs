@@ -58,8 +58,10 @@ export function parseArgs(args) {
     backend: 'vertex',
     model: null,
     limit: null,
+    ids: null,
     out: null,
     regenerateIds: null,
+    overwrite: false,
     concurrency: 1,
     temperature: 0.75,
   };
@@ -76,13 +78,20 @@ export function parseArgs(args) {
         '--backend',
         '--model',
         '--limit',
+        '--ids',
         '--out',
         '--regenerate',
+        '--overwrite',
         '--concurrency',
         '--temperature',
       ].includes(arg)
     ) {
       return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };
+    }
+
+    if (arg === '--overwrite') {
+      options.overwrite = true;
+      continue;
     }
 
     const value = args[index + 1];
@@ -96,6 +105,12 @@ export function parseArgs(args) {
     if (arg === '--backend') options.backend = value;
     if (arg === '--model') options.model = value;
     if (arg === '--limit') options.limit = Number(value);
+    if (arg === '--ids') {
+      options.ids = value
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+    }
     if (arg === '--out') options.out = value;
     if (arg === '--regenerate') {
       options.regenerateIds = value
@@ -121,6 +136,24 @@ export function parseArgs(args) {
   }
   if (options.limit != null && !options.out) {
     return { kind: 'usage-error', message: '--limit requires --out so previews do not create partial corpora.' };
+  }
+  if (options.ids != null && options.ids.length === 0) {
+    return { kind: 'usage-error', message: '--ids must list at least one document id.' };
+  }
+  if (options.ids != null && !options.out) {
+    return { kind: 'usage-error', message: '--ids requires --out so previews do not create partial corpora.' };
+  }
+  if (options.ids != null && options.limit != null) {
+    return { kind: 'usage-error', message: '--ids cannot be combined with --limit.' };
+  }
+  if (options.ids != null && options.regenerateIds != null) {
+    return { kind: 'usage-error', message: '--ids cannot be combined with --regenerate.' };
+  }
+  if (options.overwrite && options.out) {
+    return { kind: 'usage-error', message: '--overwrite writes the corpus in place and cannot be combined with --out.' };
+  }
+  if (options.overwrite && options.regenerateIds != null) {
+    return { kind: 'usage-error', message: '--overwrite cannot be combined with --regenerate.' };
   }
   if (
     !Number.isInteger(options.concurrency) ||
@@ -169,7 +202,9 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
     corpusPlan,
     outputRoot,
     limit: options.limit,
+    ids: options.ids,
     regenerateIds: options.regenerateIds,
+    overwrite: options.overwrite,
   });
 
   const provider =
@@ -183,7 +218,8 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
 
   await runPool(selectedDocuments, options.concurrency, async (doc) => {
     const prompt = buildDocumentPrompt({ profile, corpusPlan, doc });
-    const text = await provider(prompt, { doc, corpusPlan, profile, model });
+    const generatedText = await provider(prompt, { doc, corpusPlan, profile, model });
+    const text = normalizeGeneratedText(generatedText, doc);
     if (typeof text !== 'string' || text.trim().length === 0) {
       throw new Error(`Generator returned empty text for document ${doc.id}.`);
     }
@@ -239,6 +275,7 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     'You are writing one synthetic eval fixture document.',
     '',
     'Write only the document body. Do not include markdown fences or explanations.',
+    fileTypeRules(doc),
     'Use only facts from the supplied profile slice unless the plan entry explicitly marks stale, conflicting, partial, redacted, third-party, or noise context.',
     'Do not invent canonical current facts.',
     'Place every listed fact key somewhere in the body.',
@@ -255,6 +292,16 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     'Document plan entry:',
     JSON.stringify(doc, null, 2),
   ].join('\n');
+}
+
+export function normalizeGeneratedText(text, doc) {
+  if (typeof text !== 'string') return text;
+  const extension = doc.outputExtension ?? path.posix.extname(doc.path ?? '').slice(1);
+  if (!['json', 'yaml', 'txt'].includes(extension)) return text;
+
+  const trimmed = text.trim();
+  const fence = trimmed.match(/^```(?:json|ya?ml|txt|text)?\s*\n([\s\S]*?)\n```$/i);
+  return fence ? fence[1] : text;
 }
 
 export function manifestFromCorpusPlan(corpusPlan) {
@@ -280,24 +327,81 @@ export function manifestFromCorpusPlan(corpusPlan) {
   };
 }
 
-function selectDocuments({ corpusPlan, outputRoot, limit, regenerateIds }) {
+function selectDocuments({
+  corpusPlan,
+  outputRoot,
+  limit,
+  ids,
+  regenerateIds,
+  overwrite,
+}) {
   let documents = [...(corpusPlan.documents ?? [])].sort((left, right) =>
     left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
   );
 
+  if (ids) {
+    return resolveDocumentRefs(documents, ids, '--ids');
+  }
+
   if (regenerateIds) {
-    const requested = new Set(regenerateIds);
-    documents = documents.filter((doc) => requested.has(doc.id));
-    const found = new Set(documents.map((doc) => doc.id));
-    const missing = [...requested].filter((id) => !found.has(id));
-    if (missing.length) {
-      throw new Error(`Unknown document id(s) for --regenerate: ${missing.join(', ')}`);
+    if (regenerateIds.length === 1 && regenerateIds[0] === 'all') {
+      return documents;
     }
+    return resolveDocumentRefs(documents, regenerateIds, '--regenerate');
+  }
+
+  if (overwrite) {
     return documents;
   }
 
   documents = documents.filter((doc) => !fileExistsSync(path.join(outputRoot, doc.path)));
   return limit == null ? documents : documents.slice(0, limit);
+}
+
+function resolveDocumentRefs(documents, refs, optionName) {
+  const resolved = [];
+
+  for (const ref of refs) {
+    const matches = documents.filter((doc) => doc.id === ref || doc.id.endsWith(`-${ref}`));
+    if (matches.length === 0) {
+      throw new Error(`Unknown document id(s) for ${optionName}: ${ref}`);
+    }
+    if (matches.length > 1) {
+      throw new Error(`Ambiguous document id for ${optionName}: ${ref}`);
+    }
+    resolved.push(matches[0]);
+  }
+
+  return resolved;
+}
+
+function fileTypeRules(doc) {
+  const extension = doc.outputExtension ?? path.posix.extname(doc.path ?? '').slice(1);
+  if (extension === 'json') {
+    return [
+      'Output format: valid JSON only.',
+      'Do not wrap JSON in markdown fences.',
+      'Do not include comments, trailing prose, or explanatory text outside the JSON value.',
+    ].join('\n');
+  }
+  if (extension === 'yaml') {
+    return [
+      'Output format: valid YAML only.',
+      'Do not wrap YAML in markdown fences.',
+      'Do not include trailing prose or explanatory text outside the YAML document.',
+    ].join('\n');
+  }
+  if (extension === 'txt') {
+    return [
+      'Output format: plain text only.',
+      'Do not use markdown headings, markdown tables, bullet formatting, or markdown fences.',
+      'Use realistic plain-text line breaks, labels, OCR-like spacing, or raw export text when appropriate.',
+    ].join('\n');
+  }
+  return [
+    'Output format: Markdown-compatible text.',
+    'Avoid using the exact same section structure across documents unless the document genre requires it.',
+  ].join('\n');
 }
 
 async function generateWithVertex(prompt, { env, model, temperature }) {
@@ -366,7 +470,9 @@ function usage() {
     'Usage:',
     '  pnpm eval:generate --user <userId> --corpus <corpusId> --backend vertex --model <model>',
     '  pnpm eval:generate --user <userId> --corpus <corpusId> --backend vertex --model <model> --limit 5 --out /private/tmp/preview',
+    '  pnpm eval:generate --user <userId> --corpus <corpusId> --backend vertex --model <model> --ids 001,017 --out /private/tmp/preview',
     '  pnpm eval:generate --user <userId> --corpus <corpusId> --backend vertex --model <model> --regenerate 017,042',
+    '  pnpm eval:generate --user <userId> --corpus <corpusId> --backend vertex --model <model> --overwrite',
   ].join('\n');
 }
 

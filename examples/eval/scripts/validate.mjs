@@ -1026,6 +1026,8 @@ function validateDocumentProse(ctx, {
   pointer,
   profileFacts,
 }) {
+  validateDocumentBodyFormat(ctx, { doc, body, manifestPath, pointer });
+
   const checksBodyForDeclaredFacts = ['extract', 'corroborate'].includes(
     doc.expectedUse,
   );
@@ -1074,6 +1076,65 @@ function validateDocumentProse(ctx, {
       fix: 'Add realistic surrounding text or lower the detailTier.',
     });
   }
+}
+
+function validateDocumentBodyFormat(ctx, { doc, body, manifestPath, pointer }) {
+  const extension = path.posix.extname(doc.path ?? '').slice(1);
+
+  if (['json', 'yaml'].includes(extension) && /^\s*```/.test(body)) {
+    addIssue(ctx, {
+      code: 'DOCUMENT_MARKDOWN_FENCE',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} is a .${extension} file but appears to be wrapped in a Markdown code fence.`,
+      fix: 'Remove Markdown fences from structured document bodies.',
+    });
+  }
+
+  if (extension === 'json') {
+    try {
+      JSON.parse(body);
+    } catch (error) {
+      addIssue(ctx, {
+        code: 'DOCUMENT_JSON_INVALID',
+        file: manifestPath,
+        pointer,
+        message: `Document ${doc.id} is a .json file but does not contain valid JSON: ${error.message}`,
+        fix: 'Write valid JSON or change the planned file extension.',
+      });
+    }
+  }
+
+  if (extension === 'yaml') {
+    try {
+      parseYaml(body);
+    } catch (error) {
+      addIssue(ctx, {
+        code: 'DOCUMENT_YAML_INVALID',
+        file: manifestPath,
+        pointer,
+        message: `Document ${doc.id} is a .yaml file but does not contain valid YAML: ${error.message}`,
+        fix: 'Write valid YAML or change the planned file extension.',
+      });
+    }
+  }
+
+  if (extension === 'txt' && looksLikeMarkdown(body)) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_TXT_MARKDOWN_STYLE',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} is a .txt file but contains Markdown-like formatting.`,
+      fix: 'Use plain text formatting or change the planned file extension.',
+    });
+  }
+}
+
+function looksLikeMarkdown(text) {
+  return /(^|\n)\s{0,3}#{1,6}\s+\S/.test(text) ||
+    /(^|\n)\s*```/.test(text) ||
+    /(^|\n)\s*\|.+\|\s*(\n|$)/.test(text);
 }
 
 function containsPhoneLikeText(text) {

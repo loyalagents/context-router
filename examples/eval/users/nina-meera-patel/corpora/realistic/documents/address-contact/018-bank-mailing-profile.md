@@ -1,0 +1,1 @@
+Bank profile export shows Nina Meera Patel, mailing address 742 Maple Ridge Lane, Apt 5D, Austin, TX 78704, and customer email nina.patel@example.test. It is current as of the onboarding packet review date.

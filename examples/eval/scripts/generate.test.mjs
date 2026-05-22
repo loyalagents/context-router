@@ -7,9 +7,11 @@ import { fileURLToPath } from 'node:url';
 import {
   buildDocumentPrompt,
   manifestFromCorpusPlan,
+  normalizeGeneratedText,
   parseArgs,
   runGenerate,
 } from './generate.mjs';
+import { runManifest } from './manifest.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +47,42 @@ test('generate arg parser protects previews and concurrency', () => {
     ]).kind,
     'ok',
   );
+  assert.equal(
+    parseArgs([
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'realistic',
+      '--ids',
+      '001,017',
+    ]).kind,
+    'usage-error',
+  );
+  assert.equal(
+    parseArgs([
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'realistic',
+      '--ids',
+      '001,017',
+      '--out',
+      '/private/tmp/preview',
+    ]).kind,
+    'ok',
+  );
+  assert.equal(
+    parseArgs([
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'realistic',
+      '--overwrite',
+      '--out',
+      '/private/tmp/preview',
+    ]).kind,
+    'usage-error',
+  );
 });
 
 test('document prompt includes only the requested profile slice', () => {
@@ -64,6 +102,56 @@ test('document prompt includes only the requested profile slice', () => {
 
   assert.match(prompt, /000-00-0389/);
   assert.doesNotMatch(prompt, /northstarcivic/);
+});
+
+test('document prompt includes file type instructions and missing facts', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Samir Arun Desai' },
+      },
+    },
+    corpusPlan: {
+      intentionallyMissing: [
+        {
+          factKey: 'contact.phone',
+          forms: ['i-9'],
+          reason: 'Phone is missing.',
+          expectedBehavior: 'Leave it blank.',
+        },
+      ],
+    },
+    doc: {
+      id: '001',
+      path: 'documents/identity/001-id.json',
+      outputExtension: 'json',
+      factKeys: ['identity.legalName'],
+    },
+  });
+
+  assert.match(prompt, /Output format: valid JSON only/);
+  assert.match(prompt, /Do not wrap JSON in markdown fences/);
+  assert.match(prompt, /contact.phone/);
+  assert.match(prompt, /Samir Arun Desai/);
+});
+
+test('structured generated text strips only wrapping fences', () => {
+  assert.equal(
+    normalizeGeneratedText('```json\n{"ok":true}\n```', { outputExtension: 'json' }),
+    '{"ok":true}',
+  );
+  assert.equal(
+    normalizeGeneratedText('```yaml\nok: true\n```', { outputExtension: 'yaml' }),
+    'ok: true',
+  );
+  assert.equal(
+    normalizeGeneratedText('```text\nplain export\n```', { outputExtension: 'txt' }),
+    'plain export',
+  );
+  assert.equal(
+    normalizeGeneratedText('```md\n# Keep me fenced\n```', { outputExtension: 'md' }),
+    '```md\n# Keep me fenced\n```',
+  );
 });
 
 test('manifest projection keeps plan-owned metadata out of manifest', () => {
@@ -133,6 +221,101 @@ test('runGenerate writes preview documents without touching corpus manifest', as
     ),
     false,
   );
+});
+
+test('runManifest writes manifest from corpus plan without a model', async (t) => {
+  const root = await copyRepo(t);
+  await writeGeneratedTestPlan(root);
+
+  const result = await runManifest({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'generated-test'],
+  });
+
+  assert.equal(result.exitCode, 0, result.errorMessage);
+  const manifest = await readJson(
+    path.join(
+      root,
+      'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
+    ),
+  );
+  assert.equal(manifest.seed, 'samir-desai__generated-test');
+  assert.equal(manifest.documents.length, 6);
+});
+
+test('runGenerate resolves short ids for preview and overwrite regenerates existing docs', async (t) => {
+  const root = await copyRepo(t);
+  await writeGeneratedTestPlan(root);
+  const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-generate-ids-'));
+  t.after(async () => {
+    await rm(previewRoot, { recursive: true, force: true });
+  });
+
+  const preview = await runGenerate({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'generated-test',
+      '--model',
+      'unit-model',
+      '--ids',
+      '001,003',
+      '--out',
+      previewRoot,
+    ],
+    generateDocument: async (_prompt, { doc }) => `preview ${doc.id}`,
+  });
+
+  assert.equal(preview.exitCode, 0, preview.errorMessage);
+  assert.match(preview.lines.join('\n'), /generated 2 document/);
+
+  const full = await runGenerate({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'generated-test',
+      '--model',
+      'unit-model',
+    ],
+    generateDocument: async (prompt, { doc }) => `first ${doc.id}\n${prompt}`,
+  });
+  assert.equal(full.exitCode, 0, full.errorMessage);
+
+  const overwrite = await runGenerate({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'generated-test',
+      '--model',
+      'unit-model',
+      '--overwrite',
+    ],
+    generateDocument: async (prompt, { doc }) => `second ${doc.id}\n${prompt}`,
+  });
+  assert.equal(overwrite.exitCode, 0, overwrite.errorMessage);
+  assert.match(overwrite.lines.join('\n'), /generated 6 document/);
+
+  const manifest = await readJson(
+    path.join(
+      root,
+      'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
+    ),
+  );
+  const firstDoc = await readFile(
+    path.join(
+      root,
+      'examples/eval/users/samir-desai/corpora/generated-test',
+      manifest.documents[0].path,
+    ),
+    'utf8',
+  );
+  assert.match(firstDoc, /^second /);
 });
 
 test('runGenerate writes a full generated corpus and validation report', async (t) => {
