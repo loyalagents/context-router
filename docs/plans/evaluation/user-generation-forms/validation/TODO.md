@@ -222,25 +222,67 @@ For example, `.ics`, `.eml`, `.csv`, `.tsv`, `.vcf`, HTML, PDFs, and scanned
 images need deliberate parser/rendering and ingestion decisions before they
 become extraction eval fixtures.
 
-## Suggested Implementation Order
+## Need To Do For Contain And Does-Not-Contain Truth
 
-1. Implemented: add `forbiddenFactKeys[]` to `corpus-plan.schema.json`.
-2. Implemented: project exclusion metadata into validation without projecting it
-   into `manifest.json`.
-3. Implemented: add exact positive body checks for date, ZIP, state, and
-   citizenship status.
-4. Implemented: add conservative warning checks for intentionally missing
-   work-authorization identifier patterns.
-5. Implemented: add noise-document leak checks for high-confidence current
-   identifiers.
-6. Implemented: update the Nina 100-document `corpus-plan.json` with explicit
-   forbidden facts.
-7. Implemented: run focused validation and refresh the Nina validation report.
-8. Next: add warning-level stale/conflicting cue checks.
-9. Next: add corpus-level/default forbidden facts to reduce repeated
-   per-document exclusions.
-10. Next: add fuzzy name/address matching after calibration.
-11. Next: add extraction-specific expected fact snapshots.
+These are the next validation updates needed to make an example user corpus
+trustworthy as a set of files where known facts are present and known facts are
+absent.
+
+Implemented:
+
+1. Add `forbiddenFactKeys[]` to `corpus-plan.schema.json`.
+2. Project exclusion metadata into validation without projecting it into
+   `manifest.json`.
+3. Add exact positive body checks for date, ZIP, state, and citizenship status.
+4. Add conservative warning checks for intentionally missing work-authorization
+   identifier patterns.
+5. Add noise-document leak checks for high-confidence current identifiers.
+6. Update the Nina 100-document `corpus-plan.json` with explicit forbidden
+   facts.
+7. Run focused validation and refresh the Nina validation report.
+
+Next:
+
+1. Add corpus-level/default forbidden facts to reduce repeated per-document
+   exclusions.
+2. Translate corpus-level intentionally missing facts into default forbidden
+   checks for current authoritative documents.
+3. Expand positive body checks for declared `factKeys[]`, starting with:
+   - `identity.legalName`
+   - `identity.firstName`
+   - `identity.lastName`
+   - `identity.middleInitial`
+   - `identity.otherLastNames`
+   - `address.current.street`
+   - `address.current.unit`
+   - `address.current.city`
+   - `employment.company`
+   - `employment.title`
+   - `employment.startDate`
+4. Add calibrated name/address variant matching so positive and negative checks
+   can handle realistic document wording:
+   - full name vs component names
+   - address unit on same line or separate line
+   - common street abbreviations
+   - city/state/ZIP line variations
+5. Add a focused corpus-truth report view that shows, per document, which facts
+   were proven present, which forbidden facts were checked absent, and which
+   checks remain warning-only or unsupported.
+
+## Helpful For Future Extraction Benchmarks
+
+These are useful after the corpus truth layer can already prove the main
+contain/does-not-contain contract.
+
+1. Add warning-level stale/conflicting cue checks.
+2. Add `allowedStaleFactKeys[]` or equivalent metadata so stale/conflicting
+   documents can intentionally contain old values without looking current.
+3. Add extraction-specific expected fact snapshots.
+4. Add backend document ingestion for corpus extraction benchmarks.
+5. Add extraction scoring that compares model/backend extracted facts against
+   the corpus truth snapshot.
+6. Add validation support for more file types only when parser/rendering and
+   ingestion decisions are explicit.
 
 ## Verification Commands
 
