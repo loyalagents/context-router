@@ -104,6 +104,29 @@ test('document prompt includes only the requested profile slice', () => {
   assert.doesNotMatch(prompt, /northstarcivic/);
 });
 
+test('document prompt exposes only explicitly forbidden values', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Samir Arun Desai', ssn: '000-00-0389' },
+        employment: { workEmail: 'samir.desai@northstarcivic.example.test' },
+      },
+    },
+    corpusPlan: { intentionallyMissing: [] },
+    doc: {
+      id: '001',
+      factKeys: ['identity.legalName'],
+      forbiddenFactKeys: ['employment.workEmail'],
+    },
+  });
+
+  assert.match(prompt, /Forbidden fact keys/);
+  assert.match(prompt, /employment\.workEmail/);
+  assert.match(prompt, /samir\.desai@northstarcivic\.example\.test/);
+  assert.match(prompt, /Samir Arun Desai/);
+  assert.doesNotMatch(prompt, /000-00-0389/);
+});
+
 test('document prompt includes file type instructions and missing facts', () => {
   const prompt = buildDocumentPrompt({
     profile: {
@@ -169,6 +192,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
         title: 'Identity',
         outputExtension: 'md',
         factKeys: ['identity.ssn'],
+        forbiddenFactKeys: ['employment.workEmail'],
         detailTier: 'brief',
         authority: 'medium',
         freshness: 'current',
@@ -183,6 +207,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
   assert.equal(manifest.documents[0].template, undefined);
   assert.equal(manifest.documents[0].brief, undefined);
   assert.equal(manifest.documents[0].challengeTags, undefined);
+  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
 });
 
 test('runGenerate writes preview documents without touching corpus manifest', async (t) => {

@@ -270,6 +270,11 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
   for (const factKey of doc.factKeys ?? []) {
     setNestedValue(profileSlice, factKey, getFactValue(profile.facts ?? {}, factKey));
   }
+  const forbiddenProfileSlice = {};
+  for (const factKey of doc.forbiddenFactKeys ?? []) {
+    const value = getFactValue(profile.facts ?? {}, factKey);
+    if (value != null) setNestedValue(forbiddenProfileSlice, factKey, value);
+  }
 
   return [
     'You are writing one synthetic eval fixture document.',
@@ -280,6 +285,7 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     'Do not invent canonical current facts.',
     'Place every listed fact key somewhere in the body.',
     'Do not write values for intentionally missing facts.',
+    'Do not include any forbidden fact values in the document body.',
     'Noise documents must contain no canonical user fact values.',
     'Stale or conflicting documents must make their stale/conflicting status clear.',
     '',
@@ -288,6 +294,12 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     '',
     'Profile slice:',
     JSON.stringify(profileSlice, null, 2),
+    '',
+    'Forbidden fact keys:',
+    JSON.stringify(doc.forbiddenFactKeys ?? [], null, 2),
+    '',
+    'Forbidden profile values:',
+    JSON.stringify(forbiddenProfileSlice, null, 2),
     '',
     'Document plan entry:',
     JSON.stringify(doc, null, 2),

@@ -27,7 +27,14 @@ Current validation is useful, but it is not yet a full corpus-truth oracle.
   seed preferences or at least one document `factKeys[]` entry
 - intentional missingness metadata: intentionally missing facts must be null,
   mapped by a listed form, and absent from every document `factKeys[]`
-- limited document-body checks for declared high-confidence fact values
+- exact/variant document-body checks for declared high-confidence fact values,
+  including email, work email, SSN, USCIS/A-number, date of birth, ZIP, state,
+  and citizenship status
+- plan-owned `documents[].forbiddenFactKeys[]` references and body-level
+  absence checks for non-null forbidden facts
+- warning-level pattern checks for intentionally missing phone and
+  work-authorization identifiers in current extract/corroborate documents
+- high-confidence current identifier leak checks for noise/ignored documents
 - file-type checks for planned/generated `json`, `yaml`, and `txt` documents
 - scenario snapshot existence and filled-form snapshot schema
 
@@ -41,18 +48,35 @@ filled-form snapshots. It does not ingest corpus documents.
 The current validator does not yet prove that the corpus is fully trustworthy
 for extraction scoring.
 
-Known gaps:
+Implemented in `first-validation-update-0`:
+
+- `forbiddenFactKeys[]` is schema-valid in `corpus-plan.json`, validated
+  against profile leaf facts, and kept out of `manifest.json`
+- first positive body checks are hard errors for declared extract/corroborate
+  values: date of birth, ZIP, state, and citizenship status, alongside the
+  earlier email, work email, SSN, and USCIS/A-number checks
+- first negative body checks emit `DOCUMENT_FORBIDDEN_FACT_PRESENT` when a
+  non-null forbidden value appears in a document body
+- first conservative missing-value checks warn for value-like phone and
+  work-authorization identifiers when those facts are intentionally missing
+- noise and ignored documents emit `DOCUMENT_NOISE_FACT_LEAK` when they contain
+  high-confidence current identifiers such as legal name, personal/work email,
+  SSN, USCIS/A-number, or current street address
+
+Known remaining gaps:
 
 - most declared facts in `documents[].factKeys[]` are trusted as metadata and
   are not checked in document text
-- only a small high-confidence subset is body-checked today
+- only a high-confidence exact/variant subset is body-checked today
+- common forbidden-fact baselines are repeated per document; there is no
+  corpus-level `defaultForbiddenFactKeys[]` or equivalent effective-default
+  layer yet
 - intentionally missing facts are checked against metadata, but most are not
   checked against every document body
-- noise documents are metadata-checked, but not exhaustively scanned for leaked
-  current user facts
+- noise documents are scanned for first-wave high-confidence identifiers, but
+  not yet with fuzzy name/address matching
 - stale, conflicting, partial, and guardrail documents do not yet have a strong
   machine-checked non-authoritative cue contract
-- there is no document-level negative contract such as `forbiddenFactKeys[]`
 - there is no extraction-specific expected fact snapshot yet
 
 ## Corpus Truth Validation Goal
@@ -98,7 +122,7 @@ validator cannot enforce.
 For facts that should appear, expand body validation beyond the current
 high-confidence subset.
 
-Near-term exact or variant-based checks:
+Implemented exact or variant-based checks:
 
 - `contact.email`
 - `employment.workEmail`
@@ -123,12 +147,15 @@ Next checks after calibration:
 - `employment.title`
 - `employment.startDate`
 
-Variant handling to add:
+Implemented variant handling:
 
 - SSN with dashes, without dashes, and with spacing
 - USCIS/A-number with bare digits, `A` prefix, and `A-` prefix
 - dates as ISO, U.S. slash dates, and long dates
 - state full name vs postal abbreviation when profile data supports it
+
+Variant handling still to add:
+
 - addresses with unit on the same line or separate line
 - common street abbreviations only after false positives are understood
 
@@ -136,11 +163,11 @@ Variant handling to add:
 
 For facts that should not appear, add body-level absence checks.
 
-Near-term:
+Implemented:
 
-- scan all non-ignored, non-stale/non-mixed documents for intentionally
-  missing `contact.phone`
-- scan all current/extract/corroborate documents for intentionally missing
+- scan current extract/corroborate documents for intentionally missing
+  `contact.phone`
+- scan all current extract/corroborate documents for intentionally missing
   work-authorization identifiers:
   - `workAuthorization.uscisANumber`
   - `workAuthorization.i94AdmissionNumber`
@@ -152,10 +179,12 @@ Near-term:
   - SSN
   - USCIS/A-number
   - current street address
+- scan every document against its own non-null `forbiddenFactKeys[]` values
 
-After `forbiddenFactKeys[]` exists:
+Remaining:
 
-- every document should be checked against its own forbidden facts
+- add a corpus-level/default forbidden-fact mechanism so generated plans do not
+  repeat the same baseline exclusions on every document
 - corpus-level intentionally missing facts should be translated into default
   forbidden checks for current authoritative documents
 - stale/conflicting documents should be allowed to contain stale values only
@@ -195,17 +224,23 @@ become extraction eval fixtures.
 
 ## Suggested Implementation Order
 
-1. Add `forbiddenFactKeys[]` or equivalent to `corpus-plan.schema.json`.
-2. Project exclusion metadata into validation without necessarily projecting it
-   into `manifest.json`, unless the manifest needs to carry it.
-3. Add exact positive body checks for date, ZIP, state, and citizenship status.
-4. Add exact/variant negative checks for intentionally missing work-authorization
+1. Implemented: add `forbiddenFactKeys[]` to `corpus-plan.schema.json`.
+2. Implemented: project exclusion metadata into validation without projecting it
+   into `manifest.json`.
+3. Implemented: add exact positive body checks for date, ZIP, state, and
+   citizenship status.
+4. Implemented: add conservative warning checks for intentionally missing
+   work-authorization identifier patterns.
+5. Implemented: add noise-document leak checks for high-confidence current
    identifiers.
-5. Add noise-document leak checks for high-confidence current identifiers.
-6. Add warning-level stale/conflicting cue checks.
-7. Update the Nina 100-document `corpus-plan.json` with explicit forbidden
-   facts where useful.
-8. Run focused validation and refresh the Nina validation report.
+6. Implemented: update the Nina 100-document `corpus-plan.json` with explicit
+   forbidden facts.
+7. Implemented: run focused validation and refresh the Nina validation report.
+8. Next: add warning-level stale/conflicting cue checks.
+9. Next: add corpus-level/default forbidden facts to reduce repeated
+   per-document exclusions.
+10. Next: add fuzzy name/address matching after calibration.
+11. Next: add extraction-specific expected fact snapshots.
 
 ## Verification Commands
 
