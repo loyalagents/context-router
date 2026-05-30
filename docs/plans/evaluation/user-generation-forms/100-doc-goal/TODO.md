@@ -30,6 +30,34 @@ The full 100-document Vertex regeneration has not been run in the Codex shell be
 
 The current mixed corpus body files are deterministic local fixture bodies, with JSON/YAML/TXT wrappers where appropriate. They validate and are useful for tooling tests, but they are not yet the final Vertex-authored high-realism corpus.
 
+## Generation Quality Perspective
+
+Treat generated documents as needing two separate gates:
+
+- **Correctness gate:** every declared high-confidence `factKey` must appear in the body in a deterministic, validator-recognizable form, and every forbidden/missing fact must stay out of the body.
+- **Realism gate:** the body should read like a plausible source artifact, not like a tidy synthetic fact carrier.
+
+Recent Vertex previews show that those gates can fail independently. A document can contain the right human-readable idea while still failing corpus-truth validation because the exact value variant is not provable. For example, `PATEL, NINA MEERA` may be understandable as the legal name, but it does not prove `Nina Meera Patel` unless the validator supports that variant. Likewise, split I-9 name fields do not prove the combined `identity.legalName` fact.
+
+The opposite failure is also possible: a document can pass the deterministic checks while still looking fake. Common realism problems to watch for:
+
+- generic Markdown field/value blocks across too many documents
+- placeholder text such as `Current Date` or `(To be completed)`
+- very short documents that only exist to carry facts
+- over-clean labels and perfect formatting
+- invented but flat institutions, account numbers, and addresses
+- contradictory timeline details, such as an expired lease marked active
+- too many canonical user facts packed into a document type that would not naturally include them
+
+Do not solve the realism problem by only making the validator more permissive. The generator needs stronger document archetypes and a repair loop.
+
+Recommended direction:
+
+- Strengthen `corpus-plan.json` entries with document-specific source context, length/texture expectations, allowed invented surrounding details, and explicit canonical anchors for validator-backed facts.
+- Make the prompt require each declared fact to appear at least once in an exact or validator-supported value form, even if the document also includes realistic alternate formatting.
+- Add a generate/validate/repair loop: preview documents, run corpus-truth validation, feed per-document failures back into targeted regeneration, and only write to the committed corpus after the preview passes both correctness and realism review.
+- Capture this as a workflow/playbook first. A Codex skill can come later once the workflow is stable.
+
 ## Next Action
 
 Run a mixed Vertex preview from a shell that has the Vertex env configured:
@@ -40,6 +68,7 @@ pnpm eval:generate --user nina-meera-patel --corpus realistic --ids 001,017,031,
 
 Review the preview for:
 
+- declared facts appear in validator-recognizable forms
 - valid JSON and YAML
 - no Markdown fences in structured outputs
 - plain `.txt` style
@@ -47,6 +76,8 @@ Review the preview for:
 - no invented work authorization identifiers
 - no high-confidence identifiers in noise docs
 - enough variation across categories
+- no placeholder text or contradictory current/stale signals
+- documents read like plausible source artifacts, not generic synthetic templates
 
 If preview quality is acceptable, run full regeneration:
 
