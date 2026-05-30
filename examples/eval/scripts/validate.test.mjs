@@ -269,6 +269,7 @@ test('corpus plan validation rejects invalid forbidden fact references', async (
     corpusId: 'realistic',
     forms: ['i-9'],
     purpose: 'Unit-test plan.',
+    defaultForbiddenFactKeys: ['address.current', 'identity.notReal'],
     targetDocumentCount: 1,
     categoryCounts: {
       identity: 1,
@@ -301,9 +302,11 @@ test('corpus plan validation rejects invalid forbidden fact references', async (
 
   assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_AREA');
   assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+  assertHasCode(result, 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_AREA');
+  assertHasCode(result, 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_MISSING');
 });
 
-test('corpus plan document schema accepts forbidden facts and rejects unexpected fields', async (t) => {
+test('corpus plan schema accepts default forbidden facts and rejects unexpected fields', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
@@ -316,6 +319,7 @@ test('corpus plan document schema accepts forbidden facts and rejects unexpected
     corpusId: 'realistic',
     forms: ['i-9'],
     purpose: 'Unit-test plan.',
+    defaultForbiddenFactKeys: ['contact.phone'],
     targetDocumentCount: 1,
     categoryCounts: {
       identity: 1,
@@ -331,7 +335,66 @@ test('corpus plan document schema accepts forbidden facts and rejects unexpected
         outputExtension: 'md',
         factKeys: ['identity.ssn'],
         forbiddenFactKeys: ['contact.phone'],
-        unsupportedPlanField: true,
+        detailTier: 'brief',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['current-fact'],
+        brief: 'Include the SSN in a short identity note.',
+      },
+    ],
+  });
+
+  const validResult = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
+  });
+  assert.equal(validResult.exitCode, 0);
+  assertNoCode(validResult, 'SCHEMA_VALIDATION_FAILED');
+
+  const plan = await readJson(path.join(corpusRoot, 'corpus-plan.json'));
+  plan.unexpectedTopLevelField = true;
+  plan.documents[0].unsupportedPlanField = true;
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), plan);
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
+  });
+
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+  assertNoCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+});
+
+test('corpus plan schema rejects duplicate forbidden fact keys', async (t) => {
+  const root = await copyRepo(t);
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/realistic',
+  );
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 1,
+    userId: 'samir-desai',
+    corpusId: 'realistic',
+    forms: ['i-9'],
+    purpose: 'Unit-test plan.',
+    defaultForbiddenFactKeys: ['contact.phone', 'contact.phone'],
+    targetDocumentCount: 1,
+    categoryCounts: {
+      identity: 1,
+    },
+    challengeTags: ['current-fact'],
+    intentionallyMissing: [],
+    documents: [
+      {
+        id: '001',
+        path: 'documents/identity/001-id.md',
+        category: 'identity',
+        title: 'Identity Note',
+        outputExtension: 'md',
+        factKeys: ['identity.ssn'],
+        forbiddenFactKeys: ['contact.email', 'contact.email'],
         detailTier: 'brief',
         authority: 'medium',
         freshness: 'current',
@@ -348,7 +411,20 @@ test('corpus plan document schema accepts forbidden facts and rejects unexpected
   });
 
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
-  assertNoCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+});
+
+test('corpus plan validation rejects document forbidden facts that conflict with declared facts', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].factKeys = ['identity.ssn'];
+  corpusPlan.documents[0].forbiddenFactKeys = ['identity.ssn'];
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_CONFLICT');
 });
 
 test('corpus plan validation reports distribution and manifest drift', async (t) => {
@@ -418,6 +494,106 @@ test('prose checks require high-confidence declared values in document bodies', 
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
 });
 
+test('prose checks require expanded deterministic declared facts in document bodies', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [
+    'identity.legalName',
+    'identity.firstName',
+    'identity.lastName',
+    'identity.middleInitial',
+    'identity.otherLastNames',
+    'address.current.street',
+    'address.current.unit',
+    'address.current.city',
+    'employment.company',
+    'employment.title',
+  ];
+  doc.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Employee: Elena Sofia Marquez, previous family name Ruiz.',
+      'Initial on file: S.',
+      'Address: 418 Cedar Glen Ave #12B',
+      'Sacramento, CA 95819',
+      'Employer: Cedar and Coast Analytics',
+      'Title: Data Operations Analyst',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.deepEqual(truth.declaredFacts.missing, []);
+  assert.ok(truth.declaredFacts.provenPresent.includes('address.current.street'));
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.otherLastNames'));
+});
+
+test('employment start date requires a date variant near start or hire context', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = ['employment.startDate'];
+  doc.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  const docPath = path.join(corpusRoot, doc.path);
+
+  await writeFile(
+    docPath,
+    'Audit export date 6/3/2026. This is unrelated to employment timing.\n',
+  );
+  const missing = await validateElena(root);
+  assertHasCode(missing, 'DOCUMENT_FACT_VALUE_MISSING');
+
+  await writeFile(docPath, 'Hire date: June 3, 2026.\n');
+  const present = await validateElena(root);
+  assertNoCode(present, 'DOCUMENT_FACT_VALUE_MISSING');
+
+  for (const body of [
+    '{"employmentStartDate":"2026-06-03"}\n',
+    'employment:\n  start_date: "2026-06-03"\n',
+    '{"dateOfHire":"2026-06-03"}\n',
+  ]) {
+    await writeFile(docPath, body);
+    const structuredPresent = await validateElena(root);
+    assertNoCode(structuredPresent, 'DOCUMENT_FACT_VALUE_MISSING');
+  }
+
+  await writeFile(docPath, '{"exportedAt":"2026-06-03"}\n');
+  const unrelatedStructuredDate = await validateElena(root);
+  assertHasCode(unrelatedStructuredDate, 'DOCUMENT_FACT_VALUE_MISSING');
+});
+
+test('short name and address values do not match inside longer unrelated tokens', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = ['identity.firstName', 'address.current.city'];
+  doc.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    'Internal identifiers: preelenapost and xsacramentoy. No person or city is named.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+});
+
 test('document prose checks reject forbidden fact values from corpus plans', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -433,6 +609,69 @@ test('document prose checks reject forbidden fact values from corpus plans', asy
 
   const result = await validateElena(root);
   assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+});
+
+test('document prose checks reject default forbidden fact variants', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  doc.expectedUse = 'guardrail';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.defaultForbiddenFactKeys = ['identity.ssn'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    'The forbidden SSN appears in compact form as 000000194.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_FORBIDDEN_FACT_PRESENT' &&
+        issue.pointer === '/defaultForbiddenFactKeys/0',
+    ),
+  );
+});
+
+test('document prose checks apply default forbidden facts and remove declared facts from the effective set', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = ['identity.ssn'];
+  doc.expectedUse = 'extract';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.defaultForbiddenFactKeys = ['identity.ssn', 'employment.workEmail'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current identity note.',
+      'SSN: 000-00-0194.',
+      'Work email copied by mistake: elena.marquez@cedarcoast.example.test.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assert.ok(
+    result.report.corpusTruth.documents[0].declaredFacts.provenPresent.includes(
+      'identity.ssn',
+    ),
+  );
+  assert.ok(
+    result.report.corpusTruth.documents[0].forbiddenFacts.present.includes(
+      'employment.workEmail',
+    ),
+  );
 });
 
 test('document prose checks do not match forbidden numeric facts inside longer ids', async (t) => {
@@ -533,6 +772,37 @@ test('noise leak checks skip facts already covered by forbidden fact checks', as
   assert.equal(countIssueCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT'), 1);
 });
 
+test('noise leak checks skip facts already covered by default forbidden checks', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const noisy = manifest.documents[0];
+  noisy.category = 'noise';
+  noisy.expectedUse = 'ignore';
+  noisy.authority = 'none';
+  noisy.detailTier = 'brief';
+  noisy.factKeys = [];
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.defaultForbiddenFactKeys = ['identity.ssn', 'contact.phone'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, noisy.path),
+    'Unrelated note accidentally contains 000-00-0194.',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assertNoCode(result, 'DOCUMENT_NOISE_FACT_LEAK');
+  assert.equal(countIssueCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT'), 1);
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === noisy.id,
+  );
+  assert.ok(truth.forbiddenFacts.skipped.includes('contact.phone'));
+  assert.ok(!truth.forbiddenFacts.warningOnly.includes('contact.phone'));
+});
+
 test('document prose checks warn for value-like intentionally missing work authorization identifiers', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -559,6 +829,11 @@ test('document prose checks warn for value-like intentionally missing work autho
       (issue) =>
         issue.code === 'DOCUMENT_MISSING_FACT_PRESENT' &&
         issue.level === 'warning',
+    ),
+  );
+  assert.ok(
+    result.report.corpusTruth.documents[0].forbiddenFacts.warningOnly.includes(
+      'workAuthorization.uscisANumber',
     ),
   );
 });
@@ -772,6 +1047,118 @@ test('write-report is limited to single-corpus scope and writes corpus report', 
   );
 });
 
+test('corpus truth report records proven, missing, unsupported, absent, and warning-only checks', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [
+    'identity.legalName',
+    'employment.startDate',
+    'communication.preferredChannels',
+  ];
+  doc.expectedUse = 'extract';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = [
+    'employment.workEmail',
+    'contact.phone',
+  ];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    'Current employee note for Elena Sofia Marquez. Reference date 6/3/2026.\n',
+  );
+
+  const result = await validateElena(root);
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+
+  assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.legalName'));
+  assert.ok(truth.declaredFacts.missing.includes('employment.startDate'));
+  assert.ok(
+    truth.declaredFacts.unsupported.includes('communication.preferredChannels'),
+  );
+  assert.ok(truth.forbiddenFacts.provenAbsent.includes('employment.workEmail'));
+  assert.ok(truth.forbiddenFacts.warningOnly.includes('contact.phone'));
+  assert.ok(
+    result.report.corpusTruth.summary.unsupportedDeclaredFactKeys.some(
+      (entry) =>
+        entry.factKey === 'communication.preferredChannels' && entry.count === 1,
+    ),
+  );
+  assert.equal(result.report.corpusTruth.summary.hardFailures, 1);
+});
+
+test('corpus truth report records invalid forbidden refs separately from skipped checks', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  doc.expectedUse = 'guardrail';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = [
+    'identity.notReal',
+    'workAuthorization.workAuthorizationExpirationDate',
+  ];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+
+  const result = await validateElena(root);
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+
+  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+  assert.ok(truth.forbiddenFacts.invalid.includes('identity.notReal'));
+  assert.ok(
+    truth.forbiddenFacts.skipped.includes(
+      'workAuthorization.workAuthorizationExpirationDate',
+    ),
+  );
+});
+
+test('corpus truth report records effective forbidden facts by source without duplicates', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = ['identity.legalName'];
+  doc.expectedUse = 'extract';
+  doc.freshness = 'current';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.defaultForbiddenFactKeys = ['contact.phone'];
+  corpusPlan.documents[0].forbiddenFactKeys = [
+    'identity.ssn',
+    'contact.phone',
+  ];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current employee note for Elena Sofia Marquez.',
+      'This fixture omits numeric identifiers and leaves the telephone field blank.',
+      'It is long enough to avoid thin-document warnings while testing effective forbidden metadata.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+
+  assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assert.deepEqual(truth.forbiddenFacts.provenAbsent, ['identity.ssn']);
+  assert.deepEqual(truth.forbiddenFacts.warningOnly, ['contact.phone']);
+});
+
 test('validation reports are byte-deterministic across repeated runs', async (t) => {
   const root = await copyRepo(t);
   const args = [
@@ -805,6 +1192,19 @@ test('committed validation report matches a fresh single-corpus report', async (
 
   assert.equal(result.reportPath, null);
   assert.equal(committedReport, `${JSON.stringify(result.report, null, 2)}\n`);
+});
+
+test('committed Nina validation report has corpus truth with no hard failures', async () => {
+  const report = await readJson(
+    path.join(
+      repoRoot,
+      'examples/eval/users/nina-meera-patel/corpora/realistic/validation-report.json',
+    ),
+  );
+
+  assert.equal(report.status, 'pass');
+  assert.equal(report.corpusTruth.summary.documentsChecked, 100);
+  assert.equal(report.corpusTruth.summary.hardFailures, 0);
 });
 
 test('reports every document that declares an intentionally missing fact', async (t) => {

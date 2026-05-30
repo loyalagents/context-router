@@ -10,5 +10,2126 @@
     "errors": 0,
     "warnings": 0
   },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 100,
+      "factsProvenPresent": 283,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 2,
+      "factsProvenAbsent": 0,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 70,
+      "skippedAbsenceChecks": 0,
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": [
+        {
+          "factKey": "employment.company",
+          "count": 1
+        },
+        {
+          "factKey": "identity.legalName",
+          "count": 1
+        }
+      ]
+    },
+    "documents": [
+      {
+        "id": "001",
+        "path": "documents/identity/001-driver-license-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "002",
+        "path": "documents/identity/002-state-id-card-notes.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "003",
+        "path": "documents/identity/003-passport-application-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "004",
+        "path": "documents/identity/004-birth-record-summary.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "005",
+        "path": "documents/identity/005-name-change-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "006",
+        "path": "documents/identity/006-ssn-card-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "007",
+        "path": "documents/identity/007-employee-identity-affidavit.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "008",
+        "path": "documents/identity/008-background-check-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "009",
+        "path": "documents/identity/009-school-transcript-request.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "010",
+        "path": "documents/identity/010-notary-intake-summary.yml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "011",
+        "path": "documents/identity/011-library-card-profile.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "012",
+        "path": "documents/identity/012-health-portal-demographics.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "013",
+        "path": "documents/identity/013-student-loan-profile.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "014",
+        "path": "documents/identity/014-credit-freeze-letter.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "015",
+        "path": "documents/identity/015-citizenship-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "016",
+        "path": "documents/address-contact/016-current-lease-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "017",
+        "path": "documents/address-contact/017-utility-account-header.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "018",
+        "path": "documents/address-contact/018-bank-statement-header.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "019",
+        "path": "documents/address-contact/019-renters-insurance-declarations.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "020",
+        "path": "documents/address-contact/020-usps-address-confirmation.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "021",
+        "path": "documents/address-contact/021-voter-registration-reminder.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "022",
+        "path": "documents/address-contact/022-shipping-profile-export.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "023",
+        "path": "documents/address-contact/023-apartment-maintenance-ticket.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "024",
+        "path": "documents/address-contact/024-campus-alumni-record.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "025",
+        "path": "documents/address-contact/025-personal-crm-export.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "026",
+        "path": "documents/hr-onboarding/026-offer-letter.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "employment.startDate",
+            "employment.title",
+            "employment.workEmail",
+            "identity.firstName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "027",
+        "path": "documents/hr-onboarding/027-offer-acceptance-email.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "employment.company",
+            "employment.startDate",
+            "employment.title",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "028",
+        "path": "documents/hr-onboarding/028-hris-profile-export.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "employment.startDate",
+            "employment.title",
+            "employment.workEmail",
+            "identity.legalName",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "029",
+        "path": "documents/hr-onboarding/029-new-hire-data-sheet.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "employment.startDate",
+            "identity.dateOfBirth",
+            "identity.firstName",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "030",
+        "path": "documents/hr-onboarding/030-i9-section1-prep-checklist.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.dateOfBirth",
+            "identity.legalName",
+            "identity.otherLastNames",
+            "identity.ssn",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "031",
+        "path": "documents/hr-onboarding/031-remote-onboarding-instructions.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "032",
+        "path": "documents/hr-onboarding/032-badge-request.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "employment.title",
+            "identity.firstName",
+            "identity.lastName",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "033",
+        "path": "documents/hr-onboarding/033-laptop-pickup-form.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "034",
+        "path": "documents/hr-onboarding/034-manager-welcome-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "employment.title",
+            "identity.firstName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "035",
+        "path": "documents/hr-onboarding/035-people-ops-profile.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "employment.startDate",
+            "identity.firstName",
+            "identity.lastName",
+            "identity.legalName",
+            "identity.middleInitial",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "036",
+        "path": "documents/hr-onboarding/036-emergency-contact-form-blank.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "037",
+        "path": "documents/hr-onboarding/037-workplace-location-assignment.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "038",
+        "path": "documents/hr-onboarding/038-everify-notice-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "039",
+        "path": "documents/hr-onboarding/039-section2-skip-policy.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "040",
+        "path": "documents/hr-onboarding/040-benefits-eligibility-note.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "employment.workEmail",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "041",
+        "path": "documents/payroll-tax/041-w4-draft-header.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "042",
+        "path": "documents/payroll-tax/042-payroll-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "043",
+        "path": "documents/payroll-tax/043-direct-deposit-redacted.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "044",
+        "path": "documents/payroll-tax/044-state-tax-intake.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "045",
+        "path": "documents/payroll-tax/045-pay-schedule-memo.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "046",
+        "path": "documents/payroll-tax/046-compensation-letter.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "employment.title",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "047",
+        "path": "documents/payroll-tax/047-retirement-enrollment-header.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "048",
+        "path": "documents/payroll-tax/048-health-plan-election-header.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "049",
+        "path": "documents/payroll-tax/049-expense-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.title",
+            "employment.workEmail",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "050",
+        "path": "documents/payroll-tax/050-payroll-address-correction.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.firstName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "051",
+        "path": "documents/work-authorization/051-i9-acceptable-documents-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "052",
+        "path": "documents/work-authorization/052-list-b-driver-license-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "053",
+        "path": "documents/work-authorization/053-list-c-ss-card-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "054",
+        "path": "documents/work-authorization/054-us-passport-card-placeholder.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "055",
+        "path": "documents/work-authorization/055-document-choice-email.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "056",
+        "path": "documents/work-authorization/056-everify-case-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "057",
+        "path": "documents/work-authorization/057-citizenship-attestation-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "058",
+        "path": "documents/work-authorization/058-no-uscis-number-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "059",
+        "path": "documents/work-authorization/059-identity-document-index.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "060",
+        "path": "documents/work-authorization/060-authorization-expiration-note.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "061",
+        "path": "documents/employer-context/061-company-profile.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "062",
+        "path": "documents/employer-context/062-office-address-card.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "employment.company"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "063",
+        "path": "documents/employer-context/063-people-ops-roster.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "064",
+        "path": "documents/employer-context/064-authorized-representative-note.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "065",
+        "path": "documents/employer-context/065-work-location-email.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "066",
+        "path": "documents/employer-context/066-employee-first-day-confirmation.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.startDate",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "067",
+        "path": "documents/employer-context/067-section2-document-review-reminder.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "068",
+        "path": "documents/employer-context/068-remote-verifier-template.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "069",
+        "path": "documents/employer-context/069-hr-policy-excerpt.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "070",
+        "path": "documents/employer-context/070-business-entity-record.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "071",
+        "path": "documents/partial-conflicting/071-old-apartment-bill.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "072",
+        "path": "documents/partial-conflicting/072-old-driver-license-note.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "073",
+        "path": "documents/partial-conflicting/073-former-email-signature.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "074",
+        "path": "documents/partial-conflicting/074-outdated-resume.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "075",
+        "path": "documents/partial-conflicting/075-background-check-invite.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "076",
+        "path": "documents/partial-conflicting/076-recruiting-profile-export.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "employment.title",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "077",
+        "path": "documents/partial-conflicting/077-missing-address-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "078",
+        "path": "documents/partial-conflicting/078-partial-tax-note.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "079",
+        "path": "documents/partial-conflicting/079-blank-contact-card.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "080",
+        "path": "documents/partial-conflicting/080-do-not-use-sample-id.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "081",
+        "path": "documents/noise/081-recipe-notes.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "082",
+        "path": "documents/noise/082-grocery-list.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "083",
+        "path": "documents/noise/083-book-highlights.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "084",
+        "path": "documents/noise/084-workout-plan.yaml",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "085",
+        "path": "documents/noise/085-playlist-export.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "086",
+        "path": "documents/noise/086-product-warranty.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "087",
+        "path": "documents/noise/087-package-tracking.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "088",
+        "path": "documents/noise/088-restaurant-reservation.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "089",
+        "path": "documents/noise/089-newsletter.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "090",
+        "path": "documents/noise/090-travel-itinerary-redacted.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "091",
+        "path": "documents/noise/091-conference-badge.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "092",
+        "path": "documents/noise/092-expense-receipt.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "093",
+        "path": "documents/noise/093-project-kickoff-notes.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "094",
+        "path": "documents/noise/094-code-review-notes.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "095",
+        "path": "documents/noise/095-github-profile-snippet.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "096",
+        "path": "documents/noise/096-training-completion.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "097",
+        "path": "documents/noise/097-blank-template.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "098",
+        "path": "documents/noise/098-phishing-simulation.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "099",
+        "path": "documents/noise/099-redacted-id-image-description.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "100",
+        "path": "documents/hr-onboarding/100-manual-signature-reminder.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [],
+          "invalid": []
+        }
+      }
+    ]
+  },
   "issues": []
 }

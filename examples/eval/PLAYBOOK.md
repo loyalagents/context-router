@@ -105,13 +105,24 @@ pnpm eval:validate --user <userId> --corpus realistic --write-report
 
 Treat `corpus-plan.json` metadata as the intended corpus-truth contract. For
 `extract` and `corroborate` documents, validation hard-fails when declared
-high-confidence facts such as DOB, ZIP, state, or citizenship status are
-missing from the body. If validation reports one of these errors, decide
-explicitly whether the metadata overclaimed or the generated body drifted; for
-generated 100-doc corpora, the default repair is to make the body match the
-plan. Per-document `forbiddenFactKeys[]` checks only run when a corpus plan is
-present, and forbidden values stay plan-owned rather than being copied into
-`manifest.json`.
+deterministic facts such as names, current address parts, DOB, ZIP, state,
+citizenship status, employer/title, or employment start date are missing from
+the body. If validation reports one of these errors, decide explicitly whether
+the metadata overclaimed or the generated body drifted; for generated 100-doc
+corpora, the default repair is to make the body match the plan.
+`defaultForbiddenFactKeys[]` and per-document `forbiddenFactKeys[]` checks only
+run when a corpus plan is present, and forbidden values stay plan-owned rather
+than being copied into `manifest.json`.
+
+Before using a corpus for extraction benchmarking, inspect
+`validation-report.json` -> `corpusTruth`. It records, per document, which
+declared facts were proven present, which declared facts are still unsupported
+by deterministic checks, and which effective forbidden facts were proven
+absent, warning-only, skipped, or invalid. `warningOnly` means an eligible
+conservative pattern scan exists but exact absence cannot be proven; `skipped`
+means no exact or pattern check ran for that document/fact pair. Treat a
+passing report with zero hard failures as the corpus-truth readiness gate for
+the current deterministic layer, not as a backend extraction-quality score.
 
 If only plan metadata changed, regenerate the manifest without any AI calls:
 

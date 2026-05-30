@@ -4,6 +4,7 @@ Draft only. Tax elections and signature are omitted.
 
 Employee's first name and middle initial: Elena S
 Last name: Marquez
+Full legal name: Elena Sofia Marquez
 Address: 418 Cedar Glen Avenue, Apt 12B, Sacramento, CA 95819
 Social Security number: 000-00-0194
 

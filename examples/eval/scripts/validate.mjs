@@ -16,10 +16,13 @@ import {
   classifyFactKey,
   collectFactKeys,
   deriveSeedPreferences,
+  effectiveForbiddenFactKeys,
   getFactValue,
   isHighConfidenceFactKey,
   isFixtureId,
   jsonText,
+  shouldDeriveMissingFactAsForbidden,
+  textContainsDeclaredFactValue,
   textContainsFactValue,
   toPosixPath,
 } from './shared.mjs';
@@ -122,10 +125,12 @@ export async function runValidation({
   }
 
   const summary = buildSummary(ctx);
+  const corpusTruth = buildCorpusTruth(ctx);
   const report = {
     schemaVersion: 1,
     status: summary.errors > 0 ? 'fail' : 'pass',
     summary,
+    corpusTruth,
     issues: ctx.issues,
   };
 
@@ -361,6 +366,9 @@ async function createContext(repoRoot, options) {
       templates: new Set(),
     },
     templates: new Map(),
+    corpusTruth: {
+      documents: [],
+    },
   };
 }
 
@@ -695,6 +703,26 @@ function validateCorpusPlan(ctx, {
     'CORPUS_PLAN_DUPLICATE_CHALLENGE_TAG',
   );
 
+  if (profileFacts) {
+    for (const [factIndex, factKey] of (
+      corpusPlan.defaultForbiddenFactKeys ?? []
+    ).entries()) {
+      const factState = classifyFactKey(profileFacts, factKey);
+      if (factState.kind !== 'leaf') {
+        addIssue(ctx, {
+          code:
+            factState.kind === 'area'
+              ? 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_AREA'
+              : 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_MISSING',
+          file: corpusPlanPath,
+          pointer: `/defaultForbiddenFactKeys/${factIndex}`,
+          message: `Default forbidden factKey ${factKey} must resolve to a profile leaf fact.`,
+          fix: 'Use a concrete profile fact leaf or remove the default forbidden factKey.',
+        });
+      }
+    }
+  }
+
   const documents = corpusPlan.documents ?? [];
   if (corpusPlan.targetDocumentCount !== documents.length) {
     addIssue(ctx, {
@@ -822,7 +850,18 @@ function validateCorpusPlan(ctx, {
         }
       }
 
+      const declaredFactKeys = new Set(doc.factKeys ?? []);
       for (const [factIndex, factKey] of (doc.forbiddenFactKeys ?? []).entries()) {
+        if (declaredFactKeys.has(factKey)) {
+          addIssue(ctx, {
+            code: 'CORPUS_PLAN_FORBIDDEN_FACT_CONFLICT',
+            file: corpusPlanPath,
+            pointer: `${pointer}/forbiddenFactKeys/${factIndex}`,
+            message: `Planned document ${doc.id} lists ${factKey} in both factKeys[] and forbiddenFactKeys[].`,
+            fix: 'Remove the fact from forbiddenFactKeys[] or from factKeys[].',
+          });
+        }
+
         const factState = classifyFactKey(profileFacts, factKey);
         if (factState.kind !== 'leaf') {
           addIssue(ctx, {
@@ -1048,6 +1087,7 @@ async function validateDocuments(ctx, {
         pointer,
         profileFacts,
         planDoc: planned?.doc ?? null,
+        corpusPlan,
         corpusPlanPath,
         planPointer: planned?.pointer ?? null,
       });
@@ -1078,6 +1118,89 @@ function mapPlannedDocuments(corpusPlan) {
   return byRef;
 }
 
+function createCorpusTruthDocument(doc) {
+  return {
+    id: doc.id,
+    path: doc.path,
+    declaredFacts: {
+      provenPresent: [],
+      missing: [],
+      unsupported: [],
+    },
+    forbiddenFacts: {
+      provenAbsent: [],
+      present: [],
+      warningOnly: [],
+      skipped: [],
+      invalid: [],
+    },
+  };
+}
+
+function getEffectiveForbiddenEntries({
+  corpusPlan,
+  manifest,
+  doc,
+  planDoc,
+  corpusPlanPath,
+  manifestPath,
+  planPointer,
+}) {
+  const planSource = corpusPlan ?? {
+    intentionallyMissing: manifest.intentionallyMissing ?? [],
+    defaultForbiddenFactKeys: [],
+  };
+  const effectiveDoc = {
+    ...doc,
+    forbiddenFactKeys: planDoc?.forbiddenFactKeys ?? [],
+  };
+  const effectiveKeys = new Set(effectiveForbiddenFactKeys(planSource, effectiveDoc));
+  const entries = [];
+  const seen = new Set();
+
+  function add({ factKey, file, pointer }) {
+    if (!effectiveKeys.has(factKey) || seen.has(factKey)) return;
+    seen.add(factKey);
+    entries.push({ factKey, file, pointer });
+  }
+
+  if (corpusPlanPath) {
+    for (const [index, factKey] of (
+      corpusPlan?.defaultForbiddenFactKeys ?? []
+    ).entries()) {
+      add({
+        factKey,
+        file: corpusPlanPath,
+        pointer: `/defaultForbiddenFactKeys/${index}`,
+      });
+    }
+  }
+
+  if (planDoc && corpusPlanPath && planPointer) {
+    for (const [index, factKey] of (planDoc.forbiddenFactKeys ?? []).entries()) {
+      add({
+        factKey,
+        file: corpusPlanPath,
+        pointer: `${planPointer}/forbiddenFactKeys/${index}`,
+      });
+    }
+  }
+
+  if (shouldDeriveMissingFactAsForbidden(doc)) {
+    for (const [index, missing] of (
+      planSource.intentionallyMissing ?? []
+    ).entries()) {
+      add({
+        factKey: missing.factKey,
+        file: corpusPlanPath ?? manifestPath,
+        pointer: `/intentionallyMissing/${index}/factKey`,
+      });
+    }
+  }
+
+  return entries;
+}
+
 function validateDocumentProse(ctx, {
   doc,
   body,
@@ -1086,45 +1209,82 @@ function validateDocumentProse(ctx, {
   pointer,
   profileFacts,
   planDoc,
+  corpusPlan,
   corpusPlanPath,
   planPointer,
 }) {
   validateDocumentBodyFormat(ctx, { doc, body, manifestPath, pointer });
 
+  const truth = createCorpusTruthDocument(doc);
+  ctx.corpusTruth.documents.push(truth);
   const checksBodyForDeclaredFacts = ['extract', 'corroborate'].includes(
     doc.expectedUse,
   );
-  const forbiddenFactKeys = new Set(planDoc?.forbiddenFactKeys ?? []);
+  const effectiveForbiddenEntries = getEffectiveForbiddenEntries({
+    corpusPlan,
+    manifest,
+    doc,
+    planDoc,
+    corpusPlanPath,
+    manifestPath,
+    planPointer,
+  });
+  const forbiddenFactKeys = new Set(
+    effectiveForbiddenEntries.map((entry) => entry.factKey),
+  );
 
-  if (checksBodyForDeclaredFacts) {
-    for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
-      if (!isHighConfidenceFactKey(factKey)) continue;
-      const factState = classifyFactKey(profileFacts, factKey);
-      if (factState.kind !== 'leaf' || factState.value == null) continue;
-      if (textContainsFactValue(body, factKey, factState.value)) continue;
-      addIssue(ctx, {
-        code: 'DOCUMENT_FACT_VALUE_MISSING',
-        file: manifestPath,
-        pointer: `${pointer}/factKeys/${factIndex}`,
-        message: `Document ${doc.id} declares ${factKey}, but a high-confidence value variant was not found in the document body.`,
-        fix: 'Add the declared fact value to the document body or remove the factKey.',
-      });
+  for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
+    if (!checksBodyForDeclaredFacts || !isHighConfidenceFactKey(factKey)) {
+      truth.declaredFacts.unsupported.push(factKey);
+      continue;
     }
+
+    const factState = classifyFactKey(profileFacts, factKey);
+    if (factState.kind !== 'leaf' || factState.value == null) continue;
+    if (textContainsDeclaredFactValue(body, factKey, factState.value)) {
+      truth.declaredFacts.provenPresent.push(factKey);
+      continue;
+    }
+
+    truth.declaredFacts.missing.push(factKey);
+    addIssue(ctx, {
+      code: 'DOCUMENT_FACT_VALUE_MISSING',
+      file: manifestPath,
+      pointer: `${pointer}/factKeys/${factIndex}`,
+      message: `Document ${doc.id} declares ${factKey}, but a deterministic value variant was not found in the document body.`,
+      fix: 'Add the declared fact value to the document body or remove the factKey.',
+    });
   }
 
-  if (planDoc && corpusPlanPath && planPointer) {
-    for (const [factIndex, factKey] of (planDoc.forbiddenFactKeys ?? []).entries()) {
-      const factState = classifyFactKey(profileFacts, factKey);
-      if (factState.kind !== 'leaf' || factState.value == null) continue;
-      if (!textContainsFactValue(body, factKey, factState.value)) continue;
+  for (const entry of effectiveForbiddenEntries) {
+    const factState = classifyFactKey(profileFacts, entry.factKey);
+    if (factState.kind !== 'leaf') {
+      truth.forbiddenFacts.invalid.push(entry.factKey);
+      continue;
+    }
+
+    if (factState.value == null) {
+      if (isMissingFactPatternCheckEligible(doc, entry.factKey)) {
+        truth.forbiddenFacts.warningOnly.push(entry.factKey);
+      } else {
+        truth.forbiddenFacts.skipped.push(entry.factKey);
+      }
+      continue;
+    }
+
+    if (textContainsFactValue(body, entry.factKey, factState.value)) {
+      truth.forbiddenFacts.present.push(entry.factKey);
       addIssue(ctx, {
         code: 'DOCUMENT_FORBIDDEN_FACT_PRESENT',
-        file: corpusPlanPath,
-        pointer: `${planPointer}/forbiddenFactKeys/${factIndex}`,
-        message: `Document ${doc.id} contains a value for forbidden fact ${factKey}.`,
-        fix: 'Remove the forbidden value from the document body or remove the fact from forbiddenFactKeys[].',
+        file: entry.file,
+        pointer: entry.pointer,
+        message: `Document ${doc.id} contains a value for forbidden fact ${entry.factKey}.`,
+        fix: 'Remove the forbidden value from the document body or remove the fact from the effective forbidden contract.',
       });
+      continue;
     }
+
+    truth.forbiddenFacts.provenAbsent.push(entry.factKey);
   }
 
   validateNoiseFactLeaks(ctx, {
@@ -1225,13 +1385,20 @@ function containsPhoneLikeText(text) {
   return /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/.test(text);
 }
 
+function hasMissingFactPatternRule(factKey) {
+  return factKey === 'contact.phone' || WORK_AUTH_MISSING_PATTERN_KEYS.has(factKey);
+}
+
+function isMissingFactPatternCheckEligible(doc, factKey) {
+  return (
+    hasMissingFactPatternRule(factKey) &&
+    ['extract', 'corroborate'].includes(doc.expectedUse) &&
+    !['stale', 'mixed'].includes(doc.freshness)
+  );
+}
+
 function checksForMissingFactPattern(doc, factKey, body) {
-  if (
-    !['extract', 'corroborate'].includes(doc.expectedUse) ||
-    ['stale', 'mixed'].includes(doc.freshness)
-  ) {
-    return false;
-  }
+  if (!isMissingFactPatternCheckEligible(doc, factKey)) return false;
   if (factKey === 'contact.phone') return containsPhoneLikeText(body);
   if (WORK_AUTH_MISSING_PATTERN_KEYS.has(factKey)) {
     return containsMissingWorkAuthIdentifierLikeText(body, factKey);
@@ -1929,6 +2096,70 @@ function buildSummary(ctx) {
     errors,
     warnings,
   };
+}
+
+function buildCorpusTruth(ctx) {
+  const documents = ctx.corpusTruth.documents.map((doc) => ({
+    id: doc.id,
+    path: doc.path,
+    declaredFacts: {
+      provenPresent: [...doc.declaredFacts.provenPresent],
+      missing: [...doc.declaredFacts.missing],
+      unsupported: [...doc.declaredFacts.unsupported],
+    },
+    forbiddenFacts: {
+      provenAbsent: [...doc.forbiddenFacts.provenAbsent],
+      present: [...doc.forbiddenFacts.present],
+      warningOnly: [...doc.forbiddenFacts.warningOnly],
+      skipped: [...doc.forbiddenFacts.skipped],
+      invalid: [...doc.forbiddenFacts.invalid],
+    },
+  }));
+
+  const unsupportedDeclaredFactKeys = countFactKeys(
+    documents.flatMap((doc) => doc.declaredFacts.unsupported),
+  );
+
+  const summary = documents.reduce(
+    (totals, doc) => {
+      totals.factsProvenPresent += doc.declaredFacts.provenPresent.length;
+      totals.factsMissing += doc.declaredFacts.missing.length;
+      totals.unsupportedDeclaredFacts += doc.declaredFacts.unsupported.length;
+      totals.factsProvenAbsent += doc.forbiddenFacts.provenAbsent.length;
+      totals.forbiddenFactsPresent += doc.forbiddenFacts.present.length;
+      totals.warningOnlyAbsenceChecks += doc.forbiddenFacts.warningOnly.length;
+      totals.skippedAbsenceChecks += doc.forbiddenFacts.skipped.length;
+      totals.invalidAbsenceChecks += doc.forbiddenFacts.invalid.length;
+      return totals;
+    },
+    {
+      documentsChecked: documents.length,
+      factsProvenPresent: 0,
+      factsMissing: 0,
+      unsupportedDeclaredFacts: 0,
+      factsProvenAbsent: 0,
+      forbiddenFactsPresent: 0,
+      warningOnlyAbsenceChecks: 0,
+      skippedAbsenceChecks: 0,
+      invalidAbsenceChecks: 0,
+      hardFailures: 0,
+      unsupportedDeclaredFactKeys,
+    },
+  );
+  summary.hardFailures = summary.factsMissing + summary.forbiddenFactsPresent;
+
+  return { summary, documents };
+}
+
+function countFactKeys(factKeys) {
+  const counts = new Map();
+  for (const factKey of factKeys) {
+    counts.set(factKey, (counts.get(factKey) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([factKey, count]) => ({ factKey, count }));
 }
 
 function emptySummary() {

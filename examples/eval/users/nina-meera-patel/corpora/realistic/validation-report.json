@@ -10,5 +10,2934 @@
     "errors": 0,
     "warnings": 0
   },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 100,
+      "factsProvenPresent": 294,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 18,
+      "factsProvenAbsent": 299,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 248,
+      "skippedAbsenceChecks": 152,
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": [
+        {
+          "factKey": "address.current.city",
+          "count": 2
+        },
+        {
+          "factKey": "address.current.postalCode",
+          "count": 1
+        },
+        {
+          "factKey": "address.current.state",
+          "count": 2
+        },
+        {
+          "factKey": "address.current.street",
+          "count": 1
+        },
+        {
+          "factKey": "employment.company",
+          "count": 2
+        },
+        {
+          "factKey": "identity.legalName",
+          "count": 9
+        },
+        {
+          "factKey": "identity.otherLastNames",
+          "count": 1
+        }
+      ]
+    },
+    "documents": [
+      {
+        "id": "nina-meera-patel-realistic-001",
+        "path": "documents/identity/001-driver-license-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-002",
+        "path": "documents/identity/002-state-id-renewal-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "identity.middleInitial",
+            "address.current.street",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-003",
+        "path": "documents/identity/003-passport-application-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "contact.email",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-004",
+        "path": "documents/identity/004-birth-record-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-005",
+        "path": "documents/identity/005-name-history-declaration.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.otherLastNames",
+            "identity.middleInitial"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-006",
+        "path": "documents/identity/006-ssn-card-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-007",
+        "path": "documents/identity/007-identity-affidavit.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "identity.otherLastNames",
+            "address.current.city",
+            "address.current.state"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-008",
+        "path": "documents/identity/008-background-check-intake.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-009",
+        "path": "documents/identity/009-transcript-request.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-010",
+        "path": "documents/identity/010-notary-intake.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-011",
+        "path": "documents/identity/011-library-card-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-012",
+        "path": "documents/identity/012-clinic-demographics.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-013",
+        "path": "documents/identity/013-student-loan-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn",
+            "contact.email",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-014",
+        "path": "documents/identity/014-credit-freeze-letter.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-015",
+        "path": "documents/identity/015-citizenship-attestation-note.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-016",
+        "path": "documents/address-contact/016-lease-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-017",
+        "path": "documents/address-contact/017-utility-account.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-018",
+        "path": "documents/address-contact/018-bank-mailing-profile.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-019",
+        "path": "documents/address-contact/019-voter-registration.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-020",
+        "path": "documents/address-contact/020-insurance-contact.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-021",
+        "path": "documents/address-contact/021-package-delivery.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-022",
+        "path": "documents/address-contact/022-mobile-carrier-email-only.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-023",
+        "path": "documents/address-contact/023-apartment-portal.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-024",
+        "path": "documents/address-contact/024-dmv-address-change.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-025",
+        "path": "documents/address-contact/025-emergency-contact-card.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "address.current.city",
+            "address.current.state"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-026",
+        "path": "documents/address-contact/026-mail-forward-confirmation.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-027",
+        "path": "documents/address-contact/027-benefits-mailing-address.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-028",
+        "path": "documents/address-contact/028-parking-permit.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-029",
+        "path": "documents/address-contact/029-credit-union-address.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-030",
+        "path": "documents/address-contact/030-campus-alumni-contact.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.otherLastNames",
+            "contact.email",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-031",
+        "path": "documents/work-authorization/031-i9-section-one-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-032",
+        "path": "documents/work-authorization/032-citizenship-checkbox-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-033",
+        "path": "documents/work-authorization/033-hr-identity-review.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-034",
+        "path": "documents/work-authorization/034-passport-card-inventory.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-035",
+        "path": "documents/work-authorization/035-work-eligibility-email.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-036",
+        "path": "documents/work-authorization/036-employment-authorization-checklist.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-037",
+        "path": "documents/work-authorization/037-self-attestation.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-038",
+        "path": "documents/work-authorization/038-compliance-review-ticket.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus",
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-039",
+        "path": "documents/work-authorization/039-eligibility-training-roster.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-040",
+        "path": "documents/work-authorization/040-document-review-cover-sheet.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-041",
+        "path": "documents/work-authorization/041-policy-acknowledgment.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-042",
+        "path": "documents/work-authorization/042-prehire-audit-summary.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-043",
+        "path": "documents/hr-onboarding/043-offer-letter.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-044",
+        "path": "documents/hr-onboarding/044-onboarding-profile.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-045",
+        "path": "documents/hr-onboarding/045-background-consent-hr.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-046",
+        "path": "documents/hr-onboarding/046-payroll-precheck.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn",
+            "employment.company",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-047",
+        "path": "documents/hr-onboarding/047-equipment-request.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-048",
+        "path": "documents/hr-onboarding/048-welcome-email.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "employment.company",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-049",
+        "path": "documents/hr-onboarding/049-benefits-election-draft.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.startDate",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-050",
+        "path": "documents/hr-onboarding/050-employee-directory-preview.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-051",
+        "path": "documents/hr-onboarding/051-tax-onboarding-note.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "employment.company"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-052",
+        "path": "documents/hr-onboarding/052-security-badge-request.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-053",
+        "path": "documents/hr-onboarding/053-manager-intake.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-054",
+        "path": "documents/hr-onboarding/054-hris-current-record.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-055",
+        "path": "documents/employer-context/055-company-roster-snippet.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-056",
+        "path": "documents/employer-context/056-team-introduction.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-057",
+        "path": "documents/employer-context/057-org-chart-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-058",
+        "path": "documents/employer-context/058-calendar-invite.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.startDate",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-059",
+        "path": "documents/employer-context/059-slack-provisioning.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-060",
+        "path": "documents/employer-context/060-asset-tag-record.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-061",
+        "path": "documents/employer-context/061-department-headcount.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-062",
+        "path": "documents/employer-context/062-account-activation.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-063",
+        "path": "documents/partial-conflicting/063-old-apartment-lease.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-064",
+        "path": "documents/partial-conflicting/064-former-email-note.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-065",
+        "path": "documents/partial-conflicting/065-name-only-conference-badge.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-066",
+        "path": "documents/partial-conflicting/066-old-tax-envelope.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-067",
+        "path": "documents/partial-conflicting/067-draft-profile-with-missing-unit.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-068",
+        "path": "documents/partial-conflicting/068-recruiting-sponsorship-question.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-069",
+        "path": "documents/partial-conflicting/069-payroll-phone-placeholder.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-070",
+        "path": "documents/partial-conflicting/070-partial-ssn-note.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-071",
+        "path": "documents/partial-conflicting/071-wrong-nina-email.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-072",
+        "path": "documents/partial-conflicting/072-old-company-profile.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-073",
+        "path": "documents/partial-conflicting/073-address-forwarding-origin.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-074",
+        "path": "documents/partial-conflicting/074-short-id-card-note.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-075",
+        "path": "documents/partial-conflicting/075-benefits-draft-no-email.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName",
+            "employment.company"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-076",
+        "path": "documents/partial-conflicting/076-city-only-address.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName",
+            "address.current.city",
+            "address.current.state"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-077",
+        "path": "documents/partial-conflicting/077-old-married-name-card.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.otherLastNames"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-078",
+        "path": "documents/partial-conflicting/078-conflicting-start-date.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName",
+            "employment.company"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-079",
+        "path": "documents/partial-conflicting/079-missing-citizenship-checklist.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": [
+            "identity.legalName"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-080",
+        "path": "documents/partial-conflicting/080-personal-email-typo.yaml",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-081",
+        "path": "documents/noise/081-apartment-newsletter.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-082",
+        "path": "documents/noise/082-coffee-shop-receipt.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-083",
+        "path": "documents/noise/083-generic-security-policy.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-084",
+        "path": "documents/noise/084-office-lunch-menu.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-085",
+        "path": "documents/noise/085-weather-alert.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-086",
+        "path": "documents/noise/086-conference-sponsor-flyer.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-087",
+        "path": "documents/noise/087-parking-garage-rules.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-088",
+        "path": "documents/noise/088-software-license-notice.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-089",
+        "path": "documents/noise/089-building-maintenance-notice.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-090",
+        "path": "documents/noise/090-product-survey.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-091",
+        "path": "documents/noise/091-training-catalog.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-092",
+        "path": "documents/noise/092-benefits-vendor-brochure.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-093",
+        "path": "documents/noise/093-travel-packing-checklist.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-094",
+        "path": "documents/noise/094-printer-supply-invoice.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-095",
+        "path": "documents/noise/095-community-event-flyer.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-096",
+        "path": "documents/noise/096-unrelated-resume-template.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-097",
+        "path": "documents/noise/097-sample-i-9-instructions.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-098",
+        "path": "documents/noise/098-vendor-soc-summary.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-099",
+        "path": "documents/noise/099-generic-payroll-faq.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "nina-meera-patel-realistic-100",
+        "path": "documents/noise/100-office-move-announcement.json",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "identity.legalName",
+            "address.current.street"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "invalid": []
+        }
+      }
+    ]
+  },
   "issues": []
 }
