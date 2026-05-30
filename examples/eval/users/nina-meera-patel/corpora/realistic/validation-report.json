@@ -18,9 +18,40 @@
       "unsupportedDeclaredFacts": 18,
       "factsProvenAbsent": 299,
       "forbiddenFactsPresent": 0,
-      "warningOnlyAbsenceChecks": 400,
-      "skippedAbsenceChecks": 0,
-      "hardFailures": 0
+      "warningOnlyAbsenceChecks": 248,
+      "skippedAbsenceChecks": 152,
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": [
+        {
+          "factKey": "address.current.city",
+          "count": 2
+        },
+        {
+          "factKey": "address.current.postalCode",
+          "count": 1
+        },
+        {
+          "factKey": "address.current.state",
+          "count": 2
+        },
+        {
+          "factKey": "address.current.street",
+          "count": 1
+        },
+        {
+          "factKey": "employment.company",
+          "count": 2
+        },
+        {
+          "factKey": "identity.legalName",
+          "count": 9
+        },
+        {
+          "factKey": "identity.otherLastNames",
+          "count": 1
+        }
+      ]
     },
     "documents": [
       {
@@ -52,7 +83,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -84,7 +116,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -112,7 +145,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -140,7 +174,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -168,7 +203,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -194,7 +230,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -224,7 +261,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -256,7 +294,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -283,7 +322,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -315,7 +355,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -346,7 +387,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -373,7 +415,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -402,7 +445,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -433,7 +477,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -461,7 +506,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -492,7 +538,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -523,7 +570,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -554,7 +602,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -586,7 +635,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -617,7 +667,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -648,7 +699,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -674,7 +726,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -705,7 +758,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -736,7 +790,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -764,7 +819,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -795,7 +851,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -826,7 +883,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -855,7 +913,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -886,7 +945,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -916,7 +976,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -949,7 +1010,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -976,7 +1038,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1004,7 +1067,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1031,7 +1095,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1058,7 +1123,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1085,7 +1151,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1113,7 +1180,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1141,7 +1209,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1169,7 +1238,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1196,7 +1266,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1223,7 +1294,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1251,7 +1323,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1280,7 +1353,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1309,7 +1383,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1337,7 +1412,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1365,7 +1441,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1393,7 +1470,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1420,7 +1498,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1448,7 +1527,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1476,7 +1556,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1508,7 +1589,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1537,7 +1619,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1565,7 +1648,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1600,7 +1684,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1628,7 +1713,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1656,7 +1742,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1684,7 +1771,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1712,7 +1800,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1739,7 +1828,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1767,7 +1857,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1796,7 +1887,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1823,7 +1915,8 @@
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1841,13 +1934,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1865,13 +1959,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1891,13 +1986,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1915,13 +2011,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1945,13 +2042,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1969,13 +2067,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -1995,13 +2094,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2021,13 +2121,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2045,13 +2146,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2069,13 +2171,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2093,13 +2196,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2119,13 +2223,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2146,13 +2251,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2174,13 +2280,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2200,13 +2307,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2227,13 +2335,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2253,13 +2362,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2277,13 +2387,14 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2303,13 +2414,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2329,13 +2441,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2355,13 +2468,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2381,13 +2495,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2407,13 +2522,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2433,13 +2549,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2459,13 +2576,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2485,13 +2603,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2511,13 +2630,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2537,13 +2657,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2563,13 +2684,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2589,13 +2711,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2615,13 +2738,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2641,13 +2765,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2667,13 +2792,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2693,13 +2819,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2719,13 +2846,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2745,13 +2873,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2771,13 +2900,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       },
       {
@@ -2797,13 +2927,14 @@
             "address.current.street"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone",
             "workAuthorization.uscisANumber",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
           ],
-          "skipped": []
+          "invalid": []
         }
       }
     ]

@@ -3,6 +3,8 @@
 ## Implemented
 
 - Added optional top-level `defaultForbiddenFactKeys[]` to `corpus-plan.schema.json`.
+- Added schema duplicate rejection for top-level and document-level forbidden
+  fact arrays.
 - Kept default forbidden facts plan-owned; `manifest.json` projection still omits default and document-level forbidden metadata.
 - Added default forbidden reference validation:
   - `CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_AREA`
@@ -46,5 +48,6 @@ All commands passed after fixture repairs from the positive-check batch.
 
 ## Remaining Gaps
 
-- Null forbidden facts remain warning-only or skipped unless a conservative pattern check exists.
+- Null forbidden facts remain warning-only only when a conservative pattern
+  scan is eligible for that document; otherwise they are skipped.
 - Stale/conflicting documents still need a separate cue contract.

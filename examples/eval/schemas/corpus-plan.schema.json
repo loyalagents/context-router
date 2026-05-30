@@ -67,6 +67,7 @@
     },
     "defaultForbiddenFactKeys": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "type": "string"
       }
@@ -152,6 +153,7 @@
           },
           "forbiddenFactKeys": {
             "type": "array",
+            "uniqueItems": true,
             "items": {
               "type": "string"
             }

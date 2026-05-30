@@ -11,6 +11,7 @@
   - forbidden facts present
   - warning-only forbidden checks
   - skipped forbidden checks
+  - invalid forbidden refs
 - Added summary counts:
   - documents checked
   - facts proven present
@@ -20,6 +21,8 @@
   - forbidden facts present
   - warning-only absence checks
   - skipped absence checks
+  - invalid absence checks
+  - unsupported declared fact keys with counts
   - hard failures
 - Kept `issues[]` behavior unchanged for pass/fail.
 - Updated `PLAYBOOK.md` to tell users to inspect `corpusTruth` before using a corpus for extraction benchmarking.
@@ -33,11 +36,15 @@ Nina focused validation passes with zero hard failures. The report now shows:
 - 294 facts proven present
 - 299 effective forbidden facts proven absent
 - 18 unsupported declared facts
+- 248 warning-only absence checks
+- 152 skipped absence checks
 - 0 hard failures
 
 ## Tests
 
-- Added tests for corpus-truth report records covering proven present, missing, unsupported, proven absent, warning-only checks, and deterministic report output.
+- Added tests for corpus-truth report records covering proven present, missing,
+  unsupported, proven absent, warning-only checks, skipped checks, invalid refs,
+  unsupported summary counts, and deterministic report output.
 
 ## Verification
 

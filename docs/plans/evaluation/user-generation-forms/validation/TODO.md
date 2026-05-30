@@ -40,7 +40,8 @@ Current validation is useful, but it is not yet a full corpus-truth oracle.
 - file-type checks for planned/generated `json`, `yaml`, and `txt` documents
 - `validation-report.json` `corpusTruth` summaries showing facts proven
   present, missing, unsupported, proven absent, present, warning-only, or
-  skipped per document
+  skipped per document, with invalid forbidden refs separated from benign
+  skipped checks
 - scenario snapshot existence and filled-form snapshot schema
 
 `pnpm eval:run` is separate from validation. It validates a scenario, hydrates
@@ -72,7 +73,8 @@ Implemented in `default-forbidden-facts-0`,
 `positive-fact-expansion-0`, and `corpus-truth-report-0`:
 
 - `defaultForbiddenFactKeys[]` is schema-valid in `corpus-plan.json`,
-  validated against profile leaf facts, and kept out of `manifest.json`
+  duplicate-checked, validated against profile leaf facts, and kept out of
+  `manifest.json`
 - each document's effective forbidden set combines top-level defaults,
   document-level forbidden facts, and applicable intentionally missing facts,
   then removes facts declared by that document's `factKeys[]`
@@ -84,7 +86,8 @@ Implemented in `default-forbidden-facts-0`,
 - common deterministic variants are supported for street suffixes, unit labels,
   employer `&`/`and`, and structured start-date labels
 - `validation-report.json` includes `corpusTruth` with per-document contain
-  and does-not-contain validation status
+  and does-not-contain validation status, plus unsupported fact-key counts in
+  the summary
 
 Known remaining gaps:
 

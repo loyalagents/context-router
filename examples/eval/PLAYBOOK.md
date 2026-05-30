@@ -118,9 +118,11 @@ Before using a corpus for extraction benchmarking, inspect
 `validation-report.json` -> `corpusTruth`. It records, per document, which
 declared facts were proven present, which declared facts are still unsupported
 by deterministic checks, and which effective forbidden facts were proven
-absent, warning-only, or skipped. Treat a passing report with zero hard
-failures as the corpus-truth readiness gate for the current deterministic
-layer, not as a backend extraction-quality score.
+absent, warning-only, skipped, or invalid. `warningOnly` means an eligible
+conservative pattern scan exists but exact absence cannot be proven; `skipped`
+means no exact or pattern check ran for that document/fact pair. Treat a
+passing report with zero hard failures as the corpus-truth readiness gate for
+the current deterministic layer, not as a backend extraction-quality score.
 
 If only plan metadata changed, regenerate the manifest without any AI calls:
 

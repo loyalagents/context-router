@@ -20,7 +20,18 @@
       "forbiddenFactsPresent": 0,
       "warningOnlyAbsenceChecks": 70,
       "skippedAbsenceChecks": 0,
-      "hardFailures": 0
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": [
+        {
+          "factKey": "employment.company",
+          "count": 1
+        },
+        {
+          "factKey": "identity.legalName",
+          "count": 1
+        }
+      ]
     },
     "documents": [
       {
@@ -45,7 +56,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -70,7 +82,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -97,7 +110,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -118,7 +132,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -138,7 +153,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -158,7 +174,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -179,7 +196,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -206,7 +224,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -228,7 +247,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -249,7 +269,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -274,7 +295,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -300,7 +322,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -325,7 +348,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -349,7 +373,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -369,7 +394,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -394,7 +420,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -419,7 +446,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -443,7 +471,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -468,7 +497,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -492,7 +522,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -516,7 +547,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -539,7 +571,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -563,7 +596,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -588,7 +622,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -613,7 +648,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -636,7 +672,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -659,7 +696,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -683,7 +721,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -711,7 +750,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -739,7 +779,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -756,7 +797,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -779,7 +821,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -799,7 +842,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -820,7 +864,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -845,7 +890,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -864,7 +910,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -884,7 +931,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -904,7 +952,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -919,7 +968,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -940,7 +990,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -965,7 +1016,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -991,7 +1043,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1011,7 +1064,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1035,7 +1089,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1055,7 +1110,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1076,7 +1132,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1096,7 +1153,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1117,7 +1175,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1138,7 +1197,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1162,7 +1222,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1181,7 +1242,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1206,7 +1268,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1226,7 +1289,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1245,7 +1309,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1264,7 +1329,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1284,7 +1350,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1304,7 +1371,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1323,7 +1391,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1342,7 +1411,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1359,7 +1429,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1378,7 +1449,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1395,7 +1467,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1414,7 +1487,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1431,7 +1505,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1451,7 +1526,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1471,7 +1547,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1486,7 +1563,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1501,7 +1579,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1518,7 +1597,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1537,7 +1617,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1554,7 +1635,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1569,7 +1651,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1584,7 +1667,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1601,7 +1685,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1621,7 +1706,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1642,7 +1728,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1661,7 +1748,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1680,7 +1768,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1700,7 +1789,8 @@
           "warningOnly": [
             "contact.phone"
           ],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1715,7 +1805,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1730,7 +1821,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1745,7 +1837,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1760,7 +1853,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1775,7 +1869,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1790,7 +1885,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1805,7 +1901,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1820,7 +1917,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1835,7 +1933,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1850,7 +1949,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1865,7 +1965,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1880,7 +1981,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1895,7 +1997,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1910,7 +2013,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1925,7 +2029,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1940,7 +2045,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1955,7 +2061,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1970,7 +2077,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -1985,7 +2093,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -2000,7 +2109,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       },
       {
@@ -2015,7 +2125,8 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [],
-          "skipped": []
+          "skipped": [],
+          "invalid": []
         }
       }
     ]

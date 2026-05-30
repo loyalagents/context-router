@@ -1132,6 +1132,7 @@ function createCorpusTruthDocument(doc) {
       present: [],
       warningOnly: [],
       skipped: [],
+      invalid: [],
     },
   };
 }
@@ -1258,12 +1259,12 @@ function validateDocumentProse(ctx, {
   for (const entry of effectiveForbiddenEntries) {
     const factState = classifyFactKey(profileFacts, entry.factKey);
     if (factState.kind !== 'leaf') {
-      truth.forbiddenFacts.skipped.push(entry.factKey);
+      truth.forbiddenFacts.invalid.push(entry.factKey);
       continue;
     }
 
     if (factState.value == null) {
-      if (hasMissingFactPatternRule(entry.factKey)) {
+      if (isMissingFactPatternCheckEligible(doc, entry.factKey)) {
         truth.forbiddenFacts.warningOnly.push(entry.factKey);
       } else {
         truth.forbiddenFacts.skipped.push(entry.factKey);
@@ -1388,13 +1389,16 @@ function hasMissingFactPatternRule(factKey) {
   return factKey === 'contact.phone' || WORK_AUTH_MISSING_PATTERN_KEYS.has(factKey);
 }
 
+function isMissingFactPatternCheckEligible(doc, factKey) {
+  return (
+    hasMissingFactPatternRule(factKey) &&
+    ['extract', 'corroborate'].includes(doc.expectedUse) &&
+    !['stale', 'mixed'].includes(doc.freshness)
+  );
+}
+
 function checksForMissingFactPattern(doc, factKey, body) {
-  if (
-    !['extract', 'corroborate'].includes(doc.expectedUse) ||
-    ['stale', 'mixed'].includes(doc.freshness)
-  ) {
-    return false;
-  }
+  if (!isMissingFactPatternCheckEligible(doc, factKey)) return false;
   if (factKey === 'contact.phone') return containsPhoneLikeText(body);
   if (WORK_AUTH_MISSING_PATTERN_KEYS.has(factKey)) {
     return containsMissingWorkAuthIdentifierLikeText(body, factKey);
@@ -2108,8 +2112,13 @@ function buildCorpusTruth(ctx) {
       present: [...doc.forbiddenFacts.present],
       warningOnly: [...doc.forbiddenFacts.warningOnly],
       skipped: [...doc.forbiddenFacts.skipped],
+      invalid: [...doc.forbiddenFacts.invalid],
     },
   }));
+
+  const unsupportedDeclaredFactKeys = countFactKeys(
+    documents.flatMap((doc) => doc.declaredFacts.unsupported),
+  );
 
   const summary = documents.reduce(
     (totals, doc) => {
@@ -2120,6 +2129,7 @@ function buildCorpusTruth(ctx) {
       totals.forbiddenFactsPresent += doc.forbiddenFacts.present.length;
       totals.warningOnlyAbsenceChecks += doc.forbiddenFacts.warningOnly.length;
       totals.skippedAbsenceChecks += doc.forbiddenFacts.skipped.length;
+      totals.invalidAbsenceChecks += doc.forbiddenFacts.invalid.length;
       return totals;
     },
     {
@@ -2131,12 +2141,25 @@ function buildCorpusTruth(ctx) {
       forbiddenFactsPresent: 0,
       warningOnlyAbsenceChecks: 0,
       skippedAbsenceChecks: 0,
+      invalidAbsenceChecks: 0,
       hardFailures: 0,
+      unsupportedDeclaredFactKeys,
     },
   );
   summary.hardFailures = summary.factsMissing + summary.forbiddenFactsPresent;
 
   return { summary, documents };
+}
+
+function countFactKeys(factKeys) {
+  const counts = new Map();
+  for (const factKey of factKeys) {
+    counts.set(factKey, (counts.get(factKey) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([factKey, count]) => ({ factKey, count }));
 }
 
 function emptySummary() {
