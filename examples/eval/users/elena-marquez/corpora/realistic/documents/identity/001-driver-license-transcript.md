@@ -7,6 +7,7 @@ Confidence: high for typed labels, medium for OCR box ordering
 ```
 CALIFORNIA DRIVER LICENSE - OCR WORKING COPY
 DL CLASS: C                         ENDORSEMENTS: NONE
+FULL NAME: Elena Sofia Marquez
 LAST NAME: Marquez
 FIRST NAME: Elena
 MIDDLE NAME: Sofia

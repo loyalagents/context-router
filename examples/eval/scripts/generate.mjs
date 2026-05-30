@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import {
+  effectiveForbiddenFactKeys,
   getFactValue,
   isFixtureId,
   jsonText,
@@ -270,8 +271,9 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
   for (const factKey of doc.factKeys ?? []) {
     setNestedValue(profileSlice, factKey, getFactValue(profile.facts ?? {}, factKey));
   }
+  const forbiddenFactKeys = effectiveForbiddenFactKeys(corpusPlan, doc);
   const forbiddenProfileSlice = {};
-  for (const factKey of doc.forbiddenFactKeys ?? []) {
+  for (const factKey of forbiddenFactKeys) {
     const value = getFactValue(profile.facts ?? {}, factKey);
     if (value != null) setNestedValue(forbiddenProfileSlice, factKey, value);
   }
@@ -296,7 +298,7 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     JSON.stringify(profileSlice, null, 2),
     '',
     'Forbidden fact keys:',
-    JSON.stringify(doc.forbiddenFactKeys ?? [], null, 2),
+    JSON.stringify(forbiddenFactKeys, null, 2),
     '',
     'Forbidden profile values:',
     JSON.stringify(forbiddenProfileSlice, null, 2),

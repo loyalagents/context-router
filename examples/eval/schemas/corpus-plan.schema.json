@@ -65,6 +65,12 @@
         "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
       }
     },
+    "defaultForbiddenFactKeys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "intentionallyMissing": {
       "type": "array",
       "items": {

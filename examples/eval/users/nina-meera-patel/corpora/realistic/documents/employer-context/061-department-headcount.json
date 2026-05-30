@@ -3,5 +3,5 @@
   "sourceType": "employer-context",
   "expectedUse": "corroborate",
   "freshness": "current",
-  "recordText": "{\n  \"company\": \"Hill Country Data Cooperative\",\n  \"plannedHire\": \"Nina Meera Patel\",\n  \"role\": \"Data Quality Analyst\",\n  \"effectiveDate\": \"2026-07-06\",\n  \"confidence\": \"approved offer\"\n}"
+  "recordText": "{\n  \"company\": \"Hill Country Data Cooperative\",\n  \"plannedHire\": \"Nina Meera Patel\",\n  \"role\": \"Data Quality Analyst\",\n  \"employmentStartDate\": \"2026-07-06\",\n  \"confidence\": \"approved offer\"\n}"
 }

@@ -27,15 +27,20 @@ Current validation is useful, but it is not yet a full corpus-truth oracle.
   seed preferences or at least one document `factKeys[]` entry
 - intentional missingness metadata: intentionally missing facts must be null,
   mapped by a listed form, and absent from every document `factKeys[]`
-- exact/variant document-body checks for declared high-confidence fact values,
-  including email, work email, SSN, USCIS/A-number, date of birth, ZIP, state,
-  and citizenship status
-- plan-owned `documents[].forbiddenFactKeys[]` references and body-level
-  absence checks for non-null forbidden facts
+- exact/variant document-body checks for declared deterministic fact values,
+  including email, work email, SSN, USCIS/A-number, legal name, name
+  components, current address parts, date of birth, ZIP, state, employer,
+  title, employment start date, and citizenship status
+- plan-owned `defaultForbiddenFactKeys[]` and
+  `documents[].forbiddenFactKeys[]` references plus body-level absence checks
+  for non-null effective forbidden facts
 - warning-level pattern checks for intentionally missing phone and
   work-authorization identifiers in current extract/corroborate documents
 - high-confidence current identifier leak checks for noise/ignored documents
 - file-type checks for planned/generated `json`, `yaml`, and `txt` documents
+- `validation-report.json` `corpusTruth` summaries showing facts proven
+  present, missing, unsupported, proven absent, present, warning-only, or
+  skipped per document
 - scenario snapshot existence and filled-form snapshot schema
 
 `pnpm eval:run` is separate from validation. It validates a scenario, hydrates
@@ -63,16 +68,33 @@ Implemented in `first-validation-update-0`:
   high-confidence current identifiers such as legal name, personal/work email,
   SSN, USCIS/A-number, or current street address
 
+Implemented in `default-forbidden-facts-0`,
+`positive-fact-expansion-0`, and `corpus-truth-report-0`:
+
+- `defaultForbiddenFactKeys[]` is schema-valid in `corpus-plan.json`,
+  validated against profile leaf facts, and kept out of `manifest.json`
+- each document's effective forbidden set combines top-level defaults,
+  document-level forbidden facts, and applicable intentionally missing facts,
+  then removes facts declared by that document's `factKeys[]`
+- document-level forbidden facts that conflict with the same document's
+  declared `factKeys[]` are hard errors
+- positive body checks now cover legal name, first/last/middle initial,
+  other last names, current street/unit/city, employer, title, and employment
+  start date with nearby start/hire cues
+- common deterministic variants are supported for street suffixes, unit labels,
+  employer `&`/`and`, and structured start-date labels
+- `validation-report.json` includes `corpusTruth` with per-document contain
+  and does-not-contain validation status
+
 Known remaining gaps:
 
-- most declared facts in `documents[].factKeys[]` are trusted as metadata and
-  are not checked in document text
-- only a high-confidence exact/variant subset is body-checked today
-- common forbidden-fact baselines are repeated per document; there is no
-  corpus-level `defaultForbiddenFactKeys[]` or equivalent effective-default
-  layer yet
-- intentionally missing facts are checked against metadata, but most are not
-  checked against every document body
+- some declared facts in `documents[].factKeys[]` remain unsupported by
+  deterministic text checks and are reported as unsupported in `corpusTruth`
+- deterministic checks are still exact/variant-based, not fuzzy semantic
+  matching
+- intentionally missing facts are translated into effective forbidden checks
+  for current authoritative documents, but null/pattern-only absence remains
+  warning-level
 - noise documents are scanned for first-wave high-confidence identifiers, but
   not yet with fuzzy name/address matching
 - stale, conflicting, partial, and guardrail documents do not yet have a strong
@@ -126,26 +148,29 @@ Implemented exact or variant-based checks:
 
 - `contact.email`
 - `employment.workEmail`
+- `employment.company`
+- `employment.title`
+- `employment.startDate`
 - `identity.ssn`
-- `workAuthorization.uscisANumber`
-- `identity.dateOfBirth`
-- `address.current.postalCode`
-- `address.current.state`
-- `workAuthorization.citizenshipStatus`
-
-Next checks after calibration:
-
 - `identity.legalName`
 - `identity.firstName`
 - `identity.lastName`
 - `identity.middleInitial`
 - `identity.otherLastNames`
+- `workAuthorization.uscisANumber`
+- `identity.dateOfBirth`
 - `address.current.street`
 - `address.current.unit`
 - `address.current.city`
-- `employment.company`
-- `employment.title`
-- `employment.startDate`
+- `address.current.postalCode`
+- `address.current.state`
+- `workAuthorization.citizenshipStatus`
+
+Still unsupported or future candidates:
+
+- facts not listed above, as surfaced in `validation-report.json`
+  `corpusTruth.documents[].declaredFacts.unsupported`
+- fuzzy name/address checks after false positives are understood
 
 Implemented variant handling:
 
@@ -153,11 +178,10 @@ Implemented variant handling:
 - USCIS/A-number with bare digits, `A` prefix, and `A-` prefix
 - dates as ISO, U.S. slash dates, and long dates
 - state full name vs postal abbreviation when profile data supports it
-
-Variant handling still to add:
-
-- addresses with unit on the same line or separate line
-- common street abbreviations only after false positives are understood
+- common street suffix abbreviations
+- unit variants such as `Apt`, `Apartment`, `Unit`, and `#`
+- employer `&`/`and` variants
+- employment start dates only when a date variant appears near start/hire cues
 
 ## Negative Fact Checks
 
@@ -179,16 +203,18 @@ Implemented:
   - SSN
   - USCIS/A-number
   - current street address
-- scan every document against its own non-null `forbiddenFactKeys[]` values
+- scan every document against its effective non-null forbidden facts:
+  - top-level `defaultForbiddenFactKeys[]`
+  - document-level `forbiddenFactKeys[]`
+  - applicable `intentionallyMissing[].factKey`
+  - minus the document's declared `factKeys[]`
 
 Remaining:
 
-- add a corpus-level/default forbidden-fact mechanism so generated plans do not
-  repeat the same baseline exclusions on every document
-- corpus-level intentionally missing facts should be translated into default
-  forbidden checks for current authoritative documents
 - stale/conflicting documents should be allowed to contain stale values only
   when the plan explicitly says so
+- fuzzy or semantic absence checks for names and addresses should remain future
+  work until they can be calibrated without false positives
 
 ## Stale And Conflicting Documents
 
@@ -240,14 +266,11 @@ Implemented:
 6. Update the Nina 100-document `corpus-plan.json` with explicit forbidden
    facts.
 7. Run focused validation and refresh the Nina validation report.
-
-Next:
-
-1. Add corpus-level/default forbidden facts to reduce repeated per-document
+8. Add corpus-level/default forbidden facts to reduce repeated per-document
    exclusions.
-2. Translate corpus-level intentionally missing facts into default forbidden
+9. Translate corpus-level intentionally missing facts into default forbidden
    checks for current authoritative documents.
-3. Expand positive body checks for declared `factKeys[]`, starting with:
+10. Expand positive body checks for declared `factKeys[]`, including:
    - `identity.legalName`
    - `identity.firstName`
    - `identity.lastName`
@@ -259,15 +282,27 @@ Next:
    - `employment.company`
    - `employment.title`
    - `employment.startDate`
-4. Add calibrated name/address variant matching so positive and negative checks
+11. Add calibrated deterministic name/address variant matching where reliable:
+    - full legal-name phrase matching
+    - token-boundary checks for short name components
+    - common street suffix variants
+    - unit label variants
+12. Add a focused corpus-truth report view that shows, per document, which facts
+    were proven present, which forbidden facts were checked absent, and which
+    checks remain warning-only or unsupported.
+
+Next:
+
+1. Add calibrated fuzzy name/address matching so positive and negative checks
    can handle realistic document wording:
    - full name vs component names
    - address unit on same line or separate line
    - common street abbreviations
    - city/state/ZIP line variations
-5. Add a focused corpus-truth report view that shows, per document, which facts
-   were proven present, which forbidden facts were checked absent, and which
-   checks remain warning-only or unsupported.
+2. Harden stale/conflicting cue validation without blocking legitimate guardrail
+   documents.
+3. Add extraction-specific expected fact snapshots once document corpus truth is
+   stable.
 
 ## Helpful For Future Extraction Benchmarks
 

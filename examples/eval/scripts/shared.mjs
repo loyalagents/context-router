@@ -108,7 +108,12 @@ export function toPosixPath(value) {
 }
 
 export function factValueVariants(factKey, value) {
-  if (value == null || isPlainObject(value) || Array.isArray(value)) return [];
+  if (Array.isArray(value)) {
+    return [
+      ...new Set(value.flatMap((entry) => factValueVariants(factKey, entry))),
+    ];
+  }
+  if (value == null || isPlainObject(value)) return [];
   const raw = String(value).trim();
   if (!raw) return [];
 
@@ -145,6 +150,24 @@ export function factValueVariants(factKey, value) {
     }
   }
 
+  if (factKey === 'address.current.street') {
+    for (const variant of streetSuffixVariants(raw)) {
+      variants.add(variant);
+    }
+  }
+
+  if (factKey === 'address.current.unit') {
+    for (const variant of unitVariants(raw)) {
+      variants.add(variant);
+    }
+  }
+
+  if (factKey === 'employment.company') {
+    for (const variant of ampersandAndVariants(raw)) {
+      variants.add(variant);
+    }
+  }
+
   return [...variants];
 }
 
@@ -153,12 +176,35 @@ export function isHighConfidenceFactKey(factKey) {
     factKey === 'contact.email' ||
     factKey === 'employment.workEmail' ||
     factKey === 'identity.ssn' ||
+    factKey === 'identity.legalName' ||
+    factKey === 'identity.firstName' ||
+    factKey === 'identity.lastName' ||
+    factKey === 'identity.middleInitial' ||
+    factKey === 'identity.otherLastNames' ||
     factKey === 'identity.dateOfBirth' ||
+    factKey === 'address.current.street' ||
+    factKey === 'address.current.unit' ||
+    factKey === 'address.current.city' ||
     factKey === 'address.current.postalCode' ||
     factKey === 'address.current.state' ||
+    factKey === 'employment.company' ||
+    factKey === 'employment.title' ||
+    factKey === 'employment.startDate' ||
     factKey === 'workAuthorization.uscisANumber' ||
     factKey === 'workAuthorization.citizenshipStatus'
   );
+}
+
+export function textContainsDeclaredFactValue(text, factKey, value) {
+  if (factKey === 'identity.otherLastNames' && Array.isArray(value)) {
+    return value.every((entry) => textContainsFactValue(text, factKey, entry));
+  }
+
+  if (factKey === 'employment.startDate') {
+    return textContainsEmploymentStartDate(text, value);
+  }
+
+  return textContainsFactValue(text, factKey, value);
 }
 
 export function textContainsFactValue(text, factKey, value) {
@@ -173,6 +219,36 @@ export function textContainsFactValue(text, factKey, value) {
     }
     return normalizedText.includes(normalizedVariant);
   });
+}
+
+export function shouldDeriveMissingFactAsForbidden(doc) {
+  return (
+    doc.category !== 'noise' &&
+    doc.freshness === 'current' &&
+    ['extract', 'corroborate'].includes(doc.expectedUse)
+  );
+}
+
+export function effectiveForbiddenFactKeys(corpusPlan, doc) {
+  const declaredFacts = new Set(doc.factKeys ?? []);
+  const effective = [];
+  const seen = new Set();
+
+  function add(factKey) {
+    if (declaredFacts.has(factKey) || seen.has(factKey)) return;
+    seen.add(factKey);
+    effective.push(factKey);
+  }
+
+  for (const factKey of corpusPlan?.defaultForbiddenFactKeys ?? []) add(factKey);
+  for (const factKey of doc.forbiddenFactKeys ?? []) add(factKey);
+  if (shouldDeriveMissingFactAsForbidden(doc)) {
+    for (const missing of corpusPlan?.intentionallyMissing ?? []) {
+      if (typeof missing.factKey === 'string') add(missing.factKey);
+    }
+  }
+
+  return effective;
 }
 
 function normalizeSearchText(value) {
@@ -230,6 +306,58 @@ function citizenshipStatusVariants(raw) {
   return [];
 }
 
+function streetSuffixVariants(raw) {
+  const variants = [];
+  for (const [full, short] of STREET_SUFFIX_PAIRS) {
+    variants.push(replaceStreetSuffix(raw, full, short));
+    variants.push(replaceStreetSuffix(raw, short, full));
+    variants.push(replaceStreetSuffix(raw, `${short}.`, full));
+  }
+  return variants.filter(Boolean);
+}
+
+function replaceStreetSuffix(raw, from, to) {
+  const pattern = new RegExp(`\\b${escapeRegex(from)}\\.?$`, 'i');
+  if (!pattern.test(raw)) return null;
+  return raw.replace(pattern, to);
+}
+
+function unitVariants(raw) {
+  const match = raw.match(/^(?:apt\.?|apartment|unit|#)\s*([a-z0-9][a-z0-9-]*)$/i);
+  if (!match) return [];
+  const unit = match[1].toUpperCase();
+  return [`Apt ${unit}`, `Apartment ${unit}`, `Unit ${unit}`, `#${unit}`];
+}
+
+function ampersandAndVariants(raw) {
+  const variants = [];
+  if (/\s&\s/.test(raw)) variants.push(raw.replace(/\s&\s/g, ' and '));
+  if (/\sand\s/i.test(raw)) variants.push(raw.replace(/\sand\s/gi, ' & '));
+  return variants;
+}
+
+function textContainsEmploymentStartDate(text, value) {
+  const normalizedText = normalizeSearchText(text);
+  for (const variant of factValueVariants('employment.startDate', value)) {
+    const normalizedVariant = normalizeSearchText(variant);
+    if (!normalizedVariant) continue;
+
+    let index = normalizedText.indexOf(normalizedVariant);
+    while (index !== -1) {
+      const windowStart = Math.max(0, index - 90);
+      const windowEnd = Math.min(
+        normalizedText.length,
+        index + normalizedVariant.length + 90,
+      );
+      const window = normalizedText.slice(windowStart, windowEnd);
+      if (EMPLOYMENT_START_CUES.some((cue) => window.includes(cue))) return true;
+      index = normalizedText.indexOf(normalizedVariant, index + normalizedVariant.length);
+    }
+  }
+
+  return false;
+}
+
 function stateNameOrAbbreviation(raw) {
   const normalized = normalizeSearchText(raw).replace(/\./g, '');
   if (normalized.length === 2) {
@@ -243,6 +371,13 @@ function stateNameOrAbbreviation(raw) {
 function requiresTokenBoundary(factKey, normalizedVariant) {
   return (
     factKey === 'identity.ssn' ||
+    factKey === 'identity.firstName' ||
+    factKey === 'identity.lastName' ||
+    factKey === 'identity.middleInitial' ||
+    factKey === 'identity.otherLastNames' ||
+    factKey === 'address.current.city' ||
+    factKey === 'address.current.unit' ||
+    factKey === 'employment.title' ||
     factKey === 'workAuthorization.uscisANumber' ||
     (factKey === 'address.current.state' && normalizedVariant.length === 2)
   );
@@ -272,6 +407,33 @@ const DATE_FACT_KEYS = new Set([
   'employment.startDate',
   'workAuthorization.workAuthorizationExpirationDate',
 ]);
+
+const STREET_SUFFIX_PAIRS = [
+  ['Avenue', 'Ave'],
+  ['Street', 'St'],
+  ['Road', 'Rd'],
+  ['Lane', 'Ln'],
+  ['Drive', 'Dr'],
+  ['Boulevard', 'Blvd'],
+  ['Court', 'Ct'],
+  ['Place', 'Pl'],
+  ['Terrace', 'Ter'],
+];
+
+const EMPLOYMENT_START_CUES = [
+  'hire date',
+  'start date',
+  'startdate',
+  'start_date',
+  'first day',
+  'employment start',
+  'employment begins',
+  'date of hire',
+  'dateofhire',
+  'onboarding start',
+  'begins work',
+  'work begins',
+];
 
 const US_STATE_PAIRS = [
   ['AL', 'Alabama'],

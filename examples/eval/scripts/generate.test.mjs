@@ -127,6 +127,39 @@ test('document prompt exposes only explicitly forbidden values', () => {
   assert.doesNotMatch(prompt, /000-00-0389/);
 });
 
+test('document prompt includes effective default forbidden values only for the current document', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Samir Arun Desai', ssn: '000-00-0389' },
+        employment: { workEmail: 'samir.desai@northstarcivic.example.test' },
+      },
+    },
+    corpusPlan: {
+      defaultForbiddenFactKeys: ['identity.ssn', 'employment.workEmail'],
+      intentionallyMissing: [],
+    },
+    doc: {
+      id: '001',
+      factKeys: ['identity.ssn'],
+    },
+  });
+
+  const forbiddenKeys = JSON.parse(
+    prompt.match(/Forbidden fact keys:\n([\s\S]*?)\n\nForbidden profile values:/)[1],
+  );
+  const forbiddenValues = JSON.parse(
+    prompt.match(/Forbidden profile values:\n([\s\S]*?)\n\nDocument plan entry:/)[1],
+  );
+
+  assert.deepEqual(forbiddenKeys, ['employment.workEmail']);
+  assert.equal(
+    forbiddenValues.employment.workEmail,
+    'samir.desai@northstarcivic.example.test',
+  );
+  assert.equal(forbiddenValues.identity, undefined);
+});
+
 test('document prompt includes file type instructions and missing facts', () => {
   const prompt = buildDocumentPrompt({
     profile: {
@@ -183,6 +216,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
     corpusId: 'realistic',
     forms: ['i-9'],
     purpose: 'Generated test.',
+    defaultForbiddenFactKeys: ['contact.phone'],
     intentionallyMissing: [],
     documents: [
       {
@@ -208,6 +242,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
   assert.equal(manifest.documents[0].brief, undefined);
   assert.equal(manifest.documents[0].challengeTags, undefined);
   assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
+  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
 });
 
 test('runGenerate writes preview documents without touching corpus manifest', async (t) => {
@@ -251,6 +286,14 @@ test('runGenerate writes preview documents without touching corpus manifest', as
 test('runManifest writes manifest from corpus plan without a model', async (t) => {
   const root = await copyRepo(t);
   await writeGeneratedTestPlan(root);
+  const corpusPlanPath = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/generated-test/corpus-plan.json',
+  );
+  const corpusPlan = await readJson(corpusPlanPath);
+  corpusPlan.defaultForbiddenFactKeys = ['identity.ssn'];
+  corpusPlan.documents[0].forbiddenFactKeys = ['employment.workEmail'];
+  await writeJson(corpusPlanPath, corpusPlan);
 
   const result = await runManifest({
     repoRoot: root,
@@ -266,6 +309,8 @@ test('runManifest writes manifest from corpus plan without a model', async (t) =
   );
   assert.equal(manifest.seed, 'samir-desai__generated-test');
   assert.equal(manifest.documents.length, 6);
+  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
+  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
 });
 
 test('runGenerate resolves short ids for preview and overwrite regenerates existing docs', async (t) => {
