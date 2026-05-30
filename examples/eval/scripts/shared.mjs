@@ -117,6 +117,7 @@ export function factValueVariants(factKey, value) {
 
   if (factKey === 'identity.ssn' && digits.length === 9) {
     variants.add(digits);
+    variants.add(`${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5)}`);
     variants.add(`${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`);
   }
 
@@ -124,6 +125,24 @@ export function factValueVariants(factKey, value) {
     variants.add(digits);
     variants.add(`A${digits}`);
     variants.add(`A-${digits}`);
+    variants.add(`A ${digits}`);
+  }
+
+  if (DATE_FACT_KEYS.has(factKey)) {
+    for (const variant of dateVariants(raw)) {
+      variants.add(variant);
+    }
+  }
+
+  if (factKey === 'address.current.state') {
+    const stateVariant = stateNameOrAbbreviation(raw);
+    if (stateVariant) variants.add(stateVariant);
+  }
+
+  if (factKey === 'workAuthorization.citizenshipStatus') {
+    for (const variant of citizenshipStatusVariants(raw)) {
+      variants.add(variant);
+    }
   }
 
   return [...variants];
@@ -132,17 +151,28 @@ export function factValueVariants(factKey, value) {
 export function isHighConfidenceFactKey(factKey) {
   return (
     factKey === 'contact.email' ||
+    factKey === 'employment.workEmail' ||
     factKey === 'identity.ssn' ||
+    factKey === 'identity.dateOfBirth' ||
+    factKey === 'address.current.postalCode' ||
+    factKey === 'address.current.state' ||
     factKey === 'workAuthorization.uscisANumber' ||
-    factKey === 'employment.workEmail'
+    factKey === 'workAuthorization.citizenshipStatus'
   );
 }
 
 export function textContainsFactValue(text, factKey, value) {
   const normalizedText = normalizeSearchText(text);
-  return factValueVariants(factKey, value).some((variant) =>
-    normalizedText.includes(normalizeSearchText(variant)),
-  );
+  return factValueVariants(factKey, value).some((variant) => {
+    const normalizedVariant = normalizeSearchText(variant);
+    if (!normalizedVariant) return false;
+    if (requiresTokenBoundary(factKey, normalizedVariant)) {
+      return new RegExp(`(^|[^a-z0-9])${escapeRegex(normalizedVariant)}($|[^a-z0-9])`).test(
+        normalizedText,
+      );
+    }
+    return normalizedText.includes(normalizedVariant);
+  });
 }
 
 function normalizeSearchText(value) {
@@ -152,3 +182,155 @@ function normalizeSearchText(value) {
     .trim()
     .toLowerCase();
 }
+
+function dateVariants(raw) {
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return [];
+
+  const [, year, paddedMonth, paddedDay] = match;
+  const month = Number(paddedMonth);
+  const day = Number(paddedDay);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return [];
+
+  const monthName = MONTH_NAMES[month - 1];
+  return [
+    `${month}/${day}/${year}`,
+    `${paddedMonth}/${paddedDay}/${year}`,
+    `${monthName} ${day}, ${year}`,
+    `${monthName} ${paddedDay}, ${year}`,
+  ];
+}
+
+function citizenshipStatusVariants(raw) {
+  const normalized = normalizeSearchText(raw).replace(/\./g, '');
+  if (normalized.includes('us citizen') || normalized.includes('united states citizen')) {
+    return [
+      'U.S. citizen',
+      'U. S. citizen',
+      'US citizen',
+      'U S citizen',
+      'United States citizen',
+      'citizen of the United States',
+    ];
+  }
+
+  if (
+    normalized.includes('lawful permanent resident') ||
+    normalized === 'permanent resident' ||
+    normalized === 'lpr'
+  ) {
+    return [
+      'lawful permanent resident',
+      'permanent resident',
+      'LPR',
+      'green card holder',
+    ];
+  }
+
+  return [];
+}
+
+function stateNameOrAbbreviation(raw) {
+  const normalized = normalizeSearchText(raw).replace(/\./g, '');
+  if (normalized.length === 2) {
+    return US_STATE_NAMES_BY_ABBREVIATION.get(normalized.toUpperCase()) ?? null;
+  }
+
+  const abbreviation = US_STATE_ABBREVIATIONS_BY_NAME.get(normalized);
+  return abbreviation ?? null;
+}
+
+function requiresTokenBoundary(factKey, normalizedVariant) {
+  return (
+    factKey === 'identity.ssn' ||
+    factKey === 'workAuthorization.uscisANumber' ||
+    (factKey === 'address.current.state' && normalizedVariant.length === 2)
+  );
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const DATE_FACT_KEYS = new Set([
+  'identity.dateOfBirth',
+  'employment.startDate',
+  'workAuthorization.workAuthorizationExpirationDate',
+]);
+
+const US_STATE_PAIRS = [
+  ['AL', 'Alabama'],
+  ['AK', 'Alaska'],
+  ['AZ', 'Arizona'],
+  ['AR', 'Arkansas'],
+  ['CA', 'California'],
+  ['CO', 'Colorado'],
+  ['CT', 'Connecticut'],
+  ['DE', 'Delaware'],
+  ['FL', 'Florida'],
+  ['GA', 'Georgia'],
+  ['HI', 'Hawaii'],
+  ['ID', 'Idaho'],
+  ['IL', 'Illinois'],
+  ['IN', 'Indiana'],
+  ['IA', 'Iowa'],
+  ['KS', 'Kansas'],
+  ['KY', 'Kentucky'],
+  ['LA', 'Louisiana'],
+  ['ME', 'Maine'],
+  ['MD', 'Maryland'],
+  ['MA', 'Massachusetts'],
+  ['MI', 'Michigan'],
+  ['MN', 'Minnesota'],
+  ['MS', 'Mississippi'],
+  ['MO', 'Missouri'],
+  ['MT', 'Montana'],
+  ['NE', 'Nebraska'],
+  ['NV', 'Nevada'],
+  ['NH', 'New Hampshire'],
+  ['NJ', 'New Jersey'],
+  ['NM', 'New Mexico'],
+  ['NY', 'New York'],
+  ['NC', 'North Carolina'],
+  ['ND', 'North Dakota'],
+  ['OH', 'Ohio'],
+  ['OK', 'Oklahoma'],
+  ['OR', 'Oregon'],
+  ['PA', 'Pennsylvania'],
+  ['RI', 'Rhode Island'],
+  ['SC', 'South Carolina'],
+  ['SD', 'South Dakota'],
+  ['TN', 'Tennessee'],
+  ['TX', 'Texas'],
+  ['UT', 'Utah'],
+  ['VT', 'Vermont'],
+  ['VA', 'Virginia'],
+  ['WA', 'Washington'],
+  ['WV', 'West Virginia'],
+  ['WI', 'Wisconsin'],
+  ['WY', 'Wyoming'],
+  ['DC', 'District of Columbia'],
+];
+
+const US_STATE_NAMES_BY_ABBREVIATION = new Map(US_STATE_PAIRS);
+const US_STATE_ABBREVIATIONS_BY_NAME = new Map(
+  US_STATE_PAIRS.map(([abbreviation, name]) => [
+    normalizeSearchText(name),
+    abbreviation,
+  ]),
+);

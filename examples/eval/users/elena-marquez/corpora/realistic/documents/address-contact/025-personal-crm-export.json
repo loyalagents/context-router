@@ -7,8 +7,11 @@
       "elena.marquez@cedarcoast.example.test"
     ],
     "phoneNumbers": [],
+    "street": "418 Cedar Glen Avenue",
+    "unit": "Apt 12B",
     "city": "Sacramento",
-    "state": "CA"
+    "state": "CA",
+    "postalCode": "95819"
   },
   "reminders": [
     {

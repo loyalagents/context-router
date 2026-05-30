@@ -222,6 +222,7 @@ test('plan-only validates corpus plans without manifest or document bodies', asy
         title: 'Identity Note',
         outputExtension: 'md',
         factKeys: ['identity.ssn'],
+        forbiddenFactKeys: ['contact.phone'],
         detailTier: 'brief',
         authority: 'medium',
         freshness: 'current',
@@ -253,6 +254,101 @@ test('plan-only validates corpus plans without manifest or document bodies', asy
 
   assert.equal(result.exitCode, 0);
   assert.equal(result.summary.errors, 0);
+});
+
+test('corpus plan validation rejects invalid forbidden fact references', async (t) => {
+  const root = await copyRepo(t);
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/realistic',
+  );
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 1,
+    userId: 'samir-desai',
+    corpusId: 'realistic',
+    forms: ['i-9'],
+    purpose: 'Unit-test plan.',
+    targetDocumentCount: 1,
+    categoryCounts: {
+      identity: 1,
+    },
+    challengeTags: ['current-fact'],
+    intentionallyMissing: [],
+    documents: [
+      {
+        id: '001',
+        path: 'documents/identity/001-id.md',
+        category: 'identity',
+        title: 'Identity Note',
+        outputExtension: 'md',
+        factKeys: ['identity.ssn'],
+        forbiddenFactKeys: ['address.current', 'identity.notReal'],
+        detailTier: 'brief',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['current-fact'],
+        brief: 'Include the SSN in a short identity note.',
+      },
+    ],
+  });
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
+  });
+
+  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_AREA');
+  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+});
+
+test('corpus plan document schema accepts forbidden facts and rejects unexpected fields', async (t) => {
+  const root = await copyRepo(t);
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/realistic',
+  );
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 1,
+    userId: 'samir-desai',
+    corpusId: 'realistic',
+    forms: ['i-9'],
+    purpose: 'Unit-test plan.',
+    targetDocumentCount: 1,
+    categoryCounts: {
+      identity: 1,
+    },
+    challengeTags: ['current-fact'],
+    intentionallyMissing: [],
+    documents: [
+      {
+        id: '001',
+        path: 'documents/identity/001-id.md',
+        category: 'identity',
+        title: 'Identity Note',
+        outputExtension: 'md',
+        factKeys: ['identity.ssn'],
+        forbiddenFactKeys: ['contact.phone'],
+        unsupportedPlanField: true,
+        detailTier: 'brief',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['current-fact'],
+        brief: 'Include the SSN in a short identity note.',
+      },
+    ],
+  });
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
+  });
+
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+  assertNoCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
 });
 
 test('corpus plan validation reports distribution and manifest drift', async (t) => {
@@ -300,7 +396,13 @@ test('prose checks require high-confidence declared values in document bodies', 
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  manifest.documents[0].factKeys = ['identity.ssn'];
+  manifest.documents[0].factKeys = [
+    'identity.ssn',
+    'identity.dateOfBirth',
+    'address.current.postalCode',
+    'address.current.state',
+    'workAuthorization.citizenshipStatus',
+  ];
   manifest.documents[0].expectedUse = 'extract';
   await writeJson(manifestPath, manifest);
   await writeFile(
@@ -314,6 +416,151 @@ test('prose checks require high-confidence declared values in document bodies', 
 
   const result = await validateElena(root);
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+});
+
+test('document prose checks reject forbidden fact values from corpus plans', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = ['identity.ssn'];
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, manifest.documents[0].path),
+    'This fixture body leaks SSN 000-00-0194 even though it is forbidden.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+});
+
+test('document prose checks do not match forbidden numeric facts inside longer ids', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  doc.expectedUse = 'guardrail';
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = ['identity.ssn'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    'Synthetic account export id: 9900000019400. This is not an SSN field.\n',
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+});
+
+test('document prose checks leave null forbidden facts to conservative pattern warnings', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = ['contact.phone'];
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, manifest.documents[0].path),
+    [
+      'License transcript for Elena Sofia Marquez.',
+      'DOB: 07/18/1994.',
+      'Address: 418 Cedar Glen Avenue Apt 12B, Sacramento, CA 95819.',
+      'Temporary callback: 555-123-4567.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assertHasCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_MISSING_FACT_PRESENT' &&
+        issue.level === 'warning',
+    ),
+  );
+});
+
+test('document prose checks reject high-confidence current identifiers in noise docs', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const noisy = manifest.documents[0];
+  noisy.category = 'noise';
+  noisy.expectedUse = 'ignore';
+  noisy.authority = 'none';
+  noisy.detailTier = 'brief';
+  noisy.factKeys = [];
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, noisy.path),
+    'Unrelated note accidentally includes Elena Sofia Marquez and elena.marquez@example.test.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_NOISE_FACT_LEAK');
+});
+
+test('noise leak checks skip facts already covered by forbidden fact checks', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const noisy = manifest.documents[0];
+  noisy.category = 'noise';
+  noisy.expectedUse = 'ignore';
+  noisy.authority = 'none';
+  noisy.detailTier = 'brief';
+  noisy.factKeys = [];
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = ['identity.ssn'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, noisy.path),
+    'Unrelated note accidentally contains 000-00-0194.',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
+  assertNoCode(result, 'DOCUMENT_NOISE_FACT_LEAK');
+  assert.equal(countIssueCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT'), 1);
+});
+
+test('document prose checks warn for value-like intentionally missing work authorization identifiers', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  manifest.documents[0].expectedUse = 'extract';
+  manifest.documents[0].freshness = 'current';
+  manifest.intentionallyMissing.push({
+    factKey: 'workAuthorization.uscisANumber',
+    forms: ['i-9'],
+    reason: 'Unit test missing work authorization identifier.',
+    expectedBehavior: 'Leave the USCIS A-number field blank.',
+  });
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, manifest.documents[0].path),
+    'Current note includes a value-like alien number A123456789 by mistake.\n',
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_MISSING_FACT_PRESENT' &&
+        issue.level === 'warning',
+    ),
+  );
 });
 
 test('document body format checks validate structured and plain text files', async (t) => {
@@ -667,4 +914,39 @@ function assertNoCode(result, code) {
 
 function countIssueCode(result, code) {
   return result.issues.filter((issue) => issue.code === code).length;
+}
+
+// Minimal corpus-plan stand-in for validator plumbing tests. This intentionally
+// derives only the plan fields those tests need, rather than replacing the real
+// manifest projection path used by generation.
+function corpusPlanFromManifest(manifest) {
+  const categoryCounts = {};
+  for (const doc of manifest.documents) {
+    categoryCounts[doc.category] = (categoryCounts[doc.category] ?? 0) + 1;
+  }
+  return {
+    schemaVersion: 1,
+    userId: manifest.userId,
+    corpusId: manifest.corpusId,
+    forms: manifest.forms,
+    purpose: manifest.purpose,
+    targetDocumentCount: manifest.documents.length,
+    categoryCounts,
+    challengeTags: ['current-fact'],
+    intentionallyMissing: manifest.intentionallyMissing,
+    documents: manifest.documents.map((doc) => ({
+      id: doc.id,
+      path: doc.path,
+      category: doc.category,
+      title: doc.title,
+      outputExtension: path.posix.extname(doc.path).slice(1),
+      factKeys: doc.factKeys,
+      detailTier: doc.detailTier,
+      authority: doc.authority,
+      freshness: doc.freshness,
+      expectedUse: doc.expectedUse,
+      challengeTags: ['current-fact'],
+      brief: `Generate ${doc.title}.`,
+    })),
+  };
 }

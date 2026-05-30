@@ -45,6 +45,21 @@ const SNAPSHOT_FILES = {
   'final-preferences': 'final-preferences.json',
 };
 
+const NOISE_LEAK_FACT_KEYS = [
+  'identity.legalName',
+  'contact.email',
+  'employment.workEmail',
+  'identity.ssn',
+  'workAuthorization.uscisANumber',
+  'address.current.street',
+];
+
+const WORK_AUTH_MISSING_PATTERN_KEYS = new Set([
+  'workAuthorization.uscisANumber',
+  'workAuthorization.i94AdmissionNumber',
+  'workAuthorization.foreignPassportNumber',
+]);
+
 export async function runValidation({
   repoRoot = defaultRepoRoot,
   args = [],
@@ -446,7 +461,14 @@ async function validateUserCorpus(ctx, userId, corpusId) {
     if (formResult.fieldMap) formMaps.set(formId, formResult.fieldMap);
   }
 
-  await validateDocuments(ctx, corpusRoot, manifest, profileFacts, manifestPath);
+  await validateDocuments(ctx, {
+    corpusRoot,
+    manifest,
+    profileFacts,
+    manifestPath,
+    corpusPlan,
+    corpusPlanPath,
+  });
   validateIntentionallyMissing(
     ctx,
     manifest,
@@ -799,6 +821,22 @@ function validateCorpusPlan(ctx, {
           });
         }
       }
+
+      for (const [factIndex, factKey] of (doc.forbiddenFactKeys ?? []).entries()) {
+        const factState = classifyFactKey(profileFacts, factKey);
+        if (factState.kind !== 'leaf') {
+          addIssue(ctx, {
+            code:
+              factState.kind === 'area'
+                ? 'CORPUS_PLAN_FORBIDDEN_FACT_AREA'
+                : 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING',
+            file: corpusPlanPath,
+            pointer: `${pointer}/forbiddenFactKeys/${factIndex}`,
+            message: `Planned document forbiddenFactKey ${factKey} must resolve to a profile leaf fact.`,
+            fix: 'Use a concrete profile fact leaf or remove the forbiddenFactKey.',
+          });
+        }
+      }
     }
   }
 
@@ -894,13 +932,22 @@ export function manifestFromCorpusPlan(corpusPlan, { includeOnlyExistingDocs = f
   };
 }
 
-async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manifestPath) {
+async function validateDocuments(ctx, {
+  corpusRoot,
+  manifest,
+  profileFacts,
+  manifestPath,
+  corpusPlan,
+  corpusPlanPath,
+}) {
   const documentsRoot = path.join(corpusRoot, 'documents');
   const listedPaths = new Set();
   const ids = new Set();
+  const plannedDocuments = mapPlannedDocuments(corpusPlan);
 
   for (const [index, doc] of (manifest.documents ?? []).entries()) {
     const pointer = `/documents/${index}`;
+    const planned = plannedDocuments.get(doc.id) ?? plannedDocuments.get(doc.path) ?? null;
     if (ids.has(doc.id)) {
       addIssue(ctx, {
         code: 'DOCUMENT_DUPLICATE_ID',
@@ -1000,6 +1047,9 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
         manifestPath,
         pointer,
         profileFacts,
+        planDoc: planned?.doc ?? null,
+        corpusPlanPath,
+        planPointer: planned?.pointer ?? null,
       });
     }
   }
@@ -1018,6 +1068,16 @@ async function validateDocuments(ctx, corpusRoot, manifest, profileFacts, manife
   }
 }
 
+function mapPlannedDocuments(corpusPlan) {
+  const byRef = new Map();
+  for (const [index, doc] of (corpusPlan?.documents ?? []).entries()) {
+    const entry = { doc, pointer: `/documents/${index}` };
+    if (doc.id) byRef.set(doc.id, entry);
+    if (doc.path) byRef.set(doc.path, entry);
+  }
+  return byRef;
+}
+
 function validateDocumentProse(ctx, {
   doc,
   body,
@@ -1025,12 +1085,16 @@ function validateDocumentProse(ctx, {
   manifestPath,
   pointer,
   profileFacts,
+  planDoc,
+  corpusPlanPath,
+  planPointer,
 }) {
   validateDocumentBodyFormat(ctx, { doc, body, manifestPath, pointer });
 
   const checksBodyForDeclaredFacts = ['extract', 'corroborate'].includes(
     doc.expectedUse,
   );
+  const forbiddenFactKeys = new Set(planDoc?.forbiddenFactKeys ?? []);
 
   if (checksBodyForDeclaredFacts) {
     for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
@@ -1048,19 +1112,39 @@ function validateDocumentProse(ctx, {
     }
   }
 
-  for (const missing of manifest.intentionallyMissing ?? []) {
-    if (missing.factKey !== 'contact.phone') continue;
-    if (doc.expectedUse === 'ignore' || ['stale', 'mixed'].includes(doc.freshness)) {
-      continue;
+  if (planDoc && corpusPlanPath && planPointer) {
+    for (const [factIndex, factKey] of (planDoc.forbiddenFactKeys ?? []).entries()) {
+      const factState = classifyFactKey(profileFacts, factKey);
+      if (factState.kind !== 'leaf' || factState.value == null) continue;
+      if (!textContainsFactValue(body, factKey, factState.value)) continue;
+      addIssue(ctx, {
+        code: 'DOCUMENT_FORBIDDEN_FACT_PRESENT',
+        file: corpusPlanPath,
+        pointer: `${planPointer}/forbiddenFactKeys/${factIndex}`,
+        message: `Document ${doc.id} contains a value for forbidden fact ${factKey}.`,
+        fix: 'Remove the forbidden value from the document body or remove the fact from forbiddenFactKeys[].',
+      });
     }
-    if (!containsPhoneLikeText(body)) continue;
+  }
+
+  validateNoiseFactLeaks(ctx, {
+    doc,
+    body,
+    manifestPath,
+    pointer,
+    profileFacts,
+    skippedFactKeys: forbiddenFactKeys,
+  });
+
+  for (const missing of manifest.intentionallyMissing ?? []) {
+    if (!checksForMissingFactPattern(doc, missing.factKey, body)) continue;
     addIssue(ctx, {
       level: 'warning',
       code: 'DOCUMENT_MISSING_FACT_PRESENT',
       file: manifestPath,
       pointer,
-      message: `Document ${doc.id} may contain phone-like text even though contact.phone is intentionally missing.`,
-      fix: 'Remove the phone-like value or mark the document stale, mixed, guardrail, or third-party if appropriate.',
+      message: `Document ${doc.id} may contain value-like text even though ${missing.factKey} is intentionally missing.`,
+      fix: 'Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate.',
     });
   }
 
@@ -1139,6 +1223,58 @@ function looksLikeMarkdown(text) {
 
 function containsPhoneLikeText(text) {
   return /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/.test(text);
+}
+
+function checksForMissingFactPattern(doc, factKey, body) {
+  if (
+    !['extract', 'corroborate'].includes(doc.expectedUse) ||
+    ['stale', 'mixed'].includes(doc.freshness)
+  ) {
+    return false;
+  }
+  if (factKey === 'contact.phone') return containsPhoneLikeText(body);
+  if (WORK_AUTH_MISSING_PATTERN_KEYS.has(factKey)) {
+    return containsMissingWorkAuthIdentifierLikeText(body, factKey);
+  }
+  return false;
+}
+
+function containsMissingWorkAuthIdentifierLikeText(text, factKey) {
+  if (factKey === 'workAuthorization.uscisANumber') {
+    return /\bA[-\s]?\d{7,9}\b/i.test(text);
+  }
+  if (factKey === 'workAuthorization.i94AdmissionNumber') {
+    return /\bI[-\s]?94\b[^\n]{0,60}\b(?=[A-Z0-9]*\d)[A-Z0-9]{7,11}\b/i.test(text);
+  }
+  if (factKey === 'workAuthorization.foreignPassportNumber') {
+    return /\b(?:foreign\s+passport|passport\s+(?:number|no\.?))\b[^\n]{0,60}\b(?=[A-Z0-9]*\d)[A-Z0-9]{6,12}\b/i.test(text);
+  }
+  return false;
+}
+
+function validateNoiseFactLeaks(ctx, {
+  doc,
+  body,
+  manifestPath,
+  pointer,
+  profileFacts,
+  skippedFactKeys = new Set(),
+}) {
+  if (doc.category !== 'noise' && doc.expectedUse !== 'ignore') return;
+
+  for (const factKey of NOISE_LEAK_FACT_KEYS) {
+    if (skippedFactKeys.has(factKey)) continue;
+    const factState = classifyFactKey(profileFacts, factKey);
+    if (factState.kind !== 'leaf' || factState.value == null) continue;
+    if (!textContainsFactValue(body, factKey, factState.value)) continue;
+    addIssue(ctx, {
+      code: 'DOCUMENT_NOISE_FACT_LEAK',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} is ignored/noise but contains current identifier ${factKey}.`,
+      fix: 'Remove current user facts from ignored/noise documents or reclassify the document.',
+    });
+  }
 }
 
 async function validateForm(ctx, formId, options = {}) {

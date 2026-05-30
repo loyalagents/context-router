@@ -144,6 +144,12 @@
               "type": "string"
             }
           },
+          "forbiddenFactKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "detailTier": {
             "enum": ["hero", "medium", "brief"]
           },

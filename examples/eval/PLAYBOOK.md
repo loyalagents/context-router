@@ -103,6 +103,16 @@ EVAL_GENERATION_MODEL=<model> \
 pnpm eval:validate --user <userId> --corpus realistic --write-report
 ```
 
+Treat `corpus-plan.json` metadata as the intended corpus-truth contract. For
+`extract` and `corroborate` documents, validation hard-fails when declared
+high-confidence facts such as DOB, ZIP, state, or citizenship status are
+missing from the body. If validation reports one of these errors, decide
+explicitly whether the metadata overclaimed or the generated body drifted; for
+generated 100-doc corpora, the default repair is to make the body match the
+plan. Per-document `forbiddenFactKeys[]` checks only run when a corpus plan is
+present, and forbidden values stay plan-owned rather than being copied into
+`manifest.json`.
+
 If only plan metadata changed, regenerate the manifest without any AI calls:
 
 ```bash
