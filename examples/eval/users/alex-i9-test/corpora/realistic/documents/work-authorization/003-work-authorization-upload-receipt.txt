@@ -1,24 +1,56 @@
-WORK AUTHORIZATION SUPPORT UPLOAD
-Upload batch id: UPL-F23463
-Document category: employment authorization support
-Source system: Northstar Onboard
-Worker id: CHR-53242
-Reviewer: Lena Ortiz
-Captured at: 2026-06-03T14:27:00-07:00
-Processing status: accepted for Section 1 review
-Reviewer note: supporting identifiers were transcribed from the worker upload and matched to the saved I-9 draft.
+*** Northstar Onboard - Document Upload Receipt ***
 
-Worker name on the uploaded support packet:
-Alex Jordan Rivera
+Transaction Date: 2026-06-03 14:27 PDT
+Upload Batch ID: UPL-F23463
+Worker ID: CHR-53242
 
-Employee-provided citizenship or immigration status:
-alien authorized to work
+This serves as a confirmation that documents have been successfully uploaded for the purpose of verifying employment authorization. Please retain this receipt for your records.
 
-Identifier fields captured for the I-9 review:
-USCIS A-Number: A987654321
-Work authorization expiration date: September 30, 2028
-Form I-94 Admission Number: 11223344556
-Foreign Passport Number: XK1234567
+==================================================
+CANDIDATE / EMPLOYEE INFORMATION
+==================================================
 
-Review queue detail:
-The packet was routed to People Operations Hub because the work authorization path requires evidence review before the employer section can be completed. No extra immigration identifiers were added beyond the values shown above.
+Name: Rivera, Alex Jordan
+Worker ID: CHR-53242
+
+==================================================
+UPLOADED DOCUMENT DETAILS
+==================================================
+
+Document Category: Form I-9 Employment Eligibility Verification
+
+The system has parsed the following information from your uploaded documents. Please review for accuracy. If you notice any discrepancies, contact your HR coordinator.
+
+--------------------------------------------------
+DOCUMENT 1 OF 2
+--------------------------------------------------
+Document Type: Foreign Passport
+Full Name: Alex Jordan Rivera
+Passport Number: XK1234567
+
+--------------------------------------------------
+DOCUMENT 2 OF 2
+--------------------------------------------------
+Document Type: Form I-94 Arrival/Departure Record
+Full Name: Alex Jordan Rivera
+I-94 Admission Number: 11223344556
+USCIS A-Number: 987654321
+Class of Admission: Alien Authorized to Work
+Admit Until Date (Work Auth. Expiration): 2028-09-30
+
+==================================================
+PROCESSING & REVIEW STATUS
+==================================================
+
+Overall Status: SUBMITTED - PENDING REVIEW
+
+Your documents have been successfully received and are now in the queue for manual verification by the Human Resources department.
+
+Current Queue: Standard Onboarding
+Assigned To: Lena Ortiz (HR Coordinator)
+
+Reviewer Note: No notes at this time.
+
+Next Steps: An HR representative will review your submission within the next 3 business days. You will receive a notification once the review is complete or if further action is required. You do not need to take any action at this moment.
+
+*** END OF RECEIPT ***

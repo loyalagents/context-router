@@ -31,6 +31,7 @@ import {
   shouldDeriveMissingFactAsForbidden,
   textContainsDeclaredFactValue,
   textContainsFactValue,
+  textContainsSplitLegalName,
   toPosixPath,
 } from './shared.mjs';
 import { discoverTemplates } from './template-renderer.mjs';
@@ -1135,7 +1136,11 @@ function validateDocumentProse(ctx, {
 
     const factState = classifyFactKey(profileFacts, factKey);
     if (factState.kind !== 'leaf' || factState.value == null) continue;
-    if (textContainsDeclaredFactValue(body, factKey, factState.value)) {
+    if (
+      textContainsDeclaredFactValue(body, factKey, factState.value) ||
+      (factKey === 'identity.legalName' &&
+        textContainsSplitLegalName(body, profileFacts))
+    ) {
       truth.declaredFacts.provenPresent.push(factKey);
       continue;
     }
@@ -1291,7 +1296,7 @@ function validateSourceRealism(ctx, {
     (freshness === 'stale' ||
       expectedUse === 'guardrail' ||
       doc.category === 'partial-conflicting') &&
-    !/\b(?:stale|superseded|former|old|inactive|returned|do not use|do-not-use|outdated)\b/i.test(body)
+    !STALE_CUE_RE.test(body)
   ) {
     addIssue(ctx, {
       level: 'warning',
@@ -1329,6 +1334,31 @@ function nativeSignalPresent(body, signal) {
   if (signalText.includes('to header')) return /^to\s*:/im.test(body);
   if (signalText.includes('date header')) return /^date\s*:/im.test(body);
   if (signalText.includes('subject header')) return /^subject\s*:/im.test(body);
+  if (signalText.includes('resident profile block')) {
+    return hasNormalizedTerm('resident profile') ||
+      hasNormalizedTerm('resident occupant details') ||
+      hasNormalizedTerm('resident and occupant details') ||
+      hasNormalizedTerm('resident details') ||
+      hasNormalizedTerm('primary resident');
+  }
+  if (signalText.includes('stale') && signalText.includes('superseded')) {
+    return STALE_CUE_RE.test(body);
+  }
+  if (signalText.includes('document category')) {
+    return hasNormalizedTerm('document category') ||
+      hasNormalizedTerm('document type') ||
+      hasNormalizedTerm('document set');
+  }
+  if (signalText.includes('reviewer note')) {
+    return hasNormalizedTerm('reviewer note') ||
+      hasNormalizedTerm('reviewer assigned') ||
+      hasNormalizedTerm('assigned reviewer') ||
+      hasNormalizedTerm('assigned to');
+  }
+  if (signalText.includes('source system')) {
+    return hasNormalizedTerm('source system') ||
+      /^\s*(?:source[_ -]?system|system)\s*:/im.test(body);
+  }
   if (signalText.includes('footer')) return hasNormalizedTerm('unsubscribe') ||
     hasNormalizedTerm('privacy') ||
     hasNormalizedTerm('footer') ||
@@ -1363,7 +1393,10 @@ function nativeSignalPresent(body, signal) {
     return hasNormalizedTerm('phone null') ||
       hasNormalizedTerm('phone blank') ||
       hasNormalizedTerm('phone field blank') ||
-      hasNormalizedTerm('phone field state blank');
+      hasNormalizedTerm('phone field state blank') ||
+      hasNormalizedTerm('telephone number null') ||
+      hasNormalizedTerm('telephone number blank') ||
+      /^\s*(?:[a-z0-9_.-]*_)?(?:phone|telephone)(?:[_ -]?(?:number|field))?\s*:\s*(?:null|["']{2})\s*$/im.test(body);
   }
   if (signalText.includes('signature block')) {
     return /\n(?:sincerely|regards|best|thanks|thank you),?\s*\n[A-Z][A-Za-z .'-]+/i.test(body);
@@ -1478,18 +1511,61 @@ function looksLikeMarkdown(text) {
 }
 
 const PHONE_LIKE_TEXT_RE =
-  /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/;
+  /(^|[^\d])(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}(?=$|[^\d])/;
 const EVAL_LANGUAGE_RE =
   /\b(?:synthetic eval fixture|fact key|validator|benchmark|profile slice|fixture document|if a task asks|leave (?:the )?.*field empty|enter(?:ing)? a placeholder|downstream task)\b/i;
 const I9_IDENTIFIER_CONTEXT_RE =
   /(^|[^a-z0-9])(?:i[-_\s]?94|uscis|alien[-_\s]?registration|a[-_\s]?number|foreign[-_\s]?passport|passport[-_\s]?number|admission[-_\s]?number)(?=$|[^a-z0-9])/i;
+const STALE_CUE_RE =
+  /\b(?:stale|superseded|former|old|inactive|returned|do not use|do-not-use|outdated)\b/i;
+const PHONE_CONTACT_CONTEXT_RE =
+  /\b(?:phone|telephone|mobile|cell|fax|callback|call back|sms|text)\b/i;
+const SOURCE_IDENTIFIER_CONTEXT_RE =
+  /\b(?:account number|account no|account id|account data|agreement id|service agreement|export id|case id|task id|transaction id|license number|document id|worker id)\b/i;
 
 function containsPhoneLikeText(text) {
-  const phoneCandidateText = text
-    .split(/\r?\n/)
-    .filter((line) => !I9_IDENTIFIER_CONTEXT_RE.test(line))
-    .join('\n');
+  const candidateLines = [];
+  let skipNextIdentifierLine = false;
+  for (const line of String(text).split(/\r?\n/)) {
+    if (I9_IDENTIFIER_CONTEXT_RE.test(line)) {
+      skipNextIdentifierLine = true;
+      continue;
+    }
+    if (skipNextIdentifierLine && isIdentifierContinuationLine(line)) {
+      skipNextIdentifierLine = false;
+      continue;
+    }
+    if (isNonPhoneIdentifierLine(line)) {
+      skipNextIdentifierLine = false;
+      continue;
+    }
+    skipNextIdentifierLine = false;
+    candidateLines.push(line);
+  }
+  const phoneCandidateText = candidateLines.join('\n');
   return PHONE_LIKE_TEXT_RE.test(phoneCandidateText);
+}
+
+function isIdentifierContinuationLine(line) {
+  const compact = String(line)
+    .trim()
+    .replace(/^[-*]\s+/, '')
+    .replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '')
+    .replace(/\s+/g, '');
+  return (
+    compact.length >= 6 &&
+    compact.length <= 20 &&
+    /[0-9]/.test(compact) &&
+    /^[A-Z0-9-]+$/i.test(compact)
+  );
+}
+
+function isNonPhoneIdentifierLine(line) {
+  const normalized = normalizeTextForRealism(line);
+  return (
+    SOURCE_IDENTIFIER_CONTEXT_RE.test(normalized) &&
+    !PHONE_CONTACT_CONTEXT_RE.test(normalized)
+  );
 }
 
 function hasMissingFactPatternRule(factKey) {

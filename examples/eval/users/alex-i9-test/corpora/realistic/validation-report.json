@@ -8,7 +8,7 @@
     "scenarios": 0,
     "templates": 7,
     "errors": 0,
-    "warnings": 0
+    "warnings": 9
   },
   "corpusTruth": {
     "summary": {
@@ -343,5 +343,78 @@
       }
     ]
   },
-  "issues": []
+  "issues": [
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/0",
+      "message": "Document alex-i9-test-realistic-001 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/0",
+      "message": "Document alex-i9-test-realistic-001 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/3/sourceSpec/nativeSignals/0",
+      "message": "Document alex-i9-test-realistic-004 is missing native source signal \"portal export timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/5",
+      "message": "Document alex-i9-test-realistic-006 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/5/sourceSpec/nativeSignals/4",
+      "message": "Document alex-i9-test-realistic-006 is missing native source signal \"blank phone field\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/5",
+      "message": "Document alex-i9-test-realistic-006 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/6/sourceSpec/nativeSignals/4",
+      "message": "Document alex-i9-test-realistic-007 is missing native source signal \"signature block\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/7/sourceSpec/lengthTarget",
+      "message": "Document alex-i9-test-realistic-008 length 3598 is outside sourceSpec target 800-3200.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/9/sourceSpec/lengthTarget",
+      "message": "Document alex-i9-test-realistic-010 length 3049 is outside sourceSpec target 700-2600.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    }
+  ]
 }

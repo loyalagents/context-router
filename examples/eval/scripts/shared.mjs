@@ -214,6 +214,43 @@ export function textContainsDeclaredFactValue(text, factKey, value) {
   return textContainsFactValue(text, factKey, value);
 }
 
+export function textContainsSplitLegalName(text, profileFacts) {
+  const leaves = profileFacts?.leaves;
+  if (!leaves) return false;
+
+  const firstName = leaves.get('identity.firstName');
+  const lastName = leaves.get('identity.lastName');
+  const middleName = leaves.get('identity.middleName');
+  const middleInitial = leaves.get('identity.middleInitial');
+  if (!hasNameValue(firstName) || !hasNameValue(lastName)) return false;
+
+  const fields = extractLabeledNameFields(text);
+  if (!fields.first.some((value) => nameValueContains(value, firstName))) return false;
+  if (!fields.last.some((value) => nameValueContains(value, lastName))) return false;
+
+  const expectedMiddleInitial = hasNameValue(middleInitial)
+    ? String(middleInitial).trim()[0]
+    : hasNameValue(middleName)
+      ? String(middleName).trim()[0]
+      : null;
+  const needsMiddleProof = hasNameValue(middleName) || hasNameValue(middleInitial);
+  if (!needsMiddleProof) return true;
+
+  const candidateMiddleValues = [...fields.middle, ...fields.first];
+  if (
+    hasNameValue(middleName) &&
+    candidateMiddleValues.some((value) => nameValueContains(value, middleName))
+  ) {
+    return true;
+  }
+  return (
+    hasNameValue(expectedMiddleInitial) &&
+    candidateMiddleValues.some((value) =>
+      nameValueContains(value, expectedMiddleInitial),
+    )
+  );
+}
+
 export function textContainsFactValue(text, factKey, value) {
   const normalizedText = normalizeSearchText(text);
   return factValueVariants(factKey, value).some((variant) => {
@@ -312,9 +349,129 @@ function dateVariants(raw) {
   return [
     `${month}/${day}/${year}`,
     `${paddedMonth}/${paddedDay}/${year}`,
+    `${month}-${day}-${year}`,
+    `${paddedMonth}-${paddedDay}-${year}`,
     `${monthName} ${day}, ${year}`,
     `${monthName} ${paddedDay}, ${year}`,
   ];
+}
+
+function extractLabeledNameFields(text) {
+  const fields = {
+    first: [],
+    middle: [],
+    last: [],
+  };
+
+  for (const line of String(text).split(/\r?\n/)) {
+    const parsed = parseNameFieldLine(line);
+    if (!parsed) continue;
+    const kind = classifyNameLabel(parsed.label);
+    if (!kind) continue;
+    fields[kind].push(parsed.value);
+  }
+
+  return fields;
+}
+
+function parseNameFieldLine(line) {
+  const trimmed = String(line).trim().replace(/^[-*]\s+/, '');
+  if (!trimmed) return null;
+
+  const acronymMatch = trimmed.match(/^(FN|LN|MN|MI)\b[\s:=.-]+(.+)$/i);
+  if (acronymMatch) {
+    return {
+      label: acronymMatch[1],
+      value: cleanNameFieldValue(acronymMatch[2]),
+    };
+  }
+
+  const labeledMatch = trimmed.match(
+    /^["']?([A-Za-z][A-Za-z0-9_./ -]{0,80})["']?\s*[:=]\s*(.+?)\s*$/,
+  );
+  if (!labeledMatch) return null;
+  return {
+    label: labeledMatch[1],
+    value: cleanNameFieldValue(labeledMatch[2]),
+  };
+}
+
+function cleanNameFieldValue(value) {
+  return String(value)
+    .trim()
+    .replace(/,$/, '')
+    .replace(/^["']|["']$/g, '')
+    .trim();
+}
+
+function classifyNameLabel(label) {
+  const normalized = normalizeNameComparisonText(label);
+  if (!normalized) return null;
+  if (
+    /\b(?:approver|reviewer|manager|preparer|translator|emergency|contact)\b/.test(
+      normalized,
+    )
+  ) {
+    return null;
+  }
+
+  if (normalized === 'fn') return 'first';
+  if (normalized === 'ln') return 'last';
+  if (normalized === 'mn' || normalized === 'mi') return 'middle';
+
+  const ownerPrefix = '(?:employee|person|applicant|subject|worker|user|identity)';
+  const nativeFieldPrefix = '(?:field\\s+[a-z0-9]+|s\\d+|sec\\d+|section\\s+\\d+)';
+  if (
+    normalized === 'first name' ||
+    normalized === 'given name' ||
+    new RegExp(`^(?:${ownerPrefix}\\s+)?first\\s+name$`).test(normalized) ||
+    new RegExp(`^${nativeFieldPrefix}\\s+first\\s+name$`).test(normalized)
+  ) {
+    return 'first';
+  }
+  if (
+    normalized === 'last name' ||
+    normalized === 'family name' ||
+    normalized === 'surname' ||
+    new RegExp(`^(?:${ownerPrefix}\\s+)?last\\s+name$`).test(normalized) ||
+    new RegExp(`^${nativeFieldPrefix}\\s+last\\s+name$`).test(normalized)
+  ) {
+    return 'last';
+  }
+  if (
+    normalized === 'middle name' ||
+    normalized === 'middle initial' ||
+    new RegExp(`^(?:${ownerPrefix}\\s+)?middle\\s+(?:name|initial)$`).test(normalized) ||
+    new RegExp(`^${nativeFieldPrefix}\\s+middle\\s+(?:name|initial)$`).test(
+      normalized,
+    )
+  ) {
+    return 'middle';
+  }
+
+  return null;
+}
+
+function nameValueContains(value, expected) {
+  const normalizedValue = normalizeNameComparisonText(value);
+  const normalizedExpected = normalizeNameComparisonText(expected);
+  if (!normalizedValue || !normalizedExpected) return false;
+  return new RegExp(`(^| )${escapeRegex(normalizedExpected)}($| )`).test(
+    normalizedValue,
+  );
+}
+
+function hasNameValue(value) {
+  return value != null && String(value).trim().length > 0;
+}
+
+function normalizeNameComparisonText(value) {
+  return String(value)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
 function citizenshipStatusVariants(raw) {

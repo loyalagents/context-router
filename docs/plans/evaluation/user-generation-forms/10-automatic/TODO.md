@@ -52,6 +52,15 @@
     reason text, and instruct generated artifacts to omit absent values unless
     the source naturally has a blank/null field.
 
+- [ ] Add deterministic nested field/value proof for generated structured exports.
+  - Current split legal-name proof handles same-line labels such as
+    `s1_first_name: Alex` and OCR labels such as `FN ALEX JORDAN`, but does not
+    yet prove `identity.legalName` from nested YAML records like
+    `first_name: { field_id: s1_first_name, value: Alex }`.
+  - Extend this carefully for native I-9 field/value exports, including nested
+    I-94/USCIS/passport values, so validator warnings do not misclassify these
+    identifiers as source-only phone values.
+
 - [ ] Add realism-focused repair later.
   - Keep the current repair loop focused on deterministic correctness.
   - Add a future repair mode that preserves validated facts while improving

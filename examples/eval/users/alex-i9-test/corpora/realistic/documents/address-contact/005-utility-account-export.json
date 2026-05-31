@@ -1,40 +1,53 @@
 {
-  "export_id": "ME-EXP-U1486X252",
-  "generated_timestamp": "June 4 2026 at 6:06 PM Pacific",
-  "provider": "Metroline Energy",
-  "service_agreement": {
-    "agreement_label": "residential electric service",
-    "account_suffix": "3341",
-    "status": "active",
-    "billing_cycle": "monthly",
-    "mailing_preference": "electronic"
-  },
-  "account_holder": {
-    "name": "Alex Jordan Rivera",
-    "email": "alex.rivera@example.test"
-  },
-  "service_address": {
-    "street": "7428 Evergreen Terrace",
-    "unit": "Apt 5C",
-    "city": "Portland",
-    "state": "OR",
-    "postal_code": "97214"
-  },
-  "account_status_history": [
-    {
-      "timestamp": "May 20 2026 at 9:12 AM Pacific",
-      "status": "service_started",
-      "note": "Residential service moved to active status."
+  "exportId": "ME-EXP-U1486X252",
+  "generatedTimestamp": "2026-06-04T18:06:00-07:00",
+  "providerName": "Metroline Energy",
+  "account": {
+    "accountNumber": "********3341",
+    "accountStatus": "ACTIVE",
+    "accountHolder": {
+      "legalName": {
+        "firstName": "Alex",
+        "middleName": "Jordan",
+        "lastName": "Rivera"
+      }
     },
-    {
-      "timestamp": "June 4 2026 at 6:06 PM Pacific",
-      "status": "customer_export_generated",
-      "note": "Portal export requested from the account profile screen."
+    "contactInfo": {
+      "emailAddress": "alex.rivera@example.test",
+      "mobilePhone": null,
+      "mailingPreference": "PAPERLESS"
+    },
+    "accountStatusHistory": [
+      {
+        "status": "PENDING_ACTIVATION",
+        "effectiveDate": "2024-05-20T11:00:00Z"
+      },
+      {
+        "status": "ACTIVE",
+        "effectiveDate": "2024-06-01T08:00:00Z"
+      }
+    ]
+  },
+  "serviceAgreement": {
+    "agreementId": "ME-SA-89102-A",
+    "status": "ACTIVE",
+    "serviceStartDate": "2024-06-01",
+    "serviceAddress": {
+      "streetLine1": "7428 Evergreen Terrace",
+      "streetLine2": "Apt 5C",
+      "city": "Portland",
+      "state": "OR",
+      "postalCode": "97214"
+    },
+    "billing": {
+      "billingCycle": "MONTHLY_17TH",
+      "billingAddress": {
+        "streetLine1": "7428 Evergreen Terrace",
+        "streetLine2": "Apt 5C",
+        "city": "Portland",
+        "state": "OR",
+        "postalCode": "97214"
+      }
     }
-  ],
-  "redactions": {
-    "full_account_number": "masked",
-    "office_contact": "removed",
-    "phone": null
   }
 }

@@ -620,6 +620,165 @@ test('prose checks prove declared work authorization document values determinist
   );
 });
 
+test('prose checks prove date of birth from hyphenated US date variants', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = alexManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents.find((entry) =>
+    entry.path.endsWith('001-driver-license-upload-ocr.txt')
+  );
+  doc.factContract.include = ['identity.dateOfBirth'];
+  doc.evaluationRole.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'OCR EXPORT RECORD',
+      'Document status: front image received',
+      'DOB 03-14-1992',
+    ].join('\n'),
+  );
+
+  const result = await validateAlex(root);
+  assertNoCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.dateOfBirth'));
+});
+
+test('prose checks prove legal names from labeled split OCR name fields', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = alexManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents.find((entry) =>
+    entry.path.endsWith('001-driver-license-upload-ocr.txt')
+  );
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'OCR EXPORT RECORD',
+      'Document status: front image received',
+      'LN RIVERA',
+      'FN ALEX JORDAN',
+    ].join('\n'),
+  );
+
+  const result = await validateAlex(root);
+  assertNoCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.legalName'));
+});
+
+test('prose checks prove legal names from labeled I-9 YAML name fields', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = alexManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents.find((entry) =>
+    entry.path.endsWith('006-i9-section-one-field-export.yaml')
+  );
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'field_1a_last_name: Rivera',
+      'field_1b_first_name: Alex',
+      'field_1c_middle_initial: J',
+    ].join('\n'),
+  );
+
+  const result = await validateAlex(root);
+  assertNoCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.legalName'));
+});
+
+test('prose checks prove legal names from section-native I-9 field labels', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = alexManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents.find((entry) =>
+    entry.path.endsWith('006-i9-section-one-field-export.yaml')
+  );
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.expectedUse = 'extract';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'section_one_data:',
+      '  employee_identity:',
+      '    s1_last_name: "Rivera"',
+      '    s1_first_name: "Alex"',
+      '    s1_middle_initial: "J"',
+    ].join('\n'),
+  );
+
+  const result = await validateAlex(root);
+  assertNoCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.ok(truth.declaredFacts.provenPresent.includes('identity.legalName'));
+});
+
+test('prose checks reject weak split-field legal name evidence', async (t) => {
+  const cases = [
+    {
+      name: 'missing last-name label',
+      body: ['FN ALEX JORDAN', 'name: Rivera'].join('\n'),
+    },
+    {
+      name: 'wrong last name',
+      body: ['FN ALEX JORDAN', 'LN RIVAS'].join('\n'),
+    },
+    {
+      name: 'unrelated reviewer names',
+      body: [
+        'reviewer_first_name: Alex',
+        'reviewer_middle_initial: J',
+        'reviewer_last_name: Rivera',
+      ].join('\n'),
+    },
+  ];
+
+  for (const { name, body } of cases) {
+    const root = await copyRepo(t);
+    const manifestPath = alexManifestPath(root);
+    const manifest = await readJson(manifestPath);
+    const corpusRoot = path.dirname(manifestPath);
+    const doc = manifest.documents.find((entry) =>
+      entry.path.endsWith('001-driver-license-upload-ocr.txt')
+    );
+    doc.factContract.include = ['identity.legalName'];
+    doc.evaluationRole.expectedUse = 'extract';
+    await writeJson(manifestPath, manifest);
+    await writeFile(path.join(corpusRoot, doc.path), `${body}\n`);
+
+    const result = await validateAlex(root);
+    assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
+    assert.ok(
+      result.report.corpusTruth.documents
+        .find((entry) => entry.id === doc.id)
+        .declaredFacts.missing.includes('identity.legalName'),
+      `${name} should not prove the legal name`,
+    );
+  }
+});
+
 test('prose checks require expanded deterministic declared facts in document bodies', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -846,6 +1005,7 @@ test('document prose checks leave null forbidden facts to conservative pattern w
   const result = await validateElena(root);
   assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
   assertHasCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  assertHasCode(result, 'DOCUMENT_SOURCE_PHONE_PRESENT');
   assert.ok(
     result.issues.some(
       (issue) =>
@@ -875,12 +1035,14 @@ test('document prose checks do not treat I-9 identifiers as missing phone values
     path.join(corpusRoot, doc.path),
     [
       'Current work authorization document review note.',
-      'Form I-94 Admission Number: 11223344556.',
+      'Form I-94 Admission Number:',
+      '11223344556',
       'f1_i94_admission_number: "22334455667".',
       'Alien Registration Number/USCIS Number: 987654321.',
       'f1_alien_number_uscis: "246810975".',
       'Foreign Passport Number: XK1234567.',
       'f1_foreign_passport_number: "P7654321".',
+      'DD 0101202212345678',
     ].join('\n'),
   );
 
@@ -891,6 +1053,38 @@ test('document prose checks do not treat I-9 identifiers as missing phone values
     (entry) => entry.id === doc.id,
   );
   assert.ok(truth.forbiddenFacts.warningOnly.includes('contact.phone'));
+});
+
+test('document prose checks do not treat account identifiers as phone values', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
+  manifest.intentionallyMissing = manifest.intentionallyMissing.filter(
+    (missing) => missing.factKey === 'contact.phone',
+  );
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].factContract.forbid = ['contact.phone'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      '{',
+      '  "accountNumber": "ME-895510-3341",',
+      '  "serviceAgreementId": "SA-775B-9C01",',
+      '  "accountStatus": "ACTIVE"',
+      '}',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  assertNoCode(result, 'DOCUMENT_SOURCE_PHONE_PRESENT');
 });
 
 test('document prose checks warn on undeclared I-9 target field contradictions', async (t) => {
@@ -1237,6 +1431,100 @@ test('source realism checks normalize camelCase, kebab-case, and slash labels', 
 
   const result = await validateElena(root);
   assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
+});
+
+test('source realism checks accept resident and stale-cue native signal aliases', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  const manifestCopy = corpusPlanFromManifest(manifest);
+  for (const manifestDocument of manifestCopy.documents) {
+    manifestDocument.sourceSpec.nativeSignals = [];
+  }
+  manifestCopy.documents[0].sourceSpec.nativeSignals = [
+    'resident profile block',
+    'stale/superseded cue',
+  ];
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifestCopy);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Resident & Occupant Details',
+      'Primary Resident: current account holder',
+      'Status note: returned mail item is stale and do not use.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
+});
+
+test('source realism checks accept common native signal aliases from generated exports', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  const manifestCopy = corpusPlanFromManifest(manifest);
+  for (const manifestDocument of manifestCopy.documents) {
+    manifestDocument.sourceSpec.nativeSignals = [];
+  }
+  manifestCopy.documents[0].sourceSpec.nativeSignals = [
+    'source system',
+    'document category',
+    'reviewer note',
+    'blank phone field',
+  ];
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifestCopy);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'system: Northstar Onboard',
+      'Document Type: Form I-766 (Employment Authorization Document)',
+      'Assigned To: Lena Ortiz, HR Coordinator',
+      's1_telephone_number: null',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
+});
+
+test('source realism checks require raw email headers, not Markdown-bold header labels', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  const manifestCopy = corpusPlanFromManifest(manifest);
+  for (const manifestDocument of manifestCopy.documents) {
+    manifestDocument.sourceSpec.nativeSignals = [];
+  }
+  manifestCopy.documents[0].sourceSpec.nativeSignals = [
+    'From header',
+    'To header',
+    'Date header',
+    'Subject header',
+  ];
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifestCopy);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      '**From:** people@example.test',
+      '**To:** worker@example.test',
+      '**Date:** June 3, 2026',
+      '**Subject:** Offer details',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
+  assert.equal(countIssueCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING'), 4);
 });
 
 test('source realism checks report repeated corpus skeletons', async (t) => {

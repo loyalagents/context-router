@@ -293,6 +293,7 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     '',
     'Return only the artifact body. Do not include markdown fences or explanatory wrapper text.',
     fileTypeRules(doc),
+    sourceFormatRules(doc),
     'Make the body look native to the source family and capture mode.',
     'Use the allowed source context only for incidental source metadata.',
     'Do not add new personal details for the user.',
@@ -427,6 +428,23 @@ function fileTypeRules(doc) {
     'Output format: Markdown-compatible text.',
     'Avoid using the exact same section structure across documents unless the document genre requires it.',
   ].join('\n');
+}
+
+function sourceFormatRules(doc) {
+  const lines = [
+    'When sourceSpec.lengthTarget is present, aim to keep the body within its minChars/maxChars range.',
+    'Email artifacts must use raw email headers exactly like From:, To:, Date:, and Subject:, not Markdown-bold header labels.',
+    'OCR and plain-text exports should use native label/value lines, OCR-like blocks, or raw export text instead of Markdown headings or bold labels.',
+    'JSON and YAML exports should use native field ids or keys and avoid prose comments.',
+  ];
+
+  if (planDocumentFactKeys(doc).includes('identity.legalName')) {
+    lines.push(
+      'Because identity.legalName is required, include either a native combined legal-name field or clearly labeled first/middle/last name fields.',
+    );
+  }
+
+  return lines.join('\n');
 }
 
 export async function generateWithVertex(prompt, { env, model, temperature }) {

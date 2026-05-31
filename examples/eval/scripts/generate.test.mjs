@@ -204,6 +204,41 @@ test('document prompt includes file type instructions and missing facts', () => 
   assert.match(prompt, /Samir Arun Desai/);
 });
 
+test('document prompt nudges native source formats and length targets', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Alex Jordan Rivera' },
+      },
+    },
+    corpusPlan: {
+      intentionallyMissing: [],
+      artifactWorld: {},
+    },
+    doc: {
+      id: '007',
+      path: 'documents/hr-onboarding/007-offer-email.md',
+      outputExtension: 'md',
+      factContract: { include: ['identity.legalName'], forbid: [] },
+      sourceSpec: sourceSpec({
+        captureMode: 'email-body',
+        nativeSignals: ['From header', 'To header', 'Date header', 'Subject header'],
+        lengthTarget: { minChars: 1000, maxChars: 2800 },
+      }),
+      evaluationRole: evaluationRole(),
+    },
+  });
+
+  assert.match(prompt, /raw email headers exactly like From:, To:, Date:, and Subject:/);
+  assert.match(prompt, /not Markdown-bold header labels/);
+  assert.match(prompt, /within its minChars\/maxChars range/);
+  assert.match(prompt, /OCR and plain-text exports should use native label\/value lines/);
+  assert.match(prompt, /JSON and YAML exports should use native field ids or keys/);
+  assert.match(prompt, /native combined legal-name field or clearly labeled first\/middle\/last name fields/);
+  assert.match(prompt, /"minChars": 1000/);
+  assert.match(prompt, /"maxChars": 2800/);
+});
+
 test('document prompt includes only requested artifact world slices', () => {
   const prompt = buildDocumentPrompt({
     profile: {

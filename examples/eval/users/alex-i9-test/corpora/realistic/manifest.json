@@ -178,7 +178,7 @@
         ],
         "lengthTarget": {
           "minChars": 450,
-          "maxChars": 1100
+          "maxChars": 1300
         }
       },
       "factContract": {
@@ -239,7 +239,7 @@
         ],
         "lengthTarget": {
           "minChars": 700,
-          "maxChars": 1800
+          "maxChars": 2300
         }
       },
       "factContract": {
@@ -577,7 +577,7 @@
         ],
         "lengthTarget": {
           "minChars": 800,
-          "maxChars": 2200
+          "maxChars": 3200
         }
       },
       "factContract": {
@@ -642,7 +642,7 @@
         ],
         "lengthTarget": {
           "minChars": 350,
-          "maxChars": 1100
+          "maxChars": 1400
         }
       },
       "factContract": {
@@ -703,7 +703,7 @@
         ],
         "lengthTarget": {
           "minChars": 700,
-          "maxChars": 1800
+          "maxChars": 2600
         }
       },
       "factContract": {

@@ -281,6 +281,34 @@ test('plan-corpus selects status-aware I-9 slot 003 artifacts', () => {
   }
 });
 
+test('plan-corpus uses tuned length targets for verbose native source families', () => {
+  const specs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'alien authorized to work' } },
+  });
+  const specsBySlug = new Map(specs.map((spec) => [spec.slug, spec]));
+
+  assert.deepEqual(
+    specsBySlug.get('ssn-card-upload-ocr').sourceSpec.lengthTarget,
+    { minChars: 450, maxChars: 1300 },
+  );
+  assert.deepEqual(
+    specsBySlug.get('work-authorization-upload-receipt').sourceSpec.lengthTarget,
+    { minChars: 700, maxChars: 2300 },
+  );
+  assert.deepEqual(
+    specsBySlug.get('onboarding-profile-export').sourceSpec.lengthTarget,
+    { minChars: 800, maxChars: 3200 },
+  );
+  assert.deepEqual(
+    specsBySlug.get('stale-contact-ticket').sourceSpec.lengthTarget,
+    { minChars: 350, maxChars: 1400 },
+  );
+  assert.deepEqual(
+    specsBySlug.get('community-newsletter-email').sourceSpec.lengthTarget,
+    { minChars: 700, maxChars: 2600 },
+  );
+});
+
 test('artifact world is deterministic and rejects profile collisions', () => {
   const profile = {
     facts: {

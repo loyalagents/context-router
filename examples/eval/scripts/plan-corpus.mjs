@@ -129,7 +129,7 @@ const I9_BASE_SOURCE_SPECS = [
         'transcription confidence',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 450, maxChars: 1100 },
+      lengthTarget: { minChars: 450, maxChars: 1300 },
     },
   },
   {
@@ -387,7 +387,7 @@ const I9_BASE_SOURCE_SPECS = [
         'review queue',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 800, maxChars: 2200 },
+      lengthTarget: { minChars: 800, maxChars: 3200 },
     },
   },
   {
@@ -425,7 +425,7 @@ const I9_BASE_SOURCE_SPECS = [
         'do-not-use note',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 350, maxChars: 1100 },
+      lengthTarget: { minChars: 350, maxChars: 1400 },
     },
   },
   {
@@ -469,7 +469,7 @@ const I9_BASE_SOURCE_SPECS = [
         'no user-specific identifiers',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 700, maxChars: 1800 },
+      lengthTarget: { minChars: 700, maxChars: 2600 },
     },
   },
 ];
@@ -759,7 +759,7 @@ function workAuthorizationSourceSpec(profile) {
           'worker id',
         ],
         riskyDetailMenu: COMMON_RISKY_DETAILS,
-        lengthTarget: { minChars: 700, maxChars: 1800 },
+        lengthTarget: { minChars: 700, maxChars: 2300 },
       },
     };
   }
