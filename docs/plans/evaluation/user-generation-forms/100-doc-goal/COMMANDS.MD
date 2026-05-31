@@ -1,6 +1,14 @@
 # 100-Document Goal Commands
 
-TODO: Move these commands to a more permanent eval docs location after the workflow stabilizes.
+Historical, closed. This file records the old Nina 100-document experiment and
+should not be used as a current runbook. The referenced `nina-meera-patel`
+fixture was removed, and the old split `corpus-plan.json` projection workflow
+has been replaced by the unified V2 `manifest.json` flow.
+
+For current realistic corpus work, use `pnpm eval:plan-corpus` to write the V2
+manifest directly, validate it with `pnpm eval:validate --plan-only`, then use
+the generate, repair, and promote commands documented in
+`examples/eval/PLAYBOOK.md`.
 
 ## Validate The Current 100-Doc Fixture
 
@@ -28,13 +36,11 @@ Full eval verification:
 pnpm eval:verify
 ```
 
-## Regenerate Manifest Without AI
+## Current V2 Manifest Note
 
-Use after `corpus-plan.json` metadata changes:
-
-```bash
-pnpm eval:manifest --user nina-meera-patel --corpus realistic
-```
+The retired manifest projection command no longer exists. Current realistic
+corpora use `manifest.json` as the canonical contract, and
+`pnpm eval:plan-corpus` writes it directly.
 
 ## Inspect The Corpus
 
@@ -56,10 +62,10 @@ Summarize the manifest:
 node -e 'const fs=require("fs"); const m=JSON.parse(fs.readFileSync("examples/eval/users/nina-meera-patel/corpora/realistic/manifest.json","utf8")); console.log(JSON.stringify({userId:m.userId, corpusId:m.corpusId, docs:m.documents.length, categories:m.documents.reduce((a,d)=>(a[d.category]=(a[d.category]||0)+1,a),{}), intentionallyMissing:m.intentionallyMissing.map(x=>x.factKey)},null,2));'
 ```
 
-List planned file extensions:
+List document file extensions from a current V2 manifest:
 
 ```bash
-node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync("examples/eval/users/nina-meera-patel/corpora/realistic/corpus-plan.json","utf8")); console.log(p.documents.reduce((a,d)=>(a[d.outputExtension]=(a[d.outputExtension]||0)+1,a),{}));'
+USER_ID=samir-desai CORPUS_ID=realistic node -e 'const fs=require("fs"); const {USER_ID,CORPUS_ID}=process.env; const m=JSON.parse(fs.readFileSync(`examples/eval/users/${USER_ID}/corpora/${CORPUS_ID}/manifest.json`,"utf8")); console.log(m.documents.reduce((a,d)=>{const ext=d.path.split(".").pop(); a[ext]=(a[ext]||0)+1; return a;},{}));'
 ```
 
 ## Derive Seed Preferences
@@ -178,7 +184,6 @@ The backend does not need to be running for:
 
 - `pnpm eval:validate`
 - `pnpm eval:verify`
-- `pnpm eval:manifest`
 - `pnpm eval:generate`
 
 Backend test DB setup is only needed for future `pnpm eval:run` snapshot work.

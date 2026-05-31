@@ -180,10 +180,10 @@ would answer "can the system extract the right memory from documents?"
 
 ### Realistic Corpus Generation
 
-- Use `corpus-plan.json` as the authored source for large AI-authored
-  realistic corpora.
-- Keep `manifest.json` as a deterministic generated projection for those
-  corpora.
+- Use V2 `manifest.json` as the canonical authored contract for large
+  AI-authored realistic corpora.
+- Have `pnpm eval:plan-corpus` write or update the V2 manifest directly; do
+  not reintroduce a split `corpus-plan.json` projection step.
 - Generate and review a small preview set before producing a committed
   100-document corpus.
 - Record the generation model, call count, validation status, and snapshot
@@ -239,7 +239,8 @@ would answer "can the system extract the right memory from documents?"
 
 ## Suggested Future Batch Order
 
-1. Generate and validate the first 100-document realistic corpus for Samir.
+1. Generate and validate a Samir realistic corpus using the unified V2
+   manifest flow, then scale toward 100 documents after a small preview passes.
 2. Design an extraction snapshot contract.
 3. Add a document-ingestion eval runner that compares extracted facts to
    profile-backed ground truth.

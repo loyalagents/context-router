@@ -5,7 +5,6 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { runGenerate } from './generate.mjs';
-import { runManifest } from './manifest.mjs';
 import { runPlanCorpus } from './plan-corpus.mjs';
 import { runPromotePreview } from './promote-preview.mjs';
 import { getFactValue, planDocumentFactKeys } from './shared.mjs';
@@ -36,12 +35,6 @@ test('ten-document user corpus workflow plans, previews, validates, and promotes
     ],
   });
   assert.equal(plan.exitCode, 0, plan.errorMessage);
-
-  const manifest = await runManifest({
-    repoRoot: root,
-    args: ['--user', 'samir-desai', '--corpus', 'workflow-test'],
-  });
-  assert.equal(manifest.exitCode, 0, manifest.errorMessage);
 
   const generated = await runGenerate({
     repoRoot: root,

@@ -26,6 +26,14 @@
     reason/behavior prose that the model may echo.
   - Prompt still instructs artifacts to omit absent values unless the source has
     a native blank/null field.
+- Follow-up cleanup:
+  - Removed the vestigial `pnpm eval:manifest` command.
+  - Updated contributor-facing eval docs to the V2 unified-manifest flow.
+  - Aligned the parent orchestration/TODO docs and the historical 100-doc
+    runbook notes so they no longer present the retired manifest projection as
+    the current workflow.
+  - Added manifest-contract validation for inverted `sourceSpec.lengthTarget`
+    ranges.
 
 ## Important Files
 
@@ -36,6 +44,10 @@
 - `examples/eval/scripts/repair-generation.mjs`
 - `examples/eval/scripts/promote-preview.mjs`
 - `examples/eval/scripts/scaffold.mjs`
+- `examples/eval/README.md`
+- `examples/eval/PLAYBOOK.md`
+- `docs/plans/evaluation/user-generation-forms/orchestration-plan.md`
+- `docs/plans/evaluation/user-generation-forms/TODO.md`
 - `examples/eval/users/alex-i9-test/corpora/realistic/manifest.json`
 - `examples/eval/users/elena-marquez/corpora/template-smoke/manifest.json`
 - `examples/eval/users/samir-desai/corpora/template-smoke/manifest.json`
@@ -52,6 +64,13 @@ pnpm eval:verify
 pnpm eval:validate --user alex-i9-test --corpus realistic --write-report
 pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
 pnpm eval:validate --user samir-desai --corpus template-smoke --write-report
+```
+
+Follow-up cleanup verification also passed:
+
+```bash
+node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/generate.test.mjs examples/eval/scripts/validate.test.mjs examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs
+pnpm eval:test
 ```
 
 `pnpm eval:validate` result:

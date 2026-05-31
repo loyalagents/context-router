@@ -782,6 +782,22 @@ function validateManifestContract(ctx, {
       }
     }
 
+    const lengthTarget = doc.sourceSpec?.lengthTarget;
+    if (
+      lengthTarget &&
+      Number.isInteger(lengthTarget.minChars) &&
+      Number.isInteger(lengthTarget.maxChars) &&
+      lengthTarget.maxChars < lengthTarget.minChars
+    ) {
+      addIssue(ctx, {
+        code: 'MANIFEST_LENGTH_TARGET_INVALID',
+        file: manifestPath,
+        pointer: `${pointer}/sourceSpec/lengthTarget`,
+        message: `Document ${doc.id} sourceSpec lengthTarget maxChars must be greater than or equal to minChars.`,
+        fix: 'Set sourceSpec.lengthTarget.maxChars greater than or equal to minChars.',
+      });
+    }
+
     if (doc.category === 'noise' && expectedUse !== 'ignore') {
       addIssue(ctx, {
         code: 'MANIFEST_NOISE_EXPECTED_USE',
@@ -1037,6 +1053,8 @@ function getEffectiveForbiddenEntries({
   manifestPath,
   pointer,
 }) {
+  // Keep the effective key set aligned with shared.mjs while attaching
+  // validator-specific provenance for error pointers.
   const effectiveKeys = new Set(effectiveForbiddenFactKeys(manifest, doc));
   const entries = [];
   const seen = new Set();

@@ -242,7 +242,7 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
     if (!(await fileExists(path.join(outputRoot, doc.path)))) missing.push(doc.id);
   }
   if (missing.length) {
-    throw new Error(`Cannot write manifest until all planned document bodies exist. Missing ids: ${missing.join(', ')}`);
+    throw new Error(`Cannot validate generated corpus until all manifest document bodies exist. Missing ids: ${missing.join(', ')}`);
   }
 
   const validation = await runValidation({

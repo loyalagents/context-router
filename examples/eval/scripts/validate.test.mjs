@@ -509,6 +509,21 @@ test('manifest schema requires sourceSpec only for realistic-generated corpora',
   assertHasCode(realisticWithoutDefaults, 'SCHEMA_VALIDATION_FAILED');
 });
 
+test('manifest validation rejects inverted source length targets', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  manifest.documents[0].sourceSpec.lengthTarget = { minChars: 800, maxChars: 200 };
+  await writeJson(manifestPath, manifest);
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--plan-only'],
+  });
+
+  assertHasCode(result, 'MANIFEST_LENGTH_TARGET_INVALID');
+});
+
 test('manifest validation rejects document forbidden facts that conflict with declared facts', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

@@ -10,7 +10,6 @@ import {
   parseArgs,
   runGenerate,
 } from './generate.mjs';
-import { runManifest } from './manifest.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -308,29 +307,7 @@ test('runGenerate writes preview documents without touching corpus manifest', as
   );
 });
 
-test('runManifest accepts an existing canonical manifest without a model', async (t) => {
-  const root = await copyRepo(t);
-  await writeGeneratedTestPlan(root);
-  const manifestPath = path.join(
-    root,
-    'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
-  );
-  const beforeManifest = await readFile(manifestPath, 'utf8');
-
-  const result = await runManifest({
-    repoRoot: root,
-    args: ['--user', 'samir-desai', '--corpus', 'generated-test'],
-  });
-
-  assert.equal(result.exitCode, 0, result.errorMessage);
-  assert.equal(await readFile(manifestPath, 'utf8'), beforeManifest);
-  const manifest = JSON.parse(beforeManifest);
-  assert.equal(manifest.seed, 'samir-desai__generated-test');
-  assert.equal(manifest.corpusKind, 'realistic-generated');
-  assert.equal(manifest.documents.length, 6);
-});
-
-test('runManifest fails clearly when the canonical manifest is missing', async (t) => {
+test('runGenerate requires the canonical manifest and ignores corpus-plan fallbacks', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
@@ -344,9 +321,10 @@ test('runManifest fails clearly when the canonical manifest is missing', async (
     documents: [],
   });
 
-  const result = await runManifest({
+  const result = await runGenerate({
     repoRoot: root,
-    args: ['--user', 'samir-desai', '--corpus', 'generated-test'],
+    args: ['--user', 'samir-desai', '--corpus', 'generated-test', '--model', 'unit-model'],
+    generateDocument: async () => 'not used',
   });
 
   assert.equal(result.exitCode, 1);
