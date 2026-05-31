@@ -603,9 +603,14 @@ test('prose checks prove declared work authorization document values determinist
   }
 
   const body = await readFile(docPath, 'utf8');
+  const bodyWithoutI94 = body.replace(
+    /(\n\s*(?:(?:"Form I-94 Admission Number"|form_i94_admission_number)\s*:\s*)?(?:field_id:\s*s1_i94_admission_number\s*\n\s*)?value:\s*)['"]?11223344556['"]?/,
+    '$1null',
+  );
+  assert.notEqual(bodyWithoutI94, body);
   await writeFile(
     docPath,
-    body.replace('    "Form I-94 Admission Number": "11223344556"\n', ''),
+    bodyWithoutI94,
   );
 
   const missingResult = await validateAlex(root);
