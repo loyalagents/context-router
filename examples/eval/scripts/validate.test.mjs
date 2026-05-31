@@ -789,13 +789,17 @@ test('document prose checks do not treat I-9 identifiers as missing phone values
     [
       'Current work authorization document review note.',
       'Form I-94 Admission Number: 11223344556.',
+      'f1_i94_admission_number: "22334455667".',
       'Alien Registration Number/USCIS Number: 987654321.',
+      'f1_alien_number_uscis: "246810975".',
       'Foreign Passport Number: XK1234567.',
+      'f1_foreign_passport_number: "P7654321".',
     ].join('\n'),
   );
 
   const result = await validateElena(root);
   assertNoCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  assertNoCode(result, 'DOCUMENT_SOURCE_PHONE_PRESENT');
   const truth = result.report.corpusTruth.documents.find(
     (entry) => entry.id === doc.id,
   );
@@ -967,6 +971,37 @@ test('source realism checks report warning-only document issues', async (t) => {
     'examples/eval/users/elena-marquez/corpora/realistic/corpus-plan.json',
   );
   assert.equal(lengthIssue.pointer, '/documents/0/sourceSpec/lengthTarget');
+});
+
+test('source realism checks warn on task-oriented missing-value instructions', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  await writeJson(manifestPath, manifest);
+  await writeJson(
+    path.join(corpusRoot, 'corpus-plan.json'),
+    corpusPlanFromManifest(manifest),
+  );
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Copied offer email note.',
+      'If a task asks for one and none is available, leave that task field empty rather than entering a placeholder.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_EVAL_LANGUAGE');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_EVAL_LANGUAGE' &&
+        issue.level === 'warning',
+    ),
+  );
 });
 
 test('source realism checks report repeated corpus skeletons', async (t) => {

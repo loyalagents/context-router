@@ -905,11 +905,16 @@ function classifyWorkAuthorizationStatus(rawStatus) {
   const compactStatus = status.replace(/[-\s]+/g, '');
 
   if (/\bnon[-\s]?citizen national\b/.test(status)) return 'noncitizen-national';
-  if (/\bnot (?:currently )?authorized to work\b/.test(status)) return 'unknown';
+  if (
+    /\bnot (?:currently )?authorized to work\b/.test(status) ||
+    /\bunauthorized to work\b/.test(status) ||
+    /\bno longer authorized to work\b/.test(status)
+  ) {
+    return 'unknown';
+  }
   if (
     compactStatus.includes('alienauthorizedtowork') ||
-    compactStatus.includes('noncitizenauthorizedtowork') ||
-    status.includes('authorized to work')
+    compactStatus.includes('noncitizenauthorizedtowork')
   ) {
     return 'authorized-to-work';
   }

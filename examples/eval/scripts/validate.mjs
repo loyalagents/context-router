@@ -1385,7 +1385,7 @@ function validateSourceRealism(ctx, {
   const planFile = corpusPlanPath ?? manifestPath;
   const sourceSpecPointer = planPointer ? `${planPointer}/sourceSpec` : pointer;
 
-  if (/\b(?:synthetic eval fixture|fact key|validator|benchmark|profile slice|fixture document)\b/i.test(body)) {
+  if (EVAL_LANGUAGE_RE.test(body)) {
     addIssue(ctx, {
       level: 'warning',
       code: 'DOCUMENT_EVAL_LANGUAGE',
@@ -1475,6 +1475,9 @@ function nativeSignalPresent(body, signal) {
   if (signalText.includes('worker id')) return /\bworker\b.{0,12}\bid\b/i.test(body);
   if (signalText.includes('ticket id')) return /\bticket\b.{0,12}\bid\b/i.test(body);
   if (signalText.includes('export id')) return /\bexport\b.{0,12}\bid\b/i.test(body);
+  if (signalText.includes('signature block')) {
+    return /\n(?:sincerely|regards|best|thanks|thank you),?\s*\n[A-Z][A-Za-z .'-]+/i.test(body);
+  }
 
   const terms = signalText
     .split(' ')
@@ -1585,8 +1588,10 @@ function looksLikeMarkdown(text) {
 
 const PHONE_LIKE_TEXT_RE =
   /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/;
+const EVAL_LANGUAGE_RE =
+  /\b(?:synthetic eval fixture|fact key|validator|benchmark|profile slice|fixture document|if a task asks|leave (?:the )?.*field empty|enter(?:ing)? a placeholder|downstream task)\b/i;
 const I9_IDENTIFIER_CONTEXT_RE =
-  /\b(?:I-?94|USCIS|Alien Registration|A-?Number|Foreign Passport|Passport Number)\b/i;
+  /(^|[^a-z0-9])(?:i[-_\s]?94|uscis|alien[-_\s]?registration|a[-_\s]?number|foreign[-_\s]?passport|passport[-_\s]?number|admission[-_\s]?number)(?=$|[^a-z0-9])/i;
 
 function containsPhoneLikeText(text) {
   const phoneCandidateText = text

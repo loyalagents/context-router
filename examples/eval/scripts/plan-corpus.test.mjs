@@ -252,6 +252,21 @@ test('plan-corpus selects status-aware I-9 slot 003 artifacts', () => {
     negativeAuthorizedSpecs.find((doc) => doc.sequence === '003').slug,
     'work-authorization-review-note',
   );
+
+  for (const status of [
+    'unauthorized to work',
+    'no longer authorized to work',
+    'authorization pending review',
+  ]) {
+    const specs = buildI9SourceSpecs({
+      facts: { workAuthorization: { citizenshipStatus: status } },
+    });
+    assert.equal(
+      specs.find((doc) => doc.sequence === '003').slug,
+      'work-authorization-review-note',
+      `${status} should not route to the category-4 evidence receipt`,
+    );
+  }
 });
 
 test('artifact world is deterministic and rejects profile collisions', () => {

@@ -16,9 +16,9 @@ Offer context:
 - Work email: alex.rivera@cascadiahiring.example.test
 - Onboarding system: Northstar Onboard
 
-We have not stored a telephone number in this copied email thread. If a task asks for one and none is available, leave that task field empty rather than entering a placeholder.
+Please reply to this message if any offer details need correction before onboarding opens.
 
--- signature block --
+Sincerely,
 Lena Ortiz
 People Operations Hub
 Cascadia Hiring Cooperative
