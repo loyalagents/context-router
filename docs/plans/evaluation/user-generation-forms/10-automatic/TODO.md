@@ -28,6 +28,30 @@
     saved I-9 field export, offer email, onboarding YAML export, stale contact
     ticket, and newsletter/email noise.
 
+- [x] Collapse realistic planning into a unified V2 manifest.
+  - `manifest.json` is now the canonical V2 contract for both planning and
+    validation.
+  - `corpus-plan.json` is retired from realistic generation and validation.
+  - `template-smoke` manifests use the same `factContract` and
+    `evaluationRole` shape without fake `sourceSpec` metadata.
+
+- [x] Harden deterministic work-authorization validation.
+  - Declared work-authorization expiration, I-94 admission number, and foreign
+    passport number facts are now deterministic high-confidence checks.
+  - Alex's realistic corpus validates with zero unsupported declared facts.
+
+- [x] Reduce realism lint noise and add contradiction warnings.
+  - Native-signal matching now normalizes camelCase, snake_case, kebab-case,
+    spaced labels, and slash labels.
+  - Warning-only I-9 contradiction lints flag undeclared USCIS, I-94, foreign
+    passport, and work-authorization expiration values in current extract
+    sources.
+
+- [x] De-narrate missing-value generation prompts.
+  - Generation prompts pass absent person-detail paths without source-facing
+    reason text, and instruct generated artifacts to omit absent values unless
+    the source naturally has a blank/null field.
+
 - [ ] Add realism-focused repair later.
   - Keep the current repair loop focused on deterministic correctness.
   - Add a future repair mode that preserves validated facts while improving
@@ -36,4 +60,4 @@
 
 - [ ] Add the document ingestion runner later.
   - Target flow: documents -> extracted facts -> scoring -> form-fill snapshot.
-  - This remains out of scope for the V2 corpus-plan and generation batch.
+  - This remains out of scope for the V2 unified-manifest generation batch.

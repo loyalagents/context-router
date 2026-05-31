@@ -274,11 +274,18 @@ async function renderCorpus(repoRoot, options) {
         path: documentPath,
         category: meta.category,
         title: meta.title,
-        factKeys: rendered.factKeys,
-        detailTier: meta.detailTier,
-        authority: meta.authority,
-        freshness: meta.freshness,
-        expectedUse: meta.expectedUse,
+        outputExtension: meta.outputExtension,
+        factContract: {
+          include: rendered.factKeys,
+          forbid: [],
+        },
+        evaluationRole: {
+          detailTier: meta.detailTier,
+          authority: meta.authority,
+          freshness: meta.freshness,
+          expectedUse: meta.expectedUse,
+          challengeTags: [],
+        },
         template: meta.templateId,
       },
     };
@@ -296,10 +303,11 @@ async function renderCorpus(repoRoot, options) {
   }
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId: options.userId,
     corpusId: options.corpusId,
     seed,
+    corpusKind: 'template-smoke',
     forms: options.formIds,
     purpose: `Generated template-scaffold corpus for ${options.formIds.join(', ')} form-fill evaluation.`,
     intentionallyMissing,

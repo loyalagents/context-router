@@ -6,7 +6,6 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   buildDocumentPrompt,
-  manifestFromCorpusPlan,
   normalizeGeneratedText,
   parseArgs,
   runGenerate,
@@ -202,6 +201,7 @@ test('document prompt includes file type instructions and missing facts', () => 
   assert.match(prompt, /Do not wrap JSON in markdown fences/);
   assert.match(prompt, /Do not comment on, explain, or justify absent person details/);
   assert.match(prompt, /contact.phone/);
+  assert.doesNotMatch(prompt, /Phone is missing|Leave it blank/);
   assert.match(prompt, /Samir Arun Desai/);
 });
 
@@ -270,49 +270,14 @@ test('structured generated text strips only wrapping fences', () => {
   );
 });
 
-test('manifest projection keeps plan-owned metadata out of manifest', () => {
-  const manifest = manifestFromCorpusPlan({
-    userId: 'samir-desai',
-    corpusId: 'realistic',
-    forms: ['i-9'],
-    purpose: 'Generated test.',
-    factContractDefaults: { forbid: ['contact.phone'] },
-    intentionallyMissing: [],
-    documents: [
-      {
-        id: '001',
-        path: 'documents/identity/001-id.md',
-        category: 'identity',
-        title: 'Identity',
-        outputExtension: 'md',
-        sourceSpec: sourceSpec(),
-        factContract: {
-          include: ['identity.ssn'],
-          forbid: ['employment.workEmail'],
-        },
-        evaluationRole: {
-          detailTier: 'brief',
-          authority: 'medium',
-          freshness: 'current',
-          expectedUse: 'extract',
-          challengeTags: ['current-fact'],
-        },
-      },
-    ],
-  });
-
-  assert.equal(manifest.seed, 'samir-desai__realistic');
-  assert.equal(manifest.documents[0].template, undefined);
-  assert.equal(manifest.documents[0].brief, undefined);
-  assert.equal(manifest.documents[0].challengeTags, undefined);
-  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
-  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
-  assert.equal(manifest.factContractDefaults, undefined);
-});
-
 test('runGenerate writes preview documents without touching corpus manifest', async (t) => {
   const root = await copyRepo(t);
   await writeGeneratedTestPlan(root);
+  const manifestPath = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
+  );
+  const beforeManifest = await readFile(manifestPath, 'utf8');
   const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-generate-preview-'));
   t.after(async () => {
     await rm(previewRoot, { recursive: true, force: true });
@@ -338,27 +303,19 @@ test('runGenerate writes preview documents without touching corpus manifest', as
   assert.equal(result.exitCode, 0, result.errorMessage);
   assert.match(result.lines.join('\n'), /generated 1 document/);
   assert.equal(
-    await fileExists(
-      path.join(
-        root,
-        'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
-      ),
-    ),
-    false,
+    await readFile(manifestPath, 'utf8'),
+    beforeManifest,
   );
 });
 
-test('runManifest writes manifest from corpus plan without a model', async (t) => {
+test('runManifest accepts an existing canonical manifest without a model', async (t) => {
   const root = await copyRepo(t);
   await writeGeneratedTestPlan(root);
-  const corpusPlanPath = path.join(
+  const manifestPath = path.join(
     root,
-    'examples/eval/users/samir-desai/corpora/generated-test/corpus-plan.json',
+    'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
   );
-  const corpusPlan = await readJson(corpusPlanPath);
-  corpusPlan.factContractDefaults = { forbid: ['identity.ssn'] };
-  corpusPlan.documents[0].factContract.forbid = ['employment.workEmail'];
-  await writeJson(corpusPlanPath, corpusPlan);
+  const beforeManifest = await readFile(manifestPath, 'utf8');
 
   const result = await runManifest({
     repoRoot: root,
@@ -366,17 +323,34 @@ test('runManifest writes manifest from corpus plan without a model', async (t) =
   });
 
   assert.equal(result.exitCode, 0, result.errorMessage);
-  const manifest = await readJson(
-    path.join(
-      root,
-      'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
-    ),
-  );
+  assert.equal(await readFile(manifestPath, 'utf8'), beforeManifest);
+  const manifest = JSON.parse(beforeManifest);
   assert.equal(manifest.seed, 'samir-desai__generated-test');
+  assert.equal(manifest.corpusKind, 'realistic-generated');
   assert.equal(manifest.documents.length, 6);
-  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
-  assert.equal(manifest.factContractDefaults, undefined);
-  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
+});
+
+test('runManifest fails clearly when the canonical manifest is missing', async (t) => {
+  const root = await copyRepo(t);
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/generated-test',
+  );
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 2,
+    userId: 'samir-desai',
+    corpusId: 'generated-test',
+    documents: [],
+  });
+
+  const result = await runManifest({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'generated-test'],
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.errorMessage, /manifest\.json|ENOENT/);
 });
 
 test('runGenerate resolves short ids for preview and overwrite regenerates existing docs', async (t) => {
@@ -500,10 +474,12 @@ async function writeGeneratedTestPlan(root) {
     'examples/eval/users/samir-desai/corpora/generated-test',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+  await writeJson(path.join(corpusRoot, 'manifest.json'), {
     schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'generated-test',
+    seed: 'samir-desai__generated-test',
+    corpusKind: 'realistic-generated',
     forms: sourceManifest.forms,
     purpose: sourceManifest.purpose,
     artifactWorld: {
@@ -529,15 +505,12 @@ async function writeGeneratedTestPlan(root) {
         worldRefs: ['source.system'],
       }),
       factContract: {
-        include: doc.factKeys,
+        include: doc.factContract.include,
         forbid: [],
       },
       evaluationRole: {
-        detailTier: doc.detailTier,
-        authority: doc.authority,
-        freshness: doc.freshness,
-        expectedUse: doc.expectedUse,
-        challengeTags: ['current-fact'],
+        ...doc.evaluationRole,
+        challengeTags: doc.evaluationRole.challengeTags ?? ['current-fact'],
       },
     })),
   });
@@ -585,15 +558,6 @@ async function copyRepo(t) {
     path.join(root, 'apps/backend/src/config/preferences.catalog.json'),
   );
   return root;
-}
-
-async function fileExists(filePath) {
-  try {
-    await readFile(filePath, 'utf8');
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function readJson(filePath) {

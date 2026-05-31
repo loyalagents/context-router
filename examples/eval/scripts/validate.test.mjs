@@ -136,8 +136,8 @@ test('rejects area document facts and legacy noise detail tiers', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  manifest.documents[0].factKeys = ['address.current'];
-  manifest.documents[0].detailTier = 'noise';
+  manifest.documents[0].factContract.include = ['address.current'];
+  manifest.documents[0].evaluationRole.detailTier = 'noise';
   await writeJson(manifestPath, manifest);
 
   const result = await validateElena(root);
@@ -176,10 +176,10 @@ test('rejects noise and ignore metadata violations', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  manifest.documents.find((doc) => doc.id === '081').expectedUse = 'extract';
+  manifest.documents.find((doc) => doc.id === '081').evaluationRole.expectedUse = 'extract';
   const ignored = manifest.documents.find((doc) => doc.id === '082');
-  ignored.expectedUse = 'ignore';
-  ignored.factKeys = ['identity.firstName'];
+  ignored.evaluationRole.expectedUse = 'ignore';
+  ignored.factContract.include = ['identity.firstName'];
   await writeJson(manifestPath, manifest);
 
   const result = await validateElena(root);
@@ -187,14 +187,14 @@ test('rejects noise and ignore metadata violations', async (t) => {
   assertHasCode(result, 'DOCUMENT_IGNORE_FACT_KEYS');
 });
 
-test('plan-only validates corpus plans without manifest or document bodies', async (t) => {
+test('plan-only validates canonical manifests without document bodies', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
     'examples/eval/users/samir-desai/corpora/realistic',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), unitCorpusPlan({
+  await writeJson(path.join(corpusRoot, 'manifest.json'), unitManifest({
     intentionallyMissing: [
       {
         factKey: 'contact.phone',
@@ -237,14 +237,14 @@ test('plan-only validates corpus plans without manifest or document bodies', asy
   assert.equal(result.summary.errors, 0);
 });
 
-test('corpus plan validation rejects invalid forbidden fact references', async (t) => {
+test('manifest validation rejects invalid forbidden fact references', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
     'examples/eval/users/samir-desai/corpora/realistic',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), unitCorpusPlan({
+  await writeJson(path.join(corpusRoot, 'manifest.json'), unitManifest({
     factContractDefaults: {
       forbid: ['address.current', 'identity.notReal'],
     },
@@ -264,20 +264,20 @@ test('corpus plan validation rejects invalid forbidden fact references', async (
     args: ['--user', 'samir-desai', '--corpus', 'realistic', '--plan-only'],
   });
 
-  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_AREA');
-  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
-  assertHasCode(result, 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_AREA');
-  assertHasCode(result, 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_MISSING');
+  assertHasCode(result, 'MANIFEST_FORBIDDEN_FACT_AREA');
+  assertHasCode(result, 'MANIFEST_FORBIDDEN_FACT_MISSING');
+  assertHasCode(result, 'MANIFEST_DEFAULT_FORBIDDEN_FACT_AREA');
+  assertHasCode(result, 'MANIFEST_DEFAULT_FORBIDDEN_FACT_MISSING');
 });
 
-test('corpus plan schema accepts default forbidden facts and rejects unexpected fields', async (t) => {
+test('manifest schema accepts default forbidden facts and rejects unexpected fields', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
     'examples/eval/users/samir-desai/corpora/realistic',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), unitCorpusPlan({
+  await writeJson(path.join(corpusRoot, 'manifest.json'), unitManifest({
     factContractDefaults: { forbid: ['contact.phone'] },
     intentionallyMissing: [],
     documents: [
@@ -297,10 +297,10 @@ test('corpus plan schema accepts default forbidden facts and rejects unexpected 
   assert.equal(validResult.exitCode, 0);
   assertNoCode(validResult, 'SCHEMA_VALIDATION_FAILED');
 
-  const plan = await readJson(path.join(corpusRoot, 'corpus-plan.json'));
+  const plan = await readJson(path.join(corpusRoot, 'manifest.json'));
   plan.unexpectedTopLevelField = true;
   plan.documents[0].unsupportedPlanField = true;
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), plan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), plan);
 
   const result = await runValidation({
     repoRoot: root,
@@ -308,24 +308,24 @@ test('corpus plan schema accepts default forbidden facts and rejects unexpected 
   });
 
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
-  assertNoCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+  assertNoCode(result, 'MANIFEST_FORBIDDEN_FACT_MISSING');
 });
 
-test('corpus plan schema rejects V1 corpus-plan fields', async (t) => {
+test('manifest schema rejects V1 manifest fields', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
     'examples/eval/users/samir-desai/corpora/realistic',
   );
   await mkdir(corpusRoot, { recursive: true });
-  const plan = unitCorpusPlan();
+  const plan = unitManifest();
   plan.schemaVersion = 1;
   plan.defaultForbiddenFactKeys = ['contact.phone'];
   plan.targetDocumentCount = 1;
   plan.categoryCounts = { identity: 1 };
   plan.documents[0].factKeys = ['identity.ssn'];
   plan.documents[0].brief = 'Legacy V1 brief.';
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), plan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), plan);
 
   const result = await runValidation({
     repoRoot: root,
@@ -335,7 +335,7 @@ test('corpus plan schema rejects V1 corpus-plan fields', async (t) => {
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
 });
 
-test('corpus plan schema rejects each legacy V1 planning field', async (t) => {
+test('manifest schema rejects each legacy V1 planning field', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
@@ -386,9 +386,9 @@ test('corpus plan schema rejects each legacy V1 planning field', async (t) => {
   ];
 
   for (const [fieldName, mutate] of legacyFields) {
-    const plan = unitCorpusPlan();
+    const plan = unitManifest();
     mutate(plan);
-    await writeJson(path.join(corpusRoot, 'corpus-plan.json'), plan);
+    await writeJson(path.join(corpusRoot, 'manifest.json'), plan);
 
     const result = await runValidation({
       repoRoot: root,
@@ -402,14 +402,14 @@ test('corpus plan schema rejects each legacy V1 planning field', async (t) => {
   }
 });
 
-test('corpus plan schema rejects duplicate forbidden fact keys', async (t) => {
+test('manifest schema rejects duplicate forbidden fact keys', async (t) => {
   const root = await copyRepo(t);
   const corpusRoot = path.join(
     root,
     'examples/eval/users/samir-desai/corpora/realistic',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), unitCorpusPlan({
+  await writeJson(path.join(corpusRoot, 'manifest.json'), unitManifest({
     factContractDefaults: { forbid: ['contact.phone', 'contact.phone'] },
     intentionallyMissing: [],
     documents: [
@@ -430,95 +430,125 @@ test('corpus plan schema rejects duplicate forbidden fact keys', async (t) => {
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
 });
 
-test('corpus plan validation rejects document forbidden facts that conflict with declared facts', async (t) => {
+test('manifest schema requires sourceSpec only for realistic-generated corpora', async (t) => {
   const root = await copyRepo(t);
-  const manifestPath = elenaManifestPath(root);
-  const manifest = await readJson(manifestPath);
-  const corpusRoot = path.dirname(manifestPath);
-  const corpusPlan = corpusPlanFromManifest(manifest);
-  corpusPlan.documents[0].factContract.include = ['identity.ssn'];
-  corpusPlan.documents[0].factContract.forbid = ['identity.ssn'];
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  const templateManifestPath = path.join(
+    root,
+    'examples/eval/users/elena-marquez/corpora/template-smoke/manifest.json',
+  );
+  const templateManifest = await readJson(templateManifestPath);
+  assert.equal(templateManifest.corpusKind, 'template-smoke');
+  assert.equal(templateManifest.documents.some((doc) => doc.sourceSpec), false);
 
-  const result = await validateElena(root);
-  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_CONFLICT');
+  const templateResult = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke', '--plan-only'],
+  });
+  assert.equal(templateResult.exitCode, 0);
+
+  templateManifest.documents[0].sourceSpec = sourceSpec();
+  await writeJson(templateManifestPath, templateManifest);
+  const templateWithSourceSpec = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke', '--plan-only'],
+  });
+  assertHasCode(templateWithSourceSpec, 'SCHEMA_VALIDATION_FAILED');
+
+  delete templateManifest.documents[0].sourceSpec;
+  templateManifest.artifactWorld = {
+    schemaVersion: 1,
+    seed: 'elena-marquez__template-smoke',
+    timeline: {},
+  };
+  await writeJson(templateManifestPath, templateManifest);
+  const templateWithArtifactWorld = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke', '--plan-only'],
+  });
+  assertHasCode(templateWithArtifactWorld, 'SCHEMA_VALIDATION_FAILED');
+
+  delete templateManifest.artifactWorld;
+  templateManifest.factContractDefaults = { forbid: [] };
+  await writeJson(templateManifestPath, templateManifest);
+  const templateWithDefaults = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke', '--plan-only'],
+  });
+  assertHasCode(templateWithDefaults, 'SCHEMA_VALIDATION_FAILED');
+
+  const realisticManifestPath = elenaManifestPath(root);
+  const realisticManifest = await readJson(realisticManifestPath);
+  delete realisticManifest.documents[0].sourceSpec;
+  await writeJson(realisticManifestPath, realisticManifest);
+  const realisticWithoutSourceSpec = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--plan-only'],
+  });
+  assertHasCode(realisticWithoutSourceSpec, 'SCHEMA_VALIDATION_FAILED');
+
+  realisticManifest.documents[0].sourceSpec = sourceSpec();
+  delete realisticManifest.artifactWorld;
+  await writeJson(realisticManifestPath, realisticManifest);
+  const realisticWithoutWorld = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--plan-only'],
+  });
+  assertHasCode(realisticWithoutWorld, 'SCHEMA_VALIDATION_FAILED');
+
+  realisticManifest.artifactWorld = {
+    schemaVersion: 1,
+    seed: 'elena-marquez__realistic',
+    timeline: {},
+  };
+  delete realisticManifest.factContractDefaults;
+  await writeJson(realisticManifestPath, realisticManifest);
+  const realisticWithoutDefaults = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--plan-only'],
+  });
+  assertHasCode(realisticWithoutDefaults, 'SCHEMA_VALIDATION_FAILED');
 });
 
-test('corpus plan validation reports manifest projection drift', async (t) => {
+test('manifest validation rejects document forbidden facts that conflict with declared facts', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  const corpusRoot = path.dirname(manifestPath);
-  const corpusPlan = corpusPlanFromManifest(manifest);
-  corpusPlan.documents[0].factContract.include = ['identity.ssn'];
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  manifest.documents[0].factContract.include = ['identity.ssn'];
+  manifest.documents[0].factContract.forbid = ['identity.ssn'];
+  await writeJson(manifestPath, manifest);
 
   const result = await validateElena(root);
-  assertHasCode(result, 'MANIFEST_PLAN_MISMATCH');
+  assertHasCode(result, 'MANIFEST_FORBIDDEN_FACT_CONFLICT');
 });
 
-test('corpus plan validation reports manifest drift for every projected document field', async (t) => {
+test('validator no longer reads split corpus-plan files', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
-  const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
-  const planPath = path.join(corpusRoot, 'corpus-plan.json');
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 2,
+    userId: 'wrong-user',
+    documents: [],
+  });
 
-  const driftCases = [
-    ['id', (doc) => {
-      doc.id = `${doc.id}-drift`;
-    }],
-    ['path', (doc) => {
-      doc.path = 'documents/identity/001-plan-drift.md';
-    }],
-    ['category', (doc) => {
-      doc.category = 'address-contact';
-    }],
-    ['title', (doc) => {
-      doc.title = `${doc.title} Drift`;
-    }],
-    ['factKeys', (doc) => {
-      doc.factContract.include = ['identity.legalName'];
-    }],
-    ['detailTier', (doc) => {
-      doc.evaluationRole.detailTier = 'brief';
-    }],
-    ['authority', (doc) => {
-      doc.evaluationRole.authority = 'low';
-    }],
-    ['freshness', (doc) => {
-      doc.evaluationRole.freshness = 'mixed';
-    }],
-    ['expectedUse', (doc) => {
-      doc.evaluationRole.expectedUse = 'corroborate';
-    }],
-  ];
-
-  for (const [fieldName, mutate] of driftCases) {
-    const corpusPlan = corpusPlanFromManifest(manifest);
-    mutate(corpusPlan.documents[0]);
-    await writeJson(planPath, corpusPlan);
-
-    const result = await validateElena(root);
-    assert.ok(
-      result.issues.some((issue) => issue.code === 'MANIFEST_PLAN_MISMATCH'),
-      `${fieldName} drift should be reported`,
-    );
-  }
+  const result = await validateElena(root);
+  assert.equal(result.exitCode, 0);
+  assertNoCode(result, 'MANIFEST_PLAN_MISMATCH');
+  assertNoCode(result, 'MANIFEST_USER_ID_MISMATCH');
 });
 
 test('prose checks require high-confidence declared values in document bodies', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  manifest.documents[0].factKeys = [
+  manifest.documents[0].factContract.include = [
     'identity.ssn',
     'identity.dateOfBirth',
     'address.current.postalCode',
     'address.current.state',
     'workAuthorization.citizenshipStatus',
   ];
-  manifest.documents[0].expectedUse = 'extract';
+  manifest.documents[0].evaluationRole.expectedUse = 'extract';
   await writeJson(manifestPath, manifest);
   await writeFile(
     path.join(
@@ -581,7 +611,7 @@ test('prose checks require expanded deterministic declared facts in document bod
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [
+  doc.factContract.include = [
     'identity.legalName',
     'identity.firstName',
     'identity.lastName',
@@ -593,9 +623,9 @@ test('prose checks require expanded deterministic declared facts in document bod
     'employment.company',
     'employment.title',
   ];
-  doc.expectedUse = 'extract';
+  doc.evaluationRole.expectedUse = 'extract';
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlanFromManifest(manifest));
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -624,10 +654,10 @@ test('employment start date requires a date variant near start or hire context',
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = ['employment.startDate'];
-  doc.expectedUse = 'extract';
+  doc.factContract.include = ['employment.startDate'];
+  doc.evaluationRole.expectedUse = 'extract';
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlanFromManifest(manifest));
   const docPath = path.join(corpusRoot, doc.path);
 
   await writeFile(
@@ -662,10 +692,10 @@ test('short name and address values do not match inside longer unrelated tokens'
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = ['identity.firstName', 'address.current.city'];
-  doc.expectedUse = 'extract';
+  doc.factContract.include = ['identity.firstName', 'address.current.city'];
+  doc.evaluationRole.expectedUse = 'extract';
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlanFromManifest(manifest));
   await writeFile(
     path.join(corpusRoot, doc.path),
     'Internal identifiers: preelenapost and xsacramentoy. No person or city is named.\n',
@@ -675,18 +705,18 @@ test('short name and address values do not match inside longer unrelated tokens'
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
 });
 
-test('document prose checks reject forbidden fact values from corpus plans', async (t) => {
+test('document prose checks reject forbidden fact values from canonical manifests', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.expectedUse = 'guardrail';
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'guardrail';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = ['identity.ssn'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     'This fixture body leaks SSN 000-00-0194 even though it is forbidden.\n',
@@ -702,12 +732,12 @@ test('document prose checks reject default forbidden fact variants', async (t) =
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.expectedUse = 'guardrail';
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'guardrail';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.factContractDefaults.forbid = ['identity.ssn'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     'The forbidden SSN appears in compact form as 000000194.\n',
@@ -730,12 +760,12 @@ test('document prose checks apply default forbidden facts and remove declared fa
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = ['identity.ssn'];
-  doc.expectedUse = 'extract';
+  doc.factContract.include = ['identity.ssn'];
+  doc.evaluationRole.expectedUse = 'extract';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.factContractDefaults.forbid = ['identity.ssn', 'employment.workEmail'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -765,12 +795,12 @@ test('document prose checks do not match forbidden numeric facts inside longer i
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.expectedUse = 'guardrail';
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'guardrail';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = ['identity.ssn'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     'Synthetic account export id: 9900000019400. This is not an SSN field.\n',
@@ -787,7 +817,7 @@ test('document prose checks leave null forbidden facts to conservative pattern w
   const corpusRoot = path.dirname(manifestPath);
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = ['contact.phone'];
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, manifest.documents[0].path),
     [
@@ -816,16 +846,16 @@ test('document prose checks do not treat I-9 identifiers as missing phone values
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.expectedUse = 'extract';
-  doc.freshness = 'current';
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
   manifest.intentionallyMissing = manifest.intentionallyMissing.filter(
     (missing) => missing.factKey === 'contact.phone',
   );
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = ['contact.phone'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -848,6 +878,85 @@ test('document prose checks do not treat I-9 identifiers as missing phone values
   assert.ok(truth.forbiddenFacts.warningOnly.includes('contact.phone'));
 });
 
+test('document prose checks warn on undeclared I-9 target field contradictions', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current onboarding review for Elena Sofia Marquez.',
+      'Form I-94 Admission Number: 11223344556.',
+      'Foreign Passport Number: XK1234567.',
+      'Work authorization expires November 14, 2027.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT');
+  assert.equal(
+    countIssueCode(result, 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT'),
+    3,
+  );
+  assert.ok(
+    result.issues.every(
+      (issue) =>
+        issue.code !== 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT' ||
+        issue.level === 'warning',
+    ),
+  );
+});
+
+test('document prose checks skip declared, stale, and guardrail I-9 target text', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [
+    'identity.legalName',
+    'workAuthorization.i94AdmissionNumber',
+  ];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current onboarding review for Elena Sofia Marquez.',
+      'Form I-94 Admission Number: 11223344556.',
+    ].join('\n'),
+  );
+
+  const declaredResult = await validateElena(root);
+  assertNoCode(declaredResult, 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT');
+
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.freshness = 'stale';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Stale onboarding review for Elena Sofia Marquez.',
+      'Form I-94 Admission Number: 11223344556.',
+    ].join('\n'),
+  );
+  const staleResult = await validateElena(root);
+  assertNoCode(staleResult, 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT');
+
+  doc.evaluationRole.freshness = 'current';
+  doc.evaluationRole.expectedUse = 'guardrail';
+  await writeJson(manifestPath, manifest);
+  const guardrailResult = await validateElena(root);
+  assertNoCode(guardrailResult, 'DOCUMENT_UNDECLARED_I9_TARGET_FIELD_PRESENT');
+});
+
 test('document prose checks reject high-confidence current identifiers in noise docs', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -855,10 +964,10 @@ test('document prose checks reject high-confidence current identifiers in noise 
   const corpusRoot = path.dirname(manifestPath);
   const noisy = manifest.documents[0];
   noisy.category = 'noise';
-  noisy.expectedUse = 'ignore';
-  noisy.authority = 'none';
-  noisy.detailTier = 'brief';
-  noisy.factKeys = [];
+  noisy.evaluationRole.expectedUse = 'ignore';
+  noisy.evaluationRole.authority = 'none';
+  noisy.evaluationRole.detailTier = 'brief';
+  noisy.factContract.include = [];
   await writeJson(manifestPath, manifest);
   await writeFile(
     path.join(corpusRoot, noisy.path),
@@ -876,14 +985,14 @@ test('noise leak checks skip facts already covered by forbidden fact checks', as
   const corpusRoot = path.dirname(manifestPath);
   const noisy = manifest.documents[0];
   noisy.category = 'noise';
-  noisy.expectedUse = 'ignore';
-  noisy.authority = 'none';
-  noisy.detailTier = 'brief';
-  noisy.factKeys = [];
+  noisy.evaluationRole.expectedUse = 'ignore';
+  noisy.evaluationRole.authority = 'none';
+  noisy.evaluationRole.detailTier = 'brief';
+  noisy.factContract.include = [];
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = ['identity.ssn'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, noisy.path),
     'Unrelated note accidentally contains 000-00-0194.',
@@ -902,14 +1011,14 @@ test('noise leak checks skip facts already covered by default forbidden checks',
   const corpusRoot = path.dirname(manifestPath);
   const noisy = manifest.documents[0];
   noisy.category = 'noise';
-  noisy.expectedUse = 'ignore';
-  noisy.authority = 'none';
-  noisy.detailTier = 'brief';
-  noisy.factKeys = [];
+  noisy.evaluationRole.expectedUse = 'ignore';
+  noisy.evaluationRole.authority = 'none';
+  noisy.evaluationRole.detailTier = 'brief';
+  noisy.factContract.include = [];
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.factContractDefaults.forbid = ['identity.ssn', 'contact.phone'];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, noisy.path),
     'Unrelated note accidentally contains 000-00-0194.',
@@ -931,8 +1040,8 @@ test('document prose checks warn for value-like intentionally missing work autho
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
-  manifest.documents[0].expectedUse = 'extract';
-  manifest.documents[0].freshness = 'current';
+  manifest.documents[0].evaluationRole.expectedUse = 'extract';
+  manifest.documents[0].evaluationRole.freshness = 'current';
   manifest.intentionallyMissing.push({
     factKey: 'workAuthorization.uscisANumber',
     forms: ['i-9'],
@@ -967,14 +1076,14 @@ test('source realism checks report warning-only document issues', async (t) => {
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.freshness = 'stale';
-  doc.expectedUse = 'guardrail';
+  doc.factContract.include = [];
+  doc.evaluationRole.freshness = 'stale';
+  doc.evaluationRole.expectedUse = 'guardrail';
   await writeJson(manifestPath, manifest);
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].sourceSpec.nativeSignals = ['ticket id'];
   corpusPlan.documents[0].sourceSpec.lengthTarget = { minChars: 300, maxChars: 400 };
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -1002,7 +1111,7 @@ test('source realism checks report warning-only document issues', async (t) => {
   );
   assert.equal(
     nativeSignalIssue.file,
-    'examples/eval/users/elena-marquez/corpora/realistic/corpus-plan.json',
+    'examples/eval/users/elena-marquez/corpora/realistic/manifest.json',
   );
   assert.equal(nativeSignalIssue.pointer, '/documents/0/sourceSpec/nativeSignals/0');
   const lengthIssue = result.issues.find(
@@ -1010,7 +1119,7 @@ test('source realism checks report warning-only document issues', async (t) => {
   );
   assert.equal(
     lengthIssue.file,
-    'examples/eval/users/elena-marquez/corpora/realistic/corpus-plan.json',
+    'examples/eval/users/elena-marquez/corpora/realistic/manifest.json',
   );
   assert.equal(lengthIssue.pointer, '/documents/0/sourceSpec/lengthTarget');
 });
@@ -1021,10 +1130,10 @@ test('source realism checks warn on task-oriented missing-value instructions', a
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
+  doc.factContract.include = [];
   await writeJson(manifestPath, manifest);
   await writeJson(
-    path.join(corpusRoot, 'corpus-plan.json'),
+    path.join(corpusRoot, 'manifest.json'),
     corpusPlanFromManifest(manifest),
   );
   await writeFile(
@@ -1052,7 +1161,7 @@ test('source realism checks accept snake_case native export signals', async (t) 
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
+  doc.factContract.include = [];
   await writeJson(manifestPath, manifest);
   const corpusPlan = corpusPlanFromManifest(manifest);
   for (const planDocument of corpusPlan.documents) {
@@ -1065,7 +1174,7 @@ test('source realism checks accept snake_case native export signals', async (t) 
     'worker id',
     'blank phone field',
   ];
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -1081,6 +1190,40 @@ test('source realism checks accept snake_case native export signals', async (t) 
   assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
 });
 
+test('source realism checks normalize camelCase, kebab-case, and slash labels', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  const manifestCopy = corpusPlanFromManifest(manifest);
+  for (const manifestDocument of manifestCopy.documents) {
+    manifestDocument.sourceSpec.nativeSignals = [];
+  }
+  manifestCopy.documents[0].sourceSpec.nativeSignals = [
+    'saved timestamp',
+    'export id',
+    'worker id',
+    'field ids',
+    'blank phone field',
+  ];
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifestCopy);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'savedTimestamp: "2026-06-03T14:18:00-07:00"',
+      'exportId: ME-EXP-U1234X567',
+      'worker-id: CHR-53242',
+      'field/ids: f1_first_name, f1_last_name',
+      'phone-field-state: blank',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
+});
+
 test('source realism checks report repeated corpus skeletons', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -1088,11 +1231,11 @@ test('source realism checks report repeated corpus skeletons', async (t) => {
   const corpusRoot = path.dirname(manifestPath);
   const docs = manifest.documents.slice(0, 3);
   for (const doc of docs) {
-    doc.factKeys = [];
-    doc.expectedUse = 'corroborate';
+    doc.factContract.include = [];
+    doc.evaluationRole.expectedUse = 'corroborate';
   }
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlanFromManifest(manifest));
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlanFromManifest(manifest));
 
   for (const doc of docs) {
     await writeFile(
@@ -1126,28 +1269,28 @@ test('document body format checks validate structured and plain text files', asy
       doc: docs[0],
       nextPath: 'documents/identity/001-driver-license-transcript.json',
       body: '{ not json }\n',
-      factKeys: [],
+      include: [],
       expectedUse: 'corroborate',
     },
     {
       doc: docs[1],
       nextPath: 'documents/identity/002-state-id-card-notes.yaml',
       body: 'broken: [\n',
-      factKeys: [],
+      include: [],
       expectedUse: 'corroborate',
     },
     {
       doc: docs[2],
       nextPath: 'documents/identity/003-passport-application-draft.json',
       body: '```json\n{"ok": true}\n```\n',
-      factKeys: [],
+      include: [],
       expectedUse: 'corroborate',
     },
     {
       doc: docs[3],
       nextPath: 'documents/identity/004-birth-record-summary.txt',
       body: '# Markdown Heading\nplain text below\n',
-      factKeys: [],
+      include: [],
       expectedUse: 'corroborate',
     },
   ];
@@ -1158,8 +1301,9 @@ test('document body format checks validate structured and plain text files', asy
     await rm(oldPath, { force: true });
     await writeFile(nextPath, rewrite.body);
     rewrite.doc.path = rewrite.nextPath;
-    rewrite.doc.factKeys = rewrite.factKeys;
-    rewrite.doc.expectedUse = rewrite.expectedUse;
+    rewrite.doc.outputExtension = path.posix.extname(rewrite.nextPath).slice(1);
+    rewrite.doc.factContract.include = rewrite.include;
+    rewrite.doc.evaluationRole.expectedUse = rewrite.expectedUse;
   }
   await writeJson(manifestPath, manifest);
 
@@ -1422,19 +1566,19 @@ test('corpus truth report records proven, missing, unsupported, absent, and warn
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [
+  doc.factContract.include = [
     'identity.legalName',
     'employment.startDate',
     'communication.preferredChannels',
   ];
-  doc.expectedUse = 'extract';
+  doc.evaluationRole.expectedUse = 'extract';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = [
     'employment.workEmail',
     'contact.phone',
   ];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     'Current employee note for Elena Sofia Marquez. Reference date 6/3/2026.\n',
@@ -1468,22 +1612,22 @@ test('corpus truth report records invalid forbidden refs separately from skipped
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = [];
-  doc.expectedUse = 'guardrail';
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'guardrail';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].factContract.forbid = [
     'identity.notReal',
     'workAuthorization.workAuthorizationExpirationDate',
   ];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
 
   const result = await validateElena(root);
   const truth = result.report.corpusTruth.documents.find(
     (entry) => entry.id === doc.id,
   );
 
-  assertHasCode(result, 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING');
+  assertHasCode(result, 'MANIFEST_FORBIDDEN_FACT_MISSING');
   assert.ok(truth.forbiddenFacts.invalid.includes('identity.notReal'));
   assert.ok(
     truth.forbiddenFacts.skipped.includes(
@@ -1498,9 +1642,9 @@ test('corpus truth report records effective forbidden facts by source without du
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
   const doc = manifest.documents[0];
-  doc.factKeys = ['identity.legalName'];
-  doc.expectedUse = 'extract';
-  doc.freshness = 'current';
+  doc.factContract.include = ['identity.legalName'];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.factContractDefaults.forbid = ['contact.phone'];
   corpusPlan.documents[0].factContract.forbid = [
@@ -1508,7 +1652,7 @@ test('corpus truth report records effective forbidden facts by source without du
     'contact.phone',
   ];
   await writeJson(manifestPath, manifest);
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), corpusPlan);
   await writeFile(
     path.join(corpusRoot, doc.path),
     [
@@ -1586,15 +1730,17 @@ test('committed Alex realistic corpus uses V2 source artifact fixture shape', as
     repoRoot,
     'examples/eval/users/alex-i9-test/corpora/realistic',
   );
-  const plan = await readJson(path.join(corpusRoot, 'corpus-plan.json'));
   const manifest = await readJson(path.join(corpusRoot, 'manifest.json'));
 
-  assert.equal(plan.schemaVersion, 2);
-  assert.equal(plan.documents.length, 10);
-  assert.equal(manifest.schemaVersion, 1);
+  assert.equal(manifest.schemaVersion, 2);
+  assert.equal(manifest.corpusKind, 'realistic-generated');
   assert.equal(manifest.documents.length, 10);
-  assert.ok(plan.artifactWorld);
-  assert.ok(plan.factContractDefaults);
+  assert.ok(manifest.artifactWorld);
+  assert.ok(manifest.factContractDefaults);
+  await assert.rejects(
+    readJson(path.join(corpusRoot, 'corpus-plan.json')),
+    /ENOENT/,
+  );
 
   const manifestPaths = new Set(manifest.documents.map((doc) => doc.path));
   for (const oldPath of [
@@ -1611,7 +1757,7 @@ test('committed Alex realistic corpus uses V2 source artifact fixture shape', as
     assert.equal(manifestPaths.has(oldPath), false, `${oldPath} should not be listed`);
   }
 
-  for (const doc of plan.documents) {
+  for (const doc of manifest.documents) {
     assert.ok(doc.sourceSpec, `${doc.id} should have sourceSpec`);
     assert.ok(doc.factContract, `${doc.id} should have factContract`);
     assert.ok(doc.evaluationRole, `${doc.id} should have evaluationRole`);
@@ -1640,8 +1786,8 @@ test('reports every document that declares an intentionally missing fact', async
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
-  manifest.documents[0].factKeys.push('contact.phone');
-  manifest.documents[1].factKeys.push('contact.phone');
+  manifest.documents[0].factContract.include.push('contact.phone');
+  manifest.documents[1].factContract.include.push('contact.phone');
   await writeJson(manifestPath, manifest);
 
   const result = await validateElena(root);
@@ -1714,12 +1860,24 @@ async function writeElenaRealisticTestCorpus(root) {
   await mkdir(path.join(corpusRoot, 'documents/noise'), { recursive: true });
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId: 'elena-marquez',
     corpusId: 'realistic',
     seed: 'elena-marquez__realistic',
+    corpusKind: 'realistic-generated',
     forms: ['i-9'],
     purpose: 'Small validator test corpus created inside temp test repos.',
+    artifactWorld: {
+      schemaVersion: 1,
+      seed: 'elena-marquez__realistic',
+      timeline: {
+        generatedAt: '2026-06-01T10:00:00-07:00',
+      },
+      source: {
+        system: 'Validator Unit Test',
+      },
+    },
+    factContractDefaults: { forbid: [] },
     intentionallyMissing: [
       {
         factKey: 'contact.phone',
@@ -1753,9 +1911,9 @@ async function writeElenaRealisticTestCorpus(root) {
       },
     ],
     documents: [
-      {
+      fixtureDocument({
         id: '001',
-        path: 'documents/identity/001-identity-profile.md',
+        documentPath: 'documents/identity/001-identity-profile.md',
         category: 'identity',
         title: 'Identity Profile',
         factKeys: [
@@ -1777,10 +1935,10 @@ async function writeElenaRealisticTestCorpus(root) {
         authority: 'high',
         freshness: 'current',
         expectedUse: 'extract',
-      },
-      {
+      }),
+      fixtureDocument({
         id: '002',
-        path: 'documents/address-contact/002-address-note.md',
+        documentPath: 'documents/address-contact/002-address-note.md',
         category: 'address-contact',
         title: 'Address Note',
         factKeys: [
@@ -1795,10 +1953,10 @@ async function writeElenaRealisticTestCorpus(root) {
         authority: 'medium',
         freshness: 'current',
         expectedUse: 'extract',
-      },
-      {
+      }),
+      fixtureDocument({
         id: '003',
-        path: 'documents/identity/003-employment-note.md',
+        documentPath: 'documents/identity/003-employment-note.md',
         category: 'identity',
         title: 'Employment Note',
         factKeys: [
@@ -1812,10 +1970,10 @@ async function writeElenaRealisticTestCorpus(root) {
         authority: 'medium',
         freshness: 'current',
         expectedUse: 'corroborate',
-      },
-      {
+      }),
+      fixtureDocument({
         id: '081',
-        path: 'documents/noise/081-newsletter.txt',
+        documentPath: 'documents/noise/081-newsletter.txt',
         category: 'noise',
         title: 'Newsletter',
         factKeys: [],
@@ -1823,10 +1981,10 @@ async function writeElenaRealisticTestCorpus(root) {
         authority: 'none',
         freshness: 'unknown',
         expectedUse: 'ignore',
-      },
-      {
+      }),
+      fixtureDocument({
         id: '082',
-        path: 'documents/noise/082-event-note.txt',
+        documentPath: 'documents/noise/082-event-note.txt',
         category: 'noise',
         title: 'Event Note',
         factKeys: [],
@@ -1834,7 +1992,7 @@ async function writeElenaRealisticTestCorpus(root) {
         authority: 'none',
         freshness: 'unknown',
         expectedUse: 'ignore',
-      },
+      }),
     ],
   };
 
@@ -1955,47 +2113,40 @@ function countIssueCode(result, code) {
   return result.issues.filter((issue) => issue.code === code).length;
 }
 
-// Minimal corpus-plan stand-in for validator plumbing tests. This intentionally
-// derives only the plan fields those tests need, rather than replacing the real
-// manifest projection path used by generation.
-function corpusPlanFromManifest(manifest) {
+function fixtureDocument({
+  id,
+  documentPath,
+  category,
+  title,
+  factKeys,
+  detailTier,
+  authority,
+  freshness,
+  expectedUse,
+}) {
   return {
-    schemaVersion: 2,
-    userId: manifest.userId,
-    corpusId: manifest.corpusId,
-    forms: manifest.forms,
-    purpose: manifest.purpose,
-    artifactWorld: {
-      schemaVersion: 1,
-      seed: `${manifest.userId}__${manifest.corpusId}`,
-      timeline: {
-        generatedAt: '2026-06-01T10:00:00-07:00',
-      },
-      source: {
-        system: 'Validator Unit Test',
-      },
+    id,
+    path: documentPath,
+    category,
+    title,
+    outputExtension: path.posix.extname(documentPath).slice(1),
+    sourceSpec: sourceSpec(),
+    factContract: {
+      include: factKeys,
+      forbid: [],
     },
-    factContractDefaults: { forbid: [] },
-    intentionallyMissing: manifest.intentionallyMissing,
-    documents: manifest.documents.map((doc) => ({
-      id: doc.id,
-      path: doc.path,
-      category: doc.category,
-      title: doc.title,
-      outputExtension: path.posix.extname(doc.path).slice(1),
-      sourceSpec: sourceSpec(),
-      factContract: {
-        include: doc.factKeys,
-        forbid: [],
-      },
-      evaluationRole: evaluationRole({
-        detailTier: doc.detailTier,
-        authority: doc.authority,
-        freshness: doc.freshness,
-        expectedUse: doc.expectedUse,
-      }),
-    })),
+    evaluationRole: evaluationRole({
+      detailTier,
+      authority,
+      freshness,
+      expectedUse,
+    }),
   };
+}
+
+// Minimal unified-manifest clone for validator plumbing tests.
+function corpusPlanFromManifest(manifest) {
+  return JSON.parse(JSON.stringify(manifest));
 }
 
 function sourceSpec(overrides = {}) {
@@ -2048,11 +2199,13 @@ function planDoc(overrides = {}) {
   };
 }
 
-function unitCorpusPlan(overrides = {}) {
+function unitManifest(overrides = {}) {
   return {
     schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'realistic',
+    seed: 'samir-desai__realistic',
+    corpusKind: 'realistic-generated',
     forms: ['i-9'],
     purpose: 'Unit-test plan.',
     artifactWorld: {

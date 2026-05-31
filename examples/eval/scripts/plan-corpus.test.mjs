@@ -8,7 +8,7 @@ import { parse as parseYaml } from 'yaml';
 import {
   assertArtifactWorldHasNoProfileCollisions,
   buildArtifactWorld,
-  buildCorpusPlan,
+  buildCorpusManifest,
   buildI9SourceSpecs,
   parseArgs,
   runPlanCorpus,
@@ -74,7 +74,7 @@ test('plan-corpus parser supports only the V2 I-9 ten-doc flow', () => {
   assert.equal(wrongCount.message, '--count currently supports only 10.');
 });
 
-test('plan-corpus writes a valid deterministic 10-document I-9 plan', async (t) => {
+test('plan-corpus writes a valid deterministic 10-document I-9 manifest', async (t) => {
   const root = await copyRepo(t);
 
   const result = await runPlanCorpus({
@@ -92,26 +92,38 @@ test('plan-corpus writes a valid deterministic 10-document I-9 plan', async (t) 
   });
 
   assert.equal(result.exitCode, 0, result.errorMessage);
-  const planPath = path.join(
+  const manifestPath = path.join(
     root,
-    'examples/eval/users/samir-desai/corpora/realistic/corpus-plan.json',
+    'examples/eval/users/samir-desai/corpora/realistic/manifest.json',
   );
-  const plan = JSON.parse(await readFile(planPath, 'utf8'));
-  assert.equal(plan.schemaVersion, 2);
-  assert.equal(plan.documents.length, 10);
-  assert.equal(plan.artifactWorld.schemaVersion, 1);
-  assert.ok(plan.factContractDefaults.forbid.includes('contact.phone'));
-  assert.ok(plan.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  assert.equal(manifest.schemaVersion, 2);
+  assert.equal(manifest.corpusKind, 'realistic-generated');
+  assert.equal(manifest.seed, 'samir-desai__realistic');
+  assert.equal(manifest.documents.length, 10);
+  assert.equal(manifest.artifactWorld.schemaVersion, 1);
+  assert.ok(manifest.factContractDefaults.forbid.includes('contact.phone'));
+  assert.ok(manifest.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
   assert.ok(
-    plan.documents.some((doc) =>
+    manifest.documents.some((doc) =>
       doc.factContract.include.includes('workAuthorization.uscisANumber'),
     ),
   );
   assert.ok(
-    plan.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
+    manifest.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
   );
-  assert.ok(plan.documents.every((doc) => doc.sourceSpec));
-  assert.ok(plan.documents.every((doc) => doc.evaluationRole));
+  assert.ok(manifest.documents.every((doc) => doc.sourceSpec));
+  assert.ok(manifest.documents.every((doc) => doc.evaluationRole));
+  await assert.rejects(
+    readFile(
+      path.join(
+        root,
+        'examples/eval/users/samir-desai/corpora/realistic/corpus-plan.json',
+      ),
+      'utf8',
+    ),
+    /ENOENT/,
+  );
 
   const validation = await runValidation({
     repoRoot: root,
@@ -169,17 +181,17 @@ test('plan-corpus keeps citizen-only null work authorization facts intentionally
   });
 
   assert.equal(result.exitCode, 0, result.errorMessage);
-  const plan = JSON.parse(
+  const manifest = JSON.parse(
     await readFile(
       path.join(
         root,
-        'examples/eval/users/elena-marquez/corpora/realistic/corpus-plan.json',
+        'examples/eval/users/elena-marquez/corpora/realistic/manifest.json',
       ),
       'utf8',
     ),
   );
   const missingKeys = new Set(
-    plan.intentionallyMissing.map((entry) => entry.factKey),
+    manifest.intentionallyMissing.map((entry) => entry.factKey),
   );
   for (const factKey of [
     'workAuthorization.uscisANumber',
@@ -189,12 +201,12 @@ test('plan-corpus keeps citizen-only null work authorization facts intentionally
   ]) {
     assert.ok(missingKeys.has(factKey), `${factKey} should be intentionally missing`);
     assert.ok(
-      plan.documents.every((doc) => !doc.factContract.include.includes(factKey)),
+      manifest.documents.every((doc) => !doc.factContract.include.includes(factKey)),
       `${factKey} should not appear in generated document include paths`,
     );
   }
   assert.ok(
-    plan.documents.some((doc) =>
+    manifest.documents.some((doc) =>
       doc.factContract.include.includes('workAuthorization.citizenshipStatus'),
     ),
   );
@@ -323,7 +335,7 @@ test('artifact world is deterministic and rejects profile collisions', () => {
   );
 });
 
-test('buildCorpusPlan is byte-deterministic for committed I-9 profiles', async () => {
+test('buildCorpusManifest is byte-deterministic for committed I-9 profiles', async () => {
   const fieldMap = JSON.parse(
     await readFile(path.join(repoRoot, 'examples/eval/forms/i-9/field-map.json'), 'utf8'),
   );
@@ -332,38 +344,38 @@ test('buildCorpusPlan is byte-deterministic for committed I-9 profiles', async (
     const profile = parseYaml(
       await readFile(path.join(repoRoot, 'examples/eval/users', userId, 'profile.yaml'), 'utf8'),
     );
-    const plan = buildCorpusPlan({
+    const manifest = buildCorpusManifest({
       userId,
       corpusId: 'realistic',
       formId: 'i-9',
       profile,
       fieldMap,
     });
-    const repeatedPlan = buildCorpusPlan({
+    const repeatedManifest = buildCorpusManifest({
       userId,
       corpusId: 'realistic',
       formId: 'i-9',
       profile,
       fieldMap,
     });
-    assert.equal(JSON.stringify(repeatedPlan), JSON.stringify(plan));
+    assert.equal(JSON.stringify(repeatedManifest), JSON.stringify(manifest));
 
-    const alternatePlan = buildCorpusPlan({
+    const alternateManifest = buildCorpusManifest({
       userId,
       corpusId: 'realistic-alt',
       formId: 'i-9',
       profile,
       fieldMap,
     });
-    assert.equal(alternatePlan.artifactWorld.seed, `${userId}__realistic-alt`);
+    assert.equal(alternateManifest.artifactWorld.seed, `${userId}__realistic-alt`);
     assert.notEqual(
-      alternatePlan.artifactWorld.employer.workerId,
-      plan.artifactWorld.employer.workerId,
+      alternateManifest.artifactWorld.employer.workerId,
+      manifest.artifactWorld.employer.workerId,
     );
   }
 });
 
-test('buildCorpusPlan filters null facts from document declarations', async () => {
+test('buildCorpusManifest filters null facts from document declarations', async () => {
   const profile = {
     facts: {
       identity: {
@@ -401,7 +413,7 @@ test('buildCorpusPlan filters null facts from document declarations', async () =
     ],
   };
 
-  const plan = buildCorpusPlan({
+  const manifest = buildCorpusManifest({
     userId: 'casey-example',
     corpusId: 'realistic',
     formId: 'i-9',
@@ -410,14 +422,14 @@ test('buildCorpusPlan filters null facts from document declarations', async () =
   });
 
   assert.ok(
-    plan.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
+    manifest.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
   );
   assert.ok(
-    plan.documents.every((doc) => !doc.factContract.include.includes('address.current.unit')),
+    manifest.documents.every((doc) => !doc.factContract.include.includes('address.current.unit')),
   );
-  assert.ok(plan.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
+  assert.ok(manifest.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
   assert.ok(
-    plan.intentionallyMissing.some((entry) => entry.factKey === 'address.current.unit'),
+    manifest.intentionallyMissing.some((entry) => entry.factKey === 'address.current.unit'),
   );
 });
 

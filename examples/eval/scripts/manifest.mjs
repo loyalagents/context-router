@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isFixtureId, jsonText } from './shared.mjs';
-import { manifestFromCorpusPlan } from './generate.mjs';
+import { isFixtureId } from './shared.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,19 +86,16 @@ async function writeManifest(repoRoot, options) {
     'corpora',
     options.corpusId,
   );
-  const corpusPlanPath = path.join(corpusRoot, 'corpus-plan.json');
-  const corpusPlan = JSON.parse(await readFile(corpusPlanPath, 'utf8'));
+  const manifestPath = path.join(corpusRoot, 'manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 
-  if (corpusPlan.userId !== options.userId || corpusPlan.corpusId !== options.corpusId) {
-    throw new Error('corpus-plan.json userId/corpusId must match CLI arguments.');
+  if (manifest.userId !== options.userId || manifest.corpusId !== options.corpusId) {
+    throw new Error('manifest.json userId/corpusId must match CLI arguments.');
   }
 
-  const manifestPath = path.join(corpusRoot, 'manifest.json');
-  await writeFile(manifestPath, jsonText(manifestFromCorpusPlan(corpusPlan)), 'utf8');
-
   return [
-    `wrote ${path.relative(repoRoot, manifestPath)}`,
-    `documents ${(corpusPlan.documents ?? []).length}`,
+    `manifest already canonical at ${path.relative(repoRoot, manifestPath)}`,
+    `documents ${(manifest.documents ?? []).length}`,
   ];
 }
 

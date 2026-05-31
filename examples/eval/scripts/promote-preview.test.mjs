@@ -16,6 +16,8 @@ test('promote-preview validates and copies preview documents into the corpus', a
   const { previewRoot, corpusRoot, doc } = await writePromoteFixture(t, root, {
     validPreview: true,
   });
+  const manifestPath = path.join(corpusRoot, 'manifest.json');
+  const originalManifestText = await readFile(manifestPath, 'utf8');
 
   const result = await runPromotePreview({
     repoRoot: root,
@@ -31,8 +33,9 @@ test('promote-preview validates and copies preview documents into the corpus', a
 
   assert.equal(result.exitCode, 0, result.errorMessage);
   assert.match(await readFile(path.join(corpusRoot, doc.path), 'utf8'), /Samir/);
+  assert.equal(await readFile(manifestPath, 'utf8'), originalManifestText);
   const manifest = JSON.parse(
-    await readFile(path.join(corpusRoot, 'manifest.json'), 'utf8'),
+    originalManifestText,
   );
   assert.deepEqual(manifest.documents.map((entry) => entry.id), [doc.id]);
   const report = JSON.parse(
@@ -88,7 +91,10 @@ test('promote-preview refuses invalid previews before copying documents', async 
 
   assert.equal(result.exitCode, 1);
   await assert.rejects(readFile(path.join(corpusRoot, doc.path), 'utf8'), /ENOENT/);
-  await assert.rejects(readFile(path.join(corpusRoot, 'manifest.json'), 'utf8'), /ENOENT/);
+  assert.equal(
+    JSON.parse(await readFile(path.join(corpusRoot, 'manifest.json'), 'utf8')).documents[0].id,
+    doc.id,
+  );
 });
 
 test('promote-preview restores prior corpus files if committed validation fails', async (t) => {
@@ -215,10 +221,12 @@ async function writePromoteFixture(t, root, { validPreview }) {
       challengeTags: ['identity-evidence'],
     }),
   };
-  const corpusPlan = {
+  const manifest = {
     schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'promote-test',
+    seed: 'samir-desai__promote-test',
+    corpusKind: 'realistic-generated',
     forms: ['i-9'],
     purpose: 'Promote preview unit test.',
     artifactWorld: {
@@ -262,7 +270,7 @@ async function writePromoteFixture(t, root, { validPreview }) {
   };
 
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifest);
   await mkdir(path.join(previewRoot, path.dirname(doc.path)), { recursive: true });
   await writeFile(
     path.join(previewRoot, doc.path),

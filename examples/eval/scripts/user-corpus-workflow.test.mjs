@@ -114,7 +114,7 @@ function generateDeterministicBody(_prompt, { doc, profile }) {
     return JSON.stringify(
       {
         recordType: doc.title,
-        status: doc.freshness,
+        status: doc.evaluationRole.freshness,
         generatedFor: doc.category,
         facts,
         notes: [
@@ -130,7 +130,7 @@ function generateDeterministicBody(_prompt, { doc, profile }) {
   if (doc.outputExtension === 'yaml') {
     return [
       `recordType: ${JSON.stringify(doc.title)}`,
-      `status: ${JSON.stringify(doc.freshness)}`,
+      `status: ${JSON.stringify(doc.evaluationRole.freshness)}`,
       `generatedFor: ${JSON.stringify(doc.category)}`,
       'facts:',
       ...Object.entries(facts).map(

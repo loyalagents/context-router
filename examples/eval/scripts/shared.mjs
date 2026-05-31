@@ -268,7 +268,7 @@ export function planDocumentForbiddenFactKeys(doc) {
 }
 
 export function planDocumentEvaluationRole(doc) {
-  return doc?.evaluationRole ?? doc ?? {};
+  return doc?.evaluationRole ?? {};
 }
 
 export function planDocumentDetailTier(doc) {
