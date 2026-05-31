@@ -1,0 +1,19 @@
+{
+  "accountNumber": "987-654321-001",
+  "customer": {
+    "name": "Alex Jordan Rivera",
+    "contact": {
+      "emailAddress": "alex.rivera@example.test"
+    }
+  },
+  "serviceLocation": {
+    "address1": "7428 Evergreen Terrace",
+    "address2": "Apt 5C",
+    "city": "Portland",
+    "state": "OR",
+    "postalCode": "97214"
+  },
+  "serviceType": "Electric",
+  "accountStatus": "Active",
+  "exportDate": "2023-10-27T10:00:00Z"
+}

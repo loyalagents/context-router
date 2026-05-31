@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "userId": "alex-i9-test",
+  "corpusId": "realistic",
+  "seed": "alex-i9-test__realistic",
+  "forms": [
+    "i-9"
+  ],
+  "purpose": "Deterministic 10-document realistic starter corpus for I-9 eval generation from a reviewed synthetic profile.",
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9"
+      ],
+      "reason": "The reviewed alex-i9-test profile declares contact.phone as null for i-9.",
+      "expectedBehavior": "Leave the corresponding form field blank; do not guess or synthesize a value."
+    }
+  ],
+  "documents": [
+    {
+      "id": "alex-i9-test-realistic-001",
+      "path": "documents/identity/001-driver-license-transcript.md",
+      "category": "identity",
+      "title": "Driver License Transcript",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "alex-i9-test-realistic-002",
+      "path": "documents/identity/002-ssn-card-transcript.md",
+      "category": "identity",
+      "title": "SSN Card Transcript",
+      "factKeys": [
+        "identity.legalName",
+        "identity.ssn"
+      ],
+      "detailTier": "medium",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "alex-i9-test-realistic-003",
+      "path": "documents/identity/003-birth-record-summary.txt",
+      "category": "identity",
+      "title": "Birth Record Summary",
+      "factKeys": [
+        "identity.legalName",
+        "identity.dateOfBirth",
+        "workAuthorization.citizenshipStatus"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "alex-i9-test-realistic-004",
+      "path": "documents/address-contact/004-lease-summary.md",
+      "category": "address-contact",
+      "title": "Lease Summary",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "alex-i9-test-realistic-005",
+      "path": "documents/address-contact/005-utility-account-export.json",
+      "category": "address-contact",
+      "title": "Utility Account Export",
+      "factKeys": [
+        "identity.legalName",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "alex-i9-test-realistic-006",
+      "path": "documents/work-authorization/006-i9-section-one-draft.md",
+      "category": "work-authorization",
+      "title": "I-9 Section One Draft",
+      "factKeys": [
+        "identity.legalName",
+        "identity.firstName",
+        "identity.middleInitial",
+        "identity.lastName",
+        "identity.otherLastNames",
+        "identity.dateOfBirth",
+        "identity.ssn",
+        "address.current.street",
+        "address.current.unit",
+        "address.current.city",
+        "address.current.state",
+        "address.current.postalCode",
+        "contact.email",
+        "workAuthorization.citizenshipStatus",
+        "workAuthorization.uscisANumber",
+        "workAuthorization.workAuthorizationExpirationDate",
+        "workAuthorization.i94AdmissionNumber",
+        "workAuthorization.foreignPassportNumber"
+      ],
+      "detailTier": "hero",
+      "authority": "high",
+      "freshness": "current",
+      "expectedUse": "extract"
+    },
+    {
+      "id": "alex-i9-test-realistic-007",
+      "path": "documents/hr-onboarding/007-offer-letter.md",
+      "category": "hr-onboarding",
+      "title": "Offer Letter",
+      "factKeys": [
+        "identity.legalName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate",
+        "employment.workEmail"
+      ],
+      "detailTier": "hero",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "alex-i9-test-realistic-008",
+      "path": "documents/hr-onboarding/008-onboarding-profile.yaml",
+      "category": "hr-onboarding",
+      "title": "Onboarding Profile",
+      "factKeys": [
+        "identity.legalName",
+        "identity.firstName",
+        "identity.lastName",
+        "employment.company",
+        "employment.title",
+        "employment.startDate",
+        "contact.email",
+        "employment.workEmail"
+      ],
+      "detailTier": "medium",
+      "authority": "medium",
+      "freshness": "current",
+      "expectedUse": "corroborate"
+    },
+    {
+      "id": "alex-i9-test-realistic-009",
+      "path": "documents/partial-conflicting/009-stale-address-note.txt",
+      "category": "partial-conflicting",
+      "title": "Stale Address Note",
+      "factKeys": [],
+      "detailTier": "brief",
+      "authority": "low",
+      "freshness": "stale",
+      "expectedUse": "guardrail"
+    },
+    {
+      "id": "alex-i9-test-realistic-010",
+      "path": "documents/noise/010-community-newsletter.txt",
+      "category": "noise",
+      "title": "Community Newsletter",
+      "factKeys": [],
+      "detailTier": "medium",
+      "authority": "none",
+      "freshness": "unknown",
+      "expectedUse": "ignore"
+    }
+  ]
+}

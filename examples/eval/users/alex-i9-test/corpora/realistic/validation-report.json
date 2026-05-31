@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "summary": {
+    "profiles": 1,
+    "corpora": 1,
+    "forms": 1,
+    "scenarios": 0,
+    "templates": 7,
+    "errors": 0,
+    "warnings": 1
+  },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 10,
+      "factsProvenPresent": 54,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 3,
+      "factsProvenAbsent": 58,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 8,
+      "skippedAbsenceChecks": 2,
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": [
+        {
+          "factKey": "workAuthorization.foreignPassportNumber",
+          "count": 1
+        },
+        {
+          "factKey": "workAuthorization.i94AdmissionNumber",
+          "count": 1
+        },
+        {
+          "factKey": "workAuthorization.workAuthorizationExpirationDate",
+          "count": 1
+        }
+      ]
+    },
+    "documents": [
+      {
+        "id": "alex-i9-test-realistic-001",
+        "path": "documents/identity/001-driver-license-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-002",
+        "path": "documents/identity/002-ssn-card-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-003",
+        "path": "documents/identity/003-birth-record-summary.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-004",
+        "path": "documents/address-contact/004-lease-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-005",
+        "path": "documents/address-contact/005-utility-account-export.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-006",
+        "path": "documents/work-authorization/006-i9-section-one-draft.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.firstName",
+            "identity.middleInitial",
+            "identity.lastName",
+            "identity.otherLastNames",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email",
+            "workAuthorization.citizenshipStatus",
+            "workAuthorization.uscisANumber"
+          ],
+          "missing": [],
+          "unsupported": [
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ]
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.workEmail"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-007",
+        "path": "documents/hr-onboarding/007-offer-letter.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-008",
+        "path": "documents/hr-onboarding/008-onboarding-profile.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.firstName",
+            "identity.lastName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-009",
+        "path": "documents/partial-conflicting/009-stale-address-note.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "alex-i9-test-realistic-010",
+        "path": "documents/noise/010-community-newsletter.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "identity.ssn",
+            "contact.email",
+            "employment.workEmail",
+            "workAuthorization.uscisANumber",
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        }
+      }
+    ]
+  },
+  "issues": [
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
+      "pointer": "/documents/3",
+      "message": "Document alex-i9-test-realistic-004 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    }
+  ]
+}
