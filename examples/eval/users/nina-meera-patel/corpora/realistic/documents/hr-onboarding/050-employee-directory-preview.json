@@ -1,7 +1,0 @@
-{
-  "title": "Employee Directory Preview",
-  "sourceType": "hr-onboarding",
-  "expectedUse": "corroborate",
-  "freshness": "current",
-  "recordText": "{\n  \"displayName\": \"Nina Meera Patel\",\n  \"title\": \"Data Quality Analyst\",\n  \"organization\": \"Hill Country Data Cooperative\",\n  \"email\": \"nina.patel@hillcountrydata.example.test\",\n  \"visibility\": \"prehire preview\"\n}"
-}

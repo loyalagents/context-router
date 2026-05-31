@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "scenarioId": "nina-meera-patel-i9-realistic",
-  "userId": "nina-meera-patel",
-  "corpusId": "realistic",
-  "formId": "i-9",
-  "description": "Lightweight scenario hook for the deterministic 100-document Nina Patel fixture.",
-  "expectedSnapshots": []
-}

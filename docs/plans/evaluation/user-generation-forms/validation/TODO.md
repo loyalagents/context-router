@@ -239,7 +239,9 @@ Keep these as warnings first. Promote only after the cue rules are stable.
 
 ## File-Type Validation
 
-Current mixed-file validation exists for the Nina 100-document corpus:
+Mixed-file validation was originally exercised against the now-pruned Nina
+100-document corpus. The validation rules remain active for committed corpora
+and generated preview roots:
 
 - JSON bodies must parse as JSON
 - YAML bodies must parse as YAML
@@ -266,9 +268,9 @@ Implemented:
 4. Add conservative warning checks for intentionally missing work-authorization
    identifier patterns.
 5. Add noise-document leak checks for high-confidence current identifiers.
-6. Update the Nina 100-document `corpus-plan.json` with explicit forbidden
-   facts.
-7. Run focused validation and refresh the Nina validation report.
+6. Exercised explicit forbidden facts against the now-pruned Nina
+   100-document `corpus-plan.json`.
+7. Refreshed the now-pruned Nina validation report before fixture cleanup.
 8. Add corpus-level/default forbidden facts to reduce repeated per-document
    exclusions.
 9. Translate corpus-level intentionally missing facts into default forbidden
@@ -328,15 +330,21 @@ For validation-only work, prefer:
 
 ```bash
 pnpm eval:test
-pnpm eval:validate --user nina-meera-patel --corpus realistic --write-report
 pnpm eval:validate
 pnpm eval:verify
 ```
 
-For plan-only changes before body files exist:
+For current committed corpus report refreshes, use a committed corpus that still
+exists:
 
 ```bash
-pnpm eval:validate --user nina-meera-patel --corpus realistic --plan-only
+pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
+```
+
+For generated corpus plan-only changes before body files exist:
+
+```bash
+pnpm eval:validate --user <user-id> --corpus <corpus-id> --plan-only
 ```
 
 ## Non-Goals

@@ -1,1 +1,0 @@
-I-9 Section 1 draft for Nina Meera Patel. Address 742 Maple Ridge Lane, Apt 5D, Austin, TX 78704; date of birth 1992-03-14; SSN 000-00-0392; employee email nina.patel@example.test; citizenship selection U.S. citizen. No preparer or translator used.

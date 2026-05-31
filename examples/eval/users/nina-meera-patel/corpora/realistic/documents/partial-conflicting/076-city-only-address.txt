@@ -1,5 +1,0 @@
-CITY-ONLY ADDRESS SNIPPET
-Source type: partial-conflicting
-Expected use: guardrail
-
-Travel profile says Nina Meera Patel is based in Austin, TX. It is not enough for I-9 address extraction because street, unit, and postal code are absent.

@@ -1,6 +1,0 @@
-title: "Personal Email Typo"
-source_type: "partial-conflicting"
-expected_use: "guardrail"
-freshness: "stale"
-record_text: |-
-  A spreadsheet row says nina.pate1@example.test with the number 1. The typo should be ignored because stronger current records use a different email.

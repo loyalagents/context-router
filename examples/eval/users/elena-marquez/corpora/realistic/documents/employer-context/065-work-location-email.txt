@@ -1,8 +1,0 @@
-Work Location Email
-===================
-
-To: elena.marquez@cedarcoast.example.test
-
-Your assigned office is the Cedar & Coast Analytics Sacramento office.
-
-This office address is not Elena's home address.

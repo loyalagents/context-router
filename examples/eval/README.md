@@ -22,8 +22,14 @@ For contributor workflows and snapshot review guidance, see
   from user profiles.
 - `scripts/scaffold.mjs` renders deterministic template corpora and optional
   first-time scenario skeletons.
+- `scripts/plan-corpus.mjs` creates deterministic starter corpus plans for
+  reviewed user profiles.
 - `scripts/generate.mjs` generates AI-authored realistic corpus document bodies
   from a reviewed `corpus-plan.json`.
+- `scripts/repair-generation.mjs` repairs failed preview documents using
+  validation feedback.
+- `scripts/promote-preview.mjs` promotes a passing preview into the committed
+  corpus.
 - `scripts/validate.mjs` validates fixture schemas, references, field maps,
   seed determinism, and corpus coverage.
 - `scripts/run.mjs` runs local deterministic backend form-fill eval scenarios
@@ -33,7 +39,6 @@ For contributor workflows and snapshot review guidance, see
 - `users/elena-marquez/` is the first normalized synthetic user fixture.
 - `users/samir-desai/` is the second I-9 fixture user, with a lawful permanent
   resident work-authorization profile.
-- `scenarios/elena-marquez-i9-section1/` is the first scenario-shaped fixture.
 - `scenarios/elena-marquez-i9-template-smoke/` is the first runner-owned
   scenario with an expected `filled-form` snapshot.
 - `scenarios/samir-desai-i9-template-smoke/` is a second runner-owned I-9
@@ -170,10 +175,8 @@ pnpm eval:run --scenario elena-marquez-i9-template-smoke --update-snapshots
 Useful focused validation commands:
 
 ```bash
-pnpm eval:validate --user elena-marquez --corpus realistic
 pnpm eval:validate --user elena-marquez --corpus template-smoke
 pnpm eval:validate --user samir-desai --corpus template-smoke
-pnpm eval:validate --scenario elena-marquez-i9-section1
 pnpm eval:validate --scenario elena-marquez-i9-template-smoke
 pnpm eval:validate --scenario samir-desai-i9-template-smoke
 pnpm eval:validate --form i-9
@@ -182,7 +185,7 @@ pnpm eval:validate --form i-9
 Write the deterministic corpus report:
 
 ```bash
-pnpm eval:validate --user elena-marquez --corpus realistic --write-report
+pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
 ```
 
 Render or refresh a deterministic template corpus:
@@ -191,24 +194,31 @@ Render or refresh a deterministic template corpus:
 pnpm eval:scaffold --user elena-marquez --corpus template-smoke --form i-9 --force
 ```
 
-Generate realistic corpus documents from a reviewed corpus plan:
+Plan a 10-document realistic starter corpus from a reviewed profile:
+
+```bash
+pnpm eval:plan-corpus --user <userId> --corpus realistic --form i-9 --count 10
+pnpm eval:manifest --user <userId> --corpus realistic
+```
+
+Generate realistic corpus documents from a reviewed corpus plan into a preview:
 
 ```bash
 EVAL_GENERATION_MODEL=gemini-2.5-pro \
-  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --overwrite
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --out /private/tmp/<userId>-realistic-preview
 ```
 
-Preview selected generated documents outside the committed corpus:
+Repair only failed preview documents:
 
 ```bash
 EVAL_GENERATION_MODEL=gemini-2.5-pro \
-  pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --ids 001,017,031 --out /private/tmp/nina-preview
+  pnpm eval:repair-generation --user <userId> --corpus realistic --from /private/tmp/<userId>-realistic-preview --backend vertex --max-attempts 3
 ```
 
-Regenerate `manifest.json` from `corpus-plan.json` without AI calls:
+Promote a passing preview into the committed corpus:
 
 ```bash
-pnpm eval:manifest --user nina-meera-patel --corpus realistic
+pnpm eval:promote-preview --user <userId> --corpus realistic --from /private/tmp/<userId>-realistic-preview
 ```
 
 Initialize a new user profile skeleton from a form field map:

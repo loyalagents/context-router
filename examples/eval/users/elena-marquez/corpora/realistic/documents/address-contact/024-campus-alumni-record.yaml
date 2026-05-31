@@ -1,9 +1,0 @@
-record_type: alumni_contact
-name: Elena Sofia Marquez
-email: elena.marquez@example.test
-mailing_address:
-  line1: 418 Cedar Glen Avenue
-  line2: Apt 12B
-  city: Sacramento
-  state: CA
-  zip: "95819"
