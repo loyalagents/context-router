@@ -8,6 +8,8 @@ import { parse as parseYaml } from 'yaml';
 import {
   classifyFactKey,
   collectFactKeys,
+  getFactValue,
+  hashInt,
   isFixtureId,
   jsonText,
   toPosixPath,
@@ -28,15 +30,23 @@ const I9_DEFAULT_FORBIDDEN_FACT_KEYS = [
   'workAuthorization.foreignPassportNumber',
 ];
 
-const I9_ARCHETYPES = [
+const COMMON_RISKY_DETAILS = [
+  'new user phone number',
+  'extra user address',
+  'extra SSN or tax identifier',
+  'extra immigration identifier not listed in the fact contract',
+  'signature or legal attestation',
+];
+
+const I9_BASE_SOURCE_SPECS = [
   {
     sequence: '001',
-    slug: 'driver-license-transcript',
-    path: 'documents/identity/001-driver-license-transcript.md',
+    slug: 'driver-license-upload-ocr',
+    path: 'documents/identity/001-driver-license-upload-ocr.txt',
     category: 'identity',
-    title: 'Driver License Transcript',
-    outputExtension: 'md',
-    factKeys: [
+    title: 'Driver License Upload OCR',
+    outputExtension: 'txt',
+    include: [
       'identity.legalName',
       'identity.dateOfBirth',
       'address.current.street',
@@ -45,58 +55,91 @@ const I9_ARCHETYPES = [
       'address.current.state',
       'address.current.postalCode',
     ],
-    detailTier: 'hero',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    challengeTags: ['identity-evidence', 'address-evidence'],
-    texture:
-      'Write as a DMV-style transcript with realistic headers, status dates, and export artifacts.',
+    evaluationRole: {
+      detailTier: 'hero',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['identity-evidence', 'address-evidence'],
+    },
+    sourceSpec: {
+      artifactType: 'uploaded-id-ocr-transcript',
+      sourceFamily: 'identity',
+      captureMode: 'plain-text-ocr-export',
+      timelineRefs: ['identityUploadAt'],
+      worldRefs: [
+        'identityCapture.uploadBatchId',
+        'identityCapture.licenseImageName',
+        'employer.onboardingSystem',
+        'employer.workerId',
+      ],
+      nativeSignals: [
+        'upload batch id',
+        'source filename',
+        'OCR confidence',
+        'document status',
+        'issuing state',
+      ],
+      safeDetailMenu: [
+        'license class',
+        'restriction code',
+        'redacted license number',
+        'processing queue status',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 700, maxChars: 1800 },
+    },
   },
   {
     sequence: '002',
-    slug: 'ssn-card-transcript',
-    path: 'documents/identity/002-ssn-card-transcript.md',
+    slug: 'ssn-card-upload-ocr',
+    path: 'documents/identity/002-ssn-card-upload-ocr.txt',
     category: 'identity',
-    title: 'SSN Card Transcript',
-    outputExtension: 'md',
-    factKeys: ['identity.legalName', 'identity.ssn'],
-    detailTier: 'medium',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    challengeTags: ['identity-evidence', 'sensitive-identifier'],
-    texture:
-      'Write as a careful transcript of a Social Security card, with limited surrounding context.',
-  },
-  {
-    sequence: '003',
-    slug: 'birth-record-summary',
-    path: 'documents/identity/003-birth-record-summary.txt',
-    category: 'identity',
-    title: 'Birth Record Summary',
+    title: 'SSN Card Upload OCR',
     outputExtension: 'txt',
-    factKeys: [
-      'identity.legalName',
-      'identity.dateOfBirth',
-      'workAuthorization.citizenshipStatus',
-    ],
-    detailTier: 'medium',
-    authority: 'medium',
-    freshness: 'current',
-    expectedUse: 'corroborate',
-    challengeTags: ['identity-evidence', 'citizen-work-authorization'],
-    texture:
-      'Write as plain text copied from a vital-records folder note, not as Markdown.',
+    include: ['identity.legalName', 'identity.ssn'],
+    evaluationRole: {
+      detailTier: 'medium',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['identity-evidence', 'sensitive-identifier'],
+    },
+    sourceSpec: {
+      artifactType: 'uploaded-ssn-card-ocr-transcript',
+      sourceFamily: 'identity',
+      captureMode: 'plain-text-ocr-export',
+      timelineRefs: ['identityUploadAt'],
+      worldRefs: [
+        'identityCapture.uploadBatchId',
+        'identityCapture.ssnImageName',
+        'employer.onboardingSystem',
+        'employer.workerId',
+      ],
+      nativeSignals: [
+        'upload batch id',
+        'source filename',
+        'OCR confidence',
+        'redaction status',
+      ],
+      safeDetailMenu: [
+        'document category',
+        'processing status',
+        'review queue',
+        'transcription confidence',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 450, maxChars: 1100 },
+    },
   },
   {
     sequence: '004',
-    slug: 'lease-summary',
-    path: 'documents/address-contact/004-lease-summary.md',
+    slug: 'resident-portal-lease-export',
+    path: 'documents/address-contact/004-resident-portal-lease-export.md',
     category: 'address-contact',
-    title: 'Lease Summary',
+    title: 'Resident Portal Lease Export',
     outputExtension: 'md',
-    factKeys: [
+    include: [
       'identity.legalName',
       'address.current.street',
       'address.current.unit',
@@ -105,13 +148,38 @@ const I9_ARCHETYPES = [
       'address.current.postalCode',
       'contact.email',
     ],
-    detailTier: 'hero',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    challengeTags: ['address-evidence', 'email-evidence'],
-    texture:
-      'Write as a current residential lease summary with notice contact details and realistic lease metadata.',
+    evaluationRole: {
+      detailTier: 'hero',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['address-evidence', 'email-evidence'],
+    },
+    sourceSpec: {
+      artifactType: 'resident-portal-lease-export',
+      sourceFamily: 'address-contact',
+      captureMode: 'portal-markdown-export',
+      timelineRefs: ['addressProofExportAt'],
+      worldRefs: [
+        'housing.propertyManager',
+        'housing.residentPortal',
+        'housing.leaseAccountId',
+      ],
+      nativeSignals: [
+        'portal export timestamp',
+        'lease account id',
+        'lease status',
+        'resident profile block',
+      ],
+      safeDetailMenu: [
+        'lease status',
+        'notice preference',
+        'redacted office phone',
+        'renewal status',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 900, maxChars: 2400 },
+    },
   },
   {
     sequence: '005',
@@ -120,7 +188,7 @@ const I9_ARCHETYPES = [
     category: 'address-contact',
     title: 'Utility Account Export',
     outputExtension: 'json',
-    factKeys: [
+    include: [
       'identity.legalName',
       'address.current.street',
       'address.current.unit',
@@ -129,22 +197,47 @@ const I9_ARCHETYPES = [
       'address.current.postalCode',
       'contact.email',
     ],
-    detailTier: 'medium',
-    authority: 'medium',
-    freshness: 'current',
-    expectedUse: 'corroborate',
-    challengeTags: ['address-evidence', 'structured-export'],
-    texture:
-      'Write as valid JSON from a utility portal export with realistic field names.',
+    evaluationRole: {
+      detailTier: 'medium',
+      authority: 'medium',
+      freshness: 'current',
+      expectedUse: 'corroborate',
+      challengeTags: ['address-evidence', 'structured-export'],
+    },
+    sourceSpec: {
+      artifactType: 'utility-portal-account-export',
+      sourceFamily: 'address-contact',
+      captureMode: 'json-export',
+      timelineRefs: ['addressProofExportAt'],
+      worldRefs: [
+        'utility.provider',
+        'utility.exportId',
+        'utility.serviceAccountSuffix',
+      ],
+      nativeSignals: [
+        'export id',
+        'generated timestamp',
+        'service agreement',
+        'account status history',
+      ],
+      safeDetailMenu: [
+        'billing cycle',
+        'redacted account suffix',
+        'mailing preference',
+        'service agreement status',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 750, maxChars: 2200 },
+    },
   },
   {
     sequence: '006',
-    slug: 'i9-section-one-draft',
-    path: 'documents/work-authorization/006-i9-section-one-draft.md',
+    slug: 'i9-section-one-field-export',
+    path: 'documents/work-authorization/006-i9-section-one-field-export.yaml',
     category: 'work-authorization',
-    title: 'I-9 Section One Draft',
-    outputExtension: 'md',
-    factKeys: [
+    title: 'I-9 Section 1 Field Export',
+    outputExtension: 'yaml',
+    include: [
       'identity.legalName',
       'identity.firstName',
       'identity.middleInitial',
@@ -164,44 +257,96 @@ const I9_ARCHETYPES = [
       'workAuthorization.i94AdmissionNumber',
       'workAuthorization.foreignPassportNumber',
     ],
-    detailTier: 'hero',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    challengeTags: ['i9-draft', 'citizen-work-authorization'],
-    texture:
-      'Write as a pre-fill draft for I-9 Section 1. Include a separate exact legal-name line even if the form also splits first, middle, and last name fields.',
+    evaluationRole: {
+      detailTier: 'hero',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['i9-draft', 'work-authorization'],
+    },
+    sourceSpec: {
+      artifactType: 'saved-i9-section-one-field-export',
+      sourceFamily: 'work-authorization',
+      captureMode: 'yaml-field-export',
+      timelineRefs: ['i9DraftSavedAt'],
+      worldRefs: [
+        'employer.onboardingSystem',
+        'employer.workerId',
+        'employer.hrCoordinator',
+      ],
+      nativeSignals: [
+        'form version',
+        'field ids',
+        'saved timestamp',
+        'workflow status',
+        'native blank phone state',
+      ],
+      safeDetailMenu: [
+        'task status',
+        'signature pending cue',
+        'reviewer routing',
+        'blank/null phone state',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 1200, maxChars: 3200 },
+    },
   },
   {
     sequence: '007',
-    slug: 'offer-letter',
-    path: 'documents/hr-onboarding/007-offer-letter.md',
+    slug: 'offer-email',
+    path: 'documents/hr-onboarding/007-offer-email.md',
     category: 'hr-onboarding',
-    title: 'Offer Letter',
+    title: 'Offer Email',
     outputExtension: 'md',
-    factKeys: [
+    include: [
       'identity.legalName',
       'employment.company',
       'employment.title',
       'employment.startDate',
       'employment.workEmail',
     ],
-    detailTier: 'hero',
-    authority: 'medium',
-    freshness: 'current',
-    expectedUse: 'corroborate',
-    challengeTags: ['employment-context', 'work-email-vs-personal-email'],
-    texture:
-      'Write as an offer letter excerpt with realistic HR language, start-date context, and work email provisioning.',
+    evaluationRole: {
+      detailTier: 'hero',
+      authority: 'medium',
+      freshness: 'current',
+      expectedUse: 'corroborate',
+      challengeTags: ['employment-context', 'work-email-vs-personal-email'],
+    },
+    sourceSpec: {
+      artifactType: 'copied-offer-email',
+      sourceFamily: 'hr-onboarding',
+      captureMode: 'email-body',
+      timelineRefs: ['offerSentAt', 'offerAcceptedAt'],
+      worldRefs: [
+        'employer.hrCoordinator',
+        'employer.recruitingInbox',
+        'employer.officeLabel',
+      ],
+      nativeSignals: [
+        'From header',
+        'To header',
+        'Date header',
+        'Subject header',
+        'signature block',
+      ],
+      safeDetailMenu: [
+        'acceptance deadline',
+        'orientation timing',
+        'contingency language',
+        'work email provisioning',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 1000, maxChars: 2800 },
+    },
   },
   {
     sequence: '008',
-    slug: 'onboarding-profile',
-    path: 'documents/hr-onboarding/008-onboarding-profile.yaml',
+    slug: 'onboarding-profile-export',
+    path: 'documents/hr-onboarding/008-onboarding-profile-export.yaml',
     category: 'hr-onboarding',
-    title: 'Onboarding Profile',
+    title: 'Onboarding Profile Export',
     outputExtension: 'yaml',
-    factKeys: [
+    include: [
       'identity.legalName',
       'identity.firstName',
       'identity.lastName',
@@ -211,49 +356,125 @@ const I9_ARCHETYPES = [
       'contact.email',
       'employment.workEmail',
     ],
-    detailTier: 'medium',
-    authority: 'medium',
-    freshness: 'current',
-    expectedUse: 'corroborate',
-    challengeTags: ['employment-context', 'structured-export'],
-    texture:
-      'Write as valid YAML from an onboarding system export with realistic keys and no Markdown fence.',
+    evaluationRole: {
+      detailTier: 'medium',
+      authority: 'medium',
+      freshness: 'current',
+      expectedUse: 'corroborate',
+      challengeTags: ['employment-context', 'structured-export'],
+    },
+    sourceSpec: {
+      artifactType: 'onboarding-profile-export',
+      sourceFamily: 'hr-onboarding',
+      captureMode: 'yaml-export',
+      timelineRefs: ['onboardingInviteAt', 'i9DraftSavedAt'],
+      worldRefs: [
+        'employer.onboardingSystem',
+        'employer.workerId',
+        'employer.hrCoordinator',
+      ],
+      nativeSignals: [
+        'source system',
+        'created timestamp',
+        'updated timestamp',
+        'worker id',
+        'task status list',
+      ],
+      safeDetailMenu: [
+        'provisioning status',
+        'onboarding task names',
+        'audit fields',
+        'review queue',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 800, maxChars: 2200 },
+    },
   },
   {
     sequence: '009',
-    slug: 'stale-address-note',
-    path: 'documents/partial-conflicting/009-stale-address-note.txt',
+    slug: 'stale-contact-ticket',
+    path: 'documents/partial-conflicting/009-stale-contact-ticket.txt',
     category: 'partial-conflicting',
-    title: 'Stale Address Note',
+    title: 'Stale Contact Ticket',
     outputExtension: 'txt',
-    factKeys: [],
-    detailTier: 'brief',
-    authority: 'low',
-    freshness: 'stale',
-    expectedUse: 'guardrail',
-    challengeTags: ['partial-or-conflicting', 'stale-address'],
-    texture:
-      'Write as a plainly stale address note. Make the stale status explicit and avoid current canonical user fact values.',
+    include: [],
+    forbid: ['identity.legalName', 'address.current.street', 'contact.email'],
+    evaluationRole: {
+      detailTier: 'brief',
+      authority: 'low',
+      freshness: 'stale',
+      expectedUse: 'guardrail',
+      challengeTags: ['partial-or-conflicting', 'stale-address'],
+    },
+    sourceSpec: {
+      artifactType: 'returned-mail-support-ticket',
+      sourceFamily: 'partial-conflicting',
+      captureMode: 'plain-text-ticket-export',
+      timelineRefs: ['staleRecordAt'],
+      worldRefs: ['employer.onboardingSystem', 'employer.workerId'],
+      nativeSignals: [
+        'ticket id',
+        'status',
+        'event log',
+        'stale/superseded cue',
+      ],
+      safeDetailMenu: [
+        'returned mail status',
+        'superseded address cue',
+        'redacted stale value',
+        'do-not-use note',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 350, maxChars: 1100 },
+    },
   },
   {
     sequence: '010',
-    slug: 'community-newsletter',
-    path: 'documents/noise/010-community-newsletter.txt',
+    slug: 'community-newsletter-email',
+    path: 'documents/noise/010-community-newsletter-email.txt',
     category: 'noise',
-    title: 'Community Newsletter',
+    title: 'Community Newsletter Email',
     outputExtension: 'txt',
-    factKeys: [],
-    detailTier: 'medium',
-    authority: 'none',
-    freshness: 'unknown',
-    expectedUse: 'ignore',
-    challengeTags: ['noise'],
-    texture:
-      'Write as an unrelated community newsletter excerpt with no canonical user facts.',
+    include: [],
+    forbid: [
+      'identity.legalName',
+      'address.current.street',
+      'contact.email',
+      'employment.workEmail',
+    ],
+    evaluationRole: {
+      detailTier: 'medium',
+      authority: 'none',
+      freshness: 'unknown',
+      expectedUse: 'ignore',
+      challengeTags: ['noise'],
+    },
+    sourceSpec: {
+      artifactType: 'community-newsletter-email',
+      sourceFamily: 'noise',
+      captureMode: 'email-body',
+      timelineRefs: ['noiseReceivedAt'],
+      worldRefs: ['noise.sender', 'noise.subject'],
+      nativeSignals: [
+        'From header',
+        'To header',
+        'Date header',
+        'Subject header',
+        'footer',
+      ],
+      safeDetailMenu: [
+        'community event details',
+        'unsubscribe footer',
+        'generic resident audience',
+        'no user-specific identifiers',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 700, maxChars: 1800 },
+    },
   },
 ];
 
-const I9_DOCUMENT_COUNT = I9_ARCHETYPES.length;
+const I9_DOCUMENT_COUNT = I9_BASE_SOURCE_SPECS.length + 1;
 
 export async function runPlanCorpus({
   repoRoot = defaultRepoRoot,
@@ -405,72 +626,446 @@ export function buildCorpusPlan({ userId, corpusId, formId, profile, fieldMap })
       expectedBehavior: 'Leave the corresponding form field blank; do not guess or synthesize a value.',
     }));
 
-  const documents = I9_ARCHETYPES.map((archetype) => {
-    const factKeys = archetype.factKeys.filter(hasNonNullFact);
-    return {
-      id: `${userId}-${corpusId}-${archetype.sequence}`,
-      path: archetype.path,
-      category: archetype.category,
-      title: archetype.title,
-      outputExtension: archetype.outputExtension,
-      factKeys,
-      detailTier: archetype.detailTier,
-      authority: archetype.authority,
-      freshness: archetype.freshness,
-      expectedUse: archetype.expectedUse,
-      challengeTags: archetype.challengeTags,
-      brief: buildBrief(archetype, factKeys, intentionallyMissing),
-    };
-  });
+  const artifactWorld = buildArtifactWorld({ userId, corpusId, profile });
+  const documents = buildI9SourceSpecs(profile)
+    .sort((left, right) => left.sequence.localeCompare(right.sequence))
+    .map((spec) => planDocument({ userId, corpusId, spec, hasNonNullFact }));
+
+  assertArtifactWorldHasNoProfileCollisions({ artifactWorld, profileFacts });
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId,
     corpusId,
     forms: [formId],
     purpose:
-      'Deterministic 10-document realistic starter corpus for I-9 eval generation from a reviewed synthetic profile.',
-    targetDocumentCount: documents.length,
-    categoryCounts: categoryCounts(documents),
-    challengeTags: [
-      ...new Set(documents.flatMap((doc) => doc.challengeTags ?? [])),
-    ].sort(),
-    defaultForbiddenFactKeys: I9_DEFAULT_FORBIDDEN_FACT_KEYS.filter(hasLeafFact),
+      'Deterministic 10-document source-artifact corpus plan for I-9 realistic eval generation from a reviewed synthetic profile.',
+    artifactWorld,
+    factContractDefaults: {
+      forbid: I9_DEFAULT_FORBIDDEN_FACT_KEYS.filter(hasLeafFact),
+    },
     intentionallyMissing,
     documents,
   };
 }
 
-function buildBrief(archetype, factKeys, intentionallyMissing) {
-  const lines = [
-    `${archetype.title}: ${archetype.texture}`,
-    'Use only the supplied profile slice for canonical current facts.',
+export function buildI9SourceSpecs(profile) {
+  const workAuthorizationSpec = workAuthorizationSourceSpec(profile);
+  return [
+    ...I9_BASE_SOURCE_SPECS.filter((spec) => spec.sequence < '003'),
+    workAuthorizationSpec,
+    ...I9_BASE_SOURCE_SPECS.filter((spec) => spec.sequence > '003'),
   ];
-  if (factKeys.length) {
-    lines.push(
-      `Declared facts: ${factKeys.join(', ')}. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting.`,
-    );
-  } else {
-    lines.push('Do not include canonical current user fact values.');
-  }
-  if (intentionallyMissing.length) {
-    lines.push(
-      `Do not invent intentionally missing facts: ${intentionallyMissing
-        .map((entry) => entry.factKey)
-        .join(', ')}.`,
-    );
-  }
-  lines.push(
-    'Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values.',
-  );
-  return lines.join(' ');
 }
 
-function categoryCounts(documents) {
-  return documents.reduce((counts, doc) => {
-    counts[doc.category] = (counts[doc.category] ?? 0) + 1;
-    return counts;
-  }, {});
+function workAuthorizationSourceSpec(profile) {
+  const status = String(
+    getFactValue(profile.facts ?? {}, 'workAuthorization.citizenshipStatus') ?? '',
+  ).toLowerCase();
+
+  if (status.includes('noncitizen national') || status.includes('non-citizen national')) {
+    return {
+      sequence: '003',
+      slug: 'noncitizen-national-evidence-upload',
+      path: 'documents/work-authorization/003-noncitizen-national-evidence-upload.txt',
+      category: 'work-authorization',
+      title: 'Noncitizen National Evidence Upload',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'identity.dateOfBirth',
+        'workAuthorization.citizenshipStatus',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'corroborate',
+        challengeTags: ['identity-evidence', 'noncitizen-national-work-authorization'],
+      },
+      sourceSpec: {
+        artifactType: 'noncitizen-national-evidence-upload-note',
+        sourceFamily: 'work-authorization',
+        captureMode: 'plain-text-upload-note',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'review status',
+          'employee-provided status',
+        ],
+        safeDetailMenu: [
+          'noncitizen national evidence category',
+          'review queue',
+          'status confirmation note',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 450, maxChars: 1300 },
+      },
+    };
+  }
+
+  if (status.includes('citizen') && !status.includes('alien')) {
+    return {
+      sequence: '003',
+      slug: 'citizenship-evidence-upload',
+      path: 'documents/identity/003-citizenship-evidence-upload.txt',
+      category: 'identity',
+      title: 'Citizenship Evidence Upload',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'identity.dateOfBirth',
+        'workAuthorization.citizenshipStatus',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'corroborate',
+        challengeTags: ['identity-evidence', 'citizen-work-authorization'],
+      },
+      sourceSpec: {
+        artifactType: 'citizenship-evidence-upload-note',
+        sourceFamily: 'identity',
+        captureMode: 'plain-text-upload-note',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'review status',
+          'employee-provided status',
+        ],
+        safeDetailMenu: [
+          'citizenship evidence category',
+          'review queue',
+          'status confirmation note',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 450, maxChars: 1300 },
+      },
+    };
+  }
+
+  if (status.includes('lawful permanent resident') || status.includes('permanent resident')) {
+    return {
+      sequence: '003',
+      slug: 'permanent-resident-card-upload',
+      path: 'documents/work-authorization/003-permanent-resident-card-upload.txt',
+      category: 'work-authorization',
+      title: 'Permanent Resident Card Upload',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'workAuthorization.citizenshipStatus',
+        'workAuthorization.uscisANumber',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'high',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['work-authorization', 'sensitive-identifier'],
+      },
+      sourceSpec: {
+        artifactType: 'permanent-resident-card-upload-receipt',
+        sourceFamily: 'work-authorization',
+        captureMode: 'plain-text-upload-receipt',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+          'employer.hrCoordinator',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'processing status',
+          'reviewer note',
+        ],
+        safeDetailMenu: [
+          'card side received',
+          'review queue',
+          'redacted card metadata',
+          'worker id',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 650, maxChars: 1700 },
+      },
+    };
+  }
+
+  if (status.includes('alien authorized') || status.includes('authorized to work')) {
+    return {
+      sequence: '003',
+      slug: 'work-authorization-upload-receipt',
+      path: 'documents/work-authorization/003-work-authorization-upload-receipt.txt',
+      category: 'work-authorization',
+      title: 'Work Authorization Upload Receipt',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'workAuthorization.citizenshipStatus',
+        'workAuthorization.uscisANumber',
+        'workAuthorization.workAuthorizationExpirationDate',
+        'workAuthorization.i94AdmissionNumber',
+        'workAuthorization.foreignPassportNumber',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'high',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['work-authorization', 'sensitive-identifier'],
+      },
+      sourceSpec: {
+        artifactType: 'work-authorization-upload-receipt',
+        sourceFamily: 'work-authorization',
+        captureMode: 'plain-text-upload-receipt',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+          'employer.hrCoordinator',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'processing status',
+          'reviewer note',
+        ],
+        safeDetailMenu: [
+          'uploaded document type',
+          'review queue',
+          'work authorization support status',
+          'worker id',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 700, maxChars: 1800 },
+      },
+    };
+  }
+
+  return {
+    sequence: '003',
+    slug: 'work-authorization-review-note',
+    path: 'documents/work-authorization/003-work-authorization-review-note.txt',
+    category: 'work-authorization',
+    title: 'Work Authorization Review Note',
+    outputExtension: 'txt',
+    include: ['identity.legalName', 'workAuthorization.citizenshipStatus'],
+    evaluationRole: {
+      detailTier: 'medium',
+      authority: 'medium',
+      freshness: 'current',
+      expectedUse: 'corroborate',
+      challengeTags: ['work-authorization'],
+    },
+    sourceSpec: {
+      artifactType: 'work-authorization-review-note',
+      sourceFamily: 'work-authorization',
+      captureMode: 'plain-text-review-note',
+      timelineRefs: ['i9DraftSavedAt'],
+      worldRefs: [
+        'employer.onboardingSystem',
+        'employer.workerId',
+        'employer.hrCoordinator',
+      ],
+      nativeSignals: [
+        'review timestamp',
+        'workflow status',
+        'reviewer note',
+        'employee-provided status',
+      ],
+      safeDetailMenu: [
+        'review queue',
+        'status confirmation note',
+        'pending-document cue',
+      ],
+      riskyDetailMenu: COMMON_RISKY_DETAILS,
+      lengthTarget: { minChars: 550, maxChars: 1400 },
+    },
+  };
+}
+
+function planDocument({ userId, corpusId, spec, hasNonNullFact }) {
+  return {
+    id: `${userId}-${corpusId}-${spec.sequence}`,
+    path: spec.path,
+    category: spec.category,
+    title: spec.title,
+    outputExtension: spec.outputExtension,
+    sourceSpec: spec.sourceSpec,
+    factContract: {
+      include: spec.include.filter(hasNonNullFact),
+      forbid: spec.forbid ?? [],
+    },
+    evaluationRole: spec.evaluationRole,
+  };
+}
+
+export function buildArtifactWorld({ userId, corpusId, profile }) {
+  const seed = `${userId}__${corpusId}`;
+  const startDate =
+    getFactValue(profile.facts ?? {}, 'employment.startDate') ?? '2026-06-17';
+  const safeCompanySlug = String(
+    getFactValue(profile.facts ?? {}, 'employment.company') ?? 'onboarding',
+  )
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24) || 'onboarding';
+
+  return {
+    schemaVersion: 1,
+    seed,
+    timeline: {
+      offerSentAt: dateTimeBefore(startDate, 26, '09:13:00-07:00'),
+      offerAcceptedAt: dateTimeBefore(startDate, 24, '16:02:00-07:00'),
+      onboardingInviteAt: dateTimeBefore(startDate, 21, '08:44:00-07:00'),
+      i9DraftSavedAt: dateTimeBefore(startDate, 14, '14:18:00-07:00'),
+      identityUploadAt: dateTimeBefore(startDate, 14, '14:27:00-07:00'),
+      addressProofExportAt: dateTimeBefore(startDate, 13, '18:06:00-07:00'),
+      staleRecordAt: dateTimeBefore(startDate, 579, '10:20:00-08:00'),
+      noiseReceivedAt: dateTimeBefore(startDate, 18, '07:19:00-07:00'),
+    },
+    employer: {
+      hrCoordinator: choose(seed, 'hrCoordinator', [
+        'Maya Chen',
+        'Priya Nair',
+        'Jon Bell',
+        'Lena Ortiz',
+      ]),
+      onboardingSystem: choose(seed, 'onboardingSystem', [
+        'Northstar Onboard',
+        'PeopleBridge',
+        'LaunchDesk HR',
+      ]),
+      recruitingInbox: `people-ops-${safeCompanySlug}@example.test`,
+      workerId: `CHR-${10000 + (hashInt(seed, 'workerId') % 90000)}`,
+      officeLabel: choose(seed, 'officeLabel', [
+        'Regional Operations Desk',
+        'New Hire Support Queue',
+        'People Operations Hub',
+      ]),
+    },
+    housing: {
+      propertyManager: choose(seed, 'propertyManager', [
+        'Evergreen Residential Services',
+        'Cedarline Property Group',
+        'Harbor & Hill Residential',
+      ]),
+      residentPortal: choose(seed, 'residentPortal', [
+        'ResidentLink',
+        'HomeLedger',
+        'LeasePoint',
+      ]),
+      leaseAccountId: `RL-${10000 + (hashInt(seed, 'leaseAccountId') % 90000)}`,
+    },
+    utility: {
+      provider: choose(seed, 'utilityProvider', [
+        'Willamette Utility Services',
+        'Metroline Energy',
+        'Civic Water & Power',
+      ]),
+      exportId: `WUS-EXP-U${1000 + (hashInt(seed, 'utilityExportIdA') % 9000)}X${100 + (hashInt(seed, 'utilityExportIdB') % 900)}`,
+      serviceAccountSuffix: String(1000 + (hashInt(seed, 'utilitySuffix') % 9000)),
+    },
+    identityCapture: {
+      uploadBatchId: `UPL-${hashInt(seed, 'uploadBatchId').toString(16).slice(0, 6).toUpperCase()}`,
+      licenseImageName: `IMG_${4000 + (hashInt(seed, 'licenseImage') % 5000)}_license_front.jpg`,
+      ssnImageName: `IMG_${4000 + (hashInt(seed, 'ssnImage') % 5000)}_ssn_card.jpg`,
+    },
+    noise: {
+      sender: choose(seed, 'noiseSender', [
+        'announcements@example.test',
+        'resident-news@example.test',
+        'events@example.test',
+      ]),
+      subject: choose(seed, 'noiseSubject', [
+        'Community notice: weekend events and maintenance reminders',
+        'Monthly resident update and local event calendar',
+        'Neighborhood bulletin: service notices and activities',
+      ]),
+    },
+  };
+}
+
+export function assertArtifactWorldHasNoProfileCollisions({ artifactWorld, profileFacts }) {
+  const worldValues = flattenPrimitiveValues(artifactWorld);
+  for (const [factKey, factValue] of profileFacts.leaves.entries()) {
+    if (factValue == null) continue;
+    const factValues = flattenPrimitiveValues(factValue);
+    for (const factText of factValues) {
+      for (const worldText of worldValues) {
+        if (normalizedForCollision(factText) === normalizedForCollision(worldText)) {
+          throw new Error(
+            `artifactWorld value ${JSON.stringify(worldText)} collides with profile fact ${factKey}.`,
+          );
+        }
+        if (
+          digitCollisionFact(factKey) &&
+          digitsOnly(factText).length >= 4 &&
+          digitsOnly(factText) === digitsOnly(worldText)
+        ) {
+          throw new Error(
+            `artifactWorld identifier ${JSON.stringify(worldText)} collides with profile fact ${factKey}.`,
+          );
+        }
+      }
+    }
+  }
+}
+
+function flattenPrimitiveValues(value) {
+  if (Array.isArray(value)) return value.flatMap(flattenPrimitiveValues);
+  if (value && typeof value === 'object') {
+    return Object.values(value).flatMap(flattenPrimitiveValues);
+  }
+  if (value == null) return [];
+  return [String(value)];
+}
+
+function normalizedForCollision(value) {
+  return String(value).normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function digitCollisionFact(factKey) {
+  return (
+    factKey === 'identity.ssn' ||
+    factKey.startsWith('workAuthorization.') ||
+    factKey === 'contact.phone'
+  );
+}
+
+function choose(seed, key, values) {
+  return values[hashInt(seed, key) % values.length];
+}
+
+function dateTimeBefore(isoDate, daysBefore, timeWithOffset) {
+  const [year, month, day] = String(isoDate).split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - daysBefore);
+  const yyyy = String(date.getUTCFullYear()).padStart(4, '0');
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${timeWithOffset}`;
+}
+
+function digitsOnly(value) {
+  return String(value).replace(/\D/g, '');
 }
 
 async function fileExists(filePath) {

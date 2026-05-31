@@ -10,16 +10,13 @@
     "corpusId",
     "forms",
     "purpose",
-    "targetDocumentCount",
-    "categoryCounts",
-    "challengeTags",
+    "artifactWorld",
+    "factContractDefaults",
     "intentionallyMissing",
     "documents"
   ],
   "properties": {
-    "schemaVersion": {
-      "const": 1
-    },
+    "schemaVersion": { "const": 2 },
     "userId": {
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -31,6 +28,7 @@
     "forms": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string",
         "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -40,36 +38,32 @@
       "type": "string",
       "minLength": 1
     },
-    "targetDocumentCount": {
-      "type": "integer",
-      "minimum": 1
+    "artifactWorld": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schemaVersion", "seed", "timeline"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "seed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
     },
-    "categoryCounts": {
+    "factContractDefaults": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["forbid"],
       "properties": {
-        "identity": { "type": "integer", "minimum": 0 },
-        "address-contact": { "type": "integer", "minimum": 0 },
-        "hr-onboarding": { "type": "integer", "minimum": 0 },
-        "payroll-tax": { "type": "integer", "minimum": 0 },
-        "work-authorization": { "type": "integer", "minimum": 0 },
-        "employer-context": { "type": "integer", "minimum": 0 },
-        "partial-conflicting": { "type": "integer", "minimum": 0 },
-        "noise": { "type": "integer", "minimum": 0 }
-      }
-    },
-    "challengeTags": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-      }
-    },
-    "defaultForbiddenFactKeys": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string"
+        "forbid": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        }
       }
     },
     "intentionallyMissing": {
@@ -79,15 +73,11 @@
         "additionalProperties": false,
         "required": ["factKey", "forms", "reason", "expectedBehavior"],
         "properties": {
-          "factKey": {
-            "type": "string"
-          },
+          "factKey": { "type": "string" },
           "forms": {
             "type": "array",
             "minItems": 1,
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           },
           "reason": {
             "type": "string",
@@ -102,6 +92,7 @@
     },
     "documents": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -111,21 +102,13 @@
           "category",
           "title",
           "outputExtension",
-          "factKeys",
-          "detailTier",
-          "authority",
-          "freshness",
-          "expectedUse",
-          "challengeTags",
-          "brief"
+          "sourceSpec",
+          "factContract",
+          "evaluationRole"
         ],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "path": {
-            "type": "string"
-          },
+          "id": { "type": "string" },
+          "path": { "type": "string" },
           "category": {
             "enum": [
               "identity",
@@ -145,41 +128,97 @@
           "outputExtension": {
             "enum": ["md", "txt", "json", "yaml"]
           },
-          "factKeys": {
-            "type": "array",
-            "items": {
-              "type": "string"
+          "sourceSpec": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "artifactType",
+              "sourceFamily",
+              "captureMode",
+              "timelineRefs",
+              "worldRefs",
+              "nativeSignals",
+              "safeDetailMenu",
+              "riskyDetailMenu",
+              "lengthTarget"
+            ],
+            "properties": {
+              "artifactType": { "type": "string", "minLength": 1 },
+              "sourceFamily": { "type": "string", "minLength": 1 },
+              "captureMode": { "type": "string", "minLength": 1 },
+              "timelineRefs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "worldRefs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "nativeSignals": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "safeDetailMenu": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "riskyDetailMenu": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "lengthTarget": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["minChars", "maxChars"],
+                "properties": {
+                  "minChars": { "type": "integer", "minimum": 1 },
+                  "maxChars": { "type": "integer", "minimum": 1 }
+                }
+              }
             }
           },
-          "forbiddenFactKeys": {
-            "type": "array",
-            "uniqueItems": true,
-            "items": {
-              "type": "string"
+          "factContract": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["include", "forbid"],
+            "properties": {
+              "include": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "forbid": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string" }
+              }
             }
           },
-          "detailTier": {
-            "enum": ["hero", "medium", "brief"]
-          },
-          "authority": {
-            "enum": ["high", "medium", "low", "none"]
-          },
-          "freshness": {
-            "enum": ["current", "stale", "mixed", "unknown"]
-          },
-          "expectedUse": {
-            "enum": ["extract", "corroborate", "guardrail", "ignore"]
-          },
-          "challengeTags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          "evaluationRole": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "detailTier",
+              "authority",
+              "freshness",
+              "expectedUse",
+              "challengeTags"
+            ],
+            "properties": {
+              "detailTier": { "enum": ["hero", "medium", "brief"] },
+              "authority": { "enum": ["high", "medium", "low", "none"] },
+              "freshness": { "enum": ["current", "stale", "mixed", "unknown"] },
+              "expectedUse": {
+                "enum": ["extract", "corroborate", "guardrail", "ignore"]
+              },
+              "challengeTags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
             }
-          },
-          "brief": {
-            "type": "string",
-            "minLength": 1
           }
         }
       }

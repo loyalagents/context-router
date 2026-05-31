@@ -8,14 +8,14 @@
     "scenarios": 0,
     "templates": 7,
     "errors": 0,
-    "warnings": 1
+    "warnings": 0
   },
   "corpusTruth": {
     "summary": {
       "documentsChecked": 10,
       "factsProvenPresent": 54,
       "factsMissing": 0,
-      "unsupportedDeclaredFacts": 3,
+      "unsupportedDeclaredFacts": 6,
       "factsProvenAbsent": 58,
       "forbiddenFactsPresent": 0,
       "warningOnlyAbsenceChecks": 8,
@@ -25,22 +25,22 @@
       "unsupportedDeclaredFactKeys": [
         {
           "factKey": "workAuthorization.foreignPassportNumber",
-          "count": 1
+          "count": 2
         },
         {
           "factKey": "workAuthorization.i94AdmissionNumber",
-          "count": 1
+          "count": 2
         },
         {
           "factKey": "workAuthorization.workAuthorizationExpirationDate",
-          "count": 1
+          "count": 2
         }
       ]
     },
     "documents": [
       {
         "id": "alex-i9-test-realistic-001",
-        "path": "documents/identity/001-driver-license-transcript.md",
+        "path": "documents/identity/001-driver-license-upload-ocr.txt",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -74,7 +74,7 @@
       },
       {
         "id": "alex-i9-test-realistic-002",
-        "path": "documents/identity/002-ssn-card-transcript.md",
+        "path": "documents/identity/002-ssn-card-upload-ocr.txt",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -102,25 +102,25 @@
       },
       {
         "id": "alex-i9-test-realistic-003",
-        "path": "documents/identity/003-birth-record-summary.txt",
+        "path": "documents/work-authorization/003-work-authorization-upload-receipt.txt",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
-            "identity.dateOfBirth",
-            "workAuthorization.citizenshipStatus"
+            "workAuthorization.citizenshipStatus",
+            "workAuthorization.uscisANumber"
           ],
           "missing": [],
-          "unsupported": []
+          "unsupported": [
+            "workAuthorization.workAuthorizationExpirationDate",
+            "workAuthorization.i94AdmissionNumber",
+            "workAuthorization.foreignPassportNumber"
+          ]
         },
         "forbiddenFacts": {
           "provenAbsent": [
             "identity.ssn",
             "contact.email",
-            "employment.workEmail",
-            "workAuthorization.uscisANumber",
-            "workAuthorization.workAuthorizationExpirationDate",
-            "workAuthorization.i94AdmissionNumber",
-            "workAuthorization.foreignPassportNumber"
+            "employment.workEmail"
           ],
           "present": [],
           "warningOnly": [
@@ -132,7 +132,7 @@
       },
       {
         "id": "alex-i9-test-realistic-004",
-        "path": "documents/address-contact/004-lease-summary.md",
+        "path": "documents/address-contact/004-resident-portal-lease-export.md",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -198,7 +198,7 @@
       },
       {
         "id": "alex-i9-test-realistic-006",
-        "path": "documents/work-authorization/006-i9-section-one-draft.md",
+        "path": "documents/work-authorization/006-i9-section-one-field-export.yaml",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -238,7 +238,7 @@
       },
       {
         "id": "alex-i9-test-realistic-007",
-        "path": "documents/hr-onboarding/007-offer-letter.md",
+        "path": "documents/hr-onboarding/007-offer-email.md",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -269,7 +269,7 @@
       },
       {
         "id": "alex-i9-test-realistic-008",
-        "path": "documents/hr-onboarding/008-onboarding-profile.yaml",
+        "path": "documents/hr-onboarding/008-onboarding-profile-export.yaml",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -302,7 +302,7 @@
       },
       {
         "id": "alex-i9-test-realistic-009",
-        "path": "documents/partial-conflicting/009-stale-address-note.txt",
+        "path": "documents/partial-conflicting/009-stale-contact-ticket.txt",
         "declaredFacts": {
           "provenPresent": [],
           "missing": [],
@@ -316,7 +316,9 @@
             "workAuthorization.uscisANumber",
             "workAuthorization.workAuthorizationExpirationDate",
             "workAuthorization.i94AdmissionNumber",
-            "workAuthorization.foreignPassportNumber"
+            "workAuthorization.foreignPassportNumber",
+            "identity.legalName",
+            "address.current.street"
           ],
           "present": [],
           "warningOnly": [],
@@ -328,7 +330,7 @@
       },
       {
         "id": "alex-i9-test-realistic-010",
-        "path": "documents/noise/010-community-newsletter.txt",
+        "path": "documents/noise/010-community-newsletter-email.txt",
         "declaredFacts": {
           "provenPresent": [],
           "missing": [],
@@ -342,7 +344,9 @@
             "workAuthorization.uscisANumber",
             "workAuthorization.workAuthorizationExpirationDate",
             "workAuthorization.i94AdmissionNumber",
-            "workAuthorization.foreignPassportNumber"
+            "workAuthorization.foreignPassportNumber",
+            "identity.legalName",
+            "address.current.street"
           ],
           "present": [],
           "warningOnly": [],
@@ -354,14 +358,5 @@
       }
     ]
   },
-  "issues": [
-    {
-      "level": "warning",
-      "code": "DOCUMENT_MISSING_FACT_PRESENT",
-      "file": "examples/eval/users/alex-i9-test/corpora/realistic/manifest.json",
-      "pointer": "/documents/3",
-      "message": "Document alex-i9-test-realistic-004 may contain value-like text even though contact.phone is intentionally missing.",
-      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
-    }
-  ]
+  "issues": []
 }

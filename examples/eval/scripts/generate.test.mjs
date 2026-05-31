@@ -93,15 +93,18 @@ test('document prompt includes only the requested profile slice', () => {
         employment: { workEmail: 'samir.desai@northstarcivic.example.test' },
       },
     },
-    corpusPlan: { intentionallyMissing: [] },
+    corpusPlan: { intentionallyMissing: [], artifactWorld: {} },
     doc: {
       id: '001',
-      factKeys: ['identity.ssn'],
+      factContract: { include: ['identity.ssn'], forbid: [] },
+      sourceSpec: sourceSpec(),
+      evaluationRole: evaluationRole(),
     },
   });
 
   assert.match(prompt, /000-00-0389/);
   assert.doesNotMatch(prompt, /northstarcivic/);
+  assert.doesNotMatch(prompt, /synthetic eval fixture|fact key|validator|benchmark|profile slice/i);
 });
 
 test('document prompt exposes only explicitly forbidden values', () => {
@@ -112,15 +115,19 @@ test('document prompt exposes only explicitly forbidden values', () => {
         employment: { workEmail: 'samir.desai@northstarcivic.example.test' },
       },
     },
-    corpusPlan: { intentionallyMissing: [] },
+    corpusPlan: { intentionallyMissing: [], artifactWorld: {} },
     doc: {
       id: '001',
-      factKeys: ['identity.legalName'],
-      forbiddenFactKeys: ['employment.workEmail'],
+      factContract: {
+        include: ['identity.legalName'],
+        forbid: ['employment.workEmail'],
+      },
+      sourceSpec: sourceSpec(),
+      evaluationRole: evaluationRole(),
     },
   });
 
-  assert.match(prompt, /Forbidden fact keys/);
+  assert.match(prompt, /Excluded person-detail paths/);
   assert.match(prompt, /employment\.workEmail/);
   assert.match(prompt, /samir\.desai@northstarcivic\.example\.test/);
   assert.match(prompt, /Samir Arun Desai/);
@@ -136,20 +143,23 @@ test('document prompt includes effective default forbidden values only for the c
       },
     },
     corpusPlan: {
-      defaultForbiddenFactKeys: ['identity.ssn', 'employment.workEmail'],
+      factContractDefaults: { forbid: ['identity.ssn', 'employment.workEmail'] },
       intentionallyMissing: [],
+      artifactWorld: {},
     },
     doc: {
       id: '001',
-      factKeys: ['identity.ssn'],
+      factContract: { include: ['identity.ssn'], forbid: [] },
+      sourceSpec: sourceSpec(),
+      evaluationRole: evaluationRole(),
     },
   });
 
   const forbiddenKeys = JSON.parse(
-    prompt.match(/Forbidden fact keys:\n([\s\S]*?)\n\nForbidden profile values:/)[1],
+    prompt.match(/Excluded person-detail paths:\n([\s\S]*?)\n\nExcluded person-detail values:/)[1],
   );
   const forbiddenValues = JSON.parse(
-    prompt.match(/Forbidden profile values:\n([\s\S]*?)\n\nDocument plan entry:/)[1],
+    prompt.match(/Excluded person-detail values:\n([\s\S]*?)$/)[1],
   );
 
   assert.deepEqual(forbiddenKeys, ['employment.workEmail']);
@@ -176,12 +186,15 @@ test('document prompt includes file type instructions and missing facts', () => 
           expectedBehavior: 'Leave it blank.',
         },
       ],
+      artifactWorld: {},
     },
     doc: {
       id: '001',
       path: 'documents/identity/001-id.json',
       outputExtension: 'json',
-      factKeys: ['identity.legalName'],
+      factContract: { include: ['identity.legalName'], forbid: [] },
+      sourceSpec: sourceSpec(),
+      evaluationRole: evaluationRole(),
     },
   });
 
@@ -189,6 +202,52 @@ test('document prompt includes file type instructions and missing facts', () => 
   assert.match(prompt, /Do not wrap JSON in markdown fences/);
   assert.match(prompt, /contact.phone/);
   assert.match(prompt, /Samir Arun Desai/);
+});
+
+test('document prompt includes only requested artifact world slices', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Samir Arun Desai' },
+      },
+    },
+    corpusPlan: {
+      intentionallyMissing: [],
+      artifactWorld: {
+        schemaVersion: 1,
+        seed: 'samir-desai__realistic',
+        timeline: {
+          addressProofExportAt: '2026-06-04T18:06:00-07:00',
+          identityUploadAt: '2026-06-03T14:27:00-07:00',
+        },
+        utility: {
+          provider: 'Metroline Energy',
+          exportId: 'WUS-EXP-U1486X252',
+        },
+        employer: {
+          onboardingSystem: 'Northstar Onboard',
+          workerId: 'CHR-53242',
+        },
+      },
+    },
+    doc: {
+      id: '005',
+      factContract: { include: ['identity.legalName'], forbid: [] },
+      sourceSpec: sourceSpec({
+        timelineRefs: ['addressProofExportAt'],
+        worldRefs: ['utility.provider'],
+      }),
+      evaluationRole: evaluationRole(),
+    },
+  });
+
+  assert.match(prompt, /Metroline Energy/);
+  assert.match(prompt, /addressProofExportAt/);
+  assert.match(prompt, /2026-06-04T18:06:00-07:00/);
+  assert.doesNotMatch(prompt, /Northstar Onboard/);
+  assert.doesNotMatch(prompt, /CHR-53242/);
+  assert.doesNotMatch(prompt, /WUS-EXP-U1486X252/);
+  assert.doesNotMatch(prompt, /identityUploadAt/);
 });
 
 test('structured generated text strips only wrapping fences', () => {
@@ -216,7 +275,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
     corpusId: 'realistic',
     forms: ['i-9'],
     purpose: 'Generated test.',
-    defaultForbiddenFactKeys: ['contact.phone'],
+    factContractDefaults: { forbid: ['contact.phone'] },
     intentionallyMissing: [],
     documents: [
       {
@@ -225,14 +284,18 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
         category: 'identity',
         title: 'Identity',
         outputExtension: 'md',
-        factKeys: ['identity.ssn'],
-        forbiddenFactKeys: ['employment.workEmail'],
-        detailTier: 'brief',
-        authority: 'medium',
-        freshness: 'current',
-        expectedUse: 'extract',
-        challengeTags: ['current-fact'],
-        brief: 'Plan-only brief.',
+        sourceSpec: sourceSpec(),
+        factContract: {
+          include: ['identity.ssn'],
+          forbid: ['employment.workEmail'],
+        },
+        evaluationRole: {
+          detailTier: 'brief',
+          authority: 'medium',
+          freshness: 'current',
+          expectedUse: 'extract',
+          challengeTags: ['current-fact'],
+        },
       },
     ],
   });
@@ -243,6 +306,7 @@ test('manifest projection keeps plan-owned metadata out of manifest', () => {
   assert.equal(manifest.documents[0].challengeTags, undefined);
   assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
   assert.equal(manifest.defaultForbiddenFactKeys, undefined);
+  assert.equal(manifest.factContractDefaults, undefined);
 });
 
 test('runGenerate writes preview documents without touching corpus manifest', async (t) => {
@@ -291,8 +355,8 @@ test('runManifest writes manifest from corpus plan without a model', async (t) =
     'examples/eval/users/samir-desai/corpora/generated-test/corpus-plan.json',
   );
   const corpusPlan = await readJson(corpusPlanPath);
-  corpusPlan.defaultForbiddenFactKeys = ['identity.ssn'];
-  corpusPlan.documents[0].forbiddenFactKeys = ['employment.workEmail'];
+  corpusPlan.factContractDefaults = { forbid: ['identity.ssn'] };
+  corpusPlan.documents[0].factContract.forbid = ['employment.workEmail'];
   await writeJson(corpusPlanPath, corpusPlan);
 
   const result = await runManifest({
@@ -310,6 +374,7 @@ test('runManifest writes manifest from corpus plan without a model', async (t) =
   assert.equal(manifest.seed, 'samir-desai__generated-test');
   assert.equal(manifest.documents.length, 6);
   assert.equal(manifest.defaultForbiddenFactKeys, undefined);
+  assert.equal(manifest.factContractDefaults, undefined);
   assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
 });
 
@@ -434,27 +499,73 @@ async function writeGeneratedTestPlan(root) {
     'examples/eval/users/samir-desai/corpora/generated-test',
   );
   await mkdir(corpusRoot, { recursive: true });
-  const categoryCounts = {};
-  for (const doc of sourceManifest.documents) {
-    categoryCounts[doc.category] = (categoryCounts[doc.category] ?? 0) + 1;
-  }
   await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'generated-test',
     forms: sourceManifest.forms,
     purpose: sourceManifest.purpose,
-    targetDocumentCount: sourceManifest.documents.length,
-    categoryCounts,
-    challengeTags: ['current-fact', 'missing-fact'],
+    artifactWorld: {
+      schemaVersion: 1,
+      seed: 'samir-desai__generated-test',
+      timeline: {
+        generatedAt: '2026-06-01T10:00:00-07:00',
+      },
+      source: {
+        system: 'Unit Test Source',
+      },
+    },
+    factContractDefaults: { forbid: [] },
     intentionallyMissing: sourceManifest.intentionallyMissing,
     documents: sourceManifest.documents.map(({ template: _template, ...doc }) => ({
-      ...doc,
+      id: doc.id,
+      path: doc.path,
+      category: doc.category,
+      title: doc.title,
       outputExtension: path.posix.extname(doc.path).slice(1),
-      challengeTags: ['current-fact'],
-      brief: `Generate ${doc.title}.`,
+      sourceSpec: sourceSpec({
+        timelineRefs: ['generatedAt'],
+        worldRefs: ['source.system'],
+      }),
+      factContract: {
+        include: doc.factKeys,
+        forbid: [],
+      },
+      evaluationRole: {
+        detailTier: doc.detailTier,
+        authority: doc.authority,
+        freshness: doc.freshness,
+        expectedUse: doc.expectedUse,
+        challengeTags: ['current-fact'],
+      },
     })),
   });
+}
+
+function sourceSpec(overrides = {}) {
+  return {
+    artifactType: 'unit-test-artifact',
+    sourceFamily: 'unit-test',
+    captureMode: 'plain-text-export',
+    timelineRefs: [],
+    worldRefs: [],
+    nativeSignals: ['status'],
+    safeDetailMenu: ['unit test metadata'],
+    riskyDetailMenu: ['new user phone number'],
+    lengthTarget: { minChars: 20, maxChars: 8000 },
+    ...overrides,
+  };
+}
+
+function evaluationRole(overrides = {}) {
+  return {
+    detailTier: 'brief',
+    authority: 'medium',
+    freshness: 'current',
+    expectedUse: 'extract',
+    challengeTags: ['current-fact'],
+    ...overrides,
+  };
 }
 
 async function copyRepo(t) {

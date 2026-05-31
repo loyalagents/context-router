@@ -4,14 +4,23 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { buildCorpusPlan, parseArgs, runPlanCorpus } from './plan-corpus.mjs';
+import { parse as parseYaml } from 'yaml';
+import {
+  assertArtifactWorldHasNoProfileCollisions,
+  buildArtifactWorld,
+  buildCorpusPlan,
+  buildI9SourceSpecs,
+  parseArgs,
+  runPlanCorpus,
+} from './plan-corpus.mjs';
+import { collectFactKeys } from './shared.mjs';
 import { runValidation } from './validate.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '../../..');
 
-test('plan-corpus parser supports only the v1 I-9 ten-doc flow', () => {
+test('plan-corpus parser supports only the V2 I-9 ten-doc flow', () => {
   assert.equal(
     parseArgs([
       '--user',
@@ -88,22 +97,21 @@ test('plan-corpus writes a valid deterministic 10-document I-9 plan', async (t) 
     'examples/eval/users/samir-desai/corpora/realistic/corpus-plan.json',
   );
   const plan = JSON.parse(await readFile(planPath, 'utf8'));
-  assert.equal(plan.targetDocumentCount, 10);
+  assert.equal(plan.schemaVersion, 2);
   assert.equal(plan.documents.length, 10);
-  assert.equal(
-    Object.values(plan.categoryCounts).reduce((sum, value) => sum + value, 0),
-    10,
-  );
-  assert.ok(plan.defaultForbiddenFactKeys.includes('contact.phone'));
+  assert.equal(plan.artifactWorld.schemaVersion, 1);
+  assert.ok(plan.factContractDefaults.forbid.includes('contact.phone'));
   assert.ok(plan.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
   assert.ok(
     plan.documents.some((doc) =>
-      doc.factKeys.includes('workAuthorization.uscisANumber'),
+      doc.factContract.include.includes('workAuthorization.uscisANumber'),
     ),
   );
   assert.ok(
-    plan.documents.every((doc) => !doc.factKeys.includes('contact.phone')),
+    plan.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
   );
+  assert.ok(plan.documents.every((doc) => doc.sourceSpec));
+  assert.ok(plan.documents.every((doc) => doc.evaluationRole));
 
   const validation = await runValidation({
     repoRoot: root,
@@ -181,15 +189,116 @@ test('plan-corpus keeps citizen-only null work authorization facts intentionally
   ]) {
     assert.ok(missingKeys.has(factKey), `${factKey} should be intentionally missing`);
     assert.ok(
-      plan.documents.every((doc) => !doc.factKeys.includes(factKey)),
-      `${factKey} should not appear in generated document factKeys`,
+      plan.documents.every((doc) => !doc.factContract.include.includes(factKey)),
+      `${factKey} should not appear in generated document include paths`,
     );
   }
   assert.ok(
     plan.documents.some((doc) =>
-      doc.factKeys.includes('workAuthorization.citizenshipStatus'),
+      doc.factContract.include.includes('workAuthorization.citizenshipStatus'),
     ),
   );
+});
+
+test('plan-corpus selects status-aware I-9 slot 003 artifacts', () => {
+  const citizenSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'U.S. citizen' } },
+  });
+  assert.equal(citizenSpecs.find((doc) => doc.sequence === '003').slug, 'citizenship-evidence-upload');
+
+  const noncitizenNationalSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'noncitizen national' } },
+  });
+  assert.equal(
+    noncitizenNationalSpecs.find((doc) => doc.sequence === '003').slug,
+    'noncitizen-national-evidence-upload',
+  );
+
+  const lprSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'lawful permanent resident' } },
+  });
+  assert.equal(lprSpecs.find((doc) => doc.sequence === '003').slug, 'permanent-resident-card-upload');
+
+  const alienSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'alien authorized to work' } },
+  });
+  assert.equal(alienSpecs.find((doc) => doc.sequence === '003').slug, 'work-authorization-upload-receipt');
+
+  const fallbackSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'status pending review' } },
+  });
+  assert.equal(fallbackSpecs.find((doc) => doc.sequence === '003').slug, 'work-authorization-review-note');
+});
+
+test('artifact world is deterministic and rejects profile collisions', () => {
+  const profile = {
+    facts: {
+      employment: {
+        company: 'Northstar Civic Labs',
+        startDate: '2026-06-10',
+      },
+    },
+  };
+  assert.deepEqual(
+    buildArtifactWorld({ userId: 'samir-desai', corpusId: 'realistic', profile }),
+    buildArtifactWorld({ userId: 'samir-desai', corpusId: 'realistic', profile }),
+  );
+
+  assert.throws(
+    () =>
+      assertArtifactWorldHasNoProfileCollisions({
+        artifactWorld: {
+          schemaVersion: 1,
+          seed: 'unit',
+          timeline: {},
+          upload: { value: '000000389' },
+        },
+        profileFacts: collectFactKeys({
+          identity: { ssn: '000-00-0389' },
+        }),
+      }),
+    /collides with profile fact identity\.ssn/,
+  );
+});
+
+test('buildCorpusPlan is byte-deterministic for committed I-9 profiles', async () => {
+  const fieldMap = JSON.parse(
+    await readFile(path.join(repoRoot, 'examples/eval/forms/i-9/field-map.json'), 'utf8'),
+  );
+
+  for (const userId of ['elena-marquez', 'samir-desai', 'alex-i9-test']) {
+    const profile = parseYaml(
+      await readFile(path.join(repoRoot, 'examples/eval/users', userId, 'profile.yaml'), 'utf8'),
+    );
+    const plan = buildCorpusPlan({
+      userId,
+      corpusId: 'realistic',
+      formId: 'i-9',
+      profile,
+      fieldMap,
+    });
+    const repeatedPlan = buildCorpusPlan({
+      userId,
+      corpusId: 'realistic',
+      formId: 'i-9',
+      profile,
+      fieldMap,
+    });
+    assert.equal(JSON.stringify(repeatedPlan), JSON.stringify(plan));
+
+    const alternatePlan = buildCorpusPlan({
+      userId,
+      corpusId: 'realistic-alt',
+      formId: 'i-9',
+      profile,
+      fieldMap,
+    });
+    assert.equal(alternatePlan.artifactWorld.seed, `${userId}__realistic-alt`);
+    assert.notEqual(
+      alternatePlan.artifactWorld.employer.workerId,
+      plan.artifactWorld.employer.workerId,
+    );
+  }
 });
 
 test('buildCorpusPlan filters null facts from document declarations', async () => {
@@ -239,10 +348,10 @@ test('buildCorpusPlan filters null facts from document declarations', async () =
   });
 
   assert.ok(
-    plan.documents.every((doc) => !doc.factKeys.includes('contact.phone')),
+    plan.documents.every((doc) => !doc.factContract.include.includes('contact.phone')),
   );
   assert.ok(
-    plan.documents.every((doc) => !doc.factKeys.includes('address.current.unit')),
+    plan.documents.every((doc) => !doc.factContract.include.includes('address.current.unit')),
   );
   assert.ok(plan.intentionallyMissing.some((entry) => entry.factKey === 'contact.phone'));
   assert.ok(

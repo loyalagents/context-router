@@ -1,19 +1,41 @@
 {
-  "accountNumber": "987-654321-001",
-  "customer": {
-    "name": "Alex Jordan Rivera",
-    "contact": {
-      "emailAddress": "alex.rivera@example.test"
-    }
+  "export_id": "WUS-EXP-U1486X252",
+  "export_id_label": "export id WUS-EXP-U1486X252",
+  "generated_timestamp": "June 4 2026 at 6:06 PM Pacific",
+  "provider": "Metroline Energy",
+  "service_agreement": {
+    "agreement_label": "residential electric service",
+    "account_suffix": "3341",
+    "status": "active",
+    "billing_cycle": "monthly",
+    "mailing_preference": "electronic"
   },
-  "serviceLocation": {
-    "address1": "7428 Evergreen Terrace",
-    "address2": "Apt 5C",
+  "account_holder": {
+    "name": "Alex Jordan Rivera",
+    "email": "alex.rivera@example.test"
+  },
+  "service_address": {
+    "street": "7428 Evergreen Terrace",
+    "unit": "Apt 5C",
     "city": "Portland",
     "state": "OR",
-    "postalCode": "97214"
+    "postal_code": "97214"
   },
-  "serviceType": "Electric",
-  "accountStatus": "Active",
-  "exportDate": "2023-10-27T10:00:00Z"
+  "account_status_history": [
+    {
+      "timestamp": "May 20 2026 at 9:12 AM Pacific",
+      "status": "service_started",
+      "note": "Residential service moved to active status."
+    },
+    {
+      "timestamp": "June 4 2026 at 6:06 PM Pacific",
+      "status": "customer_export_generated",
+      "note": "Portal export requested from the account profile screen."
+    }
+  ],
+  "redactions": {
+    "full_account_number": "masked",
+    "office_contact": "removed",
+    "phone": null
+  }
 }

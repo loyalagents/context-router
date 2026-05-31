@@ -1,44 +1,63 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "userId": "alex-i9-test",
   "corpusId": "realistic",
   "forms": [
     "i-9"
   ],
-  "purpose": "Deterministic 10-document realistic starter corpus for I-9 eval generation from a reviewed synthetic profile.",
-  "targetDocumentCount": 10,
-  "categoryCounts": {
-    "identity": 3,
-    "address-contact": 2,
-    "work-authorization": 1,
-    "hr-onboarding": 2,
-    "partial-conflicting": 1,
-    "noise": 1
+  "purpose": "Deterministic 10-document source-artifact corpus plan for I-9 realistic eval generation from a reviewed synthetic profile.",
+  "artifactWorld": {
+    "schemaVersion": 1,
+    "seed": "alex-i9-test__realistic",
+    "timeline": {
+      "offerSentAt": "2026-05-22T09:13:00-07:00",
+      "offerAcceptedAt": "2026-05-24T16:02:00-07:00",
+      "onboardingInviteAt": "2026-05-27T08:44:00-07:00",
+      "i9DraftSavedAt": "2026-06-03T14:18:00-07:00",
+      "identityUploadAt": "2026-06-03T14:27:00-07:00",
+      "addressProofExportAt": "2026-06-04T18:06:00-07:00",
+      "staleRecordAt": "2024-11-15T10:20:00-08:00",
+      "noiseReceivedAt": "2026-05-30T07:19:00-07:00"
+    },
+    "employer": {
+      "hrCoordinator": "Lena Ortiz",
+      "onboardingSystem": "Northstar Onboard",
+      "recruitingInbox": "people-ops-cascadia-hiring-cooperat@example.test",
+      "workerId": "CHR-53242",
+      "officeLabel": "People Operations Hub"
+    },
+    "housing": {
+      "propertyManager": "Harbor & Hill Residential",
+      "residentPortal": "ResidentLink",
+      "leaseAccountId": "RL-83217"
+    },
+    "utility": {
+      "provider": "Metroline Energy",
+      "exportId": "WUS-EXP-U1486X252",
+      "serviceAccountSuffix": "3341"
+    },
+    "identityCapture": {
+      "uploadBatchId": "UPL-F23463",
+      "licenseImageName": "IMG_7879_license_front.jpg",
+      "ssnImageName": "IMG_7377_ssn_card.jpg"
+    },
+    "noise": {
+      "sender": "announcements@example.test",
+      "subject": "Monthly resident update and local event calendar"
+    }
   },
-  "challengeTags": [
-    "address-evidence",
-    "citizen-work-authorization",
-    "email-evidence",
-    "employment-context",
-    "i9-draft",
-    "identity-evidence",
-    "noise",
-    "partial-or-conflicting",
-    "sensitive-identifier",
-    "stale-address",
-    "structured-export",
-    "work-email-vs-personal-email"
-  ],
-  "defaultForbiddenFactKeys": [
-    "identity.ssn",
-    "contact.email",
-    "employment.workEmail",
-    "contact.phone",
-    "workAuthorization.uscisANumber",
-    "workAuthorization.workAuthorizationExpirationDate",
-    "workAuthorization.i94AdmissionNumber",
-    "workAuthorization.foreignPassportNumber"
-  ],
+  "factContractDefaults": {
+    "forbid": [
+      "identity.ssn",
+      "contact.email",
+      "employment.workEmail",
+      "contact.phone",
+      "workAuthorization.uscisANumber",
+      "workAuthorization.workAuthorizationExpirationDate",
+      "workAuthorization.i94AdmissionNumber",
+      "workAuthorization.foreignPassportNumber"
+    ]
+  },
   "intentionallyMissing": [
     {
       "factKey": "contact.phone",
@@ -52,94 +71,261 @@
   "documents": [
     {
       "id": "alex-i9-test-realistic-001",
-      "path": "documents/identity/001-driver-license-transcript.md",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
       "category": "identity",
-      "title": "Driver License Transcript",
-      "outputExtension": "md",
-      "factKeys": [
-        "identity.legalName",
-        "identity.dateOfBirth",
-        "address.current.street",
-        "address.current.unit",
-        "address.current.city",
-        "address.current.state",
-        "address.current.postalCode"
-      ],
-      "detailTier": "hero",
-      "authority": "high",
-      "freshness": "current",
-      "expectedUse": "extract",
-      "challengeTags": [
-        "identity-evidence",
-        "address-evidence"
-      ],
-      "brief": "Driver License Transcript: Write as a DMV-style transcript with realistic headers, status dates, and export artifacts. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, identity.dateOfBirth, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "title": "Driver License Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-id-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "identityCapture.licenseImageName",
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "upload batch id",
+          "source filename",
+          "OCR confidence",
+          "document status",
+          "issuing state"
+        ],
+        "safeDetailMenu": [
+          "license class",
+          "restriction code",
+          "redacted license number",
+          "processing queue status"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 700,
+          "maxChars": 1800
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.dateOfBirth",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "address-evidence"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-002",
-      "path": "documents/identity/002-ssn-card-transcript.md",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
       "category": "identity",
-      "title": "SSN Card Transcript",
-      "outputExtension": "md",
-      "factKeys": [
-        "identity.legalName",
-        "identity.ssn"
-      ],
-      "detailTier": "medium",
-      "authority": "high",
-      "freshness": "current",
-      "expectedUse": "extract",
-      "challengeTags": [
-        "identity-evidence",
-        "sensitive-identifier"
-      ],
-      "brief": "SSN Card Transcript: Write as a careful transcript of a Social Security card, with limited surrounding context. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, identity.ssn. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "title": "SSN Card Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-ssn-card-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "identityCapture.ssnImageName",
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "upload batch id",
+          "source filename",
+          "OCR confidence",
+          "redaction status"
+        ],
+        "safeDetailMenu": [
+          "document category",
+          "processing status",
+          "review queue",
+          "transcription confidence"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 450,
+          "maxChars": 1100
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "sensitive-identifier"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-003",
-      "path": "documents/identity/003-birth-record-summary.txt",
-      "category": "identity",
-      "title": "Birth Record Summary",
+      "path": "documents/work-authorization/003-work-authorization-upload-receipt.txt",
+      "category": "work-authorization",
+      "title": "Work Authorization Upload Receipt",
       "outputExtension": "txt",
-      "factKeys": [
-        "identity.legalName",
-        "identity.dateOfBirth",
-        "workAuthorization.citizenshipStatus"
-      ],
-      "detailTier": "medium",
-      "authority": "medium",
-      "freshness": "current",
-      "expectedUse": "corroborate",
-      "challengeTags": [
-        "identity-evidence",
-        "citizen-work-authorization"
-      ],
-      "brief": "Birth Record Summary: Write as plain text copied from a vital-records folder note, not as Markdown. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, identity.dateOfBirth, workAuthorization.citizenshipStatus. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "work-authorization-upload-receipt",
+        "sourceFamily": "work-authorization",
+        "captureMode": "plain-text-upload-receipt",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "employer.hrCoordinator"
+        ],
+        "nativeSignals": [
+          "upload batch id",
+          "document category",
+          "processing status",
+          "reviewer note"
+        ],
+        "safeDetailMenu": [
+          "uploaded document type",
+          "review queue",
+          "work authorization support status",
+          "worker id"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 700,
+          "maxChars": 1800
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "workAuthorization.citizenshipStatus",
+          "workAuthorization.uscisANumber",
+          "workAuthorization.workAuthorizationExpirationDate",
+          "workAuthorization.i94AdmissionNumber",
+          "workAuthorization.foreignPassportNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "work-authorization",
+          "sensitive-identifier"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-004",
-      "path": "documents/address-contact/004-lease-summary.md",
+      "path": "documents/address-contact/004-resident-portal-lease-export.md",
       "category": "address-contact",
-      "title": "Lease Summary",
+      "title": "Resident Portal Lease Export",
       "outputExtension": "md",
-      "factKeys": [
-        "identity.legalName",
-        "address.current.street",
-        "address.current.unit",
-        "address.current.city",
-        "address.current.state",
-        "address.current.postalCode",
-        "contact.email"
-      ],
-      "detailTier": "hero",
-      "authority": "high",
-      "freshness": "current",
-      "expectedUse": "extract",
-      "challengeTags": [
-        "address-evidence",
-        "email-evidence"
-      ],
-      "brief": "Lease Summary: Write as a current residential lease summary with notice contact details and realistic lease metadata. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "resident-portal-lease-export",
+        "sourceFamily": "address-contact",
+        "captureMode": "portal-markdown-export",
+        "timelineRefs": [
+          "addressProofExportAt"
+        ],
+        "worldRefs": [
+          "housing.propertyManager",
+          "housing.residentPortal",
+          "housing.leaseAccountId"
+        ],
+        "nativeSignals": [
+          "portal export timestamp",
+          "lease account id",
+          "lease status",
+          "resident profile block"
+        ],
+        "safeDetailMenu": [
+          "lease status",
+          "notice preference",
+          "redacted office phone",
+          "renewal status"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 900,
+          "maxChars": 2400
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "address-evidence",
+          "email-evidence"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-005",
@@ -147,142 +333,395 @@
       "category": "address-contact",
       "title": "Utility Account Export",
       "outputExtension": "json",
-      "factKeys": [
-        "identity.legalName",
-        "address.current.street",
-        "address.current.unit",
-        "address.current.city",
-        "address.current.state",
-        "address.current.postalCode",
-        "contact.email"
-      ],
-      "detailTier": "medium",
-      "authority": "medium",
-      "freshness": "current",
-      "expectedUse": "corroborate",
-      "challengeTags": [
-        "address-evidence",
-        "structured-export"
-      ],
-      "brief": "Utility Account Export: Write as valid JSON from a utility portal export with realistic field names. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "utility-portal-account-export",
+        "sourceFamily": "address-contact",
+        "captureMode": "json-export",
+        "timelineRefs": [
+          "addressProofExportAt"
+        ],
+        "worldRefs": [
+          "utility.provider",
+          "utility.exportId",
+          "utility.serviceAccountSuffix"
+        ],
+        "nativeSignals": [
+          "export id",
+          "generated timestamp",
+          "service agreement",
+          "account status history"
+        ],
+        "safeDetailMenu": [
+          "billing cycle",
+          "redacted account suffix",
+          "mailing preference",
+          "service agreement status"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 750,
+          "maxChars": 2200
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "address-evidence",
+          "structured-export"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-006",
-      "path": "documents/work-authorization/006-i9-section-one-draft.md",
+      "path": "documents/work-authorization/006-i9-section-one-field-export.yaml",
       "category": "work-authorization",
-      "title": "I-9 Section One Draft",
-      "outputExtension": "md",
-      "factKeys": [
-        "identity.legalName",
-        "identity.firstName",
-        "identity.middleInitial",
-        "identity.lastName",
-        "identity.otherLastNames",
-        "identity.dateOfBirth",
-        "identity.ssn",
-        "address.current.street",
-        "address.current.unit",
-        "address.current.city",
-        "address.current.state",
-        "address.current.postalCode",
-        "contact.email",
-        "workAuthorization.citizenshipStatus",
-        "workAuthorization.uscisANumber",
-        "workAuthorization.workAuthorizationExpirationDate",
-        "workAuthorization.i94AdmissionNumber",
-        "workAuthorization.foreignPassportNumber"
-      ],
-      "detailTier": "hero",
-      "authority": "high",
-      "freshness": "current",
-      "expectedUse": "extract",
-      "challengeTags": [
-        "i9-draft",
-        "citizen-work-authorization"
-      ],
-      "brief": "I-9 Section One Draft: Write as a pre-fill draft for I-9 Section 1. Include a separate exact legal-name line even if the form also splits first, middle, and last name fields. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, identity.firstName, identity.middleInitial, identity.lastName, identity.otherLastNames, identity.dateOfBirth, identity.ssn, address.current.street, address.current.unit, address.current.city, address.current.state, address.current.postalCode, contact.email, workAuthorization.citizenshipStatus, workAuthorization.uscisANumber, workAuthorization.workAuthorizationExpirationDate, workAuthorization.i94AdmissionNumber, workAuthorization.foreignPassportNumber. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "title": "I-9 Section 1 Field Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "saved-i9-section-one-field-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-field-export",
+        "timelineRefs": [
+          "i9DraftSavedAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "employer.hrCoordinator"
+        ],
+        "nativeSignals": [
+          "form version",
+          "field ids",
+          "saved timestamp",
+          "workflow status",
+          "native blank phone state"
+        ],
+        "safeDetailMenu": [
+          "task status",
+          "signature pending cue",
+          "reviewer routing",
+          "blank/null phone state"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1200,
+          "maxChars": 3200
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.firstName",
+          "identity.middleInitial",
+          "identity.lastName",
+          "identity.otherLastNames",
+          "identity.dateOfBirth",
+          "identity.ssn",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email",
+          "workAuthorization.citizenshipStatus",
+          "workAuthorization.uscisANumber",
+          "workAuthorization.workAuthorizationExpirationDate",
+          "workAuthorization.i94AdmissionNumber",
+          "workAuthorization.foreignPassportNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "i9-draft",
+          "work-authorization"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-007",
-      "path": "documents/hr-onboarding/007-offer-letter.md",
+      "path": "documents/hr-onboarding/007-offer-email.md",
       "category": "hr-onboarding",
-      "title": "Offer Letter",
+      "title": "Offer Email",
       "outputExtension": "md",
-      "factKeys": [
-        "identity.legalName",
-        "employment.company",
-        "employment.title",
-        "employment.startDate",
-        "employment.workEmail"
-      ],
-      "detailTier": "hero",
-      "authority": "medium",
-      "freshness": "current",
-      "expectedUse": "corroborate",
-      "challengeTags": [
-        "employment-context",
-        "work-email-vs-personal-email"
-      ],
-      "brief": "Offer Letter: Write as an offer letter excerpt with realistic HR language, start-date context, and work email provisioning. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, employment.company, employment.title, employment.startDate, employment.workEmail. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "copied-offer-email",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "email-body",
+        "timelineRefs": [
+          "offerSentAt",
+          "offerAcceptedAt"
+        ],
+        "worldRefs": [
+          "employer.hrCoordinator",
+          "employer.recruitingInbox",
+          "employer.officeLabel"
+        ],
+        "nativeSignals": [
+          "From header",
+          "To header",
+          "Date header",
+          "Subject header",
+          "signature block"
+        ],
+        "safeDetailMenu": [
+          "acceptance deadline",
+          "orientation timing",
+          "contingency language",
+          "work email provisioning"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1000,
+          "maxChars": 2800
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "employment.company",
+          "employment.title",
+          "employment.startDate",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employment-context",
+          "work-email-vs-personal-email"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-008",
-      "path": "documents/hr-onboarding/008-onboarding-profile.yaml",
+      "path": "documents/hr-onboarding/008-onboarding-profile-export.yaml",
       "category": "hr-onboarding",
-      "title": "Onboarding Profile",
+      "title": "Onboarding Profile Export",
       "outputExtension": "yaml",
-      "factKeys": [
-        "identity.legalName",
-        "identity.firstName",
-        "identity.lastName",
-        "employment.company",
-        "employment.title",
-        "employment.startDate",
-        "contact.email",
-        "employment.workEmail"
-      ],
-      "detailTier": "medium",
-      "authority": "medium",
-      "freshness": "current",
-      "expectedUse": "corroborate",
-      "challengeTags": [
-        "employment-context",
-        "structured-export"
-      ],
-      "brief": "Onboarding Profile: Write as valid YAML from an onboarding system export with realistic keys and no Markdown fence. Use only the supplied profile slice for canonical current facts. Declared facts: identity.legalName, identity.firstName, identity.lastName, employment.company, employment.title, employment.startDate, contact.email, employment.workEmail. Include every declared fact at least once using the exact profile value or a validator-supported value variant, even if the document also uses realistic alternate formatting. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "onboarding-profile-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-export",
+        "timelineRefs": [
+          "onboardingInviteAt",
+          "i9DraftSavedAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "employer.hrCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "created timestamp",
+          "updated timestamp",
+          "worker id",
+          "task status list"
+        ],
+        "safeDetailMenu": [
+          "provisioning status",
+          "onboarding task names",
+          "audit fields",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 800,
+          "maxChars": 2200
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.firstName",
+          "identity.lastName",
+          "employment.company",
+          "employment.title",
+          "employment.startDate",
+          "contact.email",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employment-context",
+          "structured-export"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-009",
-      "path": "documents/partial-conflicting/009-stale-address-note.txt",
+      "path": "documents/partial-conflicting/009-stale-contact-ticket.txt",
       "category": "partial-conflicting",
-      "title": "Stale Address Note",
+      "title": "Stale Contact Ticket",
       "outputExtension": "txt",
-      "factKeys": [],
-      "detailTier": "brief",
-      "authority": "low",
-      "freshness": "stale",
-      "expectedUse": "guardrail",
-      "challengeTags": [
-        "partial-or-conflicting",
-        "stale-address"
-      ],
-      "brief": "Stale Address Note: Write as a plainly stale address note. Make the stale status explicit and avoid current canonical user fact values. Use only the supplied profile slice for canonical current facts. Do not include canonical current user fact values. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "returned-mail-support-ticket",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "staleRecordAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "ticket id",
+          "status",
+          "event log",
+          "stale/superseded cue"
+        ],
+        "safeDetailMenu": [
+          "returned mail status",
+          "superseded address cue",
+          "redacted stale value",
+          "do-not-use note"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 350,
+          "maxChars": 1100
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "identity.legalName",
+          "address.current.street",
+          "contact.email"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "brief",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "partial-or-conflicting",
+          "stale-address"
+        ]
+      }
     },
     {
       "id": "alex-i9-test-realistic-010",
-      "path": "documents/noise/010-community-newsletter.txt",
+      "path": "documents/noise/010-community-newsletter-email.txt",
       "category": "noise",
-      "title": "Community Newsletter",
+      "title": "Community Newsletter Email",
       "outputExtension": "txt",
-      "factKeys": [],
-      "detailTier": "medium",
-      "authority": "none",
-      "freshness": "unknown",
-      "expectedUse": "ignore",
-      "challengeTags": [
-        "noise"
-      ],
-      "brief": "Community Newsletter: Write as an unrelated community newsletter excerpt with no canonical user facts. Use only the supplied profile slice for canonical current facts. Do not include canonical current user fact values. Do not invent intentionally missing facts: contact.phone. Avoid placeholder text such as Current Date, To Be Completed, or fake bracketed values."
+      "sourceSpec": {
+        "artifactType": "community-newsletter-email",
+        "sourceFamily": "noise",
+        "captureMode": "email-body",
+        "timelineRefs": [
+          "noiseReceivedAt"
+        ],
+        "worldRefs": [
+          "noise.sender",
+          "noise.subject"
+        ],
+        "nativeSignals": [
+          "From header",
+          "To header",
+          "Date header",
+          "Subject header",
+          "footer"
+        ],
+        "safeDetailMenu": [
+          "community event details",
+          "unsubscribe footer",
+          "generic resident audience",
+          "no user-specific identifiers"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra SSN or tax identifier",
+          "extra immigration identifier not listed in the fact contract",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 700,
+          "maxChars": 1800
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "identity.legalName",
+          "address.current.street",
+          "contact.email",
+          "employment.workEmail"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "noise"
+        ]
+      }
     }
   ]
 }

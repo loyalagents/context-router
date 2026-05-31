@@ -69,7 +69,7 @@ test('repair-generation regenerates only documents with validation failures', as
 test('repair-generation builds repair prompts from plan docs with per-doc forbidden facts', async (t) => {
   const root = await copyRepo(t);
   const { previewRoot, doc } = await writeRepairFixture(t, root, {
-    forbiddenFactKeys: ['employment.workEmail'],
+    forbid: ['employment.workEmail'],
   });
   const calls = [];
 
@@ -107,7 +107,7 @@ test('repair-generation builds repair prompts from plan docs with per-doc forbid
   assert.equal(result.exitCode, 0, result.errorMessage);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].doc.id, doc.id);
-  assert.deepEqual(calls[0].doc.forbiddenFactKeys, ['employment.workEmail']);
+  assert.deepEqual(calls[0].doc.factContract.forbid, ['employment.workEmail']);
   assert.match(calls[0].prompt, /employment\.workEmail/);
   assert.match(calls[0].prompt, /samir\.desai@northstarcivic\.example\.test/);
 });
@@ -165,8 +165,54 @@ test('repair-generation reports warning documents separately from failures', asy
   assert.deepEqual(report.attempts[0].warningDocumentIds, [doc.id]);
   assert.deepEqual(report.remainingIssues, []);
   assert.deepEqual(
+    report.remainingWarnings.map((issue) => issue.code).sort(),
+    [
+      'DOCUMENT_MISSING_FACT_PRESENT',
+      'DOCUMENT_NATIVE_SIGNAL_MISSING',
+      'DOCUMENT_SOURCE_PHONE_PRESENT',
+    ],
+  );
+});
+
+test('repair-generation does not regenerate realism-only warnings', async (t) => {
+  const root = await copyRepo(t);
+  const { previewRoot, doc } = await writeRepairFixture(t, root, {
+    validPreview: true,
+  });
+  let calls = 0;
+
+  const result = await runRepairGeneration({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'repair-test',
+      '--from',
+      previewRoot,
+      '--model',
+      'unit-model',
+      '--max-attempts',
+      '1',
+    ],
+    generateDocument: async () => {
+      calls += 1;
+      return 'should not be used\n';
+    },
+  });
+
+  assert.equal(result.exitCode, 0, result.errorMessage);
+  assert.equal(calls, 0);
+  const report = JSON.parse(
+    await readFile(path.join(previewRoot, 'repair-report.json'), 'utf8'),
+  );
+  assert.equal(report.status, 'pass');
+  assert.deepEqual(report.repairedDocumentIds, []);
+  assert.deepEqual(report.attempts[0].failedDocumentIds, []);
+  assert.deepEqual(report.attempts[0].warningDocumentIds, []);
+  assert.deepEqual(
     report.remainingWarnings.map((issue) => issue.code),
-    ['DOCUMENT_MISSING_FACT_PRESENT'],
+    ['DOCUMENT_NATIVE_SIGNAL_MISSING'],
   );
 });
 
@@ -283,7 +329,7 @@ test('repair-generation refuses manifest and corpus plan document drift', async 
 async function writeRepairFixture(
   t,
   root,
-  { validPreview = false, forbiddenFactKeys = [] } = {},
+  { validPreview = false, forbid = [] } = {},
 ) {
   const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-repair-preview-'));
   t.after(async () => {
@@ -299,38 +345,50 @@ async function writeRepairFixture(
     category: 'identity',
     title: 'I-9 Profile',
     outputExtension: 'md',
-    factKeys: [
-      'identity.firstName',
-      'identity.middleInitial',
-      'identity.otherLastNames',
-      'identity.dateOfBirth',
-      'identity.ssn',
-      'identity.lastName',
-      'address.current.street',
-      'address.current.unit',
-      'address.current.city',
-      'address.current.state',
-      'address.current.postalCode',
-      'contact.email',
-      'workAuthorization.uscisANumber',
-    ],
-    detailTier: 'hero',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    ...(forbiddenFactKeys.length ? { forbiddenFactKeys } : {}),
-    challengeTags: ['i9-draft'],
-    brief: 'Write a one-document I-9 repair fixture.',
+    sourceSpec: sourceSpec(),
+    factContract: {
+      include: [
+        'identity.firstName',
+        'identity.middleInitial',
+        'identity.otherLastNames',
+        'identity.dateOfBirth',
+        'identity.ssn',
+        'identity.lastName',
+        'address.current.street',
+        'address.current.unit',
+        'address.current.city',
+        'address.current.state',
+        'address.current.postalCode',
+        'contact.email',
+        'workAuthorization.uscisANumber',
+      ],
+      forbid,
+    },
+    evaluationRole: evaluationRole({
+      detailTier: 'hero',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['i9-draft'],
+    }),
   };
   const corpusPlan = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'repair-test',
     forms: ['i-9'],
     purpose: 'Repair generation unit test.',
-    targetDocumentCount: 1,
-    categoryCounts: { identity: 1 },
-    challengeTags: ['i9-draft'],
+    artifactWorld: {
+      schemaVersion: 1,
+      seed: 'samir-desai__repair-test',
+      timeline: {
+        generatedAt: '2026-06-01T10:00:00-07:00',
+      },
+      source: {
+        system: 'Repair Unit Test',
+      },
+    },
+    factContractDefaults: { forbid: [] },
     intentionallyMissing: [
       {
         factKey: 'contact.phone',
@@ -382,6 +440,32 @@ async function writeRepairFixture(
       : 'This preview is intentionally missing most declared facts.\n',
   );
   return { previewRoot, doc };
+}
+
+function sourceSpec(overrides = {}) {
+  return {
+    artifactType: 'repair-unit-artifact',
+    sourceFamily: 'repair-unit',
+    captureMode: 'plain-text-export',
+    timelineRefs: [],
+    worldRefs: [],
+    nativeSignals: ['status'],
+    safeDetailMenu: ['unit test metadata'],
+    riskyDetailMenu: ['new phone number'],
+    lengthTarget: { minChars: 20, maxChars: 8000 },
+    ...overrides,
+  };
+}
+
+function evaluationRole(overrides = {}) {
+  return {
+    detailTier: 'brief',
+    authority: 'medium',
+    freshness: 'current',
+    expectedUse: 'extract',
+    challengeTags: ['current-fact'],
+    ...overrides,
+  };
 }
 
 async function copyRepo(t) {

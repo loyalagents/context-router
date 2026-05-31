@@ -8,7 +8,7 @@ import { runGenerate } from './generate.mjs';
 import { runManifest } from './manifest.mjs';
 import { runPlanCorpus } from './plan-corpus.mjs';
 import { runPromotePreview } from './promote-preview.mjs';
-import { getFactValue } from './shared.mjs';
+import { getFactValue, planDocumentFactKeys } from './shared.mjs';
 import { runValidation } from './validate.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -104,7 +104,7 @@ test('ten-document user corpus workflow plans, previews, validates, and promotes
 
 function generateDeterministicBody(_prompt, { doc, profile }) {
   const facts = Object.fromEntries(
-    (doc.factKeys ?? []).map((factKey) => [
+    planDocumentFactKeys(doc).map((factKey) => [
       factKey,
       getFactValue(profile.facts ?? {}, factKey),
     ]),
@@ -142,7 +142,7 @@ function generateDeterministicBody(_prompt, { doc, profile }) {
     ].join('\n');
   }
 
-  if ((doc.factKeys ?? []).length === 0) {
+  if (planDocumentFactKeys(doc).length === 0) {
     return [
       doc.title,
       `Document id: ${doc.id}.`,

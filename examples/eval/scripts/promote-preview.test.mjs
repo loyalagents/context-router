@@ -188,37 +188,50 @@ async function writePromoteFixture(t, root, { validPreview }) {
     category: 'identity',
     title: 'I-9 Profile',
     outputExtension: 'md',
-    factKeys: [
-      'identity.firstName',
-      'identity.middleInitial',
-      'identity.otherLastNames',
-      'identity.dateOfBirth',
-      'identity.ssn',
-      'identity.lastName',
-      'address.current.street',
-      'address.current.unit',
-      'address.current.city',
-      'address.current.state',
-      'address.current.postalCode',
-      'contact.email',
-      'workAuthorization.uscisANumber',
-    ],
-    detailTier: 'hero',
-    authority: 'high',
-    freshness: 'current',
-    expectedUse: 'extract',
-    challengeTags: ['identity-evidence'],
-    brief: 'Write a compact I-9 profile note.',
+    sourceSpec: sourceSpec(),
+    factContract: {
+      include: [
+        'identity.firstName',
+        'identity.middleInitial',
+        'identity.otherLastNames',
+        'identity.dateOfBirth',
+        'identity.ssn',
+        'identity.lastName',
+        'address.current.street',
+        'address.current.unit',
+        'address.current.city',
+        'address.current.state',
+        'address.current.postalCode',
+        'contact.email',
+        'workAuthorization.uscisANumber',
+      ],
+      forbid: [],
+    },
+    evaluationRole: evaluationRole({
+      detailTier: 'hero',
+      authority: 'high',
+      freshness: 'current',
+      expectedUse: 'extract',
+      challengeTags: ['identity-evidence'],
+    }),
   };
   const corpusPlan = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'promote-test',
     forms: ['i-9'],
     purpose: 'Promote preview unit test.',
-    targetDocumentCount: 1,
-    categoryCounts: { identity: 1 },
-    challengeTags: ['identity-evidence'],
+    artifactWorld: {
+      schemaVersion: 1,
+      seed: 'samir-desai__promote-test',
+      timeline: {
+        generatedAt: '2026-06-01T10:00:00-07:00',
+      },
+      source: {
+        system: 'Promote Unit Test',
+      },
+    },
+    factContractDefaults: { forbid: [] },
     intentionallyMissing: [
       {
         factKey: 'contact.phone',
@@ -256,6 +269,32 @@ async function writePromoteFixture(t, root, { validPreview }) {
     validPreview ? validPromoteBody() : 'This body does not include the declared I-9 facts.\n',
   );
   return { previewRoot, corpusRoot, doc };
+}
+
+function sourceSpec(overrides = {}) {
+  return {
+    artifactType: 'promote-unit-artifact',
+    sourceFamily: 'promote-unit',
+    captureMode: 'plain-text-export',
+    timelineRefs: [],
+    worldRefs: [],
+    nativeSignals: ['status'],
+    safeDetailMenu: ['unit test metadata'],
+    riskyDetailMenu: ['new phone number'],
+    lengthTarget: { minChars: 20, maxChars: 8000 },
+    ...overrides,
+  };
+}
+
+function evaluationRole(overrides = {}) {
+  return {
+    detailTier: 'brief',
+    authority: 'medium',
+    freshness: 'current',
+    expectedUse: 'extract',
+    challengeTags: ['current-fact'],
+    ...overrides,
+  };
 }
 
 function validPromoteBody() {

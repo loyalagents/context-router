@@ -222,15 +222,16 @@ export function textContainsFactValue(text, factKey, value) {
 }
 
 export function shouldDeriveMissingFactAsForbidden(doc) {
+  const role = planDocumentEvaluationRole(doc);
   return (
     doc.category !== 'noise' &&
-    doc.freshness === 'current' &&
-    ['extract', 'corroborate'].includes(doc.expectedUse)
+    role.freshness === 'current' &&
+    ['extract', 'corroborate'].includes(role.expectedUse)
   );
 }
 
 export function effectiveForbiddenFactKeys(corpusPlan, doc) {
-  const declaredFacts = new Set(doc.factKeys ?? []);
+  const declaredFacts = new Set(planDocumentFactKeys(doc));
   const effective = [];
   const seen = new Set();
 
@@ -240,8 +241,8 @@ export function effectiveForbiddenFactKeys(corpusPlan, doc) {
     effective.push(factKey);
   }
 
-  for (const factKey of corpusPlan?.defaultForbiddenFactKeys ?? []) add(factKey);
-  for (const factKey of doc.forbiddenFactKeys ?? []) add(factKey);
+  for (const factKey of corpusPlan?.factContractDefaults?.forbid ?? []) add(factKey);
+  for (const factKey of doc?.factContract?.forbid ?? []) add(factKey);
   if (shouldDeriveMissingFactAsForbidden(doc)) {
     for (const missing of corpusPlan?.intentionallyMissing ?? []) {
       if (typeof missing.factKey === 'string') add(missing.factKey);
@@ -249,6 +250,38 @@ export function effectiveForbiddenFactKeys(corpusPlan, doc) {
   }
 
   return effective;
+}
+
+export function planDocumentFactKeys(doc) {
+  return doc?.factContract?.include ?? [];
+}
+
+export function planDocumentForbiddenFactKeys(doc) {
+  return doc?.factContract?.forbid ?? [];
+}
+
+export function planDocumentEvaluationRole(doc) {
+  return doc?.evaluationRole ?? doc ?? {};
+}
+
+export function planDocumentDetailTier(doc) {
+  return planDocumentEvaluationRole(doc).detailTier;
+}
+
+export function planDocumentAuthority(doc) {
+  return planDocumentEvaluationRole(doc).authority;
+}
+
+export function planDocumentFreshness(doc) {
+  return planDocumentEvaluationRole(doc).freshness;
+}
+
+export function planDocumentExpectedUse(doc) {
+  return planDocumentEvaluationRole(doc).expectedUse;
+}
+
+export function planDocumentChallengeTags(doc) {
+  return planDocumentEvaluationRole(doc).challengeTags ?? [];
 }
 
 function normalizeSearchText(value) {

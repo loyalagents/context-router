@@ -10,6 +10,11 @@ import {
   getFactValue,
   isFixtureId,
   jsonText,
+  planDocumentAuthority,
+  planDocumentDetailTier,
+  planDocumentExpectedUse,
+  planDocumentFactKeys,
+  planDocumentFreshness,
   setNestedValue,
   toPosixPath,
 } from './shared.mjs';
@@ -268,7 +273,7 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
 
 export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
   const profileSlice = {};
-  for (const factKey of doc.factKeys ?? []) {
+  for (const factKey of planDocumentFactKeys(doc)) {
     setNestedValue(profileSlice, factKey, getFactValue(profile.facts ?? {}, factKey));
   }
   const forbiddenFactKeys = effectiveForbiddenFactKeys(corpusPlan, doc);
@@ -278,34 +283,63 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     if (value != null) setNestedValue(forbiddenProfileSlice, factKey, value);
   }
 
+  const sourceWorld = sliceArtifactWorld(corpusPlan.artifactWorld ?? {}, doc.sourceSpec?.worldRefs ?? []);
+  const timeline = sliceArtifactWorld(
+    corpusPlan.artifactWorld ?? {},
+    (doc.sourceSpec?.timelineRefs ?? []).map((ref) => `timeline.${ref}`),
+  );
+
   return [
-    'You are writing one synthetic eval fixture document.',
+    'Write the captured body of this source artifact.',
     '',
-    'Write only the document body. Do not include markdown fences or explanations.',
+    'Return only the artifact body. Do not include markdown fences or explanatory wrapper text.',
     fileTypeRules(doc),
-    'Use only facts from the supplied profile slice unless the plan entry explicitly marks stale, conflicting, partial, redacted, third-party, or noise context.',
-    'Do not invent canonical current facts.',
-    'Place every listed fact key somewhere in the body.',
-    'Do not write values for intentionally missing facts.',
-    'Do not include any forbidden fact values in the document body.',
-    'Noise documents must contain no canonical user fact values.',
-    'Stale or conflicting documents must make their stale/conflicting status clear.',
+    'Make the body look native to the source family and capture mode.',
+    'Use the allowed source context only for incidental source metadata.',
+    'Do not add new personal details for the user.',
+    'Include each required person detail in a natural place for this artifact.',
+    'Do not include excluded person-detail values.',
+    'If a required value is blank or intentionally absent, represent the blank naturally for this source type.',
+    'Noise artifacts must not contain user-specific current identifiers.',
+    'Stale or conflicting artifacts must make their stale, superseded, or do-not-use status clear.',
     '',
-    'Corpus intentionally missing facts:',
+    'Artifact source spec:',
+    JSON.stringify(doc.sourceSpec ?? {}, null, 2),
+    '',
+    'Evaluation role:',
+    JSON.stringify(doc.evaluationRole ?? {}, null, 2),
+    '',
+    'Allowed source context:',
+    JSON.stringify({ ...sourceWorld, ...timeline }, null, 2),
+    '',
+    'Intentionally absent person details:',
     JSON.stringify(corpusPlan.intentionallyMissing ?? [], null, 2),
     '',
-    'Profile slice:',
+    'Required person details:',
     JSON.stringify(profileSlice, null, 2),
     '',
-    'Forbidden fact keys:',
+    'Excluded person-detail paths:',
     JSON.stringify(forbiddenFactKeys, null, 2),
     '',
-    'Forbidden profile values:',
+    'Excluded person-detail values:',
     JSON.stringify(forbiddenProfileSlice, null, 2),
-    '',
-    'Document plan entry:',
-    JSON.stringify(doc, null, 2),
   ].join('\n');
+}
+
+function sliceArtifactWorld(artifactWorld, refs) {
+  const slice = {};
+  for (const ref of refs) {
+    const value = getWorldValue(artifactWorld, ref);
+    if (value !== undefined) setNestedValue(slice, ref, value);
+  }
+  return slice;
+}
+
+function getWorldValue(artifactWorld, ref) {
+  return ref.split('.').reduce((value, segment) => {
+    if (value == null || typeof value !== 'object') return undefined;
+    return value[segment];
+  }, artifactWorld);
 }
 
 export function normalizeGeneratedText(text, doc) {
@@ -332,11 +366,11 @@ export function manifestFromCorpusPlan(corpusPlan) {
       path: doc.path,
       category: doc.category,
       title: doc.title,
-      factKeys: doc.factKeys ?? [],
-      detailTier: doc.detailTier,
-      authority: doc.authority,
-      freshness: doc.freshness,
-      expectedUse: doc.expectedUse,
+      factKeys: planDocumentFactKeys(doc),
+      detailTier: planDocumentDetailTier(doc),
+      authority: planDocumentAuthority(doc),
+      freshness: planDocumentFreshness(doc),
+      expectedUse: planDocumentExpectedUse(doc),
     })),
   };
 }
