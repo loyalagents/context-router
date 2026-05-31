@@ -171,11 +171,10 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
 
   const attempts = [];
   const repairedDocumentIds = new Set();
-  let lastValidation = null;
+  let repairRoundsRun = 0;
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt += 1) {
     const validation = await validatePreview(repoRoot, options, previewRoot);
-    lastValidation = validation;
     const { failedDocs, repairableIssueIndexes } = groupRepairableIssues(
       validation.issues,
       manifest,
@@ -247,6 +246,7 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
       await mkdir(path.dirname(target), { recursive: true });
       await writeFile(target, text.endsWith('\n') ? text : `${text}\n`, 'utf8');
     });
+    repairRoundsRun = attempt;
   }
 
   const finalValidation = await validatePreview(repoRoot, options, previewRoot);
@@ -286,12 +286,11 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
     );
   }
 
-  lastValidation = finalValidation;
   return [
-    `preview validation passed after ${repairedDocumentIds.size > 0 ? options.maxAttempts : 0} repair attempt(s)`,
+    `preview validation passed after ${repairRoundsRun} repair attempt(s)`,
     `preview ${repoRelative(repoRoot, previewRoot)}`,
     `report ${repoRelative(repoRoot, path.join(previewRoot, 'repair-report.json'))}`,
-    `errors ${lastValidation.summary.errors}`,
+    `errors ${finalValidation.summary.errors}`,
   ];
 }
 
@@ -314,11 +313,19 @@ async function validatePreview(repoRoot, options, previewRoot) {
 function groupRepairableIssues(issues, manifest, corpusPlan) {
   const planDocById = new Map((corpusPlan.documents ?? []).map((doc) => [doc.id, doc]));
   const planDocByPath = new Map((corpusPlan.documents ?? []).map((doc) => [doc.path, doc]));
-  const entries = (manifest.documents ?? []).map((manifestDoc) => ({
-    manifestDoc,
-    doc: planDocById.get(manifestDoc.id) ?? planDocByPath.get(manifestDoc.path) ?? manifestDoc,
-    issues: [],
-  }));
+  const entries = (manifest.documents ?? []).map((manifestDoc) => {
+    const planDoc = planDocById.get(manifestDoc.id) ?? planDocByPath.get(manifestDoc.path);
+    if (!planDoc) {
+      throw new Error(
+        `Manifest document ${manifestDoc.id ?? manifestDoc.path} does not match any corpus-plan document. Regenerate manifest.json from corpus-plan.json before repairing.`,
+      );
+    }
+    return {
+      manifestDoc,
+      doc: planDoc,
+      issues: [],
+    };
+  });
   const byId = new Map(entries.map((entry) => [entry.manifestDoc.id, entry]));
   const byIndex = new Map(entries.map((entry, index) => [String(index), entry]));
   const repairableIssueIndexes = new Set();

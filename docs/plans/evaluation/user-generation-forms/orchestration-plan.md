@@ -3,7 +3,7 @@
 - Status: orchestration
 - Read when: coordinating implementation work for reusable synthetic users, document corpora, and form-fill evaluation
 - Source of truth: `docs/plans/evaluation/user-generation-forms/brainstorm.md`
-- Last reviewed: 2026-05-21
+- Last reviewed: 2026-05-31
 
 ## Purpose
 
@@ -64,7 +64,8 @@ Script names for this initiative should use the `eval:<verb>` namespace.
 | 4. Eval runner | complete | `eval-runner/` | Added deterministic local backend eval runs and filled-form snapshots. |
 | 5. Polish and playbook | complete | `polish-playbook/` | Added no-DB verify/CI, runner diagnostics, and contributor playbook. |
 | 6. Second I-9 user | complete | `second-i9-user/` | Added a second I-9 user, generated corpus, and runner snapshot. |
-| 7. 100-document realistic generation | in-progress | `100-doc-goal/` | Added a Nina 100-document fixture, corpus-plan generation rails, mixed file types, and Vertex generation tooling; live Vertex full regeneration and extraction scoring remain pending. |
+| 7. 100-document realistic generation | deferred | `100-doc-goal/` | Superseded by the smaller modular 10-document I-9 workflow; old active Nina/Elena realistic fixtures were pruned. |
+| 8. 10-document automatic user corpus | complete | `10-automatic/user-corpus/` | Added deterministic I-9 corpus planning, preview validation, repair, promotion, and fixture cleanup. |
 
 Current implemented state:
 
@@ -74,7 +75,9 @@ Current implemented state:
 - Old `examples/form-fill-demo/`, `examples/memory-demo/`, and `examples/memory-demo-simple/` trees have been removed.
 - Batch 1 is complete.
 - `examples/eval/schemas/` defines V1 profile, corpus manifest, scenario, and field-map contracts.
-- Elena Marquez has a canonical `profile.yaml`, generated seed preferences, a V1 realistic corpus manifest under `users/elena-marquez/corpora/realistic/`, and an I-9 Section 1 scenario fixture.
+- Elena Marquez has a canonical `profile.yaml`, generated seed preferences,
+  a `template-smoke` corpus, and a runner-owned I-9 template-smoke scenario
+  fixture.
 - The I-9 field map keeps user-specific inapplicability in profile null facts
   rather than encoding Elena-specific skip reasons in the form-scoped map.
 - `pnpm eval:derive-seeds` derives committed seed preference JSON from profiles.
@@ -98,8 +101,7 @@ Current implemented state:
 - `pnpm eval:scaffold` can initialize profile skeletons, render deterministic
   template corpora, write target-user seed preferences, run validation, and
   optionally write scenario skeletons.
-- Elena Marquez now has both the hand-authored `realistic` corpus and the
-  generated `template-smoke` corpus, plus
+- Elena Marquez now has a generated `template-smoke` corpus, plus
   `elena-marquez-i9-template-smoke` as a generated scenario skeleton.
 - Batch 4 is complete.
 - `pnpm eval:run --scenario <scenarioId>` validates a scenario, boots the
@@ -120,13 +122,21 @@ Current implemented state:
 - Batch 5 is complete.
 - `pnpm eval:verify` is the local non-DB eval gate, running eval script tests
   and full fixture validation.
-- Batch 7 is in progress.
-- `examples/eval/users/nina-meera-patel/corpora/realistic/` contains a
-  validated 100-document mixed-file corpus with `md`, `txt`, `json`, and
-  `yaml` bodies.
+- Batch 7 is deferred and historical.
+- The old active Nina and Elena `realistic` corpora were pruned from
+  `examples/eval`; the current committed fixture set is intentionally centered
+  on the smaller template-smoke fixtures plus the new 10-document workflow.
+- Batch 8 is complete.
+- `pnpm eval:plan-corpus` writes a deterministic 10-document I-9
+  `corpus-plan.json` from a reviewed profile.
 - `pnpm eval:manifest` projects a corpus plan to a manifest without AI calls.
 - `pnpm eval:generate` supports Vertex generation previews with `--ids`,
   short-id regeneration, and explicit full replacement with `--overwrite`.
+- `pnpm eval:repair-generation` validates a preview and regenerates only
+  repairable document failures, refusing non-document validation errors.
+- `pnpm eval:promote-preview` validates preview documents, copies them into
+  the committed corpus, and rolls back committed corpus state if final
+  validation fails.
 - The validator now checks JSON/YAML body parseability and flags structured
   files wrapped in Markdown fences.
 - CI includes a dedicated no-DB `eval-fixture-checks` job that runs

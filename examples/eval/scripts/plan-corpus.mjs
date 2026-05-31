@@ -253,6 +253,8 @@ const I9_ARCHETYPES = [
   },
 ];
 
+const I9_DOCUMENT_COUNT = I9_ARCHETYPES.length;
+
 export async function runPlanCorpus({
   repoRoot = defaultRepoRoot,
   args = [],
@@ -324,8 +326,11 @@ export function parseArgs(args) {
   if (options.formId !== 'i-9') {
     return { kind: 'usage-error', message: '--form currently supports only i-9.' };
   }
-  if (options.count !== 10) {
-    return { kind: 'usage-error', message: '--count currently supports only 10.' };
+  if (options.count !== I9_DOCUMENT_COUNT) {
+    return {
+      kind: 'usage-error',
+      message: `--count currently supports only ${I9_DOCUMENT_COUNT}.`,
+    };
   }
 
   return { kind: 'ok', options };
@@ -484,7 +489,7 @@ function repoRelative(repoRoot, absolutePath) {
 function usage() {
   return [
     'Usage:',
-    '  pnpm eval:plan-corpus --user <userId> --corpus <corpusId> --form i-9 --count 10 [--force]',
+    `  pnpm eval:plan-corpus --user <userId> --corpus <corpusId> --form i-9 --count ${I9_DOCUMENT_COUNT} [--force]`,
   ].join('\n');
 }
 

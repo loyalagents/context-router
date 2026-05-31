@@ -183,6 +183,45 @@ test('repair-generation refuses mixed document and non-document failures before 
   assert.match(result.errorMessage, /SEED_GENERATED_STALE/);
 });
 
+test('repair-generation refuses manifest and corpus plan document drift', async (t) => {
+  const root = await copyRepo(t);
+  const { previewRoot } = await writeRepairFixture(t, root);
+  const manifestPath = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/repair-test/manifest.json',
+  );
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  manifest.documents[0].id = 'samir-desai-repair-test-drifted';
+  manifest.documents[0].path = 'documents/identity/drifted-i9-profile.md';
+  await writeJson(manifestPath, manifest);
+  let calls = 0;
+
+  const result = await runRepairGeneration({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'repair-test',
+      '--from',
+      previewRoot,
+      '--model',
+      'unit-model',
+      '--max-attempts',
+      '1',
+    ],
+    generateDocument: async () => {
+      calls += 1;
+      return 'should not be used\n';
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(calls, 0);
+  assert.match(result.errorMessage, /does not match any corpus-plan document/);
+  assert.match(result.errorMessage, /Regenerate manifest\.json/);
+});
+
 async function writeRepairFixture(
   t,
   root,

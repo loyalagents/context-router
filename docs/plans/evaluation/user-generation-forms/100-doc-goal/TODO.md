@@ -1,19 +1,23 @@
-# 100-Document Goal TODO
+# 100-Document Goal TODO (Historical, Closed)
 
 ## Status Update
 
-This track has been superseded by the smaller modular workflow under
-`../10-automatic/user-corpus/`. The active 100-document Nina and Elena
-realistic corpora were pruned from `examples/eval` so the current fixture set
-centers on the 10-document I-9 generation path.
+This track is closed as a historical record. It has been superseded by the
+smaller modular workflow under `../10-automatic/user-corpus/`.
 
-## Current State
+The active 100-document Nina and Elena realistic corpora were pruned from
+`examples/eval`, so commands in this file that reference `nina-meera-patel`,
+`elena-marquez/corpora/realistic`, or `nina-meera-patel-i9-realistic` are
+historical notes only. Do not run them against the current fixture tree.
 
-The initial cleanup pass has been implemented locally.
+## Historical State Before Supersession
 
-Now available:
+The initial cleanup pass had been implemented locally before this track was
+superseded.
 
-- `nina-meera-patel` has a 100-document `realistic` corpus.
+At that time:
+
+- `nina-meera-patel` had a 100-document `realistic` corpus.
 - The corpus uses mixed file types:
   - 45 `md`
   - 25 `txt`
@@ -25,17 +29,20 @@ Now available:
 - `pnpm eval:generate --overwrite` provides an explicit full replacement path.
 - `--regenerate` and `--ids` accept short sequence ids such as `001`.
 - The validator parses `.json`, parses `.yaml`, rejects structured files wrapped in Markdown fences, and warns when `.txt` files look like Markdown.
-- Focused validation passes with 0 errors and 0 warnings.
+- Focused validation passed with 0 errors and 0 warnings.
 
-## Still Not Done
+## Historical Remaining Work
 
-The full 100-document Vertex regeneration has not been run in the Codex shell because this shell does not have Vertex env values:
+The full 100-document Vertex regeneration had not been run in the Codex shell
+because that shell did not have Vertex env values:
 
 - `GCP_PROJECT_ID`
 - `EVAL_GENERATION_MODEL`
 - optional `VERTEX_REGION`
 
-The current mixed corpus body files are deterministic local fixture bodies, with JSON/YAML/TXT wrappers where appropriate. They validate and are useful for tooling tests, but they are not yet the final Vertex-authored high-realism corpus.
+The mixed corpus body files were deterministic local fixture bodies, with
+JSON/YAML/TXT wrappers where appropriate. They validated and were useful for
+tooling tests, but they were not the final Vertex-authored high-realism corpus.
 
 ## Generation Quality Perspective
 
@@ -58,16 +65,19 @@ The opposite failure is also possible: a document can pass the deterministic che
 
 Do not solve the realism problem by only making the validator more permissive. The generator needs stronger document archetypes and a repair loop.
 
-Recommended direction:
+Historical recommended direction:
 
 - Strengthen `corpus-plan.json` entries with document-specific source context, length/texture expectations, allowed invented surrounding details, and explicit canonical anchors for validator-backed facts.
 - Make the prompt require each declared fact to appear at least once in an exact or validator-supported value form, even if the document also includes realistic alternate formatting.
 - Add a generate/validate/repair loop: preview documents, run corpus-truth validation, feed per-document failures back into targeted regeneration, and only write to the committed corpus after the preview passes both correctness and realism review.
 - Capture this as a workflow/playbook first. A Codex skill can come later once the workflow is stable.
 
-## Next Action
+## Historical Next Action (Do Not Run)
 
-Run a mixed Vertex preview from a shell that has the Vertex env configured:
+This was the next action before the track was superseded. Do not run this
+against the current fixture tree because `nina-meera-patel` has been removed.
+
+The historical command was:
 
 ```bash
 pnpm eval:generate --user nina-meera-patel --corpus realistic --ids 001,017,031,043,055,063,081 --out /private/tmp/nina-mixed-preview
@@ -86,7 +96,7 @@ Review the preview for:
 - no placeholder text or contradictory current/stale signals
 - documents read like plausible source artifacts, not generic synthetic templates
 
-If preview quality is acceptable, run full regeneration:
+If preview quality was acceptable, the historical full-regeneration path was:
 
 ```bash
 pnpm eval:generate --user nina-meera-patel --corpus realistic --backend vertex --overwrite --concurrency 2
@@ -94,7 +104,7 @@ pnpm eval:validate --user nina-meera-patel --corpus realistic --write-report
 pnpm eval:verify
 ```
 
-## Future File Types
+## Historical Future File Types
 
 Do not add richer file types until the current mixed text/structured corpus is reviewed.
 
@@ -117,7 +127,7 @@ Those require more than plan edits:
 - document-analysis ingestion support
 - parser/rendering expectations
 
-## Corpus Truth Validation Before Extraction
+## Historical Corpus Truth Validation Before Extraction
 
 Before this corpus becomes an extraction benchmark, add stronger corpus-truth validation:
 
@@ -137,9 +147,10 @@ Possible schema direction:
 - add value variants for SSN, dates, A-numbers, addresses, and units
 - keep fuzzy checks as warnings until calibrated
 
-## Benchmark Work Later
+## Historical Benchmark Work Later
 
-After the documents are Vertex-authored and reviewed:
+After the deleted 100-document corpus documents were Vertex-authored and
+reviewed, this track would have needed:
 
 - add an expected filled-form snapshot for `nina-meera-patel-i9-realistic`
 - design `expected/extracted-facts.json`

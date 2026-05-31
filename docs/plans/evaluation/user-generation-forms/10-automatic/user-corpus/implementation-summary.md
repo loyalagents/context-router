@@ -36,6 +36,13 @@
 - Hardened `eval:repair-generation` so repair prompts use the plan document
   metadata, including future per-document forbidden facts, and so mixed
   document/non-document failures do not call the generator.
+- Tightened `eval:repair-generation` to reject manifest/corpus-plan document
+  drift instead of falling back to weaker manifest-only prompt metadata.
+- Changed `eval:plan-corpus --count` validation to derive the supported value
+  from the I-9 archetype catalog length instead of a separate literal.
+- Marked the superseded 100-document plan docs as historical and retargeted
+  active orchestration/validation notes away from deleted Nina/Elena realistic
+  fixtures.
 - Updated `examples/eval/README.md`, `examples/eval/PLAYBOOK.md`, and
   `examples/eval/users/elena-marquez/README.md`.
 - Updated root `package.json` scripts.
@@ -46,6 +53,7 @@
 node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs examples/eval/scripts/validate.test.mjs
 node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/validate.test.mjs examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs examples/eval/scripts/user-corpus-workflow.test.mjs
 node --test examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs
+node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/repair-generation.test.mjs
 pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
 pnpm eval:test
 pnpm eval:validate
@@ -54,7 +62,7 @@ pnpm eval:verify
 
 Final result:
 
-- `pnpm eval:test`: passed, 104 tests.
+- `pnpm eval:test`: passed, 105 tests.
 - `pnpm eval:validate`: passed with 2 users, 2 corpora, 6 forms, 2 scenarios,
   and 7 templates.
 - `pnpm eval:verify`: passed.
@@ -77,6 +85,9 @@ Final result:
 - Follow-up PR feedback identified a latent repair prompt asymmetry for
   per-document forbidden facts and a post-copy promote rollback gap; both are now
   covered by regression tests.
+- Follow-up PR feedback identified stale 100-document plan docs and a quiet
+  manifest/plan drift fallback in repair; both are now addressed, with drift
+  covered by a regression test.
 
 ## Remaining Follow-Ups
 

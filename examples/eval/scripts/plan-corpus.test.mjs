@@ -51,6 +51,18 @@ test('plan-corpus parser supports only the v1 I-9 ten-doc flow', () => {
     ]).kind,
     'usage-error',
   );
+  const wrongCount = parseArgs([
+    '--user',
+    'samir-desai',
+    '--corpus',
+    'realistic',
+    '--form',
+    'i-9',
+    '--count',
+    '11',
+  ]);
+  assert.equal(wrongCount.kind, 'usage-error');
+  assert.equal(wrongCount.message, '--count currently supports only 10.');
 });
 
 test('plan-corpus writes a valid deterministic 10-document I-9 plan', async (t) => {
