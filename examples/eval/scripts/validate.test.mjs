@@ -729,6 +729,40 @@ test('document prose checks leave null forbidden facts to conservative pattern w
   );
 });
 
+test('document prose checks do not treat I-9 identifiers as missing phone values', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  doc.expectedUse = 'extract';
+  doc.freshness = 'current';
+  manifest.intentionallyMissing = manifest.intentionallyMissing.filter(
+    (missing) => missing.factKey === 'contact.phone',
+  );
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  corpusPlan.documents[0].forbiddenFactKeys = ['contact.phone'];
+  await writeJson(manifestPath, manifest);
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current work authorization document review note.',
+      'Form I-94 Admission Number: 11223344556.',
+      'Alien Registration Number/USCIS Number: 987654321.',
+      'Foreign Passport Number: XK1234567.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_MISSING_FACT_PRESENT');
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+  assert.ok(truth.forbiddenFacts.warningOnly.includes('contact.phone'));
+});
+
 test('document prose checks reject high-confidence current identifiers in noise docs', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

@@ -184,14 +184,18 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
       validation.issues,
       repairableIssueIndexes,
     );
+    const warningDocumentIds = getRepairableWarningDocumentIds(
+      validation.issues,
+      manifest,
+      corpusPlan,
+    );
     attempts.push({
       attempt,
       phase: 'pre-repair-validation',
       status: validation.exitCode === 0 ? 'pass' : 'fail',
       failedDocumentIds: failedDocs.map((entry) => entry.doc.id),
-      unrepairableIssueCount:
-        validation.issues.length -
-        failedDocs.reduce((sum, entry) => sum + entry.issues.length, 0),
+      warningDocumentIds,
+      unrepairableIssueCount: unrepairableBlockingIssues.length,
     });
 
     if (validation.exitCode === 0) {
@@ -259,9 +263,15 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
     phase: 'post-repair-validation',
     status: finalValidation.exitCode === 0 ? 'pass' : 'fail',
     failedDocumentIds: finalFailedDocs.map((entry) => entry.doc.id),
-    unrepairableIssueCount:
-      finalValidation.issues.length -
-      finalFailedDocs.reduce((sum, entry) => sum + entry.issues.length, 0),
+    warningDocumentIds: getRepairableWarningDocumentIds(
+      finalValidation.issues,
+      manifest,
+      corpusPlan,
+    ),
+    unrepairableIssueCount: getUnrepairableBlockingIssues(
+      finalValidation.issues,
+      finalRepairableIssueIndexes,
+    ).length,
   });
   const finalUnrepairableBlockingIssues = getUnrepairableBlockingIssues(
     finalValidation.issues,
@@ -331,6 +341,7 @@ function groupRepairableIssues(issues, manifest, corpusPlan) {
   const repairableIssueIndexes = new Set();
 
   for (const [issueIndex, issue] of issues.entries()) {
+    if (issue.level === 'warning') continue;
     const pointerMatch = issue.pointer?.match(/^\/documents\/(\d+)(?:\/|$)/);
     let entry = pointerMatch ? byIndex.get(pointerMatch[1]) : null;
     if (!entry) {
@@ -353,6 +364,42 @@ function groupRepairableIssues(issues, manifest, corpusPlan) {
     failedDocs: entries.filter((entry) => entry.issues.length > 0),
     repairableIssueIndexes,
   };
+}
+
+function getRepairableWarningDocumentIds(issues, manifest, corpusPlan) {
+  const planDocById = new Map((corpusPlan.documents ?? []).map((doc) => [doc.id, doc]));
+  const planDocByPath = new Map((corpusPlan.documents ?? []).map((doc) => [doc.path, doc]));
+  const entries = (manifest.documents ?? []).map((manifestDoc) => {
+    const planDoc = planDocById.get(manifestDoc.id) ?? planDocByPath.get(manifestDoc.path);
+    if (!planDoc) {
+      throw new Error(
+        `Manifest document ${manifestDoc.id ?? manifestDoc.path} does not match any corpus-plan document. Regenerate manifest.json from corpus-plan.json before repairing.`,
+      );
+    }
+    return {
+      manifestDoc,
+      doc: planDoc,
+      hasWarning: false,
+    };
+  });
+  const byId = new Map(entries.map((entry) => [entry.manifestDoc.id, entry]));
+  const byIndex = new Map(entries.map((entry, index) => [String(index), entry]));
+
+  for (const issue of issues) {
+    if (issue.level !== 'warning') continue;
+    if (!isRepairableDocumentIssue(issue)) continue;
+    const pointerMatch = issue.pointer?.match(/^\/documents\/(\d+)(?:\/|$)/);
+    let entry = pointerMatch ? byIndex.get(pointerMatch[1]) : null;
+    if (!entry) {
+      const messageMatch = issue.message?.match(/^Document ([^\s]+) /);
+      entry = messageMatch ? byId.get(messageMatch[1]) : null;
+    }
+    if (entry) entry.hasWarning = true;
+  }
+
+  return entries
+    .filter((entry) => entry.hasWarning)
+    .map((entry) => entry.doc.id);
 }
 
 function isRepairableDocumentIssue(issue) {
@@ -412,6 +459,12 @@ async function writeRepairReport(previewRoot, {
   validation,
 }) {
   const reportPath = path.join(previewRoot, 'repair-report.json');
+  const remainingWarnings = validation.issues.filter(
+    (issue) => issue.level === 'warning',
+  );
+  const remainingIssues = validation.issues.filter(
+    (issue) => issue.level !== 'warning',
+  );
   await mkdir(path.dirname(reportPath), { recursive: true });
   await writeFile(
     reportPath,
@@ -421,7 +474,8 @@ async function writeRepairReport(previewRoot, {
       attempts,
       repairedDocumentIds,
       validationSummary: validation.summary,
-      remainingIssues: status === 'pass' ? [] : validation.issues,
+      remainingIssues: status === 'pass' ? [] : remainingIssues,
+      remainingWarnings,
     }),
     'utf8',
   );

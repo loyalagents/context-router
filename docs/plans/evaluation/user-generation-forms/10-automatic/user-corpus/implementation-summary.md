@@ -38,6 +38,12 @@
   document/non-document failures do not call the generator.
 - Tightened `eval:repair-generation` to reject manifest/corpus-plan document
   drift instead of falling back to weaker manifest-only prompt metadata.
+- Refined the intentionally-missing phone warning so I-9 identifier lines such
+  as I-94, USCIS, alien registration, and foreign passport fields do not look
+  like phone-number leaks.
+- Clarified `eval:repair-generation` reports so non-blocking warnings are
+  recorded as `warningDocumentIds` and `remainingWarnings`, while
+  `failedDocumentIds` and `remainingIssues` stay focused on blocking failures.
 - Changed `eval:plan-corpus --count` validation to derive the supported value
   from the I-9 archetype catalog length instead of a separate literal.
 - Marked the superseded 100-document plan docs as historical and retargeted
@@ -54,6 +60,7 @@ node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/rep
 node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/validate.test.mjs examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs examples/eval/scripts/user-corpus-workflow.test.mjs
 node --test examples/eval/scripts/repair-generation.test.mjs examples/eval/scripts/promote-preview.test.mjs
 node --test examples/eval/scripts/plan-corpus.test.mjs examples/eval/scripts/repair-generation.test.mjs
+node --test examples/eval/scripts/validate.test.mjs examples/eval/scripts/repair-generation.test.mjs
 pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
 pnpm eval:test
 pnpm eval:validate
@@ -62,10 +69,25 @@ pnpm eval:verify
 
 Final result:
 
-- `pnpm eval:test`: passed, 105 tests.
+- `pnpm eval:test`: passed, 107 tests.
 - `pnpm eval:validate`: passed with 2 users, 2 corpora, 6 forms, 2 scenarios,
-  and 7 templates.
+  and 7 templates, with 0 warnings.
 - `pnpm eval:verify`: passed.
+
+Manual local E2E smoke run:
+
+- Created and generated a temporary `alex-i9-test` realistic I-9 corpus with 10
+  documents using Vertex.
+- Initial preview validation failed on deterministic omissions:
+  - document 001 omitted `identity.dateOfBirth`.
+  - document 003 omitted `identity.legalName`.
+  - document 006 emitted a conservative missing-phone warning.
+- `pnpm eval:repair-generation` repaired the blocking omissions in one repair
+  round.
+- `pnpm eval:promote-preview` promoted the repaired preview and
+  `pnpm eval:verify` passed locally.
+- The temporary `alex-i9-test` fixture was removed from the PR scope after the
+  smoke run to keep committed examples centered on stable canonical fixtures.
 
 ## Failures Encountered
 
@@ -88,11 +110,14 @@ Final result:
 - Follow-up PR feedback identified stale 100-document plan docs and a quiet
   manifest/plan drift fallback in repair; both are now addressed, with drift
   covered by a regression test.
+- The Alex local smoke run exposed a phone-warning false positive caused by an
+  I-94 number and a confusing repair report where warning-only documents were
+  shown as failed; both are now covered by regression tests.
 
 ## Remaining Follow-Ups
 
 - Add a single E2E wrapper command after the modular commands are exercised on a
-  real new user.
+  few more real new users.
 - Add richer realism checks once the correctness repair loop is stable.
 - Extend `eval:plan-corpus` with additional form-specific archetype catalogs
   after I-9 is proven.

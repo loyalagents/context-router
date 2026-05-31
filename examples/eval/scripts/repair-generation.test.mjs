@@ -112,6 +112,64 @@ test('repair-generation builds repair prompts from plan docs with per-doc forbid
   assert.match(calls[0].prompt, /samir\.desai@northstarcivic\.example\.test/);
 });
 
+test('repair-generation reports warning documents separately from failures', async (t) => {
+  const root = await copyRepo(t);
+  const { previewRoot, doc } = await writeRepairFixture(t, root, {
+    validPreview: true,
+  });
+  await writeFile(
+    path.join(previewRoot, doc.path),
+    [
+      'Repair export for Samir Desai.',
+      'First name: Samir.',
+      'Last name: Desai.',
+      'Middle initial: A.',
+      'Other last names: Mehta.',
+      'Date of birth: 1989-11-04.',
+      'SSN: 000-00-0389.',
+      'Address: 1268 Lakeview Terrace, Unit 4C, Madison, WI 53703.',
+      'Personal email: samir.desai@example.test.',
+      'USCIS A-number: 123456789.',
+      'Temporary callback: 555-123-4567.',
+    ].join('\n'),
+  );
+  let calls = 0;
+
+  const result = await runRepairGeneration({
+    repoRoot: root,
+    args: [
+      '--user',
+      'samir-desai',
+      '--corpus',
+      'repair-test',
+      '--from',
+      previewRoot,
+      '--model',
+      'unit-model',
+      '--max-attempts',
+      '1',
+    ],
+    generateDocument: async () => {
+      calls += 1;
+      return 'should not be used\n';
+    },
+  });
+
+  assert.equal(result.exitCode, 0, result.errorMessage);
+  assert.equal(calls, 0);
+  const report = JSON.parse(
+    await readFile(path.join(previewRoot, 'repair-report.json'), 'utf8'),
+  );
+  assert.equal(report.status, 'pass');
+  assert.deepEqual(report.attempts[0].failedDocumentIds, []);
+  assert.deepEqual(report.attempts[0].warningDocumentIds, [doc.id]);
+  assert.deepEqual(report.remainingIssues, []);
+  assert.deepEqual(
+    report.remainingWarnings.map((issue) => issue.code),
+    ['DOCUMENT_MISSING_FACT_PRESENT'],
+  );
+});
+
 test('repair-generation refuses non-document validation failures without calling the generator', async (t) => {
   const root = await copyRepo(t);
   const { previewRoot } = await writeRepairFixture(t, root, { validPreview: true });

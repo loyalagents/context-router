@@ -1424,8 +1424,17 @@ function looksLikeMarkdown(text) {
     /(^|\n)\s*\|.+\|\s*(\n|$)/.test(text);
 }
 
+const PHONE_LIKE_TEXT_RE =
+  /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/;
+const I9_IDENTIFIER_CONTEXT_RE =
+  /\b(?:I-?94|USCIS|Alien Registration|A-?Number|Foreign Passport|Passport Number)\b/i;
+
 function containsPhoneLikeText(text) {
-  return /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/.test(text);
+  const phoneCandidateText = text
+    .split(/\r?\n/)
+    .filter((line) => !I9_IDENTIFIER_CONTEXT_RE.test(line))
+    .join('\n');
+  return PHONE_LIKE_TEXT_RE.test(phoneCandidateText);
 }
 
 function hasMissingFactPatternRule(factKey) {
