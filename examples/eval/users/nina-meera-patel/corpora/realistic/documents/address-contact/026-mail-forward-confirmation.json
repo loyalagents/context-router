@@ -1,7 +1,0 @@
-{
-  "title": "Mail Forward Confirmation",
-  "sourceType": "address-contact",
-  "expectedUse": "corroborate",
-  "freshness": "current",
-  "recordText": "Postal forwarding confirmation names Nina Meera Patel and destination 742 Maple Ridge Lane, Apt 5D, Austin, TX 78704. It should corroborate the new address, while any older forwarding origin should be ignored for current address extraction."
-}

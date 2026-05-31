@@ -1,1 +1,0 @@
-Offer letter to Nina Meera Patel from Hill Country Data Cooperative. Role: Data Quality Analyst. Start date: 2026-07-06. Personal email for prehire contact: nina.patel@example.test. The letter does not request a phone number.

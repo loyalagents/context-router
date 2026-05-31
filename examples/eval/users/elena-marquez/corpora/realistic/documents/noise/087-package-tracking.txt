@@ -1,6 +1,0 @@
-Package Tracking
-================
-
-Package delivered to parcel locker.
-
-Tracking ID omitted.

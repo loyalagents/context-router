@@ -5,6 +5,7 @@ import { constants as fsConstants } from 'node:fs';
 import {
   access,
   lstat,
+  mkdir,
   readdir,
   readFile,
   writeFile,
@@ -135,15 +136,18 @@ export async function runValidation({
   };
 
   let reportPath = null;
-  if (parsed.options.writeReport && writeReport) {
-    reportPath = path.join(
-      ctx.evalRoot,
-      'users',
-      parsed.options.userId,
-      'corpora',
-      parsed.options.corpusId,
-      'validation-report.json',
-    );
+  if ((parsed.options.writeReport || parsed.options.reportOut) && writeReport) {
+    reportPath = parsed.options.reportOut
+      ? path.resolve(repoRoot, parsed.options.reportOut)
+      : path.join(
+          ctx.evalRoot,
+          'users',
+          parsed.options.userId,
+          'corpora',
+          parsed.options.corpusId,
+          'validation-report.json',
+        );
+    await mkdir(path.dirname(reportPath), { recursive: true });
     await writeFile(reportPath, jsonText(report));
   }
 
@@ -164,6 +168,8 @@ export function parseArgs(args) {
     corpusId: null,
     scenarioId: null,
     formId: null,
+    documentsRoot: null,
+    reportOut: null,
     writeReport: false,
     planOnly: false,
   };
@@ -181,7 +187,16 @@ export function parseArgs(args) {
     if (arg === '--help' || arg === '-h') {
       return { kind: 'usage-error', message: usage() };
     }
-    if (!['--user', '--corpus', '--scenario', '--form'].includes(arg)) {
+    if (
+      ![
+        '--user',
+        '--corpus',
+        '--scenario',
+        '--form',
+        '--documents-root',
+        '--report-out',
+      ].includes(arg)
+    ) {
       return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };
     }
     const value = args[index + 1];
@@ -193,6 +208,8 @@ export function parseArgs(args) {
     if (arg === '--corpus') options.corpusId = value;
     if (arg === '--scenario') options.scenarioId = value;
     if (arg === '--form') options.formId = value;
+    if (arg === '--documents-root') options.documentsRoot = value;
+    if (arg === '--report-out') options.reportOut = value;
   }
 
   const primaryScopes = [
@@ -233,6 +250,27 @@ export function parseArgs(args) {
     return {
       kind: 'usage-error',
       message: '--write-report requires --user <userId> --corpus <corpusId>.',
+    };
+  }
+
+  if (options.documentsRoot && !(options.userId && options.corpusId)) {
+    return {
+      kind: 'usage-error',
+      message: '--documents-root requires --user <userId> --corpus <corpusId>.',
+    };
+  }
+
+  if (options.reportOut && !(options.userId && options.corpusId)) {
+    return {
+      kind: 'usage-error',
+      message: '--report-out requires --user <userId> --corpus <corpusId>.',
+    };
+  }
+
+  if (options.writeReport && options.reportOut) {
+    return {
+      kind: 'usage-error',
+      message: 'Use either --write-report or --report-out, not both.',
     };
   }
 
@@ -330,6 +368,7 @@ function usage() {
     '  pnpm eval:validate --form <formId>',
     '  pnpm eval:validate --user <userId> --corpus <corpusId> --plan-only',
     '  pnpm eval:validate --user <userId> --corpus <corpusId> --write-report',
+    '  pnpm eval:validate --user <userId> --corpus <corpusId> --documents-root <previewRoot> [--report-out <file>]',
   ].join('\n');
 }
 
@@ -471,6 +510,9 @@ async function validateUserCorpus(ctx, userId, corpusId) {
 
   await validateDocuments(ctx, {
     corpusRoot,
+    documentsSourceRoot: ctx.options.documentsRoot
+      ? path.resolve(ctx.repoRoot, ctx.options.documentsRoot)
+      : corpusRoot,
     manifest,
     profileFacts,
     manifestPath,
@@ -973,13 +1015,14 @@ export function manifestFromCorpusPlan(corpusPlan, { includeOnlyExistingDocs = f
 
 async function validateDocuments(ctx, {
   corpusRoot,
+  documentsSourceRoot,
   manifest,
   profileFacts,
   manifestPath,
   corpusPlan,
   corpusPlanPath,
 }) {
-  const documentsRoot = path.join(corpusRoot, 'documents');
+  const documentsRoot = path.join(documentsSourceRoot, 'documents');
   const listedPaths = new Set();
   const ids = new Set();
   const plannedDocuments = mapPlannedDocuments(corpusPlan);
@@ -1021,7 +1064,7 @@ async function validateDocuments(ctx, {
     }
     listedPaths.add(normalized.path);
 
-    const absoluteDocPath = path.join(corpusRoot, normalized.path);
+    const absoluteDocPath = path.join(documentsSourceRoot, normalized.path);
     await requireFile(ctx, absoluteDocPath, manifestPath, `${pointer}/path`, {
       code: 'DOCUMENT_PATH_MISSING',
       fix: 'Create the document file or remove the manifest entry.',
@@ -1099,7 +1142,7 @@ async function validateDocuments(ctx, {
     if (!listedPaths.has(actualPath)) {
       addIssue(ctx, {
         code: 'DOCUMENT_UNLISTED_FILE',
-        file: path.join(corpusRoot, actualPath),
+        file: path.join(documentsSourceRoot, actualPath),
         pointer: '',
         message: `Document file ${actualPath} is not listed in manifest.json.`,
         fix: 'Add the file to manifest.documents or remove it from documents/.',

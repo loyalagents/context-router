@@ -1,1 +1,0 @@
-Equipment request for Nina Meera Patel, Data Quality Analyst at Hill Country Data Cooperative. Account provisioning target is nina.patel@hillcountrydata.example.test. Ship to current address from HRIS rather than from this ticket.

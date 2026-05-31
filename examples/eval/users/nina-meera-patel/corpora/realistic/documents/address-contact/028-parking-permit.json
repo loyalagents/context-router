@@ -1,7 +1,0 @@
-{
-  "title": "Parking Permit Receipt",
-  "sourceType": "address-contact",
-  "expectedUse": "corroborate",
-  "freshness": "current",
-  "recordText": "Parking permit receipt for resident Nina Meera Patel. Unit Apt 5D in Austin, TX. The receipt is a weak address corroborator because it omits the street and postal code."
-}

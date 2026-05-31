@@ -1,5 +1,0 @@
-OLD MARRIED NAME CARD
-Source type: partial-conflicting
-Expected use: guardrail
-
-Old membership card shows last name Shah. It supports alias reconciliation but not the current legal name on its own.

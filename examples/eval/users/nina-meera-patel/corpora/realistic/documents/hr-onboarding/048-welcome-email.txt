@@ -1,5 +1,0 @@
-WELCOME EMAIL
-Source type: hr-onboarding
-Expected use: corroborate
-
-Welcome email sent to nina.patel@example.test. It tells Nina Meera Patel that the work account will be nina.patel@hillcountrydata.example.test at Hill Country Data Cooperative.

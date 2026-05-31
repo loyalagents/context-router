@@ -1,1 +1,0 @@
-Passport draft prepared for Nina Meera Patel. Applicant date of birth is 1992-03-14; contact email is nina.patel@example.test. Citizenship attestation: U.S. citizen. The draft leaves travel plans blank.

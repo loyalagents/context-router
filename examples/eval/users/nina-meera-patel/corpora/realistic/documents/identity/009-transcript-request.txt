@@ -1,5 +1,0 @@
-TRANSCRIPT REQUEST
-Source type: identity
-Expected use: corroborate
-
-Transcript request for Nina Meera Patel. Registrar matching fields: date of birth 1992-03-14; applicant email nina.patel@example.test. The request references coursework but does not contain employment authorization data.

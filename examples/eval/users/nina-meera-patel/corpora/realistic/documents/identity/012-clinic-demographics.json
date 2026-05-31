@@ -1,7 +1,0 @@
-{
-  "title": "Clinic Demographics",
-  "sourceType": "identity",
-  "expectedUse": "corroborate",
-  "freshness": "current",
-  "recordText": "{\n  \"patientName\": \"Nina Meera Patel\",\n  \"dob\": \"1992-03-14\",\n  \"portalEmail\": \"nina.patel@example.test\",\n  \"emergencyContact\": \"withheld from fixture\",\n  \"note\": \"demographics export, not a medical record\"\n}"
-}

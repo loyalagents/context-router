@@ -1,8 +1,0 @@
-Business Entity Record
-======================
-
-Legal entity: Cedar & Coast Analytics, Inc.
-
-Registered agent and tax details are omitted.
-
-This file is employer context only.

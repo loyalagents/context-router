@@ -418,7 +418,7 @@ function fileTypeRules(doc) {
   ].join('\n');
 }
 
-async function generateWithVertex(prompt, { env, model, temperature }) {
+export async function generateWithVertex(prompt, { env, model, temperature }) {
   if (!env.GCP_PROJECT_ID) {
     throw new Error('Set GCP_PROJECT_ID before using --backend vertex.');
   }

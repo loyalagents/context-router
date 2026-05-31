@@ -20,10 +20,10 @@ test('loads the backend preference catalog JSON used by the validator', async ()
   assert.equal(catalog['communication.preferred_channels'].valueType, 'array');
 });
 
-test('passes the canonical Elena corpus', async () => {
+test('passes the canonical Elena template-smoke corpus', async () => {
   const result = await runValidation({
     repoRoot,
-    args: ['--user', 'elena-marquez', '--corpus', 'realistic'],
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke'],
   });
 
   assert.equal(result.exitCode, 0);
@@ -599,11 +599,15 @@ test('document prose checks reject forbidden fact values from corpus plans', asy
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  doc.expectedUse = 'guardrail';
   const corpusPlan = corpusPlanFromManifest(manifest);
   corpusPlan.documents[0].forbiddenFactKeys = ['identity.ssn'];
+  await writeJson(manifestPath, manifest);
   await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
   await writeFile(
-    path.join(corpusRoot, manifest.documents[0].path),
+    path.join(corpusRoot, doc.path),
     'This fixture body leaks SSN 000-00-0194 even though it is forbidden.\n',
   );
 
@@ -906,7 +910,7 @@ test('scenario scope performs transitive validation', async (t) => {
 
   const result = await runValidation({
     repoRoot: root,
-    args: ['--scenario', 'elena-marquez-i9-section1'],
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
   });
   assertHasCode(result, 'FIELD_MAP_FACT_MISSING');
 });
@@ -990,7 +994,7 @@ test('scenario scope reports structural field-map errors once', async (t) => {
 
   const result = await runValidation({
     repoRoot: root,
-    args: ['--scenario', 'elena-marquez-i9-section1'],
+    args: ['--scenario', 'elena-marquez-i9-template-smoke'],
   });
   assert.equal(countIssueCode(result, 'FIELD_MAP_NAME_MISMATCH'), 1);
 });
@@ -1019,7 +1023,7 @@ test('write-report is limited to single-corpus scope and writes corpus report', 
   assert.equal(
     parseArgs([
       '--scenario',
-      'elena-marquez-i9-section1',
+      'elena-marquez-i9-template-smoke',
       '--write-report',
     ]).kind,
     'usage-error',
@@ -1044,6 +1048,99 @@ test('write-report is limited to single-corpus scope and writes corpus report', 
   assert.match(
     formatResult(result),
     /report=examples\/eval\/users\/elena-marquez\/corpora\/realistic\/validation-report\.json/,
+  );
+});
+
+test('preview validation reads document bodies from --documents-root', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const doc = manifest.documents[0];
+  const corpusRoot = path.dirname(manifestPath);
+  const committedDocPath = path.join(corpusRoot, doc.path);
+  const originalBody = await readFile(committedDocPath, 'utf8');
+  const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-preview-docs-'));
+  const previewDocPath = path.join(previewRoot, doc.path);
+  const reportOut = path.join(previewRoot, 'preview-report.json');
+  t.after(async () => {
+    await rm(previewRoot, { recursive: true, force: true });
+  });
+
+  await mkdir(path.dirname(previewDocPath), { recursive: true });
+  await writeFile(previewDocPath, originalBody);
+  await writeFile(committedDocPath, 'This committed body is intentionally invalid.\n');
+  for (const otherDoc of manifest.documents.slice(1)) {
+    const source = path.join(corpusRoot, otherDoc.path);
+    const target = path.join(previewRoot, otherDoc.path);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, await readFile(source, 'utf8'));
+  }
+
+  const previewResult = await runValidation({
+    repoRoot: root,
+    args: [
+      '--user',
+      'elena-marquez',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      previewRoot,
+      '--report-out',
+      reportOut,
+    ],
+  });
+  assert.equal(previewResult.exitCode, 0);
+  assert.equal(previewResult.reportPath, reportOut);
+  assert.equal((await readJson(reportOut)).status, 'pass');
+
+  const committedResult = await validateElena(root);
+  assertHasCode(committedResult, 'DOCUMENT_FACT_VALUE_MISSING');
+});
+
+test('preview validation reports missing and unlisted files under --documents-root', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-preview-shape-'));
+  t.after(async () => {
+    await rm(previewRoot, { recursive: true, force: true });
+  });
+
+  for (const doc of manifest.documents.slice(1)) {
+    const source = path.join(corpusRoot, doc.path);
+    const target = path.join(previewRoot, doc.path);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, await readFile(source, 'utf8'));
+  }
+  await mkdir(path.join(previewRoot, 'documents/noise'), { recursive: true });
+  await writeFile(
+    path.join(previewRoot, 'documents/noise/unlisted-preview-file.txt'),
+    'Preview-only file that is not listed in the manifest.\n',
+  );
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: [
+      '--user',
+      'elena-marquez',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      previewRoot,
+      '--report-out',
+      path.join(previewRoot, 'preview-report.json'),
+    ],
+  });
+
+  assertHasCode(result, 'DOCUMENT_PATH_MISSING');
+  assertHasCode(result, 'DOCUMENT_UNLISTED_FILE');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_UNLISTED_FILE' &&
+        issue.file.includes('unlisted-preview-file.txt'),
+    ),
   );
 });
 
@@ -1156,7 +1253,12 @@ test('corpus truth report records effective forbidden facts by source without du
 
   assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
   assert.deepEqual(truth.forbiddenFacts.provenAbsent, ['identity.ssn']);
-  assert.deepEqual(truth.forbiddenFacts.warningOnly, ['contact.phone']);
+  assert.deepEqual(truth.forbiddenFacts.warningOnly, [
+    'contact.phone',
+    'workAuthorization.uscisANumber',
+    'workAuthorization.i94AdmissionNumber',
+    'workAuthorization.foreignPassportNumber',
+  ]);
 });
 
 test('validation reports are byte-deterministic across repeated runs', async (t) => {
@@ -1179,13 +1281,13 @@ test('validation reports are byte-deterministic across repeated runs', async (t)
 test('committed validation report matches a fresh single-corpus report', async () => {
   const result = await runValidation({
     repoRoot,
-    args: ['--user', 'elena-marquez', '--corpus', 'realistic', '--write-report'],
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke', '--write-report'],
     writeReport: false,
   });
   const committedReport = await readFile(
     path.join(
       repoRoot,
-      'examples/eval/users/elena-marquez/corpora/realistic/validation-report.json',
+      'examples/eval/users/elena-marquez/corpora/template-smoke/validation-report.json',
     ),
     'utf8',
   );
@@ -1194,16 +1296,16 @@ test('committed validation report matches a fresh single-corpus report', async (
   assert.equal(committedReport, `${JSON.stringify(result.report, null, 2)}\n`);
 });
 
-test('committed Nina validation report has corpus truth with no hard failures', async () => {
+test('committed template-smoke validation report has corpus truth with no hard failures', async () => {
   const report = await readJson(
     path.join(
       repoRoot,
-      'examples/eval/users/nina-meera-patel/corpora/realistic/validation-report.json',
+      'examples/eval/users/elena-marquez/corpora/template-smoke/validation-report.json',
     ),
   );
 
   assert.equal(report.status, 'pass');
-  assert.equal(report.corpusTruth.summary.documentsChecked, 100);
+  assert.equal(report.corpusTruth.summary.documentsChecked, 5);
   assert.equal(report.corpusTruth.summary.hardFailures, 0);
 });
 
@@ -1238,7 +1340,7 @@ test('unsupported CLI combinations return usage errors', async () => {
   assert.equal(parseArgs(['--plan-only']).kind, 'usage-error');
   assert.equal(parseArgs(['--user', '../outside']).kind, 'usage-error');
   assert.equal(
-    parseArgs(['--scenario', 'elena-marquez-i9-section1', '--form', 'i-9'])
+    parseArgs(['--scenario', 'elena-marquez-i9-template-smoke', '--form', 'i-9'])
       .kind,
     'usage-error',
   );
@@ -1271,6 +1373,186 @@ async function copyFixtureRepoForTest(sourceRoot, targetRoot) {
   await cp(
     path.join(sourceRoot, 'apps/backend/src/config/preferences.catalog.json'),
     path.join(targetRoot, 'apps/backend/src/config/preferences.catalog.json'),
+  );
+  await writeElenaRealisticTestCorpus(targetRoot);
+}
+
+async function writeElenaRealisticTestCorpus(root) {
+  const corpusRoot = path.join(
+    root,
+    'examples/eval/users/elena-marquez/corpora/realistic',
+  );
+  await mkdir(path.join(corpusRoot, 'documents/identity'), { recursive: true });
+  await mkdir(path.join(corpusRoot, 'documents/address-contact'), { recursive: true });
+  await mkdir(path.join(corpusRoot, 'documents/noise'), { recursive: true });
+
+  const manifest = {
+    schemaVersion: 1,
+    userId: 'elena-marquez',
+    corpusId: 'realistic',
+    seed: 'elena-marquez__realistic',
+    forms: ['i-9'],
+    purpose: 'Small validator test corpus created inside temp test repos.',
+    intentionallyMissing: [
+      {
+        factKey: 'contact.phone',
+        forms: ['i-9'],
+        reason: 'Elena does not provide a phone number in this test fixture.',
+        expectedBehavior: 'Leave telephone blank.',
+      },
+      {
+        factKey: 'workAuthorization.uscisANumber',
+        forms: ['i-9'],
+        reason: 'Elena uses the U.S. citizen I-9 path.',
+        expectedBehavior: 'Leave USCIS A-number blank.',
+      },
+      {
+        factKey: 'workAuthorization.workAuthorizationExpirationDate',
+        forms: ['i-9'],
+        reason: 'Elena uses the U.S. citizen I-9 path.',
+        expectedBehavior: 'Leave work authorization expiration blank.',
+      },
+      {
+        factKey: 'workAuthorization.i94AdmissionNumber',
+        forms: ['i-9'],
+        reason: 'Elena uses the U.S. citizen I-9 path.',
+        expectedBehavior: 'Leave I-94 admission number blank.',
+      },
+      {
+        factKey: 'workAuthorization.foreignPassportNumber',
+        forms: ['i-9'],
+        reason: 'Elena uses the U.S. citizen I-9 path.',
+        expectedBehavior: 'Leave foreign passport number blank.',
+      },
+    ],
+    documents: [
+      {
+        id: '001',
+        path: 'documents/identity/001-identity-profile.md',
+        category: 'identity',
+        title: 'Identity Profile',
+        factKeys: [
+          'identity.legalName',
+          'identity.firstName',
+          'identity.middleInitial',
+          'identity.lastName',
+          'identity.otherLastNames',
+          'identity.dateOfBirth',
+          'identity.ssn',
+          'address.current.street',
+          'address.current.unit',
+          'address.current.city',
+          'address.current.state',
+          'address.current.postalCode',
+          'contact.email',
+        ],
+        detailTier: 'hero',
+        authority: 'high',
+        freshness: 'current',
+        expectedUse: 'extract',
+      },
+      {
+        id: '002',
+        path: 'documents/address-contact/002-address-note.md',
+        category: 'address-contact',
+        title: 'Address Note',
+        factKeys: [
+          'identity.legalName',
+          'address.current.street',
+          'address.current.unit',
+          'address.current.city',
+          'address.current.state',
+          'address.current.postalCode',
+        ],
+        detailTier: 'medium',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'extract',
+      },
+      {
+        id: '003',
+        path: 'documents/identity/003-employment-note.md',
+        category: 'identity',
+        title: 'Employment Note',
+        factKeys: [
+          'identity.legalName',
+          'employment.company',
+          'employment.title',
+          'employment.startDate',
+          'employment.workEmail',
+        ],
+        detailTier: 'medium',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'corroborate',
+      },
+      {
+        id: '081',
+        path: 'documents/noise/081-newsletter.txt',
+        category: 'noise',
+        title: 'Newsletter',
+        factKeys: [],
+        detailTier: 'brief',
+        authority: 'none',
+        freshness: 'unknown',
+        expectedUse: 'ignore',
+      },
+      {
+        id: '082',
+        path: 'documents/noise/082-event-note.txt',
+        category: 'noise',
+        title: 'Event Note',
+        factKeys: [],
+        detailTier: 'brief',
+        authority: 'none',
+        freshness: 'unknown',
+        expectedUse: 'ignore',
+      },
+    ],
+  };
+
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifest);
+  await writeFile(
+    path.join(corpusRoot, 'documents/identity/001-identity-profile.md'),
+    [
+      '# Identity Profile',
+      '',
+      'Current legal name: Elena Sofia Marquez.',
+      'Given name Elena, family name Marquez, middle initial S.',
+      'Other last names used: Ruiz.',
+      'Date of birth: July 18, 1994.',
+      'Social Security number: 000-00-0194.',
+      'Current address: 418 Cedar Glen Avenue, Apt 12B, Sacramento, CA 95819.',
+      'Personal email: elena.marquez@example.test.',
+    ].join('\n'),
+  );
+  await writeFile(
+    path.join(corpusRoot, 'documents/address-contact/002-address-note.md'),
+    [
+      '# Address Note',
+      '',
+      'Elena Sofia Marquez receives current tenant notices at 418 Cedar Glen Avenue, Apt 12B.',
+      'The mailing city is Sacramento, state CA, ZIP Code 95819.',
+    ].join('\n'),
+  );
+  await writeFile(
+    path.join(corpusRoot, 'documents/identity/003-employment-note.md'),
+    [
+      '# Employment Note',
+      '',
+      'Employee Elena Sofia Marquez works for Cedar & Coast Analytics.',
+      'Title: Data Operations Analyst.',
+      'Hire date: June 3, 2026.',
+      'Work email: elena.marquez@cedarcoast.example.test.',
+    ].join('\n'),
+  );
+  await writeFile(
+    path.join(corpusRoot, 'documents/noise/081-newsletter.txt'),
+    'Community newsletter about local library hours and transit reminders.\n',
+  );
+  await writeFile(
+    path.join(corpusRoot, 'documents/noise/082-event-note.txt'),
+    'Event note for a neighborhood cleanup with no personal identifiers.\n',
   );
 }
 

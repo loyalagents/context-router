@@ -69,12 +69,20 @@ pnpm eval:scaffold --user <userId> --corpus <corpusId> --form i-9 --scenario <sc
 
 It will not overwrite an existing scenario, even with `--force`.
 
-## Adding A 100-Doc Realistic Corpus
+## Adding A 10-Doc Realistic Starter Corpus
 
-For large realistic corpora, author `corpus-plan.json` first. Treat it as the
+For the current I-9 v1 path, start from a reviewed `profile.yaml`, then
+generate a deterministic 10-document `corpus-plan.json`. Treat the plan as the
 source of truth for per-document ids, paths, categories, fact keys, challenge
 tags, and briefs. `manifest.json` is generated from that plan and should not be
 hand-edited.
+
+Create the plan and manifest:
+
+```bash
+pnpm eval:plan-corpus --user <userId> --corpus realistic --form i-9 --count 10
+pnpm eval:manifest --user <userId> --corpus realistic
+```
 
 Before bodies exist, validate the plan only:
 
@@ -82,11 +90,11 @@ Before bodies exist, validate the plan only:
 pnpm eval:validate --user <userId> --corpus realistic --plan-only
 ```
 
-Preview a few AI-generated documents outside the committed corpus:
+Generate AI-authored documents outside the committed corpus:
 
 ```bash
 EVAL_GENERATION_MODEL=<model> \
-  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --ids 001,017,031 --out /private/tmp/<userId>-preview
+  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --out /private/tmp/<userId>-preview
 ```
 
 Review the preview for realism, fact accuracy, noise behavior, and stale or
@@ -94,13 +102,17 @@ conflicting cues before generating the committed corpus. For committed
 generation, use an explicit `EVAL_GENERATION_MODEL`; do not rely on backend
 product defaults.
 
-Then generate the corpus and validate:
+Repair failed preview documents only:
 
 ```bash
 EVAL_GENERATION_MODEL=<model> \
-  pnpm eval:generate --user <userId> --corpus realistic --backend vertex --overwrite
+  pnpm eval:repair-generation --user <userId> --corpus realistic --from /private/tmp/<userId>-preview --backend vertex --max-attempts 3
+```
 
-pnpm eval:validate --user <userId> --corpus realistic --write-report
+Then promote the already-generated preview and validate:
+
+```bash
+pnpm eval:promote-preview --user <userId> --corpus realistic --from /private/tmp/<userId>-preview
 ```
 
 Treat `corpus-plan.json` metadata as the intended corpus-truth contract. For
@@ -108,8 +120,8 @@ Treat `corpus-plan.json` metadata as the intended corpus-truth contract. For
 deterministic facts such as names, current address parts, DOB, ZIP, state,
 citizenship status, employer/title, or employment start date are missing from
 the body. If validation reports one of these errors, decide explicitly whether
-the metadata overclaimed or the generated body drifted; for generated 100-doc
-corpora, the default repair is to make the body match the plan.
+the metadata overclaimed or the generated body drifted; for generated corpora,
+the default repair is to make the body match the plan.
 `defaultForbiddenFactKeys[]` and per-document `forbiddenFactKeys[]` checks only
 run when a corpus plan is present, and forbidden values stay plan-owned rather
 than being copied into `manifest.json`.

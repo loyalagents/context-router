@@ -1,5 +1,12 @@
 # 100-Document Goal TODO
 
+## Status Update
+
+This track has been superseded by the smaller modular workflow under
+`../10-automatic/user-corpus/`. The active 100-document Nina and Elena
+realistic corpora were pruned from `examples/eval` so the current fixture set
+centers on the 10-document I-9 generation path.
+
 ## Current State
 
 The initial cleanup pass has been implemented locally.

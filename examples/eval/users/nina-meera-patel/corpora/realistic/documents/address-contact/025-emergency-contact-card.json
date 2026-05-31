@@ -1,7 +1,0 @@
-{
-  "title": "Emergency Contact Card",
-  "sourceType": "address-contact",
-  "expectedUse": "corroborate",
-  "freshness": "current",
-  "recordText": "Emergency contact card lists employee Nina Meera Patel. Contact email is nina.patel@example.test. City and state are Austin, TX. Phone is blank by design for this fixture."
-}

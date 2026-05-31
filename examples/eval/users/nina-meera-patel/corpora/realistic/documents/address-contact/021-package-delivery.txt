@@ -1,5 +1,0 @@
-PACKAGE DELIVERY PROFILE
-Source type: address-contact
-Expected use: corroborate
-
-Delivery profile uses recipient Nina Meera Patel and default address 742 Maple Ridge Lane, Apt 5D, Austin, TX 78704. Delivery notes say to leave packages with the leasing office when the elevator is down.

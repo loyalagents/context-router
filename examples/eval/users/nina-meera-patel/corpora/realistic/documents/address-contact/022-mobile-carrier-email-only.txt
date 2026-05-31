@@ -1,5 +1,0 @@
-MOBILE CARRIER EMAIL CONTACT
-Source type: address-contact
-Expected use: corroborate
-
-Mobile carrier profile for Nina Meera Patel uses email nina.patel@example.test. The phone field is intentionally blank in the exported record, so this document should not invent a phone number.
