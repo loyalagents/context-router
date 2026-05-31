@@ -1,0 +1,14 @@
+SUPPORT TICKET EXPORT
+Ticket id: TKT-4892
+Source system: Northstar Onboard
+Worker id: CHR-53242
+Opened: 2024-11-15T10:20:00-08:00
+Status: closed, superseded by later onboarding profile
+
+Event log:
+2024-11-15T10:20:00-08:00 - returned mail notice was attached to an inactive pre-hire contact record.
+2024-11-18T09:05:00-08:00 - support marked the address record stale and blocked it from current form prefills.
+2026-05-27T08:44:00-07:00 - Northstar Onboard created a new worker profile, making this old ticket non-authoritative.
+
+Stale/superseded cue:
+Do not use this ticket for current identity, address, email, work authorization, or I-9 field completion. The original contact values were removed from this export and replaced by redaction notes because the ticket belongs to an inactive record.

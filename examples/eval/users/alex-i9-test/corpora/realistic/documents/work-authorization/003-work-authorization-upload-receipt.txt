@@ -1,0 +1,24 @@
+WORK AUTHORIZATION SUPPORT UPLOAD
+Upload batch id: UPL-F23463
+Document category: employment authorization support
+Source system: Northstar Onboard
+Worker id: CHR-53242
+Reviewer: Lena Ortiz
+Captured at: 2026-06-03T14:27:00-07:00
+Processing status: accepted for Section 1 review
+Reviewer note: supporting identifiers were transcribed from the worker upload and matched to the saved I-9 draft.
+
+Worker name on the uploaded support packet:
+Alex Jordan Rivera
+
+Employee-provided citizenship or immigration status:
+alien authorized to work
+
+Identifier fields captured for the I-9 review:
+USCIS A-Number: A987654321
+Work authorization expiration date: September 30, 2028
+Form I-94 Admission Number: 11223344556
+Foreign Passport Number: XK1234567
+
+Review queue detail:
+The packet was routed to People Operations Hub because the work authorization path requires evidence review before the employer section can be completed. No extra immigration identifiers were added beyond the values shown above.

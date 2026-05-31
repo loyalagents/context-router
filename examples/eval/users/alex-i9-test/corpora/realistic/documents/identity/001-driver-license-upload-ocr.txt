@@ -1,0 +1,26 @@
+OCR EXPORT RECORD
+Upload batch id: UPL-F23463
+Source filename: IMG_7879_license_front.jpg
+Source system: Northstar Onboard
+Worker id: CHR-53242
+Captured at: 2026-06-03T14:27:00-07:00
+Document status: front image received, automated review complete
+Issuing state: OR
+OCR confidence: 0.982 overall; address line confidence 0.971
+
+Document type observed by capture queue: state driver license, front side.
+License metadata: class C, restriction code none visible, license number redacted by the intake service.
+
+Visible name block:
+Alex Jordan Rivera
+
+Visible birth date:
+March 14, 1992
+
+Visible residence address:
+7428 Evergreen Terrace
+Apt 5C
+Portland, OR 97214
+
+Review notes:
+The operator accepted this OCR transcript as current identity and residence evidence for the onboarding packet. The card image remained in the secure upload queue, while this text export carried only the fields needed for downstream review. No telephone value was supplied by the worker or inferred by the OCR pass.

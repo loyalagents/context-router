@@ -1,0 +1,19 @@
+OCR EXPORT RECORD
+Upload batch id: UPL-F23463
+Source filename: IMG_7377_ssn_card.jpg
+Source system: Northstar Onboard
+Worker id: CHR-53242
+Captured at: 2026-06-03T14:27:00-07:00
+Document category: Social Security card image
+Processing status: review queue accepted
+Redaction status: image retained in secure store; transcript exposes the entered number for I-9 field matching
+OCR confidence: 0.996 for name, 0.993 for numeric identifier
+
+Card name line:
+Alex Jordan Rivera
+
+Number line:
+000-00-0292
+
+Transcription note:
+The reviewer marked the card image legible. The export does not include address, personal email, work email, or telephone details.
