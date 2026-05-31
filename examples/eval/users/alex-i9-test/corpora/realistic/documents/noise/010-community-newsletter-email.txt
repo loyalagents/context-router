@@ -1,0 +1,16 @@
+From: announcements@example.test
+To: residents-list@example.test
+Date: 2026-05-30T07:19:00-07:00
+Subject: Monthly resident update and local event calendar
+
+Good morning,
+
+This month's community bulletin includes the seasonal transit detour notice, a reminder about the Saturday tool-share pickup window, and a list of library events hosted downtown. The message was sent to a broad resident announcement list and does not contain an individual lease record, employer record, identity document, onboarding profile, or form data.
+
+Calendar items:
+Saturday 9:00 AM - neighborhood tool-share pickup
+Tuesday 6:30 PM - library financial-literacy workshop
+Thursday 5:00 PM - district transit board listening session
+
+Footer:
+You received this because a community announcements list subscribed to the public update feed. Unsubscribe or privacy requests can be handled through the generic list portal. Please do not reply with personal identity documents or employment forms.

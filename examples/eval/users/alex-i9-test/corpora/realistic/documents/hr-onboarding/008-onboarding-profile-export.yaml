@@ -1,0 +1,33 @@
+source_system: Northstar Onboard
+created_timestamp: "2026-05-27T08:44:00-07:00"
+updated_timestamp: "2026-06-03T14:18:00-07:00"
+worker_id: CHR-53242
+worker_id_label: "worker id CHR-53242"
+profile_status: active_pre_start
+worker_profile:
+  legal_name: Alex Jordan Rivera
+  first_name: Alex
+  last_name: Rivera
+  company: Cascadia Hiring Cooperative
+  title: Operations Specialist
+  start_date: "2026-06-17"
+  personal_email: alex.rivera@example.test
+  work_email: alex.rivera@cascadiahiring.example.test
+task_status_list:
+  - task: offer_acceptance
+    status: complete
+    updated_timestamp: "2026-05-24T16:02:00-07:00"
+  - task: i9_section_one
+    status: saved_not_signed
+    updated_timestamp: "2026-06-03T14:18:00-07:00"
+  - task: identity_upload
+    status: received
+    updated_timestamp: "2026-06-03T14:27:00-07:00"
+  - task: address_confirmation
+    status: complete
+    updated_timestamp: "2026-06-04T18:06:00-07:00"
+provisioning:
+  office_label: People Operations Hub
+  hr_coordinator: Lena Ortiz
+  review_queue: onboarding_pre_start
+  phone_field_state: blank

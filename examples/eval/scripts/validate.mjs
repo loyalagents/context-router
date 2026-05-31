@@ -22,6 +22,12 @@ import {
   isHighConfidenceFactKey,
   isFixtureId,
   jsonText,
+  planDocumentAuthority,
+  planDocumentDetailTier,
+  planDocumentExpectedUse,
+  planDocumentFactKeys,
+  planDocumentForbiddenFactKeys,
+  planDocumentFreshness,
   shouldDeriveMissingFactAsForbidden,
   textContainsDeclaredFactValue,
   textContainsFactValue,
@@ -737,17 +743,9 @@ function validateCorpusPlan(ctx, {
   }
 
   checkUnique(ctx, corpusPlan.forms ?? [], corpusPlanPath, '/forms', 'CORPUS_PLAN_DUPLICATE_FORM');
-  checkUnique(
-    ctx,
-    corpusPlan.challengeTags ?? [],
-    corpusPlanPath,
-    '/challengeTags',
-    'CORPUS_PLAN_DUPLICATE_CHALLENGE_TAG',
-  );
-
   if (profileFacts) {
     for (const [factIndex, factKey] of (
-      corpusPlan.defaultForbiddenFactKeys ?? []
+      corpusPlan.factContractDefaults?.forbid ?? []
     ).entries()) {
       const factState = classifyFactKey(profileFacts, factKey);
       if (factState.kind !== 'leaf') {
@@ -757,33 +755,25 @@ function validateCorpusPlan(ctx, {
               ? 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_AREA'
               : 'CORPUS_PLAN_DEFAULT_FORBIDDEN_FACT_MISSING',
           file: corpusPlanPath,
-          pointer: `/defaultForbiddenFactKeys/${factIndex}`,
-          message: `Default forbidden factKey ${factKey} must resolve to a profile leaf fact.`,
-          fix: 'Use a concrete profile fact leaf or remove the default forbidden factKey.',
+          pointer: `/factContractDefaults/forbid/${factIndex}`,
+          message: `Default forbidden fact path ${factKey} must resolve to a profile leaf fact.`,
+          fix: 'Use a concrete profile fact leaf or remove the default forbidden path.',
         });
       }
     }
   }
 
   const documents = corpusPlan.documents ?? [];
-  if (corpusPlan.targetDocumentCount !== documents.length) {
-    addIssue(ctx, {
-      code: 'CORPUS_PLAN_DOCUMENT_COUNT_MISMATCH',
-      file: corpusPlanPath,
-      pointer: '/targetDocumentCount',
-      message: `Corpus plan targetDocumentCount ${corpusPlan.targetDocumentCount} does not match ${documents.length} documents.`,
-      fix: 'Update targetDocumentCount or planned documents[].',
-    });
-  }
-
-  const categoryCounts = new Map();
   const ids = new Set();
   const paths = new Set();
-  const allowedTags = new Set(corpusPlan.challengeTags ?? []);
 
   for (const [index, doc] of documents.entries()) {
     const pointer = `/documents/${index}`;
-    categoryCounts.set(doc.category, (categoryCounts.get(doc.category) ?? 0) + 1);
+    const expectedUse = planDocumentExpectedUse(doc);
+    const authority = planDocumentAuthority(doc);
+    const freshness = planDocumentFreshness(doc);
+    const factKeys = planDocumentFactKeys(doc);
+    const forbiddenFactKeys = planDocumentForbiddenFactKeys(doc);
 
     if (ids.has(doc.id)) {
       addIssue(ctx, {
@@ -828,43 +818,55 @@ function validateCorpusPlan(ctx, {
       }
     }
 
-    for (const [tagIndex, tag] of (doc.challengeTags ?? []).entries()) {
-      if (!allowedTags.has(tag)) {
+    for (const [refIndex, ref] of (doc.sourceSpec?.timelineRefs ?? []).entries()) {
+      if (getWorldValue(corpusPlan.artifactWorld, `timeline.${ref}`) === undefined) {
         addIssue(ctx, {
-          code: 'CORPUS_PLAN_UNKNOWN_CHALLENGE_TAG',
+          code: 'CORPUS_PLAN_WORLD_REF_MISSING',
           file: corpusPlanPath,
-          pointer: `${pointer}/challengeTags/${tagIndex}`,
-          message: `Document uses challenge tag ${tag}, but it is not listed in top-level challengeTags[].`,
-          fix: 'Add the tag to top-level challengeTags[] or remove it from the document.',
+          pointer: `${pointer}/sourceSpec/timelineRefs/${refIndex}`,
+          message: `Document ${doc.id} references missing artifactWorld timeline value ${ref}.`,
+          fix: 'Use an existing artifactWorld timeline ref or add it to artifactWorld.',
         });
       }
     }
 
-    if (doc.category === 'noise' && doc.expectedUse !== 'ignore') {
+    for (const [refIndex, ref] of (doc.sourceSpec?.worldRefs ?? []).entries()) {
+      if (getWorldValue(corpusPlan.artifactWorld, ref) === undefined) {
+        addIssue(ctx, {
+          code: 'CORPUS_PLAN_WORLD_REF_MISSING',
+          file: corpusPlanPath,
+          pointer: `${pointer}/sourceSpec/worldRefs/${refIndex}`,
+          message: `Document ${doc.id} references missing artifactWorld value ${ref}.`,
+          fix: 'Use an existing artifactWorld ref or add it to artifactWorld.',
+        });
+      }
+    }
+
+    if (doc.category === 'noise' && expectedUse !== 'ignore') {
       addIssue(ctx, {
         code: 'CORPUS_PLAN_NOISE_EXPECTED_USE',
         file: corpusPlanPath,
-        pointer: `${pointer}/expectedUse`,
+        pointer: `${pointer}/evaluationRole/expectedUse`,
         message: `Noise document ${doc.id} must have expectedUse "ignore".`,
         fix: 'Set expectedUse to "ignore" or change the category.',
       });
     }
 
-    if (doc.expectedUse === 'ignore' && (doc.factKeys ?? []).length > 0) {
+    if (expectedUse === 'ignore' && factKeys.length > 0) {
       addIssue(ctx, {
         code: 'CORPUS_PLAN_IGNORE_FACT_KEYS',
         file: corpusPlanPath,
-        pointer: `${pointer}/factKeys`,
-        message: `Ignored planned document ${doc.id} must not declare factKeys.`,
-        fix: 'Clear factKeys or change expectedUse.',
+        pointer: `${pointer}/factContract/include`,
+        message: `Ignored planned document ${doc.id} must not include person facts.`,
+        fix: 'Clear factContract.include or change expectedUse.',
       });
     }
 
     if (
       doc.category === 'partial-conflicting' &&
-      doc.authority === 'high' &&
-      doc.freshness === 'current' &&
-      doc.expectedUse === 'extract'
+      authority === 'high' &&
+      freshness === 'current' &&
+      expectedUse === 'extract'
     ) {
       addIssue(ctx, {
         code: 'CORPUS_PLAN_CONFLICTING_HIGH_AUTHORITY_EXTRACT',
@@ -876,7 +878,7 @@ function validateCorpusPlan(ctx, {
     }
 
     if (profileFacts) {
-      for (const [factIndex, factKey] of (doc.factKeys ?? []).entries()) {
+      for (const [factIndex, factKey] of factKeys.entries()) {
         const factState = classifyFactKey(profileFacts, factKey);
         if (factState.kind !== 'leaf') {
           addIssue(ctx, {
@@ -885,22 +887,22 @@ function validateCorpusPlan(ctx, {
                 ? 'CORPUS_PLAN_FACT_AREA'
                 : 'CORPUS_PLAN_FACT_MISSING',
             file: corpusPlanPath,
-            pointer: `${pointer}/factKeys/${factIndex}`,
-            message: `Planned document factKey ${factKey} must resolve to a profile leaf fact.`,
-            fix: 'Use a concrete profile fact leaf or remove the factKey.',
+            pointer: `${pointer}/factContract/include/${factIndex}`,
+            message: `Planned document include path ${factKey} must resolve to a profile leaf fact.`,
+            fix: 'Use a concrete profile fact leaf or remove the include path.',
           });
         }
       }
 
-      const declaredFactKeys = new Set(doc.factKeys ?? []);
-      for (const [factIndex, factKey] of (doc.forbiddenFactKeys ?? []).entries()) {
+      const declaredFactKeys = new Set(factKeys);
+      for (const [factIndex, factKey] of forbiddenFactKeys.entries()) {
         if (declaredFactKeys.has(factKey)) {
           addIssue(ctx, {
             code: 'CORPUS_PLAN_FORBIDDEN_FACT_CONFLICT',
             file: corpusPlanPath,
-            pointer: `${pointer}/forbiddenFactKeys/${factIndex}`,
-            message: `Planned document ${doc.id} lists ${factKey} in both factKeys[] and forbiddenFactKeys[].`,
-            fix: 'Remove the fact from forbiddenFactKeys[] or from factKeys[].',
+            pointer: `${pointer}/factContract/forbid/${factIndex}`,
+            message: `Planned document ${doc.id} lists ${factKey} in both include and forbid.`,
+            fix: 'Remove the path from factContract.forbid or factContract.include.',
           });
         }
 
@@ -912,40 +914,13 @@ function validateCorpusPlan(ctx, {
                 ? 'CORPUS_PLAN_FORBIDDEN_FACT_AREA'
                 : 'CORPUS_PLAN_FORBIDDEN_FACT_MISSING',
             file: corpusPlanPath,
-            pointer: `${pointer}/forbiddenFactKeys/${factIndex}`,
-            message: `Planned document forbiddenFactKey ${factKey} must resolve to a profile leaf fact.`,
-            fix: 'Use a concrete profile fact leaf or remove the forbiddenFactKey.',
+            pointer: `${pointer}/factContract/forbid/${factIndex}`,
+            message: `Planned document forbid path ${factKey} must resolve to a profile leaf fact.`,
+            fix: 'Use a concrete profile fact leaf or remove the forbid path.',
           });
         }
       }
     }
-  }
-
-  for (const [category, plannedCount] of Object.entries(corpusPlan.categoryCounts ?? {})) {
-    const actual = categoryCounts.get(category) ?? 0;
-    if (plannedCount !== actual) {
-      addIssue(ctx, {
-        code: 'CORPUS_PLAN_CATEGORY_COUNT_MISMATCH',
-        file: corpusPlanPath,
-        pointer: `/categoryCounts/${category}`,
-        message: `Category ${category} planned ${plannedCount} documents but documents[] contains ${actual}.`,
-        fix: 'Update categoryCounts or planned documents[].',
-      });
-    }
-  }
-
-  const totalCategoryCount = Object.values(corpusPlan.categoryCounts ?? {}).reduce(
-    (sum, value) => sum + value,
-    0,
-  );
-  if (totalCategoryCount !== corpusPlan.targetDocumentCount) {
-    addIssue(ctx, {
-      code: 'CORPUS_PLAN_CATEGORY_TOTAL_MISMATCH',
-      file: corpusPlanPath,
-      pointer: '/categoryCounts',
-      message: `categoryCounts total ${totalCategoryCount} does not match targetDocumentCount ${corpusPlan.targetDocumentCount}.`,
-      fix: 'Update categoryCounts so the total matches targetDocumentCount.',
-    });
   }
 }
 
@@ -995,11 +970,11 @@ export function manifestFromCorpusPlan(corpusPlan, { includeOnlyExistingDocs = f
       path: doc.path,
       category: doc.category,
       title: doc.title,
-      factKeys: doc.factKeys ?? [],
-      detailTier: doc.detailTier,
-      authority: doc.authority,
-      freshness: doc.freshness,
-      expectedUse: doc.expectedUse,
+      factKeys: planDocumentFactKeys(doc),
+      detailTier: planDocumentDetailTier(doc),
+      authority: planDocumentAuthority(doc),
+      freshness: planDocumentFreshness(doc),
+      expectedUse: planDocumentExpectedUse(doc),
     }));
 
   return {
@@ -1026,6 +1001,7 @@ async function validateDocuments(ctx, {
   const listedPaths = new Set();
   const ids = new Set();
   const plannedDocuments = mapPlannedDocuments(corpusPlan);
+  const bodyRecords = [];
 
   for (const [index, doc] of (manifest.documents ?? []).entries()) {
     const pointer = `/documents/${index}`;
@@ -1122,6 +1098,7 @@ async function validateDocuments(ctx, {
 
     if (profileFacts && (await fileExists(absoluteDocPath))) {
       const body = await readFile(absoluteDocPath, 'utf8');
+      bodyRecords.push({ doc, body, pointer, planDoc: planned?.doc ?? null });
       validateDocumentProse(ctx, {
         doc,
         body,
@@ -1136,6 +1113,11 @@ async function validateDocuments(ctx, {
       });
     }
   }
+
+  validateCorpusRealismSkeletons(ctx, {
+    bodyRecords,
+    manifestPath,
+  });
 
   const actualPaths = await listDocumentFiles(ctx, documentsRoot, manifestPath);
   for (const actualPath of actualPaths) {
@@ -1159,6 +1141,15 @@ function mapPlannedDocuments(corpusPlan) {
     if (doc.path) byRef.set(doc.path, entry);
   }
   return byRef;
+}
+
+function getWorldValue(artifactWorld, ref) {
+  return String(ref)
+    .split('.')
+    .reduce((value, segment) => {
+      if (value == null || typeof value !== 'object') return undefined;
+      return value[segment];
+    }, artifactWorld);
 }
 
 function createCorpusTruthDocument(doc) {
@@ -1191,11 +1182,14 @@ function getEffectiveForbiddenEntries({
 }) {
   const planSource = corpusPlan ?? {
     intentionallyMissing: manifest.intentionallyMissing ?? [],
-    defaultForbiddenFactKeys: [],
+    factContractDefaults: { forbid: [] },
   };
   const effectiveDoc = {
     ...doc,
-    forbiddenFactKeys: planDoc?.forbiddenFactKeys ?? [],
+    factContract: {
+      include: doc.factKeys ?? planDocumentFactKeys(planDoc),
+      forbid: planDocumentForbiddenFactKeys(planDoc),
+    },
   };
   const effectiveKeys = new Set(effectiveForbiddenFactKeys(planSource, effectiveDoc));
   const entries = [];
@@ -1209,22 +1203,22 @@ function getEffectiveForbiddenEntries({
 
   if (corpusPlanPath) {
     for (const [index, factKey] of (
-      corpusPlan?.defaultForbiddenFactKeys ?? []
+      corpusPlan?.factContractDefaults?.forbid ?? []
     ).entries()) {
       add({
         factKey,
         file: corpusPlanPath,
-        pointer: `/defaultForbiddenFactKeys/${index}`,
+        pointer: `/factContractDefaults/forbid/${index}`,
       });
     }
   }
 
   if (planDoc && corpusPlanPath && planPointer) {
-    for (const [index, factKey] of (planDoc.forbiddenFactKeys ?? []).entries()) {
+    for (const [index, factKey] of planDocumentForbiddenFactKeys(planDoc).entries()) {
       add({
         factKey,
         file: corpusPlanPath,
-        pointer: `${planPointer}/forbiddenFactKeys/${index}`,
+        pointer: `${planPointer}/factContract/forbid/${index}`,
       });
     }
   }
@@ -1363,6 +1357,200 @@ function validateDocumentProse(ctx, {
       fix: 'Add realistic surrounding text or lower the detailTier.',
     });
   }
+
+  validateSourceRealism(ctx, {
+    doc,
+    planDoc,
+    body,
+    manifest,
+    manifestPath,
+    pointer,
+    corpusPlanPath,
+    planPointer,
+  });
+}
+
+function validateSourceRealism(ctx, {
+  doc,
+  planDoc,
+  body,
+  manifest,
+  manifestPath,
+  pointer,
+  corpusPlanPath,
+  planPointer,
+}) {
+  const sourceSpec = planDoc?.sourceSpec;
+  if (!sourceSpec) return;
+  const planFile = corpusPlanPath ?? manifestPath;
+  const sourceSpecPointer = planPointer ? `${planPointer}/sourceSpec` : pointer;
+
+  if (EVAL_LANGUAGE_RE.test(body)) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_EVAL_LANGUAGE',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} contains evaluation-oriented language in the body.`,
+      fix: 'Rewrite the body as a native source artifact without meta commentary.',
+    });
+  }
+
+  for (const [signalIndex, signal] of (sourceSpec.nativeSignals ?? []).entries()) {
+    if (nativeSignalPresent(body, signal)) continue;
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_NATIVE_SIGNAL_MISSING',
+      file: planFile,
+      pointer: `${sourceSpecPointer}/nativeSignals/${signalIndex}`,
+      message: `Document ${doc.id} is missing native source signal ${JSON.stringify(signal)}.`,
+      fix: 'Add the native signal in a way that matches the artifact source and format.',
+    });
+  }
+
+  const lengthTarget = sourceSpec.lengthTarget;
+  if (
+    lengthTarget &&
+    (body.length < lengthTarget.minChars || body.length > lengthTarget.maxChars)
+  ) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE',
+      file: planFile,
+      pointer: `${sourceSpecPointer}/lengthTarget`,
+      message: `Document ${doc.id} length ${body.length} is outside sourceSpec target ${lengthTarget.minChars}-${lengthTarget.maxChars}.`,
+      fix: 'Adjust body density or sourceSpec.lengthTarget.',
+    });
+  }
+
+  if (
+    (doc.freshness === 'stale' ||
+      doc.expectedUse === 'guardrail' ||
+      doc.category === 'partial-conflicting') &&
+    !/\b(?:stale|superseded|former|old|inactive|returned|do not use|do-not-use|outdated)\b/i.test(body)
+  ) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_STALE_CUE_MISSING',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} is stale or guardrail material but lacks a clear stale cue.`,
+      fix: 'Add wording that marks the information stale, superseded, inactive, returned, or not for current use.',
+    });
+  }
+
+  if (
+    (manifest.intentionallyMissing ?? []).some(
+      (missing) => missing.factKey === 'contact.phone',
+    ) &&
+    containsPhoneLikeText(body)
+  ) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_SOURCE_PHONE_PRESENT',
+      file: manifestPath,
+      pointer,
+      message: `Document ${doc.id} contains phone-like text while contact.phone is intentionally missing.`,
+      fix: 'Redact source phone values or add source-fact ownership metadata before using them.',
+    });
+  }
+}
+
+function nativeSignalPresent(body, signal) {
+  const normalized = normalizeTextForRealism(body);
+  const signalText = normalizeTextForRealism(signal);
+  const hasNormalizedTerm = (term) =>
+    normalized.includes(normalizeTextForRealism(term));
+  if (signalText.includes('from header')) return /^from\s*:/im.test(body);
+  if (signalText.includes('to header')) return /^to\s*:/im.test(body);
+  if (signalText.includes('date header')) return /^date\s*:/im.test(body);
+  if (signalText.includes('subject header')) return /^subject\s*:/im.test(body);
+  if (signalText.includes('footer')) return hasNormalizedTerm('unsubscribe') ||
+    hasNormalizedTerm('privacy') ||
+    hasNormalizedTerm('footer') ||
+    hasNormalizedTerm('all rights reserved');
+  if (signalText.includes('ocr confidence')) return hasNormalizedTerm('ocr') &&
+    hasNormalizedTerm('confidence');
+  if (signalText.includes('upload batch')) return hasNormalizedTerm('upload batch') ||
+    hasNormalizedTerm('batch id') ||
+    hasNormalizedTerm('batch');
+  if (signalText.includes('filename') || signalText.includes('source filename')) {
+    return hasNormalizedTerm('filename') ||
+      hasNormalizedTerm('file name') ||
+      hasNormalizedTerm('source file') ||
+      hasNormalizedTerm('original filename');
+  }
+  if (signalText.includes('timestamp')) return hasNormalizedTerm('timestamp') ||
+    hasNormalizedTerm('generated') ||
+    hasNormalizedTerm('exported') ||
+    hasNormalizedTerm('saved') ||
+    hasNormalizedTerm('received') ||
+    hasNormalizedTerm('updated') ||
+    hasNormalizedTerm('created');
+  if (signalText.includes('status')) return hasNormalizedTerm('status');
+  if (signalText.includes('field ids')) return hasNormalizedTerm('field id') ||
+    hasNormalizedTerm('field ids') ||
+    hasNormalizedTerm('fields') ||
+    hasNormalizedTerm('field');
+  if (signalText.includes('worker id')) return hasNormalizedTerm('worker id');
+  if (signalText.includes('ticket id')) return hasNormalizedTerm('ticket id');
+  if (signalText.includes('export id')) return hasNormalizedTerm('export id');
+  if (signalText.includes('blank phone') || signalText.includes('phone state')) {
+    return hasNormalizedTerm('phone null') ||
+      hasNormalizedTerm('phone blank') ||
+      hasNormalizedTerm('phone field blank') ||
+      hasNormalizedTerm('phone field state blank');
+  }
+  if (signalText.includes('signature block')) {
+    return /\n(?:sincerely|regards|best|thanks|thank you),?\s*\n[A-Z][A-Za-z .'-]+/i.test(body);
+  }
+
+  const terms = signalText
+    .split(' ')
+    .filter((term) => term.length > 2 && !['the', 'and'].includes(term));
+  return terms.every((term) => normalized.includes(term));
+}
+
+function normalizeTextForRealism(value) {
+  return String(value)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function validateCorpusRealismSkeletons(ctx, { bodyRecords, manifestPath }) {
+  const sourceRecords = bodyRecords.filter((record) => record.planDoc?.sourceSpec);
+  const titleFirstLineRecords = sourceRecords.filter(({ doc, body }) => {
+    const firstLine = body.split(/\r?\n/).find((line) => line.trim());
+    return firstLine && normalizeTextForRealism(firstLine).includes(normalizeTextForRealism(doc.title));
+  });
+  if (titleFirstLineRecords.length >= 3) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_TITLE_FIRST_LINE_REPEATED',
+      file: manifestPath,
+      pointer: '/documents',
+      message: `${titleFirstLineRecords.length} source-artifact documents start with their manifest title.`,
+      fix: 'Use native headers, envelopes, or export records instead of repeating the manifest title as the first line.',
+    });
+  }
+
+  const markdownSkeletons = sourceRecords.filter(({ body }) => {
+    const boldLabels = body.match(/\*\*[^*\n]+:\*\*/g) ?? [];
+    const markdownHeadings = body.match(/(^|\n)\s{0,3}#{1,3}\s+\S/g) ?? [];
+    return boldLabels.length >= 4 || markdownHeadings.length >= 2;
+  });
+  if (markdownSkeletons.length >= 3) {
+    addIssue(ctx, {
+      level: 'warning',
+      code: 'DOCUMENT_MARKDOWN_PATTERN_OVERUSED',
+      file: manifestPath,
+      pointer: '/documents',
+      message: `${markdownSkeletons.length} source-artifact documents use similar Markdown heading or bold-label skeletons.`,
+      fix: 'Vary source formats and prefer native email, export, OCR, ticket, or portal structures.',
+    });
+  }
 }
 
 function validateDocumentBodyFormat(ctx, { doc, body, manifestPath, pointer }) {
@@ -1426,8 +1614,10 @@ function looksLikeMarkdown(text) {
 
 const PHONE_LIKE_TEXT_RE =
   /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/;
+const EVAL_LANGUAGE_RE =
+  /\b(?:synthetic eval fixture|fact key|validator|benchmark|profile slice|fixture document|if a task asks|leave (?:the )?.*field empty|enter(?:ing)? a placeholder|downstream task)\b/i;
 const I9_IDENTIFIER_CONTEXT_RE =
-  /\b(?:I-?94|USCIS|Alien Registration|A-?Number|Foreign Passport|Passport Number)\b/i;
+  /(^|[^a-z0-9])(?:i[-_\s]?94|uscis|alien[-_\s]?registration|a[-_\s]?number|foreign[-_\s]?passport|passport[-_\s]?number|admission[-_\s]?number)(?=$|[^a-z0-9])/i;
 
 function containsPhoneLikeText(text) {
   const phoneCandidateText = text

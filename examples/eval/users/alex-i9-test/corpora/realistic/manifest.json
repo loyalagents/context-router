@@ -6,7 +6,7 @@
   "forms": [
     "i-9"
   ],
-  "purpose": "Deterministic 10-document realistic starter corpus for I-9 eval generation from a reviewed synthetic profile.",
+  "purpose": "Deterministic 10-document source-artifact corpus plan for I-9 realistic eval generation from a reviewed synthetic profile.",
   "intentionallyMissing": [
     {
       "factKey": "contact.phone",
@@ -20,9 +20,9 @@
   "documents": [
     {
       "id": "alex-i9-test-realistic-001",
-      "path": "documents/identity/001-driver-license-transcript.md",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
       "category": "identity",
-      "title": "Driver License Transcript",
+      "title": "Driver License Upload OCR",
       "factKeys": [
         "identity.legalName",
         "identity.dateOfBirth",
@@ -39,9 +39,9 @@
     },
     {
       "id": "alex-i9-test-realistic-002",
-      "path": "documents/identity/002-ssn-card-transcript.md",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
       "category": "identity",
-      "title": "SSN Card Transcript",
+      "title": "SSN Card Upload OCR",
       "factKeys": [
         "identity.legalName",
         "identity.ssn"
@@ -53,24 +53,27 @@
     },
     {
       "id": "alex-i9-test-realistic-003",
-      "path": "documents/identity/003-birth-record-summary.txt",
-      "category": "identity",
-      "title": "Birth Record Summary",
+      "path": "documents/work-authorization/003-work-authorization-upload-receipt.txt",
+      "category": "work-authorization",
+      "title": "Work Authorization Upload Receipt",
       "factKeys": [
         "identity.legalName",
-        "identity.dateOfBirth",
-        "workAuthorization.citizenshipStatus"
+        "workAuthorization.citizenshipStatus",
+        "workAuthorization.uscisANumber",
+        "workAuthorization.workAuthorizationExpirationDate",
+        "workAuthorization.i94AdmissionNumber",
+        "workAuthorization.foreignPassportNumber"
       ],
       "detailTier": "medium",
-      "authority": "medium",
+      "authority": "high",
       "freshness": "current",
-      "expectedUse": "corroborate"
+      "expectedUse": "extract"
     },
     {
       "id": "alex-i9-test-realistic-004",
-      "path": "documents/address-contact/004-lease-summary.md",
+      "path": "documents/address-contact/004-resident-portal-lease-export.md",
       "category": "address-contact",
-      "title": "Lease Summary",
+      "title": "Resident Portal Lease Export",
       "factKeys": [
         "identity.legalName",
         "address.current.street",
@@ -106,9 +109,9 @@
     },
     {
       "id": "alex-i9-test-realistic-006",
-      "path": "documents/work-authorization/006-i9-section-one-draft.md",
+      "path": "documents/work-authorization/006-i9-section-one-field-export.yaml",
       "category": "work-authorization",
-      "title": "I-9 Section One Draft",
+      "title": "I-9 Section 1 Field Export",
       "factKeys": [
         "identity.legalName",
         "identity.firstName",
@@ -136,9 +139,9 @@
     },
     {
       "id": "alex-i9-test-realistic-007",
-      "path": "documents/hr-onboarding/007-offer-letter.md",
+      "path": "documents/hr-onboarding/007-offer-email.md",
       "category": "hr-onboarding",
-      "title": "Offer Letter",
+      "title": "Offer Email",
       "factKeys": [
         "identity.legalName",
         "employment.company",
@@ -153,9 +156,9 @@
     },
     {
       "id": "alex-i9-test-realistic-008",
-      "path": "documents/hr-onboarding/008-onboarding-profile.yaml",
+      "path": "documents/hr-onboarding/008-onboarding-profile-export.yaml",
       "category": "hr-onboarding",
-      "title": "Onboarding Profile",
+      "title": "Onboarding Profile Export",
       "factKeys": [
         "identity.legalName",
         "identity.firstName",
@@ -173,9 +176,9 @@
     },
     {
       "id": "alex-i9-test-realistic-009",
-      "path": "documents/partial-conflicting/009-stale-address-note.txt",
+      "path": "documents/partial-conflicting/009-stale-contact-ticket.txt",
       "category": "partial-conflicting",
-      "title": "Stale Address Note",
+      "title": "Stale Contact Ticket",
       "factKeys": [],
       "detailTier": "brief",
       "authority": "low",
@@ -184,9 +187,9 @@
     },
     {
       "id": "alex-i9-test-realistic-010",
-      "path": "documents/noise/010-community-newsletter.txt",
+      "path": "documents/noise/010-community-newsletter-email.txt",
       "category": "noise",
-      "title": "Community Newsletter",
+      "title": "Community Newsletter Email",
       "factKeys": [],
       "detailTier": "medium",
       "authority": "none",

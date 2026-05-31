@@ -1,0 +1,59 @@
+source_system: Northstar Onboard
+worker_id: CHR-53242
+form_version: "Form I-9 edition 08/01/23"
+saved_timestamp: "June 3 2026 at 2:18 PM Pacific"
+workflow_status: saved_not_signed
+reviewer_routing: People Operations Hub
+field_ids:
+  employee_last_name: sec1.last_name
+  employee_first_name: sec1.first_name
+  employee_middle_initial: sec1.middle_initial
+  employee_other_last_names: sec1.other_last_names
+  employee_date_of_birth: sec1.date_of_birth
+  employee_ssn: sec1.ssn
+  employee_address_street: sec1.address.street
+  employee_address_unit: sec1.address.apt_number
+  employee_address_city: sec1.address.city
+  employee_address_state: sec1.address.state
+  employee_address_zip: sec1.address.zip
+  employee_email: sec1.contact.email
+  employee_phone: sec1.contact.phone
+  citizenship_status: sec1.status.selection
+  uscis_a_number: sec1.status.uscis_a_number
+  work_authorization_expiration: sec1.status.expiration_date
+  i94_admission_number: sec1.status.i94_number
+  foreign_passport_number: sec1.status.foreign_passport_number
+fields:
+  legal_name_exact: Alex Jordan Rivera
+  first_name: Alex
+  middle_initial: J
+  last_name: Rivera
+  other_last_names:
+    - Santos
+  date_of_birth: "1992-03-14"
+  ssn: "000-00-0292"
+  address:
+    street: 7428 Evergreen Terrace
+    unit: Apt 5C
+    city: Portland
+    state: OR
+    postal_code: "97214"
+  contact:
+    email: alex.rivera@example.test
+    phone: null
+  work_authorization:
+    citizenship_status: alien authorized to work
+    uscis_a_number: "987654321"
+    work_authorization_expiration_date: "2028-09-30"
+    "Form I-94 Admission Number": "11223344556"
+    foreign_passport_number: XK1234567
+task_status_list:
+  - task: employee_information
+    status: complete
+  - task: citizenship_status
+    status: complete
+  - task: employee_signature
+    status: pending
+audit:
+  created_by: worker_self_service
+  updated_by: worker_self_service
