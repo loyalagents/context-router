@@ -659,11 +659,11 @@ export function buildI9SourceSpecs(profile) {
 }
 
 function workAuthorizationSourceSpec(profile) {
-  const status = String(
+  const statusKind = classifyWorkAuthorizationStatus(
     getFactValue(profile.facts ?? {}, 'workAuthorization.citizenshipStatus') ?? '',
-  ).toLowerCase();
+  );
 
-  if (status.includes('noncitizen national') || status.includes('non-citizen national')) {
+  if (statusKind === 'noncitizen-national') {
     return {
       sequence: '003',
       slug: 'noncitizen-national-evidence-upload',
@@ -710,103 +710,7 @@ function workAuthorizationSourceSpec(profile) {
     };
   }
 
-  if (status.includes('citizen') && !status.includes('alien')) {
-    return {
-      sequence: '003',
-      slug: 'citizenship-evidence-upload',
-      path: 'documents/identity/003-citizenship-evidence-upload.txt',
-      category: 'identity',
-      title: 'Citizenship Evidence Upload',
-      outputExtension: 'txt',
-      include: [
-        'identity.legalName',
-        'identity.dateOfBirth',
-        'workAuthorization.citizenshipStatus',
-      ],
-      evaluationRole: {
-        detailTier: 'medium',
-        authority: 'medium',
-        freshness: 'current',
-        expectedUse: 'corroborate',
-        challengeTags: ['identity-evidence', 'citizen-work-authorization'],
-      },
-      sourceSpec: {
-        artifactType: 'citizenship-evidence-upload-note',
-        sourceFamily: 'identity',
-        captureMode: 'plain-text-upload-note',
-        timelineRefs: ['identityUploadAt'],
-        worldRefs: [
-          'identityCapture.uploadBatchId',
-          'employer.onboardingSystem',
-          'employer.workerId',
-        ],
-        nativeSignals: [
-          'upload batch id',
-          'document category',
-          'review status',
-          'employee-provided status',
-        ],
-        safeDetailMenu: [
-          'citizenship evidence category',
-          'review queue',
-          'status confirmation note',
-        ],
-        riskyDetailMenu: COMMON_RISKY_DETAILS,
-        lengthTarget: { minChars: 450, maxChars: 1300 },
-      },
-    };
-  }
-
-  if (status.includes('lawful permanent resident') || status.includes('permanent resident')) {
-    return {
-      sequence: '003',
-      slug: 'permanent-resident-card-upload',
-      path: 'documents/work-authorization/003-permanent-resident-card-upload.txt',
-      category: 'work-authorization',
-      title: 'Permanent Resident Card Upload',
-      outputExtension: 'txt',
-      include: [
-        'identity.legalName',
-        'workAuthorization.citizenshipStatus',
-        'workAuthorization.uscisANumber',
-      ],
-      evaluationRole: {
-        detailTier: 'medium',
-        authority: 'high',
-        freshness: 'current',
-        expectedUse: 'extract',
-        challengeTags: ['work-authorization', 'sensitive-identifier'],
-      },
-      sourceSpec: {
-        artifactType: 'permanent-resident-card-upload-receipt',
-        sourceFamily: 'work-authorization',
-        captureMode: 'plain-text-upload-receipt',
-        timelineRefs: ['identityUploadAt'],
-        worldRefs: [
-          'identityCapture.uploadBatchId',
-          'employer.onboardingSystem',
-          'employer.workerId',
-          'employer.hrCoordinator',
-        ],
-        nativeSignals: [
-          'upload batch id',
-          'document category',
-          'processing status',
-          'reviewer note',
-        ],
-        safeDetailMenu: [
-          'card side received',
-          'review queue',
-          'redacted card metadata',
-          'worker id',
-        ],
-        riskyDetailMenu: COMMON_RISKY_DETAILS,
-        lengthTarget: { minChars: 650, maxChars: 1700 },
-      },
-    };
-  }
-
-  if (status.includes('alien authorized') || status.includes('authorized to work')) {
+  if (statusKind === 'authorized-to-work') {
     return {
       sequence: '003',
       slug: 'work-authorization-upload-receipt',
@@ -858,6 +762,102 @@ function workAuthorizationSourceSpec(profile) {
     };
   }
 
+  if (statusKind === 'lawful-permanent-resident') {
+    return {
+      sequence: '003',
+      slug: 'permanent-resident-card-upload',
+      path: 'documents/work-authorization/003-permanent-resident-card-upload.txt',
+      category: 'work-authorization',
+      title: 'Permanent Resident Card Upload',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'workAuthorization.citizenshipStatus',
+        'workAuthorization.uscisANumber',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'high',
+        freshness: 'current',
+        expectedUse: 'extract',
+        challengeTags: ['work-authorization', 'sensitive-identifier'],
+      },
+      sourceSpec: {
+        artifactType: 'permanent-resident-card-upload-receipt',
+        sourceFamily: 'work-authorization',
+        captureMode: 'plain-text-upload-receipt',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+          'employer.hrCoordinator',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'processing status',
+          'reviewer note',
+        ],
+        safeDetailMenu: [
+          'card side received',
+          'review queue',
+          'redacted card metadata',
+          'worker id',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 650, maxChars: 1700 },
+      },
+    };
+  }
+
+  if (statusKind === 'citizen') {
+    return {
+      sequence: '003',
+      slug: 'citizenship-evidence-upload',
+      path: 'documents/identity/003-citizenship-evidence-upload.txt',
+      category: 'identity',
+      title: 'Citizenship Evidence Upload',
+      outputExtension: 'txt',
+      include: [
+        'identity.legalName',
+        'identity.dateOfBirth',
+        'workAuthorization.citizenshipStatus',
+      ],
+      evaluationRole: {
+        detailTier: 'medium',
+        authority: 'medium',
+        freshness: 'current',
+        expectedUse: 'corroborate',
+        challengeTags: ['identity-evidence', 'citizen-work-authorization'],
+      },
+      sourceSpec: {
+        artifactType: 'citizenship-evidence-upload-note',
+        sourceFamily: 'identity',
+        captureMode: 'plain-text-upload-note',
+        timelineRefs: ['identityUploadAt'],
+        worldRefs: [
+          'identityCapture.uploadBatchId',
+          'employer.onboardingSystem',
+          'employer.workerId',
+        ],
+        nativeSignals: [
+          'upload batch id',
+          'document category',
+          'review status',
+          'employee-provided status',
+        ],
+        safeDetailMenu: [
+          'citizenship evidence category',
+          'review queue',
+          'status confirmation note',
+        ],
+        riskyDetailMenu: COMMON_RISKY_DETAILS,
+        lengthTarget: { minChars: 450, maxChars: 1300 },
+      },
+    };
+  }
+
   return {
     sequence: '003',
     slug: 'work-authorization-review-note',
@@ -898,6 +898,37 @@ function workAuthorizationSourceSpec(profile) {
       lengthTarget: { minChars: 550, maxChars: 1400 },
     },
   };
+}
+
+function classifyWorkAuthorizationStatus(rawStatus) {
+  const status = String(rawStatus).toLowerCase().replace(/\s+/g, ' ').trim();
+  const compactStatus = status.replace(/[-\s]+/g, '');
+
+  if (/\bnon[-\s]?citizen national\b/.test(status)) return 'noncitizen-national';
+  if (/\bnot (?:currently )?authorized to work\b/.test(status)) return 'unknown';
+  if (
+    compactStatus.includes('alienauthorizedtowork') ||
+    compactStatus.includes('noncitizenauthorizedtowork') ||
+    status.includes('authorized to work')
+  ) {
+    return 'authorized-to-work';
+  }
+  if (
+    status.includes('lawful permanent resident') ||
+    status.includes('permanent resident') ||
+    status === 'lpr'
+  ) {
+    return 'lawful-permanent-resident';
+  }
+  if (
+    status.includes('u.s. citizen') ||
+    status.includes('us citizen') ||
+    status.includes('united states citizen') ||
+    /\bcitizen of the united states\b/.test(status)
+  ) {
+    return 'citizen';
+  }
+  return 'unknown';
 }
 
 function planDocument({ userId, corpusId, spec, hasNonNullFact }) {

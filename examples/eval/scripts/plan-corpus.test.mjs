@@ -224,10 +224,34 @@ test('plan-corpus selects status-aware I-9 slot 003 artifacts', () => {
   });
   assert.equal(alienSpecs.find((doc) => doc.sequence === '003').slug, 'work-authorization-upload-receipt');
 
+  const noncitizenAuthorizedSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'noncitizen authorized to work' } },
+  });
+  assert.equal(
+    noncitizenAuthorizedSpecs.find((doc) => doc.sequence === '003').slug,
+    'work-authorization-upload-receipt',
+  );
+
+  const articleNoncitizenAuthorizedSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'A noncitizen authorized to work' } },
+  });
+  assert.equal(
+    articleNoncitizenAuthorizedSpecs.find((doc) => doc.sequence === '003').slug,
+    'work-authorization-upload-receipt',
+  );
+
   const fallbackSpecs = buildI9SourceSpecs({
     facts: { workAuthorization: { citizenshipStatus: 'status pending review' } },
   });
   assert.equal(fallbackSpecs.find((doc) => doc.sequence === '003').slug, 'work-authorization-review-note');
+
+  const negativeAuthorizedSpecs = buildI9SourceSpecs({
+    facts: { workAuthorization: { citizenshipStatus: 'not authorized to work' } },
+  });
+  assert.equal(
+    negativeAuthorizedSpecs.find((doc) => doc.sequence === '003').slug,
+    'work-authorization-review-note',
+  );
 });
 
 test('artifact world is deterministic and rejects profile collisions', () => {
