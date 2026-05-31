@@ -2,9 +2,7 @@ source_system: Northstar Onboard
 worker_id: CHR-53242
 form_version: "Form I-9 edition 08/01/23"
 saved_timestamp: "June 3 2026 at 2:18 PM Pacific"
-saved_timestamp_label: "saved timestamp June 3 2026 at 2:18 PM Pacific"
 workflow_status: saved_not_signed
-native_blank_phone_state: blank_in_worker_profile
 reviewer_routing: People Operations Hub
 field_ids:
   employee_last_name: sec1.last_name
@@ -59,4 +57,3 @@ task_status_list:
 audit:
   created_by: worker_self_service
   updated_by: worker_self_service
-  phone_blank_reason: no phone field value was supplied

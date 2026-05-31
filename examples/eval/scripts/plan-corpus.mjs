@@ -279,13 +279,13 @@ const I9_BASE_SOURCE_SPECS = [
         'field ids',
         'saved timestamp',
         'workflow status',
-        'native blank phone state',
+        'blank phone field',
       ],
       safeDetailMenu: [
         'task status',
         'signature pending cue',
         'reviewer routing',
-        'blank/null phone state',
+        'null phone field',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
       lengthTarget: { minChars: 1200, maxChars: 3200 },
@@ -956,13 +956,19 @@ export function buildArtifactWorld({ userId, corpusId, profile }) {
   const seed = `${userId}__${corpusId}`;
   const startDate =
     getFactValue(profile.facts ?? {}, 'employment.startDate') ?? '2026-06-17';
-  const safeCompanySlug = String(
+  const safeCompanySlug = truncateSlugAtBoundary(String(
     getFactValue(profile.facts ?? {}, 'employment.company') ?? 'onboarding',
   )
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 24) || 'onboarding';
+  ) || 'onboarding';
+  const utilityProvider = choose(seed, 'utilityProvider', [
+    'Willamette Utility Services',
+    'Metroline Energy',
+    'Civic Water & Power',
+  ]);
+  const utilityExportPrefix = initialism(utilityProvider);
 
   return {
     schemaVersion: 1,
@@ -1011,12 +1017,8 @@ export function buildArtifactWorld({ userId, corpusId, profile }) {
       leaseAccountId: `RL-${10000 + (hashInt(seed, 'leaseAccountId') % 90000)}`,
     },
     utility: {
-      provider: choose(seed, 'utilityProvider', [
-        'Willamette Utility Services',
-        'Metroline Energy',
-        'Civic Water & Power',
-      ]),
-      exportId: `WUS-EXP-U${1000 + (hashInt(seed, 'utilityExportIdA') % 9000)}X${100 + (hashInt(seed, 'utilityExportIdB') % 900)}`,
+      provider: utilityProvider,
+      exportId: `${utilityExportPrefix}-EXP-U${1000 + (hashInt(seed, 'utilityExportIdA') % 9000)}X${100 + (hashInt(seed, 'utilityExportIdB') % 900)}`,
       serviceAccountSuffix: String(1000 + (hashInt(seed, 'utilitySuffix') % 9000)),
     },
     identityCapture: {
@@ -1037,6 +1039,23 @@ export function buildArtifactWorld({ userId, corpusId, profile }) {
       ]),
     },
   };
+}
+
+function truncateSlugAtBoundary(slug, maxLength = 32) {
+  if (slug.length <= maxLength) return slug;
+  const truncated = slug.slice(0, maxLength);
+  const boundary = truncated.lastIndexOf('-');
+  if (boundary > 0) return truncated.slice(0, boundary);
+  return truncated;
+}
+
+function initialism(value) {
+  const letters = String(value)
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+  return letters.slice(0, 3) || 'SRC';
 }
 
 export function assertArtifactWorldHasNoProfileCollisions({ artifactWorld, profileFacts }) {

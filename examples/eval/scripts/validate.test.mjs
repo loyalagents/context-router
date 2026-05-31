@@ -533,6 +533,48 @@ test('prose checks require high-confidence declared values in document bodies', 
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
 });
 
+test('prose checks prove declared work authorization document values deterministically', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = alexManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const i9Doc = manifest.documents.find((doc) =>
+    doc.path.endsWith('006-i9-section-one-field-export.yaml')
+  );
+  assert.ok(i9Doc);
+  const docPath = path.join(corpusRoot, i9Doc.path);
+
+  const validResult = await validateAlex(root);
+  const validTruth = validResult.report.corpusTruth.documents.find(
+    (entry) => entry.id === i9Doc.id,
+  );
+  for (const factKey of [
+    'workAuthorization.workAuthorizationExpirationDate',
+    'workAuthorization.i94AdmissionNumber',
+    'workAuthorization.foreignPassportNumber',
+  ]) {
+    assert.ok(validTruth.declaredFacts.provenPresent.includes(factKey));
+    assert.ok(!validTruth.declaredFacts.unsupported.includes(factKey));
+  }
+
+  const body = await readFile(docPath, 'utf8');
+  await writeFile(
+    docPath,
+    body.replace('    "Form I-94 Admission Number": "11223344556"\n', ''),
+  );
+
+  const missingResult = await validateAlex(root);
+  assertHasCode(missingResult, 'DOCUMENT_FACT_VALUE_MISSING');
+  const missingTruth = missingResult.report.corpusTruth.documents.find(
+    (entry) => entry.id === i9Doc.id,
+  );
+  assert.ok(
+    missingTruth.declaredFacts.missing.includes(
+      'workAuthorization.i94AdmissionNumber',
+    ),
+  );
+});
+
 test('prose checks require expanded deterministic declared facts in document bodies', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -1002,6 +1044,41 @@ test('source realism checks warn on task-oriented missing-value instructions', a
         issue.level === 'warning',
     ),
   );
+});
+
+test('source realism checks accept snake_case native export signals', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  const doc = manifest.documents[0];
+  doc.factKeys = [];
+  await writeJson(manifestPath, manifest);
+  const corpusPlan = corpusPlanFromManifest(manifest);
+  for (const planDocument of corpusPlan.documents) {
+    planDocument.sourceSpec.nativeSignals = [];
+  }
+  corpusPlan.documents[0].sourceSpec.nativeSignals = [
+    'saved timestamp',
+    'workflow status',
+    'export id',
+    'worker id',
+    'blank phone field',
+  ];
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'saved_timestamp: "2026-06-03T14:18:00-07:00"',
+      'workflow_status: saved_not_signed',
+      'export_id: ME-EXP-U1234X567',
+      'worker_id: CHR-53242',
+      'phone: null',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  assertNoCode(result, 'DOCUMENT_NATIVE_SIGNAL_MISSING');
 });
 
 test('source realism checks report repeated corpus skeletons', async (t) => {
@@ -1813,10 +1890,24 @@ async function validateElena(root) {
   });
 }
 
+async function validateAlex(root) {
+  return runValidation({
+    repoRoot: root,
+    args: ['--user', 'alex-i9-test', '--corpus', 'realistic'],
+  });
+}
+
 function elenaManifestPath(root) {
   return path.join(
     root,
     'examples/eval/users/elena-marquez/corpora/realistic/manifest.json',
+  );
+}
+
+function alexManifestPath(root) {
+  return path.join(
+    root,
+    'examples/eval/users/alex-i9-test/corpora/realistic/manifest.json',
   );
 }
 

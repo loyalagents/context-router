@@ -282,6 +282,29 @@ test('artifact world is deterministic and rejects profile collisions', () => {
     buildArtifactWorld({ userId: 'samir-desai', corpusId: 'realistic', profile }),
     buildArtifactWorld({ userId: 'samir-desai', corpusId: 'realistic', profile }),
   );
+  const world = buildArtifactWorld({
+    userId: 'alex-i9-test',
+    corpusId: 'realistic',
+    profile: {
+      facts: {
+        employment: {
+          company: 'Cascadia Hiring Cooperative',
+          startDate: '2026-06-17',
+        },
+      },
+    },
+  });
+  const providerPrefix = world.utility.provider
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase())
+    .join('')
+    .slice(0, 3);
+  assert.equal(
+    world.employer.recruitingInbox,
+    'people-ops-cascadia-hiring-cooperative@example.test',
+  );
+  assert.ok(world.utility.exportId.startsWith(`${providerPrefix}-EXP-`));
 
   assert.throws(
     () =>

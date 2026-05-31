@@ -13,29 +13,16 @@
   "corpusTruth": {
     "summary": {
       "documentsChecked": 10,
-      "factsProvenPresent": 54,
+      "factsProvenPresent": 60,
       "factsMissing": 0,
-      "unsupportedDeclaredFacts": 6,
+      "unsupportedDeclaredFacts": 0,
       "factsProvenAbsent": 58,
       "forbiddenFactsPresent": 0,
       "warningOnlyAbsenceChecks": 8,
       "skippedAbsenceChecks": 2,
       "invalidAbsenceChecks": 0,
       "hardFailures": 0,
-      "unsupportedDeclaredFactKeys": [
-        {
-          "factKey": "workAuthorization.foreignPassportNumber",
-          "count": 2
-        },
-        {
-          "factKey": "workAuthorization.i94AdmissionNumber",
-          "count": 2
-        },
-        {
-          "factKey": "workAuthorization.workAuthorizationExpirationDate",
-          "count": 2
-        }
-      ]
+      "unsupportedDeclaredFactKeys": []
     },
     "documents": [
       {
@@ -107,14 +94,13 @@
           "provenPresent": [
             "identity.legalName",
             "workAuthorization.citizenshipStatus",
-            "workAuthorization.uscisANumber"
-          ],
-          "missing": [],
-          "unsupported": [
+            "workAuthorization.uscisANumber",
             "workAuthorization.workAuthorizationExpirationDate",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
-          ]
+          ],
+          "missing": [],
+          "unsupported": []
         },
         "forbiddenFacts": {
           "provenAbsent": [
@@ -215,14 +201,13 @@
             "address.current.postalCode",
             "contact.email",
             "workAuthorization.citizenshipStatus",
-            "workAuthorization.uscisANumber"
-          ],
-          "missing": [],
-          "unsupported": [
+            "workAuthorization.uscisANumber",
             "workAuthorization.workAuthorizationExpirationDate",
             "workAuthorization.i94AdmissionNumber",
             "workAuthorization.foreignPassportNumber"
-          ]
+          ],
+          "missing": [],
+          "unsupported": []
         },
         "forbiddenFacts": {
           "provenAbsent": [

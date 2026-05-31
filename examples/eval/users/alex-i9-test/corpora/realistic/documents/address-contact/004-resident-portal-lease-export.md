@@ -24,4 +24,4 @@ Lease notes:
 This resident portal export was downloaded from the active lease account after the worker started onboarding. The profile block is the canonical current address in the property system and was not created for the employer. The portal shows the same apartment unit on the lease summary, statement delivery screen, and resident profile page.
 
 Account audit:
-The export record includes only tenant name, email notice preference, current lease address, lease account id, and lease status. Renewal and balance fields were omitted from this download. No phone number is present in the resident profile export.
+The export record includes tenant name, email notice preference, current lease address, lease account id, and lease status. Renewal and balance fields were omitted from this download.

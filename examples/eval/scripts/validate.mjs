@@ -1459,22 +1459,48 @@ function validateSourceRealism(ctx, {
 function nativeSignalPresent(body, signal) {
   const normalized = normalizeTextForRealism(body);
   const signalText = normalizeTextForRealism(signal);
+  const hasNormalizedTerm = (term) =>
+    normalized.includes(normalizeTextForRealism(term));
   if (signalText.includes('from header')) return /^from\s*:/im.test(body);
   if (signalText.includes('to header')) return /^to\s*:/im.test(body);
   if (signalText.includes('date header')) return /^date\s*:/im.test(body);
   if (signalText.includes('subject header')) return /^subject\s*:/im.test(body);
-  if (signalText.includes('footer')) return /\b(?:unsubscribe|privacy|footer|all rights reserved)\b/i.test(body);
-  if (signalText.includes('ocr confidence')) return /\b(?:ocr|confidence)\b/i.test(body);
-  if (signalText.includes('upload batch')) return /\b(?:upload batch|batch id|batch)\b/i.test(body);
+  if (signalText.includes('footer')) return hasNormalizedTerm('unsubscribe') ||
+    hasNormalizedTerm('privacy') ||
+    hasNormalizedTerm('footer') ||
+    hasNormalizedTerm('all rights reserved');
+  if (signalText.includes('ocr confidence')) return hasNormalizedTerm('ocr') &&
+    hasNormalizedTerm('confidence');
+  if (signalText.includes('upload batch')) return hasNormalizedTerm('upload batch') ||
+    hasNormalizedTerm('batch id') ||
+    hasNormalizedTerm('batch');
   if (signalText.includes('filename') || signalText.includes('source filename')) {
-    return /\b(?:filename|file name|source file|original filename)\b/i.test(body);
+    return hasNormalizedTerm('filename') ||
+      hasNormalizedTerm('file name') ||
+      hasNormalizedTerm('source file') ||
+      hasNormalizedTerm('original filename');
   }
-  if (signalText.includes('timestamp')) return /\b(?:timestamp|generated|exported|saved|received|updated|created)\b/i.test(body);
-  if (signalText.includes('status')) return /\bstatus\b/i.test(body);
-  if (signalText.includes('field ids')) return /\b(?:field id|field_ids|fields:|field:)\b/i.test(body);
-  if (signalText.includes('worker id')) return /\bworker\b.{0,12}\bid\b/i.test(body);
-  if (signalText.includes('ticket id')) return /\bticket\b.{0,12}\bid\b/i.test(body);
-  if (signalText.includes('export id')) return /\bexport\b.{0,12}\bid\b/i.test(body);
+  if (signalText.includes('timestamp')) return hasNormalizedTerm('timestamp') ||
+    hasNormalizedTerm('generated') ||
+    hasNormalizedTerm('exported') ||
+    hasNormalizedTerm('saved') ||
+    hasNormalizedTerm('received') ||
+    hasNormalizedTerm('updated') ||
+    hasNormalizedTerm('created');
+  if (signalText.includes('status')) return hasNormalizedTerm('status');
+  if (signalText.includes('field ids')) return hasNormalizedTerm('field id') ||
+    hasNormalizedTerm('field ids') ||
+    hasNormalizedTerm('fields') ||
+    hasNormalizedTerm('field');
+  if (signalText.includes('worker id')) return hasNormalizedTerm('worker id');
+  if (signalText.includes('ticket id')) return hasNormalizedTerm('ticket id');
+  if (signalText.includes('export id')) return hasNormalizedTerm('export id');
+  if (signalText.includes('blank phone') || signalText.includes('phone state')) {
+    return hasNormalizedTerm('phone null') ||
+      hasNormalizedTerm('phone blank') ||
+      hasNormalizedTerm('phone field blank') ||
+      hasNormalizedTerm('phone field state blank');
+  }
   if (signalText.includes('signature block')) {
     return /\n(?:sincerely|regards|best|thanks|thank you),?\s*\n[A-Z][A-Za-z .'-]+/i.test(body);
   }

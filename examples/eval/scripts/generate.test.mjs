@@ -200,6 +200,7 @@ test('document prompt includes file type instructions and missing facts', () => 
 
   assert.match(prompt, /Output format: valid JSON only/);
   assert.match(prompt, /Do not wrap JSON in markdown fences/);
+  assert.match(prompt, /Do not comment on, explain, or justify absent person details/);
   assert.match(prompt, /contact.phone/);
   assert.match(prompt, /Samir Arun Desai/);
 });

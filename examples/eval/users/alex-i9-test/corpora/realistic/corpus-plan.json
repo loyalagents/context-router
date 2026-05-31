@@ -22,7 +22,7 @@
     "employer": {
       "hrCoordinator": "Lena Ortiz",
       "onboardingSystem": "Northstar Onboard",
-      "recruitingInbox": "people-ops-cascadia-hiring-cooperat@example.test",
+      "recruitingInbox": "people-ops-cascadia-hiring-cooperative@example.test",
       "workerId": "CHR-53242",
       "officeLabel": "People Operations Hub"
     },
@@ -33,7 +33,7 @@
     },
     "utility": {
       "provider": "Metroline Energy",
-      "exportId": "WUS-EXP-U1486X252",
+      "exportId": "ME-EXP-U1486X252",
       "serviceAccountSuffix": "3341"
     },
     "identityCapture": {
@@ -415,13 +415,13 @@
           "field ids",
           "saved timestamp",
           "workflow status",
-          "native blank phone state"
+          "blank phone field"
         ],
         "safeDetailMenu": [
           "task status",
           "signature pending cue",
           "reviewer routing",
-          "blank/null phone state"
+          "null phone field"
         ],
         "riskyDetailMenu": [
           "new user phone number",

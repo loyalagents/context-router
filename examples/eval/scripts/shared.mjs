@@ -133,6 +133,10 @@ export function factValueVariants(factKey, value) {
     variants.add(`A ${digits}`);
   }
 
+  if (factKey === 'workAuthorization.i94AdmissionNumber' && digits.length > 0) {
+    variants.add(digits);
+  }
+
   if (DATE_FACT_KEYS.has(factKey)) {
     for (const variant of dateVariants(raw)) {
       variants.add(variant);
@@ -191,6 +195,9 @@ export function isHighConfidenceFactKey(factKey) {
     factKey === 'employment.title' ||
     factKey === 'employment.startDate' ||
     factKey === 'workAuthorization.uscisANumber' ||
+    factKey === 'workAuthorization.workAuthorizationExpirationDate' ||
+    factKey === 'workAuthorization.i94AdmissionNumber' ||
+    factKey === 'workAuthorization.foreignPassportNumber' ||
     factKey === 'workAuthorization.citizenshipStatus'
   );
 }
@@ -412,6 +419,8 @@ function requiresTokenBoundary(factKey, normalizedVariant) {
     factKey === 'address.current.unit' ||
     factKey === 'employment.title' ||
     factKey === 'workAuthorization.uscisANumber' ||
+    factKey === 'workAuthorization.i94AdmissionNumber' ||
+    factKey === 'workAuthorization.foreignPassportNumber' ||
     (factKey === 'address.current.state' && normalizedVariant.length === 2)
   );
 }

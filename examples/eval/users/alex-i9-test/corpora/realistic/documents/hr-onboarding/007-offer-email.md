@@ -1,4 +1,4 @@
-From: Lena Ortiz <people-ops-cascadia-hiring-cooperat@example.test>
+From: Lena Ortiz <people-ops-cascadia-hiring-cooperative@example.test>
 To: alex.rivera@cascadiahiring.example.test
 Date: 2026-05-22T09:13:00-07:00
 Subject: Cascadia Hiring Cooperative offer details and onboarding setup

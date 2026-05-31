@@ -23,4 +23,4 @@ Apt 5C
 Portland, OR 97214
 
 Review notes:
-The operator accepted this OCR transcript as current identity and residence evidence for the onboarding packet. The card image remained in the secure upload queue, while this text export carried only the fields needed for downstream review. No telephone value was supplied by the worker or inferred by the OCR pass.
+The operator accepted this OCR transcript as current identity and residence evidence for the onboarding packet. The card image remained in the secure upload queue, while this text export carried only the fields needed for downstream review.
