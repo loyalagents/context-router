@@ -4,7 +4,6 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { manifestFromCorpusPlan } from './generate.mjs';
 import { runRepairGeneration } from './repair-generation.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,8 +12,10 @@ const repoRoot = path.resolve(__dirname, '../../..');
 
 test('repair-generation regenerates only documents with validation failures', async (t) => {
   const root = await copyRepo(t);
-  const { previewRoot, doc } = await writeRepairFixture(t, root);
+  const { previewRoot, corpusRoot, doc } = await writeRepairFixture(t, root);
   const calls = [];
+  const manifestPath = path.join(corpusRoot, 'manifest.json');
+  const originalManifestText = await readFile(manifestPath, 'utf8');
 
   const result = await runRepairGeneration({
     repoRoot: root,
@@ -48,6 +49,7 @@ test('repair-generation regenerates only documents with validation failures', as
   });
 
   assert.equal(result.exitCode, 0, result.errorMessage);
+  assert.equal(await readFile(manifestPath, 'utf8'), originalManifestText);
   assert.deepEqual(calls.map((call) => call.docId), [doc.id]);
   assert.match(calls[0].prompt, /DOCUMENT_FACT_VALUE_MISSING/);
   assert.match(await readFile(path.join(previewRoot, doc.path), 'utf8'), /123456789/);
@@ -287,45 +289,6 @@ test('repair-generation refuses mixed document and non-document failures before 
   assert.match(result.errorMessage, /SEED_GENERATED_STALE/);
 });
 
-test('repair-generation refuses manifest and corpus plan document drift', async (t) => {
-  const root = await copyRepo(t);
-  const { previewRoot } = await writeRepairFixture(t, root);
-  const manifestPath = path.join(
-    root,
-    'examples/eval/users/samir-desai/corpora/repair-test/manifest.json',
-  );
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-  manifest.documents[0].id = 'samir-desai-repair-test-drifted';
-  manifest.documents[0].path = 'documents/identity/drifted-i9-profile.md';
-  await writeJson(manifestPath, manifest);
-  let calls = 0;
-
-  const result = await runRepairGeneration({
-    repoRoot: root,
-    args: [
-      '--user',
-      'samir-desai',
-      '--corpus',
-      'repair-test',
-      '--from',
-      previewRoot,
-      '--model',
-      'unit-model',
-      '--max-attempts',
-      '1',
-    ],
-    generateDocument: async () => {
-      calls += 1;
-      return 'should not be used\n';
-    },
-  });
-
-  assert.equal(result.exitCode, 1);
-  assert.equal(calls, 0);
-  assert.match(result.errorMessage, /does not match any corpus-plan document/);
-  assert.match(result.errorMessage, /Regenerate manifest\.json/);
-});
-
 async function writeRepairFixture(
   t,
   root,
@@ -372,10 +335,12 @@ async function writeRepairFixture(
       challengeTags: ['i9-draft'],
     }),
   };
-  const corpusPlan = {
+  const manifest = {
     schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'repair-test',
+    seed: 'samir-desai__repair-test',
+    corpusKind: 'realistic-generated',
     forms: ['i-9'],
     purpose: 'Repair generation unit test.',
     artifactWorld: {
@@ -419,8 +384,7 @@ async function writeRepairFixture(
   };
 
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), corpusPlan);
-  await writeJson(path.join(corpusRoot, 'manifest.json'), manifestFromCorpusPlan(corpusPlan));
+  await writeJson(path.join(corpusRoot, 'manifest.json'), manifest);
   await mkdir(path.join(previewRoot, path.dirname(doc.path)), { recursive: true });
   await writeFile(
     path.join(previewRoot, doc.path),
@@ -439,7 +403,7 @@ async function writeRepairFixture(
         ].join('\n')
       : 'This preview is intentionally missing most declared facts.\n',
   );
-  return { previewRoot, doc };
+  return { previewRoot, corpusRoot, doc };
 }
 
 function sourceSpec(overrides = {}) {

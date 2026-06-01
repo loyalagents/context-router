@@ -71,20 +71,18 @@ It will not overwrite an existing scenario, even with `--force`.
 
 ## Adding A 10-Doc Realistic Starter Corpus
 
-For the current I-9 v1 path, start from a reviewed `profile.yaml`, then
-generate a deterministic 10-document `corpus-plan.json`. Treat the plan as the
-source of truth for per-document ids, paths, categories, fact keys, challenge
-tags, and briefs. `manifest.json` is generated from that plan and should not be
-hand-edited.
+For the current I-9 realistic path, start from a reviewed `profile.yaml`, then
+generate a deterministic 10-document V2 `manifest.json`. The manifest is the
+source of truth for per-document ids, paths, categories, fact contracts,
+evaluation roles, source specs, and artifact-world context.
 
-Create the plan and manifest:
+Create the manifest:
 
 ```bash
 pnpm eval:plan-corpus --user <userId> --corpus realistic --form i-9 --count 10
-pnpm eval:manifest --user <userId> --corpus realistic
 ```
 
-Before bodies exist, validate the plan only:
+Before bodies exist, validate the manifest contract only:
 
 ```bash
 pnpm eval:validate --user <userId> --corpus realistic --plan-only
@@ -115,16 +113,16 @@ Then promote the already-generated preview and validate:
 pnpm eval:promote-preview --user <userId> --corpus realistic --from /private/tmp/<userId>-preview
 ```
 
-Treat `corpus-plan.json` metadata as the intended corpus-truth contract. For
+Treat `manifest.json` metadata as the intended corpus-truth contract. For
 `extract` and `corroborate` documents, validation hard-fails when declared
-deterministic facts such as names, current address parts, DOB, ZIP, state,
-citizenship status, employer/title, or employment start date are missing from
-the body. If validation reports one of these errors, decide explicitly whether
-the metadata overclaimed or the generated body drifted; for generated corpora,
-the default repair is to make the body match the plan.
-`defaultForbiddenFactKeys[]` and per-document `forbiddenFactKeys[]` checks only
-run when a corpus plan is present, and forbidden values stay plan-owned rather
-than being copied into `manifest.json`.
+deterministic facts in `documents[].factContract.include` are missing from the
+body. These include names, current address parts, DOB, ZIP, state, citizenship
+status, employer/title, employment start date, and supported work-authorization
+identifiers. If validation reports one of these errors, decide explicitly
+whether the metadata overclaimed or the generated body drifted; for generated
+corpora, the default repair is to make the body match the manifest.
+Top-level `factContractDefaults.forbid` and per-document
+`factContract.forbid` values are also manifest-owned corpus-truth constraints.
 
 Before using a corpus for extraction benchmarking, inspect
 `validation-report.json` -> `corpusTruth`. It records, per document, which
@@ -136,11 +134,9 @@ means no exact or pattern check ran for that document/fact pair. Treat a
 passing report with zero hard failures as the corpus-truth readiness gate for
 the current deterministic layer, not as a backend extraction-quality score.
 
-If only plan metadata changed, regenerate the manifest without any AI calls:
-
-```bash
-pnpm eval:manifest --user <userId> --corpus realistic
-```
+If only manifest metadata changed, run `pnpm eval:validate --plan-only` first,
+then regenerate committed `validation-report.json` with `--write-report` after
+document validation passes.
 
 The generated documents are fixture artifacts. They become an extraction
 benchmark only after a later ingestion runner analyzes the documents and
@@ -201,7 +197,8 @@ for fields backed by `profile.yaml` facts and `mode: "skip"` for out-of-scope,
 manual-attestation, or unmapped fields.
 
 Use `render` hints when a PDF field needs a representation different from the
-raw profile value. V1 supports `digits-only`, used by the I-9 SSN field.
+raw profile value. The current renderer supports `digits-only`, used by the I-9
+SSN field.
 
 Run focused checks:
 
@@ -300,7 +297,7 @@ The DB-backed smoke path exercises the backend test-app harness and requires
 the backend test database. See the "Automated Smoke Check" section in
 `README.md` for the command sequence.
 
-## V1 Limitations
+## Current Limitations
 
 - Runner hydration is deterministic and service-based. It reads `profile.yaml`
   and generated seed preferences, then writes active preferences directly for

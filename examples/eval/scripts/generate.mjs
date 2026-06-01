@@ -9,12 +9,7 @@ import {
   effectiveForbiddenFactKeys,
   getFactValue,
   isFixtureId,
-  jsonText,
-  planDocumentAuthority,
-  planDocumentDetailTier,
-  planDocumentExpectedUse,
   planDocumentFactKeys,
-  planDocumentFreshness,
   setNestedValue,
   toPosixPath,
 } from './shared.mjs';
@@ -192,11 +187,11 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
   const corpusRoot = path.join(userRoot, 'corpora', options.corpusId);
   const outputRoot = options.out ? path.resolve(repoRoot, options.out) : corpusRoot;
   const profile = parseYaml(await readFile(path.join(userRoot, 'profile.yaml'), 'utf8'));
-  const corpusPlanPath = path.join(corpusRoot, 'corpus-plan.json');
-  const corpusPlan = JSON.parse(await readFile(corpusPlanPath, 'utf8'));
+  const manifestPath = path.join(corpusRoot, 'manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 
-  if (corpusPlan.userId !== options.userId || corpusPlan.corpusId !== options.corpusId) {
-    throw new Error('corpus-plan.json userId/corpusId must match CLI arguments.');
+  if (manifest.userId !== options.userId || manifest.corpusId !== options.corpusId) {
+    throw new Error('manifest.json userId/corpusId must match CLI arguments.');
   }
 
   const model = options.model ?? env.EVAL_GENERATION_MODEL;
@@ -205,7 +200,7 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
   }
 
   const selectedDocuments = selectDocuments({
-    corpusPlan,
+    corpus: manifest,
     outputRoot,
     limit: options.limit,
     ids: options.ids,
@@ -223,8 +218,8 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
       }));
 
   await runPool(selectedDocuments, options.concurrency, async (doc) => {
-    const prompt = buildDocumentPrompt({ profile, corpusPlan, doc });
-    const generatedText = await provider(prompt, { doc, corpusPlan, profile, model });
+    const prompt = buildDocumentPrompt({ profile, corpusPlan: manifest, doc });
+    const generatedText = await provider(prompt, { doc, corpusPlan: manifest, profile, model });
     const text = normalizeGeneratedText(generatedText, doc);
     if (typeof text !== 'string' || text.trim().length === 0) {
       throw new Error(`Generator returned empty text for document ${doc.id}.`);
@@ -243,15 +238,12 @@ async function generateCorpus(repoRoot, options, { env, generateDocument }) {
   if (options.out) return lines;
 
   const missing = [];
-  for (const doc of corpusPlan.documents ?? []) {
+  for (const doc of manifest.documents ?? []) {
     if (!(await fileExists(path.join(outputRoot, doc.path)))) missing.push(doc.id);
   }
   if (missing.length) {
-    throw new Error(`Cannot write manifest until all planned document bodies exist. Missing ids: ${missing.join(', ')}`);
+    throw new Error(`Cannot validate generated corpus until all manifest document bodies exist. Missing ids: ${missing.join(', ')}`);
   }
-
-  const manifestPath = path.join(corpusRoot, 'manifest.json');
-  await writeFile(manifestPath, jsonText(manifestFromCorpusPlan(corpusPlan)), 'utf8');
 
   const validation = await runValidation({
     repoRoot,
@@ -288,12 +280,20 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     corpusPlan.artifactWorld ?? {},
     (doc.sourceSpec?.timelineRefs ?? []).map((ref) => `timeline.${ref}`),
   );
+  const intentionallyMissingFactKeys = [
+    ...new Set(
+      (corpusPlan.intentionallyMissing ?? [])
+        .map((entry) => entry?.factKey)
+        .filter((factKey) => typeof factKey === 'string' && factKey.length > 0),
+    ),
+  ].sort();
 
   return [
     'Write the captured body of this source artifact.',
     '',
     'Return only the artifact body. Do not include markdown fences or explanatory wrapper text.',
     fileTypeRules(doc),
+    sourceFormatRules(doc),
     'Make the body look native to the source family and capture mode.',
     'Use the allowed source context only for incidental source metadata.',
     'Do not add new personal details for the user.',
@@ -313,8 +313,8 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     'Allowed source context:',
     JSON.stringify({ ...sourceWorld, ...timeline }, null, 2),
     '',
-    'Intentionally absent person details:',
-    JSON.stringify(corpusPlan.intentionallyMissing ?? [], null, 2),
+    'Intentionally absent person-detail paths:',
+    JSON.stringify(intentionallyMissingFactKeys, null, 2),
     '',
     'Required person details:',
     JSON.stringify(profileSlice, null, 2),
@@ -353,38 +353,15 @@ export function normalizeGeneratedText(text, doc) {
   return fence ? fence[1] : text;
 }
 
-export function manifestFromCorpusPlan(corpusPlan) {
-  return {
-    schemaVersion: 1,
-    userId: corpusPlan.userId,
-    corpusId: corpusPlan.corpusId,
-    seed: `${corpusPlan.userId}__${corpusPlan.corpusId}`,
-    forms: corpusPlan.forms ?? [],
-    purpose: corpusPlan.purpose,
-    intentionallyMissing: corpusPlan.intentionallyMissing ?? [],
-    documents: (corpusPlan.documents ?? []).map((doc) => ({
-      id: doc.id,
-      path: doc.path,
-      category: doc.category,
-      title: doc.title,
-      factKeys: planDocumentFactKeys(doc),
-      detailTier: planDocumentDetailTier(doc),
-      authority: planDocumentAuthority(doc),
-      freshness: planDocumentFreshness(doc),
-      expectedUse: planDocumentExpectedUse(doc),
-    })),
-  };
-}
-
 function selectDocuments({
-  corpusPlan,
+  corpus,
   outputRoot,
   limit,
   ids,
   regenerateIds,
   overwrite,
 }) {
-  let documents = [...(corpusPlan.documents ?? [])].sort((left, right) =>
+  let documents = [...(corpus.documents ?? [])].sort((left, right) =>
     left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
   );
 
@@ -451,6 +428,23 @@ function fileTypeRules(doc) {
     'Output format: Markdown-compatible text.',
     'Avoid using the exact same section structure across documents unless the document genre requires it.',
   ].join('\n');
+}
+
+function sourceFormatRules(doc) {
+  const lines = [
+    'When sourceSpec.lengthTarget is present, aim to keep the body within its minChars/maxChars range.',
+    'Email artifacts must use raw email headers exactly like From:, To:, Date:, and Subject:, not Markdown-bold header labels.',
+    'OCR and plain-text exports should use native label/value lines, OCR-like blocks, or raw export text instead of Markdown headings or bold labels.',
+    'JSON and YAML exports should use native field ids or keys and avoid prose comments.',
+  ];
+
+  if (planDocumentFactKeys(doc).includes('identity.legalName')) {
+    lines.push(
+      'Because identity.legalName is required, include either a native combined legal-name field or clearly labeled first/middle/last name fields.',
+    );
+  }
+
+  return lines.join('\n');
 }
 
 export async function generateWithVertex(prompt, { env, model, temperature }) {

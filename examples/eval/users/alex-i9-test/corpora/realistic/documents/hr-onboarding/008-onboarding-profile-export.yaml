@@ -1,33 +1,115 @@
-source_system: Northstar Onboard
-created_timestamp: "2026-05-27T08:44:00-07:00"
-updated_timestamp: "2026-06-03T14:18:00-07:00"
-worker_id: CHR-53242
-worker_id_label: "worker id CHR-53242"
-profile_status: active_pre_start
-worker_profile:
-  legal_name: Alex Jordan Rivera
-  first_name: Alex
-  last_name: Rivera
-  company: Cascadia Hiring Cooperative
-  title: Operations Specialist
-  start_date: "2026-06-17"
-  personal_email: alex.rivera@example.test
-  work_email: alex.rivera@cascadiahiring.example.test
-task_status_list:
-  - task: offer_acceptance
-    status: complete
-    updated_timestamp: "2026-05-24T16:02:00-07:00"
-  - task: i9_section_one
-    status: saved_not_signed
-    updated_timestamp: "2026-06-03T14:18:00-07:00"
-  - task: identity_upload
-    status: received
-    updated_timestamp: "2026-06-03T14:27:00-07:00"
-  - task: address_confirmation
-    status: complete
-    updated_timestamp: "2026-06-04T18:06:00-07:00"
+system: Northstar Onboard
+exportTimestamp: 2026-06-04T11:20:00Z
+recordType: NewHireProfile
+workerId: CHR-53242
+profile:
+  firstName: Alex
+  lastName: Rivera
+  legalName: Alex Jordan Rivera
+  contact:
+    personalEmail: alex.rivera@example.test
+    workEmail: alex.rivera@cascadiahiring.example.test
+employmentDetails:
+  companyName: Cascadia Hiring Cooperative
+  jobTitle: Operations Specialist
+  employmentType: Full-Time
+  startDate: 2026-06-17
+  department: Operations
+  manager: null
+  hrCoordinator: Lena Ortiz
+onboardingStatus:
+  overallStatus: InProgress
+  createdAt: 2026-05-27T08:44:00-07:00
+  lastUpdatedAt: 2026-06-03T14:18:00-07:00
+  tasks:
+    - id: tsk_101
+      name: Review Offer Letter
+      status: Completed
+      completedAt: 2026-05-27T09:15:21-07:00
+      assignedTo: candidate
+    - id: tsk_102
+      name: Personal Information
+      status: Completed
+      completedAt: 2026-05-27T09:30:45-07:00
+      assignedTo: candidate
+    - id: tsk_103
+      name: Form I-9, Section 1
+      status: Completed
+      completedAt: 2026-06-03T14:18:00-07:00
+      assignedTo: candidate
+      notes: Draft saved by candidate. Pending document verification on Day 1.
+    - id: tsk_104
+      name: Federal Tax Withholding (W-4)
+      status: Completed
+      completedAt: 2026-06-03T14:25:10-07:00
+      assignedTo: candidate
+    - id: tsk_105
+      name: State Tax Withholding
+      status: Pending
+      dueDate: 2026-06-17
+      assignedTo: candidate
+    - id: tsk_106
+      name: Direct Deposit Setup
+      status: Pending
+      dueDate: 2026-06-17
+      assignedTo: candidate
+    - id: tsk_107
+      name: Emergency Contact Information
+      status: Completed
+      completedAt: 2026-05-27T09:35:00-07:00
+      assignedTo: candidate
+    - id: tsk_108
+      name: Employee Handbook Acknowledgement
+      status: NotStarted
+      dueDate: 2026-06-19
+      assignedTo: candidate
+    - id: tsk_201
+      name: Background Check
+      status: Completed
+      completedAt: 2026-06-01T16:00:00-07:00
+      assignedTo: system
+      notes: Cleared.
 provisioning:
-  office_label: People Operations Hub
-  hr_coordinator: Lena Ortiz
-  review_queue: onboarding_pre_start
-  phone_field_state: blank
+  itServices:
+    - service: Email Account
+      status: Provisioned
+      details: alex.rivera@cascadiahiring.example.test
+    - service: SSO/Okta
+      status: Staged
+    - service: Laptop Shipment
+      status: Pending Fulfillment
+  facilities:
+    - service: Badge Access
+      status: Pending
+      details: Requires photo to be uploaded.
+reviewQueues:
+  - queue: I-9 Verification
+    status: Pending
+    assignedTo: Hiring Manager
+    notes: Awaiting start date for in-person document review.
+  - queue: HR Final Review
+    status: Pending
+    assignedTo: Lena Ortiz
+    notes: Awaiting completion of all candidate-facing tasks.
+auditLog:
+  - timestamp: 2026-05-27T08:44:00-07:00
+    event: Profile created. Onboarding invitation sent to alex.rivera@example.test.
+    actor: system
+  - timestamp: 2026-05-27T09:15:21-07:00
+    event: Candidate completed task 'Review Offer Letter'.
+    actor: Alex Jordan Rivera
+  - timestamp: 2026-05-27T09:30:45-07:00
+    event: Candidate completed task 'Personal Information'.
+    actor: Alex Jordan Rivera
+  - timestamp: 2026-06-01T10:05:00-07:00
+    event: Background check initiated.
+    actor: system
+  - timestamp: 2026-06-01T16:00:00-07:00
+    event: Background check status updated to 'Completed'.
+    actor: system
+  - timestamp: 2026-06-03T14:18:00-07:00
+    event: Candidate completed task 'Form I-9, Section 1'.
+    actor: Alex Jordan Rivera
+  - timestamp: 2026-06-03T14:25:10-07:00
+    event: Candidate completed task 'Federal Tax Withholding (W-4)'.
+    actor: Alex Jordan Rivera

@@ -150,9 +150,6 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
   const userRoot = path.join(evalRoot, 'users', options.userId);
   const corpusRoot = path.join(userRoot, 'corpora', options.corpusId);
   const profile = parseYaml(await readFile(path.join(userRoot, 'profile.yaml'), 'utf8'));
-  const corpusPlan = JSON.parse(
-    await readFile(path.join(corpusRoot, 'corpus-plan.json'), 'utf8'),
-  );
   const manifest = JSON.parse(await readFile(path.join(corpusRoot, 'manifest.json'), 'utf8'));
   const model = options.model ?? env.EVAL_GENERATION_MODEL;
 
@@ -178,7 +175,6 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
     const { failedDocs, repairableIssueIndexes } = groupRepairableIssues(
       validation.issues,
       manifest,
-      corpusPlan,
     );
     const unrepairableBlockingIssues = getUnrepairableBlockingIssues(
       validation.issues,
@@ -187,7 +183,6 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
     const warningDocumentIds = getRepairableWarningDocumentIds(
       validation.issues,
       manifest,
-      corpusPlan,
     );
     attempts.push({
       attempt,
@@ -228,7 +223,7 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
       repairedDocumentIds.add(doc.id);
       const prompt = await buildRepairPrompt({
         profile,
-        corpusPlan,
+        corpusPlan: manifest,
         doc,
         issues,
         previewRoot,
@@ -236,7 +231,7 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
       });
       const generatedText = await provider(prompt, {
         doc,
-        corpusPlan,
+        corpusPlan: manifest,
         profile,
         model,
         repairIssues: issues,
@@ -257,7 +252,7 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
   const {
     failedDocs: finalFailedDocs,
     repairableIssueIndexes: finalRepairableIssueIndexes,
-  } = groupRepairableIssues(finalValidation.issues, manifest, corpusPlan);
+  } = groupRepairableIssues(finalValidation.issues, manifest);
   attempts.push({
     attempt: options.maxAttempts,
     phase: 'post-repair-validation',
@@ -266,7 +261,6 @@ async function repairGeneration(repoRoot, options, { env, generateDocument }) {
     warningDocumentIds: getRepairableWarningDocumentIds(
       finalValidation.issues,
       manifest,
-      corpusPlan,
     ),
     unrepairableIssueCount: getUnrepairableBlockingIssues(
       finalValidation.issues,
@@ -320,22 +314,12 @@ async function validatePreview(repoRoot, options, previewRoot) {
   });
 }
 
-function groupRepairableIssues(issues, manifest, corpusPlan) {
-  const planDocById = new Map((corpusPlan.documents ?? []).map((doc) => [doc.id, doc]));
-  const planDocByPath = new Map((corpusPlan.documents ?? []).map((doc) => [doc.path, doc]));
-  const entries = (manifest.documents ?? []).map((manifestDoc) => {
-    const planDoc = planDocById.get(manifestDoc.id) ?? planDocByPath.get(manifestDoc.path);
-    if (!planDoc) {
-      throw new Error(
-        `Manifest document ${manifestDoc.id ?? manifestDoc.path} does not match any corpus-plan document. Regenerate manifest.json from corpus-plan.json before repairing.`,
-      );
-    }
-    return {
-      manifestDoc,
-      doc: planDoc,
-      issues: [],
-    };
-  });
+function groupRepairableIssues(issues, manifest) {
+  const entries = (manifest.documents ?? []).map((doc) => ({
+    manifestDoc: doc,
+    doc,
+    issues: [],
+  }));
   const byId = new Map(entries.map((entry) => [entry.manifestDoc.id, entry]));
   const byIndex = new Map(entries.map((entry, index) => [String(index), entry]));
   const repairableIssueIndexes = new Set();
@@ -366,22 +350,12 @@ function groupRepairableIssues(issues, manifest, corpusPlan) {
   };
 }
 
-function getRepairableWarningDocumentIds(issues, manifest, corpusPlan) {
-  const planDocById = new Map((corpusPlan.documents ?? []).map((doc) => [doc.id, doc]));
-  const planDocByPath = new Map((corpusPlan.documents ?? []).map((doc) => [doc.path, doc]));
-  const entries = (manifest.documents ?? []).map((manifestDoc) => {
-    const planDoc = planDocById.get(manifestDoc.id) ?? planDocByPath.get(manifestDoc.path);
-    if (!planDoc) {
-      throw new Error(
-        `Manifest document ${manifestDoc.id ?? manifestDoc.path} does not match any corpus-plan document. Regenerate manifest.json from corpus-plan.json before repairing.`,
-      );
-    }
-    return {
-      manifestDoc,
-      doc: planDoc,
-      hasWarning: false,
-    };
-  });
+function getRepairableWarningDocumentIds(issues, manifest) {
+  const entries = (manifest.documents ?? []).map((doc) => ({
+    manifestDoc: doc,
+    doc,
+    hasWarning: false,
+  }));
   const byId = new Map(entries.map((entry) => [entry.manifestDoc.id, entry]));
   const byIndex = new Map(entries.map((entry, index) => [String(index), entry]));
 

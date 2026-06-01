@@ -1,16 +1,50 @@
 From: announcements@example.test
-To: residents-list@example.test
-Date: 2026-05-30T07:19:00-07:00
+To: Valued Resident <residents@example.test>
+Date: Sat, 30 May 2026 07:19:00 -0700
 Subject: Monthly resident update and local event calendar
 
-Good morning,
+Hello Neighbors,
 
-This month's community bulletin includes the seasonal transit detour notice, a reminder about the Saturday tool-share pickup window, and a list of library events hosted downtown. The message was sent to a broad resident announcement list and does not contain an individual lease record, employer record, identity document, onboarding profile, or form data.
+As we head into June and the official start of summer, we have a few community updates and a calendar full of fun local events to share.
 
-Calendar items:
-Saturday 9:00 AM - neighborhood tool-share pickup
-Tuesday 6:30 PM - library financial-literacy workshop
-Thursday 5:00 PM - district transit board listening session
+**Community Announcements & Reminders**
 
-Footer:
-You received this because a community announcements list subscribed to the public update feed. Unsubscribe or privacy requests can be handled through the generic list portal. Please do not reply with personal identity documents or employment forms.
+Pool Opening:
+The community pool will officially open for the season on Monday, June 1st! The hours will be 10:00 AM to 9:00 PM daily, weather permitting. Please remember that all residents need their access fobs for entry. A copy of the pool rules is posted on the gate. Let's all work together to keep it a safe and enjoyable space for everyone.
+
+Landscaping & Grounds Maintenance:
+Our landscaping partners will be on the property during the first full week of June to perform seasonal planting and lawn treatments. Please ensure your personal items are cleared from patio areas and walkways to allow them to work efficiently.
+
+Parking Policy Reminder:
+This is a friendly reminder to all residents to be mindful of our community parking policies. Please use your assigned parking spaces. Guest parking is for temporary visitors and is located in the designated "Visitor" spots. Vehicles parked improperly in fire lanes, on grass, or in another resident's assigned spot are subject to towing at the owner's expense.
+
+Waste Management:
+We've noticed an increase in large cardboard boxes being left unfolded in the recycling area. Please break down all boxes before placing them in the bins to maximize space for all residents. For bulk item disposal (furniture, appliances, etc.), you must schedule a special pickup directly with the city's waste services.
+
+**June 2026 Event Calendar**
+
+Community Yard Sale
+Saturday, June 6th | 8:00 AM - 1:00 PM
+Clean out your clutter and find new treasures! Residents are invited to set up in their driveways or the designated common area near the clubhouse.
+
+Outdoor Movie Night on the Green
+Friday, June 12th | Movie starts at dusk (approx. 8:45 PM)
+Join us on the main lawn for a family-friendly movie under the stars. We'll be showing a popular animated classic. Bring your own blankets and lawn chairs. Free popcorn will be provided while supplies last!
+
+Summer Solstice Community BBQ
+Saturday, June 20th | 5:00 PM - 8:00 PM at the Pavilion
+Let's celebrate the longest day of the year! The resident association will provide grilled hot dogs, burgers, and veggie burgers. We ask that you RSVP at the office by June 15th and consider bringing a side dish or dessert to share.
+
+We look forward to a great month and hope to see you at these events!
+
+Best regards,
+
+Your Community Management Team
+
+------------------------------------------------------------------
+This email was sent to all residents of the community.
+You are receiving this message because you are a registered resident.
+
+To stop receiving these monthly updates, please click here to unsubscribe.
+
+Community Management | 123 Community Drive, Anytown | office@example.test

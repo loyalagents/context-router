@@ -10,5 +10,183 @@
     "errors": 0,
     "warnings": 0
   },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 6,
+      "factsProvenPresent": 23,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 0,
+      "factsProvenAbsent": 0,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 18,
+      "skippedAbsenceChecks": 6,
+      "invalidAbsenceChecks": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": []
+    },
+    "documents": [
+      {
+        "id": "001",
+        "path": "documents/address-contact/001-usps-address-confirmation.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "002",
+        "path": "documents/identity/002-name-history-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.middleInitial",
+            "identity.otherLastNames"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "003",
+        "path": "documents/address-contact/003-current-lease-summary.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
+            "contact.email",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "004",
+        "path": "documents/identity/004-birth-record-summary.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.dateOfBirth",
+            "identity.legalName"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "005",
+        "path": "documents/identity/005-ssn-card-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      },
+      {
+        "id": "006",
+        "path": "documents/work-authorization/006-lawful-permanent-resident-note.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus",
+            "workAuthorization.uscisANumber"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone",
+            "workAuthorization.foreignPassportNumber",
+            "workAuthorization.i94AdmissionNumber"
+          ],
+          "skipped": [
+            "workAuthorization.workAuthorizationExpirationDate"
+          ],
+          "invalid": []
+        }
+      }
+    ]
+  },
   "issues": []
 }

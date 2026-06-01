@@ -9,15 +9,14 @@
     "userId",
     "corpusId",
     "seed",
+    "corpusKind",
     "forms",
     "purpose",
     "intentionallyMissing",
     "documents"
   ],
   "properties": {
-    "schemaVersion": {
-      "const": 1
-    },
+    "schemaVersion": { "const": 2 },
     "userId": {
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -30,9 +29,13 @@
       "type": "string",
       "pattern": "^[a-z0-9_-]+$"
     },
+    "corpusKind": {
+      "enum": ["realistic-generated", "template-smoke"]
+    },
     "forms": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string",
         "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -42,6 +45,34 @@
       "type": "string",
       "minLength": 1
     },
+    "artifactWorld": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["schemaVersion", "seed", "timeline"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "seed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeline": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "factContractDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forbid"],
+      "properties": {
+        "forbid": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        }
+      }
+    },
     "intentionallyMissing": {
       "type": "array",
       "items": {
@@ -49,15 +80,11 @@
         "additionalProperties": false,
         "required": ["factKey", "forms", "reason", "expectedBehavior"],
         "properties": {
-          "factKey": {
-            "type": "string"
-          },
+          "factKey": { "type": "string" },
           "forms": {
             "type": "array",
             "minItems": 1,
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           },
           "reason": {
             "type": "string",
@@ -72,62 +99,179 @@
     },
     "documents": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "path",
-          "category",
-          "title",
-          "factKeys",
-          "detailTier",
-          "authority",
-          "freshness",
-          "expectedUse"
-        ],
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/document" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "corpusKind": { "const": "realistic-generated" } },
+        "required": ["corpusKind"]
+      },
+      "then": {
+        "required": ["artifactWorld", "factContractDefaults"],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "path": {
-            "type": "string"
-          },
-          "category": {
-            "enum": [
-              "identity",
-              "address-contact",
-              "hr-onboarding",
-              "payroll-tax",
-              "work-authorization",
-              "employer-context",
-              "partial-conflicting",
-              "noise"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "factKeys": {
-            "type": "array",
+          "documents": {
             "items": {
-              "type": "string"
+              "required": ["outputExtension", "sourceSpec"]
             }
-          },
-          "detailTier": {
-            "enum": ["hero", "medium", "brief"]
-          },
-          "authority": {
-            "enum": ["high", "medium", "low", "none"]
-          },
-          "freshness": {
-            "enum": ["current", "stale", "mixed", "unknown"]
-          },
-          "expectedUse": {
-            "enum": ["extract", "corroborate", "guardrail", "ignore"]
-          },
-          "template": {
-            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "corpusKind": { "const": "template-smoke" } },
+        "required": ["corpusKind"]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "required": ["artifactWorld"] },
+            { "required": ["factContractDefaults"] }
+          ]
+        },
+        "properties": {
+          "documents": {
+            "items": {
+              "not": { "required": ["sourceSpec"] }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "category",
+        "title",
+        "factContract",
+        "evaluationRole"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "category": {
+          "enum": [
+            "identity",
+            "address-contact",
+            "hr-onboarding",
+            "payroll-tax",
+            "work-authorization",
+            "employer-context",
+            "partial-conflicting",
+            "noise"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputExtension": {
+          "enum": ["md", "txt", "json", "yaml"]
+        },
+        "template": {
+          "type": "string"
+        },
+        "sourceSpec": { "$ref": "#/$defs/sourceSpec" },
+        "factContract": { "$ref": "#/$defs/factContract" },
+        "evaluationRole": { "$ref": "#/$defs/evaluationRole" }
+      }
+    },
+    "sourceSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "sourceFamily",
+        "captureMode",
+        "timelineRefs",
+        "worldRefs",
+        "nativeSignals",
+        "safeDetailMenu",
+        "riskyDetailMenu",
+        "lengthTarget"
+      ],
+      "properties": {
+        "artifactType": { "type": "string", "minLength": 1 },
+        "sourceFamily": { "type": "string", "minLength": 1 },
+        "captureMode": { "type": "string", "minLength": 1 },
+        "timelineRefs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "worldRefs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "nativeSignals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "safeDetailMenu": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "riskyDetailMenu": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "lengthTarget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minChars", "maxChars"],
+          "properties": {
+            "minChars": { "type": "integer", "minimum": 1 },
+            "maxChars": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "factContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include", "forbid"],
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "forbid": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "evaluationRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detailTier",
+        "authority",
+        "freshness",
+        "expectedUse",
+        "challengeTags"
+      ],
+      "properties": {
+        "detailTier": { "enum": ["hero", "medium", "brief"] },
+        "authority": { "enum": ["high", "medium", "low", "none"] },
+        "freshness": { "enum": ["current", "stale", "mixed", "unknown"] },
+        "expectedUse": {
+          "enum": ["extract", "corroborate", "guardrail", "ignore"]
+        },
+        "challengeTags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           }
         }
       }

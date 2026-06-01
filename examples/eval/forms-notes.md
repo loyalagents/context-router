@@ -22,9 +22,9 @@ Run `pnpm eval:manifests` after adding or replacing PDFs.
 
 ## Current Eval Fixture Coverage
 
-The current canonical user fixture is Elena Marquez. Her realistic corpus is
-focused on I-9 Section 1 and uses the V1 eval profile, manifest, scenario, and
-field-map contracts.
+The current canonical user fixtures are Elena Marquez, Samir Desai, and Alex
+I-9 Test. Their corpora focus on I-9 Section 1 and use the current eval
+profile, manifest, scenario, and field-map contracts.
 
 For evaluation and demos, signatures, certifications, legal attestations,
 consent checkboxes, and anything requiring a current legal assertion should be

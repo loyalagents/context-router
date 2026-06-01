@@ -1,26 +1,75 @@
-OCR EXPORT RECORD
-Upload batch id: UPL-F23463
-Source filename: IMG_7879_license_front.jpg
-Source system: Northstar Onboard
-Worker id: CHR-53242
-Captured at: 2026-06-03T14:27:00-07:00
-Document status: front image received, automated review complete
-Issuing state: OR
-OCR confidence: 0.982 overall; address line confidence 0.971
+// OCR System Transcript //
+Source System: Northstar Onboard
+Worker ID: CHR-53242
+Upload Batch ID: UPL-F23463
+Source Filename: IMG_7879_license_front.jpg
+Capture Timestamp: 2026-06-03T14:27:00-07:00
+Processing Queue Status: PENDING_REVIEW
+OCR Engine: VisionCore v4.2.1
+Confidence Score (Overall): 98.7%
+Document Status: VALID, NOT EXPIRED
+Document Type: DRIVER LICENSE
+Issuing State: OR
+--------------------------------------------------
+[OCR FIELD EXTRACTION]
 
-Document type observed by capture queue: state driver license, front side.
-License metadata: class C, restriction code none visible, license number redacted by the intake service.
+DOCUMENT HEADER:
+  OREGON DRIVER LICENSE
+  THE BEAVER STATE
 
-Visible name block:
-Alex Jordan Rivera
+LICENSE NUMBER:
+  DLN: *******23
 
-Visible birth date:
-March 14, 1992
+LICENSE DETAILS:
+  CLASS: C
+  EXP:   03-14-2030
+  ISS:   03-10-2022
+  RSTR:  A - CORRECTIVE LENSES
+  END:   NONE
 
-Visible residence address:
-7428 Evergreen Terrace
-Apt 5C
-Portland, OR 97214
+HOLDER INFORMATION:
+  LN:  RIVERA
+  FN:  ALEX JORDAN
 
-Review notes:
-The operator accepted this OCR transcript as current identity and residence evidence for the onboarding packet. The card image remained in the secure upload queue, while this text export carried only the fields needed for downstream review.
+ADDRESS:
+  7428 EVERGREEN TERRACE APT 5C
+  PORTLAND, OR 97214
+
+PERSONAL DETAILS:
+  DOB: 03-14-1992
+  SEX: M
+  HGT: 5-11
+  WGT: 180
+  EYES: BRN
+  HAIR: BLK
+
+--------------------------------------------------
+[RAW 2D BARCODE DATA - PDF417]
+
+@
+^AAMVA6360090102DL0041028AZO63202303DLDCAC
+^ANSI 6360090102DL0041028AZO63202303DLDCAC
+^DAQRIVERA,ALEX,JORDAN
+^DAG7428 EVERGREEN TERRACE APT 5C
+^DAIPORTLAND
+^DAJOR
+^DAK97214
+^DBB03141992
+^DBA03142030
+^DBCM
+^DAU511
+^DAW180
+^DAYBRN
+^DAZBLK
+^DC*******23
+^DCDNONE
+^DCANONE
+^DCBNONE
+^DDB03102022
+^DDEN
+^DDFN
+^DDGN
+^ZCAOR
+^ZCB
+^ZCC
+^ZCD

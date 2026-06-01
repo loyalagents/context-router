@@ -1,14 +1,25 @@
-SUPPORT TICKET EXPORT
-Ticket id: TKT-4892
-Source system: Northstar Onboard
-Worker id: CHR-53242
-Opened: 2024-11-15T10:20:00-08:00
-Status: closed, superseded by later onboarding profile
+TICKET ID: 8A-54920-RTS
+STATUS:      CLOSED - SUPERSEDED
+DATE:        2024-11-15 10:20:00 UTC-8
+SYSTEM:      Automated Mail Return Service
+SUBJECT:     Returned Mail for Employee CHR-53242
 
-Event log:
-2024-11-15T10:20:00-08:00 - returned mail notice was attached to an inactive pre-hire contact record.
-2024-11-18T09:05:00-08:00 - support marked the address record stale and blocked it from current form prefills.
-2026-05-27T08:44:00-07:00 - Northstar Onboard created a new worker profile, making this old ticket non-authoritative.
+A mail item sent to the address on file for employee CHR-53242 has been returned by the postal service.
 
-Stale/superseded cue:
-Do not use this ticket for current identity, address, email, work authorization, or I-9 field completion. The original contact values were removed from this export and replaced by redaction notes because the ticket belongs to an inactive record.
+DETAILS:
+- Employee ID: CHR-53242
+- Source System: Northstar Onboard
+- Item Description: New Hire Welcome Kit
+- Mail Status: RETURN TO SENDER - UNDELIVERABLE
+
+The address used at the time of mailing was:
+**** Evergreen Terrace
+Springfield, IL 62704 USA
+
+NOTE: This address is considered stale and has been flagged in the system. DO NOT USE THIS ADDRESS for future mailings. This ticket is for archival purposes only. A new address has since been provided and verified in the employee's primary record.
+
+EVENT LOG:
+- 2024-11-15 10:20:00: Ticket generated. Return notification received from USPS.
+- 2024-11-15 10:21:34: Address flagged as invalid in HRIS. Automated request for address update sent to employee.
+- 2024-11-18 09:30:00: New address provided by employee.
+- 2024-11-18 15:45:10: Ticket status changed to CLOSED. Record superseded by new information.

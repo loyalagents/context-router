@@ -129,7 +129,7 @@ const I9_BASE_SOURCE_SPECS = [
         'transcription confidence',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 450, maxChars: 1100 },
+      lengthTarget: { minChars: 450, maxChars: 1300 },
     },
   },
   {
@@ -387,7 +387,7 @@ const I9_BASE_SOURCE_SPECS = [
         'review queue',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 800, maxChars: 2200 },
+      lengthTarget: { minChars: 800, maxChars: 3200 },
     },
   },
   {
@@ -425,7 +425,7 @@ const I9_BASE_SOURCE_SPECS = [
         'do-not-use note',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 350, maxChars: 1100 },
+      lengthTarget: { minChars: 350, maxChars: 1400 },
     },
   },
   {
@@ -469,7 +469,7 @@ const I9_BASE_SOURCE_SPECS = [
         'no user-specific identifiers',
       ],
       riskyDetailMenu: COMMON_RISKY_DETAILS,
-      lengthTarget: { minChars: 700, maxChars: 1800 },
+      lengthTarget: { minChars: 700, maxChars: 2600 },
     },
   },
 ];
@@ -492,7 +492,7 @@ export async function runPlanCorpus({
   }
 
   try {
-    const lines = await writeCorpusPlan(repoRoot, parsed.options);
+    const lines = await writeCorpusManifest(repoRoot, parsed.options);
     return { exitCode: 0, repoRoot, lines };
   } catch (error) {
     return {
@@ -563,14 +563,14 @@ export function formatResult(result) {
   return ['eval plan-corpus passed', ...result.lines].join('\n');
 }
 
-async function writeCorpusPlan(repoRoot, options) {
+async function writeCorpusManifest(repoRoot, options) {
   const evalRoot = path.join(repoRoot, 'examples/eval');
   const userRoot = path.join(evalRoot, 'users', options.userId);
   const corpusRoot = path.join(userRoot, 'corpora', options.corpusId);
-  const planPath = path.join(corpusRoot, 'corpus-plan.json');
+  const manifestPath = path.join(corpusRoot, 'manifest.json');
 
-  if (!options.force && (await fileExists(planPath))) {
-    throw new Error(`Refusing to overwrite existing ${repoRelative(repoRoot, planPath)}.`);
+  if (!options.force && (await fileExists(manifestPath))) {
+    throw new Error(`Refusing to overwrite existing ${repoRelative(repoRoot, manifestPath)}.`);
   }
 
   const profile = parseYaml(await readFile(path.join(userRoot, 'profile.yaml'), 'utf8'));
@@ -580,7 +580,7 @@ async function writeCorpusPlan(repoRoot, options) {
       'utf8',
     ),
   );
-  const corpusPlan = buildCorpusPlan({
+  const manifest = buildCorpusManifest({
     userId: options.userId,
     corpusId: options.corpusId,
     formId: options.formId,
@@ -589,15 +589,15 @@ async function writeCorpusPlan(repoRoot, options) {
   });
 
   await mkdir(corpusRoot, { recursive: true });
-  await writeFile(planPath, jsonText(corpusPlan), 'utf8');
+  await writeFile(manifestPath, jsonText(manifest), 'utf8');
 
   return [
-    `wrote ${repoRelative(repoRoot, planPath)}`,
-    `documents ${corpusPlan.documents.length}`,
+    `wrote ${repoRelative(repoRoot, manifestPath)}`,
+    `documents ${manifest.documents.length}`,
   ];
 }
 
-export function buildCorpusPlan({ userId, corpusId, formId, profile, fieldMap }) {
+export function buildCorpusManifest({ userId, corpusId, formId, profile, fieldMap }) {
   const profileFacts = collectFactKeys(profile.facts ?? {});
   const formFactKeys = [
     ...new Set(
@@ -637,9 +637,11 @@ export function buildCorpusPlan({ userId, corpusId, formId, profile, fieldMap })
     schemaVersion: 2,
     userId,
     corpusId,
+    seed: `${userId}__${corpusId}`,
+    corpusKind: 'realistic-generated',
     forms: [formId],
     purpose:
-      'Deterministic 10-document source-artifact corpus plan for I-9 realistic eval generation from a reviewed synthetic profile.',
+      'Deterministic 10-document source-artifact corpus for I-9 realistic eval generation from a reviewed synthetic profile.',
     artifactWorld,
     factContractDefaults: {
       forbid: I9_DEFAULT_FORBIDDEN_FACT_KEYS.filter(hasLeafFact),
@@ -757,7 +759,7 @@ function workAuthorizationSourceSpec(profile) {
           'worker id',
         ],
         riskyDetailMenu: COMMON_RISKY_DETAILS,
-        lengthTarget: { minChars: 700, maxChars: 1800 },
+        lengthTarget: { minChars: 700, maxChars: 2300 },
       },
     };
   }

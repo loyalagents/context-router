@@ -127,9 +127,10 @@ Current implemented state:
   `examples/eval`; the current committed fixture set is intentionally centered
   on the smaller template-smoke fixtures plus the new 10-document workflow.
 - Batch 8 is complete.
-- `pnpm eval:plan-corpus` writes a deterministic 10-document I-9
-  `corpus-plan.json` from a reviewed profile.
-- `pnpm eval:manifest` projects a corpus plan to a manifest without AI calls.
+- `pnpm eval:plan-corpus` writes a deterministic V2 `manifest.json`
+  directly from a reviewed profile.
+- `pnpm eval:validate --plan-only --user <userId> --corpus <corpusId>`
+  validates the manifest contract before any AI generation.
 - `pnpm eval:generate` supports Vertex generation previews with `--ids`,
   short-id regeneration, and explicit full replacement with `--overwrite`.
 - `pnpm eval:repair-generation` validates a preview and regenerates only

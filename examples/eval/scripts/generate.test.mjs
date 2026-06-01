@@ -6,12 +6,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   buildDocumentPrompt,
-  manifestFromCorpusPlan,
   normalizeGeneratedText,
   parseArgs,
   runGenerate,
 } from './generate.mjs';
-import { runManifest } from './manifest.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -202,7 +200,43 @@ test('document prompt includes file type instructions and missing facts', () => 
   assert.match(prompt, /Do not wrap JSON in markdown fences/);
   assert.match(prompt, /Do not comment on, explain, or justify absent person details/);
   assert.match(prompt, /contact.phone/);
+  assert.doesNotMatch(prompt, /Phone is missing|Leave it blank/);
   assert.match(prompt, /Samir Arun Desai/);
+});
+
+test('document prompt nudges native source formats and length targets', () => {
+  const prompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Alex Jordan Rivera' },
+      },
+    },
+    corpusPlan: {
+      intentionallyMissing: [],
+      artifactWorld: {},
+    },
+    doc: {
+      id: '007',
+      path: 'documents/hr-onboarding/007-offer-email.md',
+      outputExtension: 'md',
+      factContract: { include: ['identity.legalName'], forbid: [] },
+      sourceSpec: sourceSpec({
+        captureMode: 'email-body',
+        nativeSignals: ['From header', 'To header', 'Date header', 'Subject header'],
+        lengthTarget: { minChars: 1000, maxChars: 2800 },
+      }),
+      evaluationRole: evaluationRole(),
+    },
+  });
+
+  assert.match(prompt, /raw email headers exactly like From:, To:, Date:, and Subject:/);
+  assert.match(prompt, /not Markdown-bold header labels/);
+  assert.match(prompt, /within its minChars\/maxChars range/);
+  assert.match(prompt, /OCR and plain-text exports should use native label\/value lines/);
+  assert.match(prompt, /JSON and YAML exports should use native field ids or keys/);
+  assert.match(prompt, /native combined legal-name field or clearly labeled first\/middle\/last name fields/);
+  assert.match(prompt, /"minChars": 1000/);
+  assert.match(prompt, /"maxChars": 2800/);
 });
 
 test('document prompt includes only requested artifact world slices', () => {
@@ -270,49 +304,14 @@ test('structured generated text strips only wrapping fences', () => {
   );
 });
 
-test('manifest projection keeps plan-owned metadata out of manifest', () => {
-  const manifest = manifestFromCorpusPlan({
-    userId: 'samir-desai',
-    corpusId: 'realistic',
-    forms: ['i-9'],
-    purpose: 'Generated test.',
-    factContractDefaults: { forbid: ['contact.phone'] },
-    intentionallyMissing: [],
-    documents: [
-      {
-        id: '001',
-        path: 'documents/identity/001-id.md',
-        category: 'identity',
-        title: 'Identity',
-        outputExtension: 'md',
-        sourceSpec: sourceSpec(),
-        factContract: {
-          include: ['identity.ssn'],
-          forbid: ['employment.workEmail'],
-        },
-        evaluationRole: {
-          detailTier: 'brief',
-          authority: 'medium',
-          freshness: 'current',
-          expectedUse: 'extract',
-          challengeTags: ['current-fact'],
-        },
-      },
-    ],
-  });
-
-  assert.equal(manifest.seed, 'samir-desai__realistic');
-  assert.equal(manifest.documents[0].template, undefined);
-  assert.equal(manifest.documents[0].brief, undefined);
-  assert.equal(manifest.documents[0].challengeTags, undefined);
-  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
-  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
-  assert.equal(manifest.factContractDefaults, undefined);
-});
-
 test('runGenerate writes preview documents without touching corpus manifest', async (t) => {
   const root = await copyRepo(t);
   await writeGeneratedTestPlan(root);
+  const manifestPath = path.join(
+    root,
+    'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
+  );
+  const beforeManifest = await readFile(manifestPath, 'utf8');
   const previewRoot = await mkdtemp(path.join(os.tmpdir(), 'eval-generate-preview-'));
   t.after(async () => {
     await rm(previewRoot, { recursive: true, force: true });
@@ -338,45 +337,33 @@ test('runGenerate writes preview documents without touching corpus manifest', as
   assert.equal(result.exitCode, 0, result.errorMessage);
   assert.match(result.lines.join('\n'), /generated 1 document/);
   assert.equal(
-    await fileExists(
-      path.join(
-        root,
-        'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
-      ),
-    ),
-    false,
+    await readFile(manifestPath, 'utf8'),
+    beforeManifest,
   );
 });
 
-test('runManifest writes manifest from corpus plan without a model', async (t) => {
+test('runGenerate requires the canonical manifest and ignores corpus-plan fallbacks', async (t) => {
   const root = await copyRepo(t);
-  await writeGeneratedTestPlan(root);
-  const corpusPlanPath = path.join(
+  const corpusRoot = path.join(
     root,
-    'examples/eval/users/samir-desai/corpora/generated-test/corpus-plan.json',
+    'examples/eval/users/samir-desai/corpora/generated-test',
   );
-  const corpusPlan = await readJson(corpusPlanPath);
-  corpusPlan.factContractDefaults = { forbid: ['identity.ssn'] };
-  corpusPlan.documents[0].factContract.forbid = ['employment.workEmail'];
-  await writeJson(corpusPlanPath, corpusPlan);
-
-  const result = await runManifest({
-    repoRoot: root,
-    args: ['--user', 'samir-desai', '--corpus', 'generated-test'],
+  await mkdir(corpusRoot, { recursive: true });
+  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+    schemaVersion: 2,
+    userId: 'samir-desai',
+    corpusId: 'generated-test',
+    documents: [],
   });
 
-  assert.equal(result.exitCode, 0, result.errorMessage);
-  const manifest = await readJson(
-    path.join(
-      root,
-      'examples/eval/users/samir-desai/corpora/generated-test/manifest.json',
-    ),
-  );
-  assert.equal(manifest.seed, 'samir-desai__generated-test');
-  assert.equal(manifest.documents.length, 6);
-  assert.equal(manifest.defaultForbiddenFactKeys, undefined);
-  assert.equal(manifest.factContractDefaults, undefined);
-  assert.equal(manifest.documents[0].forbiddenFactKeys, undefined);
+  const result = await runGenerate({
+    repoRoot: root,
+    args: ['--user', 'samir-desai', '--corpus', 'generated-test', '--model', 'unit-model'],
+    generateDocument: async () => 'not used',
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.errorMessage, /manifest\.json|ENOENT/);
 });
 
 test('runGenerate resolves short ids for preview and overwrite regenerates existing docs', async (t) => {
@@ -500,10 +487,12 @@ async function writeGeneratedTestPlan(root) {
     'examples/eval/users/samir-desai/corpora/generated-test',
   );
   await mkdir(corpusRoot, { recursive: true });
-  await writeJson(path.join(corpusRoot, 'corpus-plan.json'), {
+  await writeJson(path.join(corpusRoot, 'manifest.json'), {
     schemaVersion: 2,
     userId: 'samir-desai',
     corpusId: 'generated-test',
+    seed: 'samir-desai__generated-test',
+    corpusKind: 'realistic-generated',
     forms: sourceManifest.forms,
     purpose: sourceManifest.purpose,
     artifactWorld: {
@@ -529,15 +518,12 @@ async function writeGeneratedTestPlan(root) {
         worldRefs: ['source.system'],
       }),
       factContract: {
-        include: doc.factKeys,
+        include: doc.factContract.include,
         forbid: [],
       },
       evaluationRole: {
-        detailTier: doc.detailTier,
-        authority: doc.authority,
-        freshness: doc.freshness,
-        expectedUse: doc.expectedUse,
-        challengeTags: ['current-fact'],
+        ...doc.evaluationRole,
+        challengeTags: doc.evaluationRole.challengeTags ?? ['current-fact'],
       },
     })),
   });
@@ -585,15 +571,6 @@ async function copyRepo(t) {
     path.join(root, 'apps/backend/src/config/preferences.catalog.json'),
   );
   return root;
-}
-
-async function fileExists(filePath) {
-  try {
-    await readFile(filePath, 'utf8');
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function readJson(filePath) {

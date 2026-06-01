@@ -10,6 +10,9 @@ The active 100-document Nina and Elena realistic corpora were pruned from
 `elena-marquez/corpora/realistic`, or `nina-meera-patel-i9-realistic` are
 historical notes only. Do not run them against the current fixture tree.
 
+Current realistic corpus work uses a unified V2 `manifest.json`; the old split
+plan/projection workflow has been retired.
+
 ## Historical State Before Supersession
 
 The initial cleanup pass had been implemented locally before this track was
@@ -23,8 +26,9 @@ At that time:
   - 25 `txt`
   - 20 `json`
   - 10 `yaml`
-- `corpus-plan.json` has stronger file-type-aware briefs.
-- `pnpm eval:manifest` projects `corpus-plan.json` to `manifest.json` without AI or Vertex env.
+- The historical split plan file had stronger file-type-aware briefs.
+- A retired manifest projection command converted that plan file to
+  `manifest.json` without AI or Vertex env.
 - `pnpm eval:generate --ids ... --out ...` supports mixed cross-category previews.
 - `pnpm eval:generate --overwrite` provides an explicit full replacement path.
 - `--regenerate` and `--ids` accept short sequence ids such as `001`.
@@ -65,9 +69,9 @@ The opposite failure is also possible: a document can pass the deterministic che
 
 Do not solve the realism problem by only making the validator more permissive. The generator needs stronger document archetypes and a repair loop.
 
-Historical recommended direction:
+Historical recommended direction, translated to the current V2 manifest shape:
 
-- Strengthen `corpus-plan.json` entries with document-specific source context, length/texture expectations, allowed invented surrounding details, and explicit canonical anchors for validator-backed facts.
+- Strengthen manifest `sourceSpec` entries with document-specific source context, length/texture expectations, allowed invented surrounding details, and explicit canonical anchors for validator-backed facts.
 - Make the prompt require each declared fact to appear at least once in an exact or validator-supported value form, even if the document also includes realistic alternate formatting.
 - Add a generate/validate/repair loop: preview documents, run corpus-truth validation, feed per-document failures back into targeted regeneration, and only write to the committed corpus after the preview passes both correctness and realism review.
 - Capture this as a workflow/playbook first. A Codex skill can come later once the workflow is stable.

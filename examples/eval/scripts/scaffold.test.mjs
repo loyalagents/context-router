@@ -211,6 +211,8 @@ test('scaffold without count renders exactly the required coverage set', async (
       'examples/eval/users/elena-marquez/corpora/template-smoke/manifest.json',
     ),
   );
+  assert.equal(manifest.schemaVersion, 2);
+  assert.equal(manifest.corpusKind, 'template-smoke');
   assert.equal(manifest.documents.length, 5);
   assert.deepEqual(
     manifest.documents.map((doc) => doc.id),
@@ -577,7 +579,7 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
   );
   assert.equal(manifest.documents.length, 4);
   assert.equal(
-    manifest.documents.some((doc) => doc.factKeys.includes('identity.ssn')),
+    manifest.documents.some((doc) => doc.factContract.include.includes('identity.ssn')),
     false,
   );
 });

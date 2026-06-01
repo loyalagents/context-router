@@ -1,59 +1,104 @@
-source_system: Northstar Onboard
-worker_id: CHR-53242
-form_version: "Form I-9 edition 08/01/23"
-saved_timestamp: "June 3 2026 at 2:18 PM Pacific"
-workflow_status: saved_not_signed
-reviewer_routing: People Operations Hub
-field_ids:
-  employee_last_name: sec1.last_name
-  employee_first_name: sec1.first_name
-  employee_middle_initial: sec1.middle_initial
-  employee_other_last_names: sec1.other_last_names
-  employee_date_of_birth: sec1.date_of_birth
-  employee_ssn: sec1.ssn
-  employee_address_street: sec1.address.street
-  employee_address_unit: sec1.address.apt_number
-  employee_address_city: sec1.address.city
-  employee_address_state: sec1.address.state
-  employee_address_zip: sec1.address.zip
-  employee_email: sec1.contact.email
-  employee_phone: sec1.contact.phone
-  citizenship_status: sec1.status.selection
-  uscis_a_number: sec1.status.uscis_a_number
-  work_authorization_expiration: sec1.status.expiration_date
-  i94_admission_number: sec1.status.i94_number
-  foreign_passport_number: sec1.status.foreign_passport_number
-fields:
-  legal_name_exact: Alex Jordan Rivera
-  first_name: Alex
-  middle_initial: J
-  last_name: Rivera
-  other_last_names:
-    - Santos
-  date_of_birth: "1992-03-14"
-  ssn: "000-00-0292"
-  address:
-    street: 7428 Evergreen Terrace
-    unit: Apt 5C
-    city: Portland
-    state: OR
-    postal_code: "97214"
-  contact:
-    email: alex.rivera@example.test
-    phone: null
-  work_authorization:
-    citizenship_status: alien authorized to work
-    uscis_a_number: "987654321"
-    work_authorization_expiration_date: "2028-09-30"
-    "Form I-94 Admission Number": "11223344556"
-    foreign_passport_number: XK1234567
-task_status_list:
-  - task: employee_information
-    status: complete
-  - task: citizenship_status
-    status: complete
-  - task: employee_signature
-    status: pending
-audit:
-  created_by: worker_self_service
-  updated_by: worker_self_service
+export_metadata:
+  system_id: Northstar Onboard
+  export_timestamp: '2026-06-03T14:18:00-07:00'
+  source_artifact_type: i9_section_one_field_export
+
+form_details:
+  form_id: I-9
+  form_title: Employment Eligibility Verification
+  form_version: Rev. 10/21/2019
+  form_section: Section 1 - Employee Information and Attestation
+
+workflow_state:
+  employee_id: CHR-53242
+  current_status: EMPLOYEE_DATA_SAVED
+  status_description: Employee has saved their progress on Section 1. Attestation and signature are pending.
+  last_saved_at: '2026-06-03T14:18:00-07:00'
+  next_action: Awaiting employee review and electronic signature.
+  hr_contact_routing:
+    name: Lena Ortiz
+    role: HR Coordinator
+
+section_1_fields:
+  employee_information:
+    last_name:
+      field_id: s1_last_name
+      value: Rivera
+    first_name:
+      field_id: s1_first_name
+      value: Alex
+    middle_initial:
+      field_id: s1_middle_initial
+      value: J
+    full_legal_name:
+      field_id: s1_full_name_composite
+      value: Alex Jordan Rivera
+      description: Composite field generated from first name, middle initial, and last name.
+    other_last_names_used:
+      field_id: s1_other_last_names
+      value: Santos
+    address_street:
+      field_id: s1_address_street
+      value: 7428 Evergreen Terrace
+    apt_number:
+      field_id: s1_address_apt_number
+      value: Apt 5C
+    city_or_town:
+      field_id: s1_address_city
+      value: Portland
+    state:
+      field_id: s1_address_state
+      value: OR
+    zip_code:
+      field_id: s1_address_zip_code
+      value: '97214'
+    date_of_birth:
+      field_id: s1_dob
+      value: '1992-03-14'
+    us_social_security_number:
+      field_id: s1_ssn
+      value: 000-00-0292
+    employee_email_address:
+      field_id: s1_email
+      value: alex.rivera@example.test
+    employee_telephone_number:
+      field_id: s1_phone
+      value: null
+
+  attestation:
+    citizenship_status:
+      field_id: s1_attestation_status
+      value: 4
+      description: An alien authorized to work until (expiration date, if applicable, mm/dd/yyyy)
+    alien_authorized_to_work_details:
+      work_authorization_expiration_date:
+        field_id: s1_work_auth_exp_date
+        value: '2028-09-30'
+      uscis_a_number:
+        field_id: s1_uscis_a_number
+        value: '987654321'
+      form_i94_admission_number:
+        field_id: s1_i94_admission_number
+        value: '11223344556'
+      foreign_passport_number:
+        field_id: s1_foreign_passport_number
+        value: XK1234567
+      country_of_issuance:
+        field_id: s1_foreign_passport_country
+        value: null
+
+  preparer_and_or_translator_certification:
+    field_id: s1_preparer_translator_checkbox
+    value: false
+    description: I did not use a preparer or translator.
+
+  signature_attestation:
+    status: PENDING_EMPLOYEE_SIGNATURE
+    employee_signature:
+      field_id: s1_employee_signature
+      value: null
+      description: Electronic signature not yet applied.
+    date_of_signature:
+      field_id: s1_signature_date
+      value: null
+      description: Date will be recorded upon signature.

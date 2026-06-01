@@ -1,19 +1,28 @@
-OCR EXPORT RECORD
-Upload batch id: UPL-F23463
-Source filename: IMG_7377_ssn_card.jpg
-Source system: Northstar Onboard
-Worker id: CHR-53242
-Captured at: 2026-06-03T14:27:00-07:00
-Document category: Social Security card image
-Processing status: review queue accepted
-Redaction status: image retained in secure store; transcript exposes the entered number for I-9 field matching
-OCR confidence: 0.996 for name, 0.993 for numeric identifier
+OCR Extraction Report
+System: Northstar Onboard
+Source File: IMG_7377_ssn_card.jpg
+Upload Batch: UPL-F23463
+Worker ID: CHR-53242
+Process Time: 2026-06-03 14:27:00 UTC-7
+OCR Confidence: 98.9%
+Redaction Status: None Applied
 
-Card name line:
-Alex Jordan Rivera
+--- Extracted Text ---
 
-Number line:
+SOCIAL SECURITY
+
+U.S. DEPARTMENT OF HEALTH AND HUMAN SERVICES
+SOCIAL SECURITY ADMINISTRATION
+
+SOCIAL SECURITY NUMBER
 000-00-0292
 
-Transcription note:
-The reviewer marked the card image legible.
+This number has been established for
+ALEX JORDAN RIVERA
+
+SIGNATURE
+[SIGNATURE PRESENT]
+
+This card is issued by the Social Security Administration. This card is the property of the Social Security Administration and must be returned upon request. If found, please return to: SSA, P.O. Box 33002, Baltimore, MD 21290-3002.
+
+This card is for Social Security and tax purposes. It is not for identification.

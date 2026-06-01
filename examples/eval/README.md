@@ -14,7 +14,7 @@ For contributor workflows and snapshot review guidance, see
   fake-user requirement notes, and hand-authored field maps for
   evaluation-ready forms.
 - `forms-notes.md` records human context about what each form asks for.
-- `schemas/` contains the V1 local fixture contracts for profiles, corpus
+- `schemas/` contains the local fixture contracts for profiles, corpus
   manifests, scenarios, field maps, template metadata, and filled-form
   snapshots.
 - `scripts/generate-field-manifests.mjs` regenerates form field manifests.
@@ -22,10 +22,10 @@ For contributor workflows and snapshot review guidance, see
   from user profiles.
 - `scripts/scaffold.mjs` renders deterministic template corpora and optional
   first-time scenario skeletons.
-- `scripts/plan-corpus.mjs` creates deterministic starter corpus plans for
+- `scripts/plan-corpus.mjs` creates deterministic starter corpus manifests for
   reviewed user profiles.
 - `scripts/generate.mjs` generates AI-authored realistic corpus document bodies
-  from a reviewed `corpus-plan.json`.
+  from a reviewed V2 `manifest.json`.
 - `scripts/repair-generation.mjs` repairs failed preview documents using
   validation feedback.
 - `scripts/promote-preview.mjs` promotes a passing preview into the committed
@@ -60,14 +60,25 @@ generated seed preferences; empty arrays are emitted because they are explicit
 data. Form-fill rendering is separate runner behavior and may render array
 facts as scalar field values when a PDF field is scalar.
 
-Corpus manifest `documents[].factKeys` entries must be concrete profile fact
-leaves. Area markers such as `address.current` are intentionally invalid.
-`detailTier` describes richness only: `hero`, `medium`, or `brief`. Noise
-semantics live in `category` and `expectedUse`.
+Corpus manifests use `schemaVersion: 2`. `corpusKind` identifies the corpus
+shape:
 
-Corpus manifests include a required deterministic `seed`. Hand-authored
-documents omit `documents[].template`; scaffold-generated documents include the
-template id used to render the file. Document count is derived from
+- `template-smoke` for deterministic template-rendered corpora.
+- `realistic-generated` for AI-authored source-artifact corpora.
+
+Corpus manifest `documents[].factContract.include` entries must be concrete
+profile fact leaves. Area markers such as `address.current` are intentionally
+invalid. Per-document forbidden facts live in
+`documents[].factContract.forbid`, and realistic corpora can also define
+top-level `factContractDefaults.forbid`.
+
+Document role metadata lives in `documents[].evaluationRole`. `detailTier`
+describes richness only: `hero`, `medium`, or `brief`. Noise semantics live in
+`category` and `evaluationRole.expectedUse`.
+
+Corpus manifests include a required deterministic `seed`. Template-scaffolded
+documents include `documents[].template`; realistic generated documents include
+`documents[].sourceSpec` and omit `template`. Document count is derived from
 `documents.length`.
 
 Corpus manifests live at:
@@ -95,8 +106,8 @@ forms/<formId>/field-map.json
 ```
 
 Fact field maps may include an explicit `render` hint when the PDF field
-requires a representation different from the raw profile value. V1 supports
-`digits-only` for fields such as a fixed-width SSN box.
+requires a representation different from the raw profile value. The current
+renderer supports `digits-only` for fields such as a fixed-width SSN box.
 
 Template modules live at:
 
@@ -188,6 +199,9 @@ Write the deterministic corpus report:
 pnpm eval:validate --user elena-marquez --corpus template-smoke --write-report
 ```
 
+Regenerate committed `validation-report.json` files when corpus manifests or
+document bodies change.
+
 Render or refresh a deterministic template corpus:
 
 ```bash
@@ -198,10 +212,15 @@ Plan a 10-document realistic starter corpus from a reviewed profile:
 
 ```bash
 pnpm eval:plan-corpus --user <userId> --corpus realistic --form i-9 --count 10
-pnpm eval:manifest --user <userId> --corpus realistic
 ```
 
-Generate realistic corpus documents from a reviewed corpus plan into a preview:
+Validate the manifest before document bodies exist:
+
+```bash
+pnpm eval:validate --user <userId> --corpus realistic --plan-only
+```
+
+Generate realistic corpus documents from a reviewed manifest into a preview:
 
 ```bash
 EVAL_GENERATION_MODEL=gemini-2.5-pro \

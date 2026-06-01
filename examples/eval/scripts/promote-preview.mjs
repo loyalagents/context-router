@@ -13,8 +13,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { manifestFromCorpusPlan } from './generate.mjs';
-import { isFixtureId, jsonText, toPosixPath } from './shared.mjs';
+import { isFixtureId, toPosixPath } from './shared.mjs';
 import { formatResult as formatValidationResult, runValidation } from './validate.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -110,18 +109,15 @@ async function promotePreview(repoRoot, options, { validate }) {
     'corpora',
     options.corpusId,
   );
-  const corpusPlanPath = path.join(corpusRoot, 'corpus-plan.json');
   const manifestPath = path.join(corpusRoot, 'manifest.json');
   const documentsRoot = path.join(corpusRoot, 'documents');
-  const corpusPlan = JSON.parse(await readFile(corpusPlanPath, 'utf8'));
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
 
-  if (corpusPlan.userId !== options.userId || corpusPlan.corpusId !== options.corpusId) {
-    throw new Error('corpus-plan.json userId/corpusId must match CLI arguments.');
+  if (manifest.userId !== options.userId || manifest.corpusId !== options.corpusId) {
+    throw new Error('manifest.json userId/corpusId must match CLI arguments.');
   }
 
-  const previousManifest = await readExistingText(manifestPath);
   await mkdir(corpusRoot, { recursive: true });
-  await writeFile(manifestPath, jsonText(manifestFromCorpusPlan(corpusPlan)), 'utf8');
 
   try {
     const previewValidation = await validate({
@@ -147,7 +143,6 @@ async function promotePreview(repoRoot, options, { validate }) {
       );
     }
   } catch (error) {
-    await restoreText(manifestPath, previousManifest);
     throw error;
   }
 
@@ -160,7 +155,7 @@ async function promotePreview(repoRoot, options, { validate }) {
       await rm(documentsRoot, { recursive: true, force: true });
     }
 
-    for (const doc of corpusPlan.documents ?? []) {
+    for (const doc of manifest.documents ?? []) {
       const source = path.join(previewRoot, doc.path);
       const target = path.join(corpusRoot, doc.path);
       await mkdir(path.dirname(target), { recursive: true });
@@ -184,7 +179,6 @@ async function promotePreview(repoRoot, options, { validate }) {
     }
   } catch (error) {
     try {
-      await restoreText(manifestPath, previousManifest);
       await restoreText(path.join(corpusRoot, 'validation-report.json'), previousReport);
       await restoreDirectory(documentsRoot, previousDocuments);
     } finally {
@@ -195,7 +189,7 @@ async function promotePreview(repoRoot, options, { validate }) {
 
   await cleanupSnapshot(previousDocuments);
   return [
-    `promoted ${(corpusPlan.documents ?? []).length} document(s)`,
+    `promoted ${(manifest.documents ?? []).length} document(s)`,
     `from ${repoRelative(repoRoot, previewRoot)}`,
     `to ${repoRelative(repoRoot, corpusRoot)}`,
     `report ${repoRelative(repoRoot, committedValidation.reportPath)}`,

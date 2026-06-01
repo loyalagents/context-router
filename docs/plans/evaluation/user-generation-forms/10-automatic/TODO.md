@@ -28,6 +28,79 @@
     saved I-9 field export, offer email, onboarding YAML export, stale contact
     ticket, and newsletter/email noise.
 
+- [x] Collapse realistic planning into a unified V2 manifest.
+  - `manifest.json` is now the canonical V2 contract for both planning and
+    validation.
+  - `corpus-plan.json` is retired from realistic generation and validation.
+  - `template-smoke` manifests use the same `factContract` and
+    `evaluationRole` shape without fake `sourceSpec` metadata.
+
+- [x] Harden deterministic work-authorization validation.
+  - Declared work-authorization expiration, I-94 admission number, and foreign
+    passport number facts are now deterministic high-confidence checks.
+  - Alex's realistic corpus validates with zero unsupported declared facts.
+
+- [x] Reduce realism lint noise and add contradiction warnings.
+  - Native-signal matching now normalizes camelCase, snake_case, kebab-case,
+    spaced labels, and slash labels.
+  - Warning-only I-9 contradiction lints flag undeclared USCIS, I-94, foreign
+    passport, and work-authorization expiration values in current extract
+    sources.
+
+- [x] De-narrate missing-value generation prompts.
+  - Generation prompts pass absent person-detail paths without source-facing
+    reason text, and instruct generated artifacts to omit absent values unless
+    the source naturally has a blank/null field.
+
+- [ ] Add deterministic nested field/value proof for generated structured exports.
+  - Current split legal-name proof handles same-line labels such as
+    `s1_first_name: Alex` and OCR labels such as `FN ALEX JORDAN`, but does not
+    yet prove `identity.legalName` from nested YAML records like
+    `first_name: { field_id: s1_first_name, value: Alex }`.
+  - Extend this carefully for native I-9 field/value exports, including nested
+    I-94/USCIS/passport values, so validator warnings do not misclassify these
+    identifiers as source-only phone values.
+
+- [ ] Build a small source exemplar library for each realistic artifact family.
+  - Keep 2-3 sanitized example shapes per source family: OCR transcript,
+    uploaded card receipt, resident portal export, utility JSON export, copied
+    email, onboarding YAML export, stale ticket, and newsletter noise.
+  - Use these as prompt/style references and as manual review anchors, without
+    copying real personal data into fixtures.
+
+- [ ] Add source-fact ownership metadata or lint support.
+  - Distinguish canonical user facts from source-owned values such as office
+    phone numbers, account numbers, barcode rows, ticket IDs, support emails,
+    and system-generated identifiers.
+  - This should reduce false phone/contact warnings without weakening checks for
+    actual leaked user values.
+
+- [ ] Add a manual realism scorecard for promoted corpora.
+  - Record per-document review notes for native source shape, plausible length,
+    density, formatting, incidental metadata, contradiction clarity, and whether
+    a real user might plausibly possess the file.
+  - Store the review near the promoted corpus or in the realistic plan docs so
+    future generated corpora can be compared consistently.
+
+- [ ] Add source-family-specific prompt templates.
+  - Move beyond one generic artifact prompt by giving each source family tighter
+    rules for structure, common labels, allowed metadata, expected density, and
+    common failure modes.
+  - Keep the canonical fact contract shared, but make the genre instructions
+    specific enough to avoid generic prose and Markdown-like skeletons.
+
+- [ ] Add realism lint coverage for source-native structure, not just strings.
+  - Check for structured exports that parse and have expected top-level blocks,
+    raw emails with header/body/signature separation, OCR transcripts with field
+    blocks and confidence/source metadata, and tickets with event-log shape.
+  - Keep these warning-only until the source families are stable.
+
+- [ ] Generate and review multiple realistic corpora per form/status branch.
+  - Keep Alex as the alien-authorized I-9 corpus, then add or refresh corpora
+    for U.S. citizen, noncitizen national, lawful permanent resident, and
+    missing/ambiguous work-authorization cases.
+  - Use this to catch overfitting to one profile and one generated style.
+
 - [ ] Add realism-focused repair later.
   - Keep the current repair loop focused on deterministic correctness.
   - Add a future repair mode that preserves validated facts while improving
@@ -36,4 +109,4 @@
 
 - [ ] Add the document ingestion runner later.
   - Target flow: documents -> extracted facts -> scoring -> form-fill snapshot.
-  - This remains out of scope for the V2 corpus-plan and generation batch.
+  - This remains out of scope for the V2 unified-manifest generation batch.
