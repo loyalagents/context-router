@@ -121,7 +121,7 @@ function mapFormClassification(field, fieldClass) {
   if (field.classification === 'missing') return 'form_known_missing';
   if (field.classification === 'incorrect') return 'form_known_wrong';
   if (field.classification === 'hallucinated') return 'form_known_wrong';
-  return field.classification;
+  return 'form_unexpected';
 }
 
 function buildFormSummary(fields) {

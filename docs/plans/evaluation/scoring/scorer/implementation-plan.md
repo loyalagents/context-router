@@ -35,6 +35,8 @@ preferences, run ingestion, or invoke models.
   - keeps conflict rows separate from clean correctness
   - scores intentionally missing facts from manifest/profile missingness, not
     per-document `forbid`
+  - relies on corpus-truth validation to prove concrete withheld values are not
+    present in source documents
   - reports unscored extra preferences without penalty
 - Form scoring:
   - aggregates existing `filled-form.json` classifications

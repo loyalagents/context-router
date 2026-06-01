@@ -21,6 +21,9 @@
       "warningOnlyAbsenceChecks": 8,
       "skippedAbsenceChecks": 2,
       "invalidAbsenceChecks": 0,
+      "withheldValuesProvenAbsent": 0,
+      "withheldValuesPresent": 0,
+      "withheldValuesSkipped": 0,
       "hardFailures": 0,
       "unsupportedDeclaredFactKeys": []
     },
@@ -57,6 +60,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -85,6 +93,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -114,6 +127,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -147,6 +165,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -180,6 +203,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -219,6 +247,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -250,6 +283,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -283,6 +321,11 @@
           ],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -311,6 +354,11 @@
             "contact.phone"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -339,6 +387,11 @@
             "contact.phone"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       }
     ]

@@ -14,6 +14,7 @@
 - [x] Scorer contract hardening: active-only storage input, full form snapshot
   identity checks, clean conflict metrics, closed combined-stage buckets, and
   stricter score-report schemas.
+- [x] Corpus-truth validation for concrete withheld values before DB scoring.
 
 ## Next
 

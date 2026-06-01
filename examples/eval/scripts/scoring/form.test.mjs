@@ -108,3 +108,41 @@ test('form scorer rejects filled-form snapshots with mismatched fixture identity
     /filled-form corpusId different-corpus does not match scenario template-smoke/,
   );
 });
+
+test('form scorer maps unexpected should-fill snapshot classifications in band', async () => {
+  const snapshot = JSON.parse(
+    await readFile(
+      path.join(
+        repoRoot,
+        'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+      ),
+      'utf8',
+    ),
+  );
+  const firstName = snapshot.fields.find(
+    (field) => field.fieldMap.factKey === 'identity.firstName',
+  );
+  firstName.classification = 'skipped-correctly';
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-unexpected-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  const report = await scoreForm({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+    filledFormPath,
+  });
+
+  assert.equal(
+    report.fields.find((field) => field.factKey === 'identity.firstName')
+      .classification,
+    'form_unexpected',
+  );
+  await validateWithSchema(
+    repoRoot,
+    'form-fill-score-report.schema.json',
+    report,
+    'form fill score report',
+  );
+});

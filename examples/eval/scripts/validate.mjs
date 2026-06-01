@@ -1045,6 +1045,11 @@ function createCorpusTruthDocument(doc) {
       skipped: [],
       invalid: [],
     },
+    withheldFacts: {
+      provenAbsent: [],
+      present: [],
+      skipped: [],
+    },
   };
 }
 
@@ -1184,6 +1189,28 @@ function validateDocumentProse(ctx, {
     }
 
     truth.forbiddenFacts.provenAbsent.push(entry.factKey);
+  }
+
+  for (const [missingIndex, missing] of (
+    manifest.intentionallyMissing ?? []
+  ).entries()) {
+    if (missing.withheldValue == null) continue;
+    if (!(checksBodyForDeclaredFacts && freshness === 'current')) {
+      truth.withheldFacts.skipped.push(missing.factKey);
+      continue;
+    }
+    if (textContainsFactValue(body, missing.factKey, missing.withheldValue)) {
+      truth.withheldFacts.present.push(missing.factKey);
+      addIssue(ctx, {
+        code: 'DOCUMENT_WITHHELD_FACT_PRESENT',
+        file: manifestPath,
+        pointer: `/intentionallyMissing/${missingIndex}/withheldValue`,
+        message: `Document ${doc.id} contains the concrete withheld value for intentionally missing fact ${missing.factKey}.`,
+        fix: 'Remove the withheld value from document bodies or remove the intentionallyMissing withheldValue contract.',
+      });
+      continue;
+    }
+    truth.withheldFacts.provenAbsent.push(missing.factKey);
   }
 
   validateNoiseFactLeaks(ctx, {
@@ -2345,6 +2372,11 @@ function buildCorpusTruth(ctx) {
       skipped: [...doc.forbiddenFacts.skipped],
       invalid: [...doc.forbiddenFacts.invalid],
     },
+    withheldFacts: {
+      provenAbsent: [...doc.withheldFacts.provenAbsent],
+      present: [...doc.withheldFacts.present],
+      skipped: [...doc.withheldFacts.skipped],
+    },
   }));
 
   const unsupportedDeclaredFactKeys = countFactKeys(
@@ -2361,6 +2393,9 @@ function buildCorpusTruth(ctx) {
       totals.warningOnlyAbsenceChecks += doc.forbiddenFacts.warningOnly.length;
       totals.skippedAbsenceChecks += doc.forbiddenFacts.skipped.length;
       totals.invalidAbsenceChecks += doc.forbiddenFacts.invalid.length;
+      totals.withheldValuesProvenAbsent += doc.withheldFacts.provenAbsent.length;
+      totals.withheldValuesPresent += doc.withheldFacts.present.length;
+      totals.withheldValuesSkipped += doc.withheldFacts.skipped.length;
       return totals;
     },
     {
@@ -2373,11 +2408,17 @@ function buildCorpusTruth(ctx) {
       warningOnlyAbsenceChecks: 0,
       skippedAbsenceChecks: 0,
       invalidAbsenceChecks: 0,
+      withheldValuesProvenAbsent: 0,
+      withheldValuesPresent: 0,
+      withheldValuesSkipped: 0,
       hardFailures: 0,
       unsupportedDeclaredFactKeys,
     },
   );
-  summary.hardFailures = summary.factsMissing + summary.forbiddenFactsPresent;
+  summary.hardFailures =
+    summary.factsMissing +
+    summary.forbiddenFactsPresent +
+    summary.withheldValuesPresent;
 
   return { summary, documents };
 }

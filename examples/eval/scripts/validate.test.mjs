@@ -1020,6 +1020,40 @@ test('document prose checks leave null forbidden facts to conservative pattern w
   );
 });
 
+test('document prose checks hard-fail when concrete withheld values appear', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = elenaManifestPath(root);
+  const manifest = await readJson(manifestPath);
+  const corpusRoot = path.dirname(manifestPath);
+  manifest.intentionallyMissing.find(
+    (missing) => missing.factKey === 'contact.phone',
+  ).withheldValue = '503-555-0199';
+  const doc = manifest.documents[0];
+  doc.factContract.include = [];
+  doc.evaluationRole.expectedUse = 'extract';
+  doc.evaluationRole.freshness = 'current';
+  await writeJson(manifestPath, manifest);
+  await writeFile(
+    path.join(corpusRoot, doc.path),
+    [
+      'Current identity export for Elena Sofia Marquez.',
+      'Date of birth: July 18, 1994.',
+      'Current address: 418 Cedar Glen Avenue, Apt 12B, Sacramento, CA 95819.',
+      'Telephone: 503-555-0199.',
+    ].join('\n'),
+  );
+
+  const result = await validateElena(root);
+  const truth = result.report.corpusTruth.documents.find(
+    (entry) => entry.id === doc.id,
+  );
+
+  assertHasCode(result, 'DOCUMENT_WITHHELD_FACT_PRESENT');
+  assert.ok(truth.withheldFacts.present.includes('contact.phone'));
+  assert.equal(result.report.corpusTruth.summary.withheldValuesPresent, 1);
+  assert.equal(result.report.corpusTruth.summary.hardFailures, 1);
+});
+
 test('document prose checks do not treat I-9 identifiers as missing phone values', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

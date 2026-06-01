@@ -21,6 +21,9 @@
       "warningOnlyAbsenceChecks": 18,
       "skippedAbsenceChecks": 6,
       "invalidAbsenceChecks": 0,
+      "withheldValuesProvenAbsent": 0,
+      "withheldValuesPresent": 0,
+      "withheldValuesSkipped": 0,
       "hardFailures": 0,
       "unsupportedDeclaredFactKeys": []
     },
@@ -52,6 +55,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -78,6 +86,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -108,6 +121,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -133,6 +151,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -158,6 +181,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -184,6 +212,11 @@
             "workAuthorization.workAuthorizationExpirationDate"
           ],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       }
     ]

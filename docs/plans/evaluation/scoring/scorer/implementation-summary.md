@@ -38,6 +38,11 @@ preferences, or invoke models.
   and classifications are part of the machine-readable contract.
 - Added optional manifest `intentionallyMissing[].withheldValue` support for
   future withheld-value leak fixtures.
+- Added validator corpus-truth checks for concrete withheld values:
+  - current extract/corroborate documents hard-fail if they contain the
+    withheld value
+  - validation reports now include withheld-value absence/presence counts and
+    per-document `withheldFacts`
 
 ## Verification
 

@@ -210,6 +210,8 @@ At minimum, mark a run unscorable when:
 
 - corpus validation has hard errors
 - `validation-report.json` has blocking corpus-truth failures
+- corpus truth shows a concrete withheld value in current authoritative source
+  documents
 - a fact selected for scoring is declared present but is not proven present in
   corpus truth
 - an intentionally missing fact is not actually represented as null, absent, or
@@ -365,6 +367,11 @@ Most current fixtures use profile-null missing facts, such as `contact.phone:
 null`. For those, the scorer can check accepted-key absence but cannot check a
 withheld value leak unless a concrete withheld value is added to the fixture
 contract.
+
+When a concrete `withheldValue` is present, corpus validation should first prove
+that current authoritative source documents do not contain that value. Without
+that gate, the database scorer could incorrectly penalize legitimate extraction
+from a source artifact that accidentally included the withheld value.
 
 ### Value Absence
 
