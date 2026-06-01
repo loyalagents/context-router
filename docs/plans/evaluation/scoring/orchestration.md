@@ -46,6 +46,7 @@ Implemented in this phase:
 - stored-preferences and score-report schemas
 - accepted slug map
 - database, form-fill, and combined scoring modules
+- active-only storage input validation and strict score-report contracts
 - targeted scorer tests and CLI tests
 
 ## Phase 2: Exporter

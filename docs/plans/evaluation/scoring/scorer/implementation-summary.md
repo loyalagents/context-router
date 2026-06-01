@@ -23,13 +23,21 @@ preferences, or invoke models.
 - Added database scoring over active stored preferences:
   - known-present recovery and accepted-slug accuracy
   - wrong slug, wrong value, conflict, and missing classifications
+  - conflicts are reported separately and do not count as clean correctness
   - intentionally missing accepted-key and withheld-value checks
   - ignored non-active rows and unscored extra rows
   - fixture-readiness gating from validation reports
+  - `stored-preferences.json` must declare `statusesScored: ["ACTIVE"]`
 - Added form-fill score aggregation over existing `filled-form.json` snapshots:
+  - full snapshot identity checks for `scenarioId`, `userId`, `corpusId`, and
+    `formId`
   - should-fill, abstention-test, structural-skip, and unsupported denominators
   - source-slug agreement as a diagnostic
-- Added combined fact-key reports with stage attribution.
+- Added combined fact-key reports with closed stage-attribution buckets.
+- Tightened database, form-fill, and combined report schemas so summary fields
+  and classifications are part of the machine-readable contract.
+- Added optional manifest `intentionallyMissing[].withheldValue` support for
+  future withheld-value leak fixtures.
 
 ## Verification
 

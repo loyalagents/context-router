@@ -28,20 +28,23 @@ preferences, run ingestion, or invoke models.
 
 - Database scoring:
   - scores only active preference rows
+  - requires the exported artifact to declare `statusesScored: ["ACTIVE"]`
   - derives canonical slugs from seed preferences or `eval.*` fact slugs
   - merges accepted aliases from the storage map
   - scores known-present facts from corpus truth and non-null profile values
+  - keeps conflict rows separate from clean correctness
   - scores intentionally missing facts from manifest/profile missingness, not
     per-document `forbid`
   - reports unscored extra preferences without penalty
 - Form scoring:
   - aggregates existing `filled-form.json` classifications
+  - validates snapshot `scenarioId`, `userId`, `corpusId`, and `formId`
   - separates should-fill, abstention-test, structural-skip, and unsupported
     fields
   - reports source-slug agreement as a diagnostic
 - Combined scoring:
   - joins database and form reports by `factKey`
-  - emits stage-attribution buckets for cross-stage diagnosis
+  - emits closed stage-attribution buckets for cross-stage diagnosis
 
 ## Verification
 
@@ -63,4 +66,3 @@ pnpm eval:verify
 - Smart-search scoring
 - LLM-judged value equality
 - Broad extra-slug categorization
-

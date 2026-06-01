@@ -21,10 +21,113 @@
     "userId": { "type": "string" },
     "corpusId": { "type": "string" },
     "formId": { "type": "string" },
-    "summary": { "type": "object", "additionalProperties": true },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knownFieldTotal",
+        "knownFieldCorrect",
+        "knownFieldMissing",
+        "knownFieldWrong",
+        "knownFieldAccuracy",
+        "knownFieldMissingRate",
+        "knownFieldWrongRate",
+        "abstentionFieldTotal",
+        "abstentionFieldAbsentCorrect",
+        "abstentionFieldHallucinated",
+        "missingFieldAbstentionRate",
+        "missingFieldHallucinationRate",
+        "structuralSkipCount",
+        "unsupportedFieldCount",
+        "sourceSlugAgreementRate"
+      ],
+      "properties": {
+        "knownFieldTotal": { "$ref": "#/$defs/count" },
+        "knownFieldCorrect": { "$ref": "#/$defs/count" },
+        "knownFieldMissing": { "$ref": "#/$defs/count" },
+        "knownFieldWrong": { "$ref": "#/$defs/count" },
+        "knownFieldAccuracy": { "$ref": "#/$defs/rate" },
+        "knownFieldMissingRate": { "$ref": "#/$defs/rate" },
+        "knownFieldWrongRate": { "$ref": "#/$defs/rate" },
+        "abstentionFieldTotal": { "$ref": "#/$defs/count" },
+        "abstentionFieldAbsentCorrect": { "$ref": "#/$defs/count" },
+        "abstentionFieldHallucinated": { "$ref": "#/$defs/count" },
+        "missingFieldAbstentionRate": { "$ref": "#/$defs/rate" },
+        "missingFieldHallucinationRate": { "$ref": "#/$defs/rate" },
+        "structuralSkipCount": { "$ref": "#/$defs/count" },
+        "unsupportedFieldCount": { "$ref": "#/$defs/count" },
+        "sourceSlugAgreementRate": { "$ref": "#/$defs/rate" }
+      }
+    },
     "fields": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/fieldRow" }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "rate": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "fieldClass": {
+      "enum": ["should-fill", "abstention-test", "structural-skip", "unsupported"]
+    },
+    "classification": {
+      "enum": [
+        "form_known_correct",
+        "form_known_missing",
+        "form_known_wrong",
+        "form_missing_absent_correct",
+        "form_missing_hallucinated",
+        "form_unexpected",
+        "structural_skip",
+        "unsupported"
+      ]
+    },
+    "sourceSlugs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fieldRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fieldIndex",
+        "pdfFieldName",
+        "factKey",
+        "fieldClass",
+        "expectedAction",
+        "expectedValue",
+        "actualValue",
+        "sourceSlugs",
+        "sourceSlugAgrees",
+        "snapshotClassification",
+        "classification"
+      ],
+      "properties": {
+        "fieldIndex": { "type": "integer", "minimum": 0 },
+        "pdfFieldName": { "type": "string" },
+        "factKey": { "type": ["string", "null"] },
+        "fieldClass": { "$ref": "#/$defs/fieldClass" },
+        "expectedAction": { "type": ["string", "null"] },
+        "expectedValue": {},
+        "actualValue": {},
+        "sourceSlugs": { "$ref": "#/$defs/sourceSlugs" },
+        "sourceSlugAgrees": { "type": "boolean" },
+        "snapshotClassification": {
+          "enum": [
+            "correct",
+            "skipped-correctly",
+            "missing",
+            "hallucinated",
+            "incorrect",
+            "unsupported"
+          ]
+        },
+        "classification": { "$ref": "#/$defs/classification" }
+      }
     }
   }
 }

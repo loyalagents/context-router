@@ -69,6 +69,8 @@ export async function scoreCombined({
   const facts = factKeys.map((factKey) => {
     const storage = databaseByFactKey.get(factKey) ?? null;
     const formFields = formByFactKey.get(factKey) ?? [];
+    const storageClass = storage?.classification ?? 'storage_not_scored';
+    const formStatus = summarizeFormStatus(formFields);
     return {
       factKey,
       expectedValue: storage?.expectedValue ?? storage?.withheldValue ?? null,
@@ -86,7 +88,9 @@ export async function scoreCombined({
           renderedValue: field.actualValue,
         })),
       },
-      stageAttribution: stageAttribution(storage, formFields),
+      storageClass,
+      formStatus,
+      stageAttribution: stageAttribution({ storageClass, formStatus }),
     };
   });
 
@@ -111,20 +115,29 @@ function firstMatchingSlug(storage) {
   );
 }
 
-function stageAttribution(storage, formFields) {
-  const storageClass = storage?.classification ?? 'storage_not_scored';
-  const formStatus = summarizeFormStatus(formFields);
-
-  if (storageClass === 'known_present_correct' || storageClass === 'known_present_conflict') {
+function stageAttribution({ storageClass, formStatus }) {
+  if (storageClass === 'known_present_correct') {
     if (formStatus === 'correct') return 'stored_correct_form_correct';
     if (formStatus === 'wrong') return 'stored_correct_form_wrong';
     if (formStatus === 'missing') return 'stored_correct_form_missing';
     return 'stored_correct_form_not_scored';
   }
+  if (storageClass === 'known_present_conflict') {
+    if (formStatus === 'correct') return 'stored_conflict_form_correct';
+    if (formStatus === 'wrong') return 'stored_conflict_form_wrong';
+    if (formStatus === 'missing') return 'stored_conflict_form_missing';
+    return 'stored_conflict_form_not_scored';
+  }
   if (storageClass === 'known_present_wrong_slug') {
     if (formStatus === 'missing') return 'stored_wrong_slug_form_missing';
     if (formStatus === 'correct') return 'stored_wrong_slug_form_correct';
     return 'stored_wrong_slug_form_other';
+  }
+  if (storageClass === 'known_present_wrong_value') {
+    if (formStatus === 'correct') return 'stored_wrong_value_form_correct';
+    if (formStatus === 'wrong') return 'stored_wrong_value_form_wrong';
+    if (formStatus === 'missing') return 'stored_wrong_value_form_missing';
+    return 'stored_wrong_value_form_other';
   }
   if (storageClass === 'known_present_missing') {
     if (formStatus === 'hallucinated') return 'stored_missing_form_hallucinated';
@@ -141,7 +154,7 @@ function stageAttribution(storage, formFields) {
     if (!storageAbsent) return 'missing_hallucinated_form_other';
     return 'missing_absent_form_other';
   }
-  return `${storageClass}_${formStatus}`;
+  return 'other';
 }
 
 function summarizeFormStatus(fields) {
@@ -174,4 +187,3 @@ function buildCombinedSummary(facts) {
     stageAttributionCounts: counts,
   };
 }
-

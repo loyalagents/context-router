@@ -51,10 +51,43 @@ test('database scorer classifies canonical, alias, wrong slug, wrong value, conf
   assert.equal(row(report, 'identity.lastName').classification, 'known_present_conflict');
   assert.equal(row(report, 'identity.middleInitial').classification, 'known_present_missing');
   assert.equal(missingRow(report, 'contact.phone').classification, 'missing_absent_correct');
+  assert.equal(
+    report.summary.knownPresentCorrect,
+    report.knownPresent.filter(
+      (candidate) => candidate.classification === 'known_present_correct',
+    ).length,
+  );
+  assert.ok(report.summary.acceptedSlugRecoveryRate > report.summary.acceptedSlugAccuracy);
   assert.equal(report.ignoredStoredPreferences.length, 1);
   assert.deepEqual(
     report.unscoredStoredPreferences.map((preference) => preference.slug),
     ['housing.pet_policy'],
+  );
+});
+
+test('database scorer rejects stored-preferences artifacts that do not declare active-only scoring', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-db-status-'));
+  const artifactPath = path.join(tmp, 'stored-preferences.json');
+  await writeFile(
+    artifactPath,
+    jsonText({
+      schemaVersion: 1,
+      artifactType: 'stored-preferences',
+      userId: 'alex-i9-test',
+      corpusId: 'realistic',
+      storageInput: { statusesScored: ['ACTIVE', 'SUGGESTED'] },
+      preferences: [],
+    }),
+  );
+
+  await assert.rejects(
+    scoreDatabase({
+      repoRoot,
+      userId: 'alex-i9-test',
+      corpusId: 'realistic',
+      storedPreferencesPath: artifactPath,
+    }),
+    /stored preferences failed stored-preferences.schema.json/,
   );
 });
 

@@ -11,6 +11,9 @@
 - [x] Stored-preferences and score-report schemas.
 - [x] Accepted slug map with canonical and alias slugs.
 - [x] Scorer CLI via `pnpm eval:score`.
+- [x] Scorer contract hardening: active-only storage input, full form snapshot
+  identity checks, clean conflict metrics, closed combined-stage buckets, and
+  stricter score-report schemas.
 
 ## Next
 
@@ -36,4 +39,3 @@
   correctness.
 - [ ] Add extra-slug categorization only after unscored extras show recurring
   patterns.
-

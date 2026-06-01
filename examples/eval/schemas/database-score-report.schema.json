@@ -14,6 +14,7 @@
     "summary",
     "knownPresent",
     "intentionallyMissing",
+    "ignoredStoredPreferences",
     "unscoredStoredPreferences"
   ],
   "properties": {
@@ -21,24 +22,198 @@
     "scoreType": { "const": "database-storage" },
     "userId": { "type": "string" },
     "corpusId": { "type": "string" },
-    "storageInput": { "type": "object", "additionalProperties": true },
-    "fixtureReadiness": { "type": "object", "additionalProperties": true },
-    "summary": { "type": "object", "additionalProperties": true },
+    "storageInput": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["statusesScored"],
+      "properties": {
+        "statusesScored": { "const": ["ACTIVE"] }
+      }
+    },
+    "fixtureReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scorable", "blockingIssues"],
+      "properties": {
+        "scorable": { "type": "boolean" },
+        "blockingIssues": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knownPresentTotal",
+        "knownPresentCorrect",
+        "knownPresentWrongSlug",
+        "knownPresentWrongValue",
+        "knownPresentConflict",
+        "knownPresentMissing",
+        "valueRecoveryRate",
+        "acceptedSlugAccuracy",
+        "acceptedSlugRecoveryRate",
+        "intentionallyMissingTotal",
+        "missingAbsentCorrect",
+        "missingHallucinated",
+        "missingAbstentionRate",
+        "ignoredStoredPreferenceCount",
+        "unscoredStoredPreferenceCount"
+      ],
+      "properties": {
+        "knownPresentTotal": { "$ref": "#/$defs/count" },
+        "knownPresentCorrect": { "$ref": "#/$defs/count" },
+        "knownPresentWrongSlug": { "$ref": "#/$defs/count" },
+        "knownPresentWrongValue": { "$ref": "#/$defs/count" },
+        "knownPresentConflict": { "$ref": "#/$defs/count" },
+        "knownPresentMissing": { "$ref": "#/$defs/count" },
+        "valueRecoveryRate": { "$ref": "#/$defs/rate" },
+        "acceptedSlugAccuracy": { "$ref": "#/$defs/rate" },
+        "acceptedSlugRecoveryRate": { "$ref": "#/$defs/rate" },
+        "intentionallyMissingTotal": { "$ref": "#/$defs/count" },
+        "missingAbsentCorrect": { "$ref": "#/$defs/count" },
+        "missingHallucinated": { "$ref": "#/$defs/count" },
+        "missingAbstentionRate": { "$ref": "#/$defs/rate" },
+        "ignoredStoredPreferenceCount": { "$ref": "#/$defs/count" },
+        "unscoredStoredPreferenceCount": { "$ref": "#/$defs/count" }
+      }
+    },
     "knownPresent": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/knownPresentRow" }
     },
     "intentionallyMissing": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/missingRow" }
     },
     "ignoredStoredPreferences": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/preferenceSummary" }
     },
     "unscoredStoredPreferences": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/preferenceSummary" }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "rate": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "knownClassification": {
+      "enum": [
+        "known_present_correct",
+        "known_present_wrong_slug",
+        "known_present_wrong_value",
+        "known_present_conflict",
+        "known_present_missing"
+      ]
+    },
+    "missingClassification": {
+      "enum": [
+        "missing_absent_correct",
+        "missing_value_hallucinated",
+        "missing_key_hallucinated",
+        "missing_hallucinated"
+      ]
+    },
+    "preferenceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "value", "status", "sourceType", "confidence"],
+      "properties": {
+        "slug": { "type": "string" },
+        "value": {},
+        "status": { "type": "string" },
+        "sourceType": { "type": ["string", "null"] },
+        "confidence": { "type": ["number", "null"] }
+      }
+    },
+    "knownPresentRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "expectedValue",
+        "canonicalSlugs",
+        "acceptedAliasSlugs",
+        "expectedValueFoundAnywhere",
+        "expectedValueFoundUnderAcceptedSlug",
+        "acceptedSlugPopulated",
+        "acceptedSlugHasWrongValue",
+        "canonicalSlugCorrect",
+        "acceptedAliasCorrect",
+        "matchingRows",
+        "acceptedSlugRows",
+        "classification"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "expectedValue": {},
+        "canonicalSlugs": { "$ref": "#/$defs/stringArray" },
+        "acceptedAliasSlugs": { "$ref": "#/$defs/stringArray" },
+        "expectedValueFoundAnywhere": { "type": "boolean" },
+        "expectedValueFoundUnderAcceptedSlug": { "type": "boolean" },
+        "acceptedSlugPopulated": { "type": "boolean" },
+        "acceptedSlugHasWrongValue": { "type": "boolean" },
+        "canonicalSlugCorrect": { "type": "boolean" },
+        "acceptedAliasCorrect": { "type": "boolean" },
+        "matchingRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "acceptedSlugRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "classification": { "$ref": "#/$defs/knownClassification" }
+      }
+    },
+    "missingRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "missingKind",
+        "withheldValue",
+        "source",
+        "canonicalSlugs",
+        "acceptedAliasSlugs",
+        "valueFoundAnywhere",
+        "acceptedSlugHasValue",
+        "valueRows",
+        "acceptedSlugRows",
+        "classification"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "missingKind": {
+          "enum": ["profile_null_missing", "withheld_value_missing"]
+        },
+        "withheldValue": {},
+        "source": { "type": "string" },
+        "canonicalSlugs": { "$ref": "#/$defs/stringArray" },
+        "acceptedAliasSlugs": { "$ref": "#/$defs/stringArray" },
+        "valueFoundAnywhere": { "type": "boolean" },
+        "acceptedSlugHasValue": { "type": "boolean" },
+        "valueRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "acceptedSlugRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "classification": { "$ref": "#/$defs/missingClassification" }
+      }
     }
   }
 }

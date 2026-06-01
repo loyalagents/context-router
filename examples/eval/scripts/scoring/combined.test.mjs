@@ -62,6 +62,38 @@ test('combined scorer rejects mismatched user and corpus reports', async () => {
   );
 });
 
+test('combined scorer keeps conflict attribution distinct from clean correctness', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-combined-conflict-'));
+  const databaseReportPath = path.join(tmp, 'database-score-report.json');
+  const formReportPath = path.join(tmp, 'form-fill-score-report.json');
+  await writeFile(
+    databaseReportPath,
+    jsonText({
+      ...databaseReport(),
+      knownPresent: [known('identity.legalName', 'known_present_conflict')],
+    }),
+  );
+  await writeFile(
+    formReportPath,
+    jsonText({
+      ...formReport(),
+      fields: [field('identity.legalName', 'form_known_correct')],
+    }),
+  );
+
+  const report = await scoreCombined({
+    repoRoot,
+    databaseReportPath,
+    formReportPath,
+  });
+
+  assert.equal(stage(report, 'identity.legalName'), 'stored_conflict_form_correct');
+  assert.equal(
+    report.summary.stageAttributionCounts.stored_conflict_form_correct,
+    1,
+  );
+});
+
 function stage(report, factKey) {
   return report.facts.find((fact) => fact.factKey === factKey).stageAttribution;
 }
@@ -74,7 +106,7 @@ function databaseReport() {
     corpusId: 'realistic',
     storageInput: { statusesScored: ['ACTIVE'] },
     fixtureReadiness: { scorable: true, blockingIssues: [] },
-    summary: {},
+    summary: databaseSummary(),
     knownPresent: [
       known('identity.legalName', 'known_present_correct'),
       known('identity.firstName', 'known_present_correct'),
@@ -84,7 +116,15 @@ function databaseReport() {
     intentionallyMissing: [
       {
         factKey: 'contact.phone',
+        missingKind: 'profile_null_missing',
         withheldValue: null,
+        source: 'manifest.intentionallyMissing',
+        canonicalSlugs: ['profile.phone_number'],
+        acceptedAliasSlugs: ['contact.phone'],
+        valueFoundAnywhere: false,
+        acceptedSlugHasValue: false,
+        valueRows: [],
+        acceptedSlugRows: [],
         classification: 'missing_absent_correct',
       },
     ],
@@ -94,12 +134,38 @@ function databaseReport() {
 }
 
 function known(factKey, classification) {
+  const isCorrect = classification === 'known_present_correct';
+  const isWrongSlug = classification === 'known_present_wrong_slug';
+  const isWrongValue = classification === 'known_present_wrong_value';
+  const isConflict = classification === 'known_present_conflict';
+  const isMissing = classification === 'known_present_missing';
+  const acceptedCorrect = isCorrect || isConflict;
+  const matchingRows =
+    isMissing || isWrongValue ? [] : [preference('profile.test', 'value')];
+  const acceptedSlugRows =
+    isMissing || isWrongSlug
+      ? []
+      : [
+          preference(
+            'profile.test',
+            isWrongValue || isConflict ? 'wrong value' : 'value',
+          ),
+        ];
+
   return {
     factKey,
     expectedValue: 'value',
+    canonicalSlugs: ['profile.test'],
+    acceptedAliasSlugs: [],
+    expectedValueFoundAnywhere: matchingRows.length > 0,
+    expectedValueFoundUnderAcceptedSlug: acceptedCorrect,
+    acceptedSlugPopulated: !isMissing && !isWrongSlug,
+    acceptedSlugHasWrongValue: isWrongValue || isConflict,
+    canonicalSlugCorrect: acceptedCorrect,
+    acceptedAliasCorrect: false,
+    matchingRows,
+    acceptedSlugRows,
     classification,
-    matchingRows: [],
-    acceptedSlugRows: [],
   };
 }
 
@@ -111,7 +177,7 @@ function formReport() {
     userId: 'alex-i9-test',
     corpusId: 'realistic',
     formId: 'i-9',
-    summary: {},
+    summary: formSummary(),
     fields: [
       field('identity.legalName', 'form_known_correct'),
       field('identity.firstName', 'form_known_wrong'),
@@ -135,5 +201,55 @@ function field(factKey, classification) {
     sourceSlugAgrees: false,
     snapshotClassification: 'correct',
     classification,
+  };
+}
+
+function preference(slug, value) {
+  return {
+    slug,
+    value,
+    status: 'ACTIVE',
+    sourceType: 'INFERRED',
+    confidence: 0.9,
+  };
+}
+
+function databaseSummary() {
+  return {
+    knownPresentTotal: 4,
+    knownPresentCorrect: 2,
+    knownPresentWrongSlug: 1,
+    knownPresentWrongValue: 0,
+    knownPresentConflict: 0,
+    knownPresentMissing: 1,
+    valueRecoveryRate: 0.75,
+    acceptedSlugAccuracy: 0.5,
+    acceptedSlugRecoveryRate: 0.5,
+    intentionallyMissingTotal: 1,
+    missingAbsentCorrect: 1,
+    missingHallucinated: 0,
+    missingAbstentionRate: 1,
+    ignoredStoredPreferenceCount: 0,
+    unscoredStoredPreferenceCount: 0,
+  };
+}
+
+function formSummary() {
+  return {
+    knownFieldTotal: 4,
+    knownFieldCorrect: 1,
+    knownFieldMissing: 1,
+    knownFieldWrong: 1,
+    knownFieldAccuracy: 0.25,
+    knownFieldMissingRate: 0.25,
+    knownFieldWrongRate: 0.25,
+    abstentionFieldTotal: 1,
+    abstentionFieldAbsentCorrect: 1,
+    abstentionFieldHallucinated: 0,
+    missingFieldAbstentionRate: 1,
+    missingFieldHallucinationRate: 0,
+    structuralSkipCount: 0,
+    unsupportedFieldCount: 0,
+    sourceSlugAgreementRate: 0,
   };
 }

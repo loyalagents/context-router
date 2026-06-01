@@ -72,7 +72,7 @@ export async function scoreDatabase({
   );
   const ignoredStoredPreferences = (storedPreferences.preferences ?? []).filter(
     (preference) => preference.status !== ACTIVE_STATUS,
-  );
+  ).map(rowSummary);
 
   const knownFactKeys = fixtureReadiness.scorable
     ? collectKnownPresentFactKeys(validationReport, profileFacts)
@@ -105,9 +105,9 @@ export async function scoreDatabase({
     }),
   );
 
-  const unscoredStoredPreferences = activePreferences.filter(
-    (_preference, index) => !usedPreferenceIndexes.has(index),
-  );
+  const unscoredStoredPreferences = activePreferences
+    .filter((_preference, index) => !usedPreferenceIndexes.has(index))
+    .map(rowSummary);
 
   return {
     schemaVersion: 1,
@@ -368,9 +368,7 @@ function buildDatabaseSummary({
 }) {
   const knownCounts = countByClassification(knownPresent);
   const missingCounts = countByClassification(intentionallyMissing);
-  const knownPresentCorrect =
-    (knownCounts.known_present_correct ?? 0) +
-    (knownCounts.known_present_conflict ?? 0);
+  const knownPresentCorrect = knownCounts.known_present_correct ?? 0;
   const missingHallucinated =
     (missingCounts.missing_hallucinated ?? 0) +
     (missingCounts.missing_value_hallucinated ?? 0) +
@@ -388,6 +386,11 @@ function buildDatabaseSummary({
       knownPresent.length,
     ),
     acceptedSlugAccuracy: rate(knownPresentCorrect, knownPresent.length),
+    acceptedSlugRecoveryRate: rate(
+      knownPresent.filter((fact) => fact.expectedValueFoundUnderAcceptedSlug)
+        .length,
+      knownPresent.length,
+    ),
     intentionallyMissingTotal: intentionallyMissing.length,
     missingAbsentCorrect: missingCounts.missing_absent_correct ?? 0,
     missingHallucinated,

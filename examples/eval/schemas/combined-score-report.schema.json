@@ -9,6 +9,8 @@
     "scoreType",
     "userId",
     "corpusId",
+    "scenarioId",
+    "formId",
     "summary",
     "facts"
   ],
@@ -19,10 +21,134 @@
     "corpusId": { "type": "string" },
     "scenarioId": { "type": "string" },
     "formId": { "type": "string" },
-    "summary": { "type": "object", "additionalProperties": true },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factTotal", "stageAttributionCounts"],
+      "properties": {
+        "factTotal": { "type": "integer", "minimum": 0 },
+        "stageAttributionCounts": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/stageAttribution" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
     "facts": {
       "type": "array",
-      "items": { "type": "object", "additionalProperties": true }
+      "items": { "$ref": "#/$defs/factRow" }
+    }
+  },
+  "$defs": {
+    "databaseClassification": {
+      "enum": [
+        "known_present_correct",
+        "known_present_wrong_slug",
+        "known_present_wrong_value",
+        "known_present_conflict",
+        "known_present_missing",
+        "missing_absent_correct",
+        "missing_value_hallucinated",
+        "missing_key_hallucinated",
+        "missing_hallucinated",
+        "storage_not_scored"
+      ]
+    },
+    "formClassification": {
+      "enum": [
+        "form_known_correct",
+        "form_known_missing",
+        "form_known_wrong",
+        "form_missing_absent_correct",
+        "form_missing_hallucinated",
+        "form_unexpected",
+        "structural_skip",
+        "unsupported"
+      ]
+    },
+    "formStatus": {
+      "enum": ["correct", "wrong", "missing", "hallucinated", "absent", "none", "other"]
+    },
+    "stageAttribution": {
+      "enum": [
+        "stored_correct_form_correct",
+        "stored_correct_form_wrong",
+        "stored_correct_form_missing",
+        "stored_correct_form_not_scored",
+        "stored_conflict_form_correct",
+        "stored_conflict_form_wrong",
+        "stored_conflict_form_missing",
+        "stored_conflict_form_not_scored",
+        "stored_wrong_slug_form_missing",
+        "stored_wrong_slug_form_correct",
+        "stored_wrong_slug_form_other",
+        "stored_wrong_value_form_correct",
+        "stored_wrong_value_form_wrong",
+        "stored_wrong_value_form_missing",
+        "stored_wrong_value_form_other",
+        "stored_missing_form_hallucinated",
+        "stored_missing_form_missing",
+        "stored_missing_form_correct",
+        "stored_missing_form_other",
+        "missing_absent_form_absent",
+        "missing_absent_form_other",
+        "missing_hallucinated_form_hallucinated",
+        "missing_hallucinated_form_other",
+        "other"
+      ]
+    },
+    "storageSummary": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["classification", "matchingSlug"],
+      "properties": {
+        "classification": { "$ref": "#/$defs/databaseClassification" },
+        "matchingSlug": { "type": ["string", "null"] }
+      }
+    },
+    "formField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fieldIndex", "pdfFieldName", "classification", "renderedValue"],
+      "properties": {
+        "fieldIndex": { "type": "integer", "minimum": 0 },
+        "pdfFieldName": { "type": "string" },
+        "classification": { "$ref": "#/$defs/formClassification" },
+        "renderedValue": {}
+      }
+    },
+    "formSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/formField" }
+        }
+      }
+    },
+    "factRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "expectedValue",
+        "storage",
+        "form",
+        "storageClass",
+        "formStatus",
+        "stageAttribution"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "expectedValue": {},
+        "storage": { "$ref": "#/$defs/storageSummary" },
+        "form": { "$ref": "#/$defs/formSummary" },
+        "storageClass": { "$ref": "#/$defs/databaseClassification" },
+        "formStatus": { "$ref": "#/$defs/formStatus" },
+        "stageAttribution": { "$ref": "#/$defs/stageAttribution" }
+      }
     }
   }
 }

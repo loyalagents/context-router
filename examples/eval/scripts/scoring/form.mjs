@@ -39,6 +39,13 @@ export async function scoreForm({ repoRoot, scenarioId, filledFormPath }) {
       `filled-form scenarioId ${filledForm.scenarioId} does not match ${scenarioId}`,
     );
   }
+  for (const key of ['userId', 'corpusId', 'formId']) {
+    if (filledForm[key] !== fixture.scenario[key]) {
+      throw new Error(
+        `filled-form ${key} ${filledForm[key]} does not match scenario ${fixture.scenario[key]}`,
+      );
+    }
+  }
 
   const fields = filledForm.fields.map((field) =>
     scoreField({ field, fixture, storageMap }),
@@ -99,9 +106,16 @@ function mapFormClassification(field, fieldClass) {
   if (fieldClass === 'unsupported') return 'unsupported';
   if (fieldClass === 'structural-skip') return 'structural_skip';
   if (fieldClass === 'abstention-test') {
-    return field.classification === 'hallucinated'
-      ? 'form_missing_hallucinated'
-      : 'form_missing_absent_correct';
+    if (field.classification === 'hallucinated') {
+      return 'form_missing_hallucinated';
+    }
+    if (
+      field.classification === 'skipped-correctly' ||
+      field.classification === 'correct'
+    ) {
+      return 'form_missing_absent_correct';
+    }
+    return 'form_unexpected';
   }
   if (field.classification === 'correct') return 'form_known_correct';
   if (field.classification === 'missing') return 'form_known_missing';
@@ -189,4 +203,3 @@ export function expectedProfileValueForField(profile, field) {
   if (!field.factKey) return null;
   return getFactValue(profile.facts ?? {}, field.factKey) ?? null;
 }
-

@@ -94,14 +94,20 @@ test('score CLI writes database, form, and combined reports', async () => {
       userId: 'alex-i9-test',
       corpusId: 'realistic',
       formId: 'i-9',
-      summary: {},
+      summary: formScoreSummary(),
       fields: [
         {
           fieldIndex: 0,
           pdfFieldName: 'name',
           factKey: 'identity.legalName',
-          classification: 'form_known_correct',
+          fieldClass: 'should-fill',
+          expectedAction: 'SET_TEXT',
+          expectedValue: 'Alex Jordan Rivera',
           actualValue: 'Alex Jordan Rivera',
+          sourceSlugs: ['profile.full_name'],
+          sourceSlugAgrees: true,
+          snapshotClassification: 'correct',
+          classification: 'form_known_correct',
         },
       ],
     }),
@@ -246,4 +252,24 @@ async function writeMinimalUnscorableRepo(tempRepoRoot) {
       issues: [],
     }),
   );
+}
+
+function formScoreSummary() {
+  return {
+    knownFieldTotal: 1,
+    knownFieldCorrect: 1,
+    knownFieldMissing: 0,
+    knownFieldWrong: 0,
+    knownFieldAccuracy: 1,
+    knownFieldMissingRate: 0,
+    knownFieldWrongRate: 0,
+    abstentionFieldTotal: 0,
+    abstentionFieldAbsentCorrect: 0,
+    abstentionFieldHallucinated: 0,
+    missingFieldAbstentionRate: null,
+    missingFieldHallucinationRate: null,
+    structuralSkipCount: 0,
+    unsupportedFieldCount: 0,
+    sourceSlugAgreementRate: 1,
+  };
 }

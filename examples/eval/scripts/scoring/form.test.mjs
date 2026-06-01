@@ -82,3 +82,29 @@ test('form scorer reports missing, wrong, hallucinated, unsupported, and source-
   assert.equal(report.summary.unsupportedFieldCount, 1);
   assert.ok(report.summary.sourceSlugAgreementRate < 1);
 });
+
+test('form scorer rejects filled-form snapshots with mismatched fixture identity', async () => {
+  const snapshot = JSON.parse(
+    await readFile(
+      path.join(
+        repoRoot,
+        'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+      ),
+      'utf8',
+    ),
+  );
+  snapshot.corpusId = 'different-corpus';
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-mismatch-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  await assert.rejects(
+    scoreForm({
+      repoRoot,
+      scenarioId: 'elena-marquez-i9-template-smoke',
+      filledFormPath,
+    }),
+    /filled-form corpusId different-corpus does not match scenario template-smoke/,
+  );
+});
