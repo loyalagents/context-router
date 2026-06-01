@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/combined-score-report.schema.json",
+  "title": "Eval Combined Score Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scoreType",
+    "userId",
+    "corpusId",
+    "summary",
+    "facts"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "scoreType": { "const": "combined" },
+    "userId": { "type": "string" },
+    "corpusId": { "type": "string" },
+    "scenarioId": { "type": "string" },
+    "formId": { "type": "string" },
+    "summary": { "type": "object", "additionalProperties": true },
+    "facts": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    }
+  }
+}

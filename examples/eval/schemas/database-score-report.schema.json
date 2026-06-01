@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/database-score-report.schema.json",
+  "title": "Eval Database Score Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scoreType",
+    "userId",
+    "corpusId",
+    "storageInput",
+    "fixtureReadiness",
+    "summary",
+    "knownPresent",
+    "intentionallyMissing",
+    "unscoredStoredPreferences"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "scoreType": { "const": "database-storage" },
+    "userId": { "type": "string" },
+    "corpusId": { "type": "string" },
+    "storageInput": { "type": "object", "additionalProperties": true },
+    "fixtureReadiness": { "type": "object", "additionalProperties": true },
+    "summary": { "type": "object", "additionalProperties": true },
+    "knownPresent": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "intentionallyMissing": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "ignoredStoredPreferences": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "unscoredStoredPreferences": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    }
+  }
+}

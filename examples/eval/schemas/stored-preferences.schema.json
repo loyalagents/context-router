@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/stored-preferences.schema.json",
+  "title": "Eval Stored Preferences Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "userId",
+    "corpusId",
+    "storageInput",
+    "preferences"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "stored-preferences" },
+    "runId": { "type": "string", "minLength": 1 },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "storageInput": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["statusesScored"],
+      "properties": {
+        "ingestionMode": { "type": "string" },
+        "statusesScored": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "suggestionsWereAutoApplied": { "type": "boolean" }
+      }
+    },
+    "preferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preference" }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preference" }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "preference": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["slug", "value", "status"],
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "value": {},
+        "status": { "type": "string", "minLength": 1 },
+        "sourceType": { "type": "string" },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {}
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/form-fill-score-report.schema.json",
+  "title": "Eval Form Fill Score Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scoreType",
+    "scenarioId",
+    "userId",
+    "corpusId",
+    "formId",
+    "summary",
+    "fields"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "scoreType": { "const": "form-fill" },
+    "scenarioId": { "type": "string" },
+    "userId": { "type": "string" },
+    "corpusId": { "type": "string" },
+    "formId": { "type": "string" },
+    "summary": { "type": "object", "additionalProperties": true },
+    "fields": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    }
+  }
+}
