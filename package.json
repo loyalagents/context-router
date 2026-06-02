@@ -28,6 +28,7 @@
     "eval:validate": "node examples/eval/scripts/validate.mjs",
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
+    "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:test": "node --test examples/eval/scripts",
     "eval:verify": "pnpm eval:test && pnpm eval:validate",
     "lint": "pnpm -r lint",
@@ -35,7 +36,8 @@
   },
   "devDependencies": {
     "ajv": "^8.20.0",
-    "concurrently": "^8.0.0"
+    "concurrently": "^8.0.0",
+    "graphql": "^16.12.0"
   },
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",

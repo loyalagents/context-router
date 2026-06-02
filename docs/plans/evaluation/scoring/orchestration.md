@@ -1,7 +1,7 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-01
+- Last updated: 2026-06-02
 
 ## High-Level Flow
 
@@ -19,7 +19,7 @@ ingestor or manual/MCP run
 
 - [x] Brainstorm scoring, exporter, and ingestor boundaries.
 - [x] Implement scorer.
-- [ ] Implement stored-preferences exporter.
+- [x] Implement stored-preferences exporter.
 - [ ] Implement document ingestor with auto-apply into active memory.
 - [ ] Add Codex/Claude MCP agent runners.
 
@@ -59,6 +59,15 @@ This lets the same scorer evaluate:
 - manual UI uploads
 - Codex/Claude MCP runs
 - deterministic test hydration
+
+Implemented in this phase:
+
+- `pnpm eval:export-stored-preferences`
+- existing GraphQL API export path with explicit local/hosted URL selection
+- frontend debug-token manual workflow via `EVAL_AUTH_TOKEN`
+- active-only scored rows with optional suggested-row diagnostics
+- GraphQL query contract tests against `apps/backend/src/schema.gql`
+- stored-preferences schema validation before writing artifacts
 
 ## Phase 3: Ingestor
 
