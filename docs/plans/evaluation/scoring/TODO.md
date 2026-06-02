@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-01
+- Last updated: 2026-06-02
 
 ## Implemented
 
@@ -15,11 +15,11 @@
   identity checks, clean conflict metrics, closed combined-stage buckets, and
   stricter score-report schemas.
 - [x] Corpus-truth validation for concrete withheld values before DB scoring.
+- [x] Stored-preferences exporter via existing authenticated GraphQL APIs.
+- [x] Exporter query-contract tests against the backend GraphQL schema.
 
 ## Next
 
-- [ ] Implement `export-stored-preferences` to snapshot backend active
-  preferences into `stored-preferences.json`.
 - [ ] Implement `ingest-documents` to upload corpus documents, auto-apply
   extracted suggestions into active preferences, and optionally call the exporter.
 - [ ] Add setup for user-owned eval preference definitions needed by non-core
