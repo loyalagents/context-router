@@ -21,6 +21,9 @@
       "warningOnlyAbsenceChecks": 0,
       "skippedAbsenceChecks": 0,
       "invalidAbsenceChecks": 0,
+      "withheldValuesProvenAbsent": 0,
+      "withheldValuesPresent": 0,
+      "withheldValuesSkipped": 0,
       "hardFailures": 0,
       "unsupportedDeclaredFactKeys": []
     },
@@ -46,6 +49,11 @@
           "warningOnly": [],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -66,6 +74,11 @@
           "warningOnly": [],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -90,6 +103,11 @@
           "warningOnly": [],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -109,6 +127,11 @@
           "warningOnly": [],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       },
       {
@@ -128,6 +151,11 @@
           "warningOnly": [],
           "skipped": [],
           "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
         }
       }
     ]

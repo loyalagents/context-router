@@ -210,6 +210,8 @@ At minimum, mark a run unscorable when:
 
 - corpus validation has hard errors
 - `validation-report.json` has blocking corpus-truth failures
+- corpus truth shows a concrete withheld value in current authoritative source
+  documents
 - a fact selected for scoring is declared present but is not proven present in
   corpus truth
 - an intentionally missing fact is not actually represented as null, absent, or
@@ -339,7 +341,8 @@ known_present_wrong_value
   An accepted slug was populated, but its value did not match the expected value.
 
 known_present_conflict
-  An accepted slug has a wrong value, even if the correct value appears elsewhere.
+  An accepted slug has both recoverable correct value evidence and conflicting
+  wrong active value evidence. This is not counted as clean correctness.
 
 known_present_missing
   Expected value was not found anywhere, and no accepted slug had the correct
@@ -364,6 +367,11 @@ Most current fixtures use profile-null missing facts, such as `contact.phone:
 null`. For those, the scorer can check accepted-key absence but cannot check a
 withheld value leak unless a concrete withheld value is added to the fixture
 contract.
+
+When a concrete `withheldValue` is present, corpus validation should first prove
+that current authoritative source documents do not contain that value. Without
+that gate, the database scorer could incorrectly penalize legitimate extraction
+from a source artifact that accidentally included the withheld value.
 
 ### Value Absence
 
@@ -454,10 +462,12 @@ Example:
     "knownPresentMissing": 1,
     "valueRecoveryRate": 0.857,
     "acceptedSlugAccuracy": 0.714,
+    "acceptedSlugRecoveryRate": 0.857,
     "intentionallyMissingTotal": 2,
     "missingAbsentCorrect": 2,
     "missingHallucinated": 0,
     "missingAbstentionRate": 1,
+    "ignoredStoredPreferenceCount": 0,
     "unscoredStoredPreferenceCount": 1
   },
   "knownPresent": [
@@ -473,13 +483,19 @@ Example:
       "matchingRows": [
         {
           "slug": "profile.full_name",
-          "value": "Alex Jordan Rivera"
+          "value": "Alex Jordan Rivera",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.94
         }
       ],
       "acceptedSlugRows": [
         {
           "slug": "profile.full_name",
-          "value": "Alex Jordan Rivera"
+          "value": "Alex Jordan Rivera",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.94
         }
       ],
       "classification": "known_present_correct"
@@ -494,13 +510,18 @@ Example:
       "acceptedAliasSlugs": ["profile.phone"],
       "valueFoundAnywhere": false,
       "acceptedSlugHasValue": false,
+      "valueRows": [],
+      "acceptedSlugRows": [],
       "classification": "missing_absent_correct"
     }
   ],
   "unscoredStoredPreferences": [
     {
       "slug": "housing.pet_policy",
-      "value": "No cats"
+      "value": "No cats",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.88
     }
   ]
 }
@@ -612,10 +633,17 @@ Example:
         "matchingSlug": "eval.identity.ssn"
       },
       "form": {
-        "fieldIndex": 16,
-        "classification": "form_known_correct",
-        "renderedValue": "000000292"
+        "fields": [
+          {
+            "fieldIndex": 16,
+            "pdfFieldName": "Social Security Number",
+            "classification": "form_known_correct",
+            "renderedValue": "000000292"
+          }
+        ]
       },
+      "storageClass": "known_present_correct",
+      "formStatus": "correct",
       "stageAttribution": "stored_correct_form_correct"
     }
   ]
@@ -628,11 +656,17 @@ Useful stage-attribution buckets:
 stored_correct_form_correct
 stored_correct_form_wrong
 stored_correct_form_missing
+stored_conflict_form_correct
+stored_conflict_form_wrong
+stored_conflict_form_missing
 stored_wrong_slug_form_missing
+stored_wrong_value_form_wrong
+stored_wrong_value_form_missing
 stored_missing_form_missing
 stored_missing_form_hallucinated
 missing_absent_form_absent
 missing_hallucinated_form_hallucinated
+other
 ```
 
 This makes cross-stage failures legible without collapsing the underlying
@@ -797,4 +831,3 @@ Do not build yet:
 - smart-search-based scoring
 - LLM-judged value equality
 - full Codex/Claude MCP agent runner
-
