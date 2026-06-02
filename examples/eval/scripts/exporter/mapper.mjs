@@ -140,11 +140,7 @@ export function normalizePreferenceRow({
 }
 
 export function sortPreferenceRows(rows) {
-  return [...rows].sort((left, right) => {
-    const leftKey = sortKey(left);
-    const rightKey = sortKey(right);
-    return leftKey.localeCompare(rightKey);
-  });
+  return [...rows].sort(comparePreferenceRows);
 }
 
 function assertAuthenticatedUser(responseData, expectedUserId) {
@@ -159,6 +155,16 @@ function assertAuthenticatedUser(responseData, expectedUserId) {
   }
 }
 
-function sortKey(row) {
-  return [row.slug, row.locationId ?? '', row.id].join('\u0000');
+function comparePreferenceRows(left, right) {
+  return (
+    compareString(left.slug, right.slug) ||
+    compareString(left.locationId ?? '', right.locationId ?? '') ||
+    compareString(left.id, right.id)
+  );
+}
+
+function compareString(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }

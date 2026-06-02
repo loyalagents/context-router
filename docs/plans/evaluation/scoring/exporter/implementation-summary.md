@@ -32,6 +32,11 @@ The scorer remains independent from backend/API details.
   timestamp, and query name.
 - Ensured diagnostics, successful CLI output, and failure CLI output never
   include the auth token.
+- Sorts exported rows with locale-independent field-wise ordering by slug,
+  location, and id.
+- CLI help now calls out that `EVAL_AUTH_TOKEN` is preferred over `--auth-token`,
+  relative `--out` paths resolve from the repo root, and suggestions are
+  diagnostic-only.
 - Added root `graphql` dev dependency so eval tests can validate the exporter
   query against `apps/backend/src/schema.gql`.
 
@@ -49,7 +54,7 @@ pnpm eval:verify
 Results:
 
 - Targeted exporter and scorer tests passed.
-- Full eval script test suite passed with 169 tests.
+- Full eval script test suite passed with 170 tests.
 - Eval validation passed with the existing 9 Alex realism warnings and no
   errors.
 - `pnpm eval:verify` passed.

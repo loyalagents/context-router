@@ -9,7 +9,10 @@ import {
   parseArgs,
   runExportStoredPreferences,
 } from './export-stored-preferences.mjs';
-import { buildStoredPreferencesArtifact } from './exporter/mapper.mjs';
+import {
+  buildStoredPreferencesArtifact,
+  sortPreferenceRows,
+} from './exporter/mapper.mjs';
 import { EXPORT_STORED_PREFERENCES_QUERY } from './exporter/query.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -247,6 +250,25 @@ test('export CLI includes suggested preferences only when requested', async () =
     ['profile.email', 'profile.first_name'],
   );
   assert.equal(artifact.diagnostics.suggestedPreferenceCount, 2);
+});
+
+test('exporter sorts preference rows by slug, location, and id deterministically', () => {
+  const rows = [
+    pref({ id: 'id-3', slug: 'profile.full_name', locationId: 'loc-b' }),
+    pref({ id: 'id-2', slug: 'profile.full_name', locationId: 'loc-a' }),
+    pref({ id: 'id-4', slug: 'profile.full_name', locationId: 'loc-a' }),
+    pref({ id: 'id-1', slug: 'profile.email', locationId: null }),
+  ];
+
+  assert.deepEqual(
+    sortPreferenceRows(rows).map((row) => [row.slug, row.locationId, row.id]),
+    [
+      ['profile.email', null, 'id-1'],
+      ['profile.full_name', 'loc-a', 'id-2'],
+      ['profile.full_name', 'loc-a', 'id-4'],
+      ['profile.full_name', 'loc-b', 'id-3'],
+    ],
+  );
 });
 
 test('export CLI fails clearly when requested suggestions are missing', async () => {
