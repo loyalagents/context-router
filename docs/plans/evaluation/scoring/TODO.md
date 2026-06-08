@@ -17,22 +17,33 @@
 - [x] Corpus-truth validation for concrete withheld values before DB scoring.
 - [x] Stored-preferences exporter via existing authenticated GraphQL APIs.
 - [x] Exporter query-contract tests against the backend GraphQL schema.
+- [x] Ingestor benchmark brainstorm split known-schema document ingestion from
+  open-schema definition/slug discovery.
 
 ## Next
 
-- [ ] Implement `ingest-documents` to upload corpus documents, auto-apply
-  extracted suggestions into active preferences, and optionally call the exporter.
-- [ ] Add setup for user-owned eval preference definitions needed by non-core
-  accepted slugs.
+- [ ] Implement known-schema `ingest-documents` to upload corpus documents,
+  auto-apply only suggestions returned by each upload response, and optionally
+  call the exporter.
+- [ ] Add optional setup for user-owned eval preference definitions needed by
+  non-core accepted slugs. This creates definitions/slugs, not stored values.
+- [ ] Add strict upload response contract tests for complete `suggestions[]` and
+  no unsupported pagination shape.
 - [ ] Add richer withheld-but-known missing value fixtures for stronger value
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a real ingestion run once the
   exporter/ingestor exist.
+- [ ] Design open-schema ingestion with definition/slug creation.
+- [ ] Decide ordering for open-schema ingestion work:
+  - MCP/Codex/Claude agent runner.
+  - Upload-level schema discovery with proposed definitions.
 
 ## Later
 
-- [ ] Add Codex/Claude MCP runner that produces the same artifacts as the
-  ingestor/exporter path.
+- [ ] Add MCP/Codex/Claude runner that produces the same artifacts as the
+  ingestor/exporter path and tests agent-driven definition/slug discovery.
+- [ ] Add upload-level schema discovery if product document analysis should
+  propose or create definitions before storing values.
 - [ ] Add optional canonical-vs-alias stricter metrics.
 - [ ] Add derivation-rule scoring only if strict scoring creates repeated false
   negatives.

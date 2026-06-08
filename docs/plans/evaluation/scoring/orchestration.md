@@ -20,8 +20,12 @@ ingestor or manual/MCP run
 - [x] Brainstorm scoring, exporter, and ingestor boundaries.
 - [x] Implement scorer.
 - [x] Implement stored-preferences exporter.
-- [ ] Implement document ingestor with auto-apply into active memory.
-- [ ] Add Codex/Claude MCP agent runners.
+- [x] Brainstorm known-schema vs open-schema ingestion.
+- [ ] Implement known-schema document ingestor with auto-apply into active
+  memory.
+- [ ] Design open-schema ingestion with definition/slug creation.
+- [ ] Decide ordering for MCP/Codex/Claude runner and upload-level schema
+  discovery.
 
 ## Phase 1: Scorer
 
@@ -69,11 +73,41 @@ Implemented in this phase:
 - GraphQL query contract tests against `apps/backend/src/schema.gql`
 - stored-preferences schema validation before writing artifacts
 
-## Phase 3: Ingestor
+## Phase 3: Known-Schema Ingestor
 
-Upload generated corpus documents through the product ingestion path, collect
-diagnostics, auto-apply extracted suggestions into active preferences, then call
-or hand off to the exporter.
+Upload generated corpus documents through the current product ingestion path,
+collect diagnostics, auto-apply extracted suggestions into active preferences,
+then call or hand off to the exporter.
 
 This phase is intentionally separate from scoring so that scoring remains stable
 while ingestion paths evolve.
+
+This benchmark assumes useful preference definitions already exist. It measures
+whether document upload can extract values into an available schema; it does not
+measure slug discovery.
+
+Planned behavior:
+
+- reset current backend user's memory
+- optionally seed starting values
+- optionally ensure accepted eval definitions exist without writing values
+- upload each corpus document
+- auto-apply only suggestions returned by that upload response
+- export `stored-preferences.json`
+- score with the existing scorer
+
+## Phase 4: Open-Schema Ingestion
+
+Open-schema ingestion starts without pre-created eval-specific definitions. The
+system or agent must choose or create useful definitions/slugs and store values.
+
+We likely want both open-schema surfaces because they test different systems:
+
+- MCP/Codex/Claude agent runner: tests agent-driven schema discovery and memory
+  writes through tools.
+- Upload-level schema discovery: tests product document analysis discovering or
+  proposing definitions itself.
+
+The order is not decided. Current document upload is known-schema only: it shows
+the model existing valid slugs and filters unknown slugs instead of creating new
+definitions.
