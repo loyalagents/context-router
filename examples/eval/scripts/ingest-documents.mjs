@@ -18,7 +18,7 @@ import {
 import {
   buildDefinitionInput,
   collectDefinitionTargets,
-  existingSlugSet,
+  existingDefinitionMap,
   summarizeDefinitionTarget,
 } from './ingestor/definitions.mjs';
 
@@ -334,7 +334,14 @@ async function ensureDefinitions({ options, targets, fetchImpl }) {
     authToken: options.authToken,
     fetchImpl,
   });
-  const existing = existingSlugSet(definitions);
+  const existing = existingDefinitionMap(definitions);
+
+  for (const target of targets) {
+    const existingDefinition = existing.get(target.slug);
+    if (existingDefinition) {
+      assertExistingDefinitionCompatible({ target, existingDefinition });
+    }
+  }
 
   for (const target of targets) {
     const summary = summarizeDefinitionTarget(target);
@@ -348,7 +355,7 @@ async function ensureDefinitions({ options, targets, fetchImpl }) {
       input: buildDefinitionInput(target),
       fetchImpl,
     });
-    existing.add(target.slug);
+    existing.set(target.slug, buildDefinitionInput(target));
     setup.created.push(summary);
   }
   return setup;
@@ -421,6 +428,7 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
 
   try {
     validateUploadResult(uploadResult, doc.path);
+    validateSuggestionItems(uploadResult.suggestions, doc.path);
   } catch (error) {
     docReport.error = errorMessage(error, options.authToken);
     throw new HardDocumentFailure(docReport);
@@ -465,7 +473,13 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
       });
       docReport.appliedPreferences = applied.map(preferenceSummary);
       docReport.appliedSuggestionCount = applied.length;
+      if (applied.length !== applyInput.length) {
+        docReport.status = 'apply_error';
+        docReport.error = `Applied ${applied.length}/${applyInput.length} suggestions for ${doc.path}.`;
+        throw new HardDocumentFailure(docReport);
+      }
     } catch (error) {
+      if (error instanceof HardDocumentFailure) throw error;
       docReport.status = 'apply_error';
       docReport.error = errorMessage(error, options.authToken);
       throw new HardDocumentFailure(docReport);
@@ -522,6 +536,25 @@ function applyInputForSuggestion({ suggestion, doc }) {
       sourceMeta: suggestion.sourceMeta ?? null,
     },
   };
+}
+
+function validateSuggestionItems(suggestions, docPath) {
+  for (const [index, suggestion] of suggestions.entries()) {
+    for (const key of ['id', 'slug', 'operation', 'newValue', 'confidence', 'sourceSnippet']) {
+      if (!Object.hasOwn(suggestion, key)) {
+        throw new Error(`Document upload ${docPath} suggestion ${index} is missing ${key}.`);
+      }
+    }
+  }
+}
+
+function assertExistingDefinitionCompatible({ target, existingDefinition }) {
+  const actualValueType = String(existingDefinition.valueType ?? '').toUpperCase();
+  if (actualValueType !== target.valueType) {
+    throw new Error(
+      `Existing definition ${target.slug} has valueType ${actualValueType || '<missing>'}, expected ${target.valueType}.`,
+    );
+  }
 }
 
 function exportArgs(options) {

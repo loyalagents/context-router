@@ -66,12 +66,15 @@ export function summarizeDefinitionTarget(target, extra = {}) {
   };
 }
 
-export function existingSlugSet(definitions) {
-  return new Set(
-    (definitions ?? [])
-      .map((definition) => definition?.slug)
-      .filter((slug) => typeof slug === 'string' && slug.length > 0),
-  );
+export function existingDefinitionMap(definitions) {
+  const bySlug = new Map();
+  for (const definition of definitions ?? []) {
+    const slug = definition?.slug;
+    if (typeof slug === 'string' && slug.length > 0 && !bySlug.has(slug)) {
+      bySlug.set(slug, definition);
+    }
+  }
+  return bySlug;
 }
 
 function backendValueType(storageValueType, value) {

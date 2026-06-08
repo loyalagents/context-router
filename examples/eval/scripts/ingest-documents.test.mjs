@@ -213,6 +213,45 @@ test('ingest-documents resets, ensures definitions, uploads, applies, exports, a
   assert.equal(fetchMock.applyInputs[0][0].evidence.source, 'eval-ingestor-upload');
 });
 
+test('ingest-documents fails definition setup when an existing slug has the wrong value type', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-def-type-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    existingDefinitions: [
+      {
+        slug: 'profile.full_name',
+        valueType: 'BOOLEAN',
+      },
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /Existing definition profile\.full_name has valueType BOOLEAN, expected STRING/);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.documents.length, 0);
+  assert.equal(fetchMock.calls.some((call) => call.kind === 'upload'), false);
+});
+
 test('ingest-documents continues after soft analysis failures, then exports and scores partial state', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-soft-'));
   const outPath = path.join(tmp, 'ingestion-run.json');
@@ -333,6 +372,50 @@ test('ingest-documents can skip definition setup and auto-apply', async () => {
   assert.equal(report.summary.suggestionCount, 1);
   assert.equal(report.summary.appliedSuggestionCount, 0);
   assert.equal(fetchMock.createDefinitionInputs.length, 0);
+  assert.equal(fetchMock.applyInputs.length, 0);
+});
+
+test('ingest-documents validates suggestion item shape even when auto-apply is disabled', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-suggestion-shape-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          {
+            ...suggestion({ slug: 'profile.full_name' }),
+            sourceSnippet: undefined,
+          },
+        ].map(({ sourceSnippet: _sourceSnippet, ...rest }) => rest),
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--no-auto-apply',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.documents.length, 1);
+  assert.match(report.documents[0].error, /suggestion 0 is missing sourceSnippet/);
   assert.equal(fetchMock.applyInputs.length, 0);
 });
 
@@ -509,6 +592,63 @@ test('ingest-documents treats apply failures as hard failures before export', as
   assert.equal(fetchMock.calls.some((call) => call.operationName === 'EvalStoredPreferencesExport'), false);
 });
 
+test('ingest-documents treats partial apply success as a hard failure before export', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-apply-partial-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const prefsPath = path.join(tmp, 'stored-preferences.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'profile.full_name',
+            newValue: 'Alex Jordan Rivera',
+          }),
+          suggestion({
+            id: 'analysis-001:candidate:1',
+            slug: 'profile.first_name',
+            newValue: 'Alex',
+          }),
+        ],
+      }),
+    ],
+    applyResultCounts: [1],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--export-stored-preferences',
+      prefsPath,
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.documents.length, 1);
+  assert.equal(report.documents[0].status, 'apply_error');
+  assert.equal(report.documents[0].appliedSuggestionCount, 1);
+  assert.match(report.documents[0].error, /Applied 1\/2 suggestions/);
+  assert.equal(report.summary.applyFailureCount, 1);
+  assert.equal(report.export, undefined);
+  assert.equal(fetchMock.calls.some((call) => call.operationName === 'EvalStoredPreferencesExport'), false);
+});
+
 test('ingest-documents records out-of-range suggestion confidence without suppressing the report', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-confidence-'));
   const outPath = path.join(tmp, 'ingestion-run.json');
@@ -625,6 +765,7 @@ function createFetchMock({
   uploadResults = [],
   activePreferences = [],
   applyErrors = [],
+  applyResultCounts = [],
 } = {}) {
   const calls = [];
   const createDefinitionInputs = [];
@@ -668,14 +809,25 @@ function createFetchMock({
     if (operationName === 'EvalIngestorPreferenceSchema') {
       return jsonResponse({
         data: {
-          exportPreferenceSchema: existingDefinitions.map((slug, index) => ({
-            id: `definition-${index}`,
-            slug,
-            valueType: 'STRING',
-            scope: 'GLOBAL',
-            ownerUserId: null,
-            archivedAt: null,
-          })),
+          exportPreferenceSchema: existingDefinitions.map((definition, index) =>
+            typeof definition === 'string'
+              ? {
+                  id: `definition-${index}`,
+                  slug: definition,
+                  valueType: 'STRING',
+                  scope: 'GLOBAL',
+                  ownerUserId: null,
+                  archivedAt: null,
+                }
+              : {
+                  id: `definition-${index}`,
+                  valueType: 'STRING',
+                  scope: 'GLOBAL',
+                  ownerUserId: null,
+                  archivedAt: null,
+                  ...definition,
+                },
+          ),
         },
       });
     }
@@ -714,14 +866,17 @@ function createFetchMock({
           errors: [{ message: errorMessage }],
         });
       }
+      const resultCount = applyResultCounts[applyInputs.length - 1] ?? body.variables.input.length;
       return jsonResponse({
         data: {
-          applyPreferenceSuggestions: body.variables.input.map((input, index) => ({
-            id: `applied-${index + 1}`,
-            slug: input.slug,
-            value: input.newValue,
-            status: 'ACTIVE',
-          })),
+          applyPreferenceSuggestions: body.variables.input
+            .slice(0, resultCount)
+            .map((input, index) => ({
+              id: `applied-${index + 1}`,
+              slug: input.slug,
+              value: input.newValue,
+              status: 'ACTIVE',
+            })),
         },
       });
     }

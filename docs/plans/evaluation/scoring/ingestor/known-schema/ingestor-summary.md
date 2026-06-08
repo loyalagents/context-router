@@ -23,6 +23,9 @@ discovery, upload-level proposed definitions, or MCP/Codex/Claude agent behavior
 - Added `eval:ingest-documents` to `package.json`.
 - Added partial-run handling for soft document failures and separate analyzed /
   apply-failure summary counters.
+- Added hard guards for partial apply success, malformed suggestion objects even
+  in `--no-auto-apply` mode, and stale existing definition `valueType`
+  mismatches.
 - Updated exporter identity handling so `stored-preferences.userId` remains the
   eval fixture user while backend rows are validated against `me.userId`.
 - Updated exporter tests for eval-user/backend-user separation.
@@ -54,20 +57,33 @@ definitions are user-owned by the authenticated backend user; the `GLOBAL` scope
 marks how the definition is used, not shared catalog ownership. Seed values are
 written only when `--seed-preferences` is explicitly provided.
 
+Existing target definitions are checked for `valueType` compatibility before any
+new definitions are created. A stale incompatible definition fails setup because
+it can make the known-schema benchmark measure old schema state instead of
+document extraction.
+
 `MEMORY_ONLY` reset clears stored values but leaves user-owned definitions in
 place, so repeated known-schema runs should skip previously created definitions.
 
 Upload responses must include a complete `suggestions[]` array. Pagination-like
 response shapes fail clearly until the upload contract explicitly supports them.
+Suggestion objects are validated even when `--no-auto-apply` is used, because
+that mode still records upload diagnostics.
 
 Backend-reported `parse_error` / `ai_error` and upload HTTP failures are soft
 per-document failures. The ingestor continues through later documents, runs any
 requested export/scoring steps, writes a partial run artifact, and exits nonzero
-at the end. Contract-shape failures and apply mutation failures still abort
-before export/scoring.
+at the end. Contract-shape failures, apply mutation failures, and partial apply
+success still abort before export/scoring.
 
 The summary distinguishes `uploadedCount`, `analyzedCount`,
 `failedDocumentCount`, `appliedSuggestionCount`, and `applyFailureCount`.
+`analyzedCount` means documents with an analysis record, including backend
+`parse_error` / `ai_error` records.
+
+When a partial ingestion run writes a chained database score report, interpret
+that score together with `ingestion-run.status`; it is useful diagnostics for
+the partial backend state, not a clean-run benchmark result.
 
 Suggestion confidence values are recorded as returned by the backend, even when
 they fall outside the usual `[0, 1]` band, so unusual confidences do not suppress
