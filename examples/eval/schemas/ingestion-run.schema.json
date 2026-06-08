@@ -98,20 +98,24 @@
       "required": [
         "documentCount",
         "uploadedCount",
+        "analyzedCount",
         "failedDocumentCount",
         "suggestionCount",
         "filteredSuggestionCount",
         "appliedSuggestionCount",
+        "applyFailureCount",
         "createdDefinitionCount",
         "seedPreferenceCount"
       ],
       "properties": {
         "documentCount": { "type": "integer", "minimum": 0 },
         "uploadedCount": { "type": "integer", "minimum": 0 },
+        "analyzedCount": { "type": "integer", "minimum": 0 },
         "failedDocumentCount": { "type": "integer", "minimum": 0 },
         "suggestionCount": { "type": "integer", "minimum": 0 },
         "filteredSuggestionCount": { "type": "integer", "minimum": 0 },
         "appliedSuggestionCount": { "type": "integer", "minimum": 0 },
+        "applyFailureCount": { "type": "integer", "minimum": 0 },
         "createdDefinitionCount": { "type": "integer", "minimum": 0 },
         "seedPreferenceCount": { "type": "integer", "minimum": 0 }
       }
@@ -198,9 +202,7 @@
         "slug": { "type": "string", "minLength": 1 },
         "operation": { "type": "string" },
         "confidence": {
-          "type": ["number", "null"],
-          "minimum": 0,
-          "maximum": 1
+          "type": ["number", "null"]
         },
         "newValue": {},
         "filterReason": { "type": "string" },

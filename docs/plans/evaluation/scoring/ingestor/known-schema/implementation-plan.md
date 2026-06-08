@@ -88,11 +88,22 @@ Defaults:
   `--documents-root`.
 - Auto-apply uses only the current upload response's `suggestions[]`.
 - The ingestor never queries or accepts `suggestedPreferences`.
-- Pagination-looking upload responses fail clearly until pagination is
-  supported.
+- Backend-reported `parse_error` / `ai_error` and upload HTTP failures are
+  recorded as per-document failures. The ingestor continues through later
+  documents, runs requested export/scoring steps, writes a partial run artifact,
+  and exits nonzero at the end.
+- Contract-shape failures still abort before export/scoring: pagination-looking
+  upload responses, missing required upload fields, and malformed suggestion
+  inputs fail clearly until the contract supports them.
+- Apply mutation failures are hard failures because the current runner does not
+  prove whether the backend wrote partial state.
+- The summary records uploaded documents, analyzed documents, failed documents,
+  applied suggestions, and apply failures separately.
 - The run summary records eval fixture identity and backend authenticated
   identity separately.
 - Auth tokens are never written to artifacts or unredacted error output.
+- Suggestion confidence is recorded as reported by the backend; unusual values
+  outside `[0, 1]` should not suppress the entire run artifact.
 
 ## Verification
 

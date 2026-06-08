@@ -171,7 +171,9 @@ test('ingest-documents resets, ensures definitions, uploads, applies, exports, a
   assert.equal(report.settings.autoApply, true);
   assert.equal(report.summary.documentCount, 10);
   assert.equal(report.summary.uploadedCount, 10);
+  assert.equal(report.summary.analyzedCount, 10);
   assert.equal(report.summary.appliedSuggestionCount, 1);
+  assert.equal(report.summary.applyFailureCount, 0);
   assert.ok(report.summary.createdDefinitionCount > 0);
   assert.equal(
     report.definitionSetup.existing.some((definition) => definition.slug === 'profile.full_name'),
@@ -209,6 +211,85 @@ test('ingest-documents resets, ensures definitions, uploads, applies, exports, a
   );
   assert.equal(fetchMock.applyInputs[0][0].suggestionId, 'analysis-001:candidate:0');
   assert.equal(fetchMock.applyInputs[0][0].evidence.source, 'eval-ingestor-upload');
+});
+
+test('ingest-documents continues after soft analysis failures, then exports and scores partial state', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-soft-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const prefsPath = path.join(tmp, 'stored-preferences.json');
+  const dbReportPath = path.join(tmp, 'database-score-report.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      analysisFailureUpload({
+        analysisId: 'analysis-parse',
+        status: 'parse_error',
+        statusReason: 'Parser could not read page 1',
+      }),
+      successUpload({
+        analysisId: 'analysis-002',
+        suggestions: [
+          suggestion({
+            id: 'analysis-002:candidate:0',
+            slug: 'profile.full_name',
+            newValue: 'Alex Jordan Rivera',
+          }),
+        ],
+      }),
+    ],
+    activePreferences: [
+      pref({
+        id: 'pref-active-1',
+        userId: 'backend-user-123',
+        slug: 'profile.full_name',
+        value: 'Alex Jordan Rivera',
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--export-stored-preferences',
+      prefsPath,
+      '--database-score-report',
+      dbReportPath,
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.documents.length, 10);
+  assert.equal(report.documents[0].status, 'parse_error');
+  assert.equal(report.documents[0].error, 'Parser could not read page 1');
+  assert.equal(report.documents[1].status, 'success');
+  assert.equal(report.summary.failedDocumentCount, 1);
+  assert.equal(report.summary.uploadedCount, 9);
+  assert.equal(report.summary.analyzedCount, 10);
+  assert.equal(report.summary.appliedSuggestionCount, 1);
+  assert.equal(report.export.path, path.relative(repoRoot, prefsPath).split(path.sep).join('/'));
+  assert.equal(report.databaseScore.path, path.relative(repoRoot, dbReportPath).split(path.sep).join('/'));
+  assert.equal(fetchMock.calls.filter((call) => call.kind === 'upload').length, 10);
+  assert.equal(fetchMock.applyInputs.length, 1);
+
+  const storedPreferences = JSON.parse(await readFile(prefsPath, 'utf8'));
+  assert.equal(storedPreferences.preferences[0].slug, 'profile.full_name');
+  const databaseReport = JSON.parse(await readFile(dbReportPath, 'utf8'));
+  assert.equal(databaseReport.scoreType, 'database-storage');
 });
 
 test('ingest-documents can skip definition setup and auto-apply', async () => {
@@ -341,6 +422,7 @@ test('ingest-documents rejects pagination-looking upload responses', async () =>
 test('ingest-documents fails clearly when upload suggestions are missing', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-missing-'));
   const outPath = path.join(tmp, 'ingestion-run.json');
+  const prefsPath = path.join(tmp, 'stored-preferences.json');
   const fetchMock = createFetchMock({
     uploadResults: [
       {
@@ -366,6 +448,8 @@ test('ingest-documents fails clearly when upload suggestions are missing', async
       '--auth-token',
       'token',
       '--skip-ensure-definitions',
+      '--export-stored-preferences',
+      prefsPath,
     ],
     env: {},
     fetchImpl: fetchMock.fetch,
@@ -374,6 +458,97 @@ test('ingest-documents fails clearly when upload suggestions are missing', async
 
   assert.equal(result.exitCode, 1);
   assert.match(result.lines.join('\n'), /suggestions must be an array/);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.export, undefined);
+  assert.equal(fetchMock.calls.some((call) => call.operationName === 'EvalStoredPreferencesExport'), false);
+});
+
+test('ingest-documents treats apply failures as hard failures before export', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-apply-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const prefsPath = path.join(tmp, 'stored-preferences.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [suggestion({ slug: 'profile.full_name' })],
+      }),
+    ],
+    applyErrors: ['apply failed after validation'],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--export-stored-preferences',
+      prefsPath,
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.documents.length, 1);
+  assert.equal(report.documents[0].status, 'apply_error');
+  assert.match(report.documents[0].error, /apply failed after validation/);
+  assert.equal(report.summary.applyFailureCount, 1);
+  assert.equal(report.export, undefined);
+  assert.equal(fetchMock.calls.filter((call) => call.kind === 'upload').length, 1);
+  assert.equal(fetchMock.calls.some((call) => call.operationName === 'EvalStoredPreferencesExport'), false);
+});
+
+test('ingest-documents records out-of-range suggestion confidence without suppressing the report', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-confidence-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          suggestion({
+            slug: 'profile.full_name',
+            confidence: 1.42,
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--no-auto-apply',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.documents[0].suggestions[0].confidence, 1.42);
 });
 
 test('ingest-documents redacts auth token from failure output', async () => {
@@ -441,7 +616,7 @@ test('ingest-documents redacts auth token from document-level errors', async () 
   const report = JSON.parse(reportText);
   assert.equal(reportText.includes('document-secret-token'), false);
   assert.match(report.documents[0].error, /\[redacted-auth-token\]/);
-  assert.match(result.lines.join('\n'), /\[redacted-auth-token\]/);
+  assert.equal(result.lines.join('\n').includes('document-secret-token'), false);
 });
 
 function createFetchMock({
@@ -449,6 +624,7 @@ function createFetchMock({
   existingDefinitions = [],
   uploadResults = [],
   activePreferences = [],
+  applyErrors = [],
 } = {}) {
   const calls = [];
   const createDefinitionInputs = [];
@@ -532,6 +708,12 @@ function createFetchMock({
     }
     if (operationName === 'EvalIngestorApplySuggestions') {
       applyInputs.push(body.variables.input);
+      const errorMessage = applyErrors[applyInputs.length - 1];
+      if (errorMessage) {
+        return jsonResponse({
+          errors: [{ message: errorMessage }],
+        });
+      }
       return jsonResponse({
         data: {
           applyPreferenceSuggestions: body.variables.input.map((input, index) => ({
@@ -571,15 +753,28 @@ function successUpload({
   analysisId = 'analysis-001',
   suggestions = [],
   filteredSuggestions = [],
+  status = 'success',
+  statusReason,
 } = {}) {
   return {
     analysisId,
     suggestions,
     filteredSuggestions,
     documentSummary: 'Document summary',
-    status: 'success',
+    status,
+    ...(statusReason ? { statusReason } : {}),
     filteredCount: filteredSuggestions.length,
   };
+}
+
+function analysisFailureUpload({ analysisId, status, statusReason }) {
+  return successUpload({
+    analysisId,
+    status,
+    statusReason,
+    suggestions: [],
+    filteredSuggestions: [],
+  });
 }
 
 function uploadHttpError(body, status = 500) {

@@ -21,6 +21,8 @@ discovery, upload-level proposed definitions, or MCP/Codex/Claude agent behavior
 - Added `examples/eval/schemas/ingestion-run.schema.json`.
 - Added `examples/eval/scripts/ingest-documents.test.mjs`.
 - Added `eval:ingest-documents` to `package.json`.
+- Added partial-run handling for soft document failures and separate analyzed /
+  apply-failure summary counters.
 - Updated exporter identity handling so `stored-preferences.userId` remains the
   eval fixture user while backend rows are validated against `me.userId`.
 - Updated exporter tests for eval-user/backend-user separation.
@@ -44,7 +46,7 @@ load fixture
 ```
 
 The run artifact records eval fixture identity and authenticated backend identity
-separately, records upload/apply counts, and never writes the auth token.
+separately, records upload/analyze/apply counts, and never writes the auth token.
 
 Definition setup creates missing canonical target definitions only, including
 intentionally missing abstention targets. It creates slugs, not values. Created
@@ -57,6 +59,19 @@ place, so repeated known-schema runs should skip previously created definitions.
 
 Upload responses must include a complete `suggestions[]` array. Pagination-like
 response shapes fail clearly until the upload contract explicitly supports them.
+
+Backend-reported `parse_error` / `ai_error` and upload HTTP failures are soft
+per-document failures. The ingestor continues through later documents, runs any
+requested export/scoring steps, writes a partial run artifact, and exits nonzero
+at the end. Contract-shape failures and apply mutation failures still abort
+before export/scoring.
+
+The summary distinguishes `uploadedCount`, `analyzedCount`,
+`failedDocumentCount`, `appliedSuggestionCount`, and `applyFailureCount`.
+
+Suggestion confidence values are recorded as returned by the backend, even when
+they fall outside the usual `[0, 1]` band, so unusual confidences do not suppress
+the entire run artifact.
 
 ## Verification
 

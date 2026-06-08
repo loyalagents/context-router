@@ -88,17 +88,23 @@ export async function runIngestDocuments({
     }
 
     for (const doc of fixture.manifest.documents) {
-      const docReport = await ingestDocument({
-        options,
-        repoRoot,
-        documentsRoot: fixture.documentsRoot,
-        doc,
-        fetchImpl,
-      });
-      report.documents.push(docReport);
-      updateDocumentCounts(report);
-      if (docReport.error) {
-        throw new Error(`Document ${doc.path} failed: ${docReport.error}`);
+      try {
+        const docReport = await ingestDocument({
+          options,
+          repoRoot,
+          documentsRoot: fixture.documentsRoot,
+          doc,
+          fetchImpl,
+        });
+        report.documents.push(docReport);
+        updateDocumentCounts(report);
+      } catch (error) {
+        if (error instanceof HardDocumentFailure) {
+          report.documents.push(error.docReport);
+          updateDocumentCounts(report);
+          throw new Error(`Document ${doc.path} failed: ${error.docReport.error}`);
+        }
+        throw error;
       }
     }
 
@@ -131,9 +137,26 @@ export async function runIngestDocuments({
       };
     }
 
-    report.status = 'pass';
+    const hasDocumentFailures = report.summary.failedDocumentCount > 0;
+    report.status = hasDocumentFailures ? 'fail' : 'pass';
+    if (hasDocumentFailures) {
+      report.error = `${report.summary.failedDocumentCount} document(s) failed during ingestion; requested post-ingestion steps completed for the partial run.`;
+    }
     report.endedAt = isoTimestamp(now);
     await writeValidatedReport({ repoRoot, outPath, report });
+    if (hasDocumentFailures) {
+      return {
+        exitCode: 1,
+        lines: [
+          'eval ingest-documents failed',
+          `documents=${report.summary.documentCount} uploaded=${report.summary.uploadedCount} failed=${report.summary.failedDocumentCount} applied=${report.summary.appliedSuggestionCount}`,
+          `backendUser=${report.backendUserId}`,
+          `wrote ${relativePath(repoRoot, outPath)}`,
+          '',
+          report.error,
+        ],
+      };
+    }
     return {
       exitCode: 0,
       lines: [
@@ -391,10 +414,16 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
       mimeType: inferMimeType(absolutePath),
       fetchImpl,
     });
-    validateUploadResult(uploadResult, doc.path);
   } catch (error) {
     docReport.error = errorMessage(error, options.authToken);
     return docReport;
+  }
+
+  try {
+    validateUploadResult(uploadResult, doc.path);
+  } catch (error) {
+    docReport.error = errorMessage(error, options.authToken);
+    throw new HardDocumentFailure(docReport);
   }
 
   docReport.status = uploadResult.status;
@@ -415,14 +444,23 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   }
 
   if (options.autoApply && uploadResult.suggestions.length > 0) {
+    let applyInput;
+    try {
+      applyInput = uploadResult.suggestions.map((suggestion) =>
+        applyInputForSuggestion({ suggestion, doc }),
+      );
+    } catch (error) {
+      docReport.status = 'apply_error';
+      docReport.error = errorMessage(error, options.authToken);
+      throw new HardDocumentFailure(docReport);
+    }
+
     try {
       const applied = await applyPreferenceSuggestions({
         graphqlUrl: options.graphqlUrl,
         authToken: options.authToken,
         analysisId: uploadResult.analysisId,
-        input: uploadResult.suggestions.map((suggestion) =>
-          applyInputForSuggestion({ suggestion, doc }),
-        ),
+        input: applyInput,
         fetchImpl,
       });
       docReport.appliedPreferences = applied.map(preferenceSummary);
@@ -430,7 +468,7 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
     } catch (error) {
       docReport.status = 'apply_error';
       docReport.error = errorMessage(error, options.authToken);
-      return docReport;
+      throw new HardDocumentFailure(docReport);
     }
   }
 
@@ -535,10 +573,12 @@ function initialReport({ options, startedAt }) {
     summary: {
       documentCount: 0,
       uploadedCount: 0,
+      analyzedCount: 0,
       failedDocumentCount: 0,
       suggestionCount: 0,
       filteredSuggestionCount: 0,
       appliedSuggestionCount: 0,
+      applyFailureCount: 0,
       createdDefinitionCount: 0,
       seedPreferenceCount: 0,
     },
@@ -552,7 +592,9 @@ function updateDocumentCounts(report) {
   report.summary.uploadedCount = documents.filter((doc) =>
     ['success', 'no_matches'].includes(doc.status),
   ).length;
+  report.summary.analyzedCount = documents.filter((doc) => doc.analysisId).length;
   report.summary.failedDocumentCount = documents.filter((doc) => doc.error).length;
+  report.summary.applyFailureCount = documents.filter((doc) => doc.status === 'apply_error').length;
   report.summary.suggestionCount = sum(documents, 'suggestionCount');
   report.summary.filteredSuggestionCount = sum(documents, 'filteredSuggestionCount');
   report.summary.appliedSuggestionCount = sum(documents, 'appliedSuggestionCount');
@@ -611,6 +653,13 @@ function errorMessage(error, secret) {
 function isInside(root, target) {
   const relative = path.relative(root, target);
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+class HardDocumentFailure extends Error {
+  constructor(docReport) {
+    super(docReport.error);
+    this.docReport = docReport;
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
