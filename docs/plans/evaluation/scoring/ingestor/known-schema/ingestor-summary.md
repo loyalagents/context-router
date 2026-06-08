@@ -46,9 +46,14 @@ load fixture
 The run artifact records eval fixture identity and authenticated backend identity
 separately, records upload/apply counts, and never writes the auth token.
 
-Definition setup creates missing canonical target definitions only. It creates
-slugs, not values. Seed values are written only when `--seed-preferences` is
-explicitly provided.
+Definition setup creates missing canonical target definitions only, including
+intentionally missing abstention targets. It creates slugs, not values. Created
+definitions are user-owned by the authenticated backend user; the `GLOBAL` scope
+marks how the definition is used, not shared catalog ownership. Seed values are
+written only when `--seed-preferences` is explicitly provided.
+
+`MEMORY_ONLY` reset clears stored values but leaves user-owned definitions in
+place, so repeated known-schema runs should skip previously created definitions.
 
 Upload responses must include a complete `suggestions[]` array. Pagination-like
 response shapes fail clearly until the upload contract explicitly supports them.

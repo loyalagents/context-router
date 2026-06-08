@@ -203,6 +203,10 @@ test('ingest-documents resets, ensures definitions, uploads, applies, exports, a
     fetchMock.createDefinitionInputs.some((input) => input.slug === 'profile.full_name'),
     false,
   );
+  assert.equal(
+    fetchMock.createDefinitionInputs.some((input) => input.slug === 'eval.contact.phone'),
+    true,
+  );
   assert.equal(fetchMock.applyInputs[0][0].suggestionId, 'analysis-001:candidate:0');
   assert.equal(fetchMock.applyInputs[0][0].evidence.source, 'eval-ingestor-upload');
 });
@@ -403,6 +407,43 @@ test('ingest-documents redacts auth token from failure output', async () => {
   assert.match(output, /\[redacted-auth-token\]/);
 });
 
+test('ingest-documents redacts auth token from document-level errors', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-token-doc-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      uploadHttpError({ message: 'Upload failed for document-secret-token' }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'document-secret-token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const reportText = await readFile(outPath, 'utf8');
+  const report = JSON.parse(reportText);
+  assert.equal(reportText.includes('document-secret-token'), false);
+  assert.match(report.documents[0].error, /\[redacted-auth-token\]/);
+  assert.match(result.lines.join('\n'), /\[redacted-auth-token\]/);
+});
+
 function createFetchMock({
   backendUserId = 'backend-user-123',
   existingDefinitions = [],
@@ -420,6 +461,9 @@ function createFetchMock({
       calls.push({ kind: 'upload', url, options });
       const result = uploadResults[uploadIndex] ?? noMatchesUpload(`analysis-${uploadIndex + 1}`);
       uploadIndex += 1;
+      if (result?.__httpStatus) {
+        return jsonResponse(result.body, { status: result.__httpStatus });
+      }
       return jsonResponse(result);
     }
 
@@ -535,6 +579,13 @@ function successUpload({
     documentSummary: 'Document summary',
     status: 'success',
     filteredCount: filteredSuggestions.length,
+  };
+}
+
+function uploadHttpError(body, status = 500) {
+  return {
+    __httpStatus: status,
+    body,
   };
 }
 

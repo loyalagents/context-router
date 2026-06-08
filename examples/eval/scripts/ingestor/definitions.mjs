@@ -17,6 +17,11 @@ export function collectDefinitionTargets({ manifest, profile, storageMap }) {
       factKeys.add(factKey);
     }
   }
+  for (const missing of manifest.intentionallyMissing ?? []) {
+    if (typeof missing.factKey === 'string' && missing.factKey.length > 0) {
+      factKeys.add(missing.factKey);
+    }
+  }
   for (const entry of profile.seedPreferences ?? []) {
     const value = getFactValue(profile.facts ?? {}, entry.factKey);
     if (value != null) factKeys.add(entry.factKey);

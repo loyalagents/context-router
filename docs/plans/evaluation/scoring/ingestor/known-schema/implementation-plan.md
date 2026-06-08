@@ -73,14 +73,16 @@ Defaults:
    - Update exporter tests and docs.
 
 5. Close out docs.
-   - Write `docs/plans/evaluation/scoring/known-schema/ingestor-summary.md`.
+   - Write `docs/plans/evaluation/scoring/ingestor/known-schema/ingestor-summary.md`.
    - Update `docs/plans/evaluation/scoring/orchestration.md`.
    - Update `docs/plans/evaluation/scoring/TODO.md`.
 
 ## Key Behavior
 
-- Definition setup creates only canonical target definitions when missing. It
-  does not write values.
+- Definition setup creates only canonical target definitions when missing,
+  including intentionally missing abstention targets. It does not write values.
+- Created definitions are user-owned by the authenticated backend user; the
+  `GLOBAL` scope marks how the definition is used, not shared catalog ownership.
 - Seed values are written only when `--seed-preferences` is explicitly passed.
 - Upload paths come from the corpus manifest and are resolved under
   `--documents-root`.

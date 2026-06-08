@@ -393,7 +393,7 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
     });
     validateUploadResult(uploadResult, doc.path);
   } catch (error) {
-    docReport.error = error.message;
+    docReport.error = errorMessage(error, options.authToken);
     return docReport;
   }
 
@@ -407,7 +407,10 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   docReport.filteredSuggestionCount = docReport.filteredSuggestions.length;
 
   if (uploadResult.status === 'parse_error' || uploadResult.status === 'ai_error') {
-    docReport.error = uploadResult.statusReason ?? `Document analysis status was ${uploadResult.status}`;
+    docReport.error = redactSecret(
+      uploadResult.statusReason ?? `Document analysis status was ${uploadResult.status}`,
+      options.authToken,
+    );
     return docReport;
   }
 
@@ -426,7 +429,7 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
       docReport.appliedSuggestionCount = applied.length;
     } catch (error) {
       docReport.status = 'apply_error';
-      docReport.error = error.message;
+      docReport.error = errorMessage(error, options.authToken);
       return docReport;
     }
   }
@@ -599,6 +602,10 @@ function isoTimestamp(now) {
 function redactSecret(text, secret) {
   if (!secret) return text;
   return text.split(secret).join('[redacted-auth-token]');
+}
+
+function errorMessage(error, secret) {
+  return redactSecret(error?.message ?? String(error), secret);
 }
 
 function isInside(root, target) {
