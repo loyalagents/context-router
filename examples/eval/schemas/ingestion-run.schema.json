@@ -186,6 +186,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/suggestionSummary" }
         },
+        "autoApplySkippedSuggestions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionSummary" }
+        },
         "appliedPreferences": {
           "type": "array",
           "items": { "$ref": "#/$defs/preferenceSummary" }

@@ -442,6 +442,18 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   docReport.filteredSuggestions = uploadResult.filteredSuggestions.map(suggestionSummary);
   docReport.suggestionCount = docReport.suggestions.length;
   docReport.filteredSuggestionCount = docReport.filteredSuggestions.length;
+  const storableSuggestions = uploadResult.suggestions.filter(isStorableSuggestion);
+  const autoApplySkippedSuggestions = uploadResult.suggestions
+    .filter((suggestion) => !isStorableSuggestion(suggestion))
+    .map((suggestion) => ({
+      ...suggestionSummary(suggestion),
+      filterReason: 'NON_STORABLE_NULL_VALUE',
+      filterDetails:
+        'Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset.',
+    }));
+  if (autoApplySkippedSuggestions.length > 0) {
+    docReport.autoApplySkippedSuggestions = autoApplySkippedSuggestions;
+  }
 
   if (uploadResult.status === 'parse_error' || uploadResult.status === 'ai_error') {
     docReport.error = redactSecret(
@@ -451,10 +463,10 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
     return docReport;
   }
 
-  if (options.autoApply && uploadResult.suggestions.length > 0) {
+  if (options.autoApply && storableSuggestions.length > 0) {
     let applyInput;
     try {
-      applyInput = uploadResult.suggestions.map((suggestion) =>
+      applyInput = storableSuggestions.map((suggestion) =>
         applyInputForSuggestion({ suggestion, doc }),
       );
     } catch (error) {
@@ -487,6 +499,10 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   }
 
   return docReport;
+}
+
+function isStorableSuggestion(suggestion) {
+  return suggestion.newValue !== null && suggestion.newValue !== undefined;
 }
 
 function validateUploadResult(result, docPath) {

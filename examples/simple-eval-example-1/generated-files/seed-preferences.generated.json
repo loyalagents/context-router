@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "communication.preferred_channels",
+    "value": [
+      "email"
+    ]
+  },
+  {
+    "slug": "profile.company",
+    "value": "Cascadia Hiring Cooperative"
+  },
+  {
+    "slug": "profile.email",
+    "value": "alex.rivera@example.test"
+  },
+  {
+    "slug": "profile.first_name",
+    "value": "Alex"
+  },
+  {
+    "slug": "profile.full_name",
+    "value": "Alex Jordan Rivera"
+  },
+  {
+    "slug": "profile.last_name",
+    "value": "Rivera"
+  },
+  {
+    "slug": "profile.title",
+    "value": "Operations Specialist"
+  }
+]

@@ -649,6 +649,65 @@ test('ingest-documents treats partial apply success as a hard failure before exp
   assert.equal(fetchMock.calls.some((call) => call.operationName === 'EvalStoredPreferencesExport'), false);
 });
 
+test('ingest-documents skips null suggestions before auto-apply', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-apply-null-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'profile.email',
+            newValue: 'alex.rivera@example.test',
+          }),
+          suggestion({
+            id: 'analysis-001:candidate:1',
+            slug: 'eval.contact.phone',
+            newValue: null,
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.documents[0].status, 'success');
+  assert.equal(report.documents[0].suggestionCount, 2);
+  assert.equal(report.documents[0].appliedSuggestionCount, 1);
+  assert.deepEqual(
+    fetchMock.applyInputs[0].map((input) => input.slug),
+    ['profile.email'],
+  );
+  assert.equal(report.documents[0].autoApplySkippedSuggestions.length, 1);
+  assert.equal(
+    report.documents[0].autoApplySkippedSuggestions[0].filterReason,
+    'NON_STORABLE_NULL_VALUE',
+  );
+  assert.equal(report.summary.applyFailureCount, 0);
+});
+
 test('ingest-documents records out-of-range suggestion confidence without suppressing the report', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-confidence-'));
   const outPath = path.join(tmp, 'ingestion-run.json');

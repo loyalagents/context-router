@@ -1,0 +1,1510 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "ingestion-run",
+  "status": "pass",
+  "runId": "20260607-214329",
+  "evalUserId": "alex-i9-test",
+  "corpusId": "realistic",
+  "backendUrl": "http://localhost:3000",
+  "graphqlUrl": "http://localhost:3000/graphql",
+  "locationId": null,
+  "settings": {
+    "resetMemory": true,
+    "ensureDefinitions": true,
+    "autoApply": true,
+    "seedPreferences": false
+  },
+  "definitionSetup": {
+    "created": [],
+    "existing": [
+      {
+        "slug": "communication.preferred_channels",
+        "factKey": "communication.preferredChannels",
+        "valueType": "ARRAY",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.address.current.city",
+        "factKey": "address.current.city",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.address.current.postal_code",
+        "factKey": "address.current.postalCode",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.address.current.state",
+        "factKey": "address.current.state",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.address.current.street",
+        "factKey": "address.current.street",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.address.current.unit",
+        "factKey": "address.current.unit",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.contact.phone",
+        "factKey": "contact.phone",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.employment.start_date",
+        "factKey": "employment.startDate",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.employment.work_email",
+        "factKey": "employment.workEmail",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.identity.date_of_birth",
+        "factKey": "identity.dateOfBirth",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.identity.middle_initial",
+        "factKey": "identity.middleInitial",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.identity.other_last_names",
+        "factKey": "identity.otherLastNames",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.identity.ssn",
+        "factKey": "identity.ssn",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.work_authorization.citizenship_status",
+        "factKey": "workAuthorization.citizenshipStatus",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "eval.work_authorization.foreign_passport_number",
+        "factKey": "workAuthorization.foreignPassportNumber",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.work_authorization.i94_admission_number",
+        "factKey": "workAuthorization.i94AdmissionNumber",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.work_authorization.uscis_a_number",
+        "factKey": "workAuthorization.uscisANumber",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "eval.work_authorization.work_authorization_expiration_date",
+        "factKey": "workAuthorization.workAuthorizationExpirationDate",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "profile.company",
+        "factKey": "employment.company",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "profile.email",
+        "factKey": "contact.email",
+        "valueType": "STRING",
+        "isSensitive": true
+      },
+      {
+        "slug": "profile.first_name",
+        "factKey": "identity.firstName",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "profile.full_name",
+        "factKey": "identity.legalName",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "profile.last_name",
+        "factKey": "identity.lastName",
+        "valueType": "STRING",
+        "isSensitive": false
+      },
+      {
+        "slug": "profile.title",
+        "factKey": "employment.title",
+        "valueType": "STRING",
+        "isSensitive": false
+      }
+    ],
+    "skipped": []
+  },
+  "seedPreferences": [],
+  "documents": [
+    {
+      "id": "alex-i9-test-realistic-001",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
+      "title": "Driver License Upload OCR",
+      "status": "success",
+      "suggestionCount": 16,
+      "filteredSuggestionCount": 0,
+      "appliedSuggestionCount": 16,
+      "suggestions": [
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:0",
+          "slug": "profile.full_name",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "ALEX JORDAN RIVERA"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:1",
+          "slug": "profile.first_name",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "ALEX"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:2",
+          "slug": "profile.last_name",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "RIVERA"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:3",
+          "slug": "profile.middle_initial",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "J"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:4",
+          "slug": "profile.date_of_birth",
+          "operation": "CREATE",
+          "confidence": 0.99,
+          "newValue": "1992-03-14"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:5",
+          "slug": "eval.identity.date_of_birth",
+          "operation": "CREATE",
+          "confidence": 0.99,
+          "newValue": "1992-03-14"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:6",
+          "slug": "profile.home_address",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "7428 EVERGREEN TERRACE APT 5C, PORTLAND, OR 97214"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:7",
+          "slug": "eval.address.current.street",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "7428 EVERGREEN TERRACE"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:8",
+          "slug": "eval.address.current.unit",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "APT 5C"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:9",
+          "slug": "eval.address.current.city",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "PORTLAND"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:10",
+          "slug": "eval.address.current.state",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "OR"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:11",
+          "slug": "eval.address.current.postal_code",
+          "operation": "CREATE",
+          "confidence": 0.98,
+          "newValue": "97214"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:12",
+          "slug": "eval.employment.start_date",
+          "operation": "CREATE",
+          "confidence": 0.99,
+          "newValue": "2024-05-15"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:13",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "operation": "CREATE",
+          "confidence": 0.99,
+          "newValue": "2032-05-15"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:14",
+          "slug": "profile.citizenship_status",
+          "operation": "CREATE",
+          "confidence": 0.95,
+          "newValue": "UNITED STATES"
+        },
+        {
+          "id": "2b4bed1c-4580-4fae-8b28-b38649785246:candidate:15",
+          "slug": "eval.work_authorization.citizenship_status",
+          "operation": "CREATE",
+          "confidence": 0.95,
+          "newValue": "UNITED STATES"
+        }
+      ],
+      "filteredSuggestions": [],
+      "appliedPreferences": [
+        {
+          "id": "bd150521-e5b6-42d4-ae96-1db069d07771",
+          "slug": "profile.full_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "34e99d73-5e05-4902-9bcf-d004983603ae",
+          "slug": "profile.first_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "5bcb06e4-12b2-4690-b0cb-026bfcef473e",
+          "slug": "profile.last_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "a8e14443-bf84-411d-b695-3dbdf33c17f3",
+          "slug": "profile.middle_initial",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "11810db7-246a-4f36-a4e4-72ab5f844f1e",
+          "slug": "profile.date_of_birth",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "4ab06bcd-61b7-49c1-a4e3-2d6e88990b7e",
+          "slug": "eval.identity.date_of_birth",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "ccb34631-eb7c-4428-bd13-23e2c384a39d",
+          "slug": "profile.home_address",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "e11e4281-a7c7-4ed9-976d-0d29f1612905",
+          "slug": "eval.address.current.street",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "65db60dc-59b3-44bc-a01e-ded1006bf43d",
+          "slug": "eval.address.current.unit",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "97eb0638-c0f7-4d27-93b6-ffa8973218cd",
+          "slug": "eval.address.current.city",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "6a733385-38b3-4a53-be36-ca46d35f07e2",
+          "slug": "eval.address.current.state",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "4d242fa4-70d2-498d-8329-f44f2649a7ac",
+          "slug": "eval.address.current.postal_code",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "d7c6d7fd-06b0-46b1-923a-92bc051f9e10",
+          "slug": "eval.employment.start_date",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "aee23bbb-580b-457c-88a0-ddc05d93cb63",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "1436dfb4-507e-4e13-87bc-971d90587495",
+          "slug": "profile.citizenship_status",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "d63c436c-9569-4b50-8daa-f5b0bfdc8f57",
+          "slug": "eval.work_authorization.citizenship_status",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "2b4bed1c-4580-4fae-8b28-b38649785246",
+      "documentSummary": "This document is an OCR transcript of the front of an Oregon Driver License for Alex Jordan Rivera, containing personal identification, address, and licensing details."
+    },
+    {
+      "id": "alex-i9-test-realistic-002",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+      "title": "SSN Card Upload OCR",
+      "status": "success",
+      "suggestionCount": 1,
+      "filteredSuggestionCount": 4,
+      "appliedSuggestionCount": 1,
+      "suggestions": [
+        {
+          "id": "e7873400-c47d-4178-a84b-ec3bea8669e6:candidate:0",
+          "slug": "eval.identity.ssn",
+          "operation": "CREATE",
+          "confidence": 0.992,
+          "newValue": "000-00-0292"
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "e7873400-c47d-4178-a84b-ec3bea8669e6:candidate:1",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 0.992,
+          "newValue": "ALEX JORDAN RIVERA",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"ALEX JORDAN RIVERA\"\" already exists"
+        },
+        {
+          "id": "e7873400-c47d-4178-a84b-ec3bea8669e6:candidate:2",
+          "slug": "profile.first_name",
+          "operation": "UPDATE",
+          "confidence": 0.992,
+          "newValue": "ALEX",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"ALEX\"\" already exists"
+        },
+        {
+          "id": "e7873400-c47d-4178-a84b-ec3bea8669e6:candidate:3",
+          "slug": "profile.last_name",
+          "operation": "UPDATE",
+          "confidence": 0.992,
+          "newValue": "RIVERA",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"RIVERA\"\" already exists"
+        },
+        {
+          "id": "e7873400-c47d-4178-a84b-ec3bea8669e6:candidate:4",
+          "slug": "profile.middle_initial",
+          "operation": "UPDATE",
+          "confidence": 0.992,
+          "newValue": "J",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"J\"\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "18de6f2c-fc35-4e89-a07f-df77d4995cf0",
+          "slug": "eval.identity.ssn",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "e7873400-c47d-4178-a84b-ec3bea8669e6",
+      "documentSummary": "This document is a US Social Security card for Alex Jordan Rivera, containing their full name and Social Security Number."
+    },
+    {
+      "id": "alex-i9-test-realistic-003",
+      "path": "documents/work-authorization/003-work-authorization-upload-receipt.txt",
+      "title": "Work Authorization Upload Receipt",
+      "status": "success",
+      "suggestionCount": 9,
+      "filteredSuggestionCount": 0,
+      "appliedSuggestionCount": 9,
+      "suggestions": [
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:0",
+          "slug": "eval.work_authorization.uscis_a_number",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "987654321"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:1",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "09/30/2028"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:2",
+          "slug": "eval.work_authorization.foreign_passport_number",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "XK1234567"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:3",
+          "slug": "eval.work_authorization.i94_admission_number",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "11223344556"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:4",
+          "slug": "eval.work_authorization.citizenship_status",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "An alien authorized to work"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:5",
+          "slug": "profile.citizenship_status",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "An alien authorized to work"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:6",
+          "slug": "eval.identity.middle_initial",
+          "operation": "CREATE",
+          "confidence": 0.8,
+          "newValue": "Jordan"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:7",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 0.8,
+          "newValue": "Alex Jordan Rivera"
+        },
+        {
+          "id": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56:candidate:8",
+          "slug": "profile.first_name",
+          "operation": "UPDATE",
+          "confidence": 0.8,
+          "newValue": "Alex Jordan"
+        }
+      ],
+      "filteredSuggestions": [],
+      "appliedPreferences": [
+        {
+          "id": "c0bae247-99d4-4960-8b2c-63a1614cfcc5",
+          "slug": "eval.work_authorization.uscis_a_number",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "aee23bbb-580b-457c-88a0-ddc05d93cb63",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "54a56c69-79e3-459f-8045-1b84e483e12e",
+          "slug": "eval.work_authorization.foreign_passport_number",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "c7d79774-f0e2-42b3-9367-951137dc7db0",
+          "slug": "eval.work_authorization.i94_admission_number",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "d63c436c-9569-4b50-8daa-f5b0bfdc8f57",
+          "slug": "eval.work_authorization.citizenship_status",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "1436dfb4-507e-4e13-87bc-971d90587495",
+          "slug": "profile.citizenship_status",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "095fca6b-4edf-430a-a23e-e5ec78965390",
+          "slug": "eval.identity.middle_initial",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "bd150521-e5b6-42d4-ae96-1db069d07771",
+          "slug": "profile.full_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "34e99d73-5e05-4902-9bcf-d004983603ae",
+          "slug": "profile.first_name",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "4eca911e-8ab2-4dbe-b73c-8fe14823ca56",
+      "documentSummary": "This document is a receipt confirming the successful upload of employment eligibility verification documents for Alex Jordan Rivera, including EAD card, passport, and I-94 record. The documents are pending HR review."
+    },
+    {
+      "id": "alex-i9-test-realistic-004",
+      "path": "documents/address-contact/004-resident-portal-lease-export.md",
+      "title": "Resident Portal Lease Export",
+      "status": "success",
+      "suggestionCount": 7,
+      "filteredSuggestionCount": 3,
+      "appliedSuggestionCount": 7,
+      "suggestions": [
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:0",
+          "slug": "profile.email",
+          "operation": "CREATE",
+          "confidence": 0.9,
+          "newValue": "alex.rivera@example.test"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:1",
+          "slug": "profile.phone",
+          "operation": "CREATE",
+          "confidence": 0.9,
+          "newValue": "Not on file"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:3",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:4",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:5",
+          "slug": "eval.address.current.unit",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Apt 5C"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:6",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Portland"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:9",
+          "slug": "communication.preferred_channels",
+          "operation": "CREATE",
+          "confidence": 0.9,
+          "newValue": [
+            "email"
+          ]
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:2",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex Jordan Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan Rivera\"\" already exists"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:7",
+          "slug": "eval.address.current.state",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "OR",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"OR\"\" already exists"
+        },
+        {
+          "id": "e1968595-25ff-4bbd-9d60-6be458bc2907:candidate:8",
+          "slug": "eval.address.current.postal_code",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "97214",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"97214\"\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "46c412dd-5488-4a4a-9285-ab331aed4429",
+          "slug": "profile.email",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "0a7c2764-7491-4959-b2a2-f420694954f5",
+          "slug": "profile.phone",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "ccb34631-eb7c-4428-bd13-23e2c384a39d",
+          "slug": "profile.home_address",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "e11e4281-a7c7-4ed9-976d-0d29f1612905",
+          "slug": "eval.address.current.street",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "65db60dc-59b3-44bc-a01e-ded1006bf43d",
+          "slug": "eval.address.current.unit",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "97eb0638-c0f7-4d27-93b6-ffa8973218cd",
+          "slug": "eval.address.current.city",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "099b54d9-d67d-4e75-94f5-6081def0f75d",
+          "slug": "communication.preferred_channels",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "e1968595-25ff-4bbd-9d60-6be458bc2907",
+      "documentSummary": "This document is a ResidentLink Account Export for Alex Jordan Rivera from Harbor & Hill Residential, detailing their current residency, contact information, and lease terms."
+    },
+    {
+      "id": "alex-i9-test-realistic-005",
+      "path": "documents/address-contact/005-utility-account-export.txt",
+      "title": "Utility Account Export",
+      "status": "success",
+      "suggestionCount": 2,
+      "filteredSuggestionCount": 9,
+      "appliedSuggestionCount": 2,
+      "suggestions": [
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:3",
+          "slug": "profile.last_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Rivera"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:10",
+          "slug": "communication.preferred_channels",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": [
+            "email",
+            "BILLING_ALERTS",
+            "OUTAGE_NOTIFICATIONS"
+          ]
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:0",
+          "slug": "profile.email",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "alex.rivera@example.test",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"alex.rivera@example.test\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:1",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex Jordan Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan Rivera\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:2",
+          "slug": "profile.first_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex Jordan",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:4",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:5",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"7428 Evergreen Terrace\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:6",
+          "slug": "eval.address.current.unit",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Apt 5C",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Apt 5C\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:7",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Portland",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Portland\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:8",
+          "slug": "eval.address.current.state",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "OR",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"OR\"\" already exists"
+        },
+        {
+          "id": "7055edec-49f4-4a0f-a8d1-ea94ca520a36:candidate:9",
+          "slug": "eval.address.current.postal_code",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "97214",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"97214\"\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "5bcb06e4-12b2-4690-b0cb-026bfcef473e",
+          "slug": "profile.last_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "099b54d9-d67d-4e75-94f5-6081def0f75d",
+          "slug": "communication.preferred_channels",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "7055edec-49f4-4a0f-a8d1-ea94ca520a36",
+      "documentSummary": "This document is a utility account export from Metroline Energy for Alex Jordan Rivera, detailing account information, service details, and billing history."
+    },
+    {
+      "id": "alex-i9-test-realistic-006",
+      "path": "documents/work-authorization/006-i9-section-one-field-export.yaml",
+      "title": "I-9 Section 1 Field Export",
+      "status": "success",
+      "suggestionCount": 4,
+      "filteredSuggestionCount": 18,
+      "appliedSuggestionCount": 3,
+      "suggestions": [
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:1",
+          "slug": "profile.first_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:4",
+          "slug": "profile.other_last_names",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": [
+            "Santos"
+          ]
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:13",
+          "slug": "profile.phone",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": null
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:15",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "2028-09-30"
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:0",
+          "slug": "profile.last_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Rivera\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:2",
+          "slug": "profile.middle_initial",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "J",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"J\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:3",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex Jordan Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan Rivera\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:5",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"7428 Evergreen Terrace\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:6",
+          "slug": "eval.address.current.unit",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Apt 5C",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Apt 5C\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:7",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Portland",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Portland\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:8",
+          "slug": "eval.address.current.state",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "OR",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"OR\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:9",
+          "slug": "eval.address.current.postal_code",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "97214",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"97214\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:10",
+          "slug": "eval.identity.date_of_birth",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "1992-03-14",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"1992-03-14\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:11",
+          "slug": "eval.identity.ssn",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "000-00-0292",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"000-00-0292\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:12",
+          "slug": "profile.email",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "alex.rivera@example.test",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"alex.rivera@example.test\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:14",
+          "slug": "profile.citizenship_status",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "An alien authorized to work",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"An alien authorized to work\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:16",
+          "slug": "eval.work_authorization.uscis_a_number",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "987654321",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"987654321\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:17",
+          "slug": "eval.work_authorization.i94_admission_number",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "11223344556",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"11223344556\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:18",
+          "slug": "eval.work_authorization.foreign_passport_number",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "XK1234567",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"XK1234567\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:19",
+          "slug": "eval.work_authorization.citizenship_status",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "An alien authorized to work",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"An alien authorized to work\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:20",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214\"\" already exists"
+        },
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:21",
+          "slug": "profile.date_of_birth",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "1992-03-14",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"1992-03-14\"\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "34e99d73-5e05-4902-9bcf-d004983603ae",
+          "slug": "profile.first_name",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "02c211cc-eacc-44b3-bb4b-6ce5684eccc9",
+          "slug": "profile.other_last_names",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "aee23bbb-580b-457c-88a0-ddc05d93cb63",
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "9073a70b-d776-4815-9d14-1f3531b21b58",
+      "documentSummary": "This document exports data from Form I-9 Section 1, detailing employee information, attestation, and work authorization details. The workflow status indicates it is in draft pending employee signature.",
+      "autoApplySkippedSuggestions": [
+        {
+          "id": "9073a70b-d776-4815-9d14-1f3531b21b58:candidate:13",
+          "slug": "profile.phone",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        }
+      ]
+    },
+    {
+      "id": "alex-i9-test-realistic-007",
+      "path": "documents/hr-onboarding/007-offer-email.md",
+      "title": "Offer Email",
+      "status": "success",
+      "suggestionCount": 5,
+      "filteredSuggestionCount": 2,
+      "appliedSuggestionCount": 5,
+      "suggestions": [
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:1",
+          "slug": "eval.employment.work_email",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "alex.rivera@cascadiahiring.example.test"
+        },
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:2",
+          "slug": "profile.company",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "Cascadia Hiring Cooperative"
+        },
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:3",
+          "slug": "profile.title",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "Operations Specialist"
+        },
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:4",
+          "slug": "eval.employment.start_date",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "2026-06-17"
+        },
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:6",
+          "slug": "profile.email",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "alex.rivera@cascadiahiring.example.test"
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:0",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "Alex Jordan Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan Rivera\"\" already exists"
+        },
+        {
+          "id": "07d9fc63-b060-459f-92ab-bb99561abba5:candidate:5",
+          "slug": "communication.preferred_channels",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": [
+            "email",
+            "BILLING_ALERTS",
+            "OUTAGE_NOTIFICATIONS"
+          ],
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"[\"email\",\"BILLING_ALERTS\",\"OUTAGE_NOTIFICATIONS\"]\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "b12647d1-8c82-4cad-8fcd-9f36e7925a72",
+          "slug": "eval.employment.work_email",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "8070530f-985c-40ce-97a9-dde673f74b7f",
+          "slug": "profile.company",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "63024d7f-44b4-4431-a45f-3b80dded0ac2",
+          "slug": "profile.title",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "d7c6d7fd-06b0-46b1-923a-92bc051f9e10",
+          "slug": "eval.employment.start_date",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "46c412dd-5488-4a4a-9285-ab331aed4429",
+          "slug": "profile.email",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "07d9fc63-b060-459f-92ab-bb99561abba5",
+      "documentSummary": "This document is a formal offer of employment for Alex Jordan Rivera as an Operations Specialist at Cascadia Hiring Cooperative, outlining the position, start date, and other employment details."
+    },
+    {
+      "id": "alex-i9-test-realistic-008",
+      "path": "documents/hr-onboarding/008-onboarding-profile-export.yaml",
+      "title": "Onboarding Profile Export",
+      "status": "success",
+      "suggestionCount": 5,
+      "filteredSuggestionCount": 7,
+      "appliedSuggestionCount": 4,
+      "suggestions": [
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:3",
+          "slug": "profile.email",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "alex.rivera@example.test"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:4",
+          "slug": "profile.phone",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": null
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:9",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 0.8,
+          "newValue": "Address collection pending task completion"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:10",
+          "slug": "profile.middle_initial",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Jordan"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:11",
+          "slug": "profile.i9_section1_note",
+          "operation": "CREATE",
+          "confidence": 1,
+          "newValue": "Candidate has saved a draft. Pending final submission."
+        }
+      ],
+      "filteredSuggestions": [
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:0",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex Jordan Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex Jordan Rivera\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:1",
+          "slug": "profile.first_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Alex",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Alex\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:2",
+          "slug": "profile.last_name",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Rivera",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Rivera\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:5",
+          "slug": "profile.company",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Cascadia Hiring Cooperative",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Cascadia Hiring Cooperative\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:6",
+          "slug": "profile.title",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "Operations Specialist",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"Operations Specialist\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:7",
+          "slug": "eval.employment.start_date",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "2026-06-17",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"2026-06-17\"\" already exists"
+        },
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:8",
+          "slug": "eval.employment.work_email",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": "alex.rivera@cascadiahiring.example.test",
+          "filterReason": "NO_CHANGE",
+          "filterDetails": "Value \"\"alex.rivera@cascadiahiring.example.test\"\" already exists"
+        }
+      ],
+      "appliedPreferences": [
+        {
+          "id": "46c412dd-5488-4a4a-9285-ab331aed4429",
+          "slug": "profile.email",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "ccb34631-eb7c-4428-bd13-23e2c384a39d",
+          "slug": "profile.home_address",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "a8e14443-bf84-411d-b695-3dbdf33c17f3",
+          "slug": "profile.middle_initial",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "fd3a2932-d013-4859-b4a0-fffdc3628cf7",
+          "slug": "profile.i9_section1_note",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "aae29973-5232-4dff-b263-fce071f93947",
+      "documentSummary": "This document is a candidate profile export for Alex Jordan Rivera, an Operations Specialist at Cascadia Hiring Cooperative. It details their onboarding progress, employment information, and system provisioning status. The candidate has completed initial tasks but is awaiting final submission for Form I-9 Section 1.",
+      "autoApplySkippedSuggestions": [
+        {
+          "id": "aae29973-5232-4dff-b263-fce071f93947:candidate:4",
+          "slug": "profile.phone",
+          "operation": "UPDATE",
+          "confidence": 1,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        }
+      ]
+    },
+    {
+      "id": "alex-i9-test-realistic-009",
+      "path": "documents/partial-conflicting/009-stale-contact-ticket.txt",
+      "title": "Stale Contact Ticket",
+      "status": "success",
+      "suggestionCount": 6,
+      "filteredSuggestionCount": 0,
+      "appliedSuggestionCount": 0,
+      "suggestions": [
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:0",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:1",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:2",
+          "slug": "eval.address.current.unit",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:3",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:4",
+          "slug": "eval.address.current.state",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:5",
+          "slug": "eval.address.current.postal_code",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null
+        }
+      ],
+      "filteredSuggestions": [],
+      "appliedPreferences": [],
+      "analysisId": "2d760be7-33f0-4872-9a50-f69555f5dac5",
+      "documentSummary": "This ticket details a returned mail item for employee CHR-53242, indicating that the previously recorded mailing address is invalid and should no longer be used. HR is notified to obtain a new address directly from the employee.",
+      "autoApplySkippedSuggestions": [
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:0",
+          "slug": "profile.home_address",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:1",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:2",
+          "slug": "eval.address.current.unit",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:3",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:4",
+          "slug": "eval.address.current.state",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        },
+        {
+          "id": "2d760be7-33f0-4872-9a50-f69555f5dac5:candidate:5",
+          "slug": "eval.address.current.postal_code",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": null,
+          "filterReason": "NON_STORABLE_NULL_VALUE",
+          "filterDetails": "Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset."
+        }
+      ]
+    },
+    {
+      "id": "alex-i9-test-realistic-010",
+      "path": "documents/noise/010-community-newsletter-email.txt",
+      "title": "Community Newsletter Email",
+      "status": "success",
+      "suggestionCount": 4,
+      "filteredSuggestionCount": 0,
+      "appliedSuggestionCount": 4,
+      "suggestions": [
+        {
+          "id": "c17ceea3-2bbb-4e0c-8f3d-373ba933f0fa:candidate:0",
+          "slug": "eval.address.current.city",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "Oakmont"
+        },
+        {
+          "id": "c17ceea3-2bbb-4e0c-8f3d-373ba933f0fa:candidate:1",
+          "slug": "eval.address.current.street",
+          "operation": "UPDATE",
+          "confidence": 0.9,
+          "newValue": "123 Main Street"
+        },
+        {
+          "id": "c17ceea3-2bbb-4e0c-8f3d-373ba933f0fa:candidate:2",
+          "slug": "profile.email",
+          "operation": "UPDATE",
+          "confidence": 0.8,
+          "newValue": "announcements@example.test"
+        },
+        {
+          "id": "c17ceea3-2bbb-4e0c-8f3d-373ba933f0fa:candidate:3",
+          "slug": "profile.full_name",
+          "operation": "UPDATE",
+          "confidence": 0.8,
+          "newValue": "Community Management Team"
+        }
+      ],
+      "filteredSuggestions": [],
+      "appliedPreferences": [
+        {
+          "id": "97eb0638-c0f7-4d27-93b6-ffa8973218cd",
+          "slug": "eval.address.current.city",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "e11e4281-a7c7-4ed9-976d-0d29f1612905",
+          "slug": "eval.address.current.street",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "46c412dd-5488-4a4a-9285-ab331aed4429",
+          "slug": "profile.email",
+          "status": "ACTIVE"
+        },
+        {
+          "id": "bd150521-e5b6-42d4-ae96-1db069d07771",
+          "slug": "profile.full_name",
+          "status": "ACTIVE"
+        }
+      ],
+      "analysisId": "c17ceea3-2bbb-4e0c-8f3d-373ba933f0fa",
+      "documentSummary": "This is a monthly community newsletter for June 2026, providing updates on pool season opening, grounds maintenance, waste/recycling reminders, and a calendar of local events such as a farmers' market, outdoor movie night, yard sale, and a library workshop."
+    }
+  ],
+  "summary": {
+    "documentCount": 10,
+    "uploadedCount": 10,
+    "analyzedCount": 10,
+    "failedDocumentCount": 0,
+    "suggestionCount": 59,
+    "filteredSuggestionCount": 43,
+    "appliedSuggestionCount": 51,
+    "applyFailureCount": 0,
+    "createdDefinitionCount": 0,
+    "seedPreferenceCount": 0
+  },
+  "startedAt": "2026-06-08T04:43:29.591Z",
+  "endedAt": "2026-06-08T04:44:04.118Z",
+  "backendUserId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+  "reset": {
+    "mode": "MEMORY_ONLY",
+    "preferencesDeleted": 29,
+    "preferenceDefinitionsDeleted": 0,
+    "locationsDeleted": 0,
+    "preferenceAuditEventsDeleted": 0,
+    "mcpAccessEventsDeleted": 0,
+    "permissionGrantsDeleted": 0
+  },
+  "export": {
+    "path": "../../../../private/tmp/alex-i9-test-realistic-20260607-214329-ingest/stored-preferences.json"
+  },
+  "databaseScore": {
+    "path": "../../../../private/tmp/alex-i9-test-realistic-20260607-214329-ingest/database-score-report.json"
+  }
+}

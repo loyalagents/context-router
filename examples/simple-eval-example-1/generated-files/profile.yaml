@@ -1,0 +1,54 @@
+schemaVersion: 1
+userId: alex-i9-test
+displayName: Alex Rivera
+facts:
+  identity:
+    legalName: Alex Jordan Rivera
+    firstName: Alex
+    middleName: Jordan
+    middleInitial: J
+    lastName: Rivera
+    otherLastNames:
+      - Santos
+    dateOfBirth: 1992-03-14
+    ssn: 000-00-0292
+  contact:
+    email: alex.rivera@example.test
+    phone: null
+  address:
+    current:
+      street: 7428 Evergreen Terrace
+      unit: Apt 5C
+      city: Portland
+      state: OR
+      postalCode: "97214"
+  workAuthorization:
+    citizenshipStatus: alien authorized to work
+    uscisANumber: "987654321"
+    workAuthorizationExpirationDate: 2028-09-30
+    i94AdmissionNumber: "11223344556"
+    foreignPassportNumber: "XK1234567"
+    foreignPassportCountry: Canada
+  employment:
+    company: Cascadia Hiring Cooperative
+    title: Operations Specialist
+    startDate: 2026-06-17
+    workEmail: alex.rivera@cascadiahiring.example.test
+  communication:
+    preferredChannels:
+      - email
+seedPreferences:
+  - slug: communication.preferred_channels
+    factKey: communication.preferredChannels
+  - slug: profile.company
+    factKey: employment.company
+  - slug: profile.email
+    factKey: contact.email
+  - slug: profile.first_name
+    factKey: identity.firstName
+  - slug: profile.full_name
+    factKey: identity.legalName
+  - slug: profile.last_name
+    factKey: identity.lastName
+  - slug: profile.title
+    factKey: employment.title

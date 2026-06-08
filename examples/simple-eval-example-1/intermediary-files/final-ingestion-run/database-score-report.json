@@ -1,0 +1,811 @@
+{
+  "schemaVersion": 1,
+  "scoreType": "database-storage",
+  "userId": "alex-i9-test",
+  "corpusId": "realistic",
+  "storageInput": {
+    "ingestionMode": "known-schema-document-ingestion",
+    "statusesScored": [
+      "ACTIVE"
+    ],
+    "suggestionsWereAutoApplied": true
+  },
+  "fixtureReadiness": {
+    "scorable": true,
+    "blockingIssues": []
+  },
+  "summary": {
+    "knownPresentTotal": 22,
+    "knownPresentCorrect": 15,
+    "knownPresentWrongSlug": 1,
+    "knownPresentWrongValue": 6,
+    "knownPresentConflict": 0,
+    "knownPresentMissing": 0,
+    "valueRecoveryRate": 0.727,
+    "acceptedSlugAccuracy": 0.682,
+    "acceptedSlugRecoveryRate": 0.682,
+    "intentionallyMissingTotal": 1,
+    "missingAbsentCorrect": 0,
+    "missingHallucinated": 1,
+    "missingAbstentionRate": 0,
+    "ignoredStoredPreferenceCount": 0,
+    "unscoredStoredPreferenceCount": 5
+  },
+  "knownPresent": [
+    {
+      "factKey": "address.current.city",
+      "expectedValue": "Portland",
+      "canonicalSlugs": [
+        "eval.address.current.city"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.address.current.city",
+          "value": "Oakmont",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.9
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "address.current.postalCode",
+      "expectedValue": "97214",
+      "canonicalSlugs": [
+        "eval.address.current.postal_code"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.address.current.postal_code",
+          "value": "97214",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.98
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.address.current.postal_code",
+          "value": "97214",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.98
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "address.current.state",
+      "expectedValue": "OR",
+      "canonicalSlugs": [
+        "eval.address.current.state"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.address.current.state",
+          "value": "OR",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.98
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.address.current.state",
+          "value": "OR",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.98
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "address.current.street",
+      "expectedValue": "7428 Evergreen Terrace",
+      "canonicalSlugs": [
+        "eval.address.current.street"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.address.current.street",
+          "value": "123 Main Street",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.9
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "address.current.unit",
+      "expectedValue": "Apt 5C",
+      "canonicalSlugs": [
+        "eval.address.current.unit"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.address.current.unit",
+          "value": "Apt 5C",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.address.current.unit",
+          "value": "Apt 5C",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "contact.email",
+      "expectedValue": "alex.rivera@example.test",
+      "canonicalSlugs": [
+        "profile.email"
+      ],
+      "acceptedAliasSlugs": [
+        "contact.email",
+        "eval.contact.email"
+      ],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.email",
+          "value": "announcements@example.test",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.8
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "employment.company",
+      "expectedValue": "Cascadia Hiring Cooperative",
+      "canonicalSlugs": [
+        "profile.company"
+      ],
+      "acceptedAliasSlugs": [
+        "employment.company",
+        "eval.employment.company"
+      ],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "profile.company",
+          "value": "Cascadia Hiring Cooperative",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.company",
+          "value": "Cascadia Hiring Cooperative",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "employment.startDate",
+      "expectedValue": "2026-06-17",
+      "canonicalSlugs": [
+        "eval.employment.start_date"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.employment.start_date",
+          "value": "2026-06-17",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.employment.start_date",
+          "value": "2026-06-17",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "employment.title",
+      "expectedValue": "Operations Specialist",
+      "canonicalSlugs": [
+        "profile.title"
+      ],
+      "acceptedAliasSlugs": [
+        "employment.title",
+        "eval.employment.title"
+      ],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "profile.title",
+          "value": "Operations Specialist",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.title",
+          "value": "Operations Specialist",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "employment.workEmail",
+      "expectedValue": "alex.rivera@cascadiahiring.example.test",
+      "canonicalSlugs": [
+        "eval.employment.work_email"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.employment.work_email",
+          "value": "alex.rivera@cascadiahiring.example.test",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.employment.work_email",
+          "value": "alex.rivera@cascadiahiring.example.test",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "identity.dateOfBirth",
+      "expectedValue": "1992-03-14",
+      "canonicalSlugs": [
+        "eval.identity.date_of_birth"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.identity.date_of_birth",
+          "value": "1992-03-14",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.99
+        },
+        {
+          "slug": "profile.date_of_birth",
+          "value": "1992-03-14",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.99
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.identity.date_of_birth",
+          "value": "1992-03-14",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.99
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "identity.firstName",
+      "expectedValue": "Alex",
+      "canonicalSlugs": [
+        "profile.first_name"
+      ],
+      "acceptedAliasSlugs": [
+        "identity.first_name",
+        "eval.identity.first_name"
+      ],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "profile.first_name",
+          "value": "Alex",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.first_name",
+          "value": "Alex",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "identity.lastName",
+      "expectedValue": "Rivera",
+      "canonicalSlugs": [
+        "profile.last_name"
+      ],
+      "acceptedAliasSlugs": [
+        "identity.last_name",
+        "eval.identity.last_name"
+      ],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "profile.last_name",
+          "value": "Rivera",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.last_name",
+          "value": "Rivera",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "identity.legalName",
+      "expectedValue": "Alex Jordan Rivera",
+      "canonicalSlugs": [
+        "profile.full_name"
+      ],
+      "acceptedAliasSlugs": [
+        "profile.legal_name",
+        "identity.full_name",
+        "identity.legal_name",
+        "eval.identity.legal_name"
+      ],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.full_name",
+          "value": "Community Management Team",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.8
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "identity.middleInitial",
+      "expectedValue": "J",
+      "canonicalSlugs": [
+        "eval.identity.middle_initial"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.identity.middle_initial",
+          "value": "Jordan",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.8
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "identity.otherLastNames",
+      "expectedValue": [
+        "Santos"
+      ],
+      "canonicalSlugs": [
+        "eval.identity.other_last_names"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": false,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "profile.other_last_names",
+          "value": [
+            "Santos"
+          ],
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [],
+      "classification": "known_present_wrong_slug"
+    },
+    {
+      "factKey": "identity.ssn",
+      "expectedValue": "000-00-0292",
+      "canonicalSlugs": [
+        "eval.identity.ssn"
+      ],
+      "acceptedAliasSlugs": [
+        "identity.ssn",
+        "profile.ssn"
+      ],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.identity.ssn",
+          "value": "000-00-0292",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.992
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.identity.ssn",
+          "value": "000-00-0292",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.992
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "workAuthorization.citizenshipStatus",
+      "expectedValue": "alien authorized to work",
+      "canonicalSlugs": [
+        "eval.work_authorization.citizenship_status"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": false,
+      "expectedValueFoundUnderAcceptedSlug": false,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": true,
+      "canonicalSlugCorrect": false,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.work_authorization.citizenship_status",
+          "value": "An alien authorized to work",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.9
+        }
+      ],
+      "classification": "known_present_wrong_value"
+    },
+    {
+      "factKey": "workAuthorization.foreignPassportNumber",
+      "expectedValue": "XK1234567",
+      "canonicalSlugs": [
+        "eval.work_authorization.foreign_passport_number"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.work_authorization.foreign_passport_number",
+          "value": "XK1234567",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.work_authorization.foreign_passport_number",
+          "value": "XK1234567",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "workAuthorization.i94AdmissionNumber",
+      "expectedValue": "11223344556",
+      "canonicalSlugs": [
+        "eval.work_authorization.i94_admission_number"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.work_authorization.i94_admission_number",
+          "value": "11223344556",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.work_authorization.i94_admission_number",
+          "value": "11223344556",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "workAuthorization.uscisANumber",
+      "expectedValue": "987654321",
+      "canonicalSlugs": [
+        "eval.work_authorization.uscis_a_number"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.work_authorization.uscis_a_number",
+          "value": "987654321",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.work_authorization.uscis_a_number",
+          "value": "987654321",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    },
+    {
+      "factKey": "workAuthorization.workAuthorizationExpirationDate",
+      "expectedValue": "2028-09-30",
+      "canonicalSlugs": [
+        "eval.work_authorization.work_authorization_expiration_date"
+      ],
+      "acceptedAliasSlugs": [],
+      "expectedValueFoundAnywhere": true,
+      "expectedValueFoundUnderAcceptedSlug": true,
+      "acceptedSlugPopulated": true,
+      "acceptedSlugHasWrongValue": false,
+      "canonicalSlugCorrect": true,
+      "acceptedAliasCorrect": false,
+      "matchingRows": [
+        {
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "value": "2028-09-30",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "acceptedSlugRows": [
+        {
+          "slug": "eval.work_authorization.work_authorization_expiration_date",
+          "value": "2028-09-30",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 1
+        }
+      ],
+      "classification": "known_present_correct"
+    }
+  ],
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "missingKind": "profile_null_missing",
+      "withheldValue": null,
+      "source": "manifest.intentionallyMissing",
+      "canonicalSlugs": [
+        "eval.contact.phone"
+      ],
+      "acceptedAliasSlugs": [
+        "contact.phone",
+        "profile.phone",
+        "profile.phone_number"
+      ],
+      "valueFoundAnywhere": false,
+      "acceptedSlugHasValue": true,
+      "valueRows": [],
+      "acceptedSlugRows": [
+        {
+          "slug": "profile.phone",
+          "value": "Not on file",
+          "status": "ACTIVE",
+          "sourceType": "INFERRED",
+          "confidence": 0.9
+        }
+      ],
+      "classification": "missing_key_hallucinated"
+    }
+  ],
+  "ignoredStoredPreferences": [],
+  "unscoredStoredPreferences": [
+    {
+      "slug": "communication.preferred_channels",
+      "value": [
+        "email",
+        "BILLING_ALERTS",
+        "OUTAGE_NOTIFICATIONS"
+      ],
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9
+    },
+    {
+      "slug": "profile.citizenship_status",
+      "value": "An alien authorized to work",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9
+    },
+    {
+      "slug": "profile.home_address",
+      "value": "Address collection pending task completion",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.8
+    },
+    {
+      "slug": "profile.i9_section1_note",
+      "value": "Candidate has saved a draft. Pending final submission.",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1
+    },
+    {
+      "slug": "profile.middle_initial",
+      "value": "Jordan",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1
+    }
+  ]
+}
