@@ -29,6 +29,7 @@
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
+    "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",
     "eval:test": "node --test examples/eval/scripts",
     "eval:verify": "pnpm eval:test && pnpm eval:validate",
     "lint": "pnpm -r lint",

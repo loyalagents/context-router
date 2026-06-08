@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/ingestion-run.schema.json",
+  "title": "Eval Ingestion Run Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "status",
+    "evalUserId",
+    "corpusId",
+    "backendUrl",
+    "graphqlUrl",
+    "settings",
+    "documents",
+    "summary",
+    "startedAt",
+    "endedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "ingestion-run" },
+    "status": { "enum": ["pass", "fail"] },
+    "runId": { "type": "string", "minLength": 1 },
+    "evalUserId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "backendUserId": { "type": "string", "minLength": 1 },
+    "backendUrl": { "type": "string", "minLength": 1 },
+    "graphqlUrl": { "type": "string", "minLength": 1 },
+    "locationId": { "type": ["string", "null"] },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resetMemory",
+        "ensureDefinitions",
+        "autoApply",
+        "seedPreferences"
+      ],
+      "properties": {
+        "resetMemory": { "type": "boolean" },
+        "ensureDefinitions": { "type": "boolean" },
+        "autoApply": { "type": "boolean" },
+        "seedPreferences": { "type": "boolean" }
+      }
+    },
+    "reset": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "definitionSetup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created", "existing", "skipped"],
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/definitionSummary" }
+        },
+        "existing": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/definitionSummary" }
+        },
+        "skipped": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/definitionSummary" }
+        }
+      }
+    },
+    "seedPreferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preferenceSummary" }
+    },
+    "documents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/documentRun" }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "databaseScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentCount",
+        "uploadedCount",
+        "failedDocumentCount",
+        "suggestionCount",
+        "filteredSuggestionCount",
+        "appliedSuggestionCount",
+        "createdDefinitionCount",
+        "seedPreferenceCount"
+      ],
+      "properties": {
+        "documentCount": { "type": "integer", "minimum": 0 },
+        "uploadedCount": { "type": "integer", "minimum": 0 },
+        "failedDocumentCount": { "type": "integer", "minimum": 0 },
+        "suggestionCount": { "type": "integer", "minimum": 0 },
+        "filteredSuggestionCount": { "type": "integer", "minimum": 0 },
+        "appliedSuggestionCount": { "type": "integer", "minimum": 0 },
+        "createdDefinitionCount": { "type": "integer", "minimum": 0 },
+        "seedPreferenceCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "error": { "type": "string" },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "endedAt": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "definitionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug"],
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "factKey": { "type": "string", "minLength": 1 },
+        "valueType": { "type": "string", "minLength": 1 },
+        "isSensitive": { "type": "boolean" },
+        "reason": { "type": "string" }
+      }
+    },
+    "preferenceSummary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["slug", "status"],
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "id": { "type": "string" }
+      }
+    },
+    "documentRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "status",
+        "suggestionCount",
+        "filteredSuggestionCount",
+        "appliedSuggestionCount"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "status": {
+          "enum": [
+            "success",
+            "no_matches",
+            "parse_error",
+            "ai_error",
+            "upload_error",
+            "apply_error"
+          ]
+        },
+        "analysisId": { "type": "string" },
+        "documentSummary": { "type": "string" },
+        "statusReason": { "type": "string" },
+        "suggestionCount": { "type": "integer", "minimum": 0 },
+        "filteredSuggestionCount": { "type": "integer", "minimum": 0 },
+        "appliedSuggestionCount": { "type": "integer", "minimum": 0 },
+        "suggestions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionSummary" }
+        },
+        "filteredSuggestions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionSummary" }
+        },
+        "appliedPreferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "error": { "type": "string" }
+      }
+    },
+    "suggestionSummary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "slug"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string" },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "newValue": {},
+        "filterReason": { "type": "string" },
+        "filterDetails": { "type": "string" }
+      }
+    }
+  }
+}
