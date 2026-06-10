@@ -1,7 +1,7 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-08
+- Last updated: 2026-06-10
 
 ## High-Level Flow
 
@@ -12,7 +12,10 @@ artifact boundary between each phase.
 ingestor or manual/MCP run
   -> backend state
   -> exporter writes stored-preferences.json
-  -> scorer writes database/form/combined score reports
+  -> database scorer writes database-score-report.json
+  -> form runner writes filled-form.json
+  -> form scorer writes form-fill-score-report.json
+  -> combined scorer writes combined-score-report.json
 ```
 
 ## Phase Checklist
@@ -23,6 +26,7 @@ ingestor or manual/MCP run
 - [x] Brainstorm known-schema vs open-schema ingestion.
 - [x] Implement known-schema document ingestor with auto-apply into active
   memory.
+- [x] Implement backend-memory form-fill runner.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for MCP/Codex/Claude runner and upload-level schema
   discovery.
@@ -100,7 +104,27 @@ Implemented in this phase:
 - `ingestion-run.json` schema and tests
 - eval fixture user and authenticated backend user recorded separately
 
-## Phase 4: Open-Schema Ingestion
+## Phase 4: Form Fill From Backend Memory
+
+Fill a form from the authenticated backend user's current active preferences and
+write the existing `filled-form.json` artifact for form scoring.
+
+This phase is separate from the deterministic `eval:run` test harness:
+
+- `eval:run` resets a test DB, hydrates fixture truth, and mocks form-fill model
+  output for deterministic snapshot tests.
+- `eval:fill-form` calls the live `/api/form-fill/pdf` product endpoint against
+  already-prepared backend memory.
+
+Implemented in this phase:
+
+- `pnpm eval:fill-form`
+- optional filled-PDF and redacted response side artifacts
+- optional form score report convenience output
+- shared eval PDF field reader using the backend `pdf-lib` dependency
+- Alex realistic live form-fill scenario without a committed golden snapshot
+
+## Phase 5: Open-Schema Ingestion
 
 Open-schema ingestion starts without pre-created eval-specific definitions. The
 system or agent must choose or create useful definitions/slugs and store values.
