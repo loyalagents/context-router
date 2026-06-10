@@ -27,6 +27,7 @@
     "eval:promote-preview": "node examples/eval/scripts/promote-preview.mjs",
     "eval:validate": "node examples/eval/scripts/validate.mjs",
     "eval:run": "node examples/eval/scripts/run.mjs",
+    "eval:fill-form": "node examples/eval/scripts/fill-form.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",

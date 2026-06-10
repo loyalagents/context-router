@@ -34,11 +34,19 @@ For contributor workflows and snapshot review guidance, see
   seed determinism, and corpus coverage.
 - `scripts/run.mjs` runs local deterministic backend form-fill eval scenarios
   and compares or updates expected snapshots.
+- `scripts/fill-form.mjs` fills a scenario form through the live backend
+  product endpoint using the authenticated user's current active preferences and
+  writes a scorable `filled-form.json` artifact.
 - `templates/` contains trusted repo-local `.mjs` document archetypes for
   deterministic fixture generation.
+- `users/alex-i9-test/` is a realistic generated I-9 corpus fixture used for
+  live ingestion and backend-memory form-fill evaluation.
 - `users/elena-marquez/` is the first normalized synthetic user fixture.
 - `users/samir-desai/` is the second I-9 fixture user, with a lawful permanent
   resident work-authorization profile.
+- `scenarios/alex-i9-realistic/` is a live backend-memory I-9 scenario that
+  writes output to explicit artifact paths instead of committed golden
+  snapshots.
 - `scenarios/elena-marquez-i9-template-smoke/` is the first runner-owned
   scenario with an expected `filled-form` snapshot.
 - `scenarios/samir-desai-i9-template-smoke/` is a second runner-owned I-9
@@ -182,6 +190,24 @@ Update expected snapshots deliberately:
 ```bash
 pnpm eval:run --scenario elena-marquez-i9-template-smoke --update-snapshots
 ```
+
+Run the live backend-memory form-fill runner after preparing backend memory:
+
+```bash
+export EVAL_BACKEND_URL=http://localhost:3000
+export EVAL_AUTH_TOKEN=<token>
+
+pnpm eval:fill-form \
+  --scenario alex-i9-realistic \
+  --out /private/tmp/alex-filled-form.json \
+  --filled-pdf-out /private/tmp/alex-filled.pdf \
+  --response-out /private/tmp/alex-form-fill-response.json \
+  --form-score-report /private/tmp/alex-form-score-report.json
+```
+
+`eval:run` is the deterministic fixture/test-DB harness. `eval:fill-form` is
+the live backend-memory product-path runner and does not seed, reset, hydrate,
+or mutate memory.
 
 Useful focused validation commands:
 

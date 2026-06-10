@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-08
+- Last updated: 2026-06-10
 
 ## Implemented
 
@@ -24,15 +24,22 @@
   target slugs. This creates definitions/slugs, not stored values.
 - [x] Strict upload response contract tests for complete `suggestions[]` and no
   unsupported pagination shape.
+- [x] Backend-memory `eval:fill-form` command that writes `filled-form.json`.
+- [x] Optional filled-PDF, redacted form-fill response, and form score report
+  outputs from the form runner.
+- [x] Alex realistic live form-fill scenario with no committed golden snapshot.
 
 ## Next
 
 - [ ] Run and document a live known-schema backend smoke with generated corpus
-  documents, export, and database score report.
+  documents, export, database score, live form fill, form score, and combined
+  score report.
 - [ ] Add richer withheld-but-known missing value fixtures for stronger value
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
+- [ ] Consider a one-command E2E wrapper after the current artifact chain is
+  proven useful in live smoke runs.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for open-schema ingestion work:
   - MCP/Codex/Claude agent runner.
