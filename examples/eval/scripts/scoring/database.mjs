@@ -11,6 +11,7 @@ export async function scoreDatabaseToFile({
   userId,
   corpusId,
   storedPreferencesPath,
+  validationReportPath,
   outPath,
 }) {
   const report = await scoreDatabase({
@@ -18,6 +19,7 @@ export async function scoreDatabaseToFile({
     userId,
     corpusId,
     storedPreferencesPath,
+    validationReportPath,
   });
   await validateWithSchema(
     repoRoot,
@@ -34,6 +36,7 @@ export async function scoreDatabase({
   userId,
   corpusId,
   storedPreferencesPath,
+  validationReportPath,
 }) {
   const evalRoot = path.join(repoRoot, 'examples/eval');
   const userRoot = path.join(evalRoot, 'users', userId);
@@ -42,7 +45,7 @@ export async function scoreDatabase({
     await Promise.all([
       readYaml(path.join(userRoot, 'profile.yaml')),
       readJson(path.join(corpusRoot, 'manifest.json')),
-      readJson(path.join(corpusRoot, 'validation-report.json')),
+      readJson(validationReportPath ?? path.join(corpusRoot, 'validation-report.json')),
       readJson(path.join(evalRoot, 'scoring/fact-storage-map.v1.json')),
       readJson(storedPreferencesPath),
     ]);

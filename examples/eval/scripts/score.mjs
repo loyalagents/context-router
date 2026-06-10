@@ -27,6 +27,9 @@ export async function runScore({ repoRoot = defaultRepoRoot, args = [] } = {}) {
         userId: options.userId,
         corpusId: options.corpusId,
         storedPreferencesPath: path.resolve(repoRoot, options.storedPreferences),
+        validationReportPath: options.validationReport
+          ? path.resolve(repoRoot, options.validationReport)
+          : undefined,
         outPath: path.resolve(repoRoot, options.out),
       });
       return {
@@ -92,6 +95,7 @@ export function parseArgs(args) {
         '--user',
         '--corpus',
         '--stored-preferences',
+        '--validation-report',
         '--scenario',
         '--filled-form',
         '--database-report',
@@ -110,6 +114,7 @@ export function parseArgs(args) {
     if (arg === '--user') options.userId = value;
     if (arg === '--corpus') options.corpusId = value;
     if (arg === '--stored-preferences') options.storedPreferences = value;
+    if (arg === '--validation-report') options.validationReport = value;
     if (arg === '--scenario') options.scenarioId = value;
     if (arg === '--filled-form') options.filledForm = value;
     if (arg === '--database-report') options.databaseReport = value;
@@ -151,7 +156,7 @@ function optionName(key) {
 export function usage() {
   return [
     'Usage:',
-    '  pnpm eval:score --mode database --user <userId> --corpus <corpusId> --stored-preferences <file> --out <file>',
+    '  pnpm eval:score --mode database --user <userId> --corpus <corpusId> --stored-preferences <file> [--validation-report <file>] --out <file>',
     '  pnpm eval:score --mode form --scenario <scenarioId> --filled-form <file> --out <file>',
     '  pnpm eval:score --mode combined --database-report <file> --form-report <file> --out <file>',
   ].join('\n');
@@ -166,4 +171,3 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   console.log(formatScoreResult(result));
   process.exitCode = result.exitCode;
 }
-

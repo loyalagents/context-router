@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/evaluation-run.schema.json",
+  "title": "Eval Known-Schema E2E Run Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "evaluationMode",
+    "status",
+    "runId",
+    "userId",
+    "corpusId",
+    "scenarioId",
+    "documentsRoot",
+    "artifactsRoot",
+    "backendUrl",
+    "graphqlUrl",
+    "locationId",
+    "settings",
+    "backendUserId",
+    "failureStage",
+    "stages",
+    "summaries",
+    "startedAt",
+    "endedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "evaluation-run" },
+    "evaluationMode": { "const": "known-schema" },
+    "status": { "enum": ["running", "pass", "fail"] },
+    "runId": { "type": "string", "minLength": 1 },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "scenarioId": { "type": "string", "minLength": 1 },
+    "documentsRoot": { "type": "string", "minLength": 1 },
+    "artifactsRoot": { "type": "string", "minLength": 1 },
+    "backendUrl": { "type": "string", "minLength": 1 },
+    "graphqlUrl": { "type": "string", "minLength": 1 },
+    "locationId": { "type": ["string", "null"] },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resetMemory",
+        "ensureDefinitions",
+        "autoApply",
+        "seedPreferences"
+      ],
+      "properties": {
+        "resetMemory": { "type": "boolean" },
+        "ensureDefinitions": { "type": "boolean" },
+        "autoApply": { "type": "boolean" },
+        "seedPreferences": { "type": "boolean" }
+      }
+    },
+    "backendUserId": { "type": ["string", "null"] },
+    "failureStage": { "type": ["string", "null"] },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/stage" }
+    },
+    "summaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validation",
+        "ingestion",
+        "export",
+        "databaseScore",
+        "formFill",
+        "formScore",
+        "combinedScore"
+      ],
+      "properties": {
+        "validation": { "$ref": "#/$defs/summary" },
+        "ingestion": { "$ref": "#/$defs/summary" },
+        "export": { "$ref": "#/$defs/summary" },
+        "databaseScore": { "$ref": "#/$defs/summary" },
+        "formFill": { "$ref": "#/$defs/summary" },
+        "formScore": { "$ref": "#/$defs/summary" },
+        "combinedScore": { "$ref": "#/$defs/summary" }
+      }
+    },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "endedAt": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "startedAt",
+        "endedAt",
+        "durationMs",
+        "exitCode",
+        "artifacts",
+        "lines",
+        "error"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "validate-documents",
+            "ingest-documents",
+            "export-stored-preferences",
+            "score-database",
+            "fill-form",
+            "score-form",
+            "score-combined"
+          ]
+        },
+        "status": {
+          "enum": ["pending", "running", "passed", "failed", "skipped"]
+        },
+        "startedAt": { "type": ["string", "null"] },
+        "endedAt": { "type": ["string", "null"] },
+        "durationMs": { "type": ["integer", "null"], "minimum": 0 },
+        "exitCode": { "type": ["integer", "null"] },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "summary": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    }
+  }
+}
