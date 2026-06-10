@@ -75,6 +75,7 @@ export async function runFillForm({
     const filledPdfFields = await pdfFieldReader({
       repoRoot,
       base64: response.filledPdfBase64,
+      pdfBytes,
     });
     const snapshot = buildFilledFormSnapshot({
       fixture,
@@ -189,9 +190,13 @@ export function parseArgs(args, env = process.env) {
     if (arg === '--form-score-report') options.formScoreReport = value;
   }
 
-  for (const key of ['scenarioId', 'out']) {
+  const requiredOptions = [
+    ['scenarioId', '--scenario'],
+    ['out', '--out'],
+  ];
+  for (const [key, flag] of requiredOptions) {
     if (!options[key]) {
-      return { kind: 'usage-error', message: `Missing required ${optionName(key)}` };
+      return { kind: 'usage-error', message: `Missing required ${flag}` };
     }
   }
   if (!isFixtureId(options.scenarioId)) {
@@ -319,6 +324,24 @@ export function assertScorableResponse(response) {
       throw new Error(`Form-fill response summary.${key} must be an array.`);
     }
   }
+  if (response.summary.filledCount !== response.summary.filledFields.length) {
+    throw new Error(
+      `Form-fill response summary.filledCount ${response.summary.filledCount} does not match filledFields length ${response.summary.filledFields.length}.`,
+    );
+  }
+  if (response.summary.skippedCount !== response.summary.skippedFields.length) {
+    throw new Error(
+      `Form-fill response summary.skippedCount ${response.summary.skippedCount} does not match skippedFields length ${response.summary.skippedFields.length}.`,
+    );
+  }
+  if (
+    response.summary.totalFields <
+    response.summary.filledCount + response.summary.skippedCount
+  ) {
+    throw new Error(
+      `Form-fill response summary.totalFields ${response.summary.totalFields} is less than filledCount + skippedCount.`,
+    );
+  }
 }
 
 export function buildResponseArtifact({ fixture, backendUrl, response, pdfBytes }) {
@@ -329,7 +352,7 @@ export function buildResponseArtifact({ fixture, backendUrl, response, pdfBytes 
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     formId: fixture.scenario.formId,
-    backendUrl,
+    backendUrl: sanitizeUrlForArtifact(backendUrl),
     response: redactResponseBase64(response, pdfBytes),
   };
 }
@@ -355,8 +378,15 @@ function formatPayload(payload) {
   return JSON.stringify(payload).slice(0, 500);
 }
 
-function optionName(key) {
-  return `--${key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}`;
+export function sanitizeUrlForArtifact(value) {
+  try {
+    const url = new URL(value);
+    url.username = '';
+    url.password = '';
+    return url.toString();
+  } catch {
+    return value;
+  }
 }
 
 function redactSecret(text, secret) {

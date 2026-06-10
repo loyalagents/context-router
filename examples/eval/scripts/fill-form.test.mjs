@@ -28,6 +28,7 @@ test('fill-form CLI prints help and reports invalid args clearly', async () => {
   const missing = await runFillForm({ repoRoot, args: [], env: {} });
   assert.equal(missing.exitCode, 2);
   assert.match(missing.lines.join('\n'), /Missing required --scenario/);
+  assert.doesNotMatch(missing.lines.join('\n'), /--scenario-id/);
 
   const noToken = parseArgs(
     ['--scenario', 'elena-marquez-i9-template-smoke', '--out', '/tmp/x.json'],
@@ -168,7 +169,10 @@ test('fill-form writes filled-form, filled PDF, redacted response, and form scor
     ],
     env: { EVAL_AUTH_TOKEN: 'secret-token' },
     fetchImpl: async () => jsonResponse(response),
-    pdfFieldReader: async () => filledPdfFields,
+    pdfFieldReader: async ({ pdfBytes: passedPdfBytes }) => {
+      assert.deepEqual(passedPdfBytes, pdfBytes);
+      return filledPdfFields;
+    },
   });
 
   assert.equal(result.exitCode, 0, result.lines.join('\n'));
@@ -184,6 +188,7 @@ test('fill-form writes filled-form, filled PDF, redacted response, and form scor
   assert.deepEqual(await readFile(filledPdfPath), pdfBytes);
   const responseArtifact = JSON.parse(await readFile(responsePath, 'utf8'));
   assert.equal(responseArtifact.artifactType, 'form-fill-response');
+  assert.equal(responseArtifact.backendUrl, 'http://localhost:3000/');
   assert.deepEqual(responseArtifact.response.filledPdfBase64, {
     redacted: true,
     byteLength: pdfBytes.length,
@@ -240,6 +245,68 @@ test('fill-form accepts success responses and terminal statuses fail clearly', a
     assert.equal(terminal.exitCode, 1);
     assert.match(terminal.lines.join('\n'), new RegExp(`status was ${status}`));
   }
+});
+
+test('fill-form builds a live snapshot for the Alex realistic scenario', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-alex-'));
+  const { response, filledPdfFields } = await fakeResponseForScenario({
+    scenarioId: 'alex-i9-realistic',
+  });
+
+  const result = await runFillForm({
+    repoRoot,
+    args: [
+      '--scenario',
+      'alex-i9-realistic',
+      '--out',
+      path.join(tmp, 'alex-filled-form.json'),
+      '--auth-token',
+      'token',
+    ],
+    env: {},
+    fetchImpl: async () => jsonResponse(response),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.equal(result.snapshot.scenarioId, 'alex-i9-realistic');
+  assert.equal(result.snapshot.userId, 'alex-i9-test');
+  assert.equal(result.snapshot.fields.length, 48);
+  assert.equal(result.snapshot.summary.plannedActionCounts.SET_TEXT, 16);
+  assert.equal(result.snapshot.summary.plannedActionCounts.SELECT_OPTION, 1);
+  assert.equal(result.snapshot.summary.plannedActionCounts.SKIP, 31);
+});
+
+test('fill-form redacts backend URL userinfo in response artifacts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-url-redact-'));
+  const responsePath = path.join(tmp, 'response.json');
+  const { response, filledPdfFields } = await fakeResponseForScenario({
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+
+  const result = await runFillForm({
+    repoRoot,
+    args: [
+      '--scenario',
+      'elena-marquez-i9-template-smoke',
+      '--out',
+      path.join(tmp, 'filled-form.json'),
+      '--backend-url',
+      'https://user:pass@example.test/base',
+      '--auth-token',
+      'token',
+      '--response-out',
+      responsePath,
+    ],
+    env: {},
+    fetchImpl: async () => jsonResponse(response),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  const responseArtifact = JSON.parse(await readFile(responsePath, 'utf8'));
+  assert.equal(responseArtifact.backendUrl, 'https://example.test/base');
+  assert.equal(JSON.stringify(responseArtifact).includes('user:pass'), false);
 });
 
 test('fill-form fails on missing base64, malformed JSON, HTTP failure, and invalid PDF', async () => {
@@ -303,6 +370,64 @@ test('fill-form fails on missing base64, malformed JSON, HTTP failure, and inval
   });
   assert.equal(invalidPdf.exitCode, 1);
   assert.match(invalidPdf.lines.join('\n'), /PDF|parse|invalid/i);
+});
+
+test('fill-form fails on inconsistent response summary counts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-counts-'));
+  const { response, filledPdfFields } = await fakeResponseForScenario({
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+
+  const wrongFilledCount = await runFillForm({
+    repoRoot,
+    args: baseArgs(path.join(tmp, 'wrong-filled-count.json')),
+    env: {},
+    fetchImpl: async () =>
+      jsonResponse({
+        ...response,
+        summary: {
+          ...response.summary,
+          filledCount: response.summary.filledCount + 1,
+        },
+      }),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+  assert.equal(wrongFilledCount.exitCode, 1);
+  assert.match(wrongFilledCount.lines.join('\n'), /filledCount .* does not match/);
+
+  const wrongSkippedCount = await runFillForm({
+    repoRoot,
+    args: baseArgs(path.join(tmp, 'wrong-skipped-count.json')),
+    env: {},
+    fetchImpl: async () =>
+      jsonResponse({
+        ...response,
+        summary: {
+          ...response.summary,
+          skippedCount: response.summary.skippedCount + 1,
+        },
+      }),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+  assert.equal(wrongSkippedCount.exitCode, 1);
+  assert.match(wrongSkippedCount.lines.join('\n'), /skippedCount .* does not match/);
+
+  const tooSmallTotal = await runFillForm({
+    repoRoot,
+    args: baseArgs(path.join(tmp, 'too-small-total.json')),
+    env: {},
+    fetchImpl: async () =>
+      jsonResponse({
+        ...response,
+        summary: {
+          ...response.summary,
+          totalFields: response.summary.filledCount + response.summary.skippedCount - 1,
+        },
+      }),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+  assert.equal(tooSmallTotal.exitCode, 1);
+  assert.match(tooSmallTotal.lines.join('\n'), /less than filledCount \+ skippedCount/);
 });
 
 test('shared PDF helper reads fields in the snapshot-compatible shape', async () => {
