@@ -111,6 +111,7 @@ test('export CLI uses env fallback, writes schema-valid artifact, and redacts to
   );
   assert.equal(artifact.diagnostics.exportedAt, '2026-06-01T12:00:00.000Z');
   assert.equal(artifact.diagnostics.locationMode, 'global-only');
+  assert.equal(artifact.diagnostics.backendUserId, 'alex-i9-test');
   assert.equal(JSON.stringify(artifact).includes('secret-token'), false);
   assert.equal(result.lines.join('\n').includes('secret-token'), false);
 });
@@ -311,25 +312,36 @@ test('exporter mapper omits suggestions when not requested', () => {
   assert.equal(artifact.diagnostics.suggestedPreferenceCount, 0);
 });
 
-test('export CLI fails on authenticated user mismatch and preference row mismatch', async () => {
+test('exporter stores eval user separately from authenticated backend user', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'export-stored-prefs-'));
   const outPath = path.join(tmp, 'stored-preferences.json');
 
-  const userMismatch = await runExportStoredPreferences({
+  const result = await runExportStoredPreferences({
     repoRoot,
     args: baseArgs(outPath),
     env: {},
     fetchImpl: async () =>
       jsonResponse({
         data: {
-          me: { userId: 'other-user' },
-          activePreferences: [],
+          me: { userId: 'backend-user-123' },
+          activePreferences: [
+            pref({ id: 'pref-1', userId: 'backend-user-123' }),
+          ],
         },
       }),
     now: fixedNow,
   });
-  assert.equal(userMismatch.exitCode, 1);
-  assert.match(userMismatch.lines.join('\n'), /does not match requested user/);
+  assert.equal(result.exitCode, 0);
+
+  const artifact = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(artifact.userId, 'alex-i9-test');
+  assert.equal(artifact.preferences[0].userId, 'backend-user-123');
+  assert.equal(artifact.diagnostics.backendUserId, 'backend-user-123');
+});
+
+test('export CLI fails when preference rows do not belong to authenticated backend user', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'export-stored-prefs-'));
+  const outPath = path.join(tmp, 'stored-preferences.json');
 
   const rowMismatch = await runExportStoredPreferences({
     repoRoot,

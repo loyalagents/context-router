@@ -1,0 +1,612 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "stored-preferences",
+  "runId": "20260607-214329",
+  "userId": "alex-i9-test",
+  "corpusId": "realistic",
+  "storageInput": {
+    "ingestionMode": "known-schema-document-ingestion",
+    "statusesScored": [
+      "ACTIVE"
+    ],
+    "suggestionsWereAutoApplied": true
+  },
+  "preferences": [
+    {
+      "id": "099b54d9-d67d-4e75-94f5-6081def0f75d",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "communication.preferred_channels",
+      "definitionId": "8dd83842-849d-4cd1-b0cc-ac165be26925",
+      "value": [
+        "email",
+        "BILLING_ALERTS",
+        "OUTAGE_NOTIFICATIONS"
+      ],
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "\"notifications\": [\n        \"BILLING_ALERTS\",\n        \"OUTAGE_NOTIFICATIONS\"\n      ]",
+        "fileName": "005-utility-account-export.txt",
+        "sourceMeta": {
+          "line": 34
+        }
+      },
+      "createdAt": "2026-06-08T04:43:43.479Z",
+      "updatedAt": "2026-06-08T04:43:47.312Z"
+    },
+    {
+      "id": "97eb0638-c0f7-4d27-93b6-ffa8973218cd",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.address.current.city",
+      "definitionId": "7cf1a0fd-2dfd-46a1-80d6-9892e87aeefe",
+      "value": "Oakmont",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Community Management Office | 123 Main Street, Oakmont, USA",
+        "fileName": "010-community-newsletter-email.txt",
+        "sourceMeta": {
+          "line": 48
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.602Z",
+      "updatedAt": "2026-06-08T04:44:03.938Z"
+    },
+    {
+      "id": "4d242fa4-70d2-498d-8329-f44f2649a7ac",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.address.current.postal_code",
+      "definitionId": "428a50e4-7790-4f67-b656-a1109702c999",
+      "value": "97214",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.98,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "PORTLAND, OR 97214",
+        "fileName": "001-driver-license-upload-ocr.txt",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.612Z",
+      "updatedAt": "2026-06-08T04:43:34.612Z"
+    },
+    {
+      "id": "6a733385-38b3-4a53-be36-ca46d35f07e2",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.address.current.state",
+      "definitionId": "2ba42c9d-f2b6-468f-847f-c3b1477e8cb0",
+      "value": "OR",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.98,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "PORTLAND, OR 97214",
+        "fileName": "001-driver-license-upload-ocr.txt",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.607Z",
+      "updatedAt": "2026-06-08T04:43:34.607Z"
+    },
+    {
+      "id": "e11e4281-a7c7-4ed9-976d-0d29f1612905",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.address.current.street",
+      "definitionId": "651fa5d0-83b6-401b-865c-08e66144d4c7",
+      "value": "123 Main Street",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Community Management Office | 123 Main Street, Oakmont, USA",
+        "fileName": "010-community-newsletter-email.txt",
+        "sourceMeta": {
+          "line": 48
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.592Z",
+      "updatedAt": "2026-06-08T04:44:03.945Z"
+    },
+    {
+      "id": "65db60dc-59b3-44bc-a01e-ded1006bf43d",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.address.current.unit",
+      "definitionId": "a4a824e3-c07a-4f18-a7e1-1110e8152cf4",
+      "value": "Apt 5C",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Address: 7428 Evergreen Terrace, Apt 5C, Portland, OR, 97214",
+        "fileName": "004-resident-portal-lease-export.md",
+        "sourceMeta": {
+          "line": 17
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.597Z",
+      "updatedAt": "2026-06-08T04:43:43.467Z"
+    },
+    {
+      "id": "d7c6d7fd-06b0-46b1-923a-92bc051f9e10",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.employment.start_date",
+      "definitionId": "00607c36-c275-42a9-9063-2f2819a821d3",
+      "value": "2026-06-17",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Start Date: Wednesday, June 17, 2026",
+        "fileName": "007-offer-email.md",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.618Z",
+      "updatedAt": "2026-06-08T04:43:56.618Z"
+    },
+    {
+      "id": "b12647d1-8c82-4cad-8fcd-9f36e7925a72",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.employment.work_email",
+      "definitionId": "0eee8be6-3321-4b30-9a27-0989d5755ade",
+      "value": "alex.rivera@cascadiahiring.example.test",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Your work email address will be alex.rivera@cascadiahiring.example.test.",
+        "fileName": "007-offer-email.md",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:56.595Z",
+      "updatedAt": "2026-06-08T04:43:56.595Z"
+    },
+    {
+      "id": "4ab06bcd-61b7-49c1-a4e3-2d6e88990b7e",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.identity.date_of_birth",
+      "definitionId": "3ef6a4aa-a7ee-4bfa-a5a6-8d331c6d25d4",
+      "value": "1992-03-14",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.99,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "DOB 03-14-1992",
+        "fileName": "001-driver-license-upload-ocr.txt",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.571Z",
+      "updatedAt": "2026-06-08T04:43:34.571Z"
+    },
+    {
+      "id": "095fca6b-4edf-430a-a23e-e5ec78965390",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.identity.middle_initial",
+      "definitionId": "a264e1ee-0d6d-4533-bc3a-f965cf350bc7",
+      "value": "Jordan",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.8,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Candidate Name:      Rivera, Alex Jordan",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 14
+        }
+      },
+      "createdAt": "2026-06-08T04:43:39.939Z",
+      "updatedAt": "2026-06-08T04:43:39.939Z"
+    },
+    {
+      "id": "18de6f2c-fc35-4e89-a07f-df77d4995cf0",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.identity.ssn",
+      "definitionId": "297d3e23-510a-4a06-9b61-fddebe1bda99",
+      "value": "000-00-0292",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.992,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "000-00-0292",
+        "fileName": "002-ssn-card-upload-ocr.txt",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:36.708Z",
+      "updatedAt": "2026-06-08T04:43:36.708Z"
+    },
+    {
+      "id": "d63c436c-9569-4b50-8daa-f5b0bfdc8f57",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.work_authorization.citizenship_status",
+      "definitionId": "03317207-51af-4f18-8c9d-8b5d90c40276",
+      "value": "An alien authorized to work",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Citizenship/Immigration Status Attestation: An alien authorized to work",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 59
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.638Z",
+      "updatedAt": "2026-06-08T04:43:39.923Z"
+    },
+    {
+      "id": "54a56c69-79e3-459f-8045-1b84e483e12e",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.work_authorization.foreign_passport_number",
+      "definitionId": "d0d70dac-fc3e-4ed3-99c5-30fc26e90ac7",
+      "value": "XK1234567",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "- Passport No.:    XK1234567",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 32
+        }
+      },
+      "createdAt": "2026-06-08T04:43:39.912Z",
+      "updatedAt": "2026-06-08T04:43:39.912Z"
+    },
+    {
+      "id": "c7d79774-f0e2-42b3-9367-951137dc7db0",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.work_authorization.i94_admission_number",
+      "definitionId": "a8c2a72a-c4a6-4728-ad80-1ed37efd9e84",
+      "value": "11223344556",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "- Admission No.:   11223344556",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 40
+        }
+      },
+      "createdAt": "2026-06-08T04:43:39.918Z",
+      "updatedAt": "2026-06-08T04:43:39.918Z"
+    },
+    {
+      "id": "c0bae247-99d4-4960-8b2c-63a1614cfcc5",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.work_authorization.uscis_a_number",
+      "definitionId": "8a661e8f-ccfc-4782-89fa-32af53f9ac42",
+      "value": "987654321",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "- USCIS #:         987654321",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 22
+        }
+      },
+      "createdAt": "2026-06-08T04:43:39.897Z",
+      "updatedAt": "2026-06-08T04:43:39.897Z"
+    },
+    {
+      "id": "aee23bbb-580b-457c-88a0-ddc05d93cb63",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "eval.work_authorization.work_authorization_expiration_date",
+      "definitionId": "df9e3871-faf0-4f84-8342-58a6aa44e560",
+      "value": "2028-09-30",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "work_auth_expiration_date:\n        value: \"2028-09-30\"",
+        "fileName": "006-i9-section-one-field-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.623Z",
+      "updatedAt": "2026-06-08T04:43:54.013Z"
+    },
+    {
+      "id": "1436dfb4-507e-4e13-87bc-971d90587495",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.citizenship_status",
+      "definitionId": "54015795-82d9-4080-9eb9-8f15a36bd0a2",
+      "value": "An alien authorized to work",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Citizenship/Immigration Status Attestation: An alien authorized to work",
+        "fileName": "003-work-authorization-upload-receipt.txt",
+        "sourceMeta": {
+          "line": 59
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.631Z",
+      "updatedAt": "2026-06-08T04:43:39.930Z"
+    },
+    {
+      "id": "8070530f-985c-40ce-97a9-dde673f74b7f",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.company",
+      "definitionId": "e3e4ce9c-ad5b-4404-b7c5-3ceeb8fa69dd",
+      "value": "Cascadia Hiring Cooperative",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "On behalf of the entire team at Cascadia Hiring Cooperative, I am thrilled to extend to you this formal offer of employment for the full-time, exempt position of Operations Specialist.",
+        "fileName": "007-offer-email.md",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:56.603Z",
+      "updatedAt": "2026-06-08T04:43:56.603Z"
+    },
+    {
+      "id": "11810db7-246a-4f36-a4e4-72ab5f844f1e",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.date_of_birth",
+      "definitionId": "c53efff3-fef9-457a-b465-d5c6fd22c2d5",
+      "value": "1992-03-14",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.99,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "DOB 03-14-1992",
+        "fileName": "001-driver-license-upload-ocr.txt",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.565Z",
+      "updatedAt": "2026-06-08T04:43:34.565Z"
+    },
+    {
+      "id": "46c412dd-5488-4a4a-9285-ab331aed4429",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.email",
+      "definitionId": "e4240af6-b960-4f52-92ea-7cfe562ca760",
+      "value": "announcements@example.test",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.8,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "From: announcements@example.test",
+        "fileName": "010-community-newsletter-email.txt",
+        "sourceMeta": {
+          "line": 1
+        }
+      },
+      "createdAt": "2026-06-08T04:43:43.441Z",
+      "updatedAt": "2026-06-08T04:44:03.950Z"
+    },
+    {
+      "id": "34e99d73-5e05-4902-9bcf-d004983603ae",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.first_name",
+      "definitionId": "906a72af-8041-4f4c-ab2b-1a058818a75a",
+      "value": "Alex",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "first_name:\n      value: \"Alex\"",
+        "fileName": "006-i9-section-one-field-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.544Z",
+      "updatedAt": "2026-06-08T04:43:53.997Z"
+    },
+    {
+      "id": "bd150521-e5b6-42d4-ae96-1db069d07771",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.full_name",
+      "definitionId": "ab0e867e-dcb8-476e-a57d-76a500437d18",
+      "value": "Community Management Team",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.8,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Best regards,\nYour Community Management Team",
+        "fileName": "010-community-newsletter-email.txt",
+        "sourceMeta": {
+          "line": 46
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.535Z",
+      "updatedAt": "2026-06-08T04:44:03.958Z"
+    },
+    {
+      "id": "ccb34631-eb7c-4428-bd13-23e2c384a39d",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.home_address",
+      "definitionId": "3dd977d8-edb7-4075-a9fb-875402b1cefb",
+      "value": "Address collection pending task completion",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.8,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "address: # Address collection pending task completion",
+        "fileName": "008-onboarding-profile-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.579Z",
+      "updatedAt": "2026-06-08T04:44:00.175Z"
+    },
+    {
+      "id": "fd3a2932-d013-4859-b4a0-fffdc3628cf7",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.i9_section1_note",
+      "definitionId": "09748fef-3e06-460f-b74a-5ac2e56e7778",
+      "value": "Candidate has saved a draft. Pending final submission.",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "notes: \"Candidate has saved a draft. Pending final submission.\"",
+        "fileName": "008-onboarding-profile-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:44:00.196Z",
+      "updatedAt": "2026-06-08T04:44:00.196Z"
+    },
+    {
+      "id": "5bcb06e4-12b2-4690-b0cb-026bfcef473e",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.last_name",
+      "definitionId": "86a00f74-26d9-4128-b1e8-afb7bd103e23",
+      "value": "Rivera",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "\"legalName\": \"Alex Jordan Rivera\"",
+        "fileName": "005-utility-account-export.txt",
+        "sourceMeta": {
+          "line": 13
+        }
+      },
+      "createdAt": "2026-06-08T04:43:34.552Z",
+      "updatedAt": "2026-06-08T04:43:47.302Z"
+    },
+    {
+      "id": "a8e14443-bf84-411d-b695-3dbdf33c17f3",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.middle_initial",
+      "definitionId": "e7ffcff5-279a-432a-8e65-667ce18b4664",
+      "value": "Jordan",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "middle_name: \"Jordan\"",
+        "fileName": "008-onboarding-profile-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:34.559Z",
+      "updatedAt": "2026-06-08T04:44:00.186Z"
+    },
+    {
+      "id": "02c211cc-eacc-44b3-bb4b-6ce5684eccc9",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.other_last_names",
+      "definitionId": "9adbc268-bf5e-4a35-8eec-4f6e8230b562",
+      "value": [
+        "Santos"
+      ],
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "other_last_names_used:\n      value: \"Santos\"",
+        "fileName": "006-i9-section-one-field-export.yaml",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:54.006Z",
+      "updatedAt": "2026-06-08T04:43:54.006Z"
+    },
+    {
+      "id": "0a7c2764-7491-4959-b2a2-f420694954f5",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.phone",
+      "definitionId": "74b41dc9-158e-4745-8155-b1459a64a310",
+      "value": "Not on file",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 0.9,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Phone Number: Not on file",
+        "fileName": "004-resident-portal-lease-export.md",
+        "sourceMeta": {
+          "line": 13
+        }
+      },
+      "createdAt": "2026-06-08T04:43:43.448Z",
+      "updatedAt": "2026-06-08T04:43:43.448Z"
+    },
+    {
+      "id": "63024d7f-44b4-4431-a45f-3b80dded0ac2",
+      "userId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b",
+      "locationId": null,
+      "slug": "profile.title",
+      "definitionId": "f43bea7a-59af-406b-ac7a-01001b942e5f",
+      "value": "Operations Specialist",
+      "status": "ACTIVE",
+      "sourceType": "INFERRED",
+      "confidence": 1,
+      "evidence": {
+        "source": "eval-ingestor-upload",
+        "snippet": "Operations Specialist",
+        "fileName": "007-offer-email.md",
+        "sourceMeta": {}
+      },
+      "createdAt": "2026-06-08T04:43:56.611Z",
+      "updatedAt": "2026-06-08T04:43:56.611Z"
+    }
+  ],
+  "diagnostics": {
+    "exportedAt": "2026-06-08T04:44:03.986Z",
+    "graphqlUrl": "http://localhost:3000/graphql",
+    "queryName": "EvalStoredPreferencesExport",
+    "locationMode": "global-only",
+    "locationId": null,
+    "activePreferenceCount": 29,
+    "suggestedPreferenceCount": 0,
+    "includeSuggestions": false,
+    "backendUserId": "125c96a5-6b68-431a-8d63-8fa296d7cc7b"
+  }
+}

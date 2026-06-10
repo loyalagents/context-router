@@ -10,11 +10,11 @@ export function buildStoredPreferencesArtifact({
   responseData,
   exportedAt,
 }) {
-  assertAuthenticatedUser(responseData, userId);
+  const backendUserId = authenticatedBackendUserId(responseData);
 
   const activeRows = normalizeRows({
     rows: responseData.activePreferences,
-    expectedUserId: userId,
+    expectedUserId: backendUserId,
     expectedStatus: 'ACTIVE',
     label: 'activePreferences',
   });
@@ -22,7 +22,7 @@ export function buildStoredPreferencesArtifact({
   const suggestedRows = includeSuggestions
     ? normalizeRows({
         rows: responseData.suggestedPreferences,
-        expectedUserId: userId,
+        expectedUserId: backendUserId,
         expectedStatus: 'SUGGESTED',
         label: 'suggestedPreferences',
       })
@@ -52,6 +52,7 @@ export function buildStoredPreferencesArtifact({
       activePreferenceCount: activeRows.length,
       suggestedPreferenceCount: suggestedRows.length,
       includeSuggestions,
+      backendUserId,
     },
   };
 
@@ -143,16 +144,12 @@ export function sortPreferenceRows(rows) {
   return [...rows].sort(comparePreferenceRows);
 }
 
-function assertAuthenticatedUser(responseData, expectedUserId) {
+function authenticatedBackendUserId(responseData) {
   const actualUserId = responseData?.me?.userId;
   if (typeof actualUserId !== 'string' || actualUserId.length === 0) {
     throw new Error('GraphQL export response did not include me.userId.');
   }
-  if (actualUserId !== expectedUserId) {
-    throw new Error(
-      `Authenticated GraphQL user ${actualUserId} does not match requested user ${expectedUserId}.`,
-    );
-  }
+  return actualUserId;
 }
 
 function comparePreferenceRows(left, right) {

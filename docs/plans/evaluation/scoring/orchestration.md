@@ -1,7 +1,7 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-02
+- Last updated: 2026-06-08
 
 ## High-Level Flow
 
@@ -21,7 +21,7 @@ ingestor or manual/MCP run
 - [x] Implement scorer.
 - [x] Implement stored-preferences exporter.
 - [x] Brainstorm known-schema vs open-schema ingestion.
-- [ ] Implement known-schema document ingestor with auto-apply into active
+- [x] Implement known-schema document ingestor with auto-apply into active
   memory.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for MCP/Codex/Claude runner and upload-level schema
@@ -77,7 +77,7 @@ Implemented in this phase:
 
 Upload generated corpus documents through the current product ingestion path,
 collect diagnostics, auto-apply extracted suggestions into active preferences,
-then call or hand off to the exporter.
+then optionally call the exporter and database scorer.
 
 This phase is intentionally separate from scoring so that scoring remains stable
 while ingestion paths evolve.
@@ -86,15 +86,19 @@ This benchmark assumes useful preference definitions already exist. It measures
 whether document upload can extract values into an available schema; it does not
 measure slug discovery.
 
-Planned behavior:
+Implemented in this phase:
 
-- reset current backend user's memory
-- optionally seed starting values
-- optionally ensure accepted eval definitions exist without writing values
-- upload each corpus document
-- auto-apply only suggestions returned by that upload response
-- export `stored-preferences.json`
-- score with the existing scorer
+- `pnpm eval:ingest-documents`
+- optional current-user memory reset
+- optional explicit seed preference setup
+- optional canonical eval definition setup without writing values
+- manifest-driven document uploads from `--documents-root`
+- auto-apply of only the current upload response's `suggestions[]`
+- strict rejection of pagination-looking upload responses
+- optional `stored-preferences.json` export
+- optional database scoring
+- `ingestion-run.json` schema and tests
+- eval fixture user and authenticated backend user recorded separately
 
 ## Phase 4: Open-Schema Ingestion
 

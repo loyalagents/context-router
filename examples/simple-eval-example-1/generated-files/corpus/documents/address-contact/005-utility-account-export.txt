@@ -1,0 +1,63 @@
+{
+  "exportId": "ME-EXP-U1486X252",
+  "exportGeneratedTimestamp": "2026-06-04T18:06:00-07:00",
+  "provider": "Metroline Energy",
+  "accountDetails": {
+    "accountNumber": "**********3341",
+    "accountStatus": "ACTIVE",
+    "accountHolder": {
+      "legalName": "Alex Jordan Rivera",
+      "contactInfo": {
+        "email": "alex.rivera@example.test",
+        "phone": null
+      }
+    },
+    "serviceAddress": {
+      "street": "7428 Evergreen Terrace",
+      "unit": "Apt 5C",
+      "city": "Portland",
+      "state": "OR",
+      "postalCode": "97214"
+    },
+    "mailingAddress": {
+      "street": "7428 Evergreen Terrace",
+      "unit": "Apt 5C",
+      "city": "Portland",
+      "state": "OR",
+      "postalCode": "97214"
+    },
+    "preferences": {
+      "mailingPreference": "PAPERLESS",
+      "notifications": [
+        "BILLING_ALERTS",
+        "OUTAGE_NOTIFICATIONS"
+      ]
+    }
+  },
+  "serviceAgreement": {
+    "agreementId": "SA-893475-2024",
+    "status": "Active",
+    "startDate": "2024-03-15T00:00:00Z",
+    "planType": "Standard Residential - Electric",
+    "rateSchedule": "RES-1A"
+  },
+  "billingInformation": {
+    "billingCycle": "Monthly, due on the 15th",
+    "currentBalance": 78.45,
+    "lastPaymentDate": "2026-05-20T00:00:00Z",
+    "lastPaymentAmount": 82.11
+  },
+  "accountStatusHistory": [
+    {
+      "status": "ACTIVE",
+      "effectiveDate": "2024-03-15T00:00:00Z",
+      "reason": "New Service Activation"
+    },
+    {
+      "status": "PENDING_ACTIVATION",
+      "effectiveDate": "2024-03-10T00:00:00Z",
+      "reason": "Service Request Received"
+    }
+  ],
+  "disclaimer": "This data export is a snapshot of your account information as of the generated timestamp. For real-time data, please log in to your Metroline Energy online portal."
+}

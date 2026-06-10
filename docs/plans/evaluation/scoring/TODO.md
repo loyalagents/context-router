@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-02
+- Last updated: 2026-06-08
 
 ## Implemented
 
@@ -19,20 +19,20 @@
 - [x] Exporter query-contract tests against the backend GraphQL schema.
 - [x] Ingestor benchmark brainstorm split known-schema document ingestion from
   open-schema definition/slug discovery.
+- [x] Known-schema `ingest-documents` command.
+- [x] Optional setup for user-owned eval preference definitions needed by
+  target slugs. This creates definitions/slugs, not stored values.
+- [x] Strict upload response contract tests for complete `suggestions[]` and no
+  unsupported pagination shape.
 
 ## Next
 
-- [ ] Implement known-schema `ingest-documents` to upload corpus documents,
-  auto-apply only suggestions returned by each upload response, and optionally
-  call the exporter.
-- [ ] Add optional setup for user-owned eval preference definitions needed by
-  non-core accepted slugs. This creates definitions/slugs, not stored values.
-- [ ] Add strict upload response contract tests for complete `suggestions[]` and
-  no unsupported pagination shape.
+- [ ] Run and document a live known-schema backend smoke with generated corpus
+  documents, export, and database score report.
 - [ ] Add richer withheld-but-known missing value fixtures for stronger value
   leak scoring.
-- [ ] Add generated examples of scorer outputs for a real ingestion run once the
-  exporter/ingestor exist.
+- [ ] Add generated examples of scorer outputs for a representative ingestion
+  run if useful for future reviewers.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for open-schema ingestion work:
   - MCP/Codex/Claude agent runner.
