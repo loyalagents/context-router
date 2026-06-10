@@ -143,14 +143,22 @@ export function parseArgs(args) {
 function requireOptions(options, required) {
   for (const key of required) {
     if (!options[key]) {
-      return { kind: 'usage-error', message: `Missing required ${optionName(key)}` };
+      return { kind: 'usage-error', message: `Missing required ${optionNameForKey(key)}` };
     }
   }
   return { kind: 'ok', options };
 }
 
-function optionName(key) {
-  return `--${key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}`;
+function optionNameForKey(key) {
+  return {
+    userId: '--user',
+    corpusId: '--corpus',
+    storedPreferences: '--stored-preferences',
+    scenarioId: '--scenario',
+    filledForm: '--filled-form',
+    databaseReport: '--database-report',
+    formReport: '--form-report',
+  }[key];
 }
 
 export function usage() {

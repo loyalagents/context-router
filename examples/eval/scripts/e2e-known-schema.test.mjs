@@ -23,6 +23,30 @@ test('known-schema e2e CLI prints help and reports invalid args clearly', async 
   const missing = await runKnownSchemaE2E({ repoRoot, args: [], env: {} });
   assert.equal(missing.exitCode, 2);
   assert.match(missing.lines.join('\n'), /Missing required --user/);
+  assert.doesNotMatch(missing.lines.join('\n'), /--user-id/);
+
+  const requiredArgs = [
+    '--user',
+    'alex-i9-test',
+    '--corpus',
+    'realistic',
+    '--scenario',
+    'alex-i9-realistic',
+    '--artifacts-root',
+    '/tmp/eval-artifacts',
+  ];
+  for (const [flag, expected] of [
+    ['--user', 'Missing required --user'],
+    ['--corpus', 'Missing required --corpus'],
+    ['--scenario', 'Missing required --scenario'],
+    ['--artifacts-root', 'Missing required --artifacts-root'],
+  ]) {
+    const args = removeFlagValue(requiredArgs, flag);
+    const parsed = parseArgs(args, { EVAL_AUTH_TOKEN: 'token' }, fixedNow);
+    assert.equal(parsed.kind, 'usage-error');
+    assert.equal(parsed.message, expected);
+    assert.doesNotMatch(parsed.message, /--user-id|--corpus-id|--scenario-id/);
+  }
 
   const noToken = parseArgs(
     [
@@ -266,6 +290,104 @@ test('known-schema e2e writes partial evaluation run and skips later stages on f
   );
 });
 
+test('known-schema e2e includes formatted validation details when validation fails', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'known-schema-e2e-validation-fail-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    validate: async ({ args }) => {
+      calls.push({ stage: 'validate', args });
+      const reportPath = argValue(args, '--report-out');
+      await writeArtifact(reportPath, {
+        schemaVersion: 1,
+        status: 'fail',
+        summary: { errors: 1, warnings: 0 },
+        corpusTruth: {
+          summary: {
+            hardFailures: 1,
+            unsupportedDeclaredFacts: 0,
+            factsMissing: 1,
+            unsupportedDeclaredFactKeys: [],
+          },
+          documents: [],
+        },
+        issues: [],
+      });
+      return {
+        exitCode: 1,
+        repoRoot,
+        reportPath,
+        summary: {
+          profiles: 1,
+          corpora: 1,
+          forms: 0,
+          scenarios: 0,
+          templates: 0,
+          errors: 1,
+          warnings: 0,
+        },
+        issues: [
+          {
+            level: 'error',
+            code: 'DOCUMENT_FACT_VALUE_MISSING',
+            file: 'examples/eval/users/alex-i9-test/corpora/realistic/manifest.json',
+            pointer: '/documents/0/factContract/include/0',
+            message: 'Document declares identity.legalName, but the value was missing.',
+            fix: 'Add the declared fact value to the document body.',
+          },
+        ],
+      };
+    },
+  };
+
+  const result = await runKnownSchemaE2E({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--scenario',
+      'alex-i9-realistic',
+      '--artifacts-root',
+      tmp,
+      '--auth-token',
+      'token',
+      '--run-id',
+      'run-validation-failure',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(calls.map((call) => call.stage), ['validate']);
+  assert.match(result.lines.join('\n'), /DOCUMENT_FACT_VALUE_MISSING/);
+  assert.match(result.lines.join('\n'), /identity\.legalName/);
+
+  const evaluationRun = JSON.parse(
+    await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'),
+  );
+  const validationStage = evaluationRun.stages.find(
+    (stage) => stage.name === 'validate-documents',
+  );
+  assert.equal(validationStage.status, 'failed');
+  assert.match(validationStage.lines.join('\n'), /DOCUMENT_FACT_VALUE_MISSING/);
+  assert.match(validationStage.lines.join('\n'), /identity\.legalName/);
+  assert.deepEqual(
+    evaluationRun.stages.slice(1).map((stage) => [stage.name, stage.status]),
+    [
+      ['ingest-documents', 'skipped'],
+      ['export-stored-preferences', 'skipped'],
+      ['score-database', 'skipped'],
+      ['fill-form', 'skipped'],
+      ['score-form', 'skipped'],
+      ['score-combined', 'skipped'],
+    ],
+  );
+});
+
 function successfulRunners({ calls, failures = {} }) {
   return {
     validate: async ({ args }) => {
@@ -373,4 +495,10 @@ function argValue(args, flag) {
   const index = args.indexOf(flag);
   if (index === -1) return undefined;
   return args[index + 1];
+}
+
+function removeFlagValue(args, flag) {
+  const index = args.indexOf(flag);
+  assert.notEqual(index, -1);
+  return [...args.slice(0, index), ...args.slice(index + 2)];
 }

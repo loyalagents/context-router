@@ -20,6 +20,40 @@ test('score CLI reports invalid arguments clearly', async () => {
   const result = await runScore({ repoRoot, args: ['--mode', 'database'] });
   assert.equal(result.exitCode, 2);
   assert.match(result.lines.join('\n'), /Missing required --out/);
+
+  const missingUser = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'database',
+      '--corpus',
+      'realistic',
+      '--stored-preferences',
+      '/tmp/stored-preferences.json',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingUser.exitCode, 2);
+  assert.match(missingUser.lines.join('\n'), /Missing required --user/);
+  assert.doesNotMatch(missingUser.lines.join('\n'), /--user-id/);
+
+  const missingCorpus = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'database',
+      '--user',
+      'alex-i9-test',
+      '--stored-preferences',
+      '/tmp/stored-preferences.json',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingCorpus.exitCode, 2);
+  assert.match(missingCorpus.lines.join('\n'), /Missing required --corpus/);
+  assert.doesNotMatch(missingCorpus.lines.join('\n'), /--corpus-id/);
 });
 
 test('score CLI writes database, form, and combined reports', async () => {

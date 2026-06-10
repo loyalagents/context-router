@@ -8,7 +8,10 @@ import { runIngestDocuments } from './ingest-documents.mjs';
 import { readJson, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
 import { runScore } from './score.mjs';
 import { isFixtureId } from './shared.mjs';
-import { runValidation } from './validate.mjs';
+import {
+  formatResult as formatValidationResult,
+  runValidation,
+} from './validate.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,8 +76,8 @@ export async function runKnownSchemaE2E({
     const stages = [
       {
         name: 'validate-documents',
-        runner: () =>
-          stageRunners.validate({
+        runner: async () => {
+          const result = await stageRunners.validate({
             repoRoot,
             args: [
               '--user',
@@ -86,7 +89,12 @@ export async function runKnownSchemaE2E({
               '--report-out',
               artifacts.validationReport,
             ],
-          }),
+          });
+          return {
+            ...result,
+            lines: result.lines ?? [formatValidationResult(result)],
+          };
+        },
         afterSuccess: async () => {
           const validationReport = await readJson(artifacts.validationReport);
           report.summaries.validation = validationReport.summary ?? null;
@@ -414,9 +422,14 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--run-id') options.runId = value;
   }
 
-  for (const key of ['userId', 'corpusId', 'scenarioId', 'artifactsRoot']) {
+  for (const [key, flag] of [
+    ['userId', '--user'],
+    ['corpusId', '--corpus'],
+    ['scenarioId', '--scenario'],
+    ['artifactsRoot', '--artifacts-root'],
+  ]) {
     if (!options[key]) {
-      return { kind: 'usage-error', message: `Missing required ${optionName(key)}` };
+      return { kind: 'usage-error', message: `Missing required ${flag}` };
     }
   }
   for (const [label, value] of [
@@ -633,10 +646,6 @@ function failureLines({ report, reportPath, repoRoot, stageName }) {
     '',
     ...(stage?.lines ?? []),
   ];
-}
-
-function optionName(key) {
-  return `--${key.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}`;
 }
 
 function isoTimestamp(now) {
