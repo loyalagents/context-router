@@ -139,6 +139,47 @@ test('database scorer rejects schema-invalid stored-preferences artifacts', asyn
   );
 });
 
+test('database scorer uses an explicit validation report when provided', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-db-explicit-validation-'));
+  const artifactPath = await writeStoredPreferences([
+    pref('profile.full_name', 'Alex Jordan Rivera'),
+  ]);
+  const validationReportPath = path.join(tmp, 'validation-report.json');
+  await writeFile(
+    validationReportPath,
+    jsonText({
+      schemaVersion: 1,
+      status: 'fail',
+      summary: { errors: 1, warnings: 0 },
+      corpusTruth: {
+        summary: {
+          hardFailures: 1,
+          unsupportedDeclaredFacts: 0,
+          factsMissing: 0,
+          unsupportedDeclaredFactKeys: [],
+        },
+        documents: [],
+      },
+      issues: [],
+    }),
+  );
+
+  const report = await scoreDatabase({
+    repoRoot,
+    userId: 'alex-i9-test',
+    corpusId: 'realistic',
+    storedPreferencesPath: artifactPath,
+    validationReportPath,
+  });
+
+  assert.equal(report.fixtureReadiness.scorable, false);
+  assert.deepEqual(report.knownPresent, []);
+  assert.match(
+    report.fixtureReadiness.blockingIssues.map((issue) => issue.reason).join('\n'),
+    /corpusTruth has 1 hard failure/,
+  );
+});
+
 test('fixture readiness blocks hard corpus-truth failures', () => {
   const readiness = buildFixtureReadiness({
     status: 'fail',

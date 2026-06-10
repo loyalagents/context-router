@@ -20,6 +20,40 @@ test('score CLI reports invalid arguments clearly', async () => {
   const result = await runScore({ repoRoot, args: ['--mode', 'database'] });
   assert.equal(result.exitCode, 2);
   assert.match(result.lines.join('\n'), /Missing required --out/);
+
+  const missingUser = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'database',
+      '--corpus',
+      'realistic',
+      '--stored-preferences',
+      '/tmp/stored-preferences.json',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingUser.exitCode, 2);
+  assert.match(missingUser.lines.join('\n'), /Missing required --user/);
+  assert.doesNotMatch(missingUser.lines.join('\n'), /--user-id/);
+
+  const missingCorpus = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'database',
+      '--user',
+      'alex-i9-test',
+      '--stored-preferences',
+      '/tmp/stored-preferences.json',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingCorpus.exitCode, 2);
+  assert.match(missingCorpus.lines.join('\n'), /Missing required --corpus/);
+  assert.doesNotMatch(missingCorpus.lines.join('\n'), /--corpus-id/);
 });
 
 test('score CLI writes database, form, and combined reports', async () => {
@@ -174,6 +208,70 @@ test('score CLI writes unscorable database reports and exits nonzero', async () 
   const report = JSON.parse(await readFile(reportPath, 'utf8'));
   assert.equal(report.fixtureReadiness.scorable, false);
   assert.match(result.lines.join('\n'), /unscorable/);
+});
+
+test('score CLI database mode can use an explicit validation report', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-cli-validation-report-'));
+  const storedPreferencesPath = path.join(tmp, 'stored-preferences.json');
+  const validationReportPath = path.join(tmp, 'validation-report.json');
+  const reportPath = path.join(tmp, 'database-score-report.json');
+
+  await writeFile(
+    storedPreferencesPath,
+    jsonText({
+      schemaVersion: 1,
+      artifactType: 'stored-preferences',
+      userId: 'alex-i9-test',
+      corpusId: 'realistic',
+      storageInput: {
+        ingestionMode: 'test',
+        statusesScored: ['ACTIVE'],
+        suggestionsWereAutoApplied: true,
+      },
+      preferences: [],
+    }),
+  );
+  await writeFile(
+    validationReportPath,
+    jsonText({
+      schemaVersion: 1,
+      status: 'fail',
+      summary: { errors: 1, warnings: 0 },
+      corpusTruth: {
+        summary: {
+          hardFailures: 1,
+          unsupportedDeclaredFacts: 0,
+          factsMissing: 0,
+          unsupportedDeclaredFactKeys: [],
+        },
+        documents: [],
+      },
+      issues: [],
+    }),
+  );
+
+  const result = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'database',
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--stored-preferences',
+      storedPreferencesPath,
+      '--validation-report',
+      validationReportPath,
+      '--out',
+      reportPath,
+    ],
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(reportPath, 'utf8'));
+  assert.equal(report.fixtureReadiness.scorable, false);
+  assert.match(report.fixtureReadiness.blockingIssues[0].reason, /status is fail/);
 });
 
 async function writeMinimalUnscorableRepo(tempRepoRoot) {

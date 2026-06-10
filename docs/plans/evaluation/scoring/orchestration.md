@@ -27,6 +27,8 @@ ingestor or manual/MCP run
 - [x] Implement known-schema document ingestor with auto-apply into active
   memory.
 - [x] Implement backend-memory form-fill runner.
+- [x] Implement known-schema single-call wrapper over the existing stage
+  commands.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for MCP/Codex/Claude runner and upload-level schema
   discovery.
@@ -124,7 +126,32 @@ Implemented in this phase:
 - shared eval PDF field reader using the backend `pdf-lib` dependency
 - Alex realistic live form-fill scenario without a committed golden snapshot
 
-## Phase 5: Open-Schema Ingestion
+## Phase 5: Known-Schema Single-Call Wrapper
+
+Run the existing known-schema chain with one command while preserving every
+intermediate artifact:
+
+```text
+eval:e2e-known-schema
+  -> validation-report.json
+  -> ingestion-run.json
+  -> stored-preferences.json
+  -> database-score-report.json
+  -> filled-form.json / filled-form.pdf / form-fill-response.json
+  -> form-score-report.json
+  -> combined-score-report.json
+  -> evaluation-run.json
+```
+
+Implemented in this phase:
+
+- `pnpm eval:e2e-known-schema`
+- schema-validated `evaluation-run.json`
+- partial run report writing on stage failure
+- skipped-stage accounting after failures
+- explicit `--validation-report` support for database scoring
+
+## Phase 6: Open-Schema Ingestion
 
 Open-schema ingestion starts without pre-created eval-specific definitions. The
 system or agent must choose or create useful definitions/slugs and store values.

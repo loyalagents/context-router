@@ -28,18 +28,20 @@
 - [x] Optional filled-PDF, redacted form-fill response, and form score report
   outputs from the form runner.
 - [x] Alex realistic live form-fill scenario with no committed golden snapshot.
+- [x] Known-schema single-call wrapper via `pnpm eval:e2e-known-schema`.
+- [x] `evaluation-run.json` artifact for stage order, partial failures, skipped
+  stages, and output artifact paths.
+- [x] Explicit validation report input for database scoring so wrapper runs
+  score the exact document root they validated.
 
 ## Next
 
-- [ ] Run and document a live known-schema backend smoke with generated corpus
-  documents, export, database score, live form fill, form score, and combined
-  score report.
+- [ ] Run and document a live known-schema backend smoke with
+  `pnpm eval:e2e-known-schema`.
 - [ ] Add richer withheld-but-known missing value fixtures for stronger value
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Consider a one-command E2E wrapper after the current artifact chain is
-  proven useful in live smoke runs.
 - [ ] Design open-schema ingestion with definition/slug creation.
 - [ ] Decide ordering for open-schema ingestion work:
   - MCP/Codex/Claude agent runner.
