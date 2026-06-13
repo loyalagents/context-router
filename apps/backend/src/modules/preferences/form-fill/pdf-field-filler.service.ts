@@ -17,7 +17,9 @@ export class PdfFieldFillerService {
     for (const action of actions) {
       switch (action.fieldType) {
         case 'text':
-          form.getTextField(action.fieldName).setText(action.value ?? '');
+          form
+            .getTextField(action.fieldName)
+            .setText(normalizeTextValueForPdfField(action));
           break;
         case 'checkbox':
           if (action.action === 'CHECK') {
@@ -47,4 +49,23 @@ export class PdfFieldFillerService {
 
     return Buffer.from(await pdfDoc.save());
   }
+}
+
+function normalizeTextValueForPdfField(action: ValidatedFillAction): string {
+  const value = action.value ?? '';
+  if (!isSocialSecurityNumberAction(action)) {
+    return value;
+  }
+
+  const digits = value.replace(/\D/g, '');
+  return digits.length === 9 ? digits : value;
+}
+
+function isSocialSecurityNumberAction(action: ValidatedFillAction): boolean {
+  return (
+    action.fieldName === 'US Social Security Number' ||
+    action.sourceSlugs.some(
+      (slug) => slug.endsWith('.identity.ssn') || slug === 'identity.ssn',
+    )
+  );
 }

@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-10
+- Last updated: 2026-06-13
 
 ## Implemented
 
@@ -33,11 +33,30 @@
   stages, and output artifact paths.
 - [x] Explicit validation report input for database scoring so wrapper runs
   score the exact document root they validated.
+- [x] First live `pnpm eval:e2e-known-schema` smoke completed end to end for
+  `alex-i9-test` / `realistic` / `alex-i9-realistic`.
+  - Result was a pipeline pass with partial form fill.
+  - Database score: 16/22 known-present facts correct, 4 wrong values, 2 wrong
+    slugs, 1/1 intentionally missing fact absent.
+  - Form score: 11/17 known fields correct, 1 missing, 5 wrong, 1/1
+    intentionally missing field absent.
+  - Combined score produced stage attribution across storage and form-fill.
+- [x] Fixed the live form-fill blocker where dashed SSNs such as
+  `000-00-0292` crashed I-9 PDF writing because the target field has
+  `maxLength=9`.
 
 ## Next
 
-- [ ] Run and document a live known-schema backend smoke with
-  `pnpm eval:e2e-known-schema`.
+- [ ] Document the completed live known-schema E2E smoke in an example folder
+  with `evaluation-run.json`, score reports, filled PDF, and qualitative notes.
+- [ ] Inspect the live E2E score rows to separate ingestion/storage failures
+  from form-fill failures:
+  - database wrong values included stale address/email-like memory in the smoke
+    run.
+  - form score had 5 wrong known fields and 1 missing known field.
+- [ ] Persist terminal `eval:fill-form` backend responses even when the status
+  is `failed`, `no_fillable_fields`, or `unsupported_format`, so future live
+  failures leave a response artifact for debugging.
 - [ ] Add richer withheld-but-known missing value fixtures for stronger value
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion

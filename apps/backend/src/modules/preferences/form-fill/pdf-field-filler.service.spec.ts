@@ -11,6 +11,12 @@ async function createFillablePdf(): Promise<Buffer> {
     .createTextField('profile.full_name')
     .addToPage(page, { x: 50, y: 620, width: 200, height: 24 });
   form
+    .createTextField('US Social Security Number')
+    .setMaxLength(9);
+  form
+    .getTextField('US Social Security Number')
+    .addToPage(page, { x: 50, y: 600, width: 140, height: 24 });
+  form
     .createCheckBox('newsletter_opt_in')
     .addToPage(page, { x: 50, y: 580, width: 18, height: 18 });
 
@@ -109,5 +115,26 @@ describe('PdfFieldFillerService', () => {
     expect(
       form.getOptionList('communication.preferred_channels').getSelected(),
     ).toEqual(['email']);
+  });
+
+  it('strips punctuation for the I-9 social security number field', async () => {
+    const actions: ValidatedFillAction[] = [
+      {
+        fieldName: 'US Social Security Number',
+        fieldType: 'text',
+        action: 'SET_TEXT',
+        value: '000-00-0292',
+        sourceSlugs: ['eval.identity.ssn'],
+        confidence: 0.98,
+      },
+    ];
+
+    const filled = await service.fillPdf(await createFillablePdf(), actions);
+    const filledDoc = await PDFDocument.load(filled);
+    const form = filledDoc.getForm();
+
+    expect(form.getTextField('US Social Security Number').getText()).toBe(
+      '000000292',
+    );
   });
 });
