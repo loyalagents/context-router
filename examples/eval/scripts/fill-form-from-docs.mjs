@@ -327,7 +327,7 @@ export async function loadEvidenceDocuments({ manifest, documentsRoot }) {
 }
 
 export function buildPromptFieldMetadata(fixture) {
-  return fixture.joinedFields.map(({ generated }) => {
+  return fixture.joinedFields.map(({ fieldMap, generated }) => {
     const options = optionValuesForField(generated, fixture.fieldsGenerated);
     return {
       fieldName: generated.pdfFieldName,
@@ -335,6 +335,7 @@ export function buildPromptFieldMetadata(fixture) {
       inferredLabel: generated.inferredLabel ?? null,
       inferredDataKey: generated.inferredDataKey ?? null,
       fillPolicy: generated.fillPolicy ?? null,
+      fieldPolicy: promptFieldPolicy(fieldMap),
       options,
     };
   });
@@ -348,7 +349,11 @@ export function buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments }) 
     'Return exactly one fill action for every PDF field in the metadata list.',
     'Use exact case-sensitive fieldName values from the field metadata.',
     'For dropdown, radio, and option-list fields, use exact option value strings from the metadata.',
-    'Use SKIP when evidence is missing, contradicted, stale, ambiguous, low confidence, or the field requires a signature/manual attestation.',
+    'Field policy is authoritative.',
+    'When fieldPolicy.action is "skip", return SKIP for that field even if the evidence contains plausible values.',
+    'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
+    'Include numeric confidence from 0 to 1 when available; do not omit an evidence-backed value solely because confidence is uncertain.',
+    'Use SKIP when evidence is missing, contradicted, stale, ambiguous, or the field requires a signature/manual attestation.',
     'Do not infer or invent values that are not present in the evidence documents.',
     'Every non-SKIP action must include at least one sourceSlugs entry using a document ref such as doc:example-document-id.',
     'Use sourceSlugs: [] for SKIP actions.',
@@ -379,6 +384,16 @@ export function buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments }) 
   ].join('\n');
 }
 
+function promptFieldPolicy(fieldMap) {
+  if (fieldMap?.mode === 'skip') {
+    return {
+      action: 'skip',
+      reason: fieldMap.reason ?? 'structural_skip',
+    };
+  }
+  return { action: 'fillable' };
+}
+
 export function parseModelResponse(text) {
   const trimmed = String(text ?? '').trim();
   const fence = trimmed.match(/^```(?:json)?\s*\n([\s\S]*?)\n```$/i);
@@ -402,6 +417,11 @@ export function validateDocFillActions({
   confidenceThreshold = DEFAULT_CONFIDENCE_THRESHOLD,
 }) {
   const warnings = [];
+  const diagnostics = {
+    missingConfidenceCount: 0,
+    lowConfidenceCount: 0,
+    invalidActionReasonCounts: {},
+  };
   const docRefs = new Set(evidenceDocuments.map((doc) => doc.ref));
   const fieldByName = new Map(fields.map((field) => [field.fieldName, field]));
   const actionByField = new Map();
@@ -436,9 +456,9 @@ export function validateDocFillActions({
       action,
       field,
       docRefs,
-      confidenceThreshold,
     });
     if (invalidReason) {
+      countInvalidActionReason(diagnostics, invalidReason);
       skippedFields.push(skipField(field, invalidReason, action.confidence, action.sourceSlugs));
       continue;
     }
@@ -456,24 +476,30 @@ export function validateDocFillActions({
       continue;
     }
 
+    const confidence = confidenceForFilledAction({
+      action,
+      diagnostics,
+      confidenceThreshold,
+    });
     const validAction = {
       fieldName: action.fieldName,
       fieldType: field.fieldType,
       action: action.action,
       value: action.value,
       sourceSlugs: action.sourceSlugs,
-      confidence: action.confidence,
+      confidence,
     };
     validActions.push(validAction);
     filledFields.push({
       pdfFieldName: field.fieldName,
       fieldType: field.fieldType,
       sourceSlugs: action.sourceSlugs,
-      confidence: action.confidence,
+      confidence,
     });
   }
 
-  return { validActions, filledFields, skippedFields, warnings };
+  appendConfidenceWarnings(warnings, diagnostics, confidenceThreshold);
+  return { validActions, filledFields, skippedFields, warnings, diagnostics };
 }
 
 export async function fillPdfFromActions({
@@ -580,13 +606,14 @@ function buildResponseArtifact({
     returnedActionCount: aiResult.fillActions.length,
     validActionCount: validationResult.validActions.length,
     skippedFieldCount: validationResult.skippedFields.length,
+    validationDiagnostics: validationResult.diagnostics,
     warnings: validationResult.warnings,
     responseSummary: response.summary,
     note: 'sourceSlugAgreementRate in form score is not meaningful for this baseline because sourceSlugs are document refs, not DB slugs.',
   };
 }
 
-function invalidActionReason({ action, field, docRefs, confidenceThreshold }) {
+function invalidActionReason({ action, field, docRefs }) {
   if (!FILL_ACTIONS.has(action.action)) {
     return `unsupported action ${String(action.action)}`;
   }
@@ -614,13 +641,36 @@ function invalidActionReason({ action, field, docRefs, confidenceThreshold }) {
       return `unknown source document ref "${sourceRef}"`;
     }
   }
+  return null;
+}
+
+function confidenceForFilledAction({ action, diagnostics, confidenceThreshold }) {
   if (typeof action.confidence !== 'number') {
-    return 'missing confidence';
+    diagnostics.missingConfidenceCount += 1;
+    return null;
   }
   if (action.confidence < confidenceThreshold) {
-    return 'confidence below threshold';
+    diagnostics.lowConfidenceCount += 1;
   }
-  return null;
+  return action.confidence;
+}
+
+function appendConfidenceWarnings(warnings, diagnostics, confidenceThreshold) {
+  if (diagnostics.missingConfidenceCount > 0) {
+    warnings.push(
+      `${diagnostics.missingConfidenceCount} non-SKIP action(s) omitted confidence; accepted with unknown confidence.`,
+    );
+  }
+  if (diagnostics.lowConfidenceCount > 0) {
+    warnings.push(
+      `${diagnostics.lowConfidenceCount} non-SKIP action(s) reported confidence below ${confidenceThreshold}; accepted because confidence is diagnostic only.`,
+    );
+  }
+}
+
+function countInvalidActionReason(diagnostics, reason) {
+  diagnostics.invalidActionReasonCounts[reason] =
+    (diagnostics.invalidActionReasonCounts[reason] ?? 0) + 1;
 }
 
 function isCompatible(action, fieldType) {
@@ -637,8 +687,8 @@ function skipField(field, reason, confidence, sourceSlugs) {
     pdfFieldName: field.fieldName,
     fieldType: field.fieldType,
     reason,
-    confidence,
-    sourceSlugs,
+    confidence: typeof confidence === 'number' ? confidence : null,
+    sourceSlugs: Array.isArray(sourceSlugs) ? sourceSlugs : [],
   };
 }
 

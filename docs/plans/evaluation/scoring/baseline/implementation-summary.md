@@ -22,11 +22,20 @@ PDF, response/debug artifact, and form score report.
 - Does not send profile truth, expected field-map values, seed preferences,
   fact contracts, validation reports, or DB preferences to the prompt.
 - Requires non-`SKIP` actions to cite `doc:<documentId>` source refs.
-- Treats invalid, duplicate, low-confidence, unknown-field, bad-option, and
-  unknown-source-ref actions as skipped fields with diagnostics.
+- Treats invalid, duplicate, unknown-field, bad-option, and unknown-source-ref
+  actions as skipped fields with diagnostics.
+- Confidence is diagnostic-only for the direct-document baseline. Missing or
+  low confidence is reported in `validationDiagnostics` and warnings, but an
+  otherwise valid evidence-backed action is still filled and scored.
 - Reuses existing form scoring; `sourceSlugAgreementRate` is documented as not
   meaningful for this baseline because source refs are document refs, not DB
   slugs.
+- Includes policy-only skip guidance for structural fields such as manual
+  attestations and out-of-scope employer fields, without exposing fact keys or
+  expected values to the model.
+- Form score reports structural overfills as separate diagnostics, so baseline
+  runs can show when the model filled fields that should stay blank without
+  changing primary known-field accuracy.
 
 ## Command
 

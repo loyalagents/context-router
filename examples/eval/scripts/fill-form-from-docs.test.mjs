@@ -91,11 +91,26 @@ test('fill-form-from-docs builds an evidence prompt without fixture truth', asyn
   assert.match(prompt, /doc:alex-i9-test-realistic-001/);
   assert.match(prompt, /First Name Given Name/);
   assert.match(prompt, /Driver License Upload OCR/);
+  assert.match(prompt, /"fieldPolicy"/);
+  assert.match(prompt, /"manual_attestation"/);
   assert.doesNotMatch(prompt, /factContract/);
+  assert.doesNotMatch(prompt, /"factKey"/);
   assert.doesNotMatch(prompt, /seedPreferences/);
   assert.doesNotMatch(prompt, /validation-report/);
   assert.doesNotMatch(prompt, /expectedValue/);
   assert.doesNotMatch(prompt, /fieldMap/);
+
+  const firstName = fieldMetadata.find(
+    (field) => field.fieldName === 'First Name Given Name',
+  );
+  assert.deepEqual(firstName.fieldPolicy, { action: 'fillable' });
+  const signature = fieldMetadata.find(
+    (field) => field.fieldName === 'Signature of Employee',
+  );
+  assert.deepEqual(signature.fieldPolicy, {
+    action: 'skip',
+    reason: 'manual_attestation',
+  });
 });
 
 test('fill-form-from-docs parses plain and fenced JSON model responses', () => {
@@ -127,6 +142,11 @@ test('fill-form-from-docs validates action edge cases', () => {
     },
     {
       fieldName: 'Other',
+      fieldType: 'text',
+      options: [],
+    },
+    {
+      fieldName: 'NoConfidence',
       fieldType: 'text',
       options: [],
     },
@@ -177,12 +197,33 @@ test('fill-form-from-docs validates action edge cases', () => {
         sourceSlugs: ['doc:doc-1'],
         confidence: 0.6,
       },
+      {
+        fieldName: 'NoConfidence',
+        action: 'SET_TEXT',
+        value: 'accepted',
+        sourceSlugs: ['doc:doc-1'],
+      },
     ],
   });
 
-  assert.equal(result.validActions.length, 0);
+  assert.equal(result.validActions.length, 2);
+  assert.deepEqual(
+    result.validActions.map((action) => [action.fieldName, action.confidence]),
+    [
+      ['Other', 0.6],
+      ['NoConfidence', null],
+    ],
+  );
+  assert.equal(result.diagnostics.missingConfidenceCount, 1);
+  assert.equal(result.diagnostics.lowConfidenceCount, 1);
+  assert.equal(
+    result.diagnostics.invalidActionReasonCounts['missing source document ref'],
+    1,
+  );
   assert.match(result.warnings.join('\n'), /unknown field/);
   assert.match(result.warnings.join('\n'), /duplicate action/);
+  assert.match(result.warnings.join('\n'), /omitted confidence/);
+  assert.match(result.warnings.join('\n'), /confidence below 0.75/);
   assert.match(
     result.skippedFields.map((field) => field.reason).join('\n'),
     /missing source document ref/,
@@ -195,7 +236,7 @@ test('fill-form-from-docs validates action edge cases', () => {
     result.skippedFields.map((field) => field.reason).join('\n'),
     /unknown source document ref "doc:missing"/,
   );
-  assert.match(
+  assert.doesNotMatch(
     result.skippedFields.map((field) => field.reason).join('\n'),
     /confidence below threshold/,
   );
@@ -250,6 +291,11 @@ test('fill-form-from-docs writes filled-form, filled PDF, response, and form sco
   assert.equal(response.artifactType, 'direct-doc-form-fill-response');
   assert.equal(response.model, 'test-model');
   assert.equal(response.evidenceDocuments.length, 10);
+  assert.deepEqual(response.validationDiagnostics, {
+    missingConfidenceCount: 0,
+    lowConfidenceCount: 0,
+    invalidActionReasonCounts: {},
+  });
   assert.match(response.note, /sourceSlugAgreementRate/);
 
   const score = JSON.parse(await readFile(scorePath, 'utf8'));

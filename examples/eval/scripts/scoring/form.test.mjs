@@ -27,6 +27,7 @@ test('form scorer aggregates existing filled-form snapshot classifications', asy
   assert.equal(report.summary.abstentionFieldTotal, 6);
   assert.equal(report.summary.abstentionFieldAbsentCorrect, 6);
   assert.equal(report.summary.structuralSkipCount, 30);
+  assert.equal(report.summary.structuralOverfillCount, 0);
   assert.equal(report.summary.unsupportedFieldCount, 0);
   assert.equal(report.summary.sourceSlugAgreementRate, 1);
   await validateWithSchema(
@@ -65,6 +66,13 @@ test('form scorer reports missing, wrong, hallucinated, unsupported, and source-
     (field) => field.fieldMap.reason === 'manual_attestation',
   );
   signature.classification = 'unsupported';
+  const outOfScope = snapshot.fields.find(
+    (field) => field.fieldMap.reason === 'out_of_scope',
+  );
+  outOfScope.classification = 'hallucinated';
+  outOfScope.actual.filled = true;
+  outOfScope.actual.value = 'Employer-filled value';
+  outOfScope.actual.sourceSlugs = ['doc:test'];
 
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-'));
   const filledFormPath = path.join(tmp, 'filled-form.json');
@@ -79,8 +87,33 @@ test('form scorer reports missing, wrong, hallucinated, unsupported, and source-
   assert.equal(report.summary.knownFieldMissing, 1);
   assert.equal(report.summary.knownFieldWrong, 1);
   assert.equal(report.summary.abstentionFieldHallucinated, 1);
+  assert.equal(report.summary.structuralOverfillCount, 1);
+  assert.equal(report.summary.outOfScopeOverfillCount, 1);
+  assert.equal(report.summary.manualAttestationOverfillCount, 0);
+  assert.equal(report.summary.unmappedOverfillCount, 0);
   assert.equal(report.summary.unsupportedFieldCount, 1);
   assert.ok(report.summary.sourceSlugAgreementRate < 1);
+
+  const overfilled = report.fields.find(
+    (field) => field.pdfFieldName === outOfScope.pdfFieldName,
+  );
+  assert.equal(overfilled.classification, 'structural_overfilled');
+  assert.equal(overfilled.overfill, true);
+  assert.equal(overfilled.overfillSeverity, 'high');
+  assert.equal(overfilled.overfillReason, 'out_of_scope');
+
+  const skippedSignature = report.fields.find(
+    (field) => field.pdfFieldName === signature.pdfFieldName,
+  );
+  assert.equal(skippedSignature.overfill, false);
+  assert.equal(skippedSignature.overfillSeverity, null);
+
+  await validateWithSchema(
+    repoRoot,
+    'form-fill-score-report.schema.json',
+    report,
+    'form fill score report',
+  );
 });
 
 test('form scorer rejects filled-form snapshots with mismatched fixture identity', async () => {

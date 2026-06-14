@@ -38,6 +38,10 @@
         "missingFieldAbstentionRate",
         "missingFieldHallucinationRate",
         "structuralSkipCount",
+        "structuralOverfillCount",
+        "manualAttestationOverfillCount",
+        "outOfScopeOverfillCount",
+        "unmappedOverfillCount",
         "unsupportedFieldCount",
         "sourceSlugAgreementRate"
       ],
@@ -55,6 +59,10 @@
         "missingFieldAbstentionRate": { "$ref": "#/$defs/rate" },
         "missingFieldHallucinationRate": { "$ref": "#/$defs/rate" },
         "structuralSkipCount": { "$ref": "#/$defs/count" },
+        "structuralOverfillCount": { "$ref": "#/$defs/count" },
+        "manualAttestationOverfillCount": { "$ref": "#/$defs/count" },
+        "outOfScopeOverfillCount": { "$ref": "#/$defs/count" },
+        "unmappedOverfillCount": { "$ref": "#/$defs/count" },
         "unsupportedFieldCount": { "$ref": "#/$defs/count" },
         "sourceSlugAgreementRate": { "$ref": "#/$defs/rate" }
       }
@@ -83,6 +91,7 @@
         "form_missing_hallucinated",
         "form_unexpected",
         "structural_skip",
+        "structural_overfilled",
         "unsupported"
       ]
     },
@@ -104,7 +113,10 @@
         "sourceSlugs",
         "sourceSlugAgrees",
         "snapshotClassification",
-        "classification"
+        "classification",
+        "overfill",
+        "overfillSeverity",
+        "overfillReason"
       ],
       "properties": {
         "fieldIndex": { "type": "integer", "minimum": 0 },
@@ -126,7 +138,13 @@
             "unsupported"
           ]
         },
-        "classification": { "$ref": "#/$defs/classification" }
+        "classification": { "$ref": "#/$defs/classification" },
+        "overfill": { "type": "boolean" },
+        "overfillSeverity": {
+          "type": ["string", "null"],
+          "enum": ["high", "medium", "low", null]
+        },
+        "overfillReason": { "type": ["string", "null"] }
       }
     }
   }

@@ -201,6 +201,9 @@ function field(factKey, classification) {
     sourceSlugAgrees: false,
     snapshotClassification: 'correct',
     classification,
+    overfill: false,
+    overfillSeverity: null,
+    overfillReason: null,
   };
 }
 
@@ -249,6 +252,10 @@ function formSummary() {
     missingFieldAbstentionRate: 1,
     missingFieldHallucinationRate: 0,
     structuralSkipCount: 0,
+    structuralOverfillCount: 0,
+    manualAttestationOverfillCount: 0,
+    outOfScopeOverfillCount: 0,
+    unmappedOverfillCount: 0,
     unsupportedFieldCount: 0,
     sourceSlugAgreementRate: 0,
   };
