@@ -44,9 +44,17 @@
 - [x] Fixed the live form-fill blocker where dashed SSNs such as
   `000-00-0292` crashed I-9 PDF writing because the target field has
   `maxLength=9`.
+- [x] Direct-document form-fill baseline via
+  `pnpm eval:fill-form-from-docs`.
+  - Reads local corpus documents and PDF field metadata into one Vertex prompt.
+  - Writes the existing `filled-form.json` snapshot shape and optional form
+    score report without calling the backend or DB.
 
 ## Next
 
+- [ ] Run and document a live direct-document baseline smoke for
+  `alex-i9-realistic`, then compare form score against the known-schema E2E
+  score.
 - [ ] Document the completed live known-schema E2E smoke in an example folder
   with `evaluation-run.json`, score reports, filled PDF, and qualitative notes.
 - [ ] Inspect the live E2E score rows to separate ingestion/storage failures
