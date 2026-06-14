@@ -28,6 +28,7 @@
     "eval:validate": "node examples/eval/scripts/validate.mjs",
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:fill-form": "node examples/eval/scripts/fill-form.mjs",
+    "eval:fill-form-from-docs": "node examples/eval/scripts/fill-form-from-docs.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",

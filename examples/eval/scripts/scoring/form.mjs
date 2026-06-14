@@ -66,6 +66,7 @@ export async function scoreForm({ repoRoot, scenarioId, filledFormPath }) {
 function scoreField({ field, fixture, storageMap }) {
   const factKey = field.fieldMap?.factKey ?? null;
   const fieldClass = classifyFieldDenominator(field);
+  const overfill = structuralOverfill(field, fieldClass);
   const sourceSlugs = field.actual?.sourceSlugs ?? [];
   const expectedValue = field.expected?.value ?? null;
   const actualValue = field.actual?.value ?? null;
@@ -89,6 +90,9 @@ function scoreField({ field, fixture, storageMap }) {
     sourceSlugAgrees,
     snapshotClassification: field.classification,
     classification: mapFormClassification(field, fieldClass),
+    overfill: overfill.overfill,
+    overfillSeverity: overfill.overfillSeverity,
+    overfillReason: overfill.overfillReason,
   };
 }
 
@@ -104,7 +108,11 @@ function classifyFieldDenominator(field) {
 
 function mapFormClassification(field, fieldClass) {
   if (fieldClass === 'unsupported') return 'unsupported';
-  if (fieldClass === 'structural-skip') return 'structural_skip';
+  if (fieldClass === 'structural-skip') {
+    return field.classification === 'hallucinated'
+      ? 'structural_overfilled'
+      : 'structural_skip';
+  }
   if (fieldClass === 'abstention-test') {
     if (field.classification === 'hallucinated') {
       return 'form_missing_hallucinated';
@@ -124,6 +132,28 @@ function mapFormClassification(field, fieldClass) {
   return 'form_unexpected';
 }
 
+function structuralOverfill(field, fieldClass) {
+  if (fieldClass !== 'structural-skip' || field.classification !== 'hallucinated') {
+    return {
+      overfill: false,
+      overfillSeverity: null,
+      overfillReason: null,
+    };
+  }
+  const reason = field.fieldMap?.reason ?? 'unknown';
+  return {
+    overfill: true,
+    overfillSeverity: overfillSeverity(reason),
+    overfillReason: reason,
+  };
+}
+
+function overfillSeverity(reason) {
+  if (reason === 'manual_attestation' || reason === 'out_of_scope') return 'high';
+  if (reason === 'unmapped') return 'medium';
+  return 'medium';
+}
+
 function buildFormSummary(fields) {
   const shouldFill = fields.filter((field) => field.fieldClass === 'should-fill');
   const abstention = fields.filter(
@@ -136,6 +166,7 @@ function buildFormSummary(fields) {
   const knownFieldCorrect = shouldFill.filter(
     (field) => field.classification === 'form_known_correct',
   );
+  const structuralOverfills = structural.filter((field) => field.overfill);
   const sourceSlugAgreementCount = knownFieldCorrect.filter(
     (field) => field.sourceSlugAgrees,
   ).length;
@@ -180,6 +211,16 @@ function buildFormSummary(fields) {
       abstention.length,
     ),
     structuralSkipCount: structural.length,
+    structuralOverfillCount: structuralOverfills.length,
+    manualAttestationOverfillCount: structuralOverfills.filter(
+      (field) => field.overfillReason === 'manual_attestation',
+    ).length,
+    outOfScopeOverfillCount: structuralOverfills.filter(
+      (field) => field.overfillReason === 'out_of_scope',
+    ).length,
+    unmappedOverfillCount: structuralOverfills.filter(
+      (field) => field.overfillReason === 'unmapped',
+    ).length,
     unsupportedFieldCount: unsupported.length,
     sourceSlugAgreementRate: rate(
       sourceSlugAgreementCount,

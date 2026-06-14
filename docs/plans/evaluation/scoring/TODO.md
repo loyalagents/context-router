@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-13
+- Last updated: 2026-06-14
 
 ## Implemented
 
@@ -44,9 +44,22 @@
 - [x] Fixed the live form-fill blocker where dashed SSNs such as
   `000-00-0292` crashed I-9 PDF writing because the target field has
   `maxLength=9`.
+- [x] Direct-document form-fill baseline via
+  `pnpm eval:fill-form-from-docs`.
+  - Reads local corpus documents and PDF field metadata into one Vertex prompt.
+  - Writes the existing `filled-form.json` snapshot shape and optional form
+    score report without calling the backend or DB.
+- [x] Form score reports structural overfill diagnostics separately from
+  primary known-field and abstention accuracy.
+- [x] Direct-document baseline prompt includes policy-only skip guidance for
+  structural fields without exposing fact keys or expected values.
+- [x] Direct-document baseline treats model-authored confidence as diagnostic
+  metadata rather than a hard fill gate.
 
 ## Next
 
+- [ ] Document the live direct-document baseline comparison in an example
+  folder if the Pro/Flash/E2E results are useful as a durable reference.
 - [ ] Document the completed live known-schema E2E smoke in an example folder
   with `evaluation-run.json`, score reports, filled PDF, and qualitative notes.
 - [ ] Inspect the live E2E score rows to separate ingestion/storage failures
