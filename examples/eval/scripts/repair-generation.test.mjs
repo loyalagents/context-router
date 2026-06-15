@@ -43,6 +43,7 @@ test('repair-generation regenerates only documents with validation failures', as
         'SSN: 000-00-0389.',
         'Address: 1268 Lakeview Terrace, Unit 4C, Madison, WI 53703.',
         'Personal email: samir.desai@example.test.',
+        'Citizenship status: lawful permanent resident.',
         'USCIS A-number: 123456789.',
       ].join('\n');
     },
@@ -101,6 +102,7 @@ test('repair-generation builds repair prompts from plan docs with per-doc forbid
         'SSN: 000-00-0389.',
         'Address: 1268 Lakeview Terrace, Unit 4C, Madison, WI 53703.',
         'Personal email: samir.desai@example.test.',
+        'Citizenship status: lawful permanent resident.',
         'USCIS A-number: 123456789.',
       ].join('\n');
     },
@@ -131,6 +133,7 @@ test('repair-generation reports warning documents separately from failures', asy
       'SSN: 000-00-0389.',
       'Address: 1268 Lakeview Terrace, Unit 4C, Madison, WI 53703.',
       'Personal email: samir.desai@example.test.',
+      'Citizenship status: lawful permanent resident.',
       'USCIS A-number: 123456789.',
       'Temporary callback: 555-123-4567.',
     ].join('\n'),
@@ -323,6 +326,7 @@ async function writeRepairFixture(
         'address.current.state',
         'address.current.postalCode',
         'contact.email',
+        'workAuthorization.citizenshipStatus',
         'workAuthorization.uscisANumber',
       ],
       forbid,
@@ -361,24 +365,6 @@ async function writeRepairFixture(
         reason: 'Phone is intentionally missing.',
         expectedBehavior: 'Leave telephone blank.',
       },
-      {
-        factKey: 'workAuthorization.workAuthorizationExpirationDate',
-        forms: ['i-9'],
-        reason: 'No expiration date is provided in this unit test.',
-        expectedBehavior: 'Leave expiration blank.',
-      },
-      {
-        factKey: 'workAuthorization.i94AdmissionNumber',
-        forms: ['i-9'],
-        reason: 'No I-94 admission number is provided in this unit test.',
-        expectedBehavior: 'Leave I-94 blank.',
-      },
-      {
-        factKey: 'workAuthorization.foreignPassportNumber',
-        forms: ['i-9'],
-        reason: 'No foreign passport number is provided in this unit test.',
-        expectedBehavior: 'Leave foreign passport blank.',
-      },
     ],
     documents: [doc],
   };
@@ -399,6 +385,7 @@ async function writeRepairFixture(
           'SSN: 000-00-0389.',
           'Address: 1268 Lakeview Terrace, Unit 4C, Madison, WI 53703.',
           'Personal email: samir.desai@example.test.',
+          'Citizenship status: lawful permanent resident.',
           'USCIS A-number: 123456789.',
         ].join('\n')
       : 'This preview is intentionally missing most declared facts.\n',
@@ -413,7 +400,7 @@ function sourceSpec(overrides = {}) {
     captureMode: 'plain-text-export',
     timelineRefs: [],
     worldRefs: [],
-    nativeSignals: ['status'],
+    nativeSignals: ['approval watermark'],
     safeDetailMenu: ['unit test metadata'],
     riskyDetailMenu: ['new phone number'],
     lengthTarget: { minChars: 20, maxChars: 8000 },

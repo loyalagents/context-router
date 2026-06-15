@@ -1,7 +1,7 @@
 # First-Pass E2E Scoring Improvements TODO
 
-- Status: active follow-up list
-- Last updated: 2026-06-14
+- Status: active follow-up list; PR 2 field-map/scoring items implemented
+- Last updated: 2026-06-15
 
 ## Context From Live E2E Runs
 
@@ -157,14 +157,17 @@ runs as rigorous model comparisons until model metadata is captured.
 
 ## P1: Fix Form Scoring And Field-Map Gaps
 
-- [ ] Add clean conditional field-map semantics.
+PR 2 implemented these items. See
+`docs/plans/evaluation/first-pass-improve-scoring/pr2/implementation-summary.md`.
+
+- [x] Add clean conditional field-map semantics.
   - Concrete change:
     - update `field-map.schema.json`, loaders, validation, and tests.
     - add a simple conditional shape for profile-dependent fields, for example
       `when: { factKey, equals }`.
     - do not preserve backwards compatibility if a cleaner shape is available.
 
-- [ ] Fix I-9 citizenship checkbox mapping with conditional semantics.
+- [x] Fix I-9 citizenship checkbox mapping with conditional semantics.
   - Newer run showed structural overfills on `CB_1`, `CB_2`, `CB_3`, and
     `CB_4`, sourced from citizenship status.
   - Concrete change:
@@ -175,7 +178,7 @@ runs as rigorous model comparisons until model metadata is captured.
     - Add Elena/U.S.-citizen regression coverage so the conditional logic does
       not break the profile the original map was authored for.
 
-- [ ] Review the LPR-specific A-number field scoring.
+- [x] Review the LPR-specific A-number field scoring.
   - Both runs marked `3 A lawful permanent resident Enter USCIS or ANumber` as
     missing even though Alex is `alien authorized to work`.
   - Concrete change:
@@ -187,7 +190,7 @@ runs as rigorous model comparisons until model metadata is captured.
       alien-authorized USCIS field both map to
       `workAuthorization.uscisANumber`.
 
-- [ ] Confirm date render equivalence in form scoring.
+- [x] Confirm date render equivalence in form scoring.
   - Older run marked values like `03141992` and `09302028` wrong when expected
     values were rendered as `03/14/1992` and `09/30/2028`.
   - Concrete change:

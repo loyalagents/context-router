@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fieldValuesEquivalent } from '../field-map.mjs';
 import { jsonText } from '../shared.mjs';
 
 export const SNAPSHOT_FILENAMES = {
@@ -152,6 +153,7 @@ function buildFieldSnapshot({
           mode: fieldMap.mode,
           factKey: fieldMap.factKey,
           render: fieldMap.render,
+          when: fieldMap.when,
           note: fieldMap.note,
         }
       : {
@@ -170,22 +172,24 @@ function buildFieldSnapshot({
         filledSummary?.sourceSlugs ?? skippedSummary?.sourceSlugs ?? [],
       confidence: filledSummary?.confidence ?? skippedSummary?.confidence ?? null,
     },
-    classification: classifyField({ expected, actual, filledSummary, plan }),
+    classification: classifyField({ expected, actual, filledSummary, plan, fieldMap }),
   };
 }
 
 function expectedFromPlan(plan) {
   const action = plan.fillAction;
-  return {
+  const expected = {
     action: action.action,
     value: action.value ?? null,
     sourceSlugs: action.sourceSlugs ?? [],
     confidence: action.confidence ?? null,
     skipReason: action.skipReason ?? null,
   };
+  if (plan.expectedSkipKind) expected.skipKind = plan.expectedSkipKind;
+  return expected;
 }
 
-function classifyField({ expected, actual, filledSummary, plan }) {
+function classifyField({ expected, actual, filledSummary, plan, fieldMap }) {
   if (plan.expectedClassification === 'unsupported') {
     return 'unsupported';
   }
@@ -195,7 +199,9 @@ function classifyField({ expected, actual, filledSummary, plan }) {
   if (!filledSummary) return 'missing';
 
   if (expected.action === 'SET_TEXT') {
-    return actual.value === expected.value ? 'correct' : 'incorrect';
+    return fieldValuesEquivalent(expected.value, actual.value, fieldMap)
+      ? 'correct'
+      : 'incorrect';
   }
   if (expected.action === 'SELECT_OPTION') {
     return actual.selected.length === 1 && actual.selected[0] === expected.value

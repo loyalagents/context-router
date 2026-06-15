@@ -7,6 +7,7 @@ import { buildRunPlan } from './eval-runner/actions.mjs';
 import { loadScenarioFixture, optionValuesForField } from './eval-runner/fixtures.mjs';
 import { loadBackendPdfLib, readFilledPdfFields } from './eval-runner/pdf.mjs';
 import { buildFilledFormSnapshot } from './eval-runner/snapshots.mjs';
+import { conditionExpectedValues } from './field-map.mjs';
 import { generateWithVertex } from './generate.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import {
@@ -391,7 +392,13 @@ function promptFieldPolicy(fieldMap) {
       reason: fieldMap.reason ?? 'structural_skip',
     };
   }
-  return { action: 'fillable' };
+  const policy = { action: 'fillable' };
+  if (fieldMap?.render) policy.render = fieldMap.render;
+  if (fieldMap?.when) {
+    policy.branchValues = conditionExpectedValues(fieldMap.when);
+  }
+  if (fieldMap?.note) policy.note = fieldMap.note;
+  return policy;
 }
 
 export function parseModelResponse(text) {

@@ -13,7 +13,7 @@
   "corpusTruth": {
     "summary": {
       "documentsChecked": 5,
-      "factsProvenPresent": 20,
+      "factsProvenPresent": 27,
       "factsMissing": 0,
       "unsupportedDeclaredFacts": 0,
       "factsProvenAbsent": 0,
@@ -112,11 +112,18 @@
       },
       {
         "id": "004",
-        "path": "documents/identity/004-birth-record-summary.txt",
+        "path": "documents/hr-onboarding/004-i9-section1-prep-checklist.md",
         "declaredFacts": {
           "provenPresent": [
+            "address.current.city",
+            "address.current.postalCode",
+            "address.current.state",
+            "address.current.street",
+            "address.current.unit",
             "identity.dateOfBirth",
-            "identity.legalName"
+            "identity.legalName",
+            "identity.ssn",
+            "workAuthorization.citizenshipStatus"
           ],
           "missing": [],
           "unsupported": []

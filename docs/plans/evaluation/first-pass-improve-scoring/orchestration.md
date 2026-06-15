@@ -1,7 +1,7 @@
 # First-Pass E2E Scoring Improvements Orchestration
 
-- Status: active orchestration plan
-- Last updated: 2026-06-14
+- Status: active orchestration plan; PR 2 implemented
+- Last updated: 2026-06-15
 
 ## Goal
 
@@ -141,6 +141,9 @@ address values being replaced by stale/noise/blank values.
 
 ## PR 2: Field-Map Conditionality And Form Scoring Cleanup
 
+Status: implemented in this branch. See
+`docs/plans/evaluation/first-pass-improve-scoring/pr2/implementation-summary.md`.
+
 ### Goal
 
 Make form scoring reflect true form-fill behavior rather than field-map,
@@ -150,14 +153,14 @@ This can run in parallel with PR 1.
 
 ### Changes
 
-- [ ] Add clean conditional field-map semantics.
+- [x] Add clean conditional field-map semantics.
   - Backwards compatibility is not required; choose the simplest durable shape.
   - Example shape to evaluate:
     - `when: { factKey: "workAuthorization.citizenshipStatus", equals:
       "alien authorized to work" }`
   - Update `field-map.schema.json`, field-map loaders, validation, and tests.
 
-- [ ] Fix I-9 citizenship checkbox mapping with conditional semantics.
+- [x] Fix I-9 citizenship checkbox mapping with conditional semantics.
   - Recent run showed structural overfills on `CB_1`, `CB_2`, `CB_3`, and
     `CB_4`, all sourced from citizenship status.
   - Model these as mutually exclusive citizenship-status fields where possible,
@@ -166,14 +169,14 @@ This can run in parallel with PR 1.
   - Add Elena/U.S.-citizen regression coverage so the conditional behavior does
     not break the profile the original map was authored for.
 
-- [ ] Make the LPR-only A-number field conditional.
+- [x] Make the LPR-only A-number field conditional.
   - Field: `3 A lawful permanent resident Enter USCIS or ANumber`.
   - For `alien authorized to work`, this should not count as a missing known
     field.
   - Keep the appropriate alien-authorized USCIS/A-number field scored
     separately.
 
-- [ ] Confirm or add date render equivalence.
+- [x] Confirm or add date render equivalence.
   - Accept `03141992` and `03/14/1992` as equivalent where an I-9 PDF field
     expects `MMDDYYYY`.
   - Implement this where classifications are computed, likely

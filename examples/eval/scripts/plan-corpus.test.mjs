@@ -163,7 +163,7 @@ test('plan-corpus writes a valid deterministic 10-document I-9 manifest', async 
   assert.equal(forced.exitCode, 0, forced.errorMessage);
 });
 
-test('plan-corpus keeps citizen-only null work authorization facts intentionally missing', async (t) => {
+test('plan-corpus excludes inactive citizen-only work authorization branches from missing facts', async (t) => {
   const root = await copyRepo(t);
 
   const result = await runPlanCorpus({
@@ -193,13 +193,14 @@ test('plan-corpus keeps citizen-only null work authorization facts intentionally
   const missingKeys = new Set(
     manifest.intentionallyMissing.map((entry) => entry.factKey),
   );
+  assert.ok(missingKeys.has('contact.phone'), 'active missing phone should remain');
   for (const factKey of [
     'workAuthorization.uscisANumber',
     'workAuthorization.workAuthorizationExpirationDate',
     'workAuthorization.i94AdmissionNumber',
     'workAuthorization.foreignPassportNumber',
   ]) {
-    assert.ok(missingKeys.has(factKey), `${factKey} should be intentionally missing`);
+    assert.ok(!missingKeys.has(factKey), `${factKey} should be inactive, not missing`);
     assert.ok(
       manifest.documents.every((doc) => !doc.factContract.include.includes(factKey)),
       `${factKey} should not appear in generated document include paths`,

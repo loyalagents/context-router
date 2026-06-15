@@ -1,8 +1,13 @@
 import { getFactValue } from '../shared.mjs';
+import {
+  CONDITIONAL_INACTIVE_SKIP_KIND,
+  fieldIsActive,
+  renderFactValue as renderFactValueFromFieldMap,
+  renderFieldValue as renderFieldValueFromFieldMap,
+} from '../field-map.mjs';
 import { optionValuesForField, seedSlugByFactKey } from './fixtures.mjs';
 
 const SLUG_PATTERN = /^[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+$/;
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export const EXPECTED_ELENA_I9_EVAL_FACT_KEYS = [
   'identity.middleInitial',
@@ -14,7 +19,11 @@ export const EXPECTED_ELENA_I9_EVAL_FACT_KEYS = [
   'address.current.city',
   'address.current.state',
   'address.current.postalCode',
+  'workAuthorization.citizenshipStatus',
 ];
+
+export const renderFactValue = renderFactValueFromFieldMap;
+export const renderFieldValue = renderFieldValueFromFieldMap;
 
 export function buildRunPlan(fixture) {
   const seedSlugs = seedSlugByFactKey(fixture.profile);
@@ -85,23 +94,6 @@ export function valueTypeFor(value) {
   return 'STRING';
 }
 
-export function renderFactValue(value) {
-  if (Array.isArray(value)) return value.map((item) => String(item)).join(', ');
-  if (typeof value === 'string' && ISO_DATE_PATTERN.test(value)) {
-    const [year, month, day] = value.split('-');
-    return `${month}/${day}/${year}`;
-  }
-  return String(value);
-}
-
-export function renderFieldValue(value, fieldMap) {
-  const rendered = renderFactValue(value);
-  if (fieldMap.render === 'digits-only') {
-    return rendered.replace(/\D/g, '');
-  }
-  return rendered;
-}
-
 function buildActionPlan({ fieldMap, generated, fixture, seedSlugs, factPlans }) {
   if (fieldMap.mode === 'skip') {
     return skippedAction({
@@ -111,6 +103,18 @@ function buildActionPlan({ fieldMap, generated, fixture, seedSlugs, factPlans })
       expectedValue: null,
       factKey: null,
       sourceSlug: null,
+    });
+  }
+
+  if (!fieldIsActive(fieldMap, fixture.profile.facts ?? {})) {
+    return skippedAction({
+      fieldMap,
+      generated,
+      reason: 'field-map:conditional_inactive',
+      expectedValue: null,
+      factKey: fieldMap.factKey,
+      sourceSlug: null,
+      expectedSkipKind: CONDITIONAL_INACTIVE_SKIP_KIND,
     });
   }
 
@@ -162,6 +166,15 @@ function buildActionPlan({ fieldMap, generated, fixture, seedSlugs, factPlans })
       });
     }
     case 'checkbox':
+      if (fieldMap.when) {
+        return filledAction({
+          fieldMap,
+          generated,
+          action: 'CHECK',
+          value: undefined,
+          sourceSlug,
+        });
+      }
       if (typeof value !== 'boolean') {
         return skippedAction({
           fieldMap,
@@ -235,6 +248,7 @@ function skippedAction({
   factKey,
   sourceSlug,
   expectedClassification = 'skipped-correctly',
+  expectedSkipKind = null,
 }) {
   return {
     fieldIndex: fieldMap.fieldIndex,
@@ -244,6 +258,7 @@ function skippedAction({
     expectedValue,
     sourceSlug,
     expectedClassification,
+    expectedSkipKind,
     fillAction: {
       fieldName: fieldMap.pdfFieldName,
       action: 'SKIP',

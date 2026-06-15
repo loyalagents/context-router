@@ -34,6 +34,7 @@ import {
   textContainsSplitLegalName,
   toPosixPath,
 } from './shared.mjs';
+import { fieldIsActive, isConditionalField } from './field-map.mjs';
 import { discoverTemplates } from './template-renderer.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1775,6 +1776,21 @@ async function validateForm(ctx, formId, options = {}) {
           fix: 'Map the field to a concrete profile fact leaf; null leaf values are allowed.',
         });
       }
+      if (isConditionalField(field)) {
+        const conditionState = classifyFactKey(profileFacts, field.when.factKey);
+        if (conditionState.kind !== 'leaf') {
+          addIssue(ctx, {
+            code:
+              conditionState.kind === 'area'
+                ? 'FIELD_MAP_CONDITION_FACT_AREA'
+                : 'FIELD_MAP_CONDITION_FACT_MISSING',
+            file: fieldMapPath,
+            pointer: `/fields/${index}/when/factKey`,
+            message: `Field map condition factKey ${field.when.factKey} does not resolve to a profile leaf fact.`,
+            fix: 'Point when.factKey at a concrete profile fact leaf.',
+          });
+        }
+      }
     }
   }
 
@@ -1927,7 +1943,10 @@ function validateIntentionallyMissing(ctx, manifest, manifestPath, profileFacts,
     const mapped = (missing.forms ?? []).some((formId) => {
       const fieldMap = formMaps.get(formId);
       return (fieldMap?.fields ?? []).some(
-        (field) => field.mode === 'fact' && field.factKey === missing.factKey,
+        (field) =>
+          field.mode === 'fact' &&
+          field.factKey === missing.factKey &&
+          fieldIsActive(field, profileFactsToObject(profileFacts)),
       );
     });
     if (!mapped) {
@@ -1971,6 +1990,7 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
     if (!fieldMap) continue;
     for (const [index, field] of (fieldMap.fields ?? []).entries()) {
       if (field.mode !== 'fact') continue;
+      if (!fieldIsActive(field, profile.facts ?? {})) continue;
       const factState = classifyFactKey(profileFacts, field.factKey);
       if (factState.kind !== 'leaf' || factState.value == null) continue;
       if (seedCovered.has(field.factKey) || documentCovered.has(field.factKey)) {
@@ -1985,6 +2005,24 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
       });
     }
   }
+}
+
+function profileFactsToObject(profileFacts) {
+  const facts = {};
+  for (const [factKey, value] of profileFacts?.leaves ?? []) {
+    setObjectPath(facts, factKey, value);
+  }
+  return facts;
+}
+
+function setObjectPath(target, factKey, value) {
+  const segments = factKey.split('.');
+  let current = target;
+  for (const segment of segments.slice(0, -1)) {
+    current[segment] ??= {};
+    current = current[segment];
+  }
+  current[segments.at(-1)] = value;
 }
 
 function validateFieldMapExhaustiveness(ctx, generated, fieldMap, fieldMapPath) {

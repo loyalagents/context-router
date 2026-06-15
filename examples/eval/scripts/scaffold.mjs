@@ -24,6 +24,7 @@ import {
   setNestedValue,
   toPosixPath,
 } from './shared.mjs';
+import { fieldIsActive } from './field-map.mjs';
 import { discoverTemplates, renderTemplate } from './template-renderer.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -388,6 +389,7 @@ function selectTemplates({ templates, profile, profileFacts, fieldMaps, seed, co
   for (const fieldMap of fieldMaps.values()) {
     for (const field of fieldMap.fields ?? []) {
       if (field.mode !== 'fact') continue;
+      if (!fieldIsActive(field, profile.facts ?? {})) continue;
       const factState = classifyFactKey(profileFacts, field.factKey);
       if (factState.kind === 'leaf' && factState.value != null) {
         requiredFacts.add(field.factKey);
@@ -469,6 +471,7 @@ function compareTemplates(left, right, seed) {
 }
 
 function buildIntentionallyMissing({ missingFactKeys, fieldMaps, profileFacts }) {
+  const facts = factsObjectFromProfileFacts(profileFacts);
   return missingFactKeys.map((factKey) => {
     const factState = classifyFactKey(profileFacts, factKey);
     if (factState.kind !== 'leaf') {
@@ -481,7 +484,10 @@ function buildIntentionallyMissing({ missingFactKeys, fieldMaps, profileFacts })
     const forms = [...fieldMaps.entries()]
       .filter(([, fieldMap]) =>
         (fieldMap.fields ?? []).some(
-          (field) => field.mode === 'fact' && field.factKey === factKey,
+          (field) =>
+            field.mode === 'fact' &&
+            field.factKey === factKey &&
+            fieldIsActive(field, facts),
         ),
       )
       .map(([formId]) => formId)
@@ -498,6 +504,14 @@ function buildIntentionallyMissing({ missingFactKeys, fieldMaps, profileFacts })
       expectedBehavior: MISSING_EXPECTED_BEHAVIOR,
     };
   });
+}
+
+function factsObjectFromProfileFacts(profileFacts) {
+  const facts = {};
+  for (const [factKey, value] of profileFacts.leaves) {
+    setNestedValue(facts, factKey, value);
+  }
+  return facts;
 }
 
 async function loadFieldMaps(evalRoot, formIds) {

@@ -13,14 +13,14 @@
   },
   "summary": {
     "totalFields": 48,
-    "filledCount": 12,
-    "skippedCount": 36,
+    "filledCount": 13,
+    "skippedCount": 35,
     "plannedActionCounts": {
       "SET_TEXT": 11,
-      "CHECK": 0,
+      "CHECK": 1,
       "UNCHECK": 0,
       "SELECT_OPTION": 1,
-      "SKIP": 36
+      "SKIP": 35
     },
     "warnings": []
   },
@@ -38,21 +38,26 @@
       "fieldMap": {
         "mode": "fact",
         "factKey": "workAuthorization.uscisANumber",
-        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": "lawful permanent resident"
+        },
+        "note": "I-9 lawful permanent resident A-number branch."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "profile fact workAuthorization.uscisANumber is null"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": "",
         "selected": [],
         "checked": null,
         "filled": false,
-        "skippedReason": "profile fact workAuthorization.uscisANumber is null",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -309,27 +314,35 @@
         "optionCount": 0
       },
       "fieldMap": {
-        "mode": "skip",
-        "reason": "unmapped",
-        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+        "mode": "fact",
+        "factKey": "workAuthorization.citizenshipStatus",
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": "U.S. citizen"
+        },
+        "note": "I-9 citizenship checkbox for U.S. citizen."
       },
       "expected": {
-        "action": "SKIP",
+        "action": "CHECK",
         "value": null,
-        "sourceSlugs": [],
+        "sourceSlugs": [
+          "eval.work_authorization.citizenship_status"
+        ],
         "confidence": 0.99,
-        "skipReason": "field-map:unmapped"
+        "skipReason": null
       },
       "actual": {
         "value": null,
         "selected": [],
-        "checked": false,
-        "filled": false,
-        "skippedReason": "field-map:unmapped",
-        "sourceSlugs": [],
+        "checked": true,
+        "filled": true,
+        "skippedReason": null,
+        "sourceSlugs": [
+          "eval.work_authorization.citizenship_status"
+        ],
         "confidence": 0.99
       },
-      "classification": "skipped-correctly"
+      "classification": "correct"
     },
     {
       "fieldIndex": 9,
@@ -342,23 +355,28 @@
         "optionCount": 0
       },
       "fieldMap": {
-        "mode": "skip",
-        "reason": "unmapped",
-        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+        "mode": "fact",
+        "factKey": "workAuthorization.citizenshipStatus",
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": "noncitizen national"
+        },
+        "note": "I-9 citizenship checkbox for noncitizen national."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "field-map:unmapped"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": null,
         "selected": [],
         "checked": false,
         "filled": false,
-        "skippedReason": "field-map:unmapped",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -375,23 +393,28 @@
         "optionCount": 0
       },
       "fieldMap": {
-        "mode": "skip",
-        "reason": "unmapped",
-        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+        "mode": "fact",
+        "factKey": "workAuthorization.citizenshipStatus",
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": "lawful permanent resident"
+        },
+        "note": "I-9 citizenship checkbox for lawful permanent resident."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "field-map:unmapped"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": null,
         "selected": [],
         "checked": false,
         "filled": false,
-        "skippedReason": "field-map:unmapped",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -408,23 +431,32 @@
         "optionCount": 0
       },
       "fieldMap": {
-        "mode": "skip",
-        "reason": "unmapped",
-        "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+        "mode": "fact",
+        "factKey": "workAuthorization.citizenshipStatus",
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": [
+            "alien authorized to work",
+            "noncitizen authorized to work",
+            "A noncitizen authorized to work"
+          ]
+        },
+        "note": "I-9 citizenship checkbox for alien or noncitizen authorized to work."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "field-map:unmapped"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": null,
         "selected": [],
         "checked": false,
         "filled": false,
-        "skippedReason": "field-map:unmapped",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -549,11 +581,12 @@
       },
       "fieldMap": {
         "mode": "fact",
-        "factKey": "identity.dateOfBirth"
+        "factKey": "identity.dateOfBirth",
+        "render": "mmddyyyy"
       },
       "expected": {
         "action": "SET_TEXT",
-        "value": "07/18/1994",
+        "value": "07181994",
         "sourceSlugs": [
           "eval.identity.date_of_birth"
         ],
@@ -561,7 +594,7 @@
         "skipReason": null
       },
       "actual": {
-        "value": "07/18/1994",
+        "value": "07181994",
         "selected": [],
         "checked": null,
         "filled": true,
@@ -836,21 +869,31 @@
       "fieldMap": {
         "mode": "fact",
         "factKey": "workAuthorization.workAuthorizationExpirationDate",
-        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+        "render": "mmddyyyy",
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": [
+            "alien authorized to work",
+            "noncitizen authorized to work",
+            "A noncitizen authorized to work"
+          ]
+        },
+        "note": "I-9 alien/noncitizen authorized to work expiration branch."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "profile fact workAuthorization.workAuthorizationExpirationDate is null"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": "",
         "selected": [],
         "checked": null,
         "filled": false,
-        "skippedReason": "profile fact workAuthorization.workAuthorizationExpirationDate is null",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -869,21 +912,30 @@
       "fieldMap": {
         "mode": "fact",
         "factKey": "workAuthorization.uscisANumber",
-        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": [
+            "alien authorized to work",
+            "noncitizen authorized to work",
+            "A noncitizen authorized to work"
+          ]
+        },
+        "note": "I-9 alien/noncitizen authorized to work USCIS/A-number branch."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "profile fact workAuthorization.uscisANumber is null"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": "",
         "selected": [],
         "checked": null,
         "filled": false,
-        "skippedReason": "profile fact workAuthorization.uscisANumber is null",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -902,21 +954,30 @@
       "fieldMap": {
         "mode": "fact",
         "factKey": "workAuthorization.i94AdmissionNumber",
-        "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": [
+            "alien authorized to work",
+            "noncitizen authorized to work",
+            "A noncitizen authorized to work"
+          ]
+        },
+        "note": "I-9 alien/noncitizen authorized to work I-94 branch."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "profile fact workAuthorization.i94AdmissionNumber is null"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": "",
         "selected": [],
         "checked": null,
         "filled": false,
-        "skippedReason": "profile fact workAuthorization.i94AdmissionNumber is null",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },
@@ -935,21 +996,30 @@
       "fieldMap": {
         "mode": "fact",
         "factKey": "workAuthorization.foreignPassportNumber",
-        "note": "Elena declares foreign passport number and country facts as null in profile.yaml because she is a U.S. citizen."
+        "when": {
+          "factKey": "workAuthorization.citizenshipStatus",
+          "equals": [
+            "alien authorized to work",
+            "noncitizen authorized to work",
+            "A noncitizen authorized to work"
+          ]
+        },
+        "note": "I-9 alien/noncitizen authorized to work foreign passport branch."
       },
       "expected": {
         "action": "SKIP",
         "value": null,
         "sourceSlugs": [],
         "confidence": 0.99,
-        "skipReason": "profile fact workAuthorization.foreignPassportNumber is null"
+        "skipReason": "field-map:conditional_inactive",
+        "skipKind": "conditional-inactive"
       },
       "actual": {
         "value": "",
         "selected": [],
         "checked": null,
         "filled": false,
-        "skippedReason": "profile fact workAuthorization.foreignPassportNumber is null",
+        "skippedReason": "field-map:conditional_inactive",
         "sourceSlugs": [],
         "confidence": 0.99
       },

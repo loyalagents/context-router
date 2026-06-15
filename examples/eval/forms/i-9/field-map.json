@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "formId": "i-9",
   "fields": [
     {
@@ -7,7 +7,11 @@
       "pdfFieldName": "3 A lawful permanent resident Enter USCIS or ANumber",
       "mode": "fact",
       "factKey": "workAuthorization.uscisANumber",
-      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": "lawful permanent resident"
+      },
+      "note": "I-9 lawful permanent resident A-number branch."
     },
     {
       "fieldIndex": 1,
@@ -58,30 +62,50 @@
     {
       "fieldIndex": 8,
       "pdfFieldName": "CB_1",
-      "mode": "skip",
-      "reason": "unmapped",
-      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      "mode": "fact",
+      "factKey": "workAuthorization.citizenshipStatus",
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": "U.S. citizen"
+      },
+      "note": "I-9 citizenship checkbox for U.S. citizen."
     },
     {
       "fieldIndex": 9,
       "pdfFieldName": "CB_2",
-      "mode": "skip",
-      "reason": "unmapped",
-      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      "mode": "fact",
+      "factKey": "workAuthorization.citizenshipStatus",
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": "noncitizen national"
+      },
+      "note": "I-9 citizenship checkbox for noncitizen national."
     },
     {
       "fieldIndex": 10,
       "pdfFieldName": "CB_3",
-      "mode": "skip",
-      "reason": "unmapped",
-      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      "mode": "fact",
+      "factKey": "workAuthorization.citizenshipStatus",
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": "lawful permanent resident"
+      },
+      "note": "I-9 citizenship checkbox for lawful permanent resident."
     },
     {
       "fieldIndex": 11,
       "pdfFieldName": "CB_4",
-      "mode": "skip",
-      "reason": "unmapped",
-      "note": "Generated metadata does not expose a reliable label for this citizenship checkbox yet."
+      "mode": "fact",
+      "factKey": "workAuthorization.citizenshipStatus",
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": [
+          "alien authorized to work",
+          "noncitizen authorized to work",
+          "A noncitizen authorized to work"
+        ]
+      },
+      "note": "I-9 citizenship checkbox for alien or noncitizen authorized to work."
     },
     {
       "fieldIndex": 12,
@@ -106,7 +130,8 @@
       "fieldIndex": 15,
       "pdfFieldName": "Date of Birth mmddyyyy",
       "mode": "fact",
-      "factKey": "identity.dateOfBirth"
+      "factKey": "identity.dateOfBirth",
+      "render": "mmddyyyy"
     },
     {
       "fieldIndex": 16,
@@ -157,28 +182,61 @@
       "pdfFieldName": "Exp Date mmddyyyy",
       "mode": "fact",
       "factKey": "workAuthorization.workAuthorizationExpirationDate",
-      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      "render": "mmddyyyy",
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": [
+          "alien authorized to work",
+          "noncitizen authorized to work",
+          "A noncitizen authorized to work"
+        ]
+      },
+      "note": "I-9 alien/noncitizen authorized to work expiration branch."
     },
     {
       "fieldIndex": 24,
       "pdfFieldName": "USCIS ANumber",
       "mode": "fact",
       "factKey": "workAuthorization.uscisANumber",
-      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": [
+          "alien authorized to work",
+          "noncitizen authorized to work",
+          "A noncitizen authorized to work"
+        ]
+      },
+      "note": "I-9 alien/noncitizen authorized to work USCIS/A-number branch."
     },
     {
       "fieldIndex": 25,
       "pdfFieldName": "Form I94 Admission Number",
       "mode": "fact",
       "factKey": "workAuthorization.i94AdmissionNumber",
-      "note": "Elena declares this fact as null in profile.yaml because she is a U.S. citizen."
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": [
+          "alien authorized to work",
+          "noncitizen authorized to work",
+          "A noncitizen authorized to work"
+        ]
+      },
+      "note": "I-9 alien/noncitizen authorized to work I-94 branch."
     },
     {
       "fieldIndex": 26,
       "pdfFieldName": "Foreign Passport Number and Country of IssuanceRow1",
       "mode": "fact",
       "factKey": "workAuthorization.foreignPassportNumber",
-      "note": "Elena declares foreign passport number and country facts as null in profile.yaml because she is a U.S. citizen."
+      "when": {
+        "factKey": "workAuthorization.citizenshipStatus",
+        "equals": [
+          "alien authorized to work",
+          "noncitizen authorized to work",
+          "A noncitizen authorized to work"
+        ]
+      },
+      "note": "I-9 alien/noncitizen authorized to work foreign passport branch."
     },
     {
       "fieldIndex": 27,

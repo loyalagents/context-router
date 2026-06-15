@@ -99,6 +99,9 @@ function scoreField({ field, fixture, storageMap }) {
 function classifyFieldDenominator(field) {
   if (field.classification === 'unsupported') return 'unsupported';
   if (field.fieldMap?.mode === 'skip') return 'structural-skip';
+  if (field.expected?.skipKind === 'conditional-inactive') {
+    return 'structural-skip';
+  }
   if (field.fieldMap?.mode === 'fact' && field.expected?.action === 'SKIP') {
     return 'abstention-test';
   }
@@ -140,7 +143,7 @@ function structuralOverfill(field, fieldClass) {
       overfillReason: null,
     };
   }
-  const reason = field.fieldMap?.reason ?? 'unknown';
+  const reason = field.fieldMap?.reason ?? field.expected?.skipKind ?? 'unknown';
   return {
     overfill: true,
     overfillSeverity: overfillSeverity(reason),

@@ -161,6 +161,23 @@ test('reports field-map pre-pass and exhaustiveness errors', async (t) => {
   assertHasCode(result, 'FIELD_MAP_NAME_MISMATCH');
 });
 
+test('reports invalid V2 field-map condition and render hints', async (t) => {
+  const root = await copyRepo(t);
+  const fieldMapPath = path.join(
+    root,
+    'examples/eval/forms/i-9/field-map.json',
+  );
+  const fieldMap = await readJson(fieldMapPath);
+  fieldMap.fields[2].when = { factKey: 'identity.notReal', equals: 'x' };
+  fieldMap.fields[15].render = 'slashes';
+  fieldMap.fields[16].when = { factKey: 'identity.firstName', equals: [] };
+  await writeJson(fieldMapPath, fieldMap);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'FIELD_MAP_CONDITION_FACT_MISSING');
+  assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+});
+
 test('rejects invalid intentionally missing form references', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);
@@ -1285,6 +1302,14 @@ test('noise leak checks skip facts already covered by default forbidden checks',
 
 test('document prose checks warn for value-like intentionally missing work authorization identifiers', async (t) => {
   const root = await copyRepo(t);
+  const profilePath = path.join(root, 'examples/eval/users/elena-marquez/profile.yaml');
+  await writeFile(
+    profilePath,
+    (await readFile(profilePath, 'utf8')).replace(
+      'citizenshipStatus: U.S. citizen',
+      'citizenshipStatus: lawful permanent resident',
+    ),
+  );
   const manifestPath = elenaManifestPath(root);
   const manifest = await readJson(manifestPath);
   const corpusRoot = path.dirname(manifestPath);
@@ -2011,12 +2036,7 @@ test('corpus truth report records effective forbidden facts by source without du
 
   assertNoCode(result, 'DOCUMENT_FORBIDDEN_FACT_PRESENT');
   assert.deepEqual(truth.forbiddenFacts.provenAbsent, ['identity.ssn']);
-  assert.deepEqual(truth.forbiddenFacts.warningOnly, [
-    'contact.phone',
-    'workAuthorization.uscisANumber',
-    'workAuthorization.i94AdmissionNumber',
-    'workAuthorization.foreignPassportNumber',
-  ]);
+  assert.deepEqual(truth.forbiddenFacts.warningOnly, ['contact.phone']);
 });
 
 test('validation reports are byte-deterministic across repeated runs', async (t) => {
@@ -2227,30 +2247,6 @@ async function writeElenaRealisticTestCorpus(root) {
         reason: 'Elena does not provide a phone number in this test fixture.',
         expectedBehavior: 'Leave telephone blank.',
       },
-      {
-        factKey: 'workAuthorization.uscisANumber',
-        forms: ['i-9'],
-        reason: 'Elena uses the U.S. citizen I-9 path.',
-        expectedBehavior: 'Leave USCIS A-number blank.',
-      },
-      {
-        factKey: 'workAuthorization.workAuthorizationExpirationDate',
-        forms: ['i-9'],
-        reason: 'Elena uses the U.S. citizen I-9 path.',
-        expectedBehavior: 'Leave work authorization expiration blank.',
-      },
-      {
-        factKey: 'workAuthorization.i94AdmissionNumber',
-        forms: ['i-9'],
-        reason: 'Elena uses the U.S. citizen I-9 path.',
-        expectedBehavior: 'Leave I-94 admission number blank.',
-      },
-      {
-        factKey: 'workAuthorization.foreignPassportNumber',
-        forms: ['i-9'],
-        reason: 'Elena uses the U.S. citizen I-9 path.',
-        expectedBehavior: 'Leave foreign passport number blank.',
-      },
     ],
     documents: [
       fixtureDocument({
@@ -2272,6 +2268,7 @@ async function writeElenaRealisticTestCorpus(root) {
           'address.current.state',
           'address.current.postalCode',
           'contact.email',
+          'workAuthorization.citizenshipStatus',
         ],
         detailTier: 'hero',
         authority: 'high',
@@ -2351,6 +2348,7 @@ async function writeElenaRealisticTestCorpus(root) {
       'Social Security number: 000-00-0194.',
       'Current address: 418 Cedar Glen Avenue, Apt 12B, Sacramento, CA 95819.',
       'Personal email: elena.marquez@example.test.',
+      'Work authorization status: U.S. citizen.',
     ].join('\n'),
   );
   await writeFile(
