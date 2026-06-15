@@ -19,7 +19,7 @@
     "endedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "artifactType": { "const": "ingestion-run" },
     "status": { "enum": ["pass", "fail"] },
     "runId": { "type": "string", "minLength": 1 },
@@ -103,6 +103,10 @@
         "suggestionCount",
         "filteredSuggestionCount",
         "appliedSuggestionCount",
+        "overwriteCount",
+        "blankSuggestionSkippedCount",
+        "forbiddenSuggestionBlockedCount",
+        "staleOrNoiseOverwriteBlockedCount",
         "applyFailureCount",
         "createdDefinitionCount",
         "seedPreferenceCount"
@@ -115,6 +119,10 @@
         "suggestionCount": { "type": "integer", "minimum": 0 },
         "filteredSuggestionCount": { "type": "integer", "minimum": 0 },
         "appliedSuggestionCount": { "type": "integer", "minimum": 0 },
+        "overwriteCount": { "type": "integer", "minimum": 0 },
+        "blankSuggestionSkippedCount": { "type": "integer", "minimum": 0 },
+        "forbiddenSuggestionBlockedCount": { "type": "integer", "minimum": 0 },
+        "staleOrNoiseOverwriteBlockedCount": { "type": "integer", "minimum": 0 },
         "applyFailureCount": { "type": "integer", "minimum": 0 },
         "createdDefinitionCount": { "type": "integer", "minimum": 0 },
         "seedPreferenceCount": { "type": "integer", "minimum": 0 }
@@ -156,7 +164,8 @@
         "status",
         "suggestionCount",
         "filteredSuggestionCount",
-        "appliedSuggestionCount"
+        "appliedSuggestionCount",
+        "suggestionDecisions"
       ],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
@@ -190,6 +199,18 @@
           "type": "array",
           "items": { "$ref": "#/$defs/suggestionSummary" }
         },
+        "blockedSuggestions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionDecision" }
+        },
+        "suggestionDecisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionDecision" }
+        },
+        "overwriteDiagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/suggestionDecision" }
+        },
         "appliedPreferences": {
           "type": "array",
           "items": { "$ref": "#/$defs/preferenceSummary" }
@@ -211,6 +232,59 @@
         "newValue": {},
         "filterReason": { "type": "string" },
         "filterDetails": { "type": "string" }
+      }
+    },
+    "suggestionDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "documentId",
+        "documentPath",
+        "slug",
+        "confidence",
+        "newValue",
+        "decision",
+        "reasons",
+        "lowTrustSource",
+        "lowTrustSignals",
+        "overwroteNonEmpty",
+        "wouldOverwriteNonEmpty"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "documentId": { "type": "string", "minLength": 1 },
+        "documentPath": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string" },
+        "confidence": { "type": ["number", "null"] },
+        "newValue": {},
+        "existingValue": {},
+        "decision": { "enum": ["applied", "skipped", "blocked"] },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "blank_value",
+              "auto_apply_disabled",
+              "forbidden_fact",
+              "low_trust_source",
+              "would_overwrite_non_empty",
+              "would_overwrite_non_empty_with_blank"
+            ]
+          }
+        },
+        "lowTrustSource": { "type": "boolean" },
+        "lowTrustSignals": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "overwroteNonEmpty": { "type": "boolean" },
+        "wouldOverwriteNonEmpty": { "type": "boolean" },
+        "forbiddenFactKeys": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
       }
     }
   }

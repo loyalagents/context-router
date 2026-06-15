@@ -1,6 +1,6 @@
 # First-Pass E2E Scoring Improvements Orchestration
 
-- Status: active orchestration plan; PR 2 implemented
+- Status: active orchestration plan; PR 1 and PR 2 implemented
 - Last updated: 2026-06-15
 
 ## Goal
@@ -64,8 +64,8 @@ address values being replaced by stale/noise/blank values.
 
 ### Changes
 
-- [ ] Treat blank suggestions as non-storable unconditionally.
-  - Treat `null`, `undefined`, `""`, empty arrays, and empty objects as
+- [x] Treat blank suggestions as non-storable unconditionally.
+  - Treat `null`, `undefined`, `""`, and whitespace-only strings as
     non-storable.
   - Extend the existing non-storable suggestion path instead of adding
     fact-truth-specific logic for blanks.
@@ -73,7 +73,7 @@ address values being replaced by stale/noise/blank values.
   - Pre-filter these suggestions before building `applyInput`, so intentional
     skips do not trip the applied-length invariant.
 
-- [ ] Track applied state in memory during the run.
+- [x] Track applied state in memory during the run.
   - Keep a map keyed by slug.
   - Seed it from explicit `--seed-preferences` values when present.
   - Update it after each successful apply.
@@ -82,12 +82,14 @@ address values being replaced by stale/noise/blank values.
   - This first pass is optimized for reset E2E runs; non-reset robustness can
     fetch backend active preferences later if needed.
 
-- [ ] Add overwrite diagnostics to `ingestion-run.json`.
-  - For each applied suggestion, record:
+- [x] Add overwrite diagnostics to `ingestion-run.json`.
+  - For each suggestion, record:
     - document path
     - slug
-    - old value
     - new value
+    - current value if relevant
+    - decision
+    - reasons
     - whether it overwrote a non-empty value
   - For each blocked suggestion, record:
     - document path
@@ -98,14 +100,19 @@ address values being replaced by stale/noise/blank values.
   - Add summary counts:
     - `overwriteCount`
     - `blankSuggestionSkippedCount`
-    - `nonEmptyToBlankOverwriteCount`
     - `forbiddenSuggestionBlockedCount`
     - `staleOrNoiseOverwriteBlockedCount`
 
-- [ ] Block forbidden and low-authority overwrites.
+- [x] Block forbidden and low-authority overwrites.
   - Use `factContract.forbid` as an unconditional deterministic block.
-    - If a document forbids a fact, any suggestion for that fact from that
-      document is blocked even when the target field is currently unset.
+    - If a fact is effectively forbidden for a document, any suggestion for
+      that fact from that document is blocked even when the target field is
+      currently unset.
+    - Per-document `factContract.include` authorizes that document to extract
+      facts listed in `factContractDefaults.forbid`.
+    - Reuse the validator's `effectiveForbiddenFactKeys` helper so ingestion
+      and corpus-truth semantics stay aligned, including intentionally missing
+      facts that are derived as forbidden for current extract/corroborate docs.
   - Use manifest metadata as the backstop for stale/noise/guardrail overwrite
     protection:
     - `evaluationRole.freshness`
@@ -117,7 +124,7 @@ address values being replaced by stale/noise/blank values.
     are forbidden or would let a stale/noise/low-authority document overwrite a
     current non-empty target value.
 
-- [ ] Add document-order overwrite tests.
+- [x] Add document-order overwrite tests.
   - Good document writes correct address.
   - Later stale/noise document suggests blanks.
   - Later stale/noise document suggests conflicting concrete values.
@@ -126,7 +133,7 @@ address values being replaced by stale/noise/blank values.
     otherwise low-authority and even when the target field is unset.
   - Include seeded-value protection.
 
-- [ ] Update `ingestion-run.schema.json`.
+- [x] Update `ingestion-run.schema.json`.
   - Add skipped-suggestion diagnostics, overwrite diagnostics, and summary
     counts in the same PR.
 
