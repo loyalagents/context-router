@@ -30,6 +30,14 @@ test('form scorer aggregates existing filled-form snapshot classifications', asy
   assert.equal(report.summary.structuralOverfillCount, 0);
   assert.equal(report.summary.unsupportedFieldCount, 0);
   assert.equal(report.summary.sourceSlugAgreementRate, 1);
+
+  const citizenshipCheckbox = report.fields.find(
+    (field) => field.pdfFieldName === 'CB_1',
+  );
+  assert.equal(citizenshipCheckbox.expectedAction, 'CHECK');
+  assert.equal(citizenshipCheckbox.expectedValue, true);
+  assert.equal(citizenshipCheckbox.actualValue, true);
+
   await validateWithSchema(
     repoRoot,
     'form-fill-score-report.schema.json',
@@ -71,6 +79,34 @@ test('form scorer treats inactive conditional fields as structural skips', async
   );
   assert.equal(row.fieldClass, 'structural-skip');
   assert.equal(row.classification, 'structural_skip');
+});
+
+test('form scorer accepts live citizenship source slug aliases', async () => {
+  const snapshot = JSON.parse(
+    await readFile(
+      path.join(
+        repoRoot,
+        'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+      ),
+      'utf8',
+    ),
+  );
+  const citizenshipCheckbox = snapshot.fields.find(
+    (field) => field.pdfFieldName === 'CB_1',
+  );
+  citizenshipCheckbox.actual.sourceSlugs = ['profile.citizenship_status'];
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-citizenship-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  const report = await scoreForm({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+    filledFormPath,
+  });
+  const row = report.fields.find((field) => field.pdfFieldName === 'CB_1');
+  assert.equal(row.sourceSlugAgrees, true);
 });
 
 test('form scorer reports missing, wrong, hallucinated, unsupported, and source-slug disagreement', async () => {

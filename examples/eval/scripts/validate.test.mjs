@@ -178,6 +178,39 @@ test('reports invalid V2 field-map condition and render hints', async (t) => {
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
 });
 
+test('reports conditional branch groups with no active branch for profile value', async (t) => {
+  const root = await copyRepo(t);
+  const profilePath = path.join(
+    root,
+    'examples/eval/users/elena-marquez/profile.yaml',
+  );
+  const profile = await readFile(profilePath, 'utf8');
+  await writeFile(
+    profilePath,
+    profile.replace(
+      'citizenshipStatus: U.S. citizen',
+      'citizenshipStatus: US citizen',
+    ),
+  );
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'FIELD_MAP_CONDITION_NO_MATCH');
+});
+
+test('reports conditional branch groups with multiple active branches for profile value', async (t) => {
+  const root = await copyRepo(t);
+  const fieldMapPath = path.join(root, 'examples/eval/forms/i-9/field-map.json');
+  const fieldMap = await readJson(fieldMapPath);
+  const secondCitizenshipCheckbox = fieldMap.fields.find(
+    (field) => field.pdfFieldName === 'CB_2',
+  );
+  secondCitizenshipCheckbox.when.equals = 'U.S. citizen';
+  await writeJson(fieldMapPath, fieldMap);
+
+  const result = await validateElena(root);
+  assertHasCode(result, 'FIELD_MAP_CONDITION_MULTIPLE_MATCHES');
+});
+
 test('rejects invalid intentionally missing form references', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

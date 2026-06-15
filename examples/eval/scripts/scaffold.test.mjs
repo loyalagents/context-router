@@ -553,14 +553,14 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
   const root = await copyRepo(t);
   const fieldMapPath = path.join(root, 'examples/eval/forms/i-9/field-map.json');
   const fieldMap = await readJson(fieldMapPath);
-  const citizenshipField = fieldMap.fields.find(
-    (field) => field.pdfFieldName === 'CB_1',
+  const ssnField = fieldMap.fields.find(
+    (field) => field.pdfFieldName === 'US Social Security Number',
   );
-  delete citizenshipField.factKey;
-  delete citizenshipField.when;
-  delete citizenshipField.note;
-  citizenshipField.mode = 'skip';
-  citizenshipField.reason = 'out_of_scope';
+  delete ssnField.factKey;
+  delete ssnField.render;
+  delete ssnField.note;
+  ssnField.mode = 'skip';
+  ssnField.reason = 'out_of_scope';
   await writeJson(fieldMapPath, fieldMap);
 
   const result = await runScaffold({
@@ -583,9 +583,7 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
     ),
   );
   assert.equal(
-    manifest.documents.some((doc) =>
-      doc.factContract.include.includes('workAuthorization.citizenshipStatus'),
-    ),
+    manifest.documents.some((doc) => doc.template === 'identity/ssn-card-transcript'),
     false,
   );
 });

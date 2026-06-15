@@ -1792,9 +1792,51 @@ async function validateForm(ctx, formId, options = {}) {
         }
       }
     }
+    validateConditionalSelfBranchGroups(ctx, fieldMap, fieldMapPath, profileFacts);
   }
 
   return { generated, fieldMap };
+}
+
+function validateConditionalSelfBranchGroups(ctx, fieldMap, fieldMapPath, profileFacts) {
+  const facts = profileFactsToObject(profileFacts);
+  const groups = new Map();
+
+  for (const [index, field] of (fieldMap.fields ?? []).entries()) {
+    if (
+      field.mode !== 'fact' ||
+      !isConditionalField(field) ||
+      field.factKey !== field.when.factKey
+    ) {
+      continue;
+    }
+    const group = groups.get(field.factKey) ?? [];
+    group.push({ index, field });
+    groups.set(field.factKey, group);
+  }
+
+  for (const [factKey, entries] of groups.entries()) {
+    if (entries.length < 2) continue;
+    const factState = classifyFactKey(profileFacts, factKey);
+    if (factState.kind !== 'leaf' || factState.value == null) continue;
+
+    const active = entries.filter(({ field }) => fieldIsActive(field, facts));
+    if (active.length === 1) continue;
+
+    addIssue(ctx, {
+      code:
+        active.length === 0
+          ? 'FIELD_MAP_CONDITION_NO_MATCH'
+          : 'FIELD_MAP_CONDITION_MULTIPLE_MATCHES',
+      file: fieldMapPath,
+      pointer: `/fields/${entries[0].index}/when/equals`,
+      message:
+        active.length === 0
+          ? `Conditional branch group for ${factKey} has no active field for profile value ${JSON.stringify(factState.value)}.`
+          : `Conditional branch group for ${factKey} has ${active.length} active fields for profile value ${JSON.stringify(factState.value)}.`,
+      fix: 'Update the profile value or the field-map when.equals branches so exactly one branch is active.',
+    });
+  }
 }
 
 async function validateScenario(ctx, scenarioId, { transitive }) {

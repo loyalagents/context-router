@@ -68,8 +68,8 @@ function scoreField({ field, fixture, storageMap }) {
   const fieldClass = classifyFieldDenominator(field);
   const overfill = structuralOverfill(field, fieldClass);
   const sourceSlugs = field.actual?.sourceSlugs ?? [];
-  const expectedValue = field.expected?.value ?? null;
-  const actualValue = field.actual?.value ?? null;
+  const expectedValue = scoreExpectedValue(field);
+  const actualValue = scoreActualValue(field);
   const storage = factKey
     ? storageSpecForFact(factKey, { profile: fixture.profile, storageMap })
     : { acceptedSlugs: [] };
@@ -94,6 +94,22 @@ function scoreField({ field, fixture, storageMap }) {
     overfillSeverity: overfill.overfillSeverity,
     overfillReason: overfill.overfillReason,
   };
+}
+
+function scoreExpectedValue(field) {
+  if (field.expected?.action === 'CHECK') return true;
+  if (field.expected?.action === 'UNCHECK') return false;
+  return field.expected?.value ?? null;
+}
+
+function scoreActualValue(field) {
+  if (
+    field.expected?.action === 'CHECK' ||
+    field.expected?.action === 'UNCHECK'
+  ) {
+    return field.actual?.checked ?? null;
+  }
+  return field.actual?.value ?? null;
 }
 
 function classifyFieldDenominator(field) {
