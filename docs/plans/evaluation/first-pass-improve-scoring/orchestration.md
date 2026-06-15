@@ -110,6 +110,9 @@ address values being replaced by stale/noise/blank values.
       currently unset.
     - Per-document `factContract.include` authorizes that document to extract
       facts listed in `factContractDefaults.forbid`.
+    - Reuse the validator's `effectiveForbiddenFactKeys` helper so ingestion
+      and corpus-truth semantics stay aligned, including intentionally missing
+      facts that are derived as forbidden for current extract/corroborate docs.
   - Use manifest metadata as the backstop for stale/noise/guardrail overwrite
     protection:
     - `evaluationRole.freshness`

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -983,6 +983,56 @@ test('ingest-documents allows document includes to override default forbidden fa
   assert.equal(report.summary.overwriteCount, 0);
 });
 
+test('ingest-documents blocks derived intentionally-missing fact suggestions', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-derived-missing-'));
+  const fixture = await writeDerivedMissingFixture(tmp);
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        analysisId: 'analysis-001',
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'eval.contact.phone',
+            newValue: '415-555-0100',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot: fixture.repoRoot,
+    args: [
+      '--user',
+      fixture.userId,
+      '--corpus',
+      fixture.corpusId,
+      '--documents-root',
+      fixture.documentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const decision = report.documents[0].suggestionDecisions[0];
+  assert.equal(decision.slug, 'eval.contact.phone');
+  assert.equal(decision.decision, 'blocked');
+  assert.deepEqual(decision.reasons, ['forbidden_fact']);
+  assert.deepEqual(decision.forbiddenFactKeys, ['contact.phone']);
+  assert.equal(fetchMock.applyInputs.length, 0);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 1);
+});
+
 test('ingest-documents blocks forbidden accepted-alias slugs', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-alias-'));
   const outPath = path.join(tmp, 'ingestion-run.json');
@@ -1358,6 +1408,78 @@ test('ingest-documents redacts auth token from document-level errors', async () 
   assert.match(report.documents[0].error, /\[redacted-auth-token\]/);
   assert.equal(result.lines.join('\n').includes('document-secret-token'), false);
 });
+
+async function writeDerivedMissingFixture(root) {
+  const userId = 'derived-missing-user';
+  const corpusId = 'derived-missing-corpus';
+  const fixtureRepoRoot = root;
+  const userRoot = path.join(fixtureRepoRoot, 'examples/eval/users', userId);
+  const corpusRoot = path.join(userRoot, 'corpora', corpusId);
+  const documentsDir = path.join(corpusRoot, 'documents');
+  const scoringRoot = path.join(fixtureRepoRoot, 'examples/eval/scoring');
+  const schemasRoot = path.join(fixtureRepoRoot, 'examples/eval/schemas');
+
+  await mkdir(documentsDir, { recursive: true });
+  await mkdir(scoringRoot, { recursive: true });
+  await mkdir(schemasRoot, { recursive: true });
+  await writeFile(
+    path.join(schemasRoot, 'ingestion-run.schema.json'),
+    await readFile(path.join(repoRoot, 'examples/eval/schemas/ingestion-run.schema.json'), 'utf8'),
+  );
+  await writeFile(
+    path.join(userRoot, 'profile.yaml'),
+    ['facts:', '  identity:', '    legalName: Derived Missing User', ''].join('\n'),
+  );
+  await writeFile(
+    path.join(scoringRoot, 'fact-storage-map.v1.json'),
+    JSON.stringify({ facts: {} }, null, 2),
+  );
+  await writeFile(
+    path.join(documentsDir, 'current-note.txt'),
+    'Current source document that should not infer a phone number.\n',
+  );
+  await writeFile(
+    path.join(corpusRoot, 'manifest.json'),
+    JSON.stringify(
+      {
+        factContractDefaults: { forbid: [] },
+        intentionallyMissing: [
+          {
+            factKey: 'contact.phone',
+            forms: [],
+            reason: 'Phone is intentionally absent in this fixture.',
+            expectedBehavior: 'Do not store a phone value.',
+          },
+        ],
+        documents: [
+          {
+            id: 'derived-missing-001',
+            path: 'documents/current-note.txt',
+            category: 'identity',
+            title: 'Current Note',
+            factContract: { include: ['identity.legalName'], forbid: [] },
+            sourceSpec: { sourceFamily: 'identity' },
+            evaluationRole: {
+              authority: 'high',
+              freshness: 'current',
+              expectedUse: 'extract',
+              challengeTags: [],
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  return {
+    repoRoot: fixtureRepoRoot,
+    userId,
+    corpusId,
+    documentsRoot: path.relative(fixtureRepoRoot, corpusRoot),
+  };
+}
 
 function createFetchMock({
   backendUserId = 'backend-user-123',

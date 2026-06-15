@@ -6,7 +6,7 @@ import { readJson, readYaml, relativePath, validateWithSchema, writeJson } from 
 import { scoreDatabaseToFile } from './scoring/database.mjs';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
 import { storageSpecForFact } from './scoring/slugs.mjs';
-import { collectFactKeys } from './shared.mjs';
+import { collectFactKeys, effectiveForbiddenFactKeys } from './shared.mjs';
 import {
   applyPreferenceSuggestions,
   createPreferenceDefinition,
@@ -565,8 +565,8 @@ function buildSlugPolicy({ manifest, profile, storageMap }) {
   }
 
   return {
-    defaultForbiddenFactKeys: new Set(manifest.factContractDefaults?.forbid ?? []),
     factKeysBySlug,
+    manifest,
   };
 }
 
@@ -630,13 +630,7 @@ function forbiddenFactKeysForSuggestion({ doc, suggestion, slugPolicy }) {
   const suggestionFactKeys = slugPolicy.factKeysBySlug.get(suggestion.slug);
   if (!suggestionFactKeys) return [];
 
-  const effectiveForbidden = new Set([
-    ...slugPolicy.defaultForbiddenFactKeys,
-    ...(doc.factContract?.forbid ?? []),
-  ]);
-  for (const factKey of doc.factContract?.include ?? []) {
-    effectiveForbidden.delete(factKey);
-  }
+  const effectiveForbidden = new Set(effectiveForbiddenFactKeys(slugPolicy.manifest, doc));
   return [...suggestionFactKeys]
     .filter((factKey) => effectiveForbidden.has(factKey))
     .sort();

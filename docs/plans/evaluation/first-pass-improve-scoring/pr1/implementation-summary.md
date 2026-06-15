@@ -18,6 +18,9 @@ passes approved suggestions to `applyPreferenceSuggestions`.
 - `factContractDefaults.forbid` and per-document `factContract.forbid` block
   suggestions by canonical or accepted alias slug, even when the target is
   unset, unless that same document explicitly includes the fact.
+- Forbidden-fact decisions reuse the canonical validator helper
+  `effectiveForbiddenFactKeys`, so ingestor policy stays aligned with corpus
+  truth semantics, including derived forbids for intentionally missing facts.
 - Low-trust documents can first-write values, but cannot overwrite a non-empty
   in-memory value with a different value.
 - Low-trust detection uses manifest metadata from `evaluationRole` and
