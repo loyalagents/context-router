@@ -17,7 +17,7 @@ passes approved suggestions to `applyPreferenceSuggestions`.
   `undefined`, `""`, or a whitespace-only string.
 - `factContractDefaults.forbid` and per-document `factContract.forbid` block
   suggestions by canonical or accepted alias slug, even when the target is
-  unset.
+  unset, unless that same document explicitly includes the fact.
 - Low-trust documents can first-write values, but cannot overwrite a non-empty
   in-memory value with a different value.
 - Low-trust detection uses manifest metadata from `evaluationRole` and
@@ -26,6 +26,10 @@ passes approved suggestions to `applyPreferenceSuggestions`.
   successful `setPreference` calls.
 - The active-state map updates only after a full successful apply response, so
   the existing partial-apply hard failure invariant remains intact.
+- PR 1 optimizes for reset E2E runs and explicit seed rows. Non-reset runs do
+  not hydrate the active-state map from pre-existing backend ACTIVE memory yet,
+  so stale/noise overwrite protection is incomplete for arbitrary preloaded
+  backend state.
 
 ## Artifact Contract
 

@@ -634,6 +634,9 @@ function forbiddenFactKeysForSuggestion({ doc, suggestion, slugPolicy }) {
     ...slugPolicy.defaultForbiddenFactKeys,
     ...(doc.factContract?.forbid ?? []),
   ]);
+  for (const factKey of doc.factContract?.include ?? []) {
+    effectiveForbidden.delete(factKey);
+  }
   return [...suggestionFactKeys]
     .filter((factKey) => effectiveForbidden.has(factKey))
     .sort();

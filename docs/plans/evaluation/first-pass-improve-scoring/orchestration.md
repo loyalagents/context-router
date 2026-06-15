@@ -105,8 +105,11 @@ address values being replaced by stale/noise/blank values.
 
 - [x] Block forbidden and low-authority overwrites.
   - Use `factContract.forbid` as an unconditional deterministic block.
-    - If a document forbids a fact, any suggestion for that fact from that
-      document is blocked even when the target field is currently unset.
+    - If a fact is effectively forbidden for a document, any suggestion for
+      that fact from that document is blocked even when the target field is
+      currently unset.
+    - Per-document `factContract.include` authorizes that document to extract
+      facts listed in `factContractDefaults.forbid`.
   - Use manifest metadata as the backstop for stale/noise/guardrail overwrite
     protection:
     - `evaluationRole.freshness`

@@ -89,8 +89,10 @@ runs as rigorous model comparisons until model metadata is captured.
     - `009-stale-contact-ticket.txt` damaged current address fields.
   - Concrete change:
     - Use `factContract.forbid` as an unconditional deterministic block.
-      If a document forbids a fact, any suggestion for that fact from that
-      document is blocked even when the target field is currently unset.
+      If a fact is effectively forbidden for a document, any suggestion for
+      that fact from that document is blocked even when the target field is
+      currently unset. Per-document `factContract.include` authorizes that
+      document to extract facts listed in `factContractDefaults.forbid`.
     - Use manifest document metadata as the backstop for stale/noise overwrite
       protection:
       `evaluationRole.freshness`, `evaluationRole.authority`,

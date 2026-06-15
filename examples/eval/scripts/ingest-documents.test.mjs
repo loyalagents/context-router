@@ -929,6 +929,60 @@ test('ingest-documents blocks forbidden suggestions even when no value exists', 
   assert.equal(report.summary.overwriteCount, 0);
 });
 
+test('ingest-documents allows document includes to override default forbidden facts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-include-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      noMatchesUpload('analysis-001'),
+      successUpload({
+        analysisId: 'analysis-002',
+        suggestions: [
+          suggestion({
+            id: 'analysis-002:candidate:0',
+            slug: 'eval.identity.ssn',
+            newValue: '000-00-0292',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const decision = report.documents[1].suggestionDecisions[0];
+  assert.equal(report.documents[1].path, 'documents/identity/002-ssn-card-upload-ocr.txt');
+  assert.equal(decision.slug, 'eval.identity.ssn');
+  assert.equal(decision.decision, 'applied');
+  assert.deepEqual(decision.reasons, []);
+  assert.equal(Object.hasOwn(decision, 'forbiddenFactKeys'), false);
+  assert.deepEqual(fetchMock.applyInputs[0].map((input) => input.slug), [
+    'eval.identity.ssn',
+  ]);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 0);
+  assert.equal(report.summary.overwriteCount, 0);
+});
+
 test('ingest-documents blocks forbidden accepted-alias slugs', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-alias-'));
   const outPath = path.join(tmp, 'ingestion-run.json');
