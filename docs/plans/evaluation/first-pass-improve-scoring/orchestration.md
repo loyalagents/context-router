@@ -16,9 +16,15 @@ trust.
 ## Priority Order
 
 1. Ingestor overwrite safety.
-2. Form scoring correctness gaps.
+2. Field-map conditionality and form scoring correctness gaps.
 3. Observability, debug artifacts, and run comparison.
 4. Later source-authority and conflict-resolution work.
+
+## Working Assumption
+
+Backwards compatibility is not a goal for this batch. Prefer clean schema and
+artifact contracts over compatibility shims. If an artifact shape needs to
+change, update its schema, tests, and docs in the same PR.
 
 ## Parallelization
 
@@ -26,13 +32,25 @@ These tracks can mostly run in parallel:
 
 - PR 1, ingestor overwrite safety, touches ingestion/apply behavior and
   `ingestion-run.json`.
-- PR 2, form scoring cleanup, touches field maps and form scorer behavior.
+- PR 2, field-map conditionality and form scoring cleanup, touches field-map
+  schema/loading, scenario expectations, snapshot classification, and form
+  scorer behavior.
 - PR 3, observability and run comparison, touches wrapper artifacts, terminal
   response persistence, and docs/examples.
 
-The only coordination point is that PR 3 may want to display diagnostics added
-by PR 1. It can start independently with model labels and terminal response
-artifacts, then add richer overwrite display later.
+PR 1 and PR 2 can start immediately and independently.
+
+PR 3 can also start immediately for:
+
+- `--model-label` / `EVAL_MODEL_LABEL`
+- terminal form-fill response persistence
+- `evaluation-run.schema.json` updates
+
+The rest of PR 3 should wait for PR 1 and PR 2:
+
+- overwrite-aware comparison output depends on PR 1 provenance fields
+- representative example artifacts should be generated after overwrite and
+  scoring fixes land, otherwise the example will document known-bad behavior
 
 ## PR 1: Ingestor Overwrite Safety
 
@@ -46,11 +64,23 @@ address values being replaced by stale/noise/blank values.
 
 ### Changes
 
-- [ ] Skip auto-applying blank values for known-present target facts.
-  - Treat `""`, `null`, and empty arrays/objects as blank.
-  - Use fixture truth/manifest/profile data to know which target facts are
-    expected to be known-present.
+- [ ] Treat blank suggestions as non-storable unconditionally.
+  - Treat `null`, `undefined`, `""`, empty arrays, and empty objects as
+    non-storable.
+  - Extend the existing non-storable suggestion path instead of adding
+    fact-truth-specific logic for blanks.
   - Still record skipped suggestions in `ingestion-run.json`.
+  - Pre-filter these suggestions before building `applyInput`, so intentional
+    skips do not trip the applied-length invariant.
+
+- [ ] Track applied state in memory during the run.
+  - Keep a map keyed by slug.
+  - Seed it from explicit `--seed-preferences` values when present.
+  - Update it after each successful apply.
+  - Use it to know whether a suggestion would overwrite a non-empty active
+    value.
+  - This first pass is optimized for reset E2E runs; non-reset robustness can
+    fetch backend active preferences later if needed.
 
 - [ ] Add overwrite diagnostics to `ingestion-run.json`.
   - For each applied suggestion, record:
@@ -59,55 +89,82 @@ address values being replaced by stale/noise/blank values.
     - old value
     - new value
     - whether it overwrote a non-empty value
+  - For each blocked suggestion, record:
+    - document path
+    - slug
+    - new value
+    - block reason
+    - current value if relevant
   - Add summary counts:
     - `overwriteCount`
     - `blankSuggestionSkippedCount`
     - `nonEmptyToBlankOverwriteCount`
-    - `currentValueOverwrittenByStaleOrNoiseCount`
+    - `forbiddenSuggestionBlockedCount`
+    - `staleOrNoiseOverwriteBlockedCount`
 
-- [ ] Block stale/noise/guardrail documents from overwriting non-empty active
-  target values.
-  - Use manifest metadata already available to the ingestor:
+- [ ] Block forbidden and low-authority overwrites.
+  - Use `factContract.forbid` as an unconditional deterministic block.
+    - If a document forbids a fact, any suggestion for that fact from that
+      document is blocked even when the target field is currently unset.
+  - Use manifest metadata as the backstop for stale/noise/guardrail overwrite
+    protection:
     - `evaluationRole.freshness`
     - `evaluationRole.authority`
     - `evaluationRole.expectedUse`
     - `evaluationRole.challengeTags`
     - `sourceSpec.sourceFamily`
-  - Keep suggestions in diagnostics, but do not apply them when they would
-    overwrite a current non-empty value.
+  - Keep blocked suggestions in diagnostics, but do not apply them when they
+    are forbidden or would let a stale/noise/low-authority document overwrite a
+    current non-empty target value.
 
 - [ ] Add document-order overwrite tests.
   - Good document writes correct address.
   - Later stale/noise document suggests blanks.
   - Later stale/noise document suggests conflicting concrete values.
   - Final exported memory keeps the good values.
+  - Include `factContract.forbid` blocking even when the document is not
+    otherwise low-authority and even when the target field is unset.
+  - Include seeded-value protection.
+
+- [ ] Update `ingestion-run.schema.json`.
+  - Add skipped-suggestion diagnostics, overwrite diagnostics, and summary
+    counts in the same PR.
 
 ### Success Criteria
 
-- A later stale/noise/blank suggestion does not overwrite a known-present target
-  fact.
+- A forbidden suggestion is never applied.
+- A later stale/noise/blank suggestion does not overwrite a useful target value.
 - `ingestion-run.json` makes overwrite decisions visible without manual artifact
   spelunking.
 - The Alex E2E database address failures should improve or become clearly
   attributable.
 
-## PR 2: Form Scoring Cleanup
+## PR 2: Field-Map Conditionality And Form Scoring Cleanup
 
 ### Goal
 
-Make form scoring reflect true form-fill behavior rather than field-map or
-scorer gaps.
+Make form scoring reflect true form-fill behavior rather than field-map,
+scenario, or snapshot-classification gaps.
 
 This can run in parallel with PR 1.
 
 ### Changes
 
-- [ ] Review and fix I-9 citizenship checkbox mapping.
+- [ ] Add clean conditional field-map semantics.
+  - Backwards compatibility is not required; choose the simplest durable shape.
+  - Example shape to evaluate:
+    - `when: { factKey: "workAuthorization.citizenshipStatus", equals:
+      "alien authorized to work" }`
+  - Update `field-map.schema.json`, field-map loaders, validation, and tests.
+
+- [ ] Fix I-9 citizenship checkbox mapping with conditional semantics.
   - Recent run showed structural overfills on `CB_1`, `CB_2`, `CB_3`, and
     `CB_4`, all sourced from citizenship status.
-  - Decide whether these should be mapped as mutually exclusive citizenship
-    fields or explicitly treated as non-scored structural fields.
-  - Add scorer tests for the chosen behavior.
+  - Model these as mutually exclusive citizenship-status fields where possible,
+    not as permanent unscored structural fields.
+  - Add tests that only the matching citizenship checkbox is scored as filled.
+  - Add Elena/U.S.-citizen regression coverage so the conditional behavior does
+    not break the profile the original map was authored for.
 
 - [ ] Make the LPR-only A-number field conditional.
   - Field: `3 A lawful permanent resident Enter USCIS or ANumber`.
@@ -119,7 +176,12 @@ This can run in parallel with PR 1.
 - [ ] Confirm or add date render equivalence.
   - Accept `03141992` and `03/14/1992` as equivalent where an I-9 PDF field
     expects `MMDDYYYY`.
-  - Add tests for date fields with slash and no-slash renderings.
+  - Implement this where classifications are computed, likely
+    `eval-runner/snapshots.mjs`, not only in the form score aggregator.
+  - Prefer render/digits-only metadata over date-only special cases.
+  - Add tests for equivalent slash/no-slash date renderings and true
+    mismatches.
+  - Expect snapshot updates if filled-form classifications change.
 
 ### Success Criteria
 
@@ -140,12 +202,11 @@ wait for PR 1.
 ### Changes
 
 - [ ] Record model metadata in `evaluation-run.json`.
-  - Short-term:
-    - add `--model-label <label>`
-    - add `EVAL_MODEL_LABEL`
-  - Later/better:
-    - expose backend diagnostics for the actual loaded `VERTEX_MODEL_ID`
-    - record the backend-reported model automatically
+  - Add `--model-label <label>` and `EVAL_MODEL_LABEL`.
+  - Update `evaluation-run.schema.json`.
+  - This should land early so future model comparisons are labeled.
+  - Backend introspection for the actual loaded `VERTEX_MODEL_ID` is separate
+    later work.
 
 - [ ] Persist terminal `eval:fill-form` backend responses.
   - Write a redacted `form-fill-response.json` even when status is:
@@ -162,6 +223,8 @@ wait for PR 1.
     - changed wrong/missing fact keys
     - changed structural overfills
   - This is especially useful for comparing backend model choices.
+  - Basic score comparison can land immediately.
+  - Overwrite-provenance comparison should wait for PR 1.
 
 - [ ] Save a representative successful E2E run under an example folder.
   - Include:
@@ -173,6 +236,7 @@ wait for PR 1.
     - `form-score-report.json`
     - `combined-score-report.json`
     - a short qualitative summary
+  - Generate this after PR 1 and PR 2 land.
 
 ### Success Criteria
 
@@ -182,6 +246,11 @@ wait for PR 1.
 - Comparing two E2E runs is quick and repeatable.
 
 ## Later Work
+
+- [ ] Add backend model introspection.
+  - Expose the backend's actual loaded `VERTEX_MODEL_ID` through a safe
+    diagnostic path.
+  - Record it automatically in `evaluation-run.json`.
 
 - [ ] Add richer source-authority policy beyond simple stale/noise/blank guards.
   - Possible dimensions:
