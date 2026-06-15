@@ -207,7 +207,43 @@ pnpm eval:fill-form \
 
 `eval:run` is the deterministic fixture/test-DB harness. `eval:fill-form` is
 the live backend-memory product-path runner and does not seed, reset, hydrate,
-or mutate memory.
+or mutate memory. When the backend returns a terminal form-fill status such as
+`failed`, `no_fillable_fields`, or `unsupported_format`, the runner exits
+nonzero but still writes the redacted `--response-out` artifact when requested.
+
+Run the full live known-schema E2E chain and label the backend model/config used
+for the run:
+
+```bash
+export EVAL_BACKEND_URL=http://localhost:3000
+export EVAL_GRAPHQL_URL=http://localhost:3000/graphql
+export EVAL_AUTH_TOKEN=<token>
+export EVAL_MODEL_LABEL=gemini-2.5-pro
+
+pnpm eval:e2e-known-schema \
+  --user alex-i9-test \
+  --corpus realistic \
+  --scenario alex-i9-realistic \
+  --artifacts-root /private/tmp/alex-i9-pro-known-schema-e2e \
+  --reset-memory
+```
+
+`--model-label <label>` can be used instead of `EVAL_MODEL_LABEL` and takes
+precedence over the environment. The label is recorded in `evaluation-run.json`
+as manual metadata; the backend's actual loaded model is not introspected yet.
+
+Compare one or more E2E artifact directories against a baseline:
+
+```bash
+pnpm eval:compare-runs \
+  --baseline /private/tmp/alex-i9-flash-known-schema-e2e \
+  --run /private/tmp/alex-i9-pro-known-schema-e2e
+```
+
+The comparison command reads score reports plus optional `ingestion-run.json`
+and `stored-preferences.json` context. It prints database/form score deltas,
+changed wrong or missing facts, structural overfill changes, combined attribution
+deltas, and overwrite/blocking counters when available.
 
 Useful focused validation commands:
 

@@ -1,6 +1,6 @@
 # First-Pass E2E Scoring Improvements Orchestration
 
-- Status: active orchestration plan; PR 1 and PR 2 implemented
+- Status: active orchestration plan; PR 1, PR 2, and PR 3 implemented
 - Last updated: 2026-06-15
 
 ## Goal
@@ -35,22 +35,21 @@ These tracks can mostly run in parallel:
 - PR 2, field-map conditionality and form scoring cleanup, touches field-map
   schema/loading, scenario expectations, snapshot classification, and form
   scorer behavior.
-- PR 3, observability and run comparison, touches wrapper artifacts, terminal
-  response persistence, and docs/examples.
+- PR 3, observability and run comparison, touched wrapper artifacts, terminal
+  response persistence, and eval docs. It did not commit live E2E artifacts.
 
 PR 1 and PR 2 can start immediately and independently.
 
-PR 3 can also start immediately for:
+PR 3 implemented:
 
 - `--model-label` / `EVAL_MODEL_LABEL`
 - terminal form-fill response persistence
 - `evaluation-run.schema.json` updates
+- `pnpm eval:compare-runs`
 
-The rest of PR 3 should wait for PR 1 and PR 2:
-
-- overwrite-aware comparison output depends on PR 1 provenance fields
-- representative example artifacts should be generated after overwrite and
-  scoring fixes land, otherwise the example will document known-bad behavior
+Representative example artifacts should still be generated manually after a
+live backend run with valid auth, so the repo does not commit stale or
+unlabeled live artifacts.
 
 ## PR 1: Ingestor Overwrite Safety
 
@@ -206,35 +205,40 @@ This can run in parallel with PR 1.
 
 Make live E2E runs easier to debug, compare, and document.
 
-This can run in parallel with PR 1 and PR 2, though richer overwrite display can
-wait for PR 1.
+Status: implemented in this branch. See
+`docs/plans/evaluation/first-pass-improve-scoring/pr3/implementation-summary.md`.
 
 ### Changes
 
-- [ ] Record model metadata in `evaluation-run.json`.
-  - Add `--model-label <label>` and `EVAL_MODEL_LABEL`.
-  - Update `evaluation-run.schema.json`.
-  - This should land early so future model comparisons are labeled.
+- [x] Record model metadata in `evaluation-run.json`.
+  - Added `--model-label <label>` and `EVAL_MODEL_LABEL`.
+  - Updated `evaluation-run.schema.json`.
+  - New artifacts carry manual labels for model/config comparisons.
   - Backend introspection for the actual loaded `VERTEX_MODEL_ID` is separate
     later work.
 
-- [ ] Persist terminal `eval:fill-form` backend responses.
+- [x] Persist terminal `eval:fill-form` backend responses.
   - Write a redacted `form-fill-response.json` even when status is:
     - `failed`
     - `no_fillable_fields`
     - `unsupported_format`
-  - Add a regression test that terminal responses still produce the response
-    artifact.
+  - Added a regression test that terminal responses still produce the response
+    artifact and do not write filled-form outputs.
+  - E2E fill-form failures print the artifacts root and response artifact path.
 
-- [ ] Add a compact E2E comparison tool or documented command recipe.
-  - Compare two run directories and print:
+- [x] Add a compact E2E comparison tool or documented command recipe.
+  - Added `pnpm eval:compare-runs --baseline <dir> --run <dir>
+    [--run <dir>...]`.
+  - Compares one or more run directories against a baseline and prints:
     - database score deltas
     - form score deltas
     - changed wrong/missing fact keys
     - changed structural overfills
+    - combined attribution deltas
+    - optional ingestion overwrite/blocking counters
+    - optional stored preference counts
   - This is especially useful for comparing backend model choices.
-  - Basic score comparison can land immediately.
-  - Overwrite-provenance comparison should wait for PR 1.
+  - Overwrite-provenance fields in database score reports remain later work.
 
 - [ ] Save a representative successful E2E run under an example folder.
   - Include:
@@ -247,6 +251,8 @@ wait for PR 1.
     - `combined-score-report.json`
     - a short qualitative summary
   - Generate this after PR 1 and PR 2 land.
+  - PR 3 documents the command path but does not commit live artifacts because
+    capture requires a live backend and valid auth token.
 
 ### Success Criteria
 

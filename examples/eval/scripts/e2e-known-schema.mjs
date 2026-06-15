@@ -367,6 +367,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
     graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
     authToken: env.EVAL_AUTH_TOKEN,
+    modelLabel: env.EVAL_MODEL_LABEL,
     resetMemory: false,
     ensureDefinitions: true,
     autoApply: true,
@@ -380,6 +381,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--backend-url',
     '--graphql-url',
     '--auth-token',
+    '--model-label',
     '--seed-preferences',
     '--location-id',
     '--run-id',
@@ -417,6 +419,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--backend-url') options.backendUrl = value;
     if (arg === '--graphql-url') options.graphqlUrl = value;
     if (arg === '--auth-token') options.authToken = value;
+    if (arg === '--model-label') options.modelLabel = value;
     if (arg === '--seed-preferences') options.seedPreferencesPath = value;
     if (arg === '--location-id') options.locationId = value;
     if (arg === '--run-id') options.runId = value;
@@ -471,6 +474,7 @@ export function usage() {
     '  --backend-url <url>               Defaults to EVAL_BACKEND_URL or http://localhost:3000',
     '  --graphql-url <url>               Defaults to EVAL_GRAPHQL_URL or http://localhost:3000/graphql',
     '  --auth-token <token>              Defaults to EVAL_AUTH_TOKEN',
+    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
     '  --reset-memory                    Clear current backend user memory before ingestion',
     '  --seed-preferences <file>          Set explicit seed preferences before upload',
     '  --skip-ensure-definitions          Do not create missing known-schema definitions',
@@ -515,6 +519,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
     artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
     backendUrl: sanitizeUrlForArtifact(options.backendUrl),
     graphqlUrl: sanitizeUrlForArtifact(options.graphqlUrl),
+    model: modelMetadata(options),
     locationId: options.locationId ?? null,
     settings: {
       resetMemory: options.resetMemory,
@@ -638,14 +643,17 @@ function activeStageName(report) {
 
 function failureLines({ report, reportPath, repoRoot, stageName }) {
   const stage = report.stages.find((candidate) => candidate.name === stageName);
-  return [
+  const lines = [
     'eval e2e-known-schema failed',
     `stage=${stageName}`,
     `runId=${report.runId}`,
+    `artifacts=${report.artifactsRoot}`,
     `wrote ${relativePath(repoRoot, reportPath)}`,
-    '',
-    ...(stage?.lines ?? []),
   ];
+  if (stage?.artifacts?.response) {
+    lines.push(`response=${stage.artifacts.response}`);
+  }
+  return [...lines, '', ...(stage?.lines ?? [])];
 }
 
 function isoTimestamp(now) {
@@ -666,6 +674,19 @@ function generatedRunId(options, now) {
     options.corpusId,
     isoTimestamp(now).replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, ''),
   ].join('-');
+}
+
+function modelMetadata(options) {
+  if (options.modelLabel) {
+    return {
+      label: options.modelLabel,
+      source: 'manual',
+    };
+  }
+  return {
+    label: null,
+    source: 'unspecified',
+  };
 }
 
 function redactLines(lines, secret) {
