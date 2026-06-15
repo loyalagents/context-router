@@ -178,7 +178,7 @@ test('reports invalid V2 field-map condition and render hints', async (t) => {
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
 });
 
-test('reports conditional branch groups with no active branch for profile value', async (t) => {
+test('reports I-9 citizenship checkbox group with no active branch for profile value', async (t) => {
   const root = await copyRepo(t);
   const profilePath = path.join(
     root,
@@ -197,7 +197,7 @@ test('reports conditional branch groups with no active branch for profile value'
   assertHasCode(result, 'FIELD_MAP_CONDITION_NO_MATCH');
 });
 
-test('reports conditional branch groups with multiple active branches for profile value', async (t) => {
+test('reports I-9 citizenship checkbox group with multiple active branches for profile value', async (t) => {
   const root = await copyRepo(t);
   const fieldMapPath = path.join(root, 'examples/eval/forms/i-9/field-map.json');
   const fieldMap = await readJson(fieldMapPath);
