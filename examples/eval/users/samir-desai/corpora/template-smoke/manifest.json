@@ -16,30 +16,6 @@
       ],
       "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
       "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
-    },
-    {
-      "factKey": "workAuthorization.foreignPassportNumber",
-      "forms": [
-        "i-9"
-      ],
-      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
-      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
-    },
-    {
-      "factKey": "workAuthorization.i94AdmissionNumber",
-      "forms": [
-        "i-9"
-      ],
-      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
-      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
-    },
-    {
-      "factKey": "workAuthorization.workAuthorizationExpirationDate",
-      "forms": [
-        "i-9"
-      ],
-      "reason": "This profile fact is explicitly null and intentionally absent from rendered documents.",
-      "expectedBehavior": "Leave the field blank; do not guess or synthesize a value."
     }
   ],
   "documents": [
@@ -48,7 +24,6 @@
       "path": "documents/address-contact/001-usps-address-confirmation.txt",
       "category": "address-contact",
       "title": "USPS Address Confirmation",
-      "template": "address-contact/usps-address-confirmation",
       "outputExtension": "txt",
       "factContract": {
         "include": [
@@ -67,14 +42,14 @@
         "freshness": "current",
         "expectedUse": "extract",
         "challengeTags": []
-      }
+      },
+      "template": "address-contact/usps-address-confirmation"
     },
     {
       "id": "002",
       "path": "documents/identity/002-name-history-note.md",
       "category": "identity",
       "title": "Name History Note",
-      "template": "identity/name-history-note",
       "outputExtension": "md",
       "factContract": {
         "include": [
@@ -90,14 +65,14 @@
         "freshness": "current",
         "expectedUse": "extract",
         "challengeTags": []
-      }
+      },
+      "template": "identity/name-history-note"
     },
     {
       "id": "003",
       "path": "documents/address-contact/003-current-lease-summary.md",
       "category": "address-contact",
       "title": "Current Lease Summary",
-      "template": "address-contact/current-lease-summary",
       "outputExtension": "md",
       "factContract": {
         "include": [
@@ -117,58 +92,14 @@
         "freshness": "current",
         "expectedUse": "extract",
         "challengeTags": []
-      }
+      },
+      "template": "address-contact/current-lease-summary"
     },
     {
       "id": "004",
-      "path": "documents/identity/004-birth-record-summary.txt",
-      "category": "identity",
-      "title": "Birth Record Summary",
-      "template": "identity/birth-record-summary",
-      "outputExtension": "txt",
-      "factContract": {
-        "include": [
-          "identity.dateOfBirth",
-          "identity.legalName"
-        ],
-        "forbid": []
-      },
-      "evaluationRole": {
-        "detailTier": "medium",
-        "authority": "medium",
-        "freshness": "current",
-        "expectedUse": "extract",
-        "challengeTags": []
-      }
-    },
-    {
-      "id": "005",
-      "path": "documents/identity/005-ssn-card-transcript.md",
-      "category": "identity",
-      "title": "Social Security Card Transcript",
-      "template": "identity/ssn-card-transcript",
-      "outputExtension": "md",
-      "factContract": {
-        "include": [
-          "identity.legalName",
-          "identity.ssn"
-        ],
-        "forbid": []
-      },
-      "evaluationRole": {
-        "detailTier": "medium",
-        "authority": "high",
-        "freshness": "current",
-        "expectedUse": "extract",
-        "challengeTags": []
-      }
-    },
-    {
-      "id": "006",
-      "path": "documents/work-authorization/006-lawful-permanent-resident-note.md",
+      "path": "documents/work-authorization/004-lawful-permanent-resident-note.md",
       "category": "work-authorization",
       "title": "Lawful Permanent Resident Note",
-      "template": "work-authorization/lawful-permanent-resident-note",
       "outputExtension": "md",
       "factContract": {
         "include": [
@@ -184,7 +115,52 @@
         "freshness": "current",
         "expectedUse": "extract",
         "challengeTags": []
-      }
+      },
+      "template": "work-authorization/lawful-permanent-resident-note"
+    },
+    {
+      "id": "005",
+      "path": "documents/identity/005-birth-record-summary.txt",
+      "category": "identity",
+      "title": "Birth Record Summary",
+      "outputExtension": "txt",
+      "factContract": {
+        "include": [
+          "identity.dateOfBirth",
+          "identity.legalName"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": []
+      },
+      "template": "identity/birth-record-summary"
+    },
+    {
+      "id": "006",
+      "path": "documents/identity/006-ssn-card-transcript.md",
+      "category": "identity",
+      "title": "Social Security Card Transcript",
+      "outputExtension": "md",
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": []
+      },
+      "template": "identity/ssn-card-transcript"
     }
   ]
 }

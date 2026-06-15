@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { collectFactKeys, getFactValue } from '../shared.mjs';
+import { fieldIsActive } from '../field-map.mjs';
 import { readJson, readYaml, validateWithSchema, writeJson } from './io.mjs';
 import { isAbsentValue, rate, valueMatchesFact } from './normalize.mjs';
 import { storageSpecForFact, unique } from './slugs.mjs';
@@ -85,6 +86,7 @@ export async function scoreDatabase({
         repoRoot,
         manifest,
         profileFacts,
+        profile,
       })
     : [];
 
@@ -171,7 +173,7 @@ function collectKnownPresentFactKeys(validationReport, profileFacts) {
   return [...proven].sort();
 }
 
-async function collectMissingFactEntries({ repoRoot, manifest, profileFacts }) {
+async function collectMissingFactEntries({ repoRoot, manifest, profileFacts, profile }) {
   const entries = new Map();
   for (const missing of manifest.intentionallyMissing ?? []) {
     entries.set(missing.factKey, {
@@ -188,6 +190,7 @@ async function collectMissingFactEntries({ repoRoot, manifest, profileFacts }) {
     repoRoot,
     manifest,
     profileFacts,
+    facts: profile.facts ?? {},
   })) {
     if (!entries.has(factKey)) {
       entries.set(factKey, {
@@ -204,7 +207,7 @@ async function collectMissingFactEntries({ repoRoot, manifest, profileFacts }) {
   );
 }
 
-async function collectProfileNullFormFactKeys({ repoRoot, manifest, profileFacts }) {
+async function collectProfileNullFormFactKeys({ repoRoot, manifest, profileFacts, facts }) {
   const factKeys = new Set();
   for (const formId of manifest.forms ?? []) {
     const fieldMapPath = path.join(
@@ -222,6 +225,7 @@ async function collectProfileNullFormFactKeys({ repoRoot, manifest, profileFacts
     }
     for (const field of fieldMap.fields ?? []) {
       if (field.mode !== 'fact') continue;
+      if (!fieldIsActive(field, facts)) continue;
       if (profileFacts.leaves.get(field.factKey) === null) {
         factKeys.add(field.factKey);
       }

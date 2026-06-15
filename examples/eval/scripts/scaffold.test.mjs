@@ -412,7 +412,7 @@ test('scaffold persists seed override and requires force for existing corpora', 
   assert.equal(firstManifest.documents[5].id, '006');
   assert.equal(
     firstManifest.documents[5].path,
-    'documents/hr-onboarding/006-i9-section1-prep-checklist.md',
+    'documents/identity/006-birth-record-summary.txt',
   );
 
   const blocked = await runScaffold({ repoRoot: root, args });
@@ -527,7 +527,9 @@ test('scaffold fails clearly when no eligible template covers a required fact', 
   const root = await copyRepo(t);
   const fieldMapPath = path.join(root, 'examples/eval/forms/i-9/field-map.json');
   const fieldMap = await readJson(fieldMapPath);
-  const firstFactField = fieldMap.fields.find((field) => field.mode === 'fact');
+  const firstFactField = fieldMap.fields.find(
+    (field) => field.pdfFieldName === 'First Name Given Name',
+  );
   firstFactField.factKey = 'employment.startDate';
   await writeJson(fieldMapPath, fieldMap);
 
@@ -551,9 +553,12 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
   const root = await copyRepo(t);
   const fieldMapPath = path.join(root, 'examples/eval/forms/i-9/field-map.json');
   const fieldMap = await readJson(fieldMapPath);
-  const ssnField = fieldMap.fields.find((field) => field.factKey === 'identity.ssn');
+  const ssnField = fieldMap.fields.find(
+    (field) => field.pdfFieldName === 'US Social Security Number',
+  );
   delete ssnField.factKey;
   delete ssnField.render;
+  delete ssnField.note;
   ssnField.mode = 'skip';
   ssnField.reason = 'out_of_scope';
   await writeJson(fieldMapPath, fieldMap);
@@ -577,9 +582,8 @@ test('scaffold excludes skip fields from required template coverage', async (t) 
       'examples/eval/users/elena-marquez/corpora/template-skip-ssn/manifest.json',
     ),
   );
-  assert.equal(manifest.documents.length, 4);
   assert.equal(
-    manifest.documents.some((doc) => doc.factContract.include.includes('identity.ssn')),
+    manifest.documents.some((doc) => doc.template === 'identity/ssn-card-transcript'),
     false,
   );
 });

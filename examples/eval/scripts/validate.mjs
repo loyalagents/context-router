@@ -34,6 +34,7 @@ import {
   textContainsSplitLegalName,
   toPosixPath,
 } from './shared.mjs';
+import { fieldIsActive, isConditionalField } from './field-map.mjs';
 import { discoverTemplates } from './template-renderer.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1775,10 +1776,66 @@ async function validateForm(ctx, formId, options = {}) {
           fix: 'Map the field to a concrete profile fact leaf; null leaf values are allowed.',
         });
       }
+      if (isConditionalField(field)) {
+        const conditionState = classifyFactKey(profileFacts, field.when.factKey);
+        if (conditionState.kind !== 'leaf') {
+          addIssue(ctx, {
+            code:
+              conditionState.kind === 'area'
+                ? 'FIELD_MAP_CONDITION_FACT_AREA'
+                : 'FIELD_MAP_CONDITION_FACT_MISSING',
+            file: fieldMapPath,
+            pointer: `/fields/${index}/when/factKey`,
+            message: `Field map condition factKey ${field.when.factKey} does not resolve to a profile leaf fact.`,
+            fix: 'Point when.factKey at a concrete profile fact leaf.',
+          });
+        }
+      }
     }
+    validateI9CitizenshipCheckboxGroup(ctx, formId, fieldMap, fieldMapPath, profileFacts);
   }
 
   return { generated, fieldMap };
+}
+
+const I9_CITIZENSHIP_FACT_KEY = 'workAuthorization.citizenshipStatus';
+const I9_CITIZENSHIP_CHECKBOX_NAMES = new Set(['CB_1', 'CB_2', 'CB_3', 'CB_4']);
+
+function validateI9CitizenshipCheckboxGroup(ctx, formId, fieldMap, fieldMapPath, profileFacts) {
+  if (formId !== 'i-9') return;
+
+  const factState = classifyFactKey(profileFacts, I9_CITIZENSHIP_FACT_KEY);
+  if (factState.kind !== 'leaf' || factState.value == null) return;
+
+  const facts = profileFactsToObject(profileFacts);
+  const entries = (fieldMap.fields ?? [])
+    .map((field, index) => ({ field, index }))
+    .filter(({ field }) => I9_CITIZENSHIP_CHECKBOX_NAMES.has(field.pdfFieldName));
+  if (entries.length === 0) return;
+
+  const conditionEntries = entries.filter(
+    ({ field }) =>
+      field.mode === 'fact' &&
+      field.factKey === I9_CITIZENSHIP_FACT_KEY &&
+      isConditionalField(field) &&
+      field.when.factKey === I9_CITIZENSHIP_FACT_KEY,
+  );
+  const active = conditionEntries.filter(({ field }) => fieldIsActive(field, facts));
+  if (active.length === 1) return;
+
+  addIssue(ctx, {
+    code:
+      active.length === 0
+        ? 'FIELD_MAP_CONDITION_NO_MATCH'
+        : 'FIELD_MAP_CONDITION_MULTIPLE_MATCHES',
+    file: fieldMapPath,
+    pointer: `/fields/${entries[0].index}/when/equals`,
+    message:
+      active.length === 0
+        ? `I-9 citizenship checkbox group has no active field for ${I9_CITIZENSHIP_FACT_KEY} value ${JSON.stringify(factState.value)}.`
+        : `I-9 citizenship checkbox group has ${active.length} active fields for ${I9_CITIZENSHIP_FACT_KEY} value ${JSON.stringify(factState.value)}.`,
+    fix: 'Update the profile value or the I-9 CB_1 through CB_4 when.equals branches so exactly one citizenship checkbox is active.',
+  });
 }
 
 async function validateScenario(ctx, scenarioId, { transitive }) {
@@ -1927,7 +1984,10 @@ function validateIntentionallyMissing(ctx, manifest, manifestPath, profileFacts,
     const mapped = (missing.forms ?? []).some((formId) => {
       const fieldMap = formMaps.get(formId);
       return (fieldMap?.fields ?? []).some(
-        (field) => field.mode === 'fact' && field.factKey === missing.factKey,
+        (field) =>
+          field.mode === 'fact' &&
+          field.factKey === missing.factKey &&
+          fieldIsActive(field, profileFactsToObject(profileFacts)),
       );
     });
     if (!mapped) {
@@ -1971,6 +2031,7 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
     if (!fieldMap) continue;
     for (const [index, field] of (fieldMap.fields ?? []).entries()) {
       if (field.mode !== 'fact') continue;
+      if (!fieldIsActive(field, profile.facts ?? {})) continue;
       const factState = classifyFactKey(profileFacts, field.factKey);
       if (factState.kind !== 'leaf' || factState.value == null) continue;
       if (seedCovered.has(field.factKey) || documentCovered.has(field.factKey)) {
@@ -1985,6 +2046,24 @@ function validateCoverage(ctx, manifest, manifestPath, profile, profileFacts, fo
       });
     }
   }
+}
+
+function profileFactsToObject(profileFacts) {
+  const facts = {};
+  for (const [factKey, value] of profileFacts?.leaves ?? []) {
+    setObjectPath(facts, factKey, value);
+  }
+  return facts;
+}
+
+function setObjectPath(target, factKey, value) {
+  const segments = factKey.split('.');
+  let current = target;
+  for (const segment of segments.slice(0, -1)) {
+    current[segment] ??= {};
+    current = current[segment];
+  }
+  current[segments.at(-1)] = value;
 }
 
 function validateFieldMapExhaustiveness(ctx, generated, fieldMap, fieldMapPath) {

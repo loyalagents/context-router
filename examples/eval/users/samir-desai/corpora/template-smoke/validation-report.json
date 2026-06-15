@@ -18,8 +18,8 @@
       "unsupportedDeclaredFacts": 0,
       "factsProvenAbsent": 0,
       "forbiddenFactsPresent": 0,
-      "warningOnlyAbsenceChecks": 18,
-      "skippedAbsenceChecks": 6,
+      "warningOnlyAbsenceChecks": 6,
+      "skippedAbsenceChecks": 0,
       "invalidAbsenceChecks": 0,
       "withheldValuesProvenAbsent": 0,
       "withheldValuesPresent": 0,
@@ -47,13 +47,9 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
+            "contact.phone"
           ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
-          ],
+          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {
@@ -78,13 +74,9 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
+            "contact.phone"
           ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
-          ],
+          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {
@@ -113,13 +105,9 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
+            "contact.phone"
           ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
-          ],
+          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {
@@ -130,67 +118,7 @@
       },
       {
         "id": "004",
-        "path": "documents/identity/004-birth-record-summary.txt",
-        "declaredFacts": {
-          "provenPresent": [
-            "identity.dateOfBirth",
-            "identity.legalName"
-          ],
-          "missing": [],
-          "unsupported": []
-        },
-        "forbiddenFacts": {
-          "provenAbsent": [],
-          "present": [],
-          "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
-          ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
-          ],
-          "invalid": []
-        },
-        "withheldFacts": {
-          "provenAbsent": [],
-          "present": [],
-          "skipped": []
-        }
-      },
-      {
-        "id": "005",
-        "path": "documents/identity/005-ssn-card-transcript.md",
-        "declaredFacts": {
-          "provenPresent": [
-            "identity.legalName",
-            "identity.ssn"
-          ],
-          "missing": [],
-          "unsupported": []
-        },
-        "forbiddenFacts": {
-          "provenAbsent": [],
-          "present": [],
-          "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
-          ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
-          ],
-          "invalid": []
-        },
-        "withheldFacts": {
-          "provenAbsent": [],
-          "present": [],
-          "skipped": []
-        }
-      },
-      {
-        "id": "006",
-        "path": "documents/work-authorization/006-lawful-permanent-resident-note.md",
+        "path": "documents/work-authorization/004-lawful-permanent-resident-note.md",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -204,13 +132,61 @@
           "provenAbsent": [],
           "present": [],
           "warningOnly": [
-            "contact.phone",
-            "workAuthorization.foreignPassportNumber",
-            "workAuthorization.i94AdmissionNumber"
+            "contact.phone"
           ],
-          "skipped": [
-            "workAuthorization.workAuthorizationExpirationDate"
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "005",
+        "path": "documents/identity/005-birth-record-summary.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.dateOfBirth",
+            "identity.legalName"
           ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "006",
+        "path": "documents/identity/006-ssn-card-transcript.md",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {

@@ -16,6 +16,14 @@
       "acceptedAliasSlugs": ["contact.phone", "profile.phone", "profile.phone_number"],
       "valueType": "string"
     },
+    "workAuthorization.citizenshipStatus": {
+      "canonicalSlugs": ["eval.work_authorization.citizenship_status"],
+      "acceptedAliasSlugs": [
+        "profile.citizenship_status",
+        "work_authorization.citizenship_status"
+      ],
+      "valueType": "string"
+    },
     "employment.company": {
       "canonicalSlugs": ["profile.company"],
       "acceptedAliasSlugs": ["employment.company", "eval.employment.company"],

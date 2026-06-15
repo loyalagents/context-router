@@ -14,6 +14,7 @@ import {
   jsonText,
   toPosixPath,
 } from './shared.mjs';
+import { fieldIsActive } from './field-map.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -603,6 +604,7 @@ export function buildCorpusManifest({ userId, corpusId, formId, profile, fieldMa
     ...new Set(
       (fieldMap.fields ?? [])
         .filter((field) => field.mode === 'fact')
+        .filter((field) => fieldIsActive(field, profile.facts ?? {}))
         .map((field) => field.factKey)
         .filter(Boolean),
     ),

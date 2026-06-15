@@ -68,8 +68,8 @@ function scoreField({ field, fixture, storageMap }) {
   const fieldClass = classifyFieldDenominator(field);
   const overfill = structuralOverfill(field, fieldClass);
   const sourceSlugs = field.actual?.sourceSlugs ?? [];
-  const expectedValue = field.expected?.value ?? null;
-  const actualValue = field.actual?.value ?? null;
+  const expectedValue = scoreExpectedValue(field);
+  const actualValue = scoreActualValue(field);
   const storage = factKey
     ? storageSpecForFact(factKey, { profile: fixture.profile, storageMap })
     : { acceptedSlugs: [] };
@@ -96,9 +96,28 @@ function scoreField({ field, fixture, storageMap }) {
   };
 }
 
+function scoreExpectedValue(field) {
+  if (field.expected?.action === 'CHECK') return true;
+  if (field.expected?.action === 'UNCHECK') return false;
+  return field.expected?.value ?? null;
+}
+
+function scoreActualValue(field) {
+  if (
+    field.expected?.action === 'CHECK' ||
+    field.expected?.action === 'UNCHECK'
+  ) {
+    return field.actual?.checked ?? null;
+  }
+  return field.actual?.value ?? null;
+}
+
 function classifyFieldDenominator(field) {
   if (field.classification === 'unsupported') return 'unsupported';
   if (field.fieldMap?.mode === 'skip') return 'structural-skip';
+  if (field.expected?.skipKind === 'conditional-inactive') {
+    return 'structural-skip';
+  }
   if (field.fieldMap?.mode === 'fact' && field.expected?.action === 'SKIP') {
     return 'abstention-test';
   }
@@ -140,7 +159,7 @@ function structuralOverfill(field, fieldClass) {
       overfillReason: null,
     };
   }
-  const reason = field.fieldMap?.reason ?? 'unknown';
+  const reason = field.fieldMap?.reason ?? field.expected?.skipKind ?? 'unknown';
   return {
     overfill: true,
     overfillSeverity: overfillSeverity(reason),

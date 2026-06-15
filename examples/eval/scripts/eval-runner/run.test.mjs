@@ -93,13 +93,17 @@ test('run plan prefers seed slugs and creates only Elena eval-only facts', async
     11,
   );
   assert.equal(
+    runPlan.fillActions.filter((action) => action.action === 'CHECK').length,
+    1,
+  );
+  assert.equal(
     runPlan.fillActions.filter((action) => action.action === 'SELECT_OPTION')
       .length,
     1,
   );
   assert.equal(
     runPlan.fillActions.filter((action) => action.action === 'SKIP').length,
-    36,
+    35,
   );
 });
 
@@ -114,6 +118,67 @@ test('runner value rendering and eval slug derivation are deterministic', () => 
     renderFieldValue('000-00-0194', { render: 'digits-only' }),
     '000000194',
   );
+  assert.equal(
+    renderFieldValue('1994-07-18', { render: 'mmddyyyy' }),
+    '07181994',
+  );
+});
+
+test('run plan applies conditional I-9 citizenship branches', async () => {
+  const elena = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+  const elenaPlan = buildRunPlan(elena);
+  assert.equal(actionFor(elenaPlan, 'CB_1').fillAction.action, 'CHECK');
+  for (const name of ['CB_2', 'CB_3', 'CB_4']) {
+    assert.equal(actionFor(elenaPlan, name).fillAction.action, 'SKIP');
+    assert.equal(actionFor(elenaPlan, name).expectedSkipKind, 'conditional-inactive');
+  }
+
+  const samir = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'samir-desai-i9-template-smoke',
+  });
+  const samirPlan = buildRunPlan(samir);
+  assert.equal(actionFor(samirPlan, 'CB_3').fillAction.action, 'CHECK');
+  assert.equal(
+    actionFor(samirPlan, '3 A lawful permanent resident Enter USCIS or ANumber')
+      .fillAction.action,
+    'SET_TEXT',
+  );
+  assert.equal(actionFor(samirPlan, 'USCIS ANumber').fillAction.action, 'SKIP');
+  assert.equal(
+    actionFor(samirPlan, 'USCIS ANumber').expectedSkipKind,
+    'conditional-inactive',
+  );
+
+  const alex = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'alex-i9-realistic',
+  });
+  const alexPlan = buildRunPlan(alex);
+  assert.equal(actionFor(alexPlan, 'CB_4').fillAction.action, 'CHECK');
+  assert.equal(
+    actionFor(alexPlan, '3 A lawful permanent resident Enter USCIS or ANumber')
+      .expectedSkipKind,
+    'conditional-inactive',
+  );
+  assert.equal(
+    actionFor(alexPlan, 'Exp Date mmddyyyy').fillAction.value,
+    '09302028',
+  );
+  assert.equal(actionFor(alexPlan, 'USCIS ANumber').fillAction.action, 'SET_TEXT');
+  assert.equal(
+    actionFor(alexPlan, 'Form I94 Admission Number').fillAction.action,
+    'SET_TEXT',
+  );
+
+  const noncitizenNational = structuredClone(elena);
+  noncitizenNational.profile.facts.workAuthorization.citizenshipStatus =
+    'noncitizen national';
+  const noncitizenNationalPlan = buildRunPlan(noncitizenNational);
+  assert.equal(actionFor(noncitizenNationalPlan, 'CB_2').fillAction.action, 'CHECK');
 });
 
 test('dropdown option mismatch emits explicit SKIP', async () => {
@@ -149,14 +214,14 @@ test('filled-form snapshot normalization records expected counts and classificat
 
   assert.equal(snapshot.response.status, 'partial');
   assert.equal(snapshot.summary.totalFields, 48);
-  assert.equal(snapshot.summary.filledCount, 12);
-  assert.equal(snapshot.summary.skippedCount, 36);
+  assert.equal(snapshot.summary.filledCount, 13);
+  assert.equal(snapshot.summary.skippedCount, 35);
   assert.deepEqual(snapshot.summary.plannedActionCounts, {
     SET_TEXT: 11,
-    CHECK: 0,
+    CHECK: 1,
     UNCHECK: 0,
     SELECT_OPTION: 1,
-    SKIP: 36,
+    SKIP: 35,
   });
   assert.equal(
     snapshot.fields.find((field) => field.pdfFieldName === 'State').actual
@@ -167,6 +232,48 @@ test('filled-form snapshot normalization records expected counts and classificat
     snapshot.fields.find((field) => field.pdfFieldName === 'State')
       .classification,
     'correct',
+  );
+});
+
+test('snapshot classification treats field render variants as equivalent', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+  const runPlan = buildRunPlan(fixture);
+  const harnessResult = fakeHarnessResult(runPlan);
+  harnessResult.filledPdfFields['Date of Birth mmddyyyy'] = {
+    value: '07/18/1994',
+  };
+
+  const snapshot = buildFilledFormSnapshot({
+    fixture,
+    runPlan,
+    harnessResult,
+  });
+  assert.equal(
+    snapshot.fields.find((field) => field.pdfFieldName === 'Date of Birth mmddyyyy')
+      .expected.value,
+    '07181994',
+  );
+  assert.equal(
+    snapshot.fields.find((field) => field.pdfFieldName === 'Date of Birth mmddyyyy')
+      .classification,
+    'correct',
+  );
+
+  harnessResult.filledPdfFields['Date of Birth mmddyyyy'] = {
+    value: '01/01/1990',
+  };
+  const mismatch = buildFilledFormSnapshot({
+    fixture,
+    runPlan,
+    harnessResult,
+  });
+  assert.equal(
+    mismatch.fields.find((field) => field.pdfFieldName === 'Date of Birth mmddyyyy')
+      .classification,
+    'incorrect',
   );
 });
 
@@ -431,6 +538,14 @@ async function declareFilledFormSnapshot(root) {
   const scenario = JSON.parse(await readFile(scenarioPath, 'utf8'));
   scenario.expectedSnapshots = ['filled-form'];
   await writeFile(scenarioPath, `${JSON.stringify(scenario, null, 2)}\n`);
+}
+
+function actionFor(runPlan, pdfFieldName) {
+  const action = runPlan.actionPlans.find(
+    (candidate) => candidate.pdfFieldName === pdfFieldName,
+  );
+  assert.ok(action, `Missing action plan for ${pdfFieldName}`);
+  return action;
 }
 
 function fakeHarnessResult(runPlan) {

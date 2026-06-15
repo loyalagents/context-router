@@ -272,7 +272,8 @@ test('fill-form builds a live snapshot for the Alex realistic scenario', async (
   assert.equal(result.snapshot.scenarioId, 'alex-i9-realistic');
   assert.equal(result.snapshot.userId, 'alex-i9-test');
   assert.equal(result.snapshot.fields.length, 48);
-  assert.equal(result.snapshot.summary.plannedActionCounts.SET_TEXT, 16);
+  assert.equal(result.snapshot.summary.plannedActionCounts.SET_TEXT, 15);
+  assert.equal(result.snapshot.summary.plannedActionCounts.CHECK, 1);
   assert.equal(result.snapshot.summary.plannedActionCounts.SELECT_OPTION, 1);
   assert.equal(result.snapshot.summary.plannedActionCounts.SKIP, 31);
 });
