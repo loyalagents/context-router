@@ -1,7 +1,7 @@
 # First-Pass E2E Scoring Improvements TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-14
+- Last updated: 2026-06-15
 
 ## Context From Live E2E Runs
 
@@ -40,19 +40,19 @@ runs as rigorous model comparisons until model metadata is captured.
 
 ## P0: Prevent Bad Auto-Apply Overwrites
 
-- [ ] Treat blank suggestions as non-storable unconditionally.
+- [x] Treat blank suggestions as non-storable unconditionally.
   - Example from newer run:
     - `009-stale-contact-ticket.txt` wrote blank values for
       `eval.address.current.street`, `unit`, `state`, and `postal_code`.
   - Concrete change:
     - Extend the existing non-storable suggestion path to skip `newValue` values
-      that are `null`, `undefined`, `""`, empty arrays, or empty objects.
+      that are `null`, `undefined`, `""`, or whitespace-only strings.
     - Do this before building `applyInput` so intentional skips do not trip the
       applied-length invariant.
     - Record skipped blank suggestions in `ingestion-run.json`.
     - Add tests that blank suggestions are not applied and are still reported.
 
-- [ ] Add an in-memory applied-state map to the known-schema ingestor.
+- [x] Add an in-memory applied-state map to the known-schema ingestor.
   - Concrete change:
     - Track current values by slug during the ingestion run.
     - Seed the map from explicit `--seed-preferences` values when present.
@@ -63,16 +63,16 @@ runs as rigorous model comparisons until model metadata is captured.
     - add backend active-preference initialization later only if non-reset runs
       become important.
 
-- [ ] Add overwrite diagnostics to `ingestion-run.json`.
+- [x] Add overwrite diagnostics to `ingestion-run.json`.
   - Concrete change:
-    - For every applied suggestion, record `oldValue`, `newValue`, document
-      path, suggestion slug, and whether it overwrote a non-empty active value.
+    - For every suggestion, record document identity, suggestion slug,
+      `newValue`, optional existing value, decision, reasons, and whether it
+      overwrote a non-empty active value.
     - For every blocked suggestion, record document path, suggestion slug,
       `newValue`, block reason, and current value if relevant.
     - Add summary counts:
       - `overwriteCount`
       - `blankSuggestionSkippedCount`
-      - `nonEmptyToBlankOverwriteCount`
       - `forbiddenSuggestionBlockedCount`
       - `staleOrNoiseOverwriteBlockedCount`
     - Interpret counters precisely:
@@ -82,15 +82,20 @@ runs as rigorous model comparisons until model metadata is captured.
   - This makes future E2E failures attributable without manually diffing stored
     preferences.
 
-- [ ] Block forbidden and low-authority overwrites.
+- [x] Block forbidden and low-authority overwrites.
   - Examples:
     - `010-community-newsletter-email.txt` wrote `eval.address.current.city =
       Oakmont`.
     - `009-stale-contact-ticket.txt` damaged current address fields.
   - Concrete change:
     - Use `factContract.forbid` as an unconditional deterministic block.
-      If a document forbids a fact, any suggestion for that fact from that
-      document is blocked even when the target field is currently unset.
+      If a fact is effectively forbidden for a document, any suggestion for
+      that fact from that document is blocked even when the target field is
+      currently unset. Per-document `factContract.include` authorizes that
+      document to extract facts listed in `factContractDefaults.forbid`.
+    - Reuse the validator's `effectiveForbiddenFactKeys` helper so ingestion
+      and corpus-truth semantics stay aligned, including intentionally missing
+      facts that are derived as forbidden for current extract/corroborate docs.
     - Use manifest document metadata as the backstop for stale/noise overwrite
       protection:
       `evaluationRole.freshness`, `evaluationRole.authority`,
@@ -100,12 +105,12 @@ runs as rigorous model comparisons until model metadata is captured.
       active values for target facts.
     - Keep blocked suggestions in the run report but do not apply them.
 
-- [ ] Update `ingestion-run.schema.json` in the same PR.
+- [x] Update `ingestion-run.schema.json` in the same PR.
   - Add skipped-suggestion diagnostics, overwrite diagnostics, and summary
     counts.
   - Keep validation strict; do not add compatibility shims.
 
-- [ ] Add tests for document-order overwrite behavior.
+- [x] Add tests for document-order overwrite behavior.
   - Test sequence:
     - doc 1 applies correct current address.
     - doc 2 is stale/noise and suggests blank or conflicting address.

@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { readJson, readYaml, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
 import { scoreDatabaseToFile } from './scoring/database.mjs';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
+import { storageSpecForFact } from './scoring/slugs.mjs';
+import { collectFactKeys, effectiveForbiddenFactKeys } from './shared.mjs';
 import {
   applyPreferenceSuggestions,
   createPreferenceDefinition,
@@ -28,6 +30,14 @@ const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const DEFAULT_BACKEND_URL = 'http://localhost:3000';
 const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const INGESTION_MODE = 'known-schema-document-ingestion';
+const DECISION_REASON = {
+  AUTO_APPLY_DISABLED: 'auto_apply_disabled',
+  BLANK_VALUE: 'blank_value',
+  FORBIDDEN_FACT: 'forbidden_fact',
+  LOW_TRUST_SOURCE: 'low_trust_source',
+  WOULD_OVERWRITE_NON_EMPTY: 'would_overwrite_non_empty',
+  WOULD_OVERWRITE_NON_EMPTY_WITH_BLANK: 'would_overwrite_non_empty_with_blank',
+};
 
 export async function runIngestDocuments({
   repoRoot = defaultRepoRoot,
@@ -53,6 +63,8 @@ export async function runIngestDocuments({
 
   try {
     const fixture = await loadFixture({ repoRoot, options });
+    const activeState = new Map();
+    const slugPolicy = buildSlugPolicy(fixture);
     report.summary.documentCount = fixture.manifest.documents.length;
 
     const backendUser = await fetchBackendUser({
@@ -83,6 +95,7 @@ export async function runIngestDocuments({
         options,
         repoRoot,
         fetchImpl,
+        activeState,
       });
       report.summary.seedPreferenceCount = report.seedPreferences.length;
     }
@@ -95,6 +108,8 @@ export async function runIngestDocuments({
           documentsRoot: fixture.documentsRoot,
           doc,
           fetchImpl,
+          activeState,
+          slugPolicy,
         });
         report.documents.push(docReport);
         updateDocumentCounts(report);
@@ -361,7 +376,7 @@ async function ensureDefinitions({ options, targets, fetchImpl }) {
   return setup;
 }
 
-async function seedPreferences({ options, repoRoot, fetchImpl }) {
+async function seedPreferences({ options, repoRoot, fetchImpl, activeState }) {
   const seedPath = path.resolve(repoRoot, options.seedPreferencesPath);
   const seedRows = await readJson(seedPath);
   if (!Array.isArray(seedRows)) {
@@ -384,6 +399,9 @@ async function seedPreferences({ options, repoRoot, fetchImpl }) {
       input: { slug: row.slug, value: row.value },
       fetchImpl,
     });
+    activeState.set(preference?.slug ?? row.slug, {
+      value: Object.hasOwn(preference ?? {}, 'value') ? preference.value : row.value,
+    });
     written.push({
       id: preference?.id,
       slug: preference?.slug ?? row.slug,
@@ -393,7 +411,15 @@ async function seedPreferences({ options, repoRoot, fetchImpl }) {
   return written;
 }
 
-async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl }) {
+async function ingestDocument({
+  options,
+  repoRoot,
+  documentsRoot,
+  doc,
+  fetchImpl,
+  activeState,
+  slugPolicy,
+}) {
   const absolutePath = path.resolve(documentsRoot, doc.path);
   if (!isInside(documentsRoot, absolutePath)) {
     throw new Error(`Document path escapes documents root: ${doc.path}`);
@@ -408,6 +434,7 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
     appliedSuggestionCount: 0,
     suggestions: [],
     filteredSuggestions: [],
+    suggestionDecisions: [],
     appliedPreferences: [],
   };
 
@@ -442,18 +469,25 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   docReport.filteredSuggestions = uploadResult.filteredSuggestions.map(suggestionSummary);
   docReport.suggestionCount = docReport.suggestions.length;
   docReport.filteredSuggestionCount = docReport.filteredSuggestions.length;
-  const storableSuggestions = uploadResult.suggestions.filter(isStorableSuggestion);
-  const autoApplySkippedSuggestions = uploadResult.suggestions
-    .filter((suggestion) => !isStorableSuggestion(suggestion))
-    .map((suggestion) => ({
-      ...suggestionSummary(suggestion),
-      filterReason: 'NON_STORABLE_NULL_VALUE',
-      filterDetails:
-        'Active preferences cannot store null or undefined values; absence is represented by leaving the preference unset.',
-    }));
-  if (autoApplySkippedSuggestions.length > 0) {
-    docReport.autoApplySkippedSuggestions = autoApplySkippedSuggestions;
-  }
+  const decisions = uploadResult.suggestions.map((suggestion) =>
+    decideSuggestion({
+      suggestion,
+      doc,
+      activeState,
+      slugPolicy,
+      autoApply: options.autoApply,
+    }),
+  );
+  docReport.suggestionDecisions = decisions.map(suggestionDecisionSummary);
+  docReport.autoApplySkippedSuggestions = decisions
+    .filter((decision) => decision.decision === 'skipped')
+    .map(skippedSuggestionSummary);
+  docReport.blockedSuggestions = decisions
+    .filter((decision) => decision.decision === 'blocked')
+    .map(suggestionDecisionSummary);
+  docReport.overwriteDiagnostics = decisions
+    .filter((decision) => decision.decision === 'applied' && decision.overwroteNonEmpty)
+    .map(suggestionDecisionSummary);
 
   if (uploadResult.status === 'parse_error' || uploadResult.status === 'ai_error') {
     docReport.error = redactSecret(
@@ -463,11 +497,13 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
     return docReport;
   }
 
-  if (options.autoApply && storableSuggestions.length > 0) {
+  const appliedDecisions = decisions.filter((decision) => decision.decision === 'applied');
+
+  if (options.autoApply && appliedDecisions.length > 0) {
     let applyInput;
     try {
-      applyInput = storableSuggestions.map((suggestion) =>
-        applyInputForSuggestion({ suggestion, doc }),
+      applyInput = appliedDecisions.map((decision) =>
+        applyInputForSuggestion({ suggestion: decision.suggestion, doc }),
       );
     } catch (error) {
       docReport.status = 'apply_error';
@@ -490,6 +526,9 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
         docReport.error = `Applied ${applied.length}/${applyInput.length} suggestions for ${doc.path}.`;
         throw new HardDocumentFailure(docReport);
       }
+      for (const decision of appliedDecisions) {
+        activeState.set(decision.suggestion.slug, { value: decision.suggestion.newValue });
+      }
     } catch (error) {
       if (error instanceof HardDocumentFailure) throw error;
       docReport.status = 'apply_error';
@@ -501,8 +540,147 @@ async function ingestDocument({ options, repoRoot, documentsRoot, doc, fetchImpl
   return docReport;
 }
 
-function isStorableSuggestion(suggestion) {
-  return suggestion.newValue !== null && suggestion.newValue !== undefined;
+function buildSlugPolicy({ manifest, profile, storageMap }) {
+  const factKeys = new Set([
+    ...collectFactKeys(profile.facts ?? {}).leaves.keys(),
+    ...(manifest.factContractDefaults?.forbid ?? []),
+    ...(manifest.intentionallyMissing ?? [])
+      .map((missing) => missing.factKey)
+      .filter(Boolean),
+  ]);
+
+  for (const doc of manifest.documents ?? []) {
+    for (const factKey of doc.factContract?.include ?? []) factKeys.add(factKey);
+    for (const factKey of doc.factContract?.forbid ?? []) factKeys.add(factKey);
+  }
+
+  const factKeysBySlug = new Map();
+  for (const factKey of factKeys) {
+    const storage = storageSpecForFact(factKey, { profile, storageMap });
+    for (const slug of storage.acceptedSlugs) {
+      const slugs = factKeysBySlug.get(slug) ?? new Set();
+      slugs.add(factKey);
+      factKeysBySlug.set(slug, slugs);
+    }
+  }
+
+  return {
+    factKeysBySlug,
+    manifest,
+  };
+}
+
+function decideSuggestion({ suggestion, doc, activeState, slugPolicy, autoApply }) {
+  const state = activeState.get(suggestion.slug);
+  const hasExistingValue = Boolean(state);
+  const existingValue = state?.value;
+  const existingNonEmpty = hasExistingValue && !isBlankSuggestionValue(existingValue);
+  const valuesDiffer = hasExistingValue && !valuesEqual(existingValue, suggestion.newValue);
+  const wouldOverwriteNonEmpty = existingNonEmpty && valuesDiffer;
+  const newValueIsBlank = isBlankSuggestionValue(suggestion.newValue);
+  const forbiddenFactKeys = forbiddenFactKeysForSuggestion({ doc, suggestion, slugPolicy });
+  const lowTrust = lowTrustSourceForDocument(doc);
+  const reasons = [];
+  let decision = 'applied';
+
+  if (newValueIsBlank) {
+    decision = 'skipped';
+    reasons.push(DECISION_REASON.BLANK_VALUE);
+    if (wouldOverwriteNonEmpty) {
+      reasons.push(DECISION_REASON.WOULD_OVERWRITE_NON_EMPTY_WITH_BLANK);
+    }
+  } else if (forbiddenFactKeys.length > 0) {
+    decision = 'blocked';
+    reasons.push(DECISION_REASON.FORBIDDEN_FACT);
+  } else if (lowTrust.lowTrustSource && wouldOverwriteNonEmpty) {
+    decision = 'blocked';
+    reasons.push(
+      DECISION_REASON.LOW_TRUST_SOURCE,
+      DECISION_REASON.WOULD_OVERWRITE_NON_EMPTY,
+    );
+  } else if (!autoApply) {
+    decision = 'skipped';
+    reasons.push(DECISION_REASON.AUTO_APPLY_DISABLED);
+  }
+
+  return {
+    suggestion,
+    documentId: doc.id,
+    documentPath: doc.path,
+    slug: suggestion.slug,
+    operation: suggestion.operation,
+    confidence: suggestion.confidence ?? null,
+    newValue: suggestion.newValue,
+    ...(hasExistingValue ? { existingValue } : {}),
+    decision,
+    reasons,
+    lowTrustSource: lowTrust.lowTrustSource,
+    lowTrustSignals: lowTrust.lowTrustSignals,
+    overwroteNonEmpty: decision === 'applied' && wouldOverwriteNonEmpty,
+    wouldOverwriteNonEmpty,
+    forbiddenFactKeys,
+  };
+}
+
+function isBlankSuggestionValue(value) {
+  return value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+}
+
+function forbiddenFactKeysForSuggestion({ doc, suggestion, slugPolicy }) {
+  const suggestionFactKeys = slugPolicy.factKeysBySlug.get(suggestion.slug);
+  if (!suggestionFactKeys) return [];
+
+  const effectiveForbidden = new Set(effectiveForbiddenFactKeys(slugPolicy.manifest, doc));
+  return [...suggestionFactKeys]
+    .filter((factKey) => effectiveForbidden.has(factKey))
+    .sort();
+}
+
+export function lowTrustSourceForDocument(doc) {
+  const lowTrustSignals = [];
+  const role = doc.evaluationRole ?? {};
+  const sourceSpec = doc.sourceSpec ?? {};
+
+  if (matchesAnyLabel(role.freshness, ['stale', 'superseded', 'obsolete'])) {
+    lowTrustSignals.push(`freshness:${role.freshness}`);
+  }
+  if (matchesAnyLabel(role.authority, ['low', 'none'])) {
+    lowTrustSignals.push(`authority:${role.authority}`);
+  }
+  if (matchesAnyLabel(role.expectedUse, ['guardrail', 'ignore', 'noise', 'distractor'])) {
+    lowTrustSignals.push(`expectedUse:${role.expectedUse}`);
+  }
+  for (const tag of role.challengeTags ?? []) {
+    if (containsAnyLabel(tag, ['stale', 'noise', 'superseded', 'conflicting', 'guardrail'])) {
+      lowTrustSignals.push(`challengeTag:${tag}`);
+    }
+  }
+  if (matchesAnyLabel(sourceSpec.sourceFamily, ['noise', 'partial-conflicting'])) {
+    lowTrustSignals.push(`sourceFamily:${sourceSpec.sourceFamily}`);
+  }
+
+  return {
+    lowTrustSource: lowTrustSignals.length > 0,
+    lowTrustSignals,
+  };
+}
+
+function matchesAnyLabel(value, candidates) {
+  const normalized = normalizePolicyLabel(value);
+  return candidates.some((candidate) => normalized === normalizePolicyLabel(candidate));
+}
+
+function containsAnyLabel(value, candidates) {
+  const normalized = normalizePolicyLabel(value);
+  return candidates.some((candidate) => normalized.includes(normalizePolicyLabel(candidate)));
+}
+
+function normalizePolicyLabel(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function valuesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function validateUploadResult(result, docPath) {
@@ -597,7 +775,7 @@ function exportArgs(options) {
 
 function initialReport({ options, startedAt }) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     artifactType: 'ingestion-run',
     status: 'fail',
     ...(options.runId ? { runId: options.runId } : {}),
@@ -627,6 +805,10 @@ function initialReport({ options, startedAt }) {
       suggestionCount: 0,
       filteredSuggestionCount: 0,
       appliedSuggestionCount: 0,
+      overwriteCount: 0,
+      blankSuggestionSkippedCount: 0,
+      forbiddenSuggestionBlockedCount: 0,
+      staleOrNoiseOverwriteBlockedCount: 0,
       applyFailureCount: 0,
       createdDefinitionCount: 0,
       seedPreferenceCount: 0,
@@ -647,6 +829,26 @@ function updateDocumentCounts(report) {
   report.summary.suggestionCount = sum(documents, 'suggestionCount');
   report.summary.filteredSuggestionCount = sum(documents, 'filteredSuggestionCount');
   report.summary.appliedSuggestionCount = sum(documents, 'appliedSuggestionCount');
+  const decisions = documents.flatMap((doc) => doc.suggestionDecisions ?? []);
+  report.summary.overwriteCount = decisions.filter(
+    (decision) => decision.decision === 'applied' && decision.overwroteNonEmpty,
+  ).length;
+  report.summary.blankSuggestionSkippedCount = decisions.filter(
+    (decision) =>
+      decision.decision === 'skipped' &&
+      decision.reasons?.includes(DECISION_REASON.BLANK_VALUE),
+  ).length;
+  report.summary.forbiddenSuggestionBlockedCount = decisions.filter(
+    (decision) =>
+      decision.decision === 'blocked' &&
+      decision.reasons?.includes(DECISION_REASON.FORBIDDEN_FACT),
+  ).length;
+  report.summary.staleOrNoiseOverwriteBlockedCount = decisions.filter(
+    (decision) =>
+      decision.decision === 'blocked' &&
+      decision.reasons?.includes(DECISION_REASON.LOW_TRUST_SOURCE) &&
+      decision.reasons?.includes(DECISION_REASON.WOULD_OVERWRITE_NON_EMPTY),
+  ).length;
 }
 
 async function writeValidatedReport({ repoRoot, outPath, report }) {
@@ -664,6 +866,66 @@ function suggestionSummary(suggestion) {
     ...(suggestion.filterReason ? { filterReason: suggestion.filterReason } : {}),
     ...(suggestion.filterDetails ? { filterDetails: suggestion.filterDetails } : {}),
   };
+}
+
+function suggestionDecisionSummary(decision) {
+  return {
+    id: decision.suggestion.id,
+    documentId: decision.documentId,
+    documentPath: decision.documentPath,
+    slug: decision.slug,
+    operation: decision.operation,
+    confidence: decision.confidence,
+    newValue: decision.newValue,
+    ...(Object.hasOwn(decision, 'existingValue')
+      ? { existingValue: decision.existingValue }
+      : {}),
+    decision: decision.decision,
+    reasons: decision.reasons,
+    lowTrustSource: decision.lowTrustSource,
+    lowTrustSignals: decision.lowTrustSignals,
+    overwroteNonEmpty: decision.overwroteNonEmpty,
+    wouldOverwriteNonEmpty: decision.wouldOverwriteNonEmpty,
+    ...(decision.forbiddenFactKeys.length > 0
+      ? { forbiddenFactKeys: decision.forbiddenFactKeys }
+      : {}),
+  };
+}
+
+function skippedSuggestionSummary(decision) {
+  const summary = suggestionSummary(decision.suggestion);
+  return {
+    ...summary,
+    decision: decision.decision,
+    reasons: decision.reasons,
+    ...(Object.hasOwn(decision, 'existingValue')
+      ? { existingValue: decision.existingValue }
+      : {}),
+    filterReason: skippedFilterReason(decision),
+    filterDetails: skippedFilterDetails(decision),
+  };
+}
+
+function skippedFilterReason(decision) {
+  if (decision.reasons.includes(DECISION_REASON.BLANK_VALUE)) {
+    return decision.suggestion.newValue === null || decision.suggestion.newValue === undefined
+      ? 'NON_STORABLE_NULL_VALUE'
+      : 'NON_STORABLE_BLANK_VALUE';
+  }
+  if (decision.reasons.includes(DECISION_REASON.AUTO_APPLY_DISABLED)) {
+    return 'AUTO_APPLY_DISABLED';
+  }
+  return 'SKIPPED_BY_EVAL_INGESTOR';
+}
+
+function skippedFilterDetails(decision) {
+  if (decision.reasons.includes(DECISION_REASON.BLANK_VALUE)) {
+    return 'Active preferences cannot store null, undefined, empty, or whitespace-only string values; absence is represented by leaving the preference unset.';
+  }
+  if (decision.reasons.includes(DECISION_REASON.AUTO_APPLY_DISABLED)) {
+    return 'Auto-apply was disabled for this eval ingestion run.';
+  }
+  return 'Suggestion was skipped by the eval ingestor.';
 }
 
 function preferenceSummary(preference) {

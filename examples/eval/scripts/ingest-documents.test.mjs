@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildSchema, parse, validate } from 'graphql';
 import {
+  lowTrustSourceForDocument,
   parseArgs,
   runIngestDocuments,
 } from './ingest-documents.mjs';
@@ -100,6 +101,45 @@ test('ingest CLI uses env fallback and explicit CLI override', () => {
   assert.equal(cliOverride.options.backendUrl, 'http://cli-backend');
   assert.equal(cliOverride.options.graphqlUrl, 'http://cli-graphql');
   assert.equal(cliOverride.options.authToken, 'cli-token');
+});
+
+test('low-trust source detection normalizes punctuation, spacing, and case', () => {
+  const result = lowTrustSourceForDocument({
+    evaluationRole: {
+      freshness: ' Superseded ',
+      authority: 'Medium',
+      expectedUse: 'Needs Review',
+      challengeTags: ['Partial Conflicting', 'safe-detail'],
+    },
+    sourceSpec: {
+      sourceFamily: 'PARTIAL_conflicting',
+    },
+  });
+
+  assert.equal(result.lowTrustSource, true);
+  assert.deepEqual(result.lowTrustSignals, [
+    'freshness: Superseded ',
+    'challengeTag:Partial Conflicting',
+    'sourceFamily:PARTIAL_conflicting',
+  ]);
+
+  assert.deepEqual(
+    lowTrustSourceForDocument({
+      evaluationRole: {
+        freshness: 'current',
+        authority: 'high',
+        expectedUse: 'extract',
+        challengeTags: ['identity-evidence'],
+      },
+      sourceSpec: {
+        sourceFamily: 'identity',
+      },
+    }),
+    {
+      lowTrustSource: false,
+      lowTrustSignals: [],
+    },
+  );
 });
 
 test('ingest-documents resets, ensures definitions, uploads, applies, exports, and scores', async () => {
@@ -337,7 +377,7 @@ test('ingest-documents can skip definition setup and auto-apply', async () => {
   const fetchMock = createFetchMock({
     uploadResults: [
       successUpload({
-        suggestions: [suggestion({ slug: 'profile.email', newValue: 'alex@example.test' })],
+        suggestions: [suggestion({ slug: 'profile.first_name', newValue: 'Alex' })],
       }),
     ],
   });
@@ -371,6 +411,10 @@ test('ingest-documents can skip definition setup and auto-apply', async () => {
   assert.ok(report.definitionSetup.skipped.length > 0);
   assert.equal(report.summary.suggestionCount, 1);
   assert.equal(report.summary.appliedSuggestionCount, 0);
+  assert.equal(report.documents[0].suggestionDecisions[0].decision, 'skipped');
+  assert.deepEqual(report.documents[0].suggestionDecisions[0].reasons, [
+    'auto_apply_disabled',
+  ]);
   assert.equal(fetchMock.createDefinitionInputs.length, 0);
   assert.equal(fetchMock.applyInputs.length, 0);
 });
@@ -658,8 +702,8 @@ test('ingest-documents skips null suggestions before auto-apply', async () => {
         suggestions: [
           suggestion({
             id: 'analysis-001:candidate:0',
-            slug: 'profile.email',
-            newValue: 'alex.rivera@example.test',
+            slug: 'profile.first_name',
+            newValue: 'Alex',
           }),
           suggestion({
             id: 'analysis-001:candidate:1',
@@ -698,7 +742,7 @@ test('ingest-documents skips null suggestions before auto-apply', async () => {
   assert.equal(report.documents[0].appliedSuggestionCount, 1);
   assert.deepEqual(
     fetchMock.applyInputs[0].map((input) => input.slug),
-    ['profile.email'],
+    ['profile.first_name'],
   );
   assert.equal(report.documents[0].autoApplySkippedSuggestions.length, 1);
   assert.equal(
@@ -706,6 +750,553 @@ test('ingest-documents skips null suggestions before auto-apply', async () => {
     'NON_STORABLE_NULL_VALUE',
   );
   assert.equal(report.summary.applyFailureCount, 0);
+});
+
+test('ingest-documents skips blank and whitespace suggestions before auto-apply', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-blank-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'profile.first_name',
+            newValue: 'Alex',
+          }),
+          suggestion({
+            id: 'analysis-001:candidate:1',
+            slug: 'eval.address.current.street',
+            newValue: '',
+          }),
+          suggestion({
+            id: 'analysis-001:candidate:2',
+            slug: 'eval.address.current.unit',
+            newValue: '   ',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(report.schemaVersion, 2);
+  assert.deepEqual(
+    fetchMock.applyInputs[0].map((input) => input.slug),
+    ['profile.first_name'],
+  );
+  assert.equal(report.documents[0].suggestionDecisions.length, 3);
+  assert.deepEqual(
+    report.documents[0].suggestionDecisions.map((decision) => decision.decision),
+    ['applied', 'skipped', 'skipped'],
+  );
+  assert.deepEqual(
+    report.documents[0].suggestionDecisions.slice(1).map((decision) => decision.reasons),
+    [
+      ['blank_value'],
+      ['blank_value'],
+    ],
+  );
+  assert.equal(report.summary.blankSuggestionSkippedCount, 2);
+  assert.equal(report.documents[0].autoApplySkippedSuggestions.length, 2);
+});
+
+test('ingest-documents does not classify arrays or objects as blank values', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-composite-values-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'profile.first_name',
+            newValue: [],
+          }),
+          suggestion({
+            id: 'analysis-001:candidate:1',
+            slug: 'eval.identity.middle_initial',
+            newValue: {},
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--no-auto-apply',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.deepEqual(
+    report.documents[0].suggestionDecisions.map((decision) => decision.reasons),
+    [
+      ['auto_apply_disabled'],
+      ['auto_apply_disabled'],
+    ],
+  );
+  assert.equal(report.summary.blankSuggestionSkippedCount, 0);
+  assert.equal(fetchMock.applyInputs.length, 0);
+});
+
+test('ingest-documents blocks forbidden suggestions even when no value exists', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      ...Array.from({ length: 8 }, (_value, index) => noMatchesUpload(`analysis-${index + 1}`)),
+      successUpload({
+        analysisId: 'analysis-009',
+        suggestions: [
+          suggestion({
+            id: 'analysis-009:candidate:0',
+            slug: 'profile.email',
+            newValue: 'stale@example.test',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const staleDoc = report.documents[8];
+  assert.equal(staleDoc.path, 'documents/partial-conflicting/009-stale-contact-ticket.txt');
+  assert.equal(fetchMock.applyInputs.length, 0);
+  assert.equal(staleDoc.suggestionDecisions[0].decision, 'blocked');
+  assert.deepEqual(staleDoc.suggestionDecisions[0].reasons, ['forbidden_fact']);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 1);
+  assert.equal(report.summary.staleOrNoiseOverwriteBlockedCount, 0);
+  assert.equal(report.summary.overwriteCount, 0);
+});
+
+test('ingest-documents allows document includes to override default forbidden facts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-include-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      noMatchesUpload('analysis-001'),
+      successUpload({
+        analysisId: 'analysis-002',
+        suggestions: [
+          suggestion({
+            id: 'analysis-002:candidate:0',
+            slug: 'eval.identity.ssn',
+            newValue: '000-00-0292',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const decision = report.documents[1].suggestionDecisions[0];
+  assert.equal(report.documents[1].path, 'documents/identity/002-ssn-card-upload-ocr.txt');
+  assert.equal(decision.slug, 'eval.identity.ssn');
+  assert.equal(decision.decision, 'applied');
+  assert.deepEqual(decision.reasons, []);
+  assert.equal(Object.hasOwn(decision, 'forbiddenFactKeys'), false);
+  assert.deepEqual(fetchMock.applyInputs[0].map((input) => input.slug), [
+    'eval.identity.ssn',
+  ]);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 0);
+  assert.equal(report.summary.overwriteCount, 0);
+});
+
+test('ingest-documents blocks derived intentionally-missing fact suggestions', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-derived-missing-'));
+  const fixture = await writeDerivedMissingFixture(tmp);
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        analysisId: 'analysis-001',
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'eval.contact.phone',
+            newValue: '415-555-0100',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot: fixture.repoRoot,
+    args: [
+      '--user',
+      fixture.userId,
+      '--corpus',
+      fixture.corpusId,
+      '--documents-root',
+      fixture.documentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const decision = report.documents[0].suggestionDecisions[0];
+  assert.equal(decision.slug, 'eval.contact.phone');
+  assert.equal(decision.decision, 'blocked');
+  assert.deepEqual(decision.reasons, ['forbidden_fact']);
+  assert.deepEqual(decision.forbiddenFactKeys, ['contact.phone']);
+  assert.equal(fetchMock.applyInputs.length, 0);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 1);
+});
+
+test('ingest-documents blocks forbidden accepted-alias slugs', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-forbidden-alias-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      ...Array.from({ length: 8 }, (_value, index) => noMatchesUpload(`analysis-${index + 1}`)),
+      successUpload({
+        analysisId: 'analysis-009',
+        suggestions: [
+          suggestion({
+            id: 'analysis-009:candidate:0',
+            slug: 'contact.email',
+            newValue: 'stale@example.test',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  const decision = report.documents[8].suggestionDecisions[0];
+  assert.equal(decision.slug, 'contact.email');
+  assert.equal(decision.decision, 'blocked');
+  assert.deepEqual(decision.reasons, ['forbidden_fact']);
+  assert.deepEqual(decision.forbiddenFactKeys, ['contact.email']);
+  assert.equal(fetchMock.applyInputs.length, 0);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 1);
+});
+
+test('ingest-documents allows low-trust first writes but blocks low-trust overwrites', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-low-trust-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      ...Array.from({ length: 8 }, (_value, index) => noMatchesUpload(`analysis-${index + 1}`)),
+      successUpload({
+        analysisId: 'analysis-009',
+        suggestions: [
+          suggestion({
+            id: 'analysis-009:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: 'Portland',
+          }),
+        ],
+      }),
+      successUpload({
+        analysisId: 'analysis-010',
+        suggestions: [
+          suggestion({
+            id: 'analysis-010:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: 'Oakmont',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(fetchMock.applyInputs.length, 1);
+  assert.deepEqual(fetchMock.applyInputs[0].map((input) => input.slug), [
+    'eval.address.current.city',
+  ]);
+  assert.equal(report.documents[8].suggestionDecisions[0].decision, 'applied');
+  assert.equal(report.documents[8].suggestionDecisions[0].lowTrustSource, true);
+  assert.equal(report.documents[9].suggestionDecisions[0].decision, 'blocked');
+  assert.deepEqual(report.documents[9].suggestionDecisions[0].reasons, [
+    'low_trust_source',
+    'would_overwrite_non_empty',
+  ]);
+  assert.equal(report.summary.overwriteCount, 0);
+  assert.equal(report.summary.staleOrNoiseOverwriteBlockedCount, 1);
+});
+
+test('ingest-documents protects seeded values from bad overwrite classes', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-seed-protected-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const seedPath = path.join(tmp, 'seed-preferences.json');
+  await writeFile(
+    seedPath,
+    jsonText([{ slug: 'eval.address.current.city', value: 'Portland' }]),
+  );
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        analysisId: 'analysis-001',
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: '   ',
+          }),
+        ],
+      }),
+      ...Array.from({ length: 7 }, (_value, index) => noMatchesUpload(`analysis-${index + 2}`)),
+      successUpload({
+        analysisId: 'analysis-009',
+        suggestions: [
+          suggestion({
+            id: 'analysis-009:candidate:0',
+            slug: 'profile.email',
+            newValue: 'stale@example.test',
+          }),
+        ],
+      }),
+      successUpload({
+        analysisId: 'analysis-010',
+        suggestions: [
+          suggestion({
+            id: 'analysis-010:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: 'Oakmont',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--seed-preferences',
+      seedPath,
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(fetchMock.applyInputs.length, 0);
+  assert.deepEqual(report.documents[0].suggestionDecisions[0].reasons, [
+    'blank_value',
+    'would_overwrite_non_empty_with_blank',
+  ]);
+  assert.deepEqual(report.documents[8].suggestionDecisions[0].reasons, ['forbidden_fact']);
+  assert.deepEqual(report.documents[9].suggestionDecisions[0].reasons, [
+    'low_trust_source',
+    'would_overwrite_non_empty',
+  ]);
+  assert.equal(report.summary.blankSuggestionSkippedCount, 1);
+  assert.equal(report.summary.forbiddenSuggestionBlockedCount, 1);
+  assert.equal(report.summary.staleOrNoiseOverwriteBlockedCount, 1);
+  assert.equal(report.summary.overwriteCount, 0);
+});
+
+test('ingest-documents counts only applied non-empty overwrites as overwrites', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'ingest-docs-overwrite-count-'));
+  const outPath = path.join(tmp, 'ingestion-run.json');
+  const seedPath = path.join(tmp, 'seed-preferences.json');
+  await writeFile(
+    seedPath,
+    jsonText([{ slug: 'eval.address.current.city', value: 'Old City' }]),
+  );
+  const fetchMock = createFetchMock({
+    uploadResults: [
+      successUpload({
+        analysisId: 'analysis-001',
+        suggestions: [
+          suggestion({
+            id: 'analysis-001:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: 'Portland',
+          }),
+        ],
+      }),
+      ...Array.from({ length: 8 }, (_value, index) => noMatchesUpload(`analysis-${index + 2}`)),
+      successUpload({
+        analysisId: 'analysis-010',
+        suggestions: [
+          suggestion({
+            id: 'analysis-010:candidate:0',
+            slug: 'eval.address.current.city',
+            newValue: 'Oakmont',
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const result = await runIngestDocuments({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--documents-root',
+      alexDocumentsRoot,
+      '--out',
+      outPath,
+      '--auth-token',
+      'token',
+      '--skip-ensure-definitions',
+      '--seed-preferences',
+      seedPath,
+    ],
+    env: {},
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const report = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(fetchMock.applyInputs.length, 1);
+  assert.equal(report.documents[0].suggestionDecisions[0].decision, 'applied');
+  assert.equal(report.documents[0].suggestionDecisions[0].overwroteNonEmpty, true);
+  assert.equal(report.documents[9].suggestionDecisions[0].decision, 'blocked');
+  assert.equal(report.summary.overwriteCount, 1);
+  assert.equal(report.summary.staleOrNoiseOverwriteBlockedCount, 1);
 });
 
 test('ingest-documents records out-of-range suggestion confidence without suppressing the report', async () => {
@@ -817,6 +1408,78 @@ test('ingest-documents redacts auth token from document-level errors', async () 
   assert.match(report.documents[0].error, /\[redacted-auth-token\]/);
   assert.equal(result.lines.join('\n').includes('document-secret-token'), false);
 });
+
+async function writeDerivedMissingFixture(root) {
+  const userId = 'derived-missing-user';
+  const corpusId = 'derived-missing-corpus';
+  const fixtureRepoRoot = root;
+  const userRoot = path.join(fixtureRepoRoot, 'examples/eval/users', userId);
+  const corpusRoot = path.join(userRoot, 'corpora', corpusId);
+  const documentsDir = path.join(corpusRoot, 'documents');
+  const scoringRoot = path.join(fixtureRepoRoot, 'examples/eval/scoring');
+  const schemasRoot = path.join(fixtureRepoRoot, 'examples/eval/schemas');
+
+  await mkdir(documentsDir, { recursive: true });
+  await mkdir(scoringRoot, { recursive: true });
+  await mkdir(schemasRoot, { recursive: true });
+  await writeFile(
+    path.join(schemasRoot, 'ingestion-run.schema.json'),
+    await readFile(path.join(repoRoot, 'examples/eval/schemas/ingestion-run.schema.json'), 'utf8'),
+  );
+  await writeFile(
+    path.join(userRoot, 'profile.yaml'),
+    ['facts:', '  identity:', '    legalName: Derived Missing User', ''].join('\n'),
+  );
+  await writeFile(
+    path.join(scoringRoot, 'fact-storage-map.v1.json'),
+    JSON.stringify({ facts: {} }, null, 2),
+  );
+  await writeFile(
+    path.join(documentsDir, 'current-note.txt'),
+    'Current source document that should not infer a phone number.\n',
+  );
+  await writeFile(
+    path.join(corpusRoot, 'manifest.json'),
+    JSON.stringify(
+      {
+        factContractDefaults: { forbid: [] },
+        intentionallyMissing: [
+          {
+            factKey: 'contact.phone',
+            forms: [],
+            reason: 'Phone is intentionally absent in this fixture.',
+            expectedBehavior: 'Do not store a phone value.',
+          },
+        ],
+        documents: [
+          {
+            id: 'derived-missing-001',
+            path: 'documents/current-note.txt',
+            category: 'identity',
+            title: 'Current Note',
+            factContract: { include: ['identity.legalName'], forbid: [] },
+            sourceSpec: { sourceFamily: 'identity' },
+            evaluationRole: {
+              authority: 'high',
+              freshness: 'current',
+              expectedUse: 'extract',
+              challengeTags: [],
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  return {
+    repoRoot: fixtureRepoRoot,
+    userId,
+    corpusId,
+    documentsRoot: path.relative(fixtureRepoRoot, corpusRoot),
+  };
+}
 
 function createFetchMock({
   backendUserId = 'backend-user-123',
