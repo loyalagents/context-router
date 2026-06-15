@@ -507,7 +507,7 @@ function buildArtifacts({ repoRoot, options }) {
 
 function initialReport({ repoRoot, options, artifacts, startedAt }) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     artifactType: 'evaluation-run',
     evaluationMode: 'known-schema',
     status: 'running',

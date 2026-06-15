@@ -189,6 +189,9 @@ async function loadRunDirectory({ repoRoot, dir, label }) {
     label,
   );
 
+  // Do not schema-validate evaluation-run.json here. Compare-runs intentionally
+  // supports older local artifacts, including v1 runs that predate model
+  // metadata, while score reports remain the required comparable contracts.
   await validateWithSchema(
     repoRoot,
     'database-score-report.schema.json',
@@ -446,35 +449,29 @@ function combinedDeltaLines(baselineReport, runReport) {
 
 function optionalIngestionLines(baselineIngestion, runIngestion) {
   if (!baselineIngestion || !runIngestion) return [];
-  return INGESTION_METRICS
-    .filter((metric) =>
-      baselineIngestion.summary?.[metric] !== undefined ||
-      runIngestion.summary?.[metric] !== undefined)
-    .map((metric) =>
-      formatDelta(
-        'ingestion',
-        metric,
-        numberOrZero(baselineIngestion.summary?.[metric]),
-        numberOrZero(runIngestion.summary?.[metric]),
-      ));
+  const lines = [];
+  for (const metric of INGESTION_METRICS) {
+    const before = numberOrZero(baselineIngestion.summary?.[metric]);
+    const after = numberOrZero(runIngestion.summary?.[metric]);
+    if (before !== after) {
+      lines.push(formatDelta('ingestion', metric, before, after));
+    }
+  }
+  return lines;
 }
 
 function optionalStoredPreferenceLines(baselineStored, runStored) {
   if (!baselineStored || !runStored) return [];
-  return [
-    formatDelta(
-      'stored preferences',
-      'active',
-      baselineStored.preferences?.length ?? 0,
-      runStored.preferences?.length ?? 0,
-    ),
-    formatDelta(
-      'stored preferences',
-      'suggested',
-      baselineStored.suggestions?.length ?? 0,
-      runStored.suggestions?.length ?? 0,
-    ),
-  ].filter((line) => !line.endsWith('(0 -> 0)'));
+  const lines = [];
+  for (const [metric, before, after] of [
+    ['active', baselineStored.preferences?.length ?? 0, runStored.preferences?.length ?? 0],
+    ['suggested', baselineStored.suggestions?.length ?? 0, runStored.suggestions?.length ?? 0],
+  ]) {
+    if (before !== after) {
+      lines.push(formatDelta('stored preferences', metric, before, after));
+    }
+  }
+  return lines;
 }
 
 function formIssueKey(row) {

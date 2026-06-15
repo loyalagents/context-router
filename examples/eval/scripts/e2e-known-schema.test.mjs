@@ -188,6 +188,7 @@ test('known-schema e2e runs stages in order and writes a schema-valid evaluation
     evaluationRun,
     'evaluation run',
   );
+  assert.equal(evaluationRun.schemaVersion, 2);
   assert.equal(evaluationRun.status, 'pass');
   assert.equal(evaluationRun.runId, 'run-123');
   assert.equal(evaluationRun.backendUserId, 'backend-user-123');
@@ -265,6 +266,7 @@ test('known-schema e2e records unspecified model metadata when no label is provi
     label: null,
     source: 'unspecified',
   });
+  assert.equal(evaluationRun.schemaVersion, 2);
   await validateWithSchema(
     repoRoot,
     'evaluation-run.schema.json',

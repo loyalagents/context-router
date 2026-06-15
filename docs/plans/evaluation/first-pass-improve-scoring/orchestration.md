@@ -212,7 +212,7 @@ Status: implemented in this branch. See
 
 - [x] Record model metadata in `evaluation-run.json`.
   - Added `--model-label <label>` and `EVAL_MODEL_LABEL`.
-  - Updated `evaluation-run.schema.json`.
+  - Updated `evaluation-run.schema.json` to v2.
   - New artifacts carry manual labels for model/config comparisons.
   - Backend introspection for the actual loaded `VERTEX_MODEL_ID` is separate
     later work.

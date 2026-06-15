@@ -28,7 +28,7 @@
     "endedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "artifactType": { "const": "evaluation-run" },
     "evaluationMode": { "const": "known-schema" },
     "status": { "enum": ["running", "pass", "fail"] },

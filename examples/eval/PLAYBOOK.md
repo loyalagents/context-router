@@ -17,7 +17,9 @@ artifact directory with `pnpm eval:e2e-known-schema` and a clear
 `--model-label` or `EVAL_MODEL_LABEL`, then compare directories with
 `pnpm eval:compare-runs --baseline <dir> --run <dir> [--run <dir>...]`.
 Do not commit live run artifacts unless a plan explicitly asks for a durable
-example bundle.
+example bundle. Prefer comparing runs produced by the same eval-tooling
+contract; cross-version comparisons can reflect scorer or field-map changes
+rather than only backend/model quality changes.
 
 ## Ownership Rules
 

@@ -222,6 +222,41 @@ test('compare-runs fails clearly on identity mismatch', async () => {
   assert.match(result.lines.join('\n'), /scenarioId/);
 });
 
+test('compare-runs suppresses unchanged optional context counts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'compare-runs-unchanged-'));
+  const baseline = path.join(tmp, 'baseline');
+  const run = path.join(tmp, 'run');
+
+  const ingestionSummary = {
+    overwriteCount: 2,
+    blankSuggestionSkippedCount: 3,
+    forbiddenSuggestionBlockedCount: 4,
+    staleOrNoiseOverwriteBlockedCount: 5,
+  };
+  await writeRunArtifacts({
+    dir: baseline,
+    runId: 'baseline-run',
+    ingestionSummary,
+    storedPreferenceCount: 7,
+  });
+  await writeRunArtifacts({
+    dir: run,
+    runId: 'run',
+    ingestionSummary,
+    storedPreferenceCount: 7,
+  });
+
+  const result = await runCompareRuns({
+    repoRoot,
+    args: ['--baseline', baseline, '--run', run],
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  const output = result.lines.join('\n');
+  assert.doesNotMatch(output, /ingestion overwriteCount 0 \(2 -> 2\)/);
+  assert.doesNotMatch(output, /stored preferences active 0 \(7 -> 7\)/);
+});
+
 async function writeRunArtifacts({
   dir,
   runId,

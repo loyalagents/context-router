@@ -10,7 +10,8 @@
   - `EVAL_MODEL_LABEL` is used as an env fallback.
   - CLI labels take precedence over env labels.
   - Omitted labels are recorded as `{ "label": null, "source": "unspecified" }`.
-- Updated `evaluation-run.schema.json` for the nested model object.
+- Updated `evaluation-run.schema.json` to `schemaVersion: 2` for the nested
+  model object.
 - Persisted terminal `eval:fill-form` response artifacts.
   - Terminal statuses still exit nonzero.
   - `filled-form.json` and filled PDFs are not written for terminal statuses.
@@ -26,6 +27,8 @@
     structural overfills, combined attribution deltas, ingestion counters, and
     stored preference counts.
   - Normalizes older evaluation-run artifacts that do not have model metadata.
+  - Suppresses unchanged optional ingestion/storage context lines so comparison
+    output stays compact.
   - Fails clearly on required identity mismatches.
 
 ## Docs
@@ -34,7 +37,8 @@
   - terminal response artifact behavior,
   - `--model-label` / `EVAL_MODEL_LABEL`,
   - live known-schema E2E command example,
-  - `eval:compare-runs` usage.
+  - `eval:compare-runs` usage,
+  - caveat to compare runs produced by the same eval-tooling contract.
 - Updated `examples/eval/PLAYBOOK.md` with the live E2E comparison workflow.
 
 ## Verification

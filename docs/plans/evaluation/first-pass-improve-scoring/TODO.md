@@ -160,7 +160,8 @@ still later work.
   - Concrete change:
     - Added wrapper support for `--model-label <label>` and
       `EVAL_MODEL_LABEL`.
-    - Updated `evaluation-run.schema.json` with nested `model` metadata.
+    - Updated `evaluation-run.schema.json` to v2 with nested `model`
+      metadata.
   - Reason:
     - New artifacts can carry a manual label such as `gemini-2.5-flash-lite`
       or `gemini-2.5-pro`.

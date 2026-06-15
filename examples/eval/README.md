@@ -245,6 +245,10 @@ and `stored-preferences.json` context. It prints database/form score deltas,
 changed wrong or missing facts, structural overfill changes, combined attribution
 deltas, and overwrite/blocking counters when available.
 
+For model-quality comparisons, compare runs produced by the same eval-tooling
+contract. Older runs can still be loaded, but cross-version comparisons may show
+scorer or field-map contract changes, not only backend/model quality changes.
+
 Useful focused validation commands:
 
 ```bash
