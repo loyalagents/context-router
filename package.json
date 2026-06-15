@@ -30,6 +30,7 @@
     "eval:fill-form": "node examples/eval/scripts/fill-form.mjs",
     "eval:fill-form-from-docs": "node examples/eval/scripts/fill-form-from-docs.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
+    "eval:compare-runs": "node examples/eval/scripts/compare-runs.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",
     "eval:e2e-known-schema": "node examples/eval/scripts/e2e-known-schema.mjs",

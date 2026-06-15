@@ -247,6 +247,51 @@ test('fill-form accepts success responses and terminal statuses fail clearly', a
   }
 });
 
+test('fill-form writes redacted response artifact for terminal statuses without output artifacts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-terminal-response-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  const filledPdfPath = path.join(tmp, 'filled.pdf');
+  const responsePath = path.join(tmp, 'response.json');
+  const { response, filledPdfFields } = await fakeResponseForScenario({
+    scenarioId: 'elena-marquez-i9-template-smoke',
+    status: 'failed',
+  });
+
+  const result = await runFillForm({
+    repoRoot,
+    args: [
+      '--scenario',
+      'elena-marquez-i9-template-smoke',
+      '--out',
+      filledFormPath,
+      '--filled-pdf-out',
+      filledPdfPath,
+      '--response-out',
+      responsePath,
+      '--auth-token',
+      'secret-token',
+    ],
+    env: {},
+    fetchImpl: async () =>
+      jsonResponse({
+        ...response,
+        status: 'failed',
+        filledPdfBase64: null,
+      }),
+    pdfFieldReader: async () => filledPdfFields,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /status was failed/);
+  const responseArtifact = JSON.parse(await readFile(responsePath, 'utf8'));
+  assert.equal(responseArtifact.artifactType, 'form-fill-response');
+  assert.equal(responseArtifact.response.status, 'failed');
+  assert.equal(responseArtifact.response.filledPdfBase64, null);
+  assert.equal(JSON.stringify(responseArtifact).includes('secret-token'), false);
+  await assert.rejects(readFile(filledFormPath, 'utf8'), /ENOENT/);
+  await assert.rejects(readFile(filledPdfPath), /ENOENT/);
+});
+
 test('fill-form builds a live snapshot for the Alex realistic scenario', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-alex-'));
   const { response, filledPdfFields } = await fakeResponseForScenario({

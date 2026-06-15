@@ -69,9 +69,24 @@ export async function runFillForm({
       formPdfPath: fixture.formPdfPath,
       fetchImpl,
     });
+    const responsePdfBytes = decodeResponsePdfBytes(response);
+    const responsePath = options.responseOut
+      ? path.resolve(repoRoot, options.responseOut)
+      : null;
+    if (responsePath) {
+      await writeJson(
+        responsePath,
+        buildResponseArtifact({
+          fixture,
+          backendUrl: options.backendUrl,
+          response,
+          pdfBytes: responsePdfBytes,
+        }),
+      );
+    }
     assertScorableResponse(response);
 
-    const pdfBytes = Buffer.from(response.filledPdfBase64, 'base64');
+    const pdfBytes = responsePdfBytes ?? Buffer.from(response.filledPdfBase64, 'base64');
     const filledPdfFields = await pdfFieldReader({
       repoRoot,
       base64: response.filledPdfBase64,
@@ -109,11 +124,6 @@ export async function runFillForm({
     }
 
     if (options.responseOut) {
-      const responsePath = path.resolve(repoRoot, options.responseOut);
-      await writeJson(
-        responsePath,
-        buildResponseArtifact({ fixture, backendUrl: options.backendUrl, response, pdfBytes }),
-      );
       lines.push(`response ${relativePath(repoRoot, responsePath)}`);
     }
 
@@ -363,10 +373,17 @@ export function redactResponseBase64(response, pdfBytes) {
     filledPdfBase64: response.filledPdfBase64
       ? {
           redacted: true,
-          byteLength: pdfBytes.length,
+          byteLength: pdfBytes?.length ?? Buffer.from(response.filledPdfBase64, 'base64').length,
         }
       : null,
   };
+}
+
+function decodeResponsePdfBytes(response) {
+  if (typeof response?.filledPdfBase64 !== 'string' || !response.filledPdfBase64) {
+    return null;
+  }
+  return Buffer.from(response.filledPdfBase64, 'base64');
 }
 
 export function formatFillFormResult(result) {

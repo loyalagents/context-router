@@ -12,6 +12,15 @@ profile.yaml -> pnpm eval:derive-seeds -> pnpm eval:scaffold -> pnpm eval:valida
 Use `pnpm eval:verify` as the local non-DB gate before opening a PR. It runs
 the eval script tests and full fixture validation.
 
+For live known-schema E2E model comparisons, write each run to a separate
+artifact directory with `pnpm eval:e2e-known-schema` and a clear
+`--model-label` or `EVAL_MODEL_LABEL`, then compare directories with
+`pnpm eval:compare-runs --baseline <dir> --run <dir> [--run <dir>...]`.
+Do not commit live run artifacts unless a plan explicitly asks for a durable
+example bundle. Prefer comparing runs produced by the same eval-tooling
+contract; cross-version comparisons can reflect scorer or field-map changes
+rather than only backend/model quality changes.
+
 ## Ownership Rules
 
 - `users/<userId>/profile.yaml` is the source of truth for user facts.

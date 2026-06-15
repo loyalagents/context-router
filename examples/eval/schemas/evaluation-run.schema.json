@@ -17,6 +17,7 @@
     "artifactsRoot",
     "backendUrl",
     "graphqlUrl",
+    "model",
     "locationId",
     "settings",
     "backendUserId",
@@ -27,7 +28,7 @@
     "endedAt"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "artifactType": { "const": "evaluation-run" },
     "evaluationMode": { "const": "known-schema" },
     "status": { "enum": ["running", "pass", "fail"] },
@@ -39,6 +40,15 @@
     "artifactsRoot": { "type": "string", "minLength": 1 },
     "backendUrl": { "type": "string", "minLength": 1 },
     "graphqlUrl": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["label", "source"],
+      "properties": {
+        "label": { "type": ["string", "null"], "minLength": 1 },
+        "source": { "enum": ["manual", "unspecified"] }
+      }
+    },
     "locationId": { "type": ["string", "null"] },
     "settings": {
       "type": "object",

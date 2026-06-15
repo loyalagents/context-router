@@ -1,6 +1,6 @@
 # First-Pass E2E Scoring Improvements TODO
 
-- Status: active follow-up list; PR 1 overwrite safety and PR 2 field-map/scoring items implemented
+- Status: active follow-up list; PR 1, PR 2, and PR 3 implemented
 - Last updated: 2026-06-15
 
 ## Context From Live E2E Runs
@@ -15,9 +15,11 @@ Both runs passed end to end after the SSN PDF-writing fix, but both exposed the
 same main quality problem: good extracted memory can be overwritten by later
 bad suggestions.
 
-The artifacts do not currently record the backend model ID, so the model
-comparison is inferred from when the backend env was changed. Do not treat these
-runs as rigorous model comparisons until model metadata is captured.
+Older artifacts did not record model metadata, so those model comparisons are
+inferred from when the backend env was changed. New `evaluation-run.json`
+artifacts can record a manual model/config label through PR 3's
+`--model-label` / `EVAL_MODEL_LABEL` support. Backend model introspection is
+still later work.
 
 ## Main Observations
 
@@ -137,24 +139,31 @@ runs as rigorous model comparisons until model metadata is captured.
     - A reviewer should immediately see "wrong because stale ticket overwrote
       correct utility export" without manual artifact spelunking.
 
-- [ ] Add a compact E2E comparison summary command or doc recipe.
+- [x] Add a compact E2E comparison summary command or doc recipe.
   - Concrete change:
-    - Provide a small jq/script command that compares two run directories and
-      prints:
+    - Added `pnpm eval:compare-runs --baseline <dir> --run <dir>
+      [--run <dir>...]`, which compares one or more run directories against a
+      baseline and prints:
       - database score deltas
       - form score deltas
       - changed wrong/missing fact keys
       - changed structural overfills
-  - This is useful for model comparisons once model metadata is recorded.
-  - Basic score comparison can land before PR 1.
-  - Overwrite-provenance comparison should wait for PR 1.
+      - combined attribution deltas
+      - optional ingestion overwrite/blocking counters
+      - optional stored preference counts
+  - This is useful for model comparisons now that manual model labels can be
+    recorded.
+  - Detailed overwrite-provenance display inside `database-score-report.json`
+    remains separate later scorer-contract work.
 
-- [ ] Record backend model/config metadata in `evaluation-run.json`.
+- [x] Record backend model/config metadata in `evaluation-run.json`.
   - Concrete change:
-    - Add wrapper support for `--model-label <label>` and `EVAL_MODEL_LABEL`.
-    - Update `evaluation-run.schema.json`.
+    - Added wrapper support for `--model-label <label>` and
+      `EVAL_MODEL_LABEL`.
+    - Updated `evaluation-run.schema.json` to v2 with nested `model`
+      metadata.
   - Reason:
-    - Current artifacts cannot prove whether a run used `gemini-2.5-flash-lite`
+    - New artifacts can carry a manual label such as `gemini-2.5-flash-lite`
       or `gemini-2.5-pro`.
   - Later separate work:
     - expose backend diagnostic metadata for the Vertex model actually loaded by
@@ -207,13 +216,15 @@ PR 2 implemented these items. See
 
 ## P1: Improve Form-Fill Debuggability
 
-- [ ] Persist terminal `eval:fill-form` backend responses.
+- [x] Persist terminal `eval:fill-form` backend responses.
   - Before the SSN fix, form fill returned `status: failed`, but the eval
     runner did not persist `form-fill-response.json`.
   - Concrete change:
-    - Write a redacted response artifact before rejecting terminal statuses like
-      `failed`, `no_fillable_fields`, and `unsupported_format`.
-    - Add a test that terminal responses still produce a response artifact.
+    - Writes a redacted response artifact before rejecting terminal statuses
+      like `failed`, `no_fillable_fields`, and `unsupported_format`.
+    - Added a test that terminal responses still produce a response artifact.
+    - E2E failure output now includes the artifacts root and form-fill response
+      path.
 
 - [x] Normalize dashed SSN values for the I-9 PDF SSN field.
   - Fixed issue:
@@ -236,12 +247,15 @@ PR 2 implemented these items. See
   - Use this as the baseline for future PR review and model comparisons.
   - Generate this after the overwrite and field-map/scorer fixes land.
 
-- [ ] Document how to run model comparisons.
+- [x] Document how to run model comparisons.
   - Include:
     - how to set `VERTEX_MODEL_ID`
     - how to restart the backend
     - how to pass/record a model label
     - how to compare score reports between two run directories
+  - Implemented docs cover model labels and `eval:compare-runs`; backend env
+    switching/restart remains an operator responsibility until backend model
+    introspection exists.
 
 ## Later
 

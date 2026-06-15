@@ -81,6 +81,7 @@ test('known-schema e2e parseArgs handles defaults, env fallback, and CLI overrid
     EVAL_BACKEND_URL: 'http://env-backend',
     EVAL_GRAPHQL_URL: 'http://env-graphql',
     EVAL_AUTH_TOKEN: 'env-token',
+    EVAL_MODEL_LABEL: 'env-model',
   };
 
   const envFallback = parseArgs(baseArgs, env, fixedNow);
@@ -88,6 +89,7 @@ test('known-schema e2e parseArgs handles defaults, env fallback, and CLI overrid
   assert.equal(envFallback.options.backendUrl, 'http://env-backend');
   assert.equal(envFallback.options.graphqlUrl, 'http://env-graphql');
   assert.equal(envFallback.options.authToken, 'env-token');
+  assert.equal(envFallback.options.modelLabel, 'env-model');
   assert.equal(
     envFallback.options.documentsRoot,
     'examples/eval/users/alex-i9-test/corpora/realistic',
@@ -108,6 +110,8 @@ test('known-schema e2e parseArgs handles defaults, env fallback, and CLI overrid
       'http://cli-graphql',
       '--auth-token',
       'cli-token',
+      '--model-label',
+      'cli-model',
       '--run-id',
       'run-123',
     ],
@@ -119,6 +123,7 @@ test('known-schema e2e parseArgs handles defaults, env fallback, and CLI overrid
   assert.equal(cliOverride.options.backendUrl, 'http://cli-backend');
   assert.equal(cliOverride.options.graphqlUrl, 'http://cli-graphql');
   assert.equal(cliOverride.options.authToken, 'cli-token');
+  assert.equal(cliOverride.options.modelLabel, 'cli-model');
   assert.equal(cliOverride.options.runId, 'run-123');
 });
 
@@ -140,6 +145,8 @@ test('known-schema e2e runs stages in order and writes a schema-valid evaluation
       tmp,
       '--auth-token',
       'secret-token',
+      '--model-label',
+      'gemini-2.5-pro',
       '--backend-url',
       'http://user:pass@localhost:3000',
       '--graphql-url',
@@ -181,9 +188,14 @@ test('known-schema e2e runs stages in order and writes a schema-valid evaluation
     evaluationRun,
     'evaluation run',
   );
+  assert.equal(evaluationRun.schemaVersion, 2);
   assert.equal(evaluationRun.status, 'pass');
   assert.equal(evaluationRun.runId, 'run-123');
   assert.equal(evaluationRun.backendUserId, 'backend-user-123');
+  assert.deepEqual(evaluationRun.model, {
+    label: 'gemini-2.5-pro',
+    source: 'manual',
+  });
   assert.equal(evaluationRun.backendUrl, 'http://localhost:3000/');
   assert.equal(evaluationRun.graphqlUrl, 'http://localhost:3000/graphql');
   assert.equal(evaluationRun.settings.resetMemory, true);
@@ -218,6 +230,49 @@ test('known-schema e2e runs stages in order and writes a schema-valid evaluation
   assert.equal(fillArgs.includes('--form-score-report'), false);
   assert.equal(argValue(fillArgs, '--filled-pdf-out'), path.join(tmp, 'filled-form.pdf'));
   assert.equal(argValue(fillArgs, '--response-out'), path.join(tmp, 'form-fill-response.json'));
+});
+
+test('known-schema e2e records unspecified model metadata when no label is provided', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'known-schema-e2e-model-'));
+  const calls = [];
+  const runners = successfulRunners({ calls });
+
+  const result = await runKnownSchemaE2E({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--scenario',
+      'alex-i9-realistic',
+      '--artifacts-root',
+      tmp,
+      '--auth-token',
+      'token',
+      '--run-id',
+      'run-unspecified-model',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  const evaluationRun = JSON.parse(
+    await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'),
+  );
+  assert.deepEqual(evaluationRun.model, {
+    label: null,
+    source: 'unspecified',
+  });
+  assert.equal(evaluationRun.schemaVersion, 2);
+  await validateWithSchema(
+    repoRoot,
+    'evaluation-run.schema.json',
+    evaluationRun,
+    'evaluation run',
+  );
 });
 
 test('known-schema e2e writes partial evaluation run and skips later stages on failure', async () => {
@@ -256,6 +311,7 @@ test('known-schema e2e writes partial evaluation run and skips later stages on f
 
   assert.equal(result.exitCode, 1);
   assert.match(result.lines.join('\n'), /stage=export-stored-preferences/);
+  assert.match(result.lines.join('\n'), new RegExp(`artifacts=${escapeRegExp(path.relative(repoRoot, tmp))}`));
   assert.equal(result.lines.join('\n').includes('secret-token'), false);
   assert.match(result.lines.join('\n'), /\[redacted-auth-token\]/);
   assert.deepEqual(
@@ -287,6 +343,58 @@ test('known-schema e2e writes partial evaluation run and skips later stages on f
     'evaluation-run.schema.json',
     evaluationRun,
     'evaluation run',
+  );
+});
+
+test('known-schema e2e failed fill-form stage prints response artifact path', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'known-schema-e2e-fill-fail-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    fillForm: async ({ args }) => {
+      calls.push({ stage: 'fill-form', args });
+      await writeArtifact(argValue(args, '--response-out'), {
+        schemaVersion: 1,
+        artifactType: 'form-fill-response',
+      });
+      return {
+        exitCode: 1,
+        lines: [
+          'eval fill-form failed',
+          'response examples should still be visible',
+        ],
+      };
+    },
+  };
+
+  const result = await runKnownSchemaE2E({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--scenario',
+      'alex-i9-realistic',
+      '--artifacts-root',
+      tmp,
+      '--auth-token',
+      'token',
+      '--run-id',
+      'run-fill-failure',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  const output = result.lines.join('\n');
+  assert.match(output, /stage=fill-form/);
+  assert.match(output, new RegExp(`artifacts=${escapeRegExp(path.relative(repoRoot, tmp))}`));
+  assert.match(
+    output,
+    new RegExp(`response=${escapeRegExp(path.relative(repoRoot, path.join(tmp, 'form-fill-response.json')))}`),
   );
 });
 
@@ -501,4 +609,8 @@ function removeFlagValue(args, flag) {
   const index = args.indexOf(flag);
   assert.notEqual(index, -1);
   return [...args.slice(0, index), ...args.slice(index + 2)];
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
