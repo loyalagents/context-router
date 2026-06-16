@@ -7,7 +7,7 @@ import {
 } from './dto/document-analysis-result.dto';
 
 const AI_PROVIDER_FILE_TYPE_REJECTION_REASON =
-  'AI provider rejected the uploaded file type during analysis. The backend may need to normalize this file before retrying.';
+  'AI could not analyze this uploaded file type. Please try converting it to plain text before uploading again.';
 
 const AI_PROVIDER_FILE_TYPE_ERROR_PATTERNS = [
   'unsupported mime',

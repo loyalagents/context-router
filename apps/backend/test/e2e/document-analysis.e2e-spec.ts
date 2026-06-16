@@ -156,10 +156,29 @@ describe('Document Analysis API (e2e)', () => {
 
       expect(response.body.status).toBe('ai_error');
       expect(response.body.statusReason).toBe(
-        'AI provider rejected the uploaded file type during analysis. The backend may need to normalize this file before retrying.',
+        'AI could not analyze this uploaded file type. Please try converting it to plain text before uploading again.',
       );
       expect(response.body.statusReason).not.toContain('application/json');
       expect(response.body.statusReason).not.toContain('INVALID_ARGUMENT');
+    });
+
+    it('should keep the generic AI error reason for non-file-type provider failures', async () => {
+      structuredAi.generateStructuredWithFile.mockRejectedValue(
+        new Error('upstream model temporarily unavailable'),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('preference notes'), {
+          filename: 'preferences.txt',
+          contentType: 'text/plain',
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('ai_error');
+      expect(response.body.statusReason).toBe(
+        'AI service unavailable - please try again later',
+      );
     });
 
     it('should consolidate duplicate candidates and preserve stable IDs', async () => {
