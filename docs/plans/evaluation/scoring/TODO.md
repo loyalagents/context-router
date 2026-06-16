@@ -56,16 +56,20 @@
 - [x] Direct-document baseline treats model-authored confidence as diagnostic
   metadata rather than a hard fill gate.
 - [x] MCP known-schema agent runner via `pnpm eval:e2e-mcp-agent`.
-  - Validates documents, prepares memory/schema, runs one Claude or command
-    MCP-capable agent session, exports active memory, fills the form from
-    backend memory, and reuses existing score reports.
-  - Stages an isolated agent workspace so the agent can read declared corpus
-    documents without reading hidden truth from the source fixture tree.
+  - Validates documents, prepares memory/schema, runs one Claude MCP-capable
+    agent session or explicit command test adapter, exports active memory,
+    fills the form from backend memory, and reuses existing score reports.
+  - Stages an agent workspace with declared corpus documents only. This avoids
+    exposing fixture truth through the prompt/source paths, but is not an
+    OS-level filesystem sandbox.
   - Uses explicit Claude MCP config and a sanitized child environment for live
-    agent runs.
+    agent runs, while allowing documented Claude/headless model-provider auth
+    variables.
   - Writes `mcp-agent-run.json`, prompt, transcript, and the shared
     `evaluation-run.json` stage report.
   - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
+  - Records that MCP/backend identity is not yet verified; live runs are smoke
+    results until a hard identity preflight exists.
 
 ## Next
 
@@ -85,7 +89,12 @@
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Run one live known-schema Claude MCP smoke before starting open schema.
+- [ ] Add a hard MCP/backend identity preflight so the runner can prove the
+  Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
+  exports and scores.
+- [ ] Run one live known-schema Claude MCP smoke before starting open schema,
+  including a check that Claude's tool allow-list and MCP config behave as
+  expected.
 - [ ] Add open-schema memory snapshot and scoring described in
   `docs/plans/evaluation/scoring/open-schema/brainstorm.md`:
   - Export `memory-snapshot.json` with `preferences[]` and `definitions[]`.

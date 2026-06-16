@@ -75,6 +75,7 @@
         "formMode": { "enum": ["backend", "agent"] },
         "agent": { "enum": ["claude", "command"] },
         "mcpServer": { "type": "string", "minLength": 1 },
+        "commandAdapterTestOnly": { "type": "boolean" },
         "agentTimeoutMs": { "type": "integer", "minimum": 1 },
         "promptTemplate": { "type": "string", "minLength": 1 },
         "mcpConfig": { "type": ["string", "null"], "minLength": 1 },

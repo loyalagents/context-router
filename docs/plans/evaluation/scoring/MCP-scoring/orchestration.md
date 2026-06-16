@@ -27,15 +27,27 @@ validate-documents
 - [x] Add implementation summary.
 - [x] Harden agent isolation after PR feedback.
 - [x] Restrict v1 real-agent support to Claude plus command test adapter.
+- [x] Require explicit opt-in for the deterministic command test adapter.
+- [x] Allow Claude headless/cloud model-provider auth env vars while stripping
+  eval/backend/database secrets.
+- [x] Record staged-document containment and unverified MCP/backend identity
+  honestly in `mcp-agent-run.json`.
 - [ ] Run optional live Claude MCP smoke against `context-router-local`.
+- [ ] Add a hard MCP/backend identity preflight before using live MCP scores as
+  benchmark-reliable rather than smoke-only.
 
 ## Notes
 
 - V1 is known-schema MCP memory ingestion with backend form fill.
 - V1 supports `--agent claude --mcp-config <path>` for live runs and
-  `--agent command` for deterministic tests.
+  `--agent command --allow-test-command-agent` for deterministic tests.
 - The agent is launched from `agent-workspace/`, which contains only declared
-  corpus documents and a safe document index.
+  corpus documents and a safe document index. This is not an OS-level
+  filesystem sandbox, and the command adapter is not benchmark-safe.
+- Live Claude scores require the Claude MCP config to authenticate as the same
+  backend user as `EVAL_AUTH_TOKEN`; v1 records that this is unverified.
+- `mcp-agent-transcript.txt` can contain corpus PII even after auth-token
+  redaction, so artifact roots should not be committed.
 - Open schema remains a follow-up after the known-schema runner has a useful
   smoke result.
 - Low scores are benchmark output, not runner failures.

@@ -422,12 +422,15 @@ Closed-schema mode should likely look like:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
+  --agent claude \
   --schema-mode known \
+  --form-mode backend \
   --user alex-i9-test \
   --corpus realistic \
   --scenario alex-i9-realistic \
+  --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory \
-  --ensure-definitions \
   --artifacts-root /private/tmp/alex-mcp-known
 ```
 
@@ -435,10 +438,14 @@ Open-schema mode should likely look like:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
+  --agent claude \
   --schema-mode open \
+  --form-mode backend \
   --user alex-i9-test \
   --corpus realistic \
   --scenario alex-i9-realistic \
+  --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory \
   --skip-ensure-definitions \
   --artifacts-root /private/tmp/alex-mcp-open

@@ -174,9 +174,11 @@ Implemented in this phase:
 
 - `pnpm eval:e2e-mcp-agent`
 - known-schema setup helper reuse without document upload
-- Claude live adapter and explicit command test adapter
-- hidden-truth-safe prompt template plus isolated staged agent workspace
-- sanitized agent environment and explicit Claude MCP config
+- Claude live adapter and explicit opt-in command test adapter
+- hidden-truth-safe prompt template plus staged agent workspace containing only
+  declared documents; this is not an OS-level filesystem sandbox
+- sanitized agent environment, explicit Claude MCP config, and Claude
+  headless/cloud model-provider auth env passthrough
 - `mcp-agent-run.json`, redacted transcript, rendered prompt, and
   `evaluation-run.json` artifacts
 - reuse of stored-preferences export, database scoring, backend form fill, form
@@ -184,7 +186,8 @@ Implemented in this phase:
 
 Live smoke is still a manual follow-up because it requires a running backend,
 `EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing the local MCP
-server.
+server. Live scores remain smoke-only until the runner can verify that the MCP
+session and `EVAL_AUTH_TOKEN` resolve to the same backend user.
 
 Design doc:
 

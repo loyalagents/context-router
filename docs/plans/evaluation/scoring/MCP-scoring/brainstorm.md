@@ -9,9 +9,11 @@
 
 Current implementation note: after PR feedback, v1 intentionally supports
 Claude plus the deterministic `command` adapter only. The live Claude path uses
-an isolated staged workspace, explicit `--mcp-config` / `--strict-mcp-config`,
-and a sanitized child environment. Codex notes below are retained as historical
-design exploration until a similarly isolated Codex adapter is implemented.
+a staged workspace, explicit `--mcp-config` / `--strict-mcp-config`, and a
+sanitized child environment. The staged workspace is containment, not an
+OS-level filesystem sandbox; the `command` adapter is test-only and requires an
+explicit opt-in. Codex notes below are retained as historical design exploration
+until a similarly explicit Codex adapter is implemented.
 
 ## Summary
 
@@ -181,7 +183,7 @@ Proposed command:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
-  --agent codex \
+  --agent claude \
   --schema-mode known \
   --form-mode backend \
   --user alex-i9-test \
@@ -189,6 +191,7 @@ pnpm eval:e2e-mcp-agent \
   --scenario alex-i9-realistic \
   --artifacts-root /private/tmp/alex-mcp-known \
   --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory
 ```
 
@@ -305,9 +308,10 @@ The first implementation should support:
 
 - `--schema-mode known`
 - `--form-mode backend`
-- `--agent codex` or `--agent claude`
+- `--agent claude`
 - `--mcp-server <name>`
-- `--agent-command <command>` if explicit command invocation is needed
+- `--agent-command <command>` plus `--allow-test-command-agent` for
+  deterministic tests only
 - `--agent-timeout-ms <ms>`
 - `--prompt-template <path>` optional override
 - `--model-label <label>` for artifact comparison
@@ -523,7 +527,7 @@ on timeout and process exit status for hard control.
 
 ## Agent Invocation
 
-The first implementation can invoke Codex/Claude through command-line tools.
+The first implementation can invoke Claude through command-line tools.
 The runner should treat the command as a black-box agent process.
 
 Potential command strategy:
@@ -539,9 +543,9 @@ agent adapter
 The exact invocation may differ for Codex and Claude. Keep that difference in
 small adapters:
 
-- `codex` adapter
 - `claude` adapter
-- optional `command` adapter for arbitrary local experiments
+- future `codex` adapter once it has explicit MCP and workspace controls
+- optional `command` adapter for deterministic tests only
 
 Each adapter should report:
 
@@ -574,8 +578,8 @@ Suggested shape:
   "schemaMode": "known",
   "formMode": "backend",
   "agent": {
-    "provider": "codex",
-    "modelLabel": "gpt-5.4",
+    "provider": "claude",
+    "modelLabel": "claude-code",
     "mcpServer": "context-router-local",
     "timeoutMs": 900000,
     "completionMarkerObserved": true
@@ -825,7 +829,7 @@ Expected command:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
-  --agent codex \
+  --agent claude \
   --schema-mode known \
   --form-mode backend \
   --user alex-i9-test \
@@ -833,6 +837,7 @@ pnpm eval:e2e-mcp-agent \
   --scenario alex-i9-realistic \
   --artifacts-root /private/tmp/alex-mcp-known \
   --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory
 ```
 

@@ -172,6 +172,7 @@ export async function runMcpAgentE2E({
             setupResult,
             agentRun,
             stageRunners,
+            env,
             now,
             writeAgentRun,
           });
@@ -368,6 +369,7 @@ async function runMcpAgentStage({
   setupResult,
   agentRun,
   stageRunners,
+  env = process.env,
   now,
   writeAgentRun,
 }) {
@@ -379,6 +381,7 @@ async function runMcpAgentStage({
   }
 
   const stageStartedAt = isoTimestamp(now);
+  const redactionSecrets = agentArtifactSecrets(options, buildAgentEnvironment(env));
   try {
     const workspace = await prepareAgentWorkspace({
       repoRoot,
@@ -402,7 +405,7 @@ async function runMcpAgentStage({
     agentRun.workspace.safeDocumentIndexPath = relativePath(repoRoot, workspace.safeDocumentIndexPath);
     agentRun.agent.command = redactForArtifact(
       buildAgentInvocation({ repoRoot, options, artifacts }).display,
-      [options.authToken],
+      redactionSecrets,
     );
     await writeAgentRun();
 
@@ -411,10 +414,11 @@ async function runMcpAgentStage({
       options,
       prompt: promptResult.prompt,
       artifacts,
+      env,
       now,
     });
     const stageEndedAt = isoTimestamp(now);
-    const transcript = buildTranscript(result, [options.authToken]);
+    const transcript = buildTranscript(result, redactionSecrets);
     await writeText(artifacts.transcript, transcript);
 
     const rawTranscript = [result?.stdout, result?.stderr, result?.transcript]
@@ -442,7 +446,7 @@ async function runMcpAgentStage({
             `completionMarkerObserved=${completionMarkerObserved}`,
             `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
           ],
-      [options.authToken],
+      redactionSecrets,
     );
     if (effectiveExitCode === 0 && !completionMarkerObserved) {
       lines.push('completion marker was not observed; this is diagnostic-only in v1');
@@ -478,7 +482,7 @@ async function runMcpAgentStage({
     agentRun.summary.timedOut = Boolean(agentRun.summary.timedOut);
     agentRun.error = redactForArtifact(
       error?.stack ?? error?.message ?? String(error),
-      [options.authToken],
+      redactionSecrets,
     );
     try {
       await writeAgentRun();
@@ -561,6 +565,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     modelLabel: env.EVAL_MODEL_LABEL,
     resetMemory: false,
     ensureDefinitions: true,
+    allowTestCommandAgent: false,
     agentTimeoutMs: DEFAULT_AGENT_TIMEOUT_MS,
     promptTemplate: DEFAULT_PROMPT_TEMPLATE,
   };
@@ -595,6 +600,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
     if (arg === '--skip-ensure-definitions') {
       options.ensureDefinitions = false;
+      continue;
+    }
+    if (arg === '--allow-test-command-agent') {
+      options.allowTestCommandAgent = true;
       continue;
     }
     if (!valueArgs.has(arg)) {
@@ -655,7 +664,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (options.agent === 'codex') {
     return {
       kind: 'usage-error',
-      message: '--agent codex is reserved until the isolated MCP eval adapter is implemented',
+      message: '--agent codex is reserved until an explicit MCP eval adapter is implemented',
     };
   }
   if (options.schemaMode === 'open') {
@@ -686,6 +695,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     return {
       kind: 'usage-error',
       message: 'Missing required --agent-command when --agent command is used',
+    };
+  }
+  if (options.agent === 'command' && !options.allowTestCommandAgent) {
+    return {
+      kind: 'usage-error',
+      message: '--agent command is a deterministic test adapter; pass --allow-test-command-agent to use it',
     };
   }
   if (options.agent === 'claude' && !options.mcpConfig) {
@@ -727,6 +742,9 @@ export function usage() {
     '  Open schema and agent-filled forms are reserved and fail fast until implemented.',
     '  Low scores are reported but do not fail the wrapper. Runtime/setup failures stop the run.',
     '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',
+    '  --agent command is test-only and is not benchmark-safe filesystem isolation.',
+    '  Live Claude scores require the MCP config to authenticate as the same backend user as EVAL_AUTH_TOKEN; v1 records but does not verify that identity.',
+    '  mcp-agent-transcript.txt can contain corpus PII; keep artifact roots out of commits and casual sharing.',
     '',
     'Options:',
     '  --documents-root <dir>            Defaults to examples/eval/users/<user>/corpora/<corpus>',
@@ -734,6 +752,7 @@ export function usage() {
     '  --graphql-url <url>               Defaults to EVAL_GRAPHQL_URL or http://localhost:3000/graphql',
     '  --auth-token <token>              Defaults to EVAL_AUTH_TOKEN',
     '  --agent-command <command>         Required with --agent command; prompt is passed on stdin',
+    '  --allow-test-command-agent        Required with --agent command; marks the command adapter as test-only',
     '  --mcp-config <path>               Required with --agent claude; loaded with --strict-mcp-config',
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-known-schema.md',
@@ -797,6 +816,8 @@ export async function runAgentProcess({
           claudeSettings: path.join(repoRoot, 'claude-settings.json'),
         });
   const invocation = buildAgentInvocation({ repoRoot, options, artifacts: effectiveArtifacts });
+  const childEnv = buildAgentEnvironment(env);
+  const redactionSecrets = agentArtifactSecrets(options, childEnv);
   const startedAtMs = Date.now();
   return new Promise((resolve) => {
     let stdout = '';
@@ -807,7 +828,7 @@ export async function runAgentProcess({
     let forceKillTimeout = null;
     const child = spawn(invocation.file, invocation.args, {
       cwd: invocation.cwd,
-      env: buildAgentEnvironment(env),
+      env: childEnv,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
@@ -843,13 +864,13 @@ export async function runAgentProcess({
       const completionMarkerObserved = completionMarkerInOutput(combined);
       const lines = [
         `agent ${options.agent} ${exitCode === 0 && !timedOut ? 'completed' : 'failed'}`,
-        `command=${redactForArtifact(invocation.display, [options.authToken])}`,
+        `command=${redactForArtifact(invocation.display, redactionSecrets)}`,
         `exitCode=${exitCode}`,
         `timedOut=${timedOut}`,
         `completionMarkerObserved=${completionMarkerObserved}`,
       ];
       if (signal) lines.push(`signal=${signal}`);
-      if (spawnError) lines.push(redactForArtifact(spawnError.message, [options.authToken]));
+      if (spawnError) lines.push(redactForArtifact(spawnError.message, redactionSecrets));
       resolve({
         exitCode,
         lines,
@@ -1039,6 +1060,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
       formMode: options.formMode,
       agent: options.agent,
       mcpServer: options.mcpServer,
+      commandAdapterTestOnly: options.agent === 'command' && options.allowTestCommandAgent,
       agentTimeoutMs: options.agentTimeoutMs,
       promptTemplate: displayPath(repoRoot, path.resolve(repoRoot, options.promptTemplate)),
       mcpConfig: options.mcpConfig
@@ -1078,7 +1100,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
 function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt }) {
   const summary = setupSummary(setupResult, options);
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     artifactType: 'mcp-agent-run',
     runId: options.runId,
     status: 'running',
@@ -1095,6 +1117,12 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
       timeoutMs: options.agentTimeoutMs,
       command: null,
       completionMarkerObserved: null,
+    },
+    identity: {
+      runnerBackendUserId: setupResult.backendUserId ?? null,
+      mcpBackendUserId: null,
+      verifiedSameBackendUser: false,
+      verificationMethod: 'not-implemented',
     },
     setup: {
       resetMemory: options.resetMemory,
@@ -1116,7 +1144,8 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
     workspace: {
       path: relativePath(repoRoot, artifacts.agentWorkspaceRoot),
       safeDocumentIndexPath: relativePath(repoRoot, artifacts.safeDocumentIndex),
-      isolatedFromRepo: true,
+      containsOnlyDeclaredDocuments: true,
+      hardFilesystemBoundary: false,
     },
     transcript: {
       path: relativePath(repoRoot, artifacts.transcript),
@@ -1388,8 +1417,52 @@ export function buildAgentEnvironment(sourceEnv = process.env) {
     'ANTHROPIC_API_KEY',
     'ANTHROPIC_AUTH_TOKEN',
     'ANTHROPIC_BASE_URL',
+    // Model-provider auth for Claude Code headless/cloud runs. Do not add
+    // eval/backend/database credentials to this allowlist.
+    'ANTHROPIC_BEDROCK_BASE_URL',
+    'ANTHROPIC_FOUNDRY_API_KEY',
+    'ANTHROPIC_FOUNDRY_BASE_URL',
     'ANTHROPIC_MODEL',
     'ANTHROPIC_SMALL_FAST_MODEL',
+    'ANTHROPIC_VERTEX_PROJECT_ID',
+    'ANTHROPIC_VERTEX_REGION',
+    'CLAUDE_CODE_API_KEY_HELPER_TTL_MS',
+    'CLAUDE_CODE_OAUTH_TOKEN',
+    'CLAUDE_CODE_USE_BEDROCK',
+    'CLAUDE_CODE_USE_FOUNDRY',
+    'CLAUDE_CODE_USE_VERTEX',
+    'CLAUDE_CONFIG_DIR',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_SESSION_TOKEN',
+    'AWS_REGION',
+    'AWS_DEFAULT_REGION',
+    'AWS_PROFILE',
+    'AWS_CONFIG_FILE',
+    'AWS_SHARED_CREDENTIALS_FILE',
+    'AWS_WEB_IDENTITY_TOKEN_FILE',
+    'AWS_ROLE_ARN',
+    'AWS_ROLE_SESSION_NAME',
+    'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI',
+    'AWS_CONTAINER_CREDENTIALS_FULL_URI',
+    'AWS_CONTAINER_AUTHORIZATION_TOKEN',
+    'AWS_EC2_METADATA_DISABLED',
+    'GOOGLE_APPLICATION_CREDENTIALS',
+    'GOOGLE_CLOUD_PROJECT',
+    'GCLOUD_PROJECT',
+    'GCP_PROJECT',
+    'GCP_PROJECT_ID',
+    'CLOUDSDK_CONFIG',
+    'CLOUDSDK_CORE_PROJECT',
+    'CLOUD_ML_REGION',
+    'AZURE_AUTHORITY_HOST',
+    'AZURE_CLIENT_ID',
+    'AZURE_CLIENT_SECRET',
+    'AZURE_FEDERATED_TOKEN_FILE',
+    'AZURE_TENANT_ID',
+    'AZURE_USERNAME',
+    'AZURE_PASSWORD',
+    'AZURE_SUBSCRIPTION_ID',
     'HTTP_PROXY',
     'HTTPS_PROXY',
     'NO_PROXY',
@@ -1404,6 +1477,19 @@ export function buildAgentEnvironment(sourceEnv = process.env) {
     }
   }
   return result;
+}
+
+function agentArtifactSecrets(options, agentEnv = {}) {
+  return [
+    options?.authToken,
+    ...Object.entries(agentEnv)
+      .filter(([key, value]) => isSensitiveAgentEnvKey(key) && typeof value === 'string')
+      .map(([, value]) => value),
+  ];
+}
+
+function isSensitiveAgentEnvKey(key) {
+  return /(?:AUTH|TOKEN|SECRET|KEY|CREDENTIAL|PASSWORD)/i.test(key);
 }
 
 function completionMarkerInOutput(text) {

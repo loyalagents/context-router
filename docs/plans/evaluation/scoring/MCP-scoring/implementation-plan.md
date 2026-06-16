@@ -30,6 +30,7 @@ pnpm eval:e2e-mcp-agent \
   [--graphql-url <url>] \
   [--auth-token <token>] \
   [--agent-command <command>] \
+  [--allow-test-command-agent] \
   [--mcp-config <path>] \
   [--agent-timeout-ms <ms>] \
   [--prompt-template <path>] \
@@ -51,9 +52,12 @@ Defaults:
 - `--auth-token` falls back to `EVAL_AUTH_TOKEN` and is required.
 - `--mcp-config` is required with `--agent claude` and is passed with
   `--strict-mcp-config`.
+- `--agent command` is a deterministic test adapter, requires
+  `--allow-test-command-agent`, and should not be treated as benchmark-safe
+  filesystem isolation.
 - `--agent-timeout-ms` defaults to 900000.
 - `--model-label` falls back to `EVAL_MODEL_LABEL`.
-- `--agent codex` is reserved until a similarly isolated Codex adapter is
+- `--agent codex` is reserved until a similarly explicit Codex adapter is
   implemented.
 - `--schema-mode open` and `--form-mode agent` are reserved and should fail
   with usage errors until implemented.
@@ -82,12 +86,15 @@ Defaults:
 
 4. Add the MCP runner and adapters.
    - Add `examples/eval/scripts/e2e-mcp-agent.mjs`.
-   - Add Claude and explicit command adapters.
-   - Stage an isolated agent workspace under `--artifacts-root` containing only
-     declared corpus documents and a safe document index.
+   - Add Claude and explicit test-command adapters.
+   - Stage an agent workspace under `--artifacts-root` containing only declared
+     corpus documents and a safe document index. This is prompt/tool
+     containment, not an OS-level filesystem sandbox.
    - Launch the agent from the staged workspace with a sanitized environment
      that does not inherit `EVAL_AUTH_TOKEN`, backend credentials, Auth0
      secrets, or database URLs.
+   - Allow documented Claude/headless model-provider auth environment variables
+     while continuing to strip eval/backend/database secrets.
    - Capture redacted transcript output and completion-marker diagnostics.
    - Treat nonzero exit and timeout as failures. Treat a missing completion
      marker as diagnostic-only for v1.

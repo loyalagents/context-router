@@ -16,6 +16,7 @@
     "formMode",
     "backendUserId",
     "agent",
+    "identity",
     "setup",
     "prompt",
     "documents",
@@ -28,7 +29,7 @@
     "error"
   ],
   "properties": {
-    "schemaVersion": { "const": 2 },
+    "schemaVersion": { "const": 3 },
     "artifactType": { "const": "mcp-agent-run" },
     "runId": { "type": "string", "minLength": 1 },
     "status": { "enum": ["running", "pass", "fail"] },
@@ -56,6 +57,24 @@
         "timeoutMs": { "type": "integer", "minimum": 1 },
         "command": { "type": ["string", "null"], "minLength": 1 },
         "completionMarkerObserved": { "type": ["boolean", "null"] }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runnerBackendUserId",
+        "mcpBackendUserId",
+        "verifiedSameBackendUser",
+        "verificationMethod"
+      ],
+      "properties": {
+        "runnerBackendUserId": { "type": ["string", "null"] },
+        "mcpBackendUserId": { "type": ["string", "null"] },
+        "verifiedSameBackendUser": { "type": "boolean" },
+        "verificationMethod": {
+          "enum": ["not-implemented", "mcp-tool", "access-log"]
+        }
       }
     },
     "setup": {
@@ -102,11 +121,17 @@
     "workspace": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "safeDocumentIndexPath", "isolatedFromRepo"],
+      "required": [
+        "path",
+        "safeDocumentIndexPath",
+        "containsOnlyDeclaredDocuments",
+        "hardFilesystemBoundary"
+      ],
       "properties": {
         "path": { "type": "string", "minLength": 1 },
         "safeDocumentIndexPath": { "type": "string", "minLength": 1 },
-        "isolatedFromRepo": { "type": "boolean" }
+        "containsOnlyDeclaredDocuments": { "type": "boolean" },
+        "hardFilesystemBoundary": { "type": "boolean" }
       }
     },
     "transcript": {
