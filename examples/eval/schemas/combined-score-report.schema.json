@@ -63,6 +63,7 @@
         "form_missing_hallucinated",
         "form_unexpected",
         "structural_skip",
+        "structural_overfilled",
         "unsupported"
       ]
     },

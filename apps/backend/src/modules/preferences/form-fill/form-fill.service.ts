@@ -8,11 +8,19 @@ import { FormFillPromptBuilderService } from './form-fill-prompt-builder.service
 import { FormFillValidatorService } from './form-fill-validator.service';
 import { PdfFieldFillerService } from './pdf-field-filler.service';
 import {
+  FormFillFieldPolicies,
   FormFillAiResponseSchema,
   FormFillResponse,
   FormFillStatus,
   FormFillSummary,
 } from './form-fill.types';
+
+type FormFillFailureStage =
+  | 'field_extraction'
+  | 'preference_load'
+  | 'ai_generation'
+  | 'validation'
+  | 'pdf_fill';
 
 @Injectable()
 export class FormFillService {
@@ -33,6 +41,7 @@ export class FormFillService {
     userId: string,
     fileBuffer: Buffer,
     filename: string,
+    fieldPolicies?: FormFillFieldPolicies,
   ): Promise<FormFillResponse> {
     const fillId = randomUUID();
     const outputFilename = this.outputFilename(filename);
@@ -40,6 +49,8 @@ export class FormFillService {
     this.logger.log(
       `Starting form fill ${fillId} for user ${userId}: ${filename}`,
     );
+
+    let stage: FormFillFailureStage = 'field_extraction';
 
     try {
       const extracted = await this.fieldExtractor.extractFields(fileBuffer);
@@ -64,6 +75,7 @@ export class FormFillService {
         );
       }
 
+      stage = 'preference_load';
       const preferences =
         await this.preferenceService.getActivePreferences(userId);
       const prompt = this.promptBuilder.buildPrompt(
@@ -73,21 +85,34 @@ export class FormFillService {
           value: preference.value,
           description: preference.description,
         })),
+        fieldPolicies,
       );
 
+      stage = 'ai_generation';
       const aiResult = await this.aiStructuredService.generateStructured(
         prompt,
         FormFillAiResponseSchema,
         { operationName: 'formFill.fillActions' },
       );
 
+      stage = 'validation';
       const validation = this.validator.validate(
         aiResult.fillActions,
         extracted.fields,
         new Set(preferences.map((preference) => preference.slug)),
         this.config.confidenceThreshold,
+        {
+          fieldPolicies,
+          activePreferenceValues: new Map(
+            preferences.map((preference) => [
+              preference.slug,
+              preference.value,
+            ]),
+          ),
+        },
       );
 
+      stage = 'pdf_fill';
       const filledPdf = await this.pdfFiller.fillPdf(
         fileBuffer,
         validation.validActions,
@@ -100,6 +125,7 @@ export class FormFillService {
         filledFields: validation.filledFields,
         skippedFields: validation.skippedFields,
         warnings: validation.warnings,
+        validationEvents: validation.validationEvents,
       };
 
       const status: FormFillStatus =
@@ -122,10 +148,32 @@ export class FormFillService {
       };
     } catch (error) {
       this.logger.error(`Form fill ${fillId} failed`, error);
-      return this.emptyResponse(fillId, 'failed', filename, outputFilename, [
-        'Form fill failed. Please try again.',
-      ]);
+      return this.emptyResponse(
+        fillId,
+        'failed',
+        filename,
+        outputFilename,
+        [
+          'Form fill failed. Please try again.',
+          this.failureWarning(stage, error),
+        ],
+      );
     }
+  }
+
+  private failureWarning(stage: FormFillFailureStage, error: unknown): string {
+    return `Form fill failed during ${stage}: ${this.sanitizeFailureMessage(error)}`;
+  }
+
+  private sanitizeFailureMessage(error: unknown): string {
+    const rawMessage =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : 'unknown error';
+    const compact = rawMessage.replace(/\s+/g, ' ').trim();
+    return compact.length > 0 ? compact.slice(0, 500) : 'unknown error';
   }
 
   private emptyResponse(

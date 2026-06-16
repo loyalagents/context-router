@@ -926,6 +926,31 @@ describe("PreferenceExtractionService", () => {
         ]);
       });
 
+      it("should canonicalize scalar strings into singleton array suggestions", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "dev.tech_stack",
+              operation: "CREATE",
+              newValue: " TypeScript ",
+              confidence: 0.9,
+              sourceSnippet: "works with TypeScript",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0].newValue).toEqual(["TypeScript"]);
+      });
+
       it("should filter updates that only add duplicate array entries after canonicalization", async () => {
         const existingValue = [
           "distributed systems",
@@ -1019,6 +1044,43 @@ describe("PreferenceExtractionService", () => {
         );
 
         expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1");
+      });
+
+      it("should tell the model not to store absence or status text as durable fact values", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("profile.email", "alex@example.test"),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([]),
+        );
+
+        await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        const prompt =
+          mockAiStructuredService.generateStructuredWithFile.mock.calls[0][0];
+        expect(prompt).toContain(
+          "Null, blank, placeholder, or commented fields, including YAML/JSON comments",
+        );
+        expect(prompt).toContain(
+          "If a fact's only evidence is absence/status text, emit no suggestion for that slug.",
+        );
+        expect(prompt).toContain(
+          'Do not store status text such as "pending", "not provided", or "to be completed" as newValue.',
+        );
+        expect(prompt).toContain(
+          "Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note.",
+        );
+        expect(prompt).toContain(
+          "sourceSnippet must quote the text containing the actual value, not just a label, comment, placeholder, or status note.",
+        );
+        expect(prompt).toContain(
+          "Current preferences are context, not evidence.",
+        );
       });
 
       it.each([

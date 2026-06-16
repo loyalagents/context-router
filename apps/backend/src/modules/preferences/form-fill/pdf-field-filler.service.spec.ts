@@ -137,4 +137,23 @@ describe('PdfFieldFillerService', () => {
       '000000292',
     );
   });
+
+  it('wraps PDF field write errors with field and action context', async () => {
+    const actions: ValidatedFillAction[] = [
+      {
+        fieldName: 'missing_field',
+        fieldType: 'text',
+        action: 'SET_TEXT',
+        value: 'Alex Rivera',
+        sourceSlugs: ['profile.full_name'],
+        confidence: 0.98,
+      },
+    ];
+
+    await expect(
+      service.fillPdf(await createFillablePdf(), actions),
+    ).rejects.toThrow(
+      'Failed to apply SET_TEXT to PDF field "missing_field"',
+    );
+  });
 });
