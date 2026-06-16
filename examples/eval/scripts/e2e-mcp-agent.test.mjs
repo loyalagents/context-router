@@ -582,6 +582,52 @@ test('mcp agent e2e marks agent artifact failed when the agent stage throws', as
   assert.equal(mcpAgentRun.error.includes('thrown-secret-token'), false);
 });
 
+test('mcp agent e2e redacts provider secrets from thrown agent stage failures', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-provider-throw-'));
+  const calls = [];
+  const providerSecret = 'provider-secret-key-123456';
+  const oauthSecret = 'claude-oauth-secret-123456';
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async () => {
+      calls.push({ stage: 'agent' });
+      throw new Error(`agent crashed with ${providerSecret} and ${oauthSecret}`);
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...baseArgsWithArtifacts(tmp),
+      '--auth-token',
+      'token',
+      '--run-id',
+      'run-provider-throw',
+    ],
+    env: {
+      ANTHROPIC_API_KEY: providerSecret,
+      CLAUDE_CODE_OAUTH_TOKEN: oauthSecret,
+    },
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.lines.join('\n').includes(providerSecret), false);
+  assert.equal(result.lines.join('\n').includes(oauthSecret), false);
+  assert.match(result.lines.join('\n'), /\[redacted-auth-token\]/);
+
+  const evaluationRunText = await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8');
+  assert.equal(evaluationRunText.includes(providerSecret), false);
+  assert.equal(evaluationRunText.includes(oauthSecret), false);
+  assert.match(evaluationRunText, /\[redacted-auth-token\]/);
+
+  const mcpAgentRunText = await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8');
+  assert.equal(mcpAgentRunText.includes(providerSecret), false);
+  assert.equal(mcpAgentRunText.includes(oauthSecret), false);
+  assert.match(mcpAgentRunText, /\[redacted-auth-token\]/);
+});
+
 test('command adapter captures stdout, stderr, marker, and timeout status', async () => {
   const success = await runAgentProcess({
     repoRoot,

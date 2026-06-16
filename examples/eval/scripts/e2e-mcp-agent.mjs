@@ -59,6 +59,10 @@ export async function runMcpAgentE2E({
   }
 
   const options = parsed.options;
+  const artifactRedactionSecrets = agentArtifactSecrets(
+    options,
+    buildAgentEnvironment(env),
+  );
   const stageRunners = {
     validate: runValidation,
     setup: prepareKnownSchemaMemory,
@@ -173,6 +177,7 @@ export async function runMcpAgentE2E({
             agentRun,
             stageRunners,
             env,
+            redactionSecrets: artifactRedactionSecrets,
             now,
             writeAgentRun,
           });
@@ -301,7 +306,12 @@ export async function runMcpAgentE2E({
     ];
 
     for (const stage of stages) {
-      const result = await runStage({ stage, report, options, now });
+      const result = await runStage({
+        stage,
+        report,
+        redactionSecrets: artifactRedactionSecrets,
+        now,
+      });
       await writeReport();
       if (result.exitCode !== 0) {
         report.status = 'fail';
@@ -345,7 +355,7 @@ export async function runMcpAgentE2E({
     }
     const message = redactForArtifact(
       error?.stack ?? error?.message ?? String(error),
-      [options.authToken],
+      artifactRedactionSecrets,
     );
     return {
       exitCode: 1,
@@ -370,6 +380,7 @@ async function runMcpAgentStage({
   agentRun,
   stageRunners,
   env = process.env,
+  redactionSecrets = agentArtifactSecrets(options, buildAgentEnvironment(env)),
   now,
   writeAgentRun,
 }) {
@@ -381,7 +392,6 @@ async function runMcpAgentStage({
   }
 
   const stageStartedAt = isoTimestamp(now);
-  const redactionSecrets = agentArtifactSecrets(options, buildAgentEnvironment(env));
   try {
     const workspace = await prepareAgentWorkspace({
       repoRoot,
@@ -493,7 +503,7 @@ async function runMcpAgentStage({
   }
 }
 
-async function runStage({ stage, report, options, now }) {
+async function runStage({ stage, report, redactionSecrets, now }) {
   const stageRecord = report.stages.find((candidate) => candidate.name === stage.name);
   stageRecord.status = 'running';
   stageRecord.startedAt = isoTimestamp(now);
@@ -511,7 +521,7 @@ async function runStage({ stage, report, options, now }) {
         '',
         error?.stack ?? error?.message ?? String(error),
       ],
-      options.authToken,
+      redactionSecrets,
     );
     stageRecord.error = stageRecord.lines.join('\n');
     return { exitCode: 1, lines: stageRecord.lines, error };
@@ -519,7 +529,7 @@ async function runStage({ stage, report, options, now }) {
   stageRecord.endedAt = isoTimestamp(now);
   stageRecord.durationMs = durationMs(stageRecord.startedAt, stageRecord.endedAt);
   stageRecord.exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
-  stageRecord.lines = redactLines(result?.lines ?? [], options.authToken);
+  stageRecord.lines = redactLines(result?.lines ?? [], redactionSecrets);
 
   if (stageRecord.exitCode === 0) {
     try {
@@ -537,7 +547,7 @@ async function runStage({ stage, report, options, now }) {
           `eval stage ${stage.name} artifact handling failed`,
           error?.stack ?? error?.message ?? String(error),
         ],
-        options.authToken,
+        redactionSecrets,
       );
       stageRecord.error = stageRecord.lines.join('\n');
       return { exitCode: 1, lines: stageRecord.lines, error };
