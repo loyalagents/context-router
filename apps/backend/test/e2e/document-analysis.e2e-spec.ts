@@ -64,6 +64,36 @@ describe('Document Analysis API (e2e)', () => {
       );
     });
 
+    it('should accept JSON uploads and normalize them for AI file extraction', async () => {
+      structuredAi.generateStructuredWithFile.mockResolvedValue({
+        suggestions: [],
+        documentSummary: 'JSON preference export',
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach(
+          'file',
+          Buffer.from('{"preferences":{"mailingPreference":"PAPERLESS"}}\n'),
+          {
+            filename: 'preferences.json',
+            contentType: 'application/json',
+          },
+        )
+        .expect(201);
+
+      expect(response.body.status).toBe('no_matches');
+      expect(response.body.documentSummary).toBe('JSON preference export');
+      expect(structuredAi.generateStructuredWithFile).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          mimeType: 'text/plain',
+        }),
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
     it.each([
       ['application/yaml', 'preferences.yaml'],
       ['text/yaml', 'preferences.yml'],
@@ -109,6 +139,27 @@ describe('Document Analysis API (e2e)', () => {
       expect(response.body.message).toContain('Unsupported file type');
       expect(response.body.message).toContain('text/markdown');
       expect(response.body.message).toContain('application/yaml');
+    });
+
+    it('should return a sanitized AI error reason for provider file type rejections', async () => {
+      structuredAi.generateStructuredWithFile.mockRejectedValue(
+        new Error('INVALID_ARGUMENT: unsupported MIME type application/json'),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/preferences/analysis')
+        .attach('file', Buffer.from('raw bytes'), {
+          filename: 'preferences.txt',
+          contentType: 'text/plain',
+        })
+        .expect(201);
+
+      expect(response.body.status).toBe('ai_error');
+      expect(response.body.statusReason).toBe(
+        'AI provider rejected the uploaded file type during analysis. The backend may need to normalize this file before retrying.',
+      );
+      expect(response.body.statusReason).not.toContain('application/json');
+      expect(response.body.statusReason).not.toContain('INVALID_ARGUMENT');
     });
 
     it('should consolidate duplicate candidates and preserve stable IDs', async () => {

@@ -1053,6 +1053,61 @@ describe("PreferenceExtractionService", () => {
           );
         },
       );
+
+      it("should normalize JSON MIME to text/plain before AI file extraction", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([]),
+        );
+
+        await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          "application/json",
+          "prefs.json",
+        );
+
+        expect(
+          mockAiStructuredService.generateStructuredWithFile,
+        ).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            buffer: mockFileBuffer,
+            mimeType: "text/plain",
+          }),
+          expect.anything(),
+          { operationName: "preferenceExtraction" },
+        );
+      });
+
+      it.each(["text/plain", "text/markdown"])(
+        "should preserve supported text MIME %s before AI file extraction",
+        async (mimeType) => {
+          mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+          mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+            createAiResponse([]),
+          );
+
+          await service.extractPreferences(
+            "user-1",
+            mockFileBuffer,
+            mimeType,
+            "prefs.txt",
+          );
+
+          expect(
+            mockAiStructuredService.generateStructuredWithFile,
+          ).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+              buffer: mockFileBuffer,
+              mimeType,
+            }),
+            expect.anything(),
+            { operationName: "preferenceExtraction" },
+          );
+        },
+      );
     });
   });
 });

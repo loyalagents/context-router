@@ -6,6 +6,17 @@ import {
   AnalysisStatus,
 } from './dto/document-analysis-result.dto';
 
+const AI_PROVIDER_FILE_TYPE_REJECTION_REASON =
+  'AI provider rejected the uploaded file type during analysis. The backend may need to normalize this file before retrying.';
+
+const AI_PROVIDER_FILE_TYPE_ERROR_PATTERNS = [
+  'unsupported mime',
+  'unsupported file',
+  'invalid mime',
+  'mime type',
+  'file type',
+];
+
 @Injectable()
 export class DocumentAnalysisService {
   private readonly logger = new Logger(DocumentAnalysisService.name);
@@ -93,6 +104,18 @@ export class DocumentAnalysisService {
         }
       }
 
+      if (this.isAiProviderFileTypeError(error)) {
+        return {
+          analysisId,
+          suggestions: [],
+          filteredSuggestions: [],
+          documentSummary: undefined,
+          status: AnalysisStatus.AI_ERROR,
+          statusReason: AI_PROVIDER_FILE_TYPE_REJECTION_REASON,
+          filteredCount: 0,
+        };
+      }
+
       return {
         analysisId,
         suggestions: [],
@@ -103,5 +126,16 @@ export class DocumentAnalysisService {
         filteredCount: 0,
       };
     }
+  }
+
+  private isAiProviderFileTypeError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    const message = error.message.toLowerCase();
+    return AI_PROVIDER_FILE_TYPE_ERROR_PATTERNS.some((pattern) =>
+      message.includes(pattern),
+    );
   }
 }
