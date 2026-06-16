@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/mcp-agent-run.schema.json",
+  "title": "Eval MCP Agent Run Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "runId",
+    "status",
+    "userId",
+    "corpusId",
+    "scenarioId",
+    "schemaMode",
+    "formMode",
+    "backendUserId",
+    "agent",
+    "setup",
+    "prompt",
+    "documents",
+    "transcript",
+    "summary",
+    "artifacts",
+    "startedAt",
+    "endedAt",
+    "error"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "mcp-agent-run" },
+    "runId": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["running", "pass", "fail"] },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "scenarioId": { "type": "string", "minLength": 1 },
+    "schemaMode": { "enum": ["known"] },
+    "formMode": { "enum": ["backend"] },
+    "backendUserId": { "type": ["string", "null"] },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "modelLabel",
+        "mcpServer",
+        "timeoutMs",
+        "command",
+        "completionMarkerObserved"
+      ],
+      "properties": {
+        "provider": { "enum": ["codex", "claude", "command"] },
+        "modelLabel": { "type": ["string", "null"], "minLength": 1 },
+        "mcpServer": { "type": "string", "minLength": 1 },
+        "timeoutMs": { "type": "integer", "minimum": 1 },
+        "command": { "type": ["string", "null"], "minLength": 1 },
+        "completionMarkerObserved": { "type": ["boolean", "null"] }
+      }
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resetMemory",
+        "knownSchemaDefinitionsEnsured",
+        "createdDefinitionCount",
+        "existingDefinitionCount",
+        "skippedDefinitionCount"
+      ],
+      "properties": {
+        "resetMemory": { "type": "boolean" },
+        "knownSchemaDefinitionsEnsured": { "type": "boolean" },
+        "createdDefinitionCount": { "type": ["integer", "null"], "minimum": 0 },
+        "existingDefinitionCount": { "type": ["integer", "null"], "minimum": 0 },
+        "skippedDefinitionCount": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["templatePath", "renderedPromptPath", "promptHash"],
+      "properties": {
+        "templatePath": { "type": "string", "minLength": 1 },
+        "renderedPromptPath": { "type": "string", "minLength": 1 },
+        "promptHash": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "documents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentsRoot", "documentCount"],
+      "properties": {
+        "documentsRoot": { "type": "string", "minLength": 1 },
+        "documentCount": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "redacted"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "redacted": { "type": "boolean" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "durationMs",
+        "exitCode",
+        "timedOut",
+        "toolCallCount",
+        "preferenceWriteCount",
+        "definitionCreateCount"
+      ],
+      "properties": {
+        "durationMs": { "type": ["integer", "null"], "minimum": 0 },
+        "exitCode": { "type": ["integer", "null"] },
+        "timedOut": { "type": "boolean" },
+        "toolCallCount": { "type": "null" },
+        "preferenceWriteCount": { "type": "null" },
+        "definitionCreateCount": { "type": "null" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validationReport",
+        "storedPreferences",
+        "databaseScoreReport",
+        "filledForm",
+        "filledPdf",
+        "formFillResponse",
+        "formScoreReport",
+        "combinedScoreReport",
+        "evaluationRun"
+      ],
+      "properties": {
+        "validationReport": { "type": "string", "minLength": 1 },
+        "storedPreferences": { "type": "string", "minLength": 1 },
+        "databaseScoreReport": { "type": "string", "minLength": 1 },
+        "filledForm": { "type": "string", "minLength": 1 },
+        "filledPdf": { "type": "string", "minLength": 1 },
+        "formFillResponse": { "type": "string", "minLength": 1 },
+        "formScoreReport": { "type": "string", "minLength": 1 },
+        "combinedScoreReport": { "type": "string", "minLength": 1 },
+        "evaluationRun": { "type": "string", "minLength": 1 }
+      }
+    },
+    "startedAt": { "type": "string", "minLength": 1 },
+    "endedAt": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] }
+  }
+}

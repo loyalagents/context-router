@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-14
+- Last updated: 2026-06-15
 
 ## Implemented
 
@@ -55,6 +55,13 @@
   structural fields without exposing fact keys or expected values.
 - [x] Direct-document baseline treats model-authored confidence as diagnostic
   metadata rather than a hard fill gate.
+- [x] MCP known-schema agent runner via `pnpm eval:e2e-mcp-agent`.
+  - Validates documents, prepares memory/schema, runs one Codex/Claude/command
+    MCP-capable agent session, exports active memory, fills the form from
+    backend memory, and reuses existing score reports.
+  - Writes `mcp-agent-run.json`, prompt, transcript, and the shared
+    `evaluation-run.json` stage report.
+  - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
 
 ## Next
 
@@ -74,15 +81,16 @@
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Design open-schema ingestion with definition/slug creation.
-- [ ] Decide ordering for open-schema ingestion work:
-  - MCP/Codex/Claude agent runner.
-  - Upload-level schema discovery with proposed definitions.
+- [ ] Run one live known-schema MCP smoke before starting open schema.
+- [ ] Add open-schema memory snapshot and scoring described in
+  `docs/plans/evaluation/scoring/open-schema/brainstorm.md`:
+  - Export `memory-snapshot.json` with `preferences[]` and `definitions[]`.
+  - Add light value-recovery DB scoring.
+  - Add open-schema combined attribution.
+  - Enable `eval:e2e-mcp-agent --schema-mode open`.
 
 ## Later
 
-- [ ] Add MCP/Codex/Claude runner that produces the same artifacts as the
-  ingestor/exporter path and tests agent-driven definition/slug discovery.
 - [ ] Add upload-level schema discovery if product document analysis should
   propose or create definitions before storing values.
 - [ ] Add optional canonical-vs-alias stricter metrics.

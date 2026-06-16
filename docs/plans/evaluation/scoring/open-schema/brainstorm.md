@@ -28,8 +28,9 @@ form correctness > active-memory value recovery > schema quality
 The implementation path should be:
 
 1. Build MCP closed-schema eval first in `MCP-scoring`.
-2. Extend the shared memory export/scoring artifacts so open-schema runs can
-   preserve definition metadata.
+2. Add an enriched `memory-snapshot.json` export so open-schema runs can
+   preserve definition metadata without changing the known-schema
+   `stored-preferences.json` scorer contract.
 3. Add a light open-schema DB/debug score based on value recovery and
    abstention.
 4. Add MCP open-schema mode by reusing the closed-schema MCP runner shape.
@@ -238,14 +239,15 @@ score.
 Open-schema scoring needs definition metadata. The current
 `stored-preferences.json` stores values but not enough schema context.
 
-Because backwards compatibility is not a requirement for this evaluation work,
-prefer one enriched memory artifact over a sidecar.
-
 Recommended artifact:
 
 ```text
 memory-snapshot.json
 ```
+
+Keep `stored-preferences.json` v1 for known-schema MCP and existing scorers.
+Open-schema should consume `memory-snapshot.json` so known-schema runner work is
+not blocked on a broader artifact migration.
 
 Suggested shape:
 
@@ -307,9 +309,8 @@ Implementation notes:
 - Keep active preferences as the primary scored rows.
 - Keep suggestions diagnostic-only unless a later eval explicitly scores
   suggestion quality.
-- If implementation churn is lower, this can be implemented as
-  `stored-preferences.json` schema v2 instead of a renamed file. The key
-  requirement is `definitions[]`.
+- The key requirement is `definitions[]` joined to value rows by
+  `definitionId` and slug where possible.
 
 ## Open-Schema DB Report
 
@@ -420,7 +421,7 @@ The MCP open-schema runner should build on the closed-schema MCP runner from
 Closed-schema mode should likely look like:
 
 ```bash
-pnpm eval:mcp-agent \
+pnpm eval:e2e-mcp-agent \
   --schema-mode known \
   --user alex-i9-test \
   --corpus realistic \
@@ -433,7 +434,7 @@ pnpm eval:mcp-agent \
 Open-schema mode should likely look like:
 
 ```bash
-pnpm eval:mcp-agent \
+pnpm eval:e2e-mcp-agent \
   --schema-mode open \
   --user alex-i9-test \
   --corpus realistic \
@@ -518,6 +519,8 @@ Goal:
 
 - Add an enriched memory export artifact with `preferences[]` and
   `definitions[]`.
+- Add this as a separate export path or mode rather than changing the
+  known-schema `stored-preferences.json` v1 contract.
 
 Expected tests:
 
@@ -582,6 +585,8 @@ Goal:
 Expected tests:
 
 - setup skips known-schema definition creation
+- setup still resets memory values, and either archives or namespaces prior
+  eval-created definitions if repeatability requires it
 - stage artifact paths are recorded
 - run artifact distinguishes eval fixture user and backend auth user
 - partial failure writes a useful run artifact

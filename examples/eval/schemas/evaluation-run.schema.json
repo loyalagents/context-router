@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://context-router.local/examples/eval/schemas/evaluation-run.schema.json",
-  "title": "Eval Known-Schema E2E Run Artifact",
+  "title": "Eval E2E Run Artifact",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -30,7 +30,14 @@
   "properties": {
     "schemaVersion": { "const": 2 },
     "artifactType": { "const": "evaluation-run" },
-    "evaluationMode": { "const": "known-schema" },
+    "evaluationMode": {
+      "enum": [
+        "known-schema",
+        "mcp-known-schema",
+        "mcp-open-schema",
+        "mcp-agent-form"
+      ]
+    },
     "status": { "enum": ["running", "pass", "fail"] },
     "runId": { "type": "string", "minLength": 1 },
     "userId": { "type": "string", "minLength": 1 },
@@ -63,7 +70,13 @@
         "resetMemory": { "type": "boolean" },
         "ensureDefinitions": { "type": "boolean" },
         "autoApply": { "type": "boolean" },
-        "seedPreferences": { "type": "boolean" }
+        "seedPreferences": { "type": "boolean" },
+        "schemaMode": { "enum": ["known", "open"] },
+        "formMode": { "enum": ["backend", "agent"] },
+        "agent": { "enum": ["codex", "claude", "command"] },
+        "mcpServer": { "type": "string", "minLength": 1 },
+        "agentTimeoutMs": { "type": "integer", "minimum": 1 },
+        "promptTemplate": { "type": "string", "minLength": 1 }
       }
     },
     "backendUserId": { "type": ["string", "null"] },
@@ -87,7 +100,9 @@
       ],
       "properties": {
         "validation": { "$ref": "#/$defs/summary" },
+        "setup": { "$ref": "#/$defs/summary" },
         "ingestion": { "$ref": "#/$defs/summary" },
+        "agent": { "$ref": "#/$defs/summary" },
         "export": { "$ref": "#/$defs/summary" },
         "databaseScore": { "$ref": "#/$defs/summary" },
         "formFill": { "$ref": "#/$defs/summary" },
@@ -118,6 +133,8 @@
           "enum": [
             "validate-documents",
             "ingest-documents",
+            "setup-memory-and-schema",
+            "run-mcp-agent",
             "export-stored-preferences",
             "score-database",
             "fill-form",

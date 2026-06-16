@@ -1,0 +1,1220 @@
+#!/usr/bin/env node
+
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runExportStoredPreferences } from './export-stored-preferences.mjs';
+import { runFillForm } from './fill-form.mjs';
+import {
+  loadKnownSchemaFixture,
+  prepareKnownSchemaMemory,
+} from './ingestor/setup.mjs';
+import { readJson, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
+import { runScore } from './score.mjs';
+import { isFixtureId } from './shared.mjs';
+import {
+  formatResult as formatValidationResult,
+  runValidation,
+} from './validate.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const defaultRepoRoot = path.resolve(__dirname, '../../..');
+const DEFAULT_BACKEND_URL = 'http://localhost:3000';
+const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
+const DEFAULT_AGENT_TIMEOUT_MS = 900_000;
+const DEFAULT_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
+const INGESTION_MODE = 'mcp-known-schema-agent';
+export const COMPLETION_MARKER = 'EVAL_MCP_AGENT_DONE';
+
+const STAGE_NAMES = [
+  'validate-documents',
+  'setup-memory-and-schema',
+  'run-mcp-agent',
+  'export-stored-preferences',
+  'score-database',
+  'fill-form',
+  'score-form',
+  'score-combined',
+];
+
+export async function runMcpAgentE2E({
+  repoRoot = defaultRepoRoot,
+  args = [],
+  env = process.env,
+  fetchImpl = globalThis.fetch,
+  pdfFieldReader,
+  now = () => new Date(),
+  runners = {},
+} = {}) {
+  const parsed = parseArgs(args, env, now);
+  if (parsed.kind === 'help') {
+    return { exitCode: 0, lines: [usage()] };
+  }
+  if (parsed.kind === 'usage-error') {
+    return { exitCode: 2, lines: [parsed.message, '', usage()] };
+  }
+
+  const options = parsed.options;
+  const stageRunners = {
+    validate: runValidation,
+    setup: prepareKnownSchemaMemory,
+    agent: runAgentProcess,
+    exportStoredPreferences: runExportStoredPreferences,
+    score: runScore,
+    fillForm: runFillForm,
+    ...runners,
+  };
+  const artifacts = buildArtifacts({ repoRoot, options });
+  const report = initialReport({ repoRoot, options, artifacts, startedAt: isoTimestamp(now) });
+  const reportPath = artifacts.evaluationRun;
+  let setupResult = null;
+  let agentRun = null;
+
+  const writeReport = async () => {
+    await validateWithSchema(
+      repoRoot,
+      'evaluation-run.schema.json',
+      report,
+      'evaluation run',
+    );
+    await writeJson(reportPath, report);
+  };
+
+  const writeAgentRun = async () => {
+    if (!agentRun) return;
+    await validateWithSchema(
+      repoRoot,
+      'mcp-agent-run.schema.json',
+      agentRun,
+      'MCP agent run',
+    );
+    await writeJson(artifacts.mcpAgentRun, agentRun);
+  };
+
+  try {
+    await writeReport();
+
+    const stages = [
+      {
+        name: 'validate-documents',
+        runner: async () => {
+          const result = await stageRunners.validate({
+            repoRoot,
+            args: [
+              '--user',
+              options.userId,
+              '--corpus',
+              options.corpusId,
+              '--documents-root',
+              options.documentsRoot,
+              '--report-out',
+              artifacts.validationReport,
+            ],
+          });
+          return {
+            ...result,
+            lines: result.lines ?? [formatValidationResult(result)],
+          };
+        },
+        afterSuccess: async () => {
+          const validationReport = await readJson(artifacts.validationReport);
+          report.summaries.validation = validationReport.summary ?? null;
+        },
+      },
+      {
+        name: 'setup-memory-and-schema',
+        runner: async () => {
+          setupResult = await stageRunners.setup({
+            repoRoot,
+            evalUserId: options.userId,
+            corpusId: options.corpusId,
+            documentsRoot: options.documentsRoot,
+            graphqlUrl: options.graphqlUrl,
+            authToken: options.authToken,
+            resetMemoryEnabled: options.resetMemory,
+            ensureDefinitionsEnabled: options.ensureDefinitions,
+            fetchImpl,
+          });
+          const definitionSetup = setupResult.definitionSetup ?? {};
+          return {
+            exitCode: 0,
+            lines: [
+              'eval MCP setup passed',
+              `backendUser=${setupResult.backendUserId}`,
+              `definitions created=${definitionSetup.created?.length ?? 0} existing=${definitionSetup.existing?.length ?? 0} skipped=${definitionSetup.skipped?.length ?? 0}`,
+            ],
+          };
+        },
+        afterSuccess: async () => {
+          report.backendUserId = setupResult.backendUserId ?? report.backendUserId;
+          report.summaries.setup = setupSummary(setupResult, options);
+          agentRun = initialAgentRun({
+            repoRoot,
+            options,
+            artifacts,
+            setupResult,
+            startedAt: isoTimestamp(now),
+          });
+          await writeAgentRun();
+        },
+      },
+      {
+        name: 'run-mcp-agent',
+        runner: async () => {
+          const result = await runMcpAgentStage({
+            repoRoot,
+            options,
+            artifacts,
+            setupResult,
+            agentRun,
+            stageRunners,
+            now,
+            writeAgentRun,
+          });
+          report.summaries.agent = result.agentSummary ?? null;
+          return result;
+        },
+      },
+      {
+        name: 'export-stored-preferences',
+        runner: () =>
+          stageRunners.exportStoredPreferences({
+            repoRoot,
+            args: exportArgs(options, artifacts),
+            env: {},
+            fetchImpl,
+            now,
+          }),
+        afterSuccess: async () => {
+          const storedPreferences = await readJson(artifacts.storedPreferences);
+          report.backendUserId =
+            storedPreferences.diagnostics?.backendUserId ?? report.backendUserId;
+          report.summaries.export = {
+            activePreferenceCount: storedPreferences.preferences?.length ?? 0,
+            suggestedPreferenceCount: storedPreferences.suggestions?.length ?? 0,
+          };
+        },
+      },
+      {
+        name: 'score-database',
+        runner: () =>
+          stageRunners.score({
+            repoRoot,
+            args: [
+              '--mode',
+              'database',
+              '--user',
+              options.userId,
+              '--corpus',
+              options.corpusId,
+              '--stored-preferences',
+              artifacts.storedPreferences,
+              '--validation-report',
+              artifacts.validationReport,
+              '--out',
+              artifacts.databaseScoreReport,
+            ],
+          }),
+        afterSuccess: async () => {
+          const databaseScore = await readJson(artifacts.databaseScoreReport);
+          report.summaries.databaseScore = databaseScore.summary ?? null;
+        },
+      },
+      {
+        name: 'fill-form',
+        runner: () =>
+          stageRunners.fillForm({
+            repoRoot,
+            args: [
+              '--scenario',
+              options.scenarioId,
+              '--out',
+              artifacts.filledForm,
+              '--backend-url',
+              options.backendUrl,
+              '--auth-token',
+              options.authToken,
+              '--filled-pdf-out',
+              artifacts.filledPdf,
+              '--response-out',
+              artifacts.formFillResponse,
+            ],
+            env: {},
+            fetchImpl,
+            ...(pdfFieldReader ? { pdfFieldReader } : {}),
+          }),
+        afterSuccess: async () => {
+          const filledForm = await readJson(artifacts.filledForm);
+          report.summaries.formFill = {
+            status: filledForm.response?.status ?? null,
+            fieldCount: filledForm.fields?.length ?? 0,
+          };
+        },
+      },
+      {
+        name: 'score-form',
+        runner: () =>
+          stageRunners.score({
+            repoRoot,
+            args: [
+              '--mode',
+              'form',
+              '--scenario',
+              options.scenarioId,
+              '--filled-form',
+              artifacts.filledForm,
+              '--out',
+              artifacts.formScoreReport,
+            ],
+          }),
+        afterSuccess: async () => {
+          const formScore = await readJson(artifacts.formScoreReport);
+          report.summaries.formScore = formScore.summary ?? null;
+        },
+      },
+      {
+        name: 'score-combined',
+        runner: () =>
+          stageRunners.score({
+            repoRoot,
+            args: [
+              '--mode',
+              'combined',
+              '--database-report',
+              artifacts.databaseScoreReport,
+              '--form-report',
+              artifacts.formScoreReport,
+              '--out',
+              artifacts.combinedScoreReport,
+            ],
+          }),
+        afterSuccess: async () => {
+          const combinedScore = await readJson(artifacts.combinedScoreReport);
+          report.summaries.combinedScore = combinedScore.summary ?? null;
+        },
+      },
+    ];
+
+    for (const stage of stages) {
+      const result = await runStage({ stage, report, options, now });
+      await writeReport();
+      if (result.exitCode !== 0) {
+        report.status = 'fail';
+        report.failureStage = stage.name;
+        report.endedAt = isoTimestamp(now);
+        markRemainingStagesSkipped(report, stage.name);
+        await writeReport();
+        return {
+          exitCode: result.exitCode,
+          lines: failureLines({ report, reportPath, repoRoot, stageName: stage.name }),
+          report,
+        };
+      }
+    }
+
+    report.status = 'pass';
+    report.endedAt = isoTimestamp(now);
+    await writeReport();
+
+    return {
+      exitCode: 0,
+      lines: [
+        'eval e2e-mcp-agent passed',
+        `runId=${report.runId}`,
+        `artifacts=${relativePath(repoRoot, artifacts.artifactsRoot)}`,
+        `wrote ${relativePath(repoRoot, reportPath)}`,
+      ],
+      report,
+    };
+  } catch (error) {
+    report.status = 'fail';
+    report.endedAt = isoTimestamp(now);
+    report.failureStage = report.failureStage ?? activeStageName(report);
+    if (report.failureStage) {
+      markRemainingStagesSkipped(report, report.failureStage);
+    }
+    try {
+      await writeReport();
+    } catch {
+      // Preserve the primary failure in CLI output.
+    }
+    const message = redactSecret(
+      error?.stack ?? error?.message ?? String(error),
+      options.authToken,
+    );
+    return {
+      exitCode: 1,
+      lines: [
+        'eval e2e-mcp-agent failed',
+        report.failureStage ? `stage=${report.failureStage}` : 'stage=<setup>',
+        `wrote ${relativePath(repoRoot, reportPath)}`,
+        '',
+        message,
+      ],
+      report,
+      error,
+    };
+  }
+}
+
+async function runMcpAgentStage({
+  repoRoot,
+  options,
+  artifacts,
+  setupResult,
+  agentRun,
+  stageRunners,
+  now,
+  writeAgentRun,
+}) {
+  if (!setupResult?.fixture) {
+    throw new Error('MCP setup did not provide fixture metadata.');
+  }
+  if (!agentRun) {
+    throw new Error('MCP agent run artifact was not initialized.');
+  }
+
+  const promptResult = await buildMcpAgentPrompt({
+    repoRoot,
+    options,
+    fixture: setupResult.fixture,
+  });
+  await writeText(artifacts.prompt, promptResult.prompt);
+
+  agentRun.prompt.promptHash = promptHash(promptResult.prompt);
+  agentRun.documents.documentCount = promptResult.documentCount;
+  agentRun.agent.command = redactSecret(
+    buildAgentInvocation({ repoRoot, options }).display,
+    options.authToken,
+  );
+  await writeAgentRun();
+
+  const stageStartedAt = isoTimestamp(now);
+  const result = await stageRunners.agent({
+    repoRoot,
+    options,
+    prompt: promptResult.prompt,
+    artifacts,
+    now,
+  });
+  const stageEndedAt = isoTimestamp(now);
+  const transcript = buildTranscript(result, options.authToken);
+  await writeText(artifacts.transcript, transcript);
+
+  const rawTranscript = [result?.stdout, result?.stderr, result?.transcript]
+    .filter((value) => typeof value === 'string')
+    .join('\n');
+  const completionMarkerObserved =
+    typeof result?.completionMarkerObserved === 'boolean'
+      ? result.completionMarkerObserved
+      : rawTranscript.includes(COMPLETION_MARKER);
+  const timedOut = Boolean(result?.timedOut);
+  const exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
+  const effectiveExitCode = timedOut || exitCode !== 0 ? 1 : 0;
+  const duration =
+    Number.isInteger(result?.durationMs) && result.durationMs >= 0
+      ? result.durationMs
+      : durationMs(stageStartedAt, stageEndedAt);
+
+  const lines = redactLines(
+    result?.lines?.length
+      ? result.lines
+      : [
+          `eval MCP agent ${effectiveExitCode === 0 ? 'passed' : 'failed'}`,
+          `exitCode=${exitCode}`,
+          `timedOut=${timedOut}`,
+          `completionMarkerObserved=${completionMarkerObserved}`,
+          `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
+        ],
+    options.authToken,
+  );
+  if (effectiveExitCode === 0 && !completionMarkerObserved) {
+    lines.push('completion marker was not observed; this is diagnostic-only in v1');
+  }
+
+  agentRun.status = effectiveExitCode === 0 ? 'pass' : 'fail';
+  agentRun.endedAt = stageEndedAt;
+  agentRun.agent.completionMarkerObserved = completionMarkerObserved;
+  agentRun.summary.durationMs = duration;
+  agentRun.summary.exitCode = exitCode;
+  agentRun.summary.timedOut = timedOut;
+  agentRun.error = effectiveExitCode === 0 ? null : lines.join('\n');
+  await writeAgentRun();
+
+  return {
+    exitCode: effectiveExitCode,
+    lines,
+    agentSummary: {
+      status: agentRun.status,
+      durationMs: agentRun.summary.durationMs,
+      exitCode: agentRun.summary.exitCode,
+      timedOut: agentRun.summary.timedOut,
+      completionMarkerObserved,
+      transcript: relativePath(repoRoot, artifacts.transcript),
+    },
+  };
+}
+
+async function runStage({ stage, report, options, now }) {
+  const stageRecord = report.stages.find((candidate) => candidate.name === stage.name);
+  stageRecord.status = 'running';
+  stageRecord.startedAt = isoTimestamp(now);
+  let result;
+  try {
+    result = await stage.runner();
+  } catch (error) {
+    stageRecord.endedAt = isoTimestamp(now);
+    stageRecord.durationMs = durationMs(stageRecord.startedAt, stageRecord.endedAt);
+    stageRecord.exitCode = 1;
+    stageRecord.status = 'failed';
+    stageRecord.lines = redactLines(
+      [
+        `eval stage ${stage.name} failed`,
+        '',
+        error?.stack ?? error?.message ?? String(error),
+      ],
+      options.authToken,
+    );
+    stageRecord.error = stageRecord.lines.join('\n');
+    return { exitCode: 1, lines: stageRecord.lines, error };
+  }
+  stageRecord.endedAt = isoTimestamp(now);
+  stageRecord.durationMs = durationMs(stageRecord.startedAt, stageRecord.endedAt);
+  stageRecord.exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
+  stageRecord.lines = redactLines(result?.lines ?? [], options.authToken);
+
+  if (stageRecord.exitCode === 0) {
+    try {
+      if (stage.afterSuccess) {
+        await stage.afterSuccess();
+      }
+      stageRecord.status = 'passed';
+    } catch (error) {
+      stageRecord.exitCode = 1;
+      stageRecord.status = 'failed';
+      stageRecord.lines = redactLines(
+        [
+          ...stageRecord.lines,
+          '',
+          `eval stage ${stage.name} artifact handling failed`,
+          error?.stack ?? error?.message ?? String(error),
+        ],
+        options.authToken,
+      );
+      stageRecord.error = stageRecord.lines.join('\n');
+      return { exitCode: 1, lines: stageRecord.lines, error };
+    }
+  } else {
+    stageRecord.status = 'failed';
+    stageRecord.error = stageRecord.lines.join('\n') || `Stage ${stage.name} failed.`;
+  }
+
+  return {
+    ...result,
+    exitCode: stageRecord.exitCode,
+  };
+}
+
+export function parseArgs(args, env = process.env, now = () => new Date()) {
+  if (args.includes('--help') || args.includes('-h')) {
+    return { kind: 'help' };
+  }
+
+  const options = {
+    backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
+    graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
+    authToken: env.EVAL_AUTH_TOKEN,
+    modelLabel: env.EVAL_MODEL_LABEL,
+    resetMemory: false,
+    ensureDefinitions: true,
+    agentTimeoutMs: DEFAULT_AGENT_TIMEOUT_MS,
+    promptTemplate: DEFAULT_PROMPT_TEMPLATE,
+  };
+  const valueArgs = new Set([
+    '--agent',
+    '--schema-mode',
+    '--form-mode',
+    '--user',
+    '--corpus',
+    '--scenario',
+    '--artifacts-root',
+    '--mcp-server',
+    '--documents-root',
+    '--backend-url',
+    '--graphql-url',
+    '--auth-token',
+    '--agent-command',
+    '--agent-timeout-ms',
+    '--prompt-template',
+    '--model-label',
+    '--location-id',
+    '--run-id',
+  ]);
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--reset-memory') {
+      options.resetMemory = true;
+      continue;
+    }
+    if (arg === '--skip-ensure-definitions') {
+      options.ensureDefinitions = false;
+      continue;
+    }
+    if (!valueArgs.has(arg)) {
+      return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };
+    }
+
+    const value = args[index + 1];
+    if (!value || value.startsWith('--')) {
+      return { kind: 'usage-error', message: `Missing value for ${arg}` };
+    }
+    index += 1;
+
+    if (arg === '--agent') options.agent = value;
+    if (arg === '--schema-mode') options.schemaMode = value;
+    if (arg === '--form-mode') options.formMode = value;
+    if (arg === '--user') options.userId = value;
+    if (arg === '--corpus') options.corpusId = value;
+    if (arg === '--scenario') options.scenarioId = value;
+    if (arg === '--artifacts-root') options.artifactsRoot = value;
+    if (arg === '--mcp-server') options.mcpServer = value;
+    if (arg === '--documents-root') options.documentsRoot = value;
+    if (arg === '--backend-url') options.backendUrl = value;
+    if (arg === '--graphql-url') options.graphqlUrl = value;
+    if (arg === '--auth-token') options.authToken = value;
+    if (arg === '--agent-command') options.agentCommand = value;
+    if (arg === '--agent-timeout-ms') {
+      const parsed = parsePositiveInteger(value, arg);
+      if (parsed.kind === 'usage-error') return parsed;
+      options.agentTimeoutMs = parsed.value;
+    }
+    if (arg === '--prompt-template') options.promptTemplate = value;
+    if (arg === '--model-label') options.modelLabel = value;
+    if (arg === '--location-id') options.locationId = value;
+    if (arg === '--run-id') options.runId = value;
+  }
+
+  for (const [key, flag] of [
+    ['agent', '--agent'],
+    ['schemaMode', '--schema-mode'],
+    ['formMode', '--form-mode'],
+    ['userId', '--user'],
+    ['corpusId', '--corpus'],
+    ['scenarioId', '--scenario'],
+    ['artifactsRoot', '--artifacts-root'],
+    ['mcpServer', '--mcp-server'],
+  ]) {
+    if (!options[key]) {
+      return { kind: 'usage-error', message: `Missing required ${flag}` };
+    }
+  }
+  if (!['codex', 'claude', 'command'].includes(options.agent)) {
+    return {
+      kind: 'usage-error',
+      message: 'Expected --agent codex, --agent claude, or --agent command',
+    };
+  }
+  if (options.schemaMode === 'open') {
+    return {
+      kind: 'usage-error',
+      message: '--schema-mode open is reserved for a future implementation',
+    };
+  }
+  if (options.schemaMode !== 'known') {
+    return {
+      kind: 'usage-error',
+      message: 'Expected --schema-mode known',
+    };
+  }
+  if (options.formMode === 'agent') {
+    return {
+      kind: 'usage-error',
+      message: '--form-mode agent is reserved for a future implementation',
+    };
+  }
+  if (options.formMode !== 'backend') {
+    return {
+      kind: 'usage-error',
+      message: 'Expected --form-mode backend',
+    };
+  }
+  if (options.agent === 'command' && !options.agentCommand) {
+    return {
+      kind: 'usage-error',
+      message: 'Missing required --agent-command when --agent command is used',
+    };
+  }
+  for (const [label, value] of [
+    ['--user', options.userId],
+    ['--corpus', options.corpusId],
+    ['--scenario', options.scenarioId],
+  ]) {
+    if (!isFixtureId(value)) {
+      return { kind: 'usage-error', message: `${label} must be a fixture id.` };
+    }
+  }
+  if (!options.authToken) {
+    return {
+      kind: 'usage-error',
+      message: 'Missing required --auth-token or EVAL_AUTH_TOKEN',
+    };
+  }
+
+  options.documentsRoot =
+    options.documentsRoot ??
+    ['examples', 'eval', 'users', options.userId, 'corpora', options.corpusId].join('/');
+  options.runId = options.runId ?? generatedRunId(options, now);
+  return { kind: 'ok', options };
+}
+
+export function usage() {
+  return [
+    'Usage:',
+    '  pnpm eval:e2e-mcp-agent --agent codex|claude|command --schema-mode known --form-mode backend --user <userId> --corpus <corpusId> --scenario <scenarioId> --artifacts-root <dir> --mcp-server <name> [options]',
+    '',
+    'Notes:',
+    '  This wrapper runs a known-schema MCP memory ingestion eval through one agent session.',
+    '  Open schema and agent-filled forms are reserved and fail fast until implemented.',
+    '  Low scores are reported but do not fail the wrapper. Runtime/setup failures stop the run.',
+    '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',
+    '',
+    'Options:',
+    '  --documents-root <dir>            Defaults to examples/eval/users/<user>/corpora/<corpus>',
+    '  --backend-url <url>               Defaults to EVAL_BACKEND_URL or http://localhost:3000',
+    '  --graphql-url <url>               Defaults to EVAL_GRAPHQL_URL or http://localhost:3000/graphql',
+    '  --auth-token <token>              Defaults to EVAL_AUTH_TOKEN',
+    '  --agent-command <command>         Required with --agent command; prompt is passed on stdin',
+    '  --agent-timeout-ms <ms>           Defaults to 900000',
+    '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-known-schema.md',
+    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
+    '  --reset-memory                    Clear current backend user memory before the agent run',
+    '  --skip-ensure-definitions          Do not create missing known-schema definitions',
+    '  --location-id <locationId>         Export merged global + location view',
+    '  --run-id <id>',
+  ].join('\n');
+}
+
+export function formatMcpAgentE2EResult(result) {
+  return result.lines.join('\n');
+}
+
+export async function buildMcpAgentPrompt({ repoRoot, options, fixture }) {
+  const loadedFixture =
+    fixture ??
+    (await loadKnownSchemaFixture({
+      repoRoot,
+      evalUserId: options.userId,
+      corpusId: options.corpusId,
+      documentsRoot: options.documentsRoot,
+    }));
+  const scenarioRoot = path.join(repoRoot, 'examples/eval/scenarios', options.scenarioId);
+  const scenario = await readJson(path.join(scenarioRoot, 'scenario.json'));
+  const scenarioPrompt = (await readFile(path.join(scenarioRoot, 'start/prompt.md'), 'utf8')).trim();
+  const templatePath = path.resolve(repoRoot, options.promptTemplate);
+  const template = await readFile(templatePath, 'utf8');
+  const prompt = renderTemplate(template, {
+    MCP_SERVER: options.mcpServer,
+    SCENARIO_PROMPT: scenarioContext(scenario, scenarioPrompt),
+    FORM_ID: scenario.formId ?? '<unknown>',
+    SCHEMA_MODE: options.schemaMode,
+    FORM_MODE: options.formMode,
+    DOCUMENTS_ROOT: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+    DOCUMENT_LIST: documentList(loadedFixture.manifest.documents ?? []),
+    COMPLETION_MARKER,
+  });
+  return {
+    prompt,
+    documentCount: loadedFixture.manifest.documents?.length ?? 0,
+  };
+}
+
+export async function runAgentProcess({ repoRoot = defaultRepoRoot, options, prompt }) {
+  const invocation = buildAgentInvocation({ repoRoot, options });
+  const startedAtMs = Date.now();
+  return new Promise((resolve) => {
+    let stdout = '';
+    let stderr = '';
+    let spawnError = null;
+    let timedOut = false;
+    let closed = false;
+    let forceKillTimeout = null;
+    const child = spawn(invocation.file, invocation.args, {
+      cwd: repoRoot,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      forceKillTimeout = setTimeout(() => {
+        if (!closed) child.kill('SIGKILL');
+      }, 2_000);
+      forceKillTimeout.unref();
+    }, options.agentTimeoutMs);
+    timeout.unref();
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString('utf8');
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString('utf8');
+    });
+    child.on('error', (error) => {
+      spawnError = error;
+    });
+    child.stdin.on('error', () => {
+      // The process may exit before reading all input; close handling reports it.
+    });
+    child.on('close', (code, signal) => {
+      closed = true;
+      clearTimeout(timeout);
+      if (forceKillTimeout) clearTimeout(forceKillTimeout);
+      const durationMs = Math.max(0, Date.now() - startedAtMs);
+      const exitCode = timedOut || spawnError ? 1 : Number.isInteger(code) ? code : 1;
+      const combined = `${stdout}\n${stderr}`;
+      const completionMarkerObserved = combined.includes(COMPLETION_MARKER);
+      const lines = [
+        `agent ${options.agent} ${exitCode === 0 && !timedOut ? 'completed' : 'failed'}`,
+        `command=${redactSecret(invocation.display, options.authToken)}`,
+        `exitCode=${exitCode}`,
+        `timedOut=${timedOut}`,
+        `completionMarkerObserved=${completionMarkerObserved}`,
+      ];
+      if (signal) lines.push(`signal=${signal}`);
+      if (spawnError) lines.push(redactSecret(spawnError.message, options.authToken));
+      resolve({
+        exitCode,
+        lines,
+        stdout,
+        stderr,
+        timedOut,
+        durationMs,
+        command: invocation.display,
+        completionMarkerObserved,
+      });
+    });
+    child.stdin.end(prompt);
+  });
+}
+
+export function buildAgentInvocation({ repoRoot, options }) {
+  if (options.agent === 'codex') {
+    const args = [
+      'exec',
+      '--cd',
+      repoRoot,
+      '--sandbox',
+      'read-only',
+      '--ask-for-approval',
+      'never',
+      '-',
+    ];
+    return {
+      file: 'codex',
+      args,
+      display: ['codex', ...args.map(shellDisplayArg)].join(' '),
+    };
+  }
+  if (options.agent === 'claude') {
+    const args = ['--print', '--permission-mode', 'dontAsk', '--output-format', 'stream-json'];
+    return {
+      file: 'claude',
+      args,
+      display: ['claude', ...args.map(shellDisplayArg)].join(' '),
+    };
+  }
+  return {
+    file: '/bin/sh',
+    args: ['-lc', options.agentCommand],
+    display: options.agentCommand,
+  };
+}
+
+function buildArtifacts({ repoRoot, options }) {
+  const artifactsRoot = path.resolve(repoRoot, options.artifactsRoot);
+  return {
+    artifactsRoot,
+    validationReport: path.join(artifactsRoot, 'validation-report.json'),
+    mcpAgentRun: path.join(artifactsRoot, 'mcp-agent-run.json'),
+    prompt: path.join(artifactsRoot, 'mcp-agent-prompt.md'),
+    transcript: path.join(artifactsRoot, 'mcp-agent-transcript.txt'),
+    storedPreferences: path.join(artifactsRoot, 'stored-preferences.json'),
+    databaseScoreReport: path.join(artifactsRoot, 'database-score-report.json'),
+    filledForm: path.join(artifactsRoot, 'filled-form.json'),
+    filledPdf: path.join(artifactsRoot, 'filled-form.pdf'),
+    formFillResponse: path.join(artifactsRoot, 'form-fill-response.json'),
+    formScoreReport: path.join(artifactsRoot, 'form-score-report.json'),
+    combinedScoreReport: path.join(artifactsRoot, 'combined-score-report.json'),
+    evaluationRun: path.join(artifactsRoot, 'evaluation-run.json'),
+  };
+}
+
+function initialReport({ repoRoot, options, artifacts, startedAt }) {
+  return {
+    schemaVersion: 2,
+    artifactType: 'evaluation-run',
+    evaluationMode: 'mcp-known-schema',
+    status: 'running',
+    runId: options.runId,
+    userId: options.userId,
+    corpusId: options.corpusId,
+    scenarioId: options.scenarioId,
+    documentsRoot: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+    artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
+    backendUrl: sanitizeUrlForArtifact(options.backendUrl),
+    graphqlUrl: sanitizeUrlForArtifact(options.graphqlUrl),
+    model: modelMetadata(options),
+    locationId: options.locationId ?? null,
+    settings: {
+      resetMemory: options.resetMemory,
+      ensureDefinitions: options.ensureDefinitions,
+      autoApply: false,
+      seedPreferences: false,
+      schemaMode: options.schemaMode,
+      formMode: options.formMode,
+      agent: options.agent,
+      mcpServer: options.mcpServer,
+      agentTimeoutMs: options.agentTimeoutMs,
+      promptTemplate: displayPath(repoRoot, path.resolve(repoRoot, options.promptTemplate)),
+    },
+    backendUserId: null,
+    failureStage: null,
+    stages: STAGE_NAMES.map((name) => ({
+      name,
+      status: 'pending',
+      startedAt: null,
+      endedAt: null,
+      durationMs: null,
+      exitCode: null,
+      artifacts: artifactMapForStage({ repoRoot, artifacts, name }),
+      lines: [],
+      error: null,
+    })),
+    summaries: {
+      validation: null,
+      setup: null,
+      ingestion: null,
+      agent: null,
+      export: null,
+      databaseScore: null,
+      formFill: null,
+      formScore: null,
+      combinedScore: null,
+    },
+    startedAt,
+    endedAt: null,
+  };
+}
+
+function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt }) {
+  const summary = setupSummary(setupResult, options);
+  return {
+    schemaVersion: 1,
+    artifactType: 'mcp-agent-run',
+    runId: options.runId,
+    status: 'running',
+    userId: options.userId,
+    corpusId: options.corpusId,
+    scenarioId: options.scenarioId,
+    schemaMode: options.schemaMode,
+    formMode: options.formMode,
+    backendUserId: setupResult.backendUserId ?? null,
+    agent: {
+      provider: options.agent,
+      modelLabel: options.modelLabel ?? null,
+      mcpServer: options.mcpServer,
+      timeoutMs: options.agentTimeoutMs,
+      command: null,
+      completionMarkerObserved: null,
+    },
+    setup: {
+      resetMemory: options.resetMemory,
+      knownSchemaDefinitionsEnsured: options.ensureDefinitions,
+      createdDefinitionCount: summary.createdDefinitionCount,
+      existingDefinitionCount: summary.existingDefinitionCount,
+      skippedDefinitionCount: summary.skippedDefinitionCount,
+    },
+    prompt: {
+      templatePath: displayPath(repoRoot, path.resolve(repoRoot, options.promptTemplate)),
+      renderedPromptPath: relativePath(repoRoot, artifacts.prompt),
+      promptHash: null,
+    },
+    documents: {
+      documentsRoot: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+      documentCount: setupResult.fixture?.manifest?.documents?.length ?? null,
+    },
+    transcript: {
+      path: relativePath(repoRoot, artifacts.transcript),
+      redacted: true,
+    },
+    summary: {
+      durationMs: null,
+      exitCode: null,
+      timedOut: false,
+      toolCallCount: null,
+      preferenceWriteCount: null,
+      definitionCreateCount: null,
+    },
+    artifacts: {
+      validationReport: relativePath(repoRoot, artifacts.validationReport),
+      storedPreferences: relativePath(repoRoot, artifacts.storedPreferences),
+      databaseScoreReport: relativePath(repoRoot, artifacts.databaseScoreReport),
+      filledForm: relativePath(repoRoot, artifacts.filledForm),
+      filledPdf: relativePath(repoRoot, artifacts.filledPdf),
+      formFillResponse: relativePath(repoRoot, artifacts.formFillResponse),
+      formScoreReport: relativePath(repoRoot, artifacts.formScoreReport),
+      combinedScoreReport: relativePath(repoRoot, artifacts.combinedScoreReport),
+      evaluationRun: relativePath(repoRoot, artifacts.evaluationRun),
+    },
+    startedAt,
+    endedAt: null,
+    error: null,
+  };
+}
+
+function setupSummary(setupResult, options) {
+  const definitionSetup = setupResult?.definitionSetup ?? {};
+  return {
+    backendUserId: setupResult?.backendUserId ?? null,
+    resetMemory: options.resetMemory,
+    ensureDefinitions: options.ensureDefinitions,
+    createdDefinitionCount: definitionSetup.created?.length ?? 0,
+    existingDefinitionCount: definitionSetup.existing?.length ?? 0,
+    skippedDefinitionCount: definitionSetup.skipped?.length ?? 0,
+  };
+}
+
+function artifactMapForStage({ repoRoot, artifacts, name }) {
+  const map = {
+    'validate-documents': { validationReport: artifacts.validationReport },
+    'setup-memory-and-schema': { mcpAgentRun: artifacts.mcpAgentRun },
+    'run-mcp-agent': {
+      mcpAgentRun: artifacts.mcpAgentRun,
+      prompt: artifacts.prompt,
+      transcript: artifacts.transcript,
+    },
+    'export-stored-preferences': { storedPreferences: artifacts.storedPreferences },
+    'score-database': { databaseScoreReport: artifacts.databaseScoreReport },
+    'fill-form': {
+      filledForm: artifacts.filledForm,
+      filledPdf: artifacts.filledPdf,
+      response: artifacts.formFillResponse,
+    },
+    'score-form': { formScoreReport: artifacts.formScoreReport },
+    'score-combined': { combinedScoreReport: artifacts.combinedScoreReport },
+  }[name];
+  return Object.fromEntries(
+    Object.entries(map).map(([key, value]) => [key, relativePath(repoRoot, value)]),
+  );
+}
+
+function exportArgs(options, artifacts) {
+  const args = [
+    '--user',
+    options.userId,
+    '--corpus',
+    options.corpusId,
+    '--out',
+    artifacts.storedPreferences,
+    '--graphql-url',
+    options.graphqlUrl,
+    '--auth-token',
+    options.authToken,
+    '--ingestion-mode',
+    INGESTION_MODE,
+    '--suggestions-were-auto-applied',
+    'false',
+    '--run-id',
+    options.runId,
+  ];
+  if (options.locationId) args.push('--location-id', options.locationId);
+  return args;
+}
+
+function renderTemplate(template, values) {
+  let rendered = template;
+  for (const [key, value] of Object.entries(values)) {
+    rendered = rendered.split(`{{${key}}}`).join(String(value));
+  }
+  return rendered;
+}
+
+function scenarioContext(scenario, prompt) {
+  return [
+    scenario.scenarioId ? `Scenario id: ${scenario.scenarioId}` : null,
+    scenario.description ? `Purpose: ${scenario.description}` : null,
+    prompt ? `Prompt: ${prompt}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function documentList(documents) {
+  if (!documents.length) return '- <no documents>';
+  return documents
+    .map((doc) =>
+      [
+        `- path: ${doc.path}`,
+        `  id: ${doc.id ?? ''}`,
+        `  title: ${doc.title ?? ''}`,
+        `  category: ${doc.category ?? ''}`,
+        `  outputExtension: ${doc.outputExtension ?? ''}`,
+      ].join('\n'),
+    )
+    .join('\n');
+}
+
+function buildTranscript(result, secret) {
+  const sections = [];
+  if (result?.command) {
+    sections.push(`$ ${result.command}`);
+  }
+  if (typeof result?.transcript === 'string' && result.transcript.length > 0) {
+    sections.push(result.transcript);
+  }
+  if (typeof result?.stdout === 'string') {
+    sections.push(`[stdout]\n${result.stdout}`);
+  }
+  if (typeof result?.stderr === 'string') {
+    sections.push(`[stderr]\n${result.stderr}`);
+  }
+  return `${redactSecret(sections.join('\n\n'), secret)}\n`;
+}
+
+async function writeText(filePath, text) {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, text);
+}
+
+function markRemainingStagesSkipped(report, failedStageName) {
+  let afterFailed = false;
+  for (const stage of report.stages) {
+    if (afterFailed && stage.status === 'pending') {
+      stage.status = 'skipped';
+    }
+    if (stage.name === failedStageName) {
+      afterFailed = true;
+    }
+  }
+}
+
+function activeStageName(report) {
+  return report.stages.find((stage) => stage.status === 'running')?.name ?? null;
+}
+
+function failureLines({ report, reportPath, repoRoot, stageName }) {
+  const stage = report.stages.find((candidate) => candidate.name === stageName);
+  const lines = [
+    'eval e2e-mcp-agent failed',
+    `stage=${stageName}`,
+    `runId=${report.runId}`,
+    `artifacts=${report.artifactsRoot}`,
+    `wrote ${relativePath(repoRoot, reportPath)}`,
+  ];
+  if (stage?.artifacts?.response) {
+    lines.push(`response=${stage.artifacts.response}`);
+  }
+  if (stage?.artifacts?.transcript) {
+    lines.push(`transcript=${stage.artifacts.transcript}`);
+  }
+  return [...lines, '', ...(stage?.lines ?? [])];
+}
+
+function isoTimestamp(now) {
+  const value = now();
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') return value;
+  return new Date(value).toISOString();
+}
+
+function durationMs(startedAt, endedAt) {
+  return Math.max(0, Date.parse(endedAt) - Date.parse(startedAt));
+}
+
+function generatedRunId(options, now) {
+  return [
+    'mcp-known-schema',
+    options.userId,
+    options.corpusId,
+    isoTimestamp(now).replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, ''),
+  ].join('-');
+}
+
+function modelMetadata(options) {
+  if (options.modelLabel) {
+    return {
+      label: options.modelLabel,
+      source: 'manual',
+    };
+  }
+  return {
+    label: null,
+    source: 'unspecified',
+  };
+}
+
+function parsePositiveInteger(value, flag) {
+  if (!/^[0-9]+$/.test(value)) {
+    return {
+      kind: 'usage-error',
+      message: `Expected ${flag} to be a positive integer`,
+    };
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    return {
+      kind: 'usage-error',
+      message: `Expected ${flag} to be a positive integer`,
+    };
+  }
+  return { kind: 'ok', value: parsed };
+}
+
+function promptHash(prompt) {
+  return `sha256:${createHash('sha256').update(prompt).digest('hex')}`;
+}
+
+function displayPath(repoRoot, filePath) {
+  const absoluteRepoRoot = path.resolve(repoRoot);
+  const absoluteFilePath = path.resolve(filePath);
+  const relative = path.relative(absoluteRepoRoot, absoluteFilePath);
+  if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
+    return relative.split(path.sep).join('/');
+  }
+  return absoluteFilePath.split(path.sep).join('/');
+}
+
+function shellDisplayArg(value) {
+  if (/^[A-Za-z0-9_./:=@+-]+$/.test(value)) return value;
+  return JSON.stringify(value);
+}
+
+function redactLines(lines, secret) {
+  return lines.map((line) => redactSecret(String(line), secret));
+}
+
+function redactSecret(text, secret) {
+  if (!secret) return text;
+  return text.split(secret).join('[redacted-auth-token]');
+}
+
+function sanitizeUrlForArtifact(value) {
+  try {
+    const url = new URL(value);
+    url.username = '';
+    url.password = '';
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const result = await runMcpAgentE2E({ args: process.argv.slice(2) });
+  console.log(formatMcpAgentE2EResult(result));
+  process.exitCode = result.exitCode;
+}

@@ -16,6 +16,7 @@ The first implementation should be:
 
 ```text
 known-schema fixture setup
+  -> shared reset/definition setup
   -> one fixed Codex/Claude agent session
   -> agent reads local corpus documents
   -> agent writes active backend memory through MCP
@@ -94,6 +95,7 @@ For MCP, the agent should be just another producer.
 
 Existing artifacts to reuse:
 
+- `validation-report.json`
 - `stored-preferences.json`
 - `database-score-report.json`
 - `filled-form.json`
@@ -328,6 +330,14 @@ Known-schema setup should:
 - avoid passing the accepted slug map to the agent
 - tell the agent to inspect visible schema through MCP
 
+Implementation note:
+
+- Extract the reset and definition-setup primitives currently private to
+  `examples/eval/scripts/ingest-documents.mjs` into shared eval helpers.
+- The MCP runner should use those helpers directly; it should not invoke
+  `eval:ingest-documents`, because that command's main job is product document
+  upload and suggestion application.
+
 Known-schema prompt intent:
 
 ```text
@@ -371,11 +381,14 @@ Open-schema scoring should be added after the known-schema runner is stable:
 
 Open-schema likely needs one new artifact:
 
-- `preference-schema-snapshot.json`, or
-- `stored-preferences.json` extended with definition metadata
+- `memory-snapshot.json`
 
 The metadata should include slug, display name, description, value type, scope,
 visibility, owner/backend user, and archived state.
+
+Keep known-schema MCP on `stored-preferences.json` v1 until the open-schema
+scoring layer exists. Do not make the known-schema runner depend on the enriched
+snapshot just to satisfy future open-schema needs.
 
 ## Form Mode Strategy
 
@@ -598,9 +611,9 @@ Suggested shape:
 }
 ```
 
-The top-level `evaluation-run.json` should include the MCP stages. Since
-backwards compatibility is not required, update the schema directly rather than
-adding compatibility shims.
+The top-level `evaluation-run.json` should include the MCP stages. Update
+`evaluation-run.schema.json` from its current known-schema-only shape so it can
+validate both the existing `known-schema` wrapper and the new MCP modes.
 
 Suggested `evaluationMode` values:
 
@@ -740,6 +753,17 @@ Cons:
 
 ## Implementation Checkpoints
 
+### Checkpoint 0: Shared Setup Extraction
+
+- Extract reusable fixture loading, `resetMyMemory(MEMORY_ONLY)`, and
+  known-schema definition setup helpers from `ingest-documents`.
+- Keep `eval:ingest-documents` behavior unchanged while the MCP runner reuses
+  only the setup primitives.
+- Add focused tests proving existing definition compatibility checks still run
+  outside the upload ingestor.
+
+Checkpoint can run targeted setup/helper tests plus existing ingestor tests.
+
 ### Checkpoint 1: Prompt And Artifact Design
 
 - Add prompt template for known-schema MCP memory ingestion.
@@ -757,7 +781,8 @@ pnpm eval:validate
 
 - Add `pnpm eval:e2e-mcp-agent`.
 - Parse CLI args.
-- Write `evaluation-run.json` with MCP stage names.
+- Write `evaluation-run.json` with `evaluationMode: "mcp-known-schema"` and
+  MCP stage names.
 - Stub agent stage with an injectable test runner.
 - Reuse exporter, form runner, and scorers in the same style as
   `eval:e2e-known-schema`.
@@ -766,7 +791,7 @@ Checkpoint can run targeted tests for the wrapper without a live agent.
 
 ### Checkpoint 3: Known-Schema Setup Strategy
 
-- Reuse the existing known-schema definition setup logic where possible.
+- Reuse the extracted known-schema definition setup helpers.
 - Ensure definitions before the agent stage.
 - Reset memory when requested.
 - Do not pass accepted slug map or profile truth into the prompt.
