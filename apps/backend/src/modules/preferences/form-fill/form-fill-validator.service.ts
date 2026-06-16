@@ -228,6 +228,7 @@ export class FormFillValidatorService {
 
     return sourceSlugs.some((slug) => {
       if (!activePreferenceValues.has(slug)) {
+        // Conditional policies fail closed when the gating fact is unavailable.
         return false;
       }
       return this.valueMatchesExpected(activePreferenceValues.get(slug), expected);
@@ -239,14 +240,10 @@ export class FormFillValidatorService {
       return value.some((entry) => this.valueMatchesExpected(entry, expected));
     }
 
-    if (typeof value === 'string') {
-      const normalizedValue = value.trim().toLocaleLowerCase();
-      return expected.some(
-        (candidate) => candidate.trim().toLocaleLowerCase() === normalizedValue,
-      );
-    }
-
-    return expected.some((candidate) => Object.is(value, candidate));
+    const normalizedValue = String(value).trim().toLocaleLowerCase();
+    return expected.some(
+      (candidate) => candidate.trim().toLocaleLowerCase() === normalizedValue,
+    );
   }
 
   private applyCheckboxGroupPolicies({
@@ -313,6 +310,18 @@ export class FormFillValidatorService {
             confidence: loser.confidence,
             message: `checkbox group conflict: kept ${winner.fieldName}`,
           });
+        }
+      }
+    }
+
+    if (blockedFieldNames.size > 0) {
+      for (let index = validationEvents.length - 1; index >= 0; index -= 1) {
+        const event = validationEvents[index];
+        if (
+          event.kind === 'low_confidence_applied' &&
+          blockedFieldNames.has(event.fieldName)
+        ) {
+          validationEvents.splice(index, 1);
         }
       }
     }

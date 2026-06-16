@@ -359,6 +359,7 @@ describe('FormFillValidatorService', () => {
             {
               fieldName: 'profile.full_name',
               mode: 'skip',
+              sourceSlugs: [],
               reason: 'manual_attestation',
             },
           ],
@@ -399,7 +400,7 @@ describe('FormFillValidatorService', () => {
       new Set(['profile.citizenship_status']),
       0.75,
       {
-        activePreferenceValues: new Map([
+        activePreferenceValues: new Map<string, unknown>([
           ['profile.citizenship_status', 'alien authorized to work'],
         ]),
         fieldPolicies: {
@@ -438,6 +439,68 @@ describe('FormFillValidatorService', () => {
         }),
       ]),
     );
+  });
+
+  it('matches non-string active preference values for conditional policies', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['preferences.newsletter_opt_in'],
+          confidence: 0.95,
+        },
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: '1',
+          sourceSlugs: ['preferences.household_size'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['preferences.newsletter_opt_in', 'preferences.household_size']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['preferences.newsletter_opt_in', true],
+          ['preferences.household_size', 1],
+        ]),
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'fact',
+              factKey: 'preferences.newsletterOptIn',
+              sourceSlugs: ['preferences.newsletter_opt_in'],
+              when: {
+                factKey: 'preferences.newsletterOptIn',
+                sourceSlugs: ['preferences.newsletter_opt_in'],
+                equals: 'true',
+              },
+            },
+            {
+              fieldName: 'profile.full_name',
+              mode: 'fact',
+              factKey: 'preferences.householdSize',
+              sourceSlugs: ['preferences.household_size'],
+              when: {
+                factKey: 'preferences.householdSize',
+                sourceSlugs: ['preferences.household_size'],
+                equals: '1',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'profile.full_name' }),
+      expect.objectContaining({ fieldName: 'newsletter_opt_in' }),
+    ]);
+    expect(result.validationEvents).toEqual([]);
   });
 
   it('keeps the highest-confidence checkbox action in a policy group', () => {
@@ -511,6 +574,74 @@ describe('FormFillValidatorService', () => {
         kind: 'checkbox_group_conflict',
         fieldName: 'CB_1',
         groupId: 'workAuthorization.citizenshipStatus',
+      }),
+    ]);
+  });
+
+  it('does not report low-confidence applied for checkbox actions blocked by group conflict', () => {
+    const checkboxFields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_1',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+      {
+        name: 'CB_4',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'CB_1',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.4,
+        },
+        {
+          fieldName: 'CB_4',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      checkboxFields,
+      new Set(['profile.citizenship_status']),
+      0.75,
+      {
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_1',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+            {
+              fieldName: 'CB_4',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'CB_4', action: 'CHECK' }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'checkbox_group_conflict',
+        fieldName: 'CB_1',
       }),
     ]);
   });

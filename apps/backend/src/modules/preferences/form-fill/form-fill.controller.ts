@@ -94,6 +94,6 @@ export class FormFillController {
       );
     }
 
-    return result.data as FormFillFieldPolicies;
+    return result.data;
   }
 }

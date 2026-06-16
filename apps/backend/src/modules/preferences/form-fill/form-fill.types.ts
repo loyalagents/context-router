@@ -37,27 +37,6 @@ export interface PdfFieldMetadata {
   unsupportedReason?: string;
 }
 
-export interface FormFillFieldCondition {
-  factKey: string;
-  sourceSlugs?: string[];
-  equals: string | string[];
-}
-
-export interface FormFillFieldPolicy {
-  fieldName: string;
-  mode: 'fact' | 'skip';
-  factKey?: string;
-  sourceSlugs?: string[];
-  when?: FormFillFieldCondition;
-  groupId?: string;
-  reason?: string;
-}
-
-export interface FormFillFieldPolicies {
-  schemaVersion: 1;
-  fields: FormFillFieldPolicy[];
-}
-
 export interface FormFillValidationEvent {
   kind:
     | 'low_confidence_applied'
@@ -87,6 +66,7 @@ const FieldPolicySchema = z.object({
   factKey: z.string().optional(),
   sourceSlugs: z.array(z.string()).optional().default([]),
   when: FieldConditionSchema.optional(),
+  // Checkbox policies sharing a groupId are treated as mutually exclusive.
   groupId: z.string().optional(),
   reason: z.string().optional(),
 });
@@ -95,6 +75,12 @@ export const FormFillFieldPoliciesSchema = z.object({
   schemaVersion: z.literal(1),
   fields: z.array(FieldPolicySchema),
 });
+
+export type FormFillFieldCondition = z.infer<typeof FieldConditionSchema>;
+export type FormFillFieldPolicy = z.infer<typeof FieldPolicySchema>;
+export type FormFillFieldPolicies = z.infer<
+  typeof FormFillFieldPoliciesSchema
+>;
 
 export const FillActionSchema = z.object({
   fieldName: z.string(),

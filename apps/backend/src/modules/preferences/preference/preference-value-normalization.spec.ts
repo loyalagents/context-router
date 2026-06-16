@@ -77,6 +77,15 @@ describe('canonicalizePreferenceValue', () => {
     ]);
   });
 
+  it('leaves blank scalar strings invalid for array definitions', () => {
+    const value = canonicalizePreferenceValue(
+      { valueType: PreferenceValueType.ARRAY },
+      '   ',
+    );
+
+    expect(value).toBe('');
+  });
+
   it('trims, drops blank strings, and dedupes string array entries', () => {
     const value = canonicalizePreferenceValue(
       { valueType: PreferenceValueType.ARRAY },

@@ -55,3 +55,14 @@ All commands passed locally. The E2E test run required refreshing local dependen
 - Run a live backend known-schema E2E for pro and flash-lite after updating backend `.env`/restart as needed.
 - Compare the new run directories with `pnpm eval:compare-runs`.
 - Keep backend model introspection as separate later work.
+
+## Review Feedback Follow-Up
+
+Addressed the actionable PR feedback:
+
+- Blank scalar strings for `ARRAY` preferences now remain invalid after normalization instead of becoming `[]`.
+- Conditional policy matching now handles boolean and numeric active preference values by comparing normalized scalar text.
+- Checkbox group conflict pruning removes stale `low_confidence_applied` events for actions that are ultimately skipped.
+- Form-fill policy types now derive from the zod schema, removing the controller cast.
+- The eval policy-generation test no longer depends on exact policy count.
+- Added comments documenting diagnostic-only confidence threshold behavior, fail-closed conditionals, and checkbox `groupId` semantics.

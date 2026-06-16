@@ -44,7 +44,7 @@ export function canonicalizePreferenceValue(
       emit(options, "coerced_array_scalar");
       return [trimmed];
     }
-    return [];
+    return trimmed;
   }
 
   if (!Array.isArray(value)) {
