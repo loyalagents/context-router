@@ -15,6 +15,7 @@ describe('FormFillPromptBuilderService', () => {
         type: 'text',
         options: [],
         supported: true,
+        maxLength: 12,
       },
       {
         name: 'food.spice_tolerance',
@@ -42,9 +43,48 @@ describe('FormFillPromptBuilderService', () => {
 
     expect(prompt).toContain('Return exactly one fill action for every PDF field');
     expect(prompt).toContain('Use exact case-sensitive fieldName values');
+    expect(prompt).toContain('final text length is at or below maxLength');
     expect(prompt).toContain('"name": "profile.full_name"');
+    expect(prompt).toContain('"maxLength": 12');
     expect(prompt).toContain('"value": "medium"');
     expect(prompt).toContain('"slug": "food.spice_tolerance"');
     expect(prompt).toContain('"value": "Alex Rivera"');
+  });
+
+  it('includes optional field policies when provided', () => {
+    const fields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_4',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const prompt = service.buildPrompt(
+      fields,
+      [
+        {
+          slug: 'profile.citizenship_status',
+          value: 'alien authorized to work',
+        },
+      ],
+      {
+        schemaVersion: 1,
+        fields: [
+          {
+            fieldName: 'CB_4',
+            mode: 'fact',
+            factKey: 'workAuthorization.citizenshipStatus',
+            sourceSlugs: ['profile.citizenship_status'],
+            groupId: 'workAuthorization.citizenshipStatus',
+          },
+        ],
+      },
+    );
+
+    expect(prompt).toContain('Field policies');
+    expect(prompt).toContain('"fieldName": "CB_4"');
+    expect(prompt).toContain('"groupId": "workAuthorization.citizenshipStatus"');
   });
 });

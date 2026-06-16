@@ -3,12 +3,13 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildRunPlan } from './eval-runner/actions.mjs';
+import { buildRunPlan, evalSlugForFactKey } from './eval-runner/actions.mjs';
 import { loadScenarioFixture } from './eval-runner/fixtures.mjs';
 import { readFilledPdfFieldsFromBase64 } from './eval-runner/pdf.mjs';
 import { buildFilledFormSnapshot } from './eval-runner/snapshots.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import {
+  readJson,
   relativePath,
   validateWithSchema,
   writeJson,
@@ -63,10 +64,14 @@ export async function runFillForm({
       scenarioId: options.scenarioId,
     });
     const runPlan = buildRunPlan(fixture);
+    const fieldPolicies = options.fieldPolicies
+      ? await buildFieldPoliciesForFixture({ fixture })
+      : undefined;
     const response = await fetchFormFillResponse({
       backendUrl: options.backendUrl,
       authToken: options.authToken,
       formPdfPath: fixture.formPdfPath,
+      fieldPolicies,
       fetchImpl,
     });
     const responsePdfBytes = decodeResponsePdfBytes(response);
@@ -168,6 +173,7 @@ export function parseArgs(args, env = process.env) {
   const options = {
     backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
     authToken: env.EVAL_AUTH_TOKEN,
+    fieldPolicies: true,
   };
 
   const valueArgs = new Set([
@@ -182,6 +188,10 @@ export function parseArgs(args, env = process.env) {
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
+    if (arg === '--no-field-policies') {
+      options.fieldPolicies = false;
+      continue;
+    }
     if (!valueArgs.has(arg)) {
       return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };
     }
@@ -239,6 +249,7 @@ export function usage() {
     '  --filled-pdf-out <file>          Write the decoded filled PDF for visual review',
     '  --response-out <file>            Write a redacted backend response artifact',
     '  --form-score-report <file>       Also run eval:score --mode form output',
+    '  --no-field-policies              Send only the PDF, without eval field-policy metadata',
   ].join('\n');
 }
 
@@ -246,6 +257,7 @@ export async function fetchFormFillResponse({
   backendUrl,
   authToken,
   formPdfPath,
+  fieldPolicies,
   fetchImpl = globalThis.fetch,
 }) {
   if (typeof fetchImpl !== 'function') {
@@ -262,6 +274,9 @@ export async function fetchFormFillResponse({
     new Blob([pdfBytes], { type: 'application/pdf' }),
     path.basename(formPdfPath),
   );
+  if (fieldPolicies) {
+    formData.append('fieldPolicies', JSON.stringify(fieldPolicies));
+  }
 
   const endpoint = new URL('/api/form-fill/pdf', backendUrl).toString();
   const response = await fetchImpl(endpoint, {
@@ -292,6 +307,70 @@ export async function fetchFormFillResponse({
   return payload;
 }
 
+export async function buildFieldPoliciesForFixture({ fixture }) {
+  const storageMap = await readJson(
+    path.join(fixture.evalRoot, 'scoring/fact-storage-map.v1.json'),
+  );
+  return buildFormFillFieldPolicies({ fixture, storageMap });
+}
+
+export function buildFormFillFieldPolicies({ fixture, storageMap }) {
+  const fields = [];
+
+  for (const { fieldMap, generated } of fixture.joinedFields) {
+    if (fieldMap.mode === 'skip') {
+      fields.push({
+        fieldName: fieldMap.pdfFieldName,
+        mode: 'skip',
+        reason: fieldMap.reason ?? 'structural_skip',
+      });
+      continue;
+    }
+
+    if (fieldMap.mode !== 'fact') {
+      continue;
+    }
+
+    const policy = {
+      fieldName: fieldMap.pdfFieldName,
+      mode: 'fact',
+      factKey: fieldMap.factKey,
+      sourceSlugs: sourceSlugsForFactKey(fieldMap.factKey, storageMap),
+    };
+
+    if (fieldMap.when) {
+      policy.when = {
+        factKey: fieldMap.when.factKey,
+        sourceSlugs: sourceSlugsForFactKey(fieldMap.when.factKey, storageMap),
+        equals: fieldMap.when.equals,
+      };
+      if (generated.type === 'checkbox') {
+        policy.groupId = fieldMap.when.factKey;
+      }
+    }
+
+    fields.push(policy);
+  }
+
+  return {
+    schemaVersion: 1,
+    fields,
+  };
+}
+
+function sourceSlugsForFactKey(factKey, storageMap) {
+  const mapEntry = storageMap.facts?.[factKey] ?? {};
+  return unique([
+    ...(mapEntry.canonicalSlugs ?? []),
+    ...(mapEntry.acceptedAliasSlugs ?? []),
+    evalSlugForFactKey(factKey),
+  ]);
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
 export function assertScorableResponse(response) {
   if (!response || typeof response !== 'object') {
     throw new Error('Form-fill response did not include a response object.');
@@ -302,8 +381,9 @@ export function assertScorableResponse(response) {
     );
   }
   if (TERMINAL_STATUSES.has(response.status)) {
+    const detail = terminalResponseDetail(response);
     throw new Error(
-      `Form-fill response status was ${response.status}. This eval runner only scores success or partial responses.`,
+      `Form-fill response status was ${response.status}. This eval runner only scores success or partial responses.${detail ? ` Detail: ${detail}` : ''}`,
     );
   }
   for (const key of ['originalFilename', 'outputFilename', 'outputMimeType']) {
@@ -352,6 +432,38 @@ export function assertScorableResponse(response) {
       `Form-fill response summary.totalFields ${response.summary.totalFields} is less than filledCount + skippedCount.`,
     );
   }
+}
+
+function terminalResponseDetail(response) {
+  const summary = response?.summary;
+  if (!summary || typeof summary !== 'object') return null;
+
+  const warnings = Array.isArray(summary.warnings)
+    ? summary.warnings.filter((warning) => typeof warning === 'string' && warning.trim())
+    : [];
+  const warning =
+    warnings.find((value) => value.trim() !== 'Form fill failed. Please try again.') ??
+    warnings[0];
+  if (warning) return compactDetail(warning);
+
+  const validationEvents = Array.isArray(summary.validationEvents)
+    ? summary.validationEvents
+    : [];
+  const event = validationEvents.find((value) => value && typeof value === 'object');
+  if (!event) return null;
+  if (typeof event.message === 'string' && event.message.trim()) {
+    return compactDetail(event.message);
+  }
+  if (typeof event.kind === 'string' && typeof event.fieldName === 'string') {
+    return compactDetail(`${event.kind} for ${event.fieldName}`);
+  }
+  if (typeof event.kind === 'string') return compactDetail(event.kind);
+  return null;
+}
+
+function compactDetail(value) {
+  const detail = value.replace(/\s+/g, ' ').trim();
+  return detail ? detail.slice(0, 500) : null;
 }
 
 export function buildResponseArtifact({ fixture, backendUrl, response, pdfBytes }) {
