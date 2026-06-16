@@ -23,6 +23,7 @@ Implemented the PR3 follow-up without adding a model retry loop.
   - `low_confidence_applied`
   - `policy_inactive_blocked`
   - `policy_structural_skip_blocked`
+  - `policy_source_slug_off_policy`
   - `checkbox_group_conflict`
 - Preserved PDF-only callers by making policy metadata optional.
 
@@ -63,6 +64,7 @@ Addressed the actionable PR feedback:
 - Blank scalar strings for `ARRAY` preferences now remain invalid after normalization instead of becoming `[]`.
 - Conditional policy matching now handles boolean and numeric active preference values by comparing normalized scalar text.
 - Checkbox group conflict pruning removes stale `low_confidence_applied` events for actions that are ultimately skipped.
+- Applied actions using active-but-off-policy source slugs now emit a warning-only `policy_source_slug_off_policy` validation event; hard enforcement remains deferred.
 - Form-fill policy types now derive from the zod schema, removing the controller cast.
 - The eval policy-generation test no longer depends on exact policy count.
 - Added comments documenting diagnostic-only confidence threshold behavior, fail-closed conditionals, and checkbox `groupId` semantics.

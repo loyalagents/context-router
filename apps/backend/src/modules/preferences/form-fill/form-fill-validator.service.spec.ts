@@ -503,6 +503,50 @@ describe('FormFillValidatorService', () => {
     expect(result.validationEvents).toEqual([]);
   });
 
+  it('records a warning event for applied active slugs outside field policy slugs', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.legal_name'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['profile.legal_name']),
+      0.75,
+      {
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'profile.full_name',
+              mode: 'fact',
+              factKey: 'identity.legalName',
+              sourceSlugs: ['profile.full_name'],
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'profile.full_name',
+        action: 'SET_TEXT',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'policy_source_slug_off_policy',
+        fieldName: 'profile.full_name',
+        message: 'source slug not listed in field policy: profile.legal_name',
+      }),
+    ]);
+  });
+
   it('keeps the highest-confidence checkbox action in a policy group', () => {
     const checkboxFields: PdfFieldMetadata[] = [
       {
@@ -611,6 +655,74 @@ describe('FormFillValidatorService', () => {
       ],
       checkboxFields,
       new Set(['profile.citizenship_status']),
+      0.75,
+      {
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_1',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+            {
+              fieldName: 'CB_4',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'CB_4', action: 'CHECK' }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'checkbox_group_conflict',
+        fieldName: 'CB_1',
+      }),
+    ]);
+  });
+
+  it('does not report off-policy slugs for checkbox actions blocked by group conflict', () => {
+    const checkboxFields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_1',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+      {
+        name: 'CB_4',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'CB_1',
+          action: 'CHECK',
+          sourceSlugs: ['profile.unexpected_status'],
+          confidence: 0.8,
+        },
+        {
+          fieldName: 'CB_4',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      checkboxFields,
+      new Set(['profile.citizenship_status', 'profile.unexpected_status']),
       0.75,
       {
         fieldPolicies: {

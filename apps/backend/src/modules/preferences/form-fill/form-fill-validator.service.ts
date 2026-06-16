@@ -197,6 +197,20 @@ export class FormFillValidatorService {
       }
     }
 
+    if (policy?.mode === 'fact' && policy.sourceSlugs.length > 0) {
+      const allowedSlugs = new Set(policy.sourceSlugs);
+      const offPolicySlugs = action.sourceSlugs.filter(
+        (slug) => !allowedSlugs.has(slug),
+      );
+      if (offPolicySlugs.length > 0) {
+        validationEvents.push({
+          kind: 'policy_source_slug_off_policy',
+          fieldName: field.name,
+          message: `source slug not listed in field policy: ${offPolicySlugs.join(', ')}`,
+        });
+      }
+    }
+
     if (typeof action.confidence !== 'number') {
       return 'missing confidence';
     }
@@ -318,7 +332,8 @@ export class FormFillValidatorService {
       for (let index = validationEvents.length - 1; index >= 0; index -= 1) {
         const event = validationEvents[index];
         if (
-          event.kind === 'low_confidence_applied' &&
+          (event.kind === 'low_confidence_applied' ||
+            event.kind === 'policy_source_slug_off_policy') &&
           blockedFieldNames.has(event.fieldName)
         ) {
           validationEvents.splice(index, 1);

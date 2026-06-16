@@ -42,6 +42,7 @@ export interface FormFillValidationEvent {
     | 'low_confidence_applied'
     | 'policy_inactive_blocked'
     | 'policy_structural_skip_blocked'
+    | 'policy_source_slug_off_policy'
     | 'checkbox_group_conflict';
   fieldName: string;
   message: string;
