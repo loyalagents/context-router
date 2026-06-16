@@ -155,13 +155,14 @@ Task:
 - Analyze the attached document for any information that indicates a new or updated preference.
 - For each item, output a suggestion object using a valid slug from the schema.
 - Only suggest changes with clear evidence in the document.
-- Distinguish value evidence from absence/status evidence. If text describes a missing value, collection state, workflow state, task status, placeholder, or YAML/JSON comment, do not use that text as newValue for a preference fact.
-- Examples of absence/status evidence include phrases like "pending", "not provided", "to be completed", "collection pending", "pending task completion", or "draft saved". These phrases are only valid newValue content when the slug itself is explicitly asking for that status or note, not when filling a durable personal fact such as address, ZIP, phone, email, identity, or work authorization.
-- newValue must be the durable user fact itself, not an explanation of why that fact is missing, pending, or not yet collected.
+- Distinguish value evidence from absence/status evidence. Null, blank, placeholder, or commented fields, including YAML/JSON comments, and text describing a missing value, collection state, workflow status, or task status, mean the fact is absent; they are not the value itself.
+- If a fact's only evidence is absence/status text, emit no suggestion for that slug. Do not store status text such as "pending", "not provided", or "to be completed" as newValue.
+- Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note. Do not use workflow or task prose to fill unrelated durable memory notes.
+- newValue must be the durable fact itself. sourceSnippet must quote the text containing the actual value, not just a label, comment, placeholder, or status note.
 - Return at most ${this.config.maxSuggestions} suggestions, prioritizing higher-confidence items.
 - Use ONLY slugs from the schema above. Invalid slugs will be rejected.
 - If a preference already exists with the same value, do not include it.
-- For UPDATE operations, include the oldValue from current preferences. If a current preference has a non-empty value, only suggest a different replacement when this document clearly contains a durable replacement value for that same fact.
+- For UPDATE operations, include the oldValue from current preferences. If a current preference has a non-empty value, only suggest a replacement when the attached document clearly contains the replacement value for the same fact. Current preferences are context, not evidence.
 
 Respond with JSON only (no markdown code blocks):
 {

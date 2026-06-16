@@ -1064,16 +1064,22 @@ describe("PreferenceExtractionService", () => {
         const prompt =
           mockAiStructuredService.generateStructuredWithFile.mock.calls[0][0];
         expect(prompt).toContain(
-          "Distinguish value evidence from absence/status evidence.",
+          "Null, blank, placeholder, or commented fields, including YAML/JSON comments",
         );
         expect(prompt).toContain(
-          'These phrases are only valid newValue content when the slug itself is explicitly asking for that status or note',
+          "If a fact's only evidence is absence/status text, emit no suggestion for that slug.",
         );
         expect(prompt).toContain(
-          "not when filling a durable personal fact such as address, ZIP, phone, email, identity, or work authorization.",
+          'Do not store status text such as "pending", "not provided", or "to be completed" as newValue.',
         );
         expect(prompt).toContain(
-          "If a current preference has a non-empty value, only suggest a different replacement when this document clearly contains a durable replacement value for that same fact.",
+          "Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note.",
+        );
+        expect(prompt).toContain(
+          "sourceSnippet must quote the text containing the actual value, not just a label, comment, placeholder, or status note.",
+        );
+        expect(prompt).toContain(
+          "Current preferences are context, not evidence.",
         );
       });
 
