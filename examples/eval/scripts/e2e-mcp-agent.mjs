@@ -440,7 +440,13 @@ async function runMcpAgentStage({
         : completionMarkerInOutput(rawTranscript);
     const timedOut = Boolean(result?.timedOut);
     const exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
-    const effectiveExitCode = timedOut || exitCode !== 0 ? 1 : 0;
+    const contractErrors = agentContractErrors({
+      options,
+      rawTranscript,
+      completionMarkerObserved,
+    });
+    const effectiveExitCode =
+      timedOut || exitCode !== 0 || contractErrors.length > 0 ? 1 : 0;
     const duration =
       Number.isInteger(result?.durationMs) && result.durationMs >= 0
         ? result.durationMs
@@ -461,6 +467,10 @@ async function runMcpAgentStage({
     if (effectiveExitCode === 0 && !completionMarkerObserved) {
       lines.push('completion marker was not observed; this is diagnostic-only in v1');
     }
+    appendUniqueLines(
+      lines,
+      contractErrors.map((error) => `agent contract error: ${error}`),
+    );
 
     agentRun.status = effectiveExitCode === 0 ? 'pass' : 'fail';
     agentRun.endedAt = stageEndedAt;
@@ -754,6 +764,7 @@ export function usage() {
     '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',
     '  --agent command is test-only and is not benchmark-safe filesystem isolation.',
     '  Live Claude scores require the MCP config to authenticate as the same backend user as EVAL_AUTH_TOKEN; v1 records but does not verify that identity.',
+    `  Live Claude runs fail if the MCP server is disconnected, no mcp__<server>__* tools are exposed, or ${COMPLETION_MARKER} is missing.`,
     '  mcp-agent-transcript.txt can contain corpus PII; keep artifact roots out of commits and casual sharing.',
     '',
     'Options:',
@@ -834,6 +845,8 @@ export async function runAgentProcess({
     let stderr = '';
     let spawnError = null;
     let timedOut = false;
+    let mcpAvailabilityErrors = [];
+    let mcpAvailabilityChecked = false;
     let closed = false;
     let forceKillTimeout = null;
     const child = spawn(invocation.file, invocation.args, {
@@ -854,6 +867,19 @@ export async function runAgentProcess({
 
     child.stdout.on('data', (chunk) => {
       stdout += chunk.toString('utf8');
+      if (options.agent === 'claude' && !mcpAvailabilityChecked) {
+        const initEvent = findClaudeInitEvent(stdout);
+        if (initEvent) {
+          mcpAvailabilityChecked = true;
+          mcpAvailabilityErrors = claudeMcpAvailabilityErrors({
+            initEvent,
+            mcpServer: options.mcpServer,
+          });
+          if (mcpAvailabilityErrors.length > 0) {
+            child.kill('SIGTERM');
+          }
+        }
+      }
     });
     child.stderr.on('data', (chunk) => {
       stderr += chunk.toString('utf8');
@@ -881,6 +907,10 @@ export async function runAgentProcess({
       ];
       if (signal) lines.push(`signal=${signal}`);
       if (spawnError) lines.push(redactForArtifact(spawnError.message, redactionSecrets));
+      appendUniqueLines(
+        lines,
+        mcpAvailabilityErrors.map((error) => `agent contract error: ${error}`),
+      );
       resolve({
         exitCode,
         lines,
@@ -890,6 +920,7 @@ export async function runAgentProcess({
         durationMs,
         command: invocation.display,
         completionMarkerObserved,
+        mcpAvailabilityErrors,
       });
     });
     child.stdin.end(prompt);
@@ -1528,8 +1559,72 @@ function jsonAssistantOutputHasMarker(value) {
   return true;
 }
 
+function agentContractErrors({ options, rawTranscript, completionMarkerObserved }) {
+  if (options.agent !== 'claude') return [];
+
+  const errors = [];
+  const initEvent = findClaudeInitEvent(rawTranscript);
+  if (!initEvent) {
+    errors.push(
+      `Claude init event was not found; cannot verify MCP server ${options.mcpServer} is connected.`,
+    );
+  } else {
+    errors.push(
+      ...claudeMcpAvailabilityErrors({
+        initEvent,
+        mcpServer: options.mcpServer,
+      }),
+    );
+  }
+  if (!completionMarkerObserved) {
+    errors.push(`required completion marker ${COMPLETION_MARKER} was not observed.`);
+  }
+  return errors;
+}
+
+function findClaudeInitEvent(text) {
+  if (typeof text !== 'string') return null;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('{')) continue;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed?.type === 'system' && parsed?.subtype === 'init') {
+        return parsed;
+      }
+    } catch {
+      // Ignore incomplete or non-JSON transcript lines.
+    }
+  }
+  return null;
+}
+
+function claudeMcpAvailabilityErrors({ initEvent, mcpServer }) {
+  const errors = [];
+  const servers = Array.isArray(initEvent?.mcp_servers) ? initEvent.mcp_servers : [];
+  const server = servers.find((candidate) => candidate?.name === mcpServer);
+  if (!server) {
+    errors.push(`MCP server ${mcpServer} was not listed in Claude init event.`);
+  } else if (server.status !== 'connected') {
+    errors.push(`MCP server ${mcpServer} status was ${server.status ?? '<missing>'}, not connected.`);
+  }
+
+  const tools = Array.isArray(initEvent?.tools) ? initEvent.tools : [];
+  const mcpToolPrefix = `mcp__${mcpServer}__`;
+  if (!tools.some((toolName) => typeof toolName === 'string' && toolName.startsWith(mcpToolPrefix))) {
+    errors.push(`No Claude tools were exposed with prefix ${mcpToolPrefix}*.`);
+  }
+  return errors;
+}
+
 function redactLines(lines, secrets) {
   return lines.map((line) => redactForArtifact(String(line), secrets));
+}
+
+function appendUniqueLines(lines, additions) {
+  for (const addition of additions) {
+    if (!lines.includes(addition)) lines.push(addition);
+  }
 }
 
 function redactForArtifact(text, secrets = []) {

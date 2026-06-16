@@ -70,6 +70,12 @@
   - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
   - Records that MCP/backend identity is not yet verified; live runs are smoke
     results until a hard identity preflight exists.
+  - Live Claude runs fail if the configured MCP server is unavailable, no
+    `mcp__<server>__*` tools are exposed, or the required completion marker is
+    missing.
+  - First local live Claude MCP smoke completed on 2026-06-16: 27 active
+    preferences exported, 21/22 known-present database facts correct, and 16/17
+    known form fields correct.
 
 ## Next
 
@@ -92,7 +98,7 @@
 - [ ] Add a hard MCP/backend identity preflight so the runner can prove the
   Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
   exports and scores.
-- [ ] Run one live known-schema Claude MCP smoke before starting open schema,
+- [x] Run one live known-schema Claude MCP smoke before starting open schema,
   including a check that Claude's tool allow-list and MCP config behave as
   expected.
 - [ ] Add open-schema memory snapshot and scoring described in

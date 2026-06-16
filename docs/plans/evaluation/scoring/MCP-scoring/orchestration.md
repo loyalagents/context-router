@@ -32,7 +32,9 @@ validate-documents
   eval/backend/database secrets.
 - [x] Record staged-document containment and unverified MCP/backend identity
   honestly in `mcp-agent-run.json`.
-- [ ] Run optional live Claude MCP smoke against `context-router-local`.
+- [x] Run optional live Claude MCP smoke against `context-router-local`.
+- [x] Fail live Claude runs when the MCP server is unavailable, no MCP tools are
+  exposed, or the required completion marker is missing.
 - [ ] Add a hard MCP/backend identity preflight before using live MCP scores as
   benchmark-reliable rather than smoke-only.
 
@@ -46,12 +48,15 @@ validate-documents
   filesystem sandbox, and the command adapter is not benchmark-safe.
 - Live Claude scores require the Claude MCP config to authenticate as the same
   backend user as `EVAL_AUTH_TOKEN`; v1 records that this is unverified.
+- Live Claude runs hard-fail the agent stage if `context-router-local` is not
+  connected, no `mcp__context-router-local__*` tools are exposed, or
+  `EVAL_MCP_AGENT_DONE` is missing.
 - `mcp-agent-transcript.txt` can contain corpus PII even after auth-token
   redaction, so artifact roots should not be committed.
 - Open schema remains a follow-up after the known-schema runner has a useful
   smoke result.
 - Low scores are benchmark output, not runner failures.
-- Automated verification used fake agent runners and local command-adapter
-  tests. Live smoke was not run because it needs a running backend,
-  `EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing
-  `context-router-local`.
+- Automated verification uses fake agent runners and local command-adapter
+  tests. The first live smoke completed locally on 2026-06-16 with 27 active
+  preferences exported, 21/22 known-present database facts correct, and 16/17
+  known form fields correct.

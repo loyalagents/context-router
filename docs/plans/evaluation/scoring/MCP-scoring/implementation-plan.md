@@ -96,8 +96,11 @@ Defaults:
    - Allow documented Claude/headless model-provider auth environment variables
      while continuing to strip eval/backend/database secrets.
    - Capture redacted transcript output and completion-marker diagnostics.
-   - Treat nonzero exit and timeout as failures. Treat a missing completion
-     marker as diagnostic-only for v1.
+   - Treat nonzero exit and timeout as failures.
+   - After live-smoke hardening, live Claude runs also fail if the configured
+     MCP server is not connected, no `mcp__<server>__*` tools are exposed, or
+     the completion marker is missing. The command adapter remains a
+     deterministic test-only path.
 
 5. Add package script and tests.
    - Add `eval:e2e-mcp-agent` to `package.json`.

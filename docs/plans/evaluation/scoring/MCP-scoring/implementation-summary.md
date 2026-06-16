@@ -26,6 +26,9 @@
   - Agent subprocesses run from `agent-workspace/` with a curated environment
     that strips eval/backend/database credentials while allowing documented
     Claude/headless model-provider auth variables.
+  - Live Claude runs now hard-fail the agent stage if Claude's init event does
+    not show the configured MCP server connected, if no `mcp__<server>__*`
+    tools are exposed, or if `EVAL_MCP_AGENT_DONE` is missing.
   - `mcp-agent-run.json` is schema version 3 and records staged-document
     containment, lack of a hard filesystem boundary, unverified MCP/backend
     identity, and honest transcript redaction metadata.
@@ -99,9 +102,22 @@ pnpm eval:verify
 `pnpm eval:validate` still reports the existing Alex realistic corpus warnings
 and no errors.
 
-## Not Run
+## Live Smoke
 
-The optional live MCP smoke was not run. It requires:
+The first local live Claude MCP smoke was run on 2026-06-16 after refreshing the
+Claude MCP auth/config. Artifact root was `/private/tmp/alex-mcp-known-schema-3`
+and is intentionally not committed.
+
+Result:
+
+- MCP server connected and completion marker observed.
+- Exported active preferences: 27.
+- Database score: 21/22 known-present facts correct, value recovery 1.000,
+  accepted slug accuracy 0.955.
+- Form score: 16/17 known fields correct, no missing known fields, one wrong
+  email field, and 0 structural overfills.
+
+Live smoke requirements:
 
 - backend running
 - `EVAL_AUTH_TOKEN`
@@ -131,7 +147,6 @@ pnpm eval:e2e-mcp-agent \
 
 ## Follow-Up
 
-- Run the live Claude MCP smoke before implementing open-schema scoring.
 - Add a hard MCP/backend identity check before treating live MCP scores as
   benchmark-reliable instead of smoke-only.
 - Implement a Codex adapter only after it can use the same staged workspace,

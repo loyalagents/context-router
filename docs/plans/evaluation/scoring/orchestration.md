@@ -33,7 +33,7 @@ ingestor or manual/MCP run
   discovery: build MCP known-schema first, then MCP open-schema, then
   upload-level open-schema discovery.
 - [x] Implement MCP known-schema agent runner.
-- [ ] Run live MCP known-schema Claude smoke.
+- [x] Run live MCP known-schema Claude smoke.
 - [ ] Add open-schema memory snapshot/scoring and MCP open-schema mode.
 
 ## Phase 1: Scorer
@@ -184,10 +184,11 @@ Implemented in this phase:
 - reuse of stored-preferences export, database scoring, backend form fill, form
   scoring, and combined scoring
 
-Live smoke is still a manual follow-up because it requires a running backend,
-`EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing the local MCP
-server. Live scores remain smoke-only until the runner can verify that the MCP
-session and `EVAL_AUTH_TOKEN` resolve to the same backend user.
+The first live smoke completed locally on 2026-06-16 with the local backend,
+`EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing
+`context-router-local`. Live scores remain smoke-only until the runner can
+verify that the MCP session and `EVAL_AUTH_TOKEN` resolve to the same backend
+user.
 
 Design doc:
 

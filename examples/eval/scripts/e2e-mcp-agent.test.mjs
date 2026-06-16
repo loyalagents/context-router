@@ -400,7 +400,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(argValue(exportArgs, '--run-id'), 'run-123');
 });
 
-test('mcp agent missing completion marker is diagnostic-only in v1', async () => {
+test('command adapter missing completion marker is diagnostic-only', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-marker-'));
   const calls = [];
   const runners = {
@@ -435,6 +435,148 @@ test('mcp agent missing completion marker is diagnostic-only in v1', async () =>
   const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
   assert.equal(mcpAgentRun.status, 'pass');
   assert.equal(mcpAgentRun.agent.completionMarkerObserved, false);
+});
+
+test('mcp agent e2e fails live Claude run when completion marker is missing', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-claude-marker-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async ({ prompt, artifacts }) => {
+      calls.push({ stage: 'agent', prompt, artifacts });
+      return {
+        exitCode: 0,
+        lines: ['claude exited without completion marker'],
+        stdout: `${claudeInitLine({ mcpServer: 'context-router-local' })}\n`,
+        stderr: '',
+        timedOut: false,
+        durationMs: 10,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [...claudeArgsWithArtifacts(tmp), '--auth-token', 'token', '--run-id', 'run-claude-marker'],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /stage=run-mcp-agent/);
+  assert.match(result.lines.join('\n'), /required completion marker/);
+  assert.deepEqual(calls.map((call) => call.stage), ['validate', 'setup', 'agent']);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  const agentStage = evaluationRun.stages.find((stage) => stage.name === 'run-mcp-agent');
+  assert.equal(agentStage.status, 'failed');
+  assert.match(agentStage.error, /required completion marker/);
+  assert.equal(evaluationRun.stages.find((stage) => stage.name === 'export-stored-preferences').status, 'skipped');
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  assert.equal(mcpAgentRun.status, 'fail');
+  assert.equal(mcpAgentRun.agent.provider, 'claude');
+  assert.equal(mcpAgentRun.agent.completionMarkerObserved, false);
+  assert.match(mcpAgentRun.error, /required completion marker/);
+});
+
+test('mcp agent e2e fails live Claude run when MCP server is disconnected', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-claude-mcp-disconnected-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async ({ prompt, artifacts }) => {
+      calls.push({ stage: 'agent', prompt, artifacts });
+      return {
+        exitCode: 0,
+        lines: ['claude exited after disconnected MCP init'],
+        stdout: [
+          claudeInitLine({
+            mcpServer: 'context-router-local',
+            serverStatus: 'failed',
+            tools: ['Read', 'Glob', 'Grep'],
+          }),
+          COMPLETION_MARKER,
+          '',
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+        durationMs: 10,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...claudeArgsWithArtifacts(tmp),
+      '--auth-token',
+      'token',
+      '--run-id',
+      'run-claude-mcp-disconnected',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /MCP server context-router-local status was failed/);
+  assert.match(result.lines.join('\n'), /No Claude tools were exposed/);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  const agentStage = evaluationRun.stages.find((stage) => stage.name === 'run-mcp-agent');
+  assert.equal(agentStage.status, 'failed');
+  assert.match(agentStage.error, /MCP server context-router-local status was failed/);
+  assert.equal(evaluationRun.stages.find((stage) => stage.name === 'export-stored-preferences').status, 'skipped');
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  assert.equal(mcpAgentRun.status, 'fail');
+  assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
+  assert.match(mcpAgentRun.error, /No Claude tools were exposed/);
+});
+
+test('mcp agent e2e fails live Claude run when MCP tools are not exposed', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-claude-no-tools-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async ({ prompt, artifacts }) => {
+      calls.push({ stage: 'agent', prompt, artifacts });
+      return {
+        exitCode: 0,
+        lines: ['claude exited without MCP tools'],
+        stdout: [
+          claudeInitLine({
+            mcpServer: 'context-router-local',
+            tools: ['Read', 'Glob', 'Grep'],
+          }),
+          COMPLETION_MARKER,
+          '',
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+        durationMs: 10,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [...claudeArgsWithArtifacts(tmp), '--auth-token', 'token', '--run-id', 'run-claude-no-tools'],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /No Claude tools were exposed/);
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  assert.equal(mcpAgentRun.status, 'fail');
+  assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
+  assert.match(mcpAgentRun.error, /No Claude tools were exposed/);
 });
 
 test('mcp agent transcript redacts allowed model-provider env secrets', async () => {
@@ -682,6 +824,30 @@ test('command adapter captures stdout, stderr, marker, and timeout status', asyn
 
 function baseArgsWithArtifacts(tmp) {
   return replaceFlagValue(baseArgs, '--artifacts-root', tmp);
+}
+
+function claudeArgsWithArtifacts(tmp) {
+  return [
+    ...removeFlagValue(
+      removeFlag(replaceFlagValue(baseArgsWithArtifacts(tmp), '--agent', 'claude'), '--allow-test-command-agent'),
+      '--agent-command',
+    ),
+    '--mcp-config',
+    '/private/tmp/context-router-mcp.json',
+  ];
+}
+
+function claudeInitLine({
+  mcpServer,
+  serverStatus = 'connected',
+  tools = ['Read', 'Glob', 'Grep', `mcp__${mcpServer}__listPreferenceSlugs`],
+}) {
+  return JSON.stringify({
+    type: 'system',
+    subtype: 'init',
+    tools,
+    mcp_servers: [{ name: mcpServer, status: serverStatus }],
+  });
 }
 
 function successfulRunners({ calls, failures = {} }) {
