@@ -49,6 +49,7 @@ export class OAuthMetadataController {
 
   private buildProtectedResourceMetadata() {
     const resource = this.configService.get<string>('mcp.oauth.resource');
+    const serverUrl = this.configService.get<string>('mcp.oauth.serverUrl');
 
     if (!resource) {
       this.logger.error(
@@ -56,9 +57,15 @@ export class OAuthMetadataController {
       );
     }
 
+    if (!serverUrl) {
+      this.logger.error(
+        'MCP_SERVER_URL not configured - OAuth discovery issuer will be invalid',
+      );
+    }
+
     const metadata = {
       resource: resource,
-      authorization_servers: [resource],
+      authorization_servers: [serverUrl || resource],
       scopes_supported: this.configService.get<string[]>('mcp.oauth.scopes'),
     };
 
@@ -125,7 +132,7 @@ export class OAuthMetadataController {
 
     const metadata = {
       // Discovery issuer = our domain (not Auth0)
-      issuer: resource,
+      issuer: serverUrl || resource,
 
       // Auth0 handles actual authorization and token exchange
       authorization_endpoint: authorizationEndpoint,
