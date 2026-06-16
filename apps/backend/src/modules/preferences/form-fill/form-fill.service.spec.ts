@@ -116,6 +116,111 @@ describe('FormFillService', () => {
     expect(pdfFiller.fillPdf).toHaveBeenCalledTimes(1);
   });
 
+  it('passes field policies through prompt and validation and returns validation events', async () => {
+    const pdfBytes = Buffer.from('filled pdf');
+    const fieldPolicies = {
+      schemaVersion: 1 as const,
+      fields: [
+        {
+          fieldName: 'CB_4',
+          mode: 'fact' as const,
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlugs: ['profile.citizenship_status'],
+          groupId: 'workAuthorization.citizenshipStatus',
+        },
+      ],
+    };
+    fieldExtractor.extractFields.mockResolvedValue({
+      hasXfa: false,
+      fields: [
+        {
+          name: 'CB_4',
+          type: 'checkbox',
+          options: [],
+          supported: true,
+        },
+      ],
+    });
+    preferenceService.getActivePreferences.mockResolvedValue([
+      {
+        slug: 'profile.citizenship_status',
+        value: 'alien authorized to work',
+        description: 'Citizenship status',
+      },
+    ]);
+    promptBuilder.buildPrompt.mockReturnValue('prompt');
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'CB_4',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.4,
+        },
+      ],
+    });
+    validator.validate.mockReturnValue({
+      validActions: [
+        {
+          fieldName: 'CB_4',
+          fieldType: 'checkbox',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.4,
+        },
+      ],
+      filledFields: [
+        {
+          pdfFieldName: 'CB_4',
+          fieldType: 'checkbox',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.4,
+        },
+      ],
+      skippedFields: [],
+      warnings: [],
+      validationEvents: [
+        {
+          kind: 'low_confidence_applied',
+          fieldName: 'CB_4',
+          confidence: 0.4,
+        },
+      ],
+    });
+    pdfFiller.fillPdf.mockResolvedValue(pdfBytes);
+
+    const result = await service.fillPdfForm(
+      'user-1',
+      Buffer.from('input pdf'),
+      'registration.pdf',
+      fieldPolicies,
+    );
+
+    expect(promptBuilder.buildPrompt).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      fieldPolicies,
+    );
+    expect(validator.validate).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      new Set(['profile.citizenship_status']),
+      expect.any(Number),
+      expect.objectContaining({
+        fieldPolicies,
+        activePreferenceValues: new Map([
+          ['profile.citizenship_status', 'alien authorized to work'],
+        ]),
+      }),
+    );
+    expect(result.summary.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'low_confidence_applied',
+        fieldName: 'CB_4',
+      }),
+    ]);
+  });
+
   it('returns partial with a non-null filled PDF artifact when fields are skipped', async () => {
     const pdfBytes = Buffer.from('partially filled pdf');
     fieldExtractor.extractFields.mockResolvedValue({
@@ -238,7 +343,83 @@ describe('FormFillService', () => {
         totalFields: 0,
         filledCount: 0,
         skippedCount: 0,
+        warnings: [
+          'Form fill failed. Please try again.',
+          'Form fill failed during field_extraction: bad pdf',
+        ],
       },
     });
+  });
+
+  it('returns failed with pdf_fill detail when PDF writing fails', async () => {
+    fieldExtractor.extractFields.mockResolvedValue({
+      hasXfa: false,
+      fields: [
+        {
+          name: 'ZIP Code',
+          type: 'text',
+          options: [],
+          supported: true,
+        },
+      ],
+    });
+    preferenceService.getActivePreferences.mockResolvedValue([
+      {
+        slug: 'eval.address.current.postal_code',
+        value: '97214',
+        description: 'Postal code',
+      },
+    ]);
+    promptBuilder.buildPrompt.mockReturnValue('prompt');
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'ZIP Code',
+          action: 'SET_TEXT',
+          value: '97214',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+    });
+    validator.validate.mockReturnValue({
+      validActions: [
+        {
+          fieldName: 'ZIP Code',
+          fieldType: 'text',
+          action: 'SET_TEXT',
+          value: '97214',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+      filledFields: [
+        {
+          pdfFieldName: 'ZIP Code',
+          fieldType: 'text',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+      skippedFields: [],
+      warnings: [],
+      validationEvents: [],
+    });
+    pdfFiller.fillPdf.mockRejectedValue(
+      new Error('Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6'),
+    );
+
+    const result = await service.fillPdfForm(
+      'user-1',
+      Buffer.from('input pdf'),
+      'i9.pdf',
+    );
+
+    expect(result.status).toBe('failed');
+    expect(result.filledPdfBase64).toBeNull();
+    expect(result.summary.warnings).toEqual([
+      'Form fill failed. Please try again.',
+      'Form fill failed during pdf_fill: Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6',
+    ]);
   });
 });

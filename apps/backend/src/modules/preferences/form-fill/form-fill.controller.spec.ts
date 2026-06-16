@@ -72,12 +72,69 @@ describe('FormFillController', () => {
         buffer: Buffer.from('pdf'),
       } as Express.Multer.File,
       { user: { userId: 'user-1' } },
+      undefined,
     );
 
     expect(service.fillPdfForm).toHaveBeenCalledWith(
       'user-1',
       Buffer.from('pdf'),
       'form.pdf',
+      undefined,
     );
+  });
+
+  it('parses optional field policies and delegates them to the service', async () => {
+    const rawPolicies = JSON.stringify({
+      schemaVersion: 1,
+      fields: [
+        {
+          fieldName: 'CB_4',
+          mode: 'fact',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlugs: ['profile.citizenship_status'],
+        },
+      ],
+    });
+
+    await controller.fillPdf(
+      {
+        mimetype: 'application/pdf',
+        size: 10,
+        originalname: 'form.pdf',
+        buffer: Buffer.from('pdf'),
+      } as Express.Multer.File,
+      { user: { userId: 'user-1' } },
+      rawPolicies,
+    );
+
+    expect(service.fillPdfForm).toHaveBeenCalledWith(
+      'user-1',
+      Buffer.from('pdf'),
+      'form.pdf',
+      expect.objectContaining({
+        schemaVersion: 1,
+        fields: [
+          expect.objectContaining({
+            fieldName: 'CB_4',
+            mode: 'fact',
+          }),
+        ],
+      }),
+    );
+  });
+
+  it('rejects malformed field policies', async () => {
+    await expect(
+      controller.fillPdf(
+        {
+          mimetype: 'application/pdf',
+          size: 10,
+          originalname: 'form.pdf',
+          buffer: Buffer.from('pdf'),
+        } as Express.Multer.File,
+        { user: { userId: 'user-1' } },
+        '{not-json',
+      ),
+    ).rejects.toThrow('fieldPolicies must be valid JSON');
   });
 });

@@ -117,10 +117,21 @@ export class PreferenceService {
   }
 
   private canonicalizeValue(
-    definition: { valueType: PrismaPreferenceDefinition["valueType"] },
+    slug: string,
+    definition: {
+      valueType: PrismaPreferenceDefinition["valueType"];
+      options?: unknown;
+    },
     value: unknown,
   ): unknown {
-    return canonicalizePreferenceValue(definition, value);
+    return canonicalizePreferenceValue(definition, value, {
+      slug,
+      onEvent: (event) => {
+        this.logger.debug(
+          `Canonicalized preference value for ${event.slug}: ${event.kind}`,
+        );
+      },
+    });
   }
 
   private async canonicalizeValueByDefinitionId(
@@ -132,7 +143,7 @@ export class PreferenceService {
       return value;
     }
 
-    return this.canonicalizeValue(definition, value);
+    return this.canonicalizeValue(definition.slug, definition, value);
   }
 
   /**
@@ -145,7 +156,11 @@ export class PreferenceService {
     context: MutationContext,
   ): Promise<EnrichedPreference> {
     const definition = await this.resolveAndValidateDefinition(input.slug, userId);
-    const normalizedValue = this.canonicalizeValue(definition, input.value);
+    const normalizedValue = this.canonicalizeValue(
+      input.slug,
+      definition,
+      input.value,
+    );
     this.validateValueForDefinition(input.slug, definition, normalizedValue);
     this.validateScopeForDefinition(definition, input.locationId);
 
@@ -211,7 +226,11 @@ export class PreferenceService {
     context: MutationContext,
   ): Promise<EnrichedPreference | null> {
     const definition = await this.resolveAndValidateDefinition(input.slug, userId);
-    const normalizedValue = this.canonicalizeValue(definition, input.value);
+    const normalizedValue = this.canonicalizeValue(
+      input.slug,
+      definition,
+      input.value,
+    );
     this.validateValueForDefinition(input.slug, definition, normalizedValue);
     this.validateScopeForDefinition(definition, input.locationId);
 

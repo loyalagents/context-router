@@ -207,9 +207,12 @@ pnpm eval:fill-form \
 
 `eval:run` is the deterministic fixture/test-DB harness. `eval:fill-form` is
 the live backend-memory product-path runner and does not seed, reset, hydrate,
-or mutate memory. When the backend returns a terminal form-fill status such as
-`failed`, `no_fillable_fields`, or `unsupported_format`, the runner exits
-nonzero but still writes the redacted `--response-out` artifact when requested.
+or mutate memory. It sends eval field-policy metadata by default so the backend
+can block structural skip fields, inactive conditional fields, and conflicting
+checkbox branches. Use `--no-field-policies` to exercise raw PDF-only backend
+behavior. When the backend returns a terminal form-fill status such as `failed`,
+`no_fillable_fields`, or `unsupported_format`, the runner exits nonzero but
+still writes the redacted `--response-out` artifact when requested.
 
 Run the full live known-schema E2E chain and label the backend model/config used
 for the run:

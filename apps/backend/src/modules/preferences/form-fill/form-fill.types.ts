@@ -34,13 +34,58 @@ export interface PdfFieldMetadata {
   type: PdfFieldType;
   options: PdfFieldOption[];
   supported: boolean;
+  maxLength?: number;
   unsupportedReason?: string;
+}
+
+export interface FormFillValidationEvent {
+  kind:
+    | 'low_confidence_applied'
+    | 'policy_inactive_blocked'
+    | 'policy_structural_skip_blocked'
+    | 'policy_source_slug_off_policy'
+    | 'pdf_text_max_length_blocked'
+    | 'checkbox_group_conflict';
+  fieldName: string;
+  message: string;
+  confidence?: number;
+  groupId?: string;
+  maxLength?: number;
+  valueLength?: number;
 }
 
 export interface ExtractedPdfFields {
   hasXfa: boolean;
   fields: PdfFieldMetadata[];
 }
+
+const FieldConditionSchema = z.object({
+  factKey: z.string(),
+  sourceSlugs: z.array(z.string()).optional().default([]),
+  equals: z.union([z.string(), z.array(z.string())]),
+});
+
+const FieldPolicySchema = z.object({
+  fieldName: z.string(),
+  mode: z.enum(['fact', 'skip']),
+  factKey: z.string().optional(),
+  sourceSlugs: z.array(z.string()).optional().default([]),
+  when: FieldConditionSchema.optional(),
+  // Checkbox policies sharing a groupId are treated as mutually exclusive.
+  groupId: z.string().optional(),
+  reason: z.string().optional(),
+});
+
+export const FormFillFieldPoliciesSchema = z.object({
+  schemaVersion: z.literal(1),
+  fields: z.array(FieldPolicySchema),
+});
+
+export type FormFillFieldCondition = z.infer<typeof FieldConditionSchema>;
+export type FormFillFieldPolicy = z.infer<typeof FieldPolicySchema>;
+export type FormFillFieldPolicies = z.infer<
+  typeof FormFillFieldPoliciesSchema
+>;
 
 export const FillActionSchema = z.object({
   fieldName: z.string(),
@@ -89,6 +134,7 @@ export interface FormFillSummary {
   filledFields: FilledFieldSummary[];
   skippedFields: SkippedFieldSummary[];
   warnings: string[];
+  validationEvents?: FormFillValidationEvent[];
 }
 
 export interface FormFillResponse {

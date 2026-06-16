@@ -10,6 +10,12 @@ async function createFillablePdf(): Promise<Buffer> {
     .createTextField('profile.full_name')
     .addToPage(page, { x: 50, y: 620, width: 200, height: 24 });
   form
+    .createTextField('ZIP Code')
+    .setMaxLength(6);
+  form
+    .getTextField('ZIP Code')
+    .addToPage(page, { x: 50, y: 600, width: 100, height: 24 });
+  form
     .createCheckBox('newsletter_opt_in')
     .addToPage(page, { x: 50, y: 580, width: 18, height: 18 });
 
@@ -67,6 +73,12 @@ describe('PdfFieldExtractorService', () => {
         expect.objectContaining({
           name: 'profile.full_name',
           type: 'text',
+          supported: true,
+        }),
+        expect.objectContaining({
+          name: 'ZIP Code',
+          type: 'text',
+          maxLength: 6,
           supported: true,
         }),
         expect.objectContaining({

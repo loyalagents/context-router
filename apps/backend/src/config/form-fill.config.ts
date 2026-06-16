@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 export interface FormFillConfig {
   maxFileSizeBytes: number;
   allowedMimeTypes: string[];
+  // Diagnostic threshold only; otherwise valid source-backed actions are applied.
   confidenceThreshold: number;
 }
 

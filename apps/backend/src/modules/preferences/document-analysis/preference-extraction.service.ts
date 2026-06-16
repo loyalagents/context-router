@@ -50,7 +50,10 @@ type NormalizationResult =
   | { kind: 'accepted'; suggestion: PreferenceSuggestion }
   | { kind: 'filtered'; suggestion: FilteredSuggestion };
 
-const YAML_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
+// Vertex inline file input rejects these text-like MIME types even though the
+// same bytes work as text/plain.
+const TEXT_LIKE_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
+  'application/json',
   'application/yaml',
   'text/yaml',
   'application/x-yaml',
@@ -126,7 +129,7 @@ export class PreferenceExtractionService {
   }
 
   private normalizeMimeTypeForAiFileInput(mimeType: string): string {
-    if (YAML_MIME_TYPES_FOR_AI_FILE_INPUT.has(mimeType)) {
+    if (TEXT_LIKE_MIME_TYPES_FOR_AI_FILE_INPUT.has(mimeType)) {
       return 'text/plain';
     }
 
@@ -155,10 +158,14 @@ Task:
 - Analyze the attached document for any information that indicates a new or updated preference.
 - For each item, output a suggestion object using a valid slug from the schema.
 - Only suggest changes with clear evidence in the document.
+- Distinguish value evidence from absence/status evidence. Null, blank, placeholder, or commented fields, including YAML/JSON comments, and text describing a missing value, collection state, workflow status, or task status, mean the fact is absent; they are not the value itself.
+- If a fact's only evidence is absence/status text, emit no suggestion for that slug. Do not store status text such as "pending", "not provided", or "to be completed" as newValue.
+- Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note. Do not use workflow or task prose to fill unrelated durable memory notes.
+- newValue must be the durable fact itself. sourceSnippet must quote the text containing the actual value, not just a label, comment, placeholder, or status note.
 - Return at most ${this.config.maxSuggestions} suggestions, prioritizing higher-confidence items.
 - Use ONLY slugs from the schema above. Invalid slugs will be rejected.
 - If a preference already exists with the same value, do not include it.
-- For UPDATE operations, include the oldValue from current preferences.
+- For UPDATE operations, include the oldValue from current preferences. If a current preference has a non-empty value, only suggest a replacement when the attached document clearly contains the replacement value for the same fact. Current preferences are context, not evidence.
 
 Respond with JSON only (no markdown code blocks):
 {
@@ -626,7 +633,14 @@ If no preferences can be extracted, return:
       return value;
     }
 
-    return canonicalizePreferenceValue(definition, value);
+    return canonicalizePreferenceValue(definition, value, {
+      slug,
+      onEvent: (event) => {
+        this.logger.debug(
+          `Canonicalized preference suggestion value for ${event.slug}: ${event.kind}`,
+        );
+      },
+    });
   }
 
   private async canonicalizeSuggestionValues(

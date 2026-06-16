@@ -1,6 +1,6 @@
 # First-Pass E2E Scoring Improvements TODO
 
-- Status: active follow-up list; PR 1, PR 2, and PR 3 implemented
+- Status: active follow-up list; PR 1, PR 2, PR 3, and the PR3 follow-up implemented
 - Last updated: 2026-06-15
 
 ## Context From Live E2E Runs
@@ -232,6 +232,30 @@ PR 2 implemented these items. See
   - Implemented behavior:
     - Fill as `000000292` for the known I-9 SSN field / SSN-sourced actions.
 
+- [x] Normalize backend preference values before strict validation.
+  - Implemented in the PR3 follow-up.
+  - Concrete change:
+    - `STRING` trims only.
+    - `ENUM` trims and case-insensitively canonicalizes to configured options.
+    - `ARRAY` accepts non-empty scalar strings as singleton arrays, then trims
+      and dedupes string entries.
+    - Ambiguous or unmatched values still fail existing validation.
+
+- [x] Add guarded form-fill policies for live eval/backend E2E runs.
+  - Implemented in the PR3 follow-up.
+  - Concrete change:
+    - `POST /api/form-fill/pdf` accepts optional multipart `fieldPolicies`.
+    - `eval:fill-form` sends policies by default from field maps plus storage
+      slug mappings.
+    - `--no-field-policies` preserves raw PDF-only backend behavior.
+    - Backend validation blocks structural skip fields, inactive conditional
+      fields, and checkbox group conflicts.
+    - Low-confidence source-backed actions are applied and recorded as
+      diagnostic validation events instead of being skipped solely for
+      confidence.
+  - See:
+    - `docs/plans/evaluation/first-pass-improve-scoring/pr3-followup/implementation-summary.md`
+
 ## P2: Documentation And Example Artifacts
 
 - [ ] Save a representative successful E2E run under an example folder.
@@ -245,7 +269,8 @@ PR 2 implemented these items. See
     - `combined-score-report.json`
     - a short summary of what passed and what failed
   - Use this as the baseline for future PR review and model comparisons.
-  - Generate this after the overwrite and field-map/scorer fixes land.
+  - Generate this after the overwrite, field-map/scorer, and guarded form-fill
+    fixes land in the live backend environment.
 
 - [x] Document how to run model comparisons.
   - Include:

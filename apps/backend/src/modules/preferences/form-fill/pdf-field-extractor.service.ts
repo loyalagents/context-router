@@ -61,6 +61,9 @@ export class PdfFieldExtractorService {
       type,
       options,
       supported: !unsupportedReason,
+      ...(field instanceof PDFTextField && field.getMaxLength() !== undefined
+        ? { maxLength: field.getMaxLength() }
+        : {}),
       unsupportedReason,
     };
   }

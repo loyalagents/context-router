@@ -1,6 +1,6 @@
 # First-Pass E2E Scoring Improvements Orchestration
 
-- Status: active orchestration plan; PR 1, PR 2, and PR 3 implemented
+- Status: active orchestration plan; PR 1, PR 2, PR 3, and the PR3 follow-up implemented
 - Last updated: 2026-06-15
 
 ## Goal
@@ -37,6 +37,9 @@ These tracks can mostly run in parallel:
   scorer behavior.
 - PR 3, observability and run comparison, touched wrapper artifacts, terminal
   response persistence, and eval docs. It did not commit live E2E artifacts.
+- PR3 follow-up, normalization and guarded form fill, touched backend
+  preference normalization, backend form-fill validation, and live eval
+  form-fill policy submission.
 
 PR 1 and PR 2 can start immediately and independently.
 
@@ -46,6 +49,17 @@ PR 3 implemented:
 - terminal form-fill response persistence
 - `evaluation-run.schema.json` updates
 - `pnpm eval:compare-runs`
+
+PR3 follow-up implemented:
+
+- backend enum casing and scalar-to-array preference normalization
+- optional `fieldPolicies` multipart metadata for `POST /api/form-fill/pdf`
+- policy-backed form-fill guards for structural skips, inactive conditionals,
+  and checkbox group conflicts
+- diagnostic-only low-confidence handling for otherwise valid source-backed
+  actions
+- default eval field-policy submission with `--no-field-policies` for raw
+  backend behavior
 
 Representative example artifacts should still be generated manually after a
 live backend run with valid auth, so the repo does not commit stale or
@@ -260,6 +274,56 @@ Status: implemented in this branch. See
 - Failed form-fill responses leave enough local evidence to debug without
   rerunning curl manually.
 - Comparing two E2E runs is quick and repeatable.
+
+## PR3 Follow-Up: Normalization And Guarded Form Fill
+
+Status: implemented in this branch. See
+`docs/plans/evaluation/first-pass-improve-scoring/pr3-followup/implementation-summary.md`.
+
+### Goal
+
+Reduce avoidable live E2E noise from model output shape/casing issues and from
+form-fill actions that are invalid under known eval field-map semantics.
+
+### Changes
+
+- [x] Normalize backend preference values before strict validation.
+  - `STRING`: trim only.
+  - `ENUM`: trim and case-insensitively canonicalize to configured options.
+  - `ARRAY`: accept non-empty scalar strings as singleton arrays, then trim and
+    dedupe string entries.
+  - `BOOLEAN`: unchanged.
+  - Ambiguous or unmatched values still fail validation.
+
+- [x] Add optional metadata-backed form-fill policies.
+  - `POST /api/form-fill/pdf` accepts multipart `fieldPolicies`.
+  - PDF-only callers remain supported.
+  - Policies are derived from field maps plus storage slug mappings in eval
+    tooling, not profile truth or expected filled values.
+
+- [x] Guard form-fill validation with policies.
+  - Include policies in the model prompt when present.
+  - Resolve conditional fields against active stored preferences.
+  - Block non-SKIP actions for structural skip fields and inactive conditionals.
+  - Resolve checkbox group conflicts deterministically by confidence, then PDF
+    field order.
+  - Apply otherwise valid source-backed low-confidence actions and record
+    diagnostic validation events.
+
+- [x] Update eval tooling.
+  - `eval:fill-form` sends field policies by default.
+  - `--no-field-policies` preserves raw backend PDF-only behavior.
+  - `eval:e2e-known-schema` uses policy-backed form fill by default through the
+    live fill-form runner.
+  - Direct-doc baseline behavior is unchanged.
+
+### Success Criteria
+
+- Backend memory accepts harmless model shape/casing variance while preserving
+  strict validation for ambiguous values.
+- Live form-fill output is guarded against known structural and conditional I-9
+  mistakes without hiding model behavior.
+- The response artifact exposes concise validation events for debugging.
 
 ## Later Work
 

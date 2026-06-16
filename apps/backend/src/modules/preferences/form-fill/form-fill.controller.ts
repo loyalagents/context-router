@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Logger,
   Post,
@@ -12,7 +13,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { getFormFillConfig } from '../../../config/form-fill.config';
 import { FormFillService } from './form-fill.service';
-import { FormFillResponse } from './form-fill.types';
+import {
+  FormFillFieldPolicies,
+  FormFillFieldPoliciesSchema,
+  FormFillResponse,
+} from './form-fill.types';
 
 @Controller('api/form-fill')
 @UseGuards(JwtAuthGuard)
@@ -33,6 +38,7 @@ export class FormFillController {
   async fillPdf(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
+    @Body('fieldPolicies') fieldPoliciesRaw?: string,
   ): Promise<FormFillResponse> {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -63,6 +69,31 @@ export class FormFillController {
       userId,
       file.buffer,
       file.originalname,
+      this.parseFieldPolicies(fieldPoliciesRaw),
     );
+  }
+
+  private parseFieldPolicies(
+    raw: string | undefined,
+  ): FormFillFieldPolicies | undefined {
+    if (!raw) {
+      return undefined;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new BadRequestException('fieldPolicies must be valid JSON');
+    }
+
+    const result = FormFillFieldPoliciesSchema.safeParse(parsed);
+    if (!result.success) {
+      throw new BadRequestException(
+        `fieldPolicies are invalid: ${result.error.message}`,
+      );
+    }
+
+    return result.data;
   }
 }
