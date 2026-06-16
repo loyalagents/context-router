@@ -11,6 +11,7 @@ import {
   readFilledPdfFields,
 } from './eval-runner/pdf.mjs';
 import {
+  buildFormFillFieldPolicies,
   fetchFormFillResponse,
   parseArgs,
   runFillForm,
@@ -71,6 +72,45 @@ test('fill-form CLI uses env fallback and CLI override for backend URL and token
   assert.equal(result.exitCode, 0, result.lines.join('\n'));
   assert.equal(calls[0].url, 'https://hosted.example/api/form-fill/pdf');
   assert.equal(calls[0].options.headers.authorization, 'Bearer cli-token');
+  const fieldPolicies = JSON.parse(calls[0].options.body.get('fieldPolicies'));
+  assert.equal(fieldPolicies.schemaVersion, 1);
+  assert.ok(
+    fieldPolicies.fields.some(
+      (field) =>
+        field.fieldName === 'CB_4' &&
+        field.groupId === 'workAuthorization.citizenshipStatus',
+    ),
+  );
+});
+
+test('fill-form can disable default field-policy submission', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'fill-form-no-policies-'));
+  const calls = [];
+  const { response, filledPdfFields } = await fakeResponseForScenario({
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+
+  const result = await runFillForm({
+    repoRoot,
+    args: [
+      '--scenario',
+      'elena-marquez-i9-template-smoke',
+      '--out',
+      path.join(tmp, 'filled-form.json'),
+      '--auth-token',
+      'token',
+      '--no-field-policies',
+    ],
+    env: {},
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return jsonResponse(response);
+    },
+    pdfFieldReader: async () => filledPdfFields,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.equal(calls[0].options.body.get('fieldPolicies'), null);
 });
 
 test('fill-form validates scenario before backend call', async () => {
@@ -138,6 +178,99 @@ test('fetchFormFillResponse posts the PDF as multipart file with bearer auth', a
   assert.equal(file.name, 'form.pdf');
   assert.equal(file.type, 'application/pdf');
   assert.ok((await file.arrayBuffer()).byteLength > 1000);
+});
+
+test('fetchFormFillResponse posts optional field policies as multipart JSON', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+  const calls = [];
+  const expectedPayload = {
+    status: 'failed',
+    originalFilename: 'form.pdf',
+    outputFilename: 'filled-form.pdf',
+    outputMimeType: 'application/pdf',
+    filledPdfBase64: null,
+    summary: {
+      totalFields: 0,
+      filledCount: 0,
+      skippedCount: 0,
+      filledFields: [],
+      skippedFields: [],
+      warnings: [],
+    },
+  };
+  const fieldPolicies = {
+    schemaVersion: 1,
+    fields: [{ fieldName: 'CB_4', mode: 'fact', factKey: 'workAuthorization.citizenshipStatus' }],
+  };
+
+  await fetchFormFillResponse({
+    backendUrl: 'http://localhost:3000',
+    authToken: 'secret-token',
+    formPdfPath: fixture.formPdfPath,
+    fieldPolicies,
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return jsonResponse(expectedPayload);
+    },
+  });
+
+  assert.deepEqual(
+    JSON.parse(calls[0].options.body.get('fieldPolicies')),
+    fieldPolicies,
+  );
+});
+
+test('buildFormFillFieldPolicies derives policies from field and storage maps', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'alex-i9-realistic',
+  });
+  const storageMap = JSON.parse(
+    await readFile(
+      path.join(repoRoot, 'examples/eval/scoring/fact-storage-map.v1.json'),
+      'utf8',
+    ),
+  );
+
+  const policies = buildFormFillFieldPolicies({ fixture, storageMap });
+
+  assert.equal(policies.schemaVersion, 1);
+  assert.equal(policies.fields.length, fixture.joinedFields.length);
+
+  const cb4 = policies.fields.find((field) => field.fieldName === 'CB_4');
+  assert.equal(cb4.mode, 'fact');
+  assert.equal(cb4.factKey, 'workAuthorization.citizenshipStatus');
+  assert.equal(cb4.groupId, 'workAuthorization.citizenshipStatus');
+  assert.ok(cb4.sourceSlugs.includes('eval.work_authorization.citizenship_status'));
+  assert.ok(cb4.sourceSlugs.includes('profile.citizenship_status'));
+  assert.deepEqual(cb4.when.equals, [
+    'alien authorized to work',
+    'noncitizen authorized to work',
+    'A noncitizen authorized to work',
+  ]);
+
+  const firstName = policies.fields.find(
+    (field) => field.fieldName === 'First Name Given Name',
+  );
+  assert.ok(firstName.sourceSlugs.includes('profile.first_name'));
+  assert.ok(firstName.sourceSlugs.includes('eval.identity.first_name'));
+
+  const address = policies.fields.find(
+    (field) => field.fieldName === 'Address Street Number and Name',
+  );
+  assert.deepEqual(address.sourceSlugs, ['eval.address.current.street']);
+
+  const signature = policies.fields.find(
+    (field) => field.fieldName === 'Signature of Employee',
+  );
+  assert.deepEqual(signature, {
+    fieldName: 'Signature of Employee',
+    mode: 'skip',
+    reason: 'manual_attestation',
+  });
 });
 
 test('fill-form writes filled-form, filled PDF, redacted response, and form score report', async () => {

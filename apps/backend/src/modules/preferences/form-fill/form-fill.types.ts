@@ -37,10 +37,64 @@ export interface PdfFieldMetadata {
   unsupportedReason?: string;
 }
 
+export interface FormFillFieldCondition {
+  factKey: string;
+  sourceSlugs?: string[];
+  equals: string | string[];
+}
+
+export interface FormFillFieldPolicy {
+  fieldName: string;
+  mode: 'fact' | 'skip';
+  factKey?: string;
+  sourceSlugs?: string[];
+  when?: FormFillFieldCondition;
+  groupId?: string;
+  reason?: string;
+}
+
+export interface FormFillFieldPolicies {
+  schemaVersion: 1;
+  fields: FormFillFieldPolicy[];
+}
+
+export interface FormFillValidationEvent {
+  kind:
+    | 'low_confidence_applied'
+    | 'policy_inactive_blocked'
+    | 'policy_structural_skip_blocked'
+    | 'checkbox_group_conflict';
+  fieldName: string;
+  message: string;
+  confidence?: number;
+  groupId?: string;
+}
+
 export interface ExtractedPdfFields {
   hasXfa: boolean;
   fields: PdfFieldMetadata[];
 }
+
+const FieldConditionSchema = z.object({
+  factKey: z.string(),
+  sourceSlugs: z.array(z.string()).optional().default([]),
+  equals: z.union([z.string(), z.array(z.string())]),
+});
+
+const FieldPolicySchema = z.object({
+  fieldName: z.string(),
+  mode: z.enum(['fact', 'skip']),
+  factKey: z.string().optional(),
+  sourceSlugs: z.array(z.string()).optional().default([]),
+  when: FieldConditionSchema.optional(),
+  groupId: z.string().optional(),
+  reason: z.string().optional(),
+});
+
+export const FormFillFieldPoliciesSchema = z.object({
+  schemaVersion: z.literal(1),
+  fields: z.array(FieldPolicySchema),
+});
 
 export const FillActionSchema = z.object({
   fieldName: z.string(),
@@ -89,6 +143,7 @@ export interface FormFillSummary {
   filledFields: FilledFieldSummary[];
   skippedFields: SkippedFieldSummary[];
   warnings: string[];
+  validationEvents?: FormFillValidationEvent[];
 }
 
 export interface FormFillResponse {

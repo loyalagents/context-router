@@ -926,6 +926,31 @@ describe("PreferenceExtractionService", () => {
         ]);
       });
 
+      it("should canonicalize scalar strings into singleton array suggestions", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([
+            {
+              slug: "dev.tech_stack",
+              operation: "CREATE",
+              newValue: " TypeScript ",
+              confidence: 0.9,
+              sourceSnippet: "works with TypeScript",
+            },
+          ]),
+        );
+
+        const result = await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        expect(result.suggestions).toHaveLength(1);
+        expect(result.suggestions[0].newValue).toEqual(["TypeScript"]);
+      });
+
       it("should filter updates that only add duplicate array entries after canonicalization", async () => {
         const existingValue = [
           "distributed systems",

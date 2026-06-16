@@ -8,6 +8,7 @@ import { FormFillPromptBuilderService } from './form-fill-prompt-builder.service
 import { FormFillValidatorService } from './form-fill-validator.service';
 import { PdfFieldFillerService } from './pdf-field-filler.service';
 import {
+  FormFillFieldPolicies,
   FormFillAiResponseSchema,
   FormFillResponse,
   FormFillStatus,
@@ -33,6 +34,7 @@ export class FormFillService {
     userId: string,
     fileBuffer: Buffer,
     filename: string,
+    fieldPolicies?: FormFillFieldPolicies,
   ): Promise<FormFillResponse> {
     const fillId = randomUUID();
     const outputFilename = this.outputFilename(filename);
@@ -73,6 +75,7 @@ export class FormFillService {
           value: preference.value,
           description: preference.description,
         })),
+        fieldPolicies,
       );
 
       const aiResult = await this.aiStructuredService.generateStructured(
@@ -86,6 +89,15 @@ export class FormFillService {
         extracted.fields,
         new Set(preferences.map((preference) => preference.slug)),
         this.config.confidenceThreshold,
+        {
+          fieldPolicies,
+          activePreferenceValues: new Map(
+            preferences.map((preference) => [
+              preference.slug,
+              preference.value,
+            ]),
+          ),
+        },
       );
 
       const filledPdf = await this.pdfFiller.fillPdf(
@@ -100,6 +112,7 @@ export class FormFillService {
         filledFields: validation.filledFields,
         skippedFields: validation.skippedFields,
         warnings: validation.warnings,
+        validationEvents: validation.validationEvents,
       };
 
       const status: FormFillStatus =

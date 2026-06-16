@@ -139,6 +139,78 @@ describe('Form Fill API (e2e)', () => {
     ]);
   });
 
+  it('accepts multipart field policies and blocks structural skip fields', async () => {
+    structuredAi.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.98,
+        },
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['communication.preferred_channels'],
+          confidence: 0.9,
+        },
+        {
+          fieldName: 'food.spice_tolerance',
+          action: 'SELECT_OPTION',
+          value: 'medium',
+          sourceSlugs: ['food.spice_tolerance'],
+          confidence: 0.95,
+        },
+      ],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/api/form-fill/pdf')
+      .field(
+        'fieldPolicies',
+        JSON.stringify({
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'skip',
+              reason: 'structural_skip',
+            },
+          ],
+        }),
+      )
+      .attach('file', await createUploadPdf(), {
+        filename: 'registration.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      status: 'partial',
+      summary: {
+        totalFields: 3,
+        filledCount: 2,
+        skippedCount: 1,
+        validationEvents: [
+          {
+            kind: 'policy_structural_skip_blocked',
+            fieldName: 'newsletter_opt_in',
+          },
+        ],
+      },
+    });
+    expect(response.body.summary.skippedFields).toContainEqual(
+      expect.objectContaining({
+        pdfFieldName: 'newsletter_opt_in',
+        reason: 'field policy skip: structural_skip',
+      }),
+    );
+    expect(structuredAi.generateStructured.mock.calls[0][0]).toContain(
+      'Field policies:',
+    );
+  });
+
   it('returns null artifact for PDFs without AcroForm fields', async () => {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.addPage([300, 300]);

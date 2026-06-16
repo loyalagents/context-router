@@ -192,7 +192,7 @@ describe('FormFillValidatorService', () => {
     );
   });
 
-  it('skips actions with missing values, unknown slugs, or low confidence', () => {
+  it('skips actions with missing values or unknown slugs and records low confidence', () => {
     const result = service.validate(
       [
         {
@@ -227,7 +227,12 @@ describe('FormFillValidatorService', () => {
       0.75,
     );
 
-    expect(result.validActions).toEqual([]);
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'food.spice_tolerance',
+        action: 'SELECT_OPTION',
+      }),
+    ]);
     expect(result.skippedFields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -239,15 +244,18 @@ describe('FormFillValidatorService', () => {
           reason: 'source slug "unknown.slug" is not an active preference',
         }),
         expect.objectContaining({
-          pdfFieldName: 'food.spice_tolerance',
-          reason: 'confidence below threshold',
-        }),
-        expect.objectContaining({
           pdfFieldName: 'signature',
           reason: 'signature fields are not supported',
         }),
       ]),
     );
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'low_confidence_applied',
+        fieldName: 'food.spice_tolerance',
+        confidence: 0.4,
+      }),
+    ]);
   });
 
   it('skips non-SKIP actions missing source slugs or confidence from permissive AI parsing', () => {
@@ -297,5 +305,213 @@ describe('FormFillValidatorService', () => {
     expect(result.filledFields.length + result.skippedFields.length).toBe(
       fields.length,
     );
+  });
+
+  it('applies source-backed low-confidence actions and records a validation event', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.4,
+        },
+      ],
+      fields,
+      new Set(['profile.full_name']),
+      0.75,
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'profile.full_name',
+        action: 'SET_TEXT',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'low_confidence_applied',
+        fieldName: 'profile.full_name',
+        confidence: 0.4,
+      }),
+    ]);
+  });
+
+  it('blocks structural-skip policy fields even when the AI returns a fill action', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['profile.full_name']),
+      0.75,
+      {
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'profile.full_name',
+              mode: 'skip',
+              reason: 'manual_attestation',
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'profile.full_name',
+          reason: 'field policy skip: manual_attestation',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_structural_skip_blocked',
+          fieldName: 'profile.full_name',
+        }),
+      ]),
+    );
+  });
+
+  it('blocks inactive conditional policy fields using active preference values', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['profile.citizenship_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map([
+          ['profile.citizenship_status', 'alien authorized to work'],
+        ]),
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: ['profile.citizenship_status'],
+                equals: 'lawful permanent resident',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'newsletter_opt_in',
+          reason: 'field policy inactive: workAuthorization.citizenshipStatus',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_inactive_blocked',
+          fieldName: 'newsletter_opt_in',
+        }),
+      ]),
+    );
+  });
+
+  it('keeps the highest-confidence checkbox action in a policy group', () => {
+    const checkboxFields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_1',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+      {
+        name: 'CB_4',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'CB_1',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.8,
+        },
+        {
+          fieldName: 'CB_4',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      checkboxFields,
+      new Set(['profile.citizenship_status']),
+      0.75,
+      {
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_1',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+            {
+              fieldName: 'CB_4',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['profile.citizenship_status'],
+              groupId: 'workAuthorization.citizenshipStatus',
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'CB_4', action: 'CHECK' }),
+    ]);
+    expect(result.skippedFields).toEqual([
+      expect.objectContaining({
+        pdfFieldName: 'CB_1',
+        reason: 'checkbox group conflict: workAuthorization.citizenshipStatus',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'checkbox_group_conflict',
+        fieldName: 'CB_1',
+        groupId: 'workAuthorization.citizenshipStatus',
+      }),
+    ]);
   });
 });

@@ -626,7 +626,14 @@ If no preferences can be extracted, return:
       return value;
     }
 
-    return canonicalizePreferenceValue(definition, value);
+    return canonicalizePreferenceValue(definition, value, {
+      slug,
+      onEvent: (event) => {
+        this.logger.debug(
+          `Canonicalized preference suggestion value for ${event.slug}: ${event.kind}`,
+        );
+      },
+    });
   }
 
   private async canonicalizeSuggestionValues(

@@ -94,6 +94,62 @@ test('combined scorer keeps conflict attribution distinct from clean correctness
   );
 });
 
+test('combined scorer schema accepts structural overfilled form fields', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-combined-overfill-'));
+  const databaseReportPath = path.join(tmp, 'database-score-report.json');
+  const formReportPath = path.join(tmp, 'form-fill-score-report.json');
+  await writeFile(
+    databaseReportPath,
+    jsonText({
+      ...databaseReport(),
+      knownPresent: [
+        known('workAuthorization.citizenshipStatus', 'known_present_correct'),
+      ],
+      intentionallyMissing: [],
+    }),
+  );
+  await writeFile(
+    formReportPath,
+    jsonText({
+      ...formReport(),
+      fields: [
+        field(
+          'workAuthorization.citizenshipStatus',
+          'structural_overfilled',
+          {
+            fieldIndex: 8,
+            pdfFieldName: 'CB_1',
+            fieldClass: 'structural-skip',
+            expectedAction: 'SKIP',
+            actualValue: null,
+            overfill: true,
+            overfillSeverity: 'medium',
+            overfillReason: 'conditional-inactive',
+          },
+        ),
+      ],
+    }),
+  );
+
+  const report = await scoreCombined({
+    repoRoot,
+    databaseReportPath,
+    formReportPath,
+  });
+
+  const formField = report.facts.find(
+    (fact) => fact.factKey === 'workAuthorization.citizenshipStatus',
+  ).form.fields[0];
+  assert.equal(formField.classification, 'structural_overfilled');
+  assert.equal(formField.pdfFieldName, 'CB_1');
+  await validateWithSchema(
+    repoRoot,
+    'combined-score-report.schema.json',
+    report,
+    'combined score report',
+  );
+});
+
 function stage(report, factKey) {
   return report.facts.find((fact) => fact.factKey === factKey).stageAttribution;
 }
@@ -188,7 +244,7 @@ function formReport() {
   };
 }
 
-function field(factKey, classification) {
+function field(factKey, classification, overrides = {}) {
   return {
     fieldIndex: 0,
     pdfFieldName: factKey,
@@ -204,6 +260,7 @@ function field(factKey, classification) {
     overfill: false,
     overfillSeverity: null,
     overfillReason: null,
+    ...overrides,
   };
 }
 
