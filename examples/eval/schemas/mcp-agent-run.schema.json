@@ -19,6 +19,7 @@
     "setup",
     "prompt",
     "documents",
+    "workspace",
     "transcript",
     "summary",
     "artifacts",
@@ -27,7 +28,7 @@
     "error"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "artifactType": { "const": "mcp-agent-run" },
     "runId": { "type": "string", "minLength": 1 },
     "status": { "enum": ["running", "pass", "fail"] },
@@ -49,7 +50,7 @@
         "completionMarkerObserved"
       ],
       "properties": {
-        "provider": { "enum": ["codex", "claude", "command"] },
+        "provider": { "enum": ["claude", "command"] },
         "modelLabel": { "type": ["string", "null"], "minLength": 1 },
         "mcpServer": { "type": "string", "minLength": 1 },
         "timeoutMs": { "type": "integer", "minimum": 1 },
@@ -91,19 +92,31 @@
     "documents": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["documentsRoot", "documentCount"],
+      "required": ["sourceDocumentsRoot", "documentsRoot", "documentCount"],
       "properties": {
+        "sourceDocumentsRoot": { "type": "string", "minLength": 1 },
         "documentsRoot": { "type": "string", "minLength": 1 },
         "documentCount": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "safeDocumentIndexPath", "isolatedFromRepo"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "safeDocumentIndexPath": { "type": "string", "minLength": 1 },
+        "isolatedFromRepo": { "type": "boolean" }
       }
     },
     "transcript": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "redacted"],
+      "required": ["path", "redactedAuthSecrets", "mayContainCorpusPii"],
       "properties": {
         "path": { "type": "string", "minLength": 1 },
-        "redacted": { "type": "boolean" }
+        "redactedAuthSecrets": { "type": "boolean" },
+        "mayContainCorpusPii": { "type": "boolean" }
       }
     },
     "summary": {
@@ -121,9 +134,9 @@
         "durationMs": { "type": ["integer", "null"], "minimum": 0 },
         "exitCode": { "type": ["integer", "null"] },
         "timedOut": { "type": "boolean" },
-        "toolCallCount": { "type": "null" },
-        "preferenceWriteCount": { "type": "null" },
-        "definitionCreateCount": { "type": "null" }
+        "toolCallCount": { "type": ["integer", "null"], "minimum": 0 },
+        "preferenceWriteCount": { "type": ["integer", "null"], "minimum": 0 },
+        "definitionCreateCount": { "type": ["integer", "null"], "minimum": 0 }
       }
     },
     "artifacts": {

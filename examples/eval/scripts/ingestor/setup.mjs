@@ -44,6 +44,7 @@ export async function prepareKnownSchemaMemory({
   resetMemoryEnabled = false,
   ensureDefinitionsEnabled = true,
   fetchImpl,
+  onProgress,
 }) {
   const fixture = await loadKnownSchemaFixture({
     repoRoot,
@@ -51,11 +52,16 @@ export async function prepareKnownSchemaMemory({
     corpusId,
     documentsRoot,
   });
+  await onProgress?.({ fixture });
 
   const backendUser = await fetchBackendUser({
     graphqlUrl,
     authToken,
     fetchImpl,
+  });
+  await onProgress?.({
+    fixture,
+    backendUserId: backendUser.userId,
   });
 
   const reset = resetMemoryEnabled
@@ -65,14 +71,32 @@ export async function prepareKnownSchemaMemory({
         fetchImpl,
       })
     : null;
+  await onProgress?.({
+    fixture,
+    backendUserId: backendUser.userId,
+    reset,
+  });
 
   const definitionTargets = collectDefinitionTargets(fixture);
+  await onProgress?.({
+    fixture,
+    backendUserId: backendUser.userId,
+    reset,
+    definitionTargets,
+  });
   const definitionSetup = await ensureKnownSchemaDefinitions({
     graphqlUrl,
     authToken,
     fetchImpl,
     ensureDefinitions: ensureDefinitionsEnabled,
     targets: definitionTargets,
+  });
+  await onProgress?.({
+    fixture,
+    backendUserId: backendUser.userId,
+    reset,
+    definitionTargets,
+    definitionSetup,
   });
 
   return {

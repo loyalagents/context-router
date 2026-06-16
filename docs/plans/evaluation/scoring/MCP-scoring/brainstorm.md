@@ -1,11 +1,17 @@
 # MCP Agent Evaluation Design
 
 - Status: active design
-- Last updated: 2026-06-15
+- Last updated: 2026-06-16
 - Scope: evaluating Codex/Claude Code style agents that use MCP/tool access as
   an end-to-end eval producer
 - Implementation target: first build known-schema MCP memory ingestion, with a
   runner shape that can extend to open schema and agent-filled forms later
+
+Current implementation note: after PR feedback, v1 intentionally supports
+Claude plus the deterministic `command` adapter only. The live Claude path uses
+an isolated staged workspace, explicit `--mcp-config` / `--strict-mcp-config`,
+and a sanitized child environment. Codex notes below are retained as historical
+design exploration until a similarly isolated Codex adapter is implemented.
 
 ## Summary
 

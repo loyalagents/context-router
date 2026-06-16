@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
@@ -27,6 +27,7 @@ const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const DEFAULT_AGENT_TIMEOUT_MS = 900_000;
 const DEFAULT_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
 const INGESTION_MODE = 'mcp-known-schema-agent';
+const CLAUDE_BUILTIN_TOOLS = 'Read,Glob,Grep';
 export const COMPLETION_MARKER = 'EVAL_MCP_AGENT_DONE';
 
 const STAGE_NAMES = [
@@ -341,9 +342,9 @@ export async function runMcpAgentE2E({
     } catch {
       // Preserve the primary failure in CLI output.
     }
-    const message = redactSecret(
+    const message = redactForArtifact(
       error?.stack ?? error?.message ?? String(error),
-      options.authToken,
+      [options.authToken],
     );
     return {
       exitCode: 1,
@@ -377,85 +378,115 @@ async function runMcpAgentStage({
     throw new Error('MCP agent run artifact was not initialized.');
   }
 
-  const promptResult = await buildMcpAgentPrompt({
-    repoRoot,
-    options,
-    fixture: setupResult.fixture,
-  });
-  await writeText(artifacts.prompt, promptResult.prompt);
-
-  agentRun.prompt.promptHash = promptHash(promptResult.prompt);
-  agentRun.documents.documentCount = promptResult.documentCount;
-  agentRun.agent.command = redactSecret(
-    buildAgentInvocation({ repoRoot, options }).display,
-    options.authToken,
-  );
-  await writeAgentRun();
-
   const stageStartedAt = isoTimestamp(now);
-  const result = await stageRunners.agent({
-    repoRoot,
-    options,
-    prompt: promptResult.prompt,
-    artifacts,
-    now,
-  });
-  const stageEndedAt = isoTimestamp(now);
-  const transcript = buildTranscript(result, options.authToken);
-  await writeText(artifacts.transcript, transcript);
+  try {
+    const workspace = await prepareAgentWorkspace({
+      repoRoot,
+      artifacts,
+      options,
+      fixture: setupResult.fixture,
+    });
+    const promptResult = await buildMcpAgentPrompt({
+      repoRoot,
+      options,
+      fixture: setupResult.fixture,
+      agentWorkspace: workspace,
+    });
+    await writeText(artifacts.prompt, promptResult.prompt);
 
-  const rawTranscript = [result?.stdout, result?.stderr, result?.transcript]
-    .filter((value) => typeof value === 'string')
-    .join('\n');
-  const completionMarkerObserved =
-    typeof result?.completionMarkerObserved === 'boolean'
-      ? result.completionMarkerObserved
-      : rawTranscript.includes(COMPLETION_MARKER);
-  const timedOut = Boolean(result?.timedOut);
-  const exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
-  const effectiveExitCode = timedOut || exitCode !== 0 ? 1 : 0;
-  const duration =
-    Number.isInteger(result?.durationMs) && result.durationMs >= 0
-      ? result.durationMs
-      : durationMs(stageStartedAt, stageEndedAt);
+    await writeClaudeSettings({ artifacts, options });
 
-  const lines = redactLines(
-    result?.lines?.length
-      ? result.lines
-      : [
-          `eval MCP agent ${effectiveExitCode === 0 ? 'passed' : 'failed'}`,
-          `exitCode=${exitCode}`,
-          `timedOut=${timedOut}`,
-          `completionMarkerObserved=${completionMarkerObserved}`,
-          `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
-        ],
-    options.authToken,
-  );
-  if (effectiveExitCode === 0 && !completionMarkerObserved) {
-    lines.push('completion marker was not observed; this is diagnostic-only in v1');
+    agentRun.prompt.promptHash = promptHash(promptResult.prompt);
+    agentRun.documents.documentCount = promptResult.documentCount;
+    agentRun.workspace.path = relativePath(repoRoot, workspace.root);
+    agentRun.workspace.safeDocumentIndexPath = relativePath(repoRoot, workspace.safeDocumentIndexPath);
+    agentRun.agent.command = redactForArtifact(
+      buildAgentInvocation({ repoRoot, options, artifacts }).display,
+      [options.authToken],
+    );
+    await writeAgentRun();
+
+    const result = await stageRunners.agent({
+      repoRoot,
+      options,
+      prompt: promptResult.prompt,
+      artifacts,
+      now,
+    });
+    const stageEndedAt = isoTimestamp(now);
+    const transcript = buildTranscript(result, [options.authToken]);
+    await writeText(artifacts.transcript, transcript);
+
+    const rawTranscript = [result?.stdout, result?.stderr, result?.transcript]
+      .filter((value) => typeof value === 'string')
+      .join('\n');
+    const completionMarkerObserved =
+      typeof result?.completionMarkerObserved === 'boolean'
+        ? result.completionMarkerObserved
+        : completionMarkerInOutput(rawTranscript);
+    const timedOut = Boolean(result?.timedOut);
+    const exitCode = Number.isInteger(result?.exitCode) ? result.exitCode : 1;
+    const effectiveExitCode = timedOut || exitCode !== 0 ? 1 : 0;
+    const duration =
+      Number.isInteger(result?.durationMs) && result.durationMs >= 0
+        ? result.durationMs
+        : durationMs(stageStartedAt, stageEndedAt);
+
+    const lines = redactLines(
+      result?.lines?.length
+        ? result.lines
+        : [
+            `eval MCP agent ${effectiveExitCode === 0 ? 'passed' : 'failed'}`,
+            `exitCode=${exitCode}`,
+            `timedOut=${timedOut}`,
+            `completionMarkerObserved=${completionMarkerObserved}`,
+            `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
+          ],
+      [options.authToken],
+    );
+    if (effectiveExitCode === 0 && !completionMarkerObserved) {
+      lines.push('completion marker was not observed; this is diagnostic-only in v1');
+    }
+
+    agentRun.status = effectiveExitCode === 0 ? 'pass' : 'fail';
+    agentRun.endedAt = stageEndedAt;
+    agentRun.agent.completionMarkerObserved = completionMarkerObserved;
+    agentRun.summary.durationMs = duration;
+    agentRun.summary.exitCode = exitCode;
+    agentRun.summary.timedOut = timedOut;
+    agentRun.error = effectiveExitCode === 0 ? null : lines.join('\n');
+    await writeAgentRun();
+
+    return {
+      exitCode: effectiveExitCode,
+      lines,
+      agentSummary: {
+        status: agentRun.status,
+        durationMs: agentRun.summary.durationMs,
+        exitCode: agentRun.summary.exitCode,
+        timedOut: agentRun.summary.timedOut,
+        completionMarkerObserved,
+        transcript: relativePath(repoRoot, artifacts.transcript),
+      },
+    };
+  } catch (error) {
+    const stageEndedAt = isoTimestamp(now);
+    agentRun.status = 'fail';
+    agentRun.endedAt = stageEndedAt;
+    agentRun.summary.durationMs = durationMs(stageStartedAt, stageEndedAt);
+    agentRun.summary.exitCode = agentRun.summary.exitCode ?? 1;
+    agentRun.summary.timedOut = Boolean(agentRun.summary.timedOut);
+    agentRun.error = redactForArtifact(
+      error?.stack ?? error?.message ?? String(error),
+      [options.authToken],
+    );
+    try {
+      await writeAgentRun();
+    } catch {
+      // Preserve the primary agent-stage failure for the stage report.
+    }
+    throw error;
   }
-
-  agentRun.status = effectiveExitCode === 0 ? 'pass' : 'fail';
-  agentRun.endedAt = stageEndedAt;
-  agentRun.agent.completionMarkerObserved = completionMarkerObserved;
-  agentRun.summary.durationMs = duration;
-  agentRun.summary.exitCode = exitCode;
-  agentRun.summary.timedOut = timedOut;
-  agentRun.error = effectiveExitCode === 0 ? null : lines.join('\n');
-  await writeAgentRun();
-
-  return {
-    exitCode: effectiveExitCode,
-    lines,
-    agentSummary: {
-      status: agentRun.status,
-      durationMs: agentRun.summary.durationMs,
-      exitCode: agentRun.summary.exitCode,
-      timedOut: agentRun.summary.timedOut,
-      completionMarkerObserved,
-      transcript: relativePath(repoRoot, artifacts.transcript),
-    },
-  };
 }
 
 async function runStage({ stage, report, options, now }) {
@@ -549,10 +580,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--agent-command',
     '--agent-timeout-ms',
     '--prompt-template',
+    '--mcp-config',
     '--model-label',
     '--location-id',
     '--run-id',
   ]);
+  const dashPrefixedValueArgs = new Set(['--agent-command', '--model-label', '--run-id']);
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -569,7 +602,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
 
     const value = args[index + 1];
-    if (!value || value.startsWith('--')) {
+    if (!value || (value.startsWith('--') && !dashPrefixedValueArgs.has(arg))) {
       return { kind: 'usage-error', message: `Missing value for ${arg}` };
     }
     index += 1;
@@ -593,6 +626,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       options.agentTimeoutMs = parsed.value;
     }
     if (arg === '--prompt-template') options.promptTemplate = value;
+    if (arg === '--mcp-config') options.mcpConfig = value;
     if (arg === '--model-label') options.modelLabel = value;
     if (arg === '--location-id') options.locationId = value;
     if (arg === '--run-id') options.runId = value;
@@ -615,7 +649,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!['codex', 'claude', 'command'].includes(options.agent)) {
     return {
       kind: 'usage-error',
-      message: 'Expected --agent codex, --agent claude, or --agent command',
+      message: 'Expected --agent claude or --agent command',
+    };
+  }
+  if (options.agent === 'codex') {
+    return {
+      kind: 'usage-error',
+      message: '--agent codex is reserved until the isolated MCP eval adapter is implemented',
     };
   }
   if (options.schemaMode === 'open') {
@@ -648,6 +688,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: 'Missing required --agent-command when --agent command is used',
     };
   }
+  if (options.agent === 'claude' && !options.mcpConfig) {
+    return {
+      kind: 'usage-error',
+      message: 'Missing required --mcp-config when --agent claude is used',
+    };
+  }
   for (const [label, value] of [
     ['--user', options.userId],
     ['--corpus', options.corpusId],
@@ -674,7 +720,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
 export function usage() {
   return [
     'Usage:',
-    '  pnpm eval:e2e-mcp-agent --agent codex|claude|command --schema-mode known --form-mode backend --user <userId> --corpus <corpusId> --scenario <scenarioId> --artifacts-root <dir> --mcp-server <name> [options]',
+    '  pnpm eval:e2e-mcp-agent --agent claude|command --schema-mode known --form-mode backend --user <userId> --corpus <corpusId> --scenario <scenarioId> --artifacts-root <dir> --mcp-server <name> [options]',
     '',
     'Notes:',
     '  This wrapper runs a known-schema MCP memory ingestion eval through one agent session.',
@@ -688,6 +734,7 @@ export function usage() {
     '  --graphql-url <url>               Defaults to EVAL_GRAPHQL_URL or http://localhost:3000/graphql',
     '  --auth-token <token>              Defaults to EVAL_AUTH_TOKEN',
     '  --agent-command <command>         Required with --agent command; prompt is passed on stdin',
+    '  --mcp-config <path>               Required with --agent claude; loaded with --strict-mcp-config',
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-known-schema.md',
     '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
@@ -702,7 +749,7 @@ export function formatMcpAgentE2EResult(result) {
   return result.lines.join('\n');
 }
 
-export async function buildMcpAgentPrompt({ repoRoot, options, fixture }) {
+export async function buildMcpAgentPrompt({ repoRoot, options, fixture, agentWorkspace }) {
   const loadedFixture =
     fixture ??
     (await loadKnownSchemaFixture({
@@ -722,7 +769,9 @@ export async function buildMcpAgentPrompt({ repoRoot, options, fixture }) {
     FORM_ID: scenario.formId ?? '<unknown>',
     SCHEMA_MODE: options.schemaMode,
     FORM_MODE: options.formMode,
-    DOCUMENTS_ROOT: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+    DOCUMENTS_ROOT: agentWorkspace
+      ? displayPath(repoRoot, agentWorkspace.root)
+      : displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
     DOCUMENT_LIST: documentList(loadedFixture.manifest.documents ?? []),
     COMPLETION_MARKER,
   });
@@ -732,8 +781,22 @@ export async function buildMcpAgentPrompt({ repoRoot, options, fixture }) {
   };
 }
 
-export async function runAgentProcess({ repoRoot = defaultRepoRoot, options, prompt }) {
-  const invocation = buildAgentInvocation({ repoRoot, options });
+export async function runAgentProcess({
+  repoRoot = defaultRepoRoot,
+  options,
+  prompt,
+  artifacts,
+  env = process.env,
+}) {
+  const effectiveArtifacts =
+    artifacts ??
+    (options.artifactsRoot
+      ? buildArtifacts({ repoRoot, options })
+      : {
+          agentWorkspaceRoot: repoRoot,
+          claudeSettings: path.join(repoRoot, 'claude-settings.json'),
+        });
+  const invocation = buildAgentInvocation({ repoRoot, options, artifacts: effectiveArtifacts });
   const startedAtMs = Date.now();
   return new Promise((resolve) => {
     let stdout = '';
@@ -743,7 +806,8 @@ export async function runAgentProcess({ repoRoot = defaultRepoRoot, options, pro
     let closed = false;
     let forceKillTimeout = null;
     const child = spawn(invocation.file, invocation.args, {
-      cwd: repoRoot,
+      cwd: invocation.cwd,
+      env: buildAgentEnvironment(env),
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
@@ -776,16 +840,16 @@ export async function runAgentProcess({ repoRoot = defaultRepoRoot, options, pro
       const durationMs = Math.max(0, Date.now() - startedAtMs);
       const exitCode = timedOut || spawnError ? 1 : Number.isInteger(code) ? code : 1;
       const combined = `${stdout}\n${stderr}`;
-      const completionMarkerObserved = combined.includes(COMPLETION_MARKER);
+      const completionMarkerObserved = completionMarkerInOutput(combined);
       const lines = [
         `agent ${options.agent} ${exitCode === 0 && !timedOut ? 'completed' : 'failed'}`,
-        `command=${redactSecret(invocation.display, options.authToken)}`,
+        `command=${redactForArtifact(invocation.display, [options.authToken])}`,
         `exitCode=${exitCode}`,
         `timedOut=${timedOut}`,
         `completionMarkerObserved=${completionMarkerObserved}`,
       ];
       if (signal) lines.push(`signal=${signal}`);
-      if (spawnError) lines.push(redactSecret(spawnError.message, options.authToken));
+      if (spawnError) lines.push(redactForArtifact(spawnError.message, [options.authToken]));
       resolve({
         exitCode,
         lines,
@@ -801,43 +865,140 @@ export async function runAgentProcess({ repoRoot = defaultRepoRoot, options, pro
   });
 }
 
-export function buildAgentInvocation({ repoRoot, options }) {
-  if (options.agent === 'codex') {
-    const args = [
-      'exec',
-      '--cd',
-      repoRoot,
-      '--sandbox',
-      'read-only',
-      '--ask-for-approval',
-      'never',
-      '-',
-    ];
-    return {
-      file: 'codex',
-      args,
-      display: ['codex', ...args.map(shellDisplayArg)].join(' '),
-    };
-  }
+export function buildAgentInvocation({ repoRoot, options, artifacts }) {
+  const agentWorkspaceRoot = artifacts?.agentWorkspaceRoot ?? repoRoot;
+  const claudeSettings = artifacts?.claudeSettings ?? path.join(agentWorkspaceRoot, 'claude-settings.json');
   if (options.agent === 'claude') {
-    const args = ['--print', '--permission-mode', 'dontAsk', '--output-format', 'stream-json'];
+    const mcpConfigPath = path.resolve(repoRoot, options.mcpConfig);
+    const args = [
+      '--print',
+      '--permission-mode',
+      'dontAsk',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--no-session-persistence',
+      '--mcp-config',
+      mcpConfigPath,
+      '--strict-mcp-config',
+      '--settings',
+      claudeSettings,
+      '--tools',
+      CLAUDE_BUILTIN_TOOLS,
+      '--allowedTools',
+      `${CLAUDE_BUILTIN_TOOLS},mcp__${options.mcpServer}__*`,
+    ];
     return {
       file: 'claude',
       args,
       display: ['claude', ...args.map(shellDisplayArg)].join(' '),
+      cwd: agentWorkspaceRoot,
     };
   }
   return {
     file: '/bin/sh',
     args: ['-lc', options.agentCommand],
     display: options.agentCommand,
+    cwd: agentWorkspaceRoot,
   };
+}
+
+export async function prepareAgentWorkspace({ repoRoot, artifacts, options, fixture }) {
+  const root = artifacts.agentWorkspaceRoot;
+  await rm(root, { recursive: true, force: true });
+  await mkdir(root, { recursive: true });
+
+  const sourceRoot = path.resolve(repoRoot, fixture.documentsRoot ?? options.documentsRoot);
+  const documents = fixture.manifest?.documents ?? [];
+  const safeDocuments = [];
+  for (const doc of documents) {
+    const relativeDocPath = safeRelativePath(doc.path, 'document path');
+    const sourcePath = path.resolve(sourceRoot, relativeDocPath);
+    if (!isInside(sourceRoot, sourcePath)) {
+      throw new Error(`Document path escapes documents root: ${doc.path}`);
+    }
+    const destinationPath = path.resolve(root, relativeDocPath);
+    if (!isInside(root, destinationPath)) {
+      throw new Error(`Document path escapes agent workspace: ${doc.path}`);
+    }
+    await mkdir(path.dirname(destinationPath), { recursive: true });
+    await copyFile(sourcePath, destinationPath);
+    safeDocuments.push(safeDocumentMetadata(doc));
+  }
+
+  await writeJson(artifacts.safeDocumentIndex, {
+    schemaVersion: 1,
+    artifactType: 'mcp-agent-document-index',
+    documentsRoot: '.',
+    documentCount: safeDocuments.length,
+    documents: safeDocuments,
+  });
+  const instructions = [
+    '# Eval Agent Workspace',
+    '',
+    `Use the MCP server named \`${options.mcpServer}\` for memory reads and writes.`,
+    'Read only files in this workspace. Do not access the source repository, generated artifacts, validation reports, score reports, profile files, manifests, or expected snapshots.',
+    'The safe document index is `documents.json`; listed document paths are relative to this workspace.',
+    `Print ${COMPLETION_MARKER} on its own line when finished.`,
+    '',
+  ].join('\n');
+  await writeText(artifacts.agentInstructions, instructions);
+  await writeText(artifacts.agentCodexInstructions, instructions);
+
+  return {
+    root,
+    safeDocumentIndexPath: artifacts.safeDocumentIndex,
+    documents: safeDocuments,
+  };
+}
+
+async function writeClaudeSettings({ artifacts, options }) {
+  await writeJson(artifacts.claudeSettings, {
+    permissions: {
+      allow: ['Read', 'Glob', 'Grep', `mcp__${options.mcpServer}__*`],
+    },
+  });
+}
+
+function safeDocumentMetadata(doc) {
+  return {
+    id: doc.id ?? null,
+    path: safeRelativePath(doc.path, 'document path'),
+    title: doc.title ?? null,
+    category: doc.category ?? null,
+    outputExtension: doc.outputExtension ?? null,
+  };
+}
+
+function safeRelativePath(value, label) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`${label} must be a non-empty relative path.`);
+  }
+  if (path.isAbsolute(value)) {
+    throw new Error(`${label} must be relative: ${value}`);
+  }
+  const normalized = path.normalize(value);
+  if (normalized === '..' || normalized.startsWith(`..${path.sep}`)) {
+    throw new Error(`${label} escapes its root: ${value}`);
+  }
+  return normalized.split(path.sep).join('/');
+}
+
+function isInside(root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
 function buildArtifacts({ repoRoot, options }) {
   const artifactsRoot = path.resolve(repoRoot, options.artifactsRoot);
+  const agentWorkspaceRoot = path.join(artifactsRoot, 'agent-workspace');
   return {
     artifactsRoot,
+    agentWorkspaceRoot,
+    safeDocumentIndex: path.join(agentWorkspaceRoot, 'documents.json'),
+    agentInstructions: path.join(agentWorkspaceRoot, 'CLAUDE.md'),
+    agentCodexInstructions: path.join(agentWorkspaceRoot, 'AGENTS.md'),
+    claudeSettings: path.join(artifactsRoot, 'claude-settings.json'),
     validationReport: path.join(artifactsRoot, 'validation-report.json'),
     mcpAgentRun: path.join(artifactsRoot, 'mcp-agent-run.json'),
     prompt: path.join(artifactsRoot, 'mcp-agent-prompt.md'),
@@ -880,6 +1041,10 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
       mcpServer: options.mcpServer,
       agentTimeoutMs: options.agentTimeoutMs,
       promptTemplate: displayPath(repoRoot, path.resolve(repoRoot, options.promptTemplate)),
+      mcpConfig: options.mcpConfig
+        ? displayPath(repoRoot, path.resolve(repoRoot, options.mcpConfig))
+        : null,
+      agentWorkspace: relativePath(repoRoot, artifacts.agentWorkspaceRoot),
     },
     backendUserId: null,
     failureStage: null,
@@ -913,7 +1078,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
 function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt }) {
   const summary = setupSummary(setupResult, options);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     artifactType: 'mcp-agent-run',
     runId: options.runId,
     status: 'running',
@@ -944,12 +1109,19 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
       promptHash: null,
     },
     documents: {
-      documentsRoot: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+      sourceDocumentsRoot: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
+      documentsRoot: relativePath(repoRoot, artifacts.agentWorkspaceRoot),
       documentCount: setupResult.fixture?.manifest?.documents?.length ?? null,
+    },
+    workspace: {
+      path: relativePath(repoRoot, artifacts.agentWorkspaceRoot),
+      safeDocumentIndexPath: relativePath(repoRoot, artifacts.safeDocumentIndex),
+      isolatedFromRepo: true,
     },
     transcript: {
       path: relativePath(repoRoot, artifacts.transcript),
-      redacted: true,
+      redactedAuthSecrets: true,
+      mayContainCorpusPii: true,
     },
     summary: {
       durationMs: null,
@@ -994,6 +1166,9 @@ function artifactMapForStage({ repoRoot, artifacts, name }) {
     'setup-memory-and-schema': { mcpAgentRun: artifacts.mcpAgentRun },
     'run-mcp-agent': {
       mcpAgentRun: artifacts.mcpAgentRun,
+      agentWorkspace: artifacts.agentWorkspaceRoot,
+      safeDocumentIndex: artifacts.safeDocumentIndex,
+      claudeSettings: artifacts.claudeSettings,
       prompt: artifacts.prompt,
       transcript: artifacts.transcript,
     },
@@ -1068,7 +1243,7 @@ function documentList(documents) {
     .join('\n');
 }
 
-function buildTranscript(result, secret) {
+function buildTranscript(result, secrets) {
   const sections = [];
   if (result?.command) {
     sections.push(`$ ${result.command}`);
@@ -1082,7 +1257,7 @@ function buildTranscript(result, secret) {
   if (typeof result?.stderr === 'string') {
     sections.push(`[stderr]\n${result.stderr}`);
   }
-  return `${redactSecret(sections.join('\n\n'), secret)}\n`;
+  return `${redactForArtifact(sections.join('\n\n'), secrets)}\n`;
 }
 
 async function writeText(filePath, text) {
@@ -1193,13 +1368,94 @@ function shellDisplayArg(value) {
   return JSON.stringify(value);
 }
 
-function redactLines(lines, secret) {
-  return lines.map((line) => redactSecret(String(line), secret));
+export function buildAgentEnvironment(sourceEnv = process.env) {
+  const allowedExact = new Set([
+    'PATH',
+    'HOME',
+    'TMPDIR',
+    'TEMP',
+    'TMP',
+    'LANG',
+    'LC_ALL',
+    'LC_CTYPE',
+    'SHELL',
+    'USER',
+    'LOGNAME',
+    'TERM',
+    'COLORTERM',
+    'NO_COLOR',
+    'FORCE_COLOR',
+    'ANTHROPIC_API_KEY',
+    'ANTHROPIC_AUTH_TOKEN',
+    'ANTHROPIC_BASE_URL',
+    'ANTHROPIC_MODEL',
+    'ANTHROPIC_SMALL_FAST_MODEL',
+    'HTTP_PROXY',
+    'HTTPS_PROXY',
+    'NO_PROXY',
+    'http_proxy',
+    'https_proxy',
+    'no_proxy',
+  ]);
+  const result = {};
+  for (const key of allowedExact) {
+    if (typeof sourceEnv[key] === 'string') {
+      result[key] = sourceEnv[key];
+    }
+  }
+  return result;
 }
 
-function redactSecret(text, secret) {
-  if (!secret) return text;
-  return text.split(secret).join('[redacted-auth-token]');
+function completionMarkerInOutput(text) {
+  if (typeof text !== 'string' || !text.includes(COMPLETION_MARKER)) return false;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed === COMPLETION_MARKER) return true;
+    if (!trimmed.startsWith('{')) continue;
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (jsonAssistantOutputHasMarker(parsed)) return true;
+    } catch {
+      // Non-JSON lines are handled by the exact-line check above.
+    }
+  }
+  return false;
+}
+
+function jsonAssistantOutputHasMarker(value) {
+  if (!value || typeof value !== 'object') return false;
+  const encoded = JSON.stringify(value);
+  if (!encoded.includes(COMPLETION_MARKER)) return false;
+  if (encoded.includes('"role":"user"') || encoded.includes('"type":"user"')) {
+    return false;
+  }
+  return true;
+}
+
+function redactLines(lines, secrets) {
+  return lines.map((line) => redactForArtifact(String(line), secrets));
+}
+
+function redactForArtifact(text, secrets = []) {
+  let redacted = String(text);
+  for (const secret of normalizeSecrets(secrets)) {
+    redacted = redacted.split(secret).join('[redacted-auth-token]');
+  }
+  redacted = redacted.replace(
+    /\bBearer\s+[A-Za-z0-9._~+/=-]{12,}/g,
+    'Bearer [redacted-bearer-token]',
+  );
+  redacted = redacted.replace(
+    /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,
+    '[redacted-jwt]',
+  );
+  redacted = redacted.replace(/\bsk-[A-Za-z0-9_-]{12,}\b/g, '[redacted-api-key]');
+  return redacted;
+}
+
+function normalizeSecrets(secrets) {
+  const list = Array.isArray(secrets) ? secrets : [secrets];
+  return list.filter((secret) => typeof secret === 'string' && secret.length > 0);
 }
 
 function sanitizeUrlForArtifact(value) {

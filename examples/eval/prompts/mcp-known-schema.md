@@ -13,11 +13,15 @@ Form:
 Corpus root:
 `{{DOCUMENTS_ROOT}}`
 
+Safe document index:
+`documents.json`
+
 Documents:
 {{DOCUMENT_LIST}}
 
 Instructions:
-- Read only the corpus documents listed above from the local filesystem.
+- Read only the corpus documents listed above from the local filesystem, relative to the corpus root.
+- You may use `documents.json` only as a safe index of those same documents.
 - Use the MCP server to inspect the available memory/preference schema if needed.
 - Store supported facts from the listed documents into backend memory through MCP.
 - Use existing known-schema definitions; do not invent new definitions for this run.

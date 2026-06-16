@@ -6,6 +6,8 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   COMPLETION_MARKER,
+  buildAgentEnvironment,
+  buildAgentInvocation,
   buildMcpAgentPrompt,
   parseArgs,
   runAgentProcess,
@@ -134,6 +136,72 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   const commandWithoutCommand = parseArgs(removeFlagValue(baseArgs, '--agent-command'), env, fixedNow);
   assert.equal(commandWithoutCommand.kind, 'usage-error');
   assert.match(commandWithoutCommand.message, /--agent-command/);
+
+  const codex = parseArgs(replaceFlagValue(baseArgs, '--agent', 'codex'), env, fixedNow);
+  assert.equal(codex.kind, 'usage-error');
+  assert.match(codex.message, /reserved/);
+
+  const claudeWithoutConfig = parseArgs(replaceFlagValue(baseArgs, '--agent', 'claude'), env, fixedNow);
+  assert.equal(claudeWithoutConfig.kind, 'usage-error');
+  assert.match(claudeWithoutConfig.message, /--mcp-config/);
+
+  const claude = parseArgs(
+    [
+      ...replaceFlagValue(baseArgs, '--agent', 'claude'),
+      '--mcp-config',
+      '/private/tmp/mcp.json',
+    ],
+    env,
+    fixedNow,
+  );
+  assert.equal(claude.kind, 'ok');
+  assert.equal(claude.options.mcpConfig, '/private/tmp/mcp.json');
+
+  const dashPrefixedCommand = parseArgs(
+    replaceFlagValue(baseArgs, '--agent-command', '--fake-agent --flag'),
+    env,
+    fixedNow,
+  );
+  assert.equal(dashPrefixedCommand.kind, 'ok');
+  assert.equal(dashPrefixedCommand.options.agentCommand, '--fake-agent --flag');
+});
+
+test('mcp agent builds isolated Claude invocation and sanitized child environment', () => {
+  const invocation = buildAgentInvocation({
+    repoRoot,
+    options: {
+      agent: 'claude',
+      mcpConfig: '/private/tmp/context-router-mcp.json',
+      mcpServer: 'context-router-local',
+    },
+    artifacts: {
+      agentWorkspaceRoot: '/private/tmp/agent-workspace',
+      claudeSettings: '/private/tmp/claude-settings.json',
+    },
+  });
+
+  assert.equal(invocation.file, 'claude');
+  assert.equal(invocation.cwd, '/private/tmp/agent-workspace');
+  assert.equal(invocation.args.includes('--strict-mcp-config'), true);
+  assert.equal(argValue(invocation.args, '--mcp-config'), '/private/tmp/context-router-mcp.json');
+  assert.equal(argValue(invocation.args, '--settings'), '/private/tmp/claude-settings.json');
+  assert.equal(argValue(invocation.args, '--tools'), 'Read,Glob,Grep');
+  assert.equal(argValue(invocation.args, '--allowedTools'), 'Read,Glob,Grep,mcp__context-router-local__*');
+
+  const childEnv = buildAgentEnvironment({
+    PATH: '/usr/bin',
+    HOME: '/Users/example',
+    EVAL_AUTH_TOKEN: 'must-not-leak',
+    DATABASE_URL: 'postgres://must-not-leak',
+    AUTH0_SECRET: 'must-not-leak',
+    ANTHROPIC_API_KEY: 'model-provider-key',
+  });
+  assert.equal(childEnv.PATH, '/usr/bin');
+  assert.equal(childEnv.HOME, '/Users/example');
+  assert.equal(childEnv.ANTHROPIC_API_KEY, 'model-provider-key');
+  assert.equal(Object.hasOwn(childEnv, 'EVAL_AUTH_TOKEN'), false);
+  assert.equal(Object.hasOwn(childEnv, 'DATABASE_URL'), false);
+  assert.equal(Object.hasOwn(childEnv, 'AUTH0_SECRET'), false);
 });
 
 test('mcp known-schema prompt includes safe context and excludes hidden truth', async () => {
@@ -235,6 +303,8 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(evaluationRun.settings.autoApply, false);
   assert.equal(evaluationRun.settings.seedPreferences, false);
   assert.equal(evaluationRun.settings.agent, 'command');
+  assert.equal(evaluationRun.settings.mcpConfig, null);
+  assert.match(evaluationRun.settings.agentWorkspace, /agent-workspace$/);
   assert.deepEqual(
     evaluationRun.stages.map((stage) => stage.status),
     ['passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed'],
@@ -245,6 +315,14 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
   await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
   assert.equal(mcpAgentRun.status, 'pass');
+  assert.equal(mcpAgentRun.schemaVersion, 2);
+  assert.equal(mcpAgentRun.workspace.isolatedFromRepo, true);
+  assert.match(mcpAgentRun.workspace.path, /agent-workspace$/);
+  assert.match(mcpAgentRun.workspace.safeDocumentIndexPath, /agent-workspace\/documents\.json$/);
+  assert.match(mcpAgentRun.documents.sourceDocumentsRoot, /examples\/eval\/users\/alex-i9-test\/corpora\/realistic$/);
+  assert.match(mcpAgentRun.documents.documentsRoot, /agent-workspace$/);
+  assert.equal(mcpAgentRun.transcript.redactedAuthSecrets, true);
+  assert.equal(mcpAgentRun.transcript.mayContainCorpusPii, true);
   assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
   assert.equal(mcpAgentRun.setup.createdDefinitionCount, 1);
   assert.equal(mcpAgentRun.setup.existingDefinitionCount, 1);
@@ -255,6 +333,24 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
 
   const prompt = await readFile(path.join(tmp, 'mcp-agent-prompt.md'), 'utf8');
   assert.match(prompt, /documents\/identity\/001-driver-license-upload-ocr\.txt/);
+  assert.match(prompt, new RegExp(escapeRegExp(path.join(tmp, 'agent-workspace'))));
+  assert.equal(prompt.includes('examples/eval/users/alex-i9-test/corpora/realistic'), false);
+
+  const safeDocumentIndex = JSON.parse(await readFile(path.join(tmp, 'agent-workspace/documents.json'), 'utf8'));
+  assert.equal(safeDocumentIndex.documentCount, 1);
+  assert.equal(safeDocumentIndex.documents[0].path, 'documents/identity/001-driver-license-upload-ocr.txt');
+  assert.match(
+    await readFile(path.join(tmp, 'agent-workspace/documents/identity/001-driver-license-upload-ocr.txt'), 'utf8'),
+    /Northstar Onboard/,
+  );
+  await assert.rejects(
+    readFile(path.join(tmp, 'agent-workspace/profile.yaml'), 'utf8'),
+    /ENOENT/,
+  );
+  await assert.rejects(
+    readFile(path.join(tmp, 'agent-workspace/manifest.json'), 'utf8'),
+    /ENOENT/,
+  );
 
   const transcript = await readFile(path.join(tmp, 'mcp-agent-transcript.txt'), 'utf8');
   assert.equal(transcript.includes('secret-token'), false);
@@ -264,6 +360,9 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   const setupCall = calls.find((call) => call.stage === 'setup');
   assert.equal(setupCall.resetMemoryEnabled, true);
   assert.equal(setupCall.ensureDefinitionsEnabled, false);
+
+  const agentCall = calls.find((call) => call.stage === 'agent');
+  assert.equal(agentCall.artifacts.agentWorkspaceRoot, path.join(tmp, 'agent-workspace'));
 
   const exportArgs = calls.find((call) => call.stage === 'export').args;
   assert.equal(argValue(exportArgs, '--ingestion-mode'), 'mcp-known-schema-agent');
@@ -277,8 +376,8 @@ test('mcp agent missing completion marker is diagnostic-only in v1', async () =>
   const calls = [];
   const runners = {
     ...successfulRunners({ calls }),
-    agent: async ({ prompt }) => {
-      calls.push({ stage: 'agent', prompt });
+    agent: async ({ prompt, artifacts }) => {
+      calls.push({ stage: 'agent', prompt, artifacts });
       return {
         exitCode: 0,
         lines: ['agent completed without marker'],
@@ -373,6 +472,43 @@ test('mcp agent e2e writes partial run and skips later stages on agent failure',
   assert.match(transcript, /\[redacted-auth-token\]/);
 });
 
+test('mcp agent e2e marks agent artifact failed when the agent stage throws', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-throw-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async () => {
+      calls.push({ stage: 'agent' });
+      throw new Error('agent crashed with thrown-secret-token');
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...baseArgsWithArtifacts(tmp),
+      '--auth-token',
+      'thrown-secret-token',
+      '--run-id',
+      'run-agent-throw',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /stage=run-mcp-agent/);
+  assert.equal(result.lines.join('\n').includes('thrown-secret-token'), false);
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  assert.equal(mcpAgentRun.status, 'fail');
+  assert.equal(mcpAgentRun.summary.exitCode, 1);
+  assert.equal(mcpAgentRun.endedAt, '2026-06-01T12:00:00.000Z');
+  assert.match(mcpAgentRun.error, /\[redacted-auth-token\]/);
+  assert.equal(mcpAgentRun.error.includes('thrown-secret-token'), false);
+});
+
 test('command adapter captures stdout, stderr, marker, and timeout status', async () => {
   const success = await runAgentProcess({
     repoRoot,
@@ -402,6 +538,27 @@ test('command adapter captures stdout, stderr, marker, and timeout status', asyn
   });
   assert.equal(timeout.exitCode, 1);
   assert.equal(timeout.timedOut, true);
+
+  const envProbe = await runAgentProcess({
+    repoRoot,
+    options: {
+      agent: 'command',
+      agentCommand: `node -e "console.log(process.env.EVAL_AUTH_TOKEN || 'no-eval-token'); console.log(process.env.DATABASE_URL || 'no-db')"`,
+      agentTimeoutMs: 5000,
+      authToken: 'token',
+    },
+    prompt: '',
+    env: {
+      PATH: process.env.PATH,
+      HOME: process.env.HOME,
+      EVAL_AUTH_TOKEN: 'must-not-leak',
+      DATABASE_URL: 'postgres://must-not-leak',
+    },
+  });
+  assert.equal(envProbe.exitCode, 0);
+  assert.match(envProbe.stdout, /no-eval-token/);
+  assert.match(envProbe.stdout, /no-db/);
+  assert.equal(envProbe.stdout.includes('must-not-leak'), false);
 });
 
 function baseArgsWithArtifacts(tmp) {
@@ -464,8 +621,8 @@ function successfulRunners({ calls, failures = {} }) {
         },
       };
     },
-    agent: async ({ prompt }) => {
-      calls.push({ stage: 'agent', prompt });
+    agent: async ({ prompt, artifacts }) => {
+      calls.push({ stage: 'agent', prompt, artifacts });
       return {
         exitCode: 0,
         lines: ['agent finished with secret-token'],
@@ -560,4 +717,8 @@ function replaceFlagValue(args, flag, value) {
   const index = args.indexOf(flag);
   assert.notEqual(index, -1);
   return [...args.slice(0, index + 1), value, ...args.slice(index + 2)];
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

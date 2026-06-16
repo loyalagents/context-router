@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-15
+- Last updated: 2026-06-16
 
 ## Implemented
 
@@ -56,9 +56,13 @@
 - [x] Direct-document baseline treats model-authored confidence as diagnostic
   metadata rather than a hard fill gate.
 - [x] MCP known-schema agent runner via `pnpm eval:e2e-mcp-agent`.
-  - Validates documents, prepares memory/schema, runs one Codex/Claude/command
+  - Validates documents, prepares memory/schema, runs one Claude or command
     MCP-capable agent session, exports active memory, fills the form from
     backend memory, and reuses existing score reports.
+  - Stages an isolated agent workspace so the agent can read declared corpus
+    documents without reading hidden truth from the source fixture tree.
+  - Uses explicit Claude MCP config and a sanitized child environment for live
+    agent runs.
   - Writes `mcp-agent-run.json`, prompt, transcript, and the shared
     `evaluation-run.json` stage report.
   - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
@@ -81,7 +85,7 @@
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Run one live known-schema MCP smoke before starting open schema.
+- [ ] Run one live known-schema Claude MCP smoke before starting open schema.
 - [ ] Add open-schema memory snapshot and scoring described in
   `docs/plans/evaluation/scoring/open-schema/brainstorm.md`:
   - Export `memory-snapshot.json` with `preferences[]` and `definitions[]`.

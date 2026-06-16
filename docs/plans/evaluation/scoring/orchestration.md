@@ -1,7 +1,7 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-15
+- Last updated: 2026-06-16
 
 ## High-Level Flow
 
@@ -33,7 +33,7 @@ ingestor or manual/MCP run
   discovery: build MCP known-schema first, then MCP open-schema, then
   upload-level open-schema discovery.
 - [x] Implement MCP known-schema agent runner.
-- [ ] Run live MCP known-schema smoke.
+- [ ] Run live MCP known-schema Claude smoke.
 - [ ] Add open-schema memory snapshot/scoring and MCP open-schema mode.
 
 ## Phase 1: Scorer
@@ -162,7 +162,7 @@ writes with the existing backend/form scorers.
 ```text
 validate documents
   -> shared reset/known-schema definition setup
-  -> Codex/Claude agent reads local corpus and writes memory through MCP
+  -> Claude agent reads staged local corpus and writes memory through MCP
   -> export stored-preferences.json
   -> score database
   -> fill form from backend memory
@@ -174,15 +174,17 @@ Implemented in this phase:
 
 - `pnpm eval:e2e-mcp-agent`
 - known-schema setup helper reuse without document upload
-- Codex, Claude, and explicit command adapters
-- hidden-truth-safe prompt template
+- Claude live adapter and explicit command test adapter
+- hidden-truth-safe prompt template plus isolated staged agent workspace
+- sanitized agent environment and explicit Claude MCP config
 - `mcp-agent-run.json`, redacted transcript, rendered prompt, and
   `evaluation-run.json` artifacts
 - reuse of stored-preferences export, database scoring, backend form fill, form
   scoring, and combined scoring
 
 Live smoke is still a manual follow-up because it requires a running backend,
-`EVAL_AUTH_TOKEN`, and an authenticated local MCP server config.
+`EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing the local MCP
+server.
 
 Design doc:
 

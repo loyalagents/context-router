@@ -63,6 +63,21 @@ export async function runIngestDocuments({
       resetMemoryEnabled: options.resetMemory,
       ensureDefinitionsEnabled: options.ensureDefinitions,
       fetchImpl,
+      onProgress: (partialSetup) => {
+        if (partialSetup.fixture?.manifest?.documents) {
+          report.summary.documentCount = partialSetup.fixture.manifest.documents.length;
+        }
+        if (partialSetup.backendUserId) {
+          report.backendUserId = partialSetup.backendUserId;
+        }
+        if (partialSetup.reset) {
+          report.reset = partialSetup.reset;
+        }
+        if (partialSetup.definitionSetup) {
+          report.definitionSetup = partialSetup.definitionSetup;
+          report.summary.createdDefinitionCount = report.definitionSetup.created.length;
+        }
+      },
     });
     const fixture = setup.fixture;
     const activeState = new Map();
