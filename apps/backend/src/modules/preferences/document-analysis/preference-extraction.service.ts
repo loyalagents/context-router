@@ -50,7 +50,10 @@ type NormalizationResult =
   | { kind: 'accepted'; suggestion: PreferenceSuggestion }
   | { kind: 'filtered'; suggestion: FilteredSuggestion };
 
-const YAML_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
+// Vertex inline file input rejects these text-like MIME types even though the
+// same bytes work as text/plain.
+const TEXT_LIKE_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
+  'application/json',
   'application/yaml',
   'text/yaml',
   'application/x-yaml',
@@ -126,7 +129,7 @@ export class PreferenceExtractionService {
   }
 
   private normalizeMimeTypeForAiFileInput(mimeType: string): string {
-    if (YAML_MIME_TYPES_FOR_AI_FILE_INPUT.has(mimeType)) {
+    if (TEXT_LIKE_MIME_TYPES_FOR_AI_FILE_INPUT.has(mimeType)) {
       return 'text/plain';
     }
 
