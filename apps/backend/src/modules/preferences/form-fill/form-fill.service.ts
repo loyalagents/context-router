@@ -15,6 +15,13 @@ import {
   FormFillSummary,
 } from './form-fill.types';
 
+type FormFillFailureStage =
+  | 'field_extraction'
+  | 'preference_load'
+  | 'ai_generation'
+  | 'validation'
+  | 'pdf_fill';
+
 @Injectable()
 export class FormFillService {
   private readonly logger = new Logger(FormFillService.name);
@@ -43,6 +50,8 @@ export class FormFillService {
       `Starting form fill ${fillId} for user ${userId}: ${filename}`,
     );
 
+    let stage: FormFillFailureStage = 'field_extraction';
+
     try {
       const extracted = await this.fieldExtractor.extractFields(fileBuffer);
 
@@ -66,6 +75,7 @@ export class FormFillService {
         );
       }
 
+      stage = 'preference_load';
       const preferences =
         await this.preferenceService.getActivePreferences(userId);
       const prompt = this.promptBuilder.buildPrompt(
@@ -78,12 +88,14 @@ export class FormFillService {
         fieldPolicies,
       );
 
+      stage = 'ai_generation';
       const aiResult = await this.aiStructuredService.generateStructured(
         prompt,
         FormFillAiResponseSchema,
         { operationName: 'formFill.fillActions' },
       );
 
+      stage = 'validation';
       const validation = this.validator.validate(
         aiResult.fillActions,
         extracted.fields,
@@ -100,6 +112,7 @@ export class FormFillService {
         },
       );
 
+      stage = 'pdf_fill';
       const filledPdf = await this.pdfFiller.fillPdf(
         fileBuffer,
         validation.validActions,
@@ -135,10 +148,32 @@ export class FormFillService {
       };
     } catch (error) {
       this.logger.error(`Form fill ${fillId} failed`, error);
-      return this.emptyResponse(fillId, 'failed', filename, outputFilename, [
-        'Form fill failed. Please try again.',
-      ]);
+      return this.emptyResponse(
+        fillId,
+        'failed',
+        filename,
+        outputFilename,
+        [
+          'Form fill failed. Please try again.',
+          this.failureWarning(stage, error),
+        ],
+      );
     }
+  }
+
+  private failureWarning(stage: FormFillFailureStage, error: unknown): string {
+    return `Form fill failed during ${stage}: ${this.sanitizeFailureMessage(error)}`;
+  }
+
+  private sanitizeFailureMessage(error: unknown): string {
+    const rawMessage =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : 'unknown error';
+    const compact = rawMessage.replace(/\s+/g, ' ').trim();
+    return compact.length > 0 ? compact.slice(0, 500) : 'unknown error';
   }
 
   private emptyResponse(

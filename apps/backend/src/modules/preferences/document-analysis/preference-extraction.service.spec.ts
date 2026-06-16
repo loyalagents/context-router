@@ -1046,6 +1046,34 @@ describe("PreferenceExtractionService", () => {
         expect(mockSnapshotService.getSnapshot).toHaveBeenCalledWith("user-1");
       });
 
+      it("should tell the model not to store absence or status text as values", async () => {
+        mockPreferenceService.getActivePreferences.mockResolvedValue([
+          createMockPreference("profile.email", "alex@example.test"),
+        ]);
+        mockAiStructuredService.generateStructuredWithFile.mockResolvedValue(
+          createAiResponse([]),
+        );
+
+        await service.extractPreferences(
+          "user-1",
+          mockFileBuffer,
+          mockMimeType,
+          mockFilename,
+        );
+
+        const prompt =
+          mockAiStructuredService.generateStructuredWithFile.mock.calls[0][0];
+        expect(prompt).toContain(
+          "Treat null fields, blank fields, placeholders, YAML/JSON comments, and workflow or task status text as evidence that a value is absent",
+        );
+        expect(prompt).toContain(
+          'Do not store absence or status phrases such as "pending", "not provided", "to be completed", "collection pending", "pending task completion", or task-state prose as newValue.',
+        );
+        expect(prompt).toContain(
+          "If a current preference has a non-empty value, only suggest a different replacement when this document clearly contains a durable replacement value for that same fact.",
+        );
+      });
+
       it.each([
         "application/yaml",
         "text/yaml",

@@ -155,10 +155,13 @@ Task:
 - Analyze the attached document for any information that indicates a new or updated preference.
 - For each item, output a suggestion object using a valid slug from the schema.
 - Only suggest changes with clear evidence in the document.
+- Treat null fields, blank fields, placeholders, YAML/JSON comments, and workflow or task status text as evidence that a value is absent, not as the value itself.
+- Do not store absence or status phrases such as "pending", "not provided", "to be completed", "collection pending", "pending task completion", or task-state prose as newValue.
+- newValue must be the durable user fact itself, not an explanation of why the fact is missing or pending.
 - Return at most ${this.config.maxSuggestions} suggestions, prioritizing higher-confidence items.
 - Use ONLY slugs from the schema above. Invalid slugs will be rejected.
 - If a preference already exists with the same value, do not include it.
-- For UPDATE operations, include the oldValue from current preferences.
+- For UPDATE operations, include the oldValue from current preferences. If a current preference has a non-empty value, only suggest a different replacement when this document clearly contains a durable replacement value for that same fact.
 
 Respond with JSON only (no markdown code blocks):
 {

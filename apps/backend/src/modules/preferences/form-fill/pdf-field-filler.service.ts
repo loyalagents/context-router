@@ -4,6 +4,7 @@ import {
   StandardFonts,
 } from 'pdf-lib';
 import { ValidatedFillAction } from './form-fill.types';
+import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
 
 @Injectable()
 export class PdfFieldFillerService {
@@ -15,32 +16,36 @@ export class PdfFieldFillerService {
     const form = pdfDoc.getForm();
 
     for (const action of actions) {
-      switch (action.fieldType) {
-        case 'text':
-          form
-            .getTextField(action.fieldName)
-            .setText(normalizeTextValueForPdfField(action));
-          break;
-        case 'checkbox':
-          if (action.action === 'CHECK') {
-            form.getCheckBox(action.fieldName).check();
-          } else {
-            form.getCheckBox(action.fieldName).uncheck();
-          }
-          break;
-        case 'radio':
-          form.getRadioGroup(action.fieldName).select(action.value ?? '');
-          break;
-        case 'dropdown':
-          form.getDropdown(action.fieldName).select(action.value ?? '');
-          break;
-        case 'option_list':
-          form.getOptionList(action.fieldName).select([action.value ?? '']);
-          break;
-        case 'button':
-        case 'signature':
-        case 'unknown':
-          break;
+      try {
+        switch (action.fieldType) {
+          case 'text':
+            form
+              .getTextField(action.fieldName)
+              .setText(normalizeTextValueForPdfField(action));
+            break;
+          case 'checkbox':
+            if (action.action === 'CHECK') {
+              form.getCheckBox(action.fieldName).check();
+            } else {
+              form.getCheckBox(action.fieldName).uncheck();
+            }
+            break;
+          case 'radio':
+            form.getRadioGroup(action.fieldName).select(action.value ?? '');
+            break;
+          case 'dropdown':
+            form.getDropdown(action.fieldName).select(action.value ?? '');
+            break;
+          case 'option_list':
+            form.getOptionList(action.fieldName).select([action.value ?? '']);
+            break;
+          case 'button':
+          case 'signature':
+          case 'unknown':
+            break;
+        }
+      } catch (error) {
+        throw this.fieldWriteError(action, error);
       }
     }
 
@@ -49,23 +54,21 @@ export class PdfFieldFillerService {
 
     return Buffer.from(await pdfDoc.save());
   }
-}
 
-function normalizeTextValueForPdfField(action: ValidatedFillAction): string {
-  const value = action.value ?? '';
-  if (!isSocialSecurityNumberAction(action)) {
-    return value;
+  private fieldWriteError(
+    action: ValidatedFillAction,
+    error: unknown,
+  ): Error {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : 'unknown error';
+    const wrapped = new Error(
+      `Failed to apply ${action.action} to PDF field "${action.fieldName}": ${message}`,
+    ) as Error & { cause?: unknown };
+    wrapped.cause = error;
+    return wrapped;
   }
-
-  const digits = value.replace(/\D/g, '');
-  return digits.length === 9 ? digits : value;
-}
-
-function isSocialSecurityNumberAction(action: ValidatedFillAction): boolean {
-  return (
-    action.fieldName === 'US Social Security Number' ||
-    action.sourceSlugs.some(
-      (slug) => slug.endsWith('.identity.ssn') || slug === 'identity.ssn',
-    )
-  );
 }

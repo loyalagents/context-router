@@ -15,6 +15,7 @@ describe('FormFillPromptBuilderService', () => {
         type: 'text',
         options: [],
         supported: true,
+        maxLength: 12,
       },
       {
         name: 'food.spice_tolerance',
@@ -42,7 +43,9 @@ describe('FormFillPromptBuilderService', () => {
 
     expect(prompt).toContain('Return exactly one fill action for every PDF field');
     expect(prompt).toContain('Use exact case-sensitive fieldName values');
+    expect(prompt).toContain('final text length is at or below maxLength');
     expect(prompt).toContain('"name": "profile.full_name"');
+    expect(prompt).toContain('"maxLength": 12');
     expect(prompt).toContain('"value": "medium"');
     expect(prompt).toContain('"slug": "food.spice_tolerance"');
     expect(prompt).toContain('"value": "Alex Rivera"');

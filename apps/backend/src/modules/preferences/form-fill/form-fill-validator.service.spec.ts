@@ -338,6 +338,93 @@ describe('FormFillValidatorService', () => {
     ]);
   });
 
+  it('skips text actions that exceed the PDF field max length', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.95,
+        },
+        {
+          fieldName: 'ZIP Code',
+          action: 'SET_TEXT',
+          value: 'Address collection pending task completion',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+      [
+        ...fields,
+        {
+          name: 'ZIP Code',
+          type: 'text',
+          options: [],
+          supported: true,
+          maxLength: 6,
+        },
+      ],
+      new Set(['profile.full_name', 'eval.address.current.postal_code']),
+      0.75,
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'profile.full_name' }),
+    ]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'ZIP Code',
+          reason: 'text length 42 exceeds PDF field maxLength 6',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'pdf_text_max_length_blocked',
+        fieldName: 'ZIP Code',
+        valueLength: 42,
+        maxLength: 6,
+      }),
+    ]);
+  });
+
+  it('checks PDF text max length after applying built-in text normalization', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'US Social Security Number',
+          action: 'SET_TEXT',
+          value: '000-00-0292',
+          sourceSlugs: ['eval.identity.ssn'],
+          confidence: 0.95,
+        },
+      ],
+      [
+        {
+          name: 'US Social Security Number',
+          type: 'text',
+          options: [],
+          supported: true,
+          maxLength: 9,
+        },
+      ],
+      new Set(['eval.identity.ssn']),
+      0.75,
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'US Social Security Number',
+        action: 'SET_TEXT',
+      }),
+    ]);
+    expect(result.skippedFields).toEqual([]);
+    expect(result.validationEvents).toEqual([]);
+  });
+
   it('blocks structural-skip policy fields even when the AI returns a fill action', () => {
     const result = service.validate(
       [

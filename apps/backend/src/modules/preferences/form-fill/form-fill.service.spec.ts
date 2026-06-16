@@ -343,7 +343,83 @@ describe('FormFillService', () => {
         totalFields: 0,
         filledCount: 0,
         skippedCount: 0,
+        warnings: [
+          'Form fill failed. Please try again.',
+          'Form fill failed during field_extraction: bad pdf',
+        ],
       },
     });
+  });
+
+  it('returns failed with pdf_fill detail when PDF writing fails', async () => {
+    fieldExtractor.extractFields.mockResolvedValue({
+      hasXfa: false,
+      fields: [
+        {
+          name: 'ZIP Code',
+          type: 'text',
+          options: [],
+          supported: true,
+        },
+      ],
+    });
+    preferenceService.getActivePreferences.mockResolvedValue([
+      {
+        slug: 'eval.address.current.postal_code',
+        value: '97214',
+        description: 'Postal code',
+      },
+    ]);
+    promptBuilder.buildPrompt.mockReturnValue('prompt');
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'ZIP Code',
+          action: 'SET_TEXT',
+          value: '97214',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+    });
+    validator.validate.mockReturnValue({
+      validActions: [
+        {
+          fieldName: 'ZIP Code',
+          fieldType: 'text',
+          action: 'SET_TEXT',
+          value: '97214',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+      filledFields: [
+        {
+          pdfFieldName: 'ZIP Code',
+          fieldType: 'text',
+          sourceSlugs: ['eval.address.current.postal_code'],
+          confidence: 0.95,
+        },
+      ],
+      skippedFields: [],
+      warnings: [],
+      validationEvents: [],
+    });
+    pdfFiller.fillPdf.mockRejectedValue(
+      new Error('Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6'),
+    );
+
+    const result = await service.fillPdfForm(
+      'user-1',
+      Buffer.from('input pdf'),
+      'i9.pdf',
+    );
+
+    expect(result.status).toBe('failed');
+    expect(result.filledPdfBase64).toBeNull();
+    expect(result.summary.warnings).toEqual([
+      'Form fill failed. Please try again.',
+      'Form fill failed during pdf_fill: Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6',
+    ]);
   });
 });

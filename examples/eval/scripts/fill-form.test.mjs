@@ -389,6 +389,10 @@ test('fill-form writes redacted response artifact for terminal statuses without 
     scenarioId: 'elena-marquez-i9-template-smoke',
     status: 'failed',
   });
+  const failureWarnings = [
+    'Form fill failed. Please try again.',
+    'Form fill failed during pdf_fill: Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6',
+  ];
 
   const result = await runFillForm({
     repoRoot,
@@ -410,16 +414,22 @@ test('fill-form writes redacted response artifact for terminal statuses without 
         ...response,
         status: 'failed',
         filledPdfBase64: null,
+        summary: {
+          ...response.summary,
+          warnings: failureWarnings,
+        },
       }),
     pdfFieldReader: async () => filledPdfFields,
   });
 
   assert.equal(result.exitCode, 1);
   assert.match(result.lines.join('\n'), /status was failed/);
+  assert.match(result.lines.join('\n'), /Form fill failed during pdf_fill/);
   const responseArtifact = JSON.parse(await readFile(responsePath, 'utf8'));
   assert.equal(responseArtifact.artifactType, 'form-fill-response');
   assert.equal(responseArtifact.response.status, 'failed');
   assert.equal(responseArtifact.response.filledPdfBase64, null);
+  assert.deepEqual(responseArtifact.response.summary.warnings, failureWarnings);
   assert.equal(JSON.stringify(responseArtifact).includes('secret-token'), false);
   await assert.rejects(readFile(filledFormPath, 'utf8'), /ENOENT/);
   await assert.rejects(readFile(filledPdfPath), /ENOENT/);

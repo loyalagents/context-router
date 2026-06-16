@@ -10,6 +10,7 @@ import {
   SkippedFieldSummary,
   ValidatedFillAction,
 } from './form-fill.types';
+import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
 
 export interface FormFillValidationResult {
   validActions: ValidatedFillAction[];
@@ -197,6 +198,26 @@ export class FormFillValidatorService {
       }
     }
 
+    if (typeof action.confidence !== 'number') {
+      return 'missing confidence';
+    }
+
+    if (action.action === 'SET_TEXT' && typeof field.maxLength === 'number') {
+      const valueLength = normalizeTextValueForPdfField(action).length;
+      if (valueLength > field.maxLength) {
+        const reason = `text length ${valueLength} exceeds PDF field maxLength ${field.maxLength}`;
+        validationEvents.push({
+          kind: 'pdf_text_max_length_blocked',
+          fieldName: field.name,
+          message: reason,
+          confidence: action.confidence,
+          maxLength: field.maxLength,
+          valueLength,
+        });
+        return reason;
+      }
+    }
+
     if (policy?.mode === 'fact' && policy.sourceSlugs.length > 0) {
       const allowedSlugs = new Set(policy.sourceSlugs);
       const offPolicySlugs = action.sourceSlugs.filter(
@@ -209,10 +230,6 @@ export class FormFillValidatorService {
           message: `source slug not listed in field policy: ${offPolicySlugs.join(', ')}`,
         });
       }
-    }
-
-    if (typeof action.confidence !== 'number') {
-      return 'missing confidence';
     }
 
     if (action.confidence < confidenceThreshold) {

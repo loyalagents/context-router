@@ -34,6 +34,7 @@ export interface PdfFieldMetadata {
   type: PdfFieldType;
   options: PdfFieldOption[];
   supported: boolean;
+  maxLength?: number;
   unsupportedReason?: string;
 }
 
@@ -43,11 +44,14 @@ export interface FormFillValidationEvent {
     | 'policy_inactive_blocked'
     | 'policy_structural_skip_blocked'
     | 'policy_source_slug_off_policy'
+    | 'pdf_text_max_length_blocked'
     | 'checkbox_group_conflict';
   fieldName: string;
   message: string;
   confidence?: number;
   groupId?: string;
+  maxLength?: number;
+  valueLength?: number;
 }
 
 export interface ExtractedPdfFields {

@@ -381,8 +381,9 @@ export function assertScorableResponse(response) {
     );
   }
   if (TERMINAL_STATUSES.has(response.status)) {
+    const detail = terminalResponseDetail(response);
     throw new Error(
-      `Form-fill response status was ${response.status}. This eval runner only scores success or partial responses.`,
+      `Form-fill response status was ${response.status}. This eval runner only scores success or partial responses.${detail ? ` Detail: ${detail}` : ''}`,
     );
   }
   for (const key of ['originalFilename', 'outputFilename', 'outputMimeType']) {
@@ -431,6 +432,38 @@ export function assertScorableResponse(response) {
       `Form-fill response summary.totalFields ${response.summary.totalFields} is less than filledCount + skippedCount.`,
     );
   }
+}
+
+function terminalResponseDetail(response) {
+  const summary = response?.summary;
+  if (!summary || typeof summary !== 'object') return null;
+
+  const warnings = Array.isArray(summary.warnings)
+    ? summary.warnings.filter((warning) => typeof warning === 'string' && warning.trim())
+    : [];
+  const warning =
+    warnings.find((value) => value.trim() !== 'Form fill failed. Please try again.') ??
+    warnings[0];
+  if (warning) return compactDetail(warning);
+
+  const validationEvents = Array.isArray(summary.validationEvents)
+    ? summary.validationEvents
+    : [];
+  const event = validationEvents.find((value) => value && typeof value === 'object');
+  if (!event) return null;
+  if (typeof event.message === 'string' && event.message.trim()) {
+    return compactDetail(event.message);
+  }
+  if (typeof event.kind === 'string' && typeof event.fieldName === 'string') {
+    return compactDetail(`${event.kind} for ${event.fieldName}`);
+  }
+  if (typeof event.kind === 'string') return compactDetail(event.kind);
+  return null;
+}
+
+function compactDetail(value) {
+  const detail = value.replace(/\s+/g, ' ').trim();
+  return detail ? detail.slice(0, 500) : null;
 }
 
 export function buildResponseArtifact({ fixture, backendUrl, response, pdfBytes }) {
