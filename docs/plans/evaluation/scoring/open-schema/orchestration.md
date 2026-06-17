@@ -73,7 +73,8 @@ Tests:
 - Pre-run baseline and post-run definitions identify new definition IDs.
 - Malformed preference/definition rows, user mismatches, GraphQL errors, and
   HTTP errors fail clearly.
-- Auth tokens remain redacted from CLI errors and artifacts.
+- Auth tokens and GraphQL URL credentials remain redacted from CLI errors and
+  artifacts.
 
 Stop point achieved:
 

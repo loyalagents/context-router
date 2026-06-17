@@ -22,10 +22,13 @@ Known-schema artifacts and scorers remain unchanged.
   - Preference and definition normalization.
   - Deterministic preference and definition sorting.
   - Definition baseline input/output and post-run diff diagnostics.
+  - Shared GraphQL URL sanitization for artifacts, success output, and failure
+    output.
 - Added `examples/eval/schemas/memory-snapshot.schema.json`.
 - Added focused Node tests for CLI behavior, schema validation, query-contract
   validation, diagnostics, suggestions, sorting, baselines, malformed data,
-  GraphQL errors, HTTP errors, and token redaction.
+  GraphQL errors, HTTP errors, empty definition descriptions, and token/URL
+  redaction.
 - Updated open-schema orchestration to mark Checkpoint 1 as implemented.
 
 ## Artifact Behavior
@@ -37,6 +40,8 @@ The exporter writes `memory-snapshot.json` with:
   `definitionId`.
 - Optional `suggestions[]` when `--include-suggestions` is provided.
 - Visible `definitions[]` from `exportPreferenceSchema(scope: ALL)`.
+  Descriptions may be empty strings because backend update paths can produce
+  that valid state; schema quality remains a later diagnostic.
 - `definitionBaseline` from `--baseline-in`, `--baseline-out`, or an explicit
   no-baseline diagnostic state.
 - Diagnostics for backend identity, sanitized GraphQL URL, location mode,
@@ -44,7 +49,7 @@ The exporter writes `memory-snapshot.json` with:
   time.
 
 Definition-created-by-run detection uses post-run definition ID diffs against a
-captured baseline. Slug diffs are preserved as diagnostics only.
+captured baseline. Slug diffs are deduped and preserved as diagnostics only.
 
 ## Verification
 
@@ -59,9 +64,9 @@ pnpm eval:verify
 
 Results:
 
-- Targeted memory snapshot and stored-preferences exporter tests passed: 29
+- Targeted memory snapshot and stored-preferences exporter tests passed: 30
   tests.
-- Full eval script test suite passed: 270 tests.
+- Full eval script test suite passed: 271 tests.
 - Eval validation passed with the existing 11 Alex realism warnings and no
   errors.
 - `pnpm eval:verify` passed.

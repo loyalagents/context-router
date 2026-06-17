@@ -88,7 +88,7 @@ test('memory snapshot CLI uses env fallback, writes schema-valid artifact, and r
       'run-123',
     ],
     env: {
-      EVAL_GRAPHQL_URL: 'http://user:pass@localhost:3000/graphql',
+      EVAL_GRAPHQL_URL: 'http://user:pass@localhost:3000/graphql?token=query-secret&keep=1',
       EVAL_AUTH_TOKEN: 'secret-token',
     },
     fetchImpl,
@@ -97,7 +97,7 @@ test('memory snapshot CLI uses env fallback, writes schema-valid artifact, and r
 
   assert.equal(result.exitCode, 0);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, 'http://user:pass@localhost:3000/graphql');
+  assert.equal(calls[0].url, 'http://user:pass@localhost:3000/graphql?token=query-secret&keep=1');
   assert.equal(calls[0].options.headers.authorization, 'Bearer secret-token');
   assert.deepEqual(JSON.parse(calls[0].options.body).variables, {
     locationId: null,
@@ -123,12 +123,14 @@ test('memory snapshot CLI uses env fallback, writes schema-valid artifact, and r
   );
   assert.equal(artifact.definitionBaseline.capturedBeforeRun, false);
   assert.equal(artifact.definitionBaseline.strategy, 'baseline-only');
-  assert.equal(artifact.diagnostics.graphqlUrl, 'http://localhost:3000/graphql');
+  assert.equal(artifact.diagnostics.graphqlUrl, 'http://localhost:3000/graphql?token=redacted&keep=1');
   assert.equal(artifact.diagnostics.locationMode, 'global-only');
   assert.equal(artifact.diagnostics.preferencesMergedWithLocation, false);
   assert.equal(artifact.diagnostics.backendUserId, 'alex-i9-test');
   assert.equal(JSON.stringify(artifact).includes('secret-token'), false);
+  assert.equal(JSON.stringify(artifact).includes('query-secret'), false);
   assert.equal(result.lines.join('\n').includes('secret-token'), false);
+  assert.equal(result.lines.join('\n').includes('query-secret'), false);
 });
 
 test('memory snapshot CLI arguments override env and record merged-location diagnostics', async () => {
@@ -271,6 +273,44 @@ test('memory snapshot sorts definitions deterministically', () => {
   );
 });
 
+test('memory snapshot preserves backend-valid empty definition descriptions and structured JSON', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'memory-snapshot-'));
+  const outPath = path.join(tmp, 'memory-snapshot.json');
+  const result = await runExportMemorySnapshot({
+    repoRoot,
+    args: baseArgs(outPath),
+    env: {},
+    fetchImpl: async () =>
+      jsonResponse({
+        data: snapshotResponse({
+          activePreferences: [
+            pref({
+              id: 'pref-1',
+              value: ['email', 'sms'],
+              evidence: { sources: ['profile'], confidenceNote: 'user-owned' },
+            }),
+          ],
+          definitions: [
+            definition({
+              id: 'definition-1',
+              description: '',
+              valueType: 'ENUM',
+              options: ['email', 'sms'],
+            }),
+          ],
+        }),
+      }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0);
+  const artifact = JSON.parse(await readFile(outPath, 'utf8'));
+  assert.equal(artifact.definitions[0].description, '');
+  assert.deepEqual(artifact.definitions[0].options, ['email', 'sms']);
+  assert.deepEqual(artifact.preferences[0].value, ['email', 'sms']);
+  assert.deepEqual(artifact.preferences[0].evidence.sources, ['profile']);
+});
+
 test('memory snapshot baseline-out writes pre-run definition ids and slugs', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'memory-snapshot-'));
   const outPath = path.join(tmp, 'memory-snapshot.json');
@@ -325,8 +365,8 @@ test('memory snapshot baseline-in identifies new definition ids and slugs', asyn
         backendUserId: 'backend-user-123',
         capturedAt: '2026-06-01T11:00:00.000Z',
         strategy: 'baseline-only',
-        definitionIds: ['def-1'],
-        slugs: ['profile.full_name'],
+        definitionIds: ['def-1', 'def-removed'],
+        slugs: ['profile.full_name', 'profile.removed'],
       },
       null,
       2,
@@ -351,6 +391,11 @@ test('memory snapshot baseline-in identifies new definition ids and slugs', asyn
           definitions: [
             definition({ id: 'def-1', slug: 'profile.full_name' }),
             definition({ id: 'def-2', slug: 'profile.last_name' }),
+            definition({
+              id: 'def-3',
+              namespace: 'USER:backend-user-123',
+              slug: 'profile.last_name',
+            }),
           ],
         }),
       }),
@@ -360,9 +405,11 @@ test('memory snapshot baseline-in identifies new definition ids and slugs', asyn
   assert.equal(result.exitCode, 0);
   const artifact = JSON.parse(await readFile(outPath, 'utf8'));
   assert.equal(artifact.definitionBaseline.capturedBeforeRun, true);
-  assert.deepEqual(artifact.definitionBaseline.preexistingDefinitionIds, ['def-1']);
-  assert.deepEqual(artifact.definitionBaseline.newDefinitionIds, ['def-2']);
+  assert.deepEqual(artifact.definitionBaseline.preexistingDefinitionIds, ['def-1', 'def-removed']);
+  assert.deepEqual(artifact.definitionBaseline.newDefinitionIds, ['def-2', 'def-3']);
   assert.deepEqual(artifact.definitionBaseline.newSlugs, ['profile.last_name']);
+  assert.deepEqual(artifact.definitionBaseline.removedDefinitionIds, ['def-removed']);
+  assert.deepEqual(artifact.definitionBaseline.removedSlugs, ['profile.removed']);
 });
 
 test('memory snapshot records eval user separately from authenticated backend user', async () => {
@@ -574,6 +621,36 @@ test('memory snapshot CLI redacts auth token from failure output and validates p
   assert.equal(output.includes('failure-secret-token'), false);
   assert.match(output, /\[redacted-auth-token\]/);
 
+  const credentialUrl = 'http://user:pass@localhost:3000/graphql?token=query-secret&keep=1';
+  const urlFailure = await runExportMemorySnapshot({
+    repoRoot,
+    args: [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--out',
+      outPath,
+      '--graphql-url',
+      credentialUrl,
+      '--auth-token',
+      'failure-secret-token',
+    ],
+    env: {},
+    fetchImpl: async () => {
+      throw new Error(
+        `Request cannot be constructed from URL ${credentialUrl} with failure-secret-token`,
+      );
+    },
+    now: fixedNow,
+  });
+  const urlFailureOutput = urlFailure.lines.join('\n');
+  assert.equal(urlFailure.exitCode, 1);
+  assert.equal(urlFailureOutput.includes('failure-secret-token'), false);
+  assert.equal(urlFailureOutput.includes('user:pass'), false);
+  assert.equal(urlFailureOutput.includes('query-secret'), false);
+  assert.match(urlFailureOutput, /http:\/\/localhost:3000\/graphql\?token=redacted&keep=1/);
+
   const badMode = parseArgs(
     [
       '--user',
@@ -589,6 +666,22 @@ test('memory snapshot CLI redacts auth token from failure output and validates p
   );
   assert.equal(badMode.kind, 'usage-error');
   assert.match(badMode.message, /schema-mode/);
+
+  const badResetMode = parseArgs(
+    [
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--out',
+      outPath,
+      '--schema-reset-mode',
+      'drop-all',
+    ],
+    { EVAL_AUTH_TOKEN: 'token' },
+  );
+  assert.equal(badResetMode.kind, 'usage-error');
+  assert.match(badResetMode.message, /schema-reset-mode/);
 
   const bothBaselines = parseArgs(
     [

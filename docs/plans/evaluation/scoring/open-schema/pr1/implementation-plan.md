@@ -96,7 +96,9 @@ timestamps because the current GraphQL schema does not expose them.
    - Validate the GraphQL query against `apps/backend/src/schema.gql`.
    - Cover help, missing args, env fallback, CLI overrides, token redaction,
      suggestions, location diagnostics, deterministic sorting, baseline in/out,
-     malformed rows, user mismatch, GraphQL errors, and HTTP errors.
+     removed definitions, backend-valid empty definition descriptions,
+     malformed rows, user mismatch, GraphQL errors, HTTP errors, and GraphQL
+     URL credential redaction.
 
 3. Documentation closeout.
    - Add this implementation plan.

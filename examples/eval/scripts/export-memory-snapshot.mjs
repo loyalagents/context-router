@@ -11,6 +11,10 @@ import {
   sortDefinitionRows,
 } from './memory-snapshot/mapper.mjs';
 import {
+  redactMemorySnapshotSecrets,
+  sanitizeGraphqlUrl,
+} from './memory-snapshot/sanitize.mjs';
+import {
   readJson,
   relativePath,
   validateWithSchema,
@@ -124,7 +128,7 @@ export async function runExportMemorySnapshot({
     const lines = [
       'eval export-memory-snapshot passed',
       `active=${artifact.preferences.length} definitions=${artifact.definitions.length} suggestions=${artifact.suggestions?.length ?? 0}`,
-      `graphql ${sanitizeUrlForDisplay(options.graphqlUrl)}`,
+      `graphql ${sanitizeGraphqlUrl(options.graphqlUrl)}`,
       `wrote ${relativePath(repoRoot, outPath)}`,
     ];
     if (writtenBaselinePath) {
@@ -137,7 +141,10 @@ export async function runExportMemorySnapshot({
       lines: [
         'eval export-memory-snapshot failed',
         '',
-        redactSecret(error?.stack ?? error?.message ?? String(error), options.authToken),
+        redactMemorySnapshotSecrets(error?.stack ?? error?.message ?? String(error), {
+          authToken: options.authToken,
+          graphqlUrl: options.graphqlUrl,
+        }),
       ],
       error,
     };
@@ -298,22 +305,6 @@ function generatedRunId(options, now) {
     options.corpusId,
     isoTimestamp(now).replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, ''),
   ].join('-');
-}
-
-function sanitizeUrlForDisplay(value) {
-  try {
-    const url = new URL(value);
-    url.username = '';
-    url.password = '';
-    return url.toString();
-  } catch {
-    return value;
-  }
-}
-
-function redactSecret(text, secret) {
-  if (!secret) return text;
-  return text.split(secret).join('[redacted-auth-token]');
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

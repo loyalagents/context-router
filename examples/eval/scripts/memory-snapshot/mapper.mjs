@@ -2,6 +2,7 @@ import {
   normalizeRows,
   sortPreferenceRows,
 } from '../exporter/mapper.mjs';
+import { sanitizeGraphqlUrl } from './sanitize.mjs';
 
 const BASELINE_STRATEGIES = new Set([
   'none',
@@ -73,7 +74,7 @@ export function buildMemorySnapshotArtifact({
     definitionBaseline: baseline,
     diagnostics: {
       exportedAt,
-      graphqlUrl: sanitizeUrlForArtifact(graphqlUrl),
+      graphqlUrl: sanitizeGraphqlUrl(graphqlUrl),
       queryName: 'EvalMemorySnapshotExport',
       locationMode: locationId ? 'merged-location' : 'global-only',
       locationId: locationId ?? null,
@@ -113,7 +114,7 @@ export function buildDefinitionBaselineArtifact({
     slugs: sortedDefinitions.map((definition) => definition.slug),
     definitions: sortedDefinitions,
     diagnostics: {
-      graphqlUrl: sanitizeUrlForArtifact(graphqlUrl),
+      graphqlUrl: sanitizeGraphqlUrl(graphqlUrl),
       definitionCount: sortedDefinitions.length,
     },
   };
@@ -132,10 +133,13 @@ export function normalizeDefinitionRow({ row, index, label }) {
     throw new Error(`GraphQL ${rowPath} must be an object.`);
   }
 
-  for (const key of ['id', 'namespace', 'slug', 'description', 'valueType', 'scope', 'category']) {
+  for (const key of ['id', 'namespace', 'slug', 'valueType', 'scope', 'category']) {
     if (typeof row[key] !== 'string' || row[key].length === 0) {
       throw new Error(`GraphQL ${rowPath}.${key} must be a non-empty string.`);
     }
+  }
+  if (typeof row.description !== 'string') {
+    throw new Error(`GraphQL ${rowPath}.description must be a string.`);
   }
   for (const key of ['isSensitive', 'isCore']) {
     if (typeof row[key] !== 'boolean') {
@@ -311,7 +315,7 @@ function uniqueStrings(values, label) {
 
 function difference(left, right) {
   const rightSet = new Set(right);
-  return left.filter((value) => !rightSet.has(value)).sort(compareString);
+  return [...new Set(left.filter((value) => !rightSet.has(value)))].sort(compareString);
 }
 
 function compareDefinitionRows(left, right) {
@@ -326,15 +330,4 @@ function compareString(left, right) {
   if (left < right) return -1;
   if (left > right) return 1;
   return 0;
-}
-
-function sanitizeUrlForArtifact(value) {
-  try {
-    const url = new URL(value);
-    url.username = '';
-    url.password = '';
-    return url.toString();
-  } catch {
-    return value;
-  }
 }
