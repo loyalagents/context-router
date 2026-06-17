@@ -1,4 +1,12 @@
 import {
+  LEGACY_MCP_AGENT_PRODUCER,
+  MCP_KNOWN_SCHEMA_EVALUATION_MODE,
+  MCP_KNOWN_SCHEMA_PRODUCER,
+  MCP_OPEN_SCHEMA_EVALUATION_MODE,
+  MCP_OPEN_SCHEMA_PRODUCER,
+  OPEN_SCHEMA_BASELINE_RESET_MODE,
+} from '../eval-constants.mjs';
+import {
   normalizeRows,
   sortPreferenceRows,
 } from '../exporter/mapper.mjs';
@@ -8,7 +16,7 @@ const BASELINE_STRATEGIES = new Set([
   'none',
   'fresh-user',
   'archive-eval-owned',
-  'baseline-only',
+  OPEN_SCHEMA_BASELINE_RESET_MODE,
 ]);
 
 export function buildMemorySnapshotArtifact({
@@ -293,16 +301,16 @@ function authenticatedBackendUserId(responseData) {
 
 function evaluationModeFor({ producer, schemaMode }) {
   if (
-    (producer === 'mcp-agent' || producer === 'mcp-open-schema-agent') &&
+    (producer === LEGACY_MCP_AGENT_PRODUCER || producer === MCP_OPEN_SCHEMA_PRODUCER) &&
     schemaMode === 'open'
   ) {
-    return 'mcp-open-schema';
+    return MCP_OPEN_SCHEMA_EVALUATION_MODE;
   }
   if (
-    (producer === 'mcp-agent' || producer === 'mcp-known-schema-agent') &&
+    (producer === LEGACY_MCP_AGENT_PRODUCER || producer === MCP_KNOWN_SCHEMA_PRODUCER) &&
     schemaMode === 'known'
   ) {
-    return 'mcp-known-schema';
+    return MCP_KNOWN_SCHEMA_EVALUATION_MODE;
   }
   return `${schemaMode}-schema`;
 }

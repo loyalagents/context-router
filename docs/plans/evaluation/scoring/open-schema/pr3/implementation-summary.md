@@ -39,6 +39,16 @@ changing known-schema MCP artifacts or score report contracts.
 - Updated `evaluation-run.schema.json` and `mcp-agent-run.schema.json` for
   open stage names and mode-specific artifact paths.
 - Added deterministic runner tests for the open happy path and failure paths.
+- Added `definition-baseline.schema.json` and validate both runner-captured
+  baselines and exporter `--baseline-out` artifacts against it.
+- Added direct tests for the real `captureDefinitionBaseline` helper, including
+  happy path, missing backend user, and backend-user mismatch coverage.
+- Tightened `mcp-agent-run.schema.json` so known runs reject open artifacts and
+  open runs reject known artifacts.
+- Added a thin `prepareOpenSchemaMemory` wrapper around the shared setup helper
+  so open mode has an explicit setup hook with definition setup forced off.
+- Centralized MCP producer/evaluation-mode/reset labels in
+  `examples/eval/scripts/eval-constants.mjs`.
 
 ## Known-Schema Stability
 
@@ -79,9 +89,9 @@ pnpm eval:verify
 
 Results:
 
-- Focused MCP runner tests passed: 19 tests.
-- PR3 targeted runner/exporter/score tests passed: 41 tests.
-- Full eval script suite passed: 284 tests.
+- Focused MCP runner tests passed: 20 tests.
+- PR3 targeted runner/exporter/score tests passed: 42 tests.
+- Full eval script suite passed: 285 tests.
 - Eval validation passed with the existing 11 Alex realistic warnings and no
   errors.
 - `pnpm eval:verify` passed.

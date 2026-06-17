@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/definition-baseline.schema.json",
+  "title": "Eval Definition Baseline Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "userId",
+    "corpusId",
+    "backendUserId",
+    "capturedAt",
+    "strategy",
+    "definitionIds",
+    "slugs",
+    "definitions",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "definition-baseline" },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "scenarioId": { "type": "string", "minLength": 1 },
+    "backendUserId": { "type": "string", "minLength": 1 },
+    "capturedAt": { "type": "string", "minLength": 1 },
+    "strategy": {
+      "enum": [
+        "none",
+        "fresh-user",
+        "archive-eval-owned",
+        "baseline-only"
+      ]
+    },
+    "definitionIds": { "$ref": "#/$defs/stringArray" },
+    "slugs": { "$ref": "#/$defs/stringArray" },
+    "definitions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/definition" }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["graphqlUrl", "definitionCount"],
+      "properties": {
+        "graphqlUrl": { "type": "string", "minLength": 1 },
+        "definitionCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "namespace",
+        "slug",
+        "displayName",
+        "ownerUserId",
+        "archivedAt",
+        "description",
+        "valueType",
+        "scope",
+        "options",
+        "isSensitive",
+        "isCore",
+        "category"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "namespace": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "displayName": { "type": ["string", "null"] },
+        "ownerUserId": { "type": ["string", "null"] },
+        "archivedAt": { "type": ["string", "null"] },
+        "description": { "type": "string" },
+        "valueType": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "options": {},
+        "isSensitive": { "type": "boolean" },
+        "isCore": { "type": "boolean" },
+        "category": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -95,6 +95,12 @@ export async function runExportMemorySnapshot({
         definitionIds: outBaseline.definitionIds,
         slugs: outBaseline.slugs,
       };
+      await validateWithSchema(
+        repoRoot,
+        'definition-baseline.schema.json',
+        outBaseline,
+        'definition baseline',
+      );
       writtenBaselinePath = path.resolve(repoRoot, options.baselineOut);
       await writeJson(writtenBaselinePath, outBaseline);
     }

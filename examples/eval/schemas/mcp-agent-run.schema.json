@@ -208,7 +208,15 @@
               "storedPreferences",
               "databaseScoreReport",
               "combinedScoreReport"
-            ]
+            ],
+            "not": {
+              "anyOf": [
+                { "required": ["definitionBaseline"] },
+                { "required": ["memorySnapshot"] },
+                { "required": ["openSchemaDatabaseScoreReport"] },
+                { "required": ["openSchemaCombinedScoreReport"] }
+              ]
+            }
           }
         }
       }
@@ -226,7 +234,14 @@
               "memorySnapshot",
               "openSchemaDatabaseScoreReport",
               "openSchemaCombinedScoreReport"
-            ]
+            ],
+            "not": {
+              "anyOf": [
+                { "required": ["storedPreferences"] },
+                { "required": ["databaseScoreReport"] },
+                { "required": ["combinedScoreReport"] }
+              ]
+            }
           }
         }
       }

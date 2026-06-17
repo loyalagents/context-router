@@ -88,8 +88,12 @@ stage names.
 
 2. Add open-stage orchestration.
    - Force known-schema definition setup off in open mode.
+   - Use an explicit open-schema setup wrapper so future isolation work has a
+     mode-specific hook.
    - Keep `--reset-memory` scoped to active memory values.
    - Capture `definition-baseline.json` before the agent stage.
+   - Validate `definition-baseline.json` with a standalone schema when it is
+     written.
    - Run the existing agent stage against the staged document workspace.
    - Export `memory-snapshot.json` with `--baseline-in`,
      `--schema-mode open`, `--schema-reset-mode baseline-only`,
@@ -100,10 +104,12 @@ stage names.
    - Allow open stage names in `evaluation-run.schema.json`.
    - Allow `schemaMode: "open"` in `mcp-agent-run.schema.json`.
    - Require mode-specific known or open artifact paths.
+   - Reject cross-mode artifact paths in `mcp-agent-run.schema.json`.
 
 4. Add focused tests.
    - Parser/default behavior.
    - Hidden-truth-safe open prompt.
+   - Direct baseline capture helper coverage.
    - Full deterministic command-adapter open run.
    - Agent, baseline, and memory snapshot export failure paths.
    - Existing known-schema MCP tests unchanged.

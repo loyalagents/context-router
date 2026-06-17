@@ -5,6 +5,13 @@ import { spawn } from 'node:child_process';
 import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  MCP_KNOWN_SCHEMA_EVALUATION_MODE,
+  MCP_KNOWN_SCHEMA_PRODUCER,
+  MCP_OPEN_SCHEMA_EVALUATION_MODE,
+  MCP_OPEN_SCHEMA_PRODUCER,
+  OPEN_SCHEMA_BASELINE_RESET_MODE,
+} from './eval-constants.mjs';
 import { runExportMemorySnapshot } from './export-memory-snapshot.mjs';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
 import { runFillForm } from './fill-form.mjs';
@@ -34,9 +41,6 @@ const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const DEFAULT_AGENT_TIMEOUT_MS = 900_000;
 const KNOWN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
 const OPEN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-open-schema.md';
-const KNOWN_INGESTION_MODE = 'mcp-known-schema-agent';
-const OPEN_MEMORY_PRODUCER = 'mcp-open-schema-agent';
-const OPEN_SCHEMA_RESET_MODE = 'baseline-only';
 const CLAUDE_BUILTIN_TOOLS = 'Read,Glob,Grep';
 export const COMPLETION_MARKER = 'EVAL_MCP_AGENT_DONE';
 
@@ -88,6 +92,7 @@ export async function runMcpAgentE2E({
   const stageRunners = {
     validate: runValidation,
     setup: prepareKnownSchemaMemory,
+    setupOpenSchemaMemory: prepareOpenSchemaMemory,
     captureDefinitionBaseline,
     agent: runAgentProcess,
     exportStoredPreferences: runExportStoredPreferences,
@@ -156,7 +161,11 @@ export async function runMcpAgentE2E({
       {
         name: options.schemaMode === 'open' ? 'setup-open-schema-memory' : 'setup-memory-and-schema',
         runner: async () => {
-          setupResult = await stageRunners.setup({
+          const setupRunner =
+            options.schemaMode === 'open'
+              ? stageRunners.setupOpenSchemaMemory
+              : stageRunners.setup;
+          setupResult = await setupRunner({
             repoRoot,
             evalUserId: options.userId,
             corpusId: options.corpusId,
@@ -631,7 +640,14 @@ async function runMcpAgentStage({
   }
 }
 
-async function captureDefinitionBaseline({
+export async function prepareOpenSchemaMemory(options) {
+  return prepareKnownSchemaMemory({
+    ...options,
+    ensureDefinitionsEnabled: false,
+  });
+}
+
+export async function captureDefinitionBaseline({
   repoRoot = defaultRepoRoot,
   options,
   artifacts,
@@ -673,8 +689,14 @@ async function captureDefinitionBaseline({
     backendUserId,
     definitions,
     capturedAt,
-    schemaResetMode: OPEN_SCHEMA_RESET_MODE,
+    schemaResetMode: OPEN_SCHEMA_BASELINE_RESET_MODE,
   });
+  await validateWithSchema(
+    repoRoot,
+    'definition-baseline.schema.json',
+    artifact,
+    'definition baseline',
+  );
   await writeJson(artifacts.definitionBaseline, artifact);
   return {
     exitCode: 0,
@@ -1267,7 +1289,10 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
   return {
     schemaVersion: 2,
     artifactType: 'evaluation-run',
-    evaluationMode: options.schemaMode === 'open' ? 'mcp-open-schema' : 'mcp-known-schema',
+    evaluationMode:
+      options.schemaMode === 'open'
+        ? MCP_OPEN_SCHEMA_EVALUATION_MODE
+        : MCP_KNOWN_SCHEMA_EVALUATION_MODE,
     status: 'running',
     runId: options.runId,
     userId: options.userId,
@@ -1492,7 +1517,7 @@ function exportArgs(options, artifacts) {
     '--auth-token',
     options.authToken,
     '--ingestion-mode',
-    KNOWN_INGESTION_MODE,
+    MCP_KNOWN_SCHEMA_PRODUCER,
     '--suggestions-were-auto-applied',
     'false',
     '--run-id',
@@ -1518,11 +1543,11 @@ function exportMemorySnapshotArgs(options, artifacts) {
     options.authToken,
     '--include-suggestions',
     '--producer',
-    OPEN_MEMORY_PRODUCER,
+    MCP_OPEN_SCHEMA_PRODUCER,
     '--schema-mode',
     'open',
     '--schema-reset-mode',
-    OPEN_SCHEMA_RESET_MODE,
+    OPEN_SCHEMA_BASELINE_RESET_MODE,
     '--baseline-in',
     artifacts.definitionBaseline,
     '--run-id',
@@ -1634,7 +1659,9 @@ function durationMs(startedAt, endedAt) {
 
 function generatedRunId(options, now) {
   return [
-    options.schemaMode === 'open' ? 'mcp-open-schema' : 'mcp-known-schema',
+    options.schemaMode === 'open'
+      ? MCP_OPEN_SCHEMA_EVALUATION_MODE
+      : MCP_KNOWN_SCHEMA_EVALUATION_MODE,
     options.userId,
     options.corpusId,
     isoTimestamp(now).replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, ''),

@@ -9,6 +9,7 @@ import {
   buildAgentEnvironment,
   buildAgentInvocation,
   buildMcpAgentPrompt,
+  captureDefinitionBaseline,
   parseArgs,
   runAgentProcess,
   runMcpAgentE2E,
@@ -329,6 +330,101 @@ test('mcp open-schema prompt permits schema creation without hidden truth leakag
   }
 });
 
+test('captureDefinitionBaseline writes schema-valid baselines and rejects user mismatches', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-baseline-'));
+  const options = {
+    userId: 'alex-i9-test',
+    corpusId: 'realistic',
+    scenarioId: 'alex-i9-realistic',
+    graphqlUrl: 'http://user:pass@localhost:3000/graphql',
+    authToken: 'secret-token',
+    locationId: 'loc-1',
+  };
+  const artifacts = {
+    definitionBaseline: path.join(tmp, 'definition-baseline.json'),
+  };
+  const setupResult = {
+    backendUserId: 'backend-user-123',
+  };
+  const requests = [];
+  const result = await captureDefinitionBaseline({
+    repoRoot,
+    options,
+    artifacts,
+    setupResult,
+    now: fixedNow,
+    fetchImpl: async (url, request) => {
+      requests.push({ url, request });
+      return jsonResponse({
+        data: {
+          me: { userId: 'backend-user-123' },
+          activePreferences: [],
+          exportPreferenceSchema: [
+            definitionRow({ id: 'def-b', slug: 'zeta.value' }),
+            definitionRow({ id: 'def-a', slug: 'alpha.value' }),
+          ],
+        },
+      });
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, 'http://user:pass@localhost:3000/graphql');
+  assert.equal(requests[0].request.headers.authorization, 'Bearer secret-token');
+  assert.deepEqual(JSON.parse(requests[0].request.body).variables, {
+    locationId: 'loc-1',
+    includeSuggestions: false,
+  });
+
+  const artifact = JSON.parse(await readFile(artifacts.definitionBaseline, 'utf8'));
+  await validateWithSchema(repoRoot, 'definition-baseline.schema.json', artifact, 'definition baseline');
+  assert.equal(artifact.artifactType, 'definition-baseline');
+  assert.equal(artifact.backendUserId, 'backend-user-123');
+  assert.equal(artifact.strategy, 'baseline-only');
+  assert.deepEqual(artifact.definitionIds, ['def-a', 'def-b']);
+  assert.deepEqual(artifact.slugs, ['alpha.value', 'zeta.value']);
+  assert.equal(artifact.diagnostics.graphqlUrl, 'http://localhost:3000/graphql');
+
+  await assert.rejects(
+    captureDefinitionBaseline({
+      repoRoot,
+      options,
+      artifacts: { definitionBaseline: path.join(tmp, 'missing-user.json') },
+      setupResult,
+      now: fixedNow,
+      fetchImpl: async () =>
+        jsonResponse({
+          data: {
+            me: {},
+            activePreferences: [],
+            exportPreferenceSchema: [],
+          },
+        }),
+    }),
+    /did not include me\.userId/,
+  );
+
+  await assert.rejects(
+    captureDefinitionBaseline({
+      repoRoot,
+      options,
+      artifacts: { definitionBaseline: path.join(tmp, 'wrong-user.json') },
+      setupResult,
+      now: fixedNow,
+      fetchImpl: async () =>
+        jsonResponse({
+          data: {
+            me: { userId: 'other-backend-user' },
+            activePreferences: [],
+            exportPreferenceSchema: [],
+          },
+        }),
+    }),
+    /does not match setup backend user backend-user-123/,
+  );
+});
+
 test('mcp agent e2e runs stages in order and writes schema-valid artifacts', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-'));
   const calls = [];
@@ -398,6 +494,21 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
 
   const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
   await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  await assert.rejects(
+    validateWithSchema(
+      repoRoot,
+      'mcp-agent-run.schema.json',
+      {
+        ...mcpAgentRun,
+        artifacts: {
+          ...mcpAgentRun.artifacts,
+          memorySnapshot: 'memory-snapshot.json',
+        },
+      },
+      'MCP agent run with cross-mode artifact',
+    ),
+    /must NOT be valid/,
+  );
   assert.equal(mcpAgentRun.status, 'pass');
   assert.equal(mcpAgentRun.schemaVersion, 3);
   assert.equal(mcpAgentRun.identity.runnerBackendUserId, 'backend-user-123');
@@ -560,6 +671,21 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
 
   const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
   await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  await assert.rejects(
+    validateWithSchema(
+      repoRoot,
+      'mcp-agent-run.schema.json',
+      {
+        ...mcpAgentRun,
+        artifacts: {
+          ...mcpAgentRun.artifacts,
+          storedPreferences: 'stored-preferences.json',
+        },
+      },
+      'MCP agent run with cross-mode artifact',
+    ),
+    /must NOT be valid/,
+  );
   assert.equal(mcpAgentRun.schemaMode, 'open');
   assert.equal(mcpAgentRun.setup.knownSchemaDefinitionsEnsured, false);
   assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
@@ -1191,6 +1317,42 @@ function claudeInitLine({
 }
 
 function successfulRunners({ calls, failures = {} }) {
+  const setupRunner = async ({
+    resetMemoryEnabled,
+    ensureDefinitionsEnabled,
+    documentsRoot,
+  }) => {
+    calls.push({
+      stage: 'setup',
+      resetMemoryEnabled,
+      ensureDefinitionsEnabled,
+      documentsRoot,
+    });
+    if (failures.setup) throw new Error(failures.setup);
+    return {
+      backendUserId: 'backend-user-123',
+      reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
+      definitionSetup: {
+        created: [{ slug: 'eval.contact.phone' }],
+        existing: [{ slug: 'profile.full_name' }],
+        skipped: [],
+      },
+      fixture: {
+        manifest: {
+          documents: [
+            {
+              id: 'doc-1',
+              path: 'documents/identity/001-driver-license-upload-ocr.txt',
+              title: 'Driver License Upload OCR',
+              category: 'identity',
+              outputExtension: 'txt',
+            },
+          ],
+        },
+      },
+    };
+  };
+
   return {
     validate: async ({ args }) => {
       calls.push({ stage: 'validate', args });
@@ -1211,41 +1373,12 @@ function successfulRunners({ calls, failures = {} }) {
       });
       return { exitCode: 0, lines: ['validation passed'] };
     },
-    setup: async ({
-      resetMemoryEnabled,
-      ensureDefinitionsEnabled,
-      documentsRoot,
-    }) => {
-      calls.push({
-        stage: 'setup',
-        resetMemoryEnabled,
-        ensureDefinitionsEnabled,
-        documentsRoot,
-      });
-      if (failures.setup) throw new Error(failures.setup);
-      return {
-        backendUserId: 'backend-user-123',
-        reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
-        definitionSetup: {
-          created: [{ slug: 'eval.contact.phone' }],
-          existing: [{ slug: 'profile.full_name' }],
-          skipped: [],
-        },
-        fixture: {
-          manifest: {
-            documents: [
-              {
-                id: 'doc-1',
-                path: 'documents/identity/001-driver-license-upload-ocr.txt',
-                title: 'Driver License Upload OCR',
-                category: 'identity',
-                outputExtension: 'txt',
-              },
-            ],
-          },
-        },
-      };
-    },
+    setup: setupRunner,
+    setupOpenSchemaMemory: (params) =>
+      setupRunner({
+        ...params,
+        ensureDefinitionsEnabled: false,
+      }),
     agent: async ({ prompt, artifacts }) => {
       calls.push({ stage: 'agent', prompt, artifacts });
       return {
@@ -1447,6 +1580,33 @@ function replaceFlagValue(args, flag, value) {
   const index = args.indexOf(flag);
   assert.notEqual(index, -1);
   return [...args.slice(0, index + 1), value, ...args.slice(index + 2)];
+}
+
+function jsonResponse(payload, { ok = true, status = 200 } = {}) {
+  return {
+    ok,
+    status,
+    text: async () => JSON.stringify(payload),
+  };
+}
+
+function definitionRow(overrides = {}) {
+  return {
+    id: 'def-1',
+    namespace: 'user',
+    slug: 'profile.full_name',
+    displayName: 'Full name',
+    ownerUserId: null,
+    archivedAt: null,
+    description: 'Full legal name',
+    valueType: 'TEXT',
+    scope: 'USER',
+    options: null,
+    isSensitive: false,
+    isCore: true,
+    category: 'profile',
+    ...overrides,
+  };
 }
 
 function escapeRegExp(value) {
