@@ -53,6 +53,12 @@ The runner supports:
 - `--schema-mode known`
 - `--form-mode backend`
 
+`--schema-mode known` means existing visible backend schema, not a closed
+target-form-only schema. The runner ensures known eval definitions exist before
+the agent runs, but the live MCP agent can still write other visible existing
+definitions when the documents support them. This differs from the backend
+known-schema document ingestor, which is driven by the eval fact/storage map.
+
 `--schema-mode open` and `--form-mode agent` intentionally fail with usage
 errors until their separate implementations exist.
 
@@ -116,6 +122,9 @@ Result:
   accepted slug accuracy 0.955.
 - Form score: 16/17 known fields correct, no missing known fields, one wrong
   email field, and 0 structural overfills.
+- The live smoke is a readiness signal for open schema and a product-style MCP
+  eval. It is not an apples-to-apples closed-schema benchmark against the
+  backend known-schema ingestor.
 
 Live smoke requirements:
 

@@ -76,6 +76,16 @@
   - First local live Claude MCP smoke completed on 2026-06-16: 27 active
     preferences exported, 21/22 known-present database facts correct, and 16/17
     known form fields correct.
+- [x] MCP scoring follow-up documentation and backend form-fill prompt
+  hardening.
+  - Clarifies that MCP `--schema-mode known` means existing visible backend
+    schema, not a closed target-form-only schema.
+  - Records that backend known-schema document ingestion and MCP known-schema
+    agent runs are intentionally different producers.
+  - Makes backend form-fill prompts treat field policies as authoritative and
+    reject semantically similar source substitutions.
+  - Keeps off-policy source slug validation diagnostic-only so evaluation
+    scoring still captures backend form-fill mistakes truthfully.
 
 ## Next
 

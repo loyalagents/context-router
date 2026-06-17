@@ -45,6 +45,14 @@ Open schema and agent-filled forms should be added after this path is stable.
 The first runner should still be mode-aware so those later extensions are
 additive rather than rewrites.
 
+Terminology note: the implemented `--schema-mode known` runner is an
+existing-schema MCP eval. The runner ensures known eval definitions exist, but
+the agent can inspect and write any visible backend definition allowed by MCP
+permissions. It is not a closed target-form-only schema. That makes it useful
+as a product-style readiness signal for open schema, but it is not an
+apples-to-apples producer comparison with the backend known-schema document
+ingestor.
+
 ## Recommended First Approach
 
 Start with **MCP known-schema memory ingestion plus backend form fill**.
@@ -73,7 +81,9 @@ flowchart LR
 Why this should be first:
 
 - It reuses the current deterministic exporter and scorers.
-- It compares cleanly against the known-schema document ingestor.
+- It can be compared against the known-schema document ingestor while keeping in
+  mind that the MCP agent chooses among the existing visible schema, whereas
+  the backend ingestor is driven by the eval's known fact/storage map.
 - It keeps attribution legible: memory failures appear in the database score;
   product form-fill failures appear in the form and combined scores.
 - It tests real MCP behavior: tool discovery, schema inspection, active memory

@@ -590,7 +590,7 @@ describe('FormFillValidatorService', () => {
     expect(result.validationEvents).toEqual([]);
   });
 
-  it('records a warning event for applied active slugs outside field policy slugs', () => {
+  it('records a warning event for applied active slugs outside field policy slugs without blocking the fill', () => {
     const result = service.validate(
       [
         {
