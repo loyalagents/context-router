@@ -1,65 +1,36 @@
 # Open-Schema Evaluation Design
 
-- Status: implementation-ready brainstorm
-- Last updated: 2026-06-15
-- Scope: evaluating runs where the producer may create its own
-  preference definitions/slugs instead of using pre-created eval definitions
-- Prerequisite: implement the closed-schema MCP eval described in
-  `docs/plans/evaluation/scoring/MCP-scoring/` first
+- Status: implementation-oriented brainstorm
+- Last updated: 2026-06-17
+- Scope: evaluating runs where eval-specific target definitions are not
+  pre-created and the producer must choose or create useful memory schema
 
 ## Summary
 
 Open-schema evaluation should answer one main question:
 
-> Can the system complete the user's form-filling goal when the exact memory
-> schema is not supplied ahead of time?
+```text
+Can the system complete the user's form-filling goal when the exact eval memory
+schema is not supplied ahead of time?
+```
 
-The first open-schema metric should not be strict slug quality. The first metric
-should be whether the final form is correct and safe. Schema quality still
-matters, but it is harder to score deterministically and should remain
-diagnostic until we have real outputs to review.
+The headline score should be the final form outcome. The second signal should
+be whether expected values were recovered in active memory. Schema quality is
+important, but the first version should keep it diagnostic until there are real
+open-schema outputs to review.
 
 Recommended priority:
 
 ```text
-form correctness > active-memory value recovery > schema quality
+form correctness
+  -> active-memory value recovery
+  -> schema diagnostics
+  -> reviewed schema-quality judgment later
 ```
 
-The implementation path should be:
-
-1. Build MCP closed-schema eval first in `MCP-scoring`.
-2. Add an enriched `memory-snapshot.json` export so open-schema runs can
-   preserve definition metadata without changing the known-schema
-   `stored-preferences.json` scorer contract.
-3. Add a light open-schema DB/debug score based on value recovery and
-   abstention.
-4. Add MCP open-schema mode by reusing the closed-schema MCP runner shape.
-5. Add backend upload-level open-schema discovery later.
-6. Harden schema-quality scoring only after reviewing real novel slugs.
-
-## Why Closed-Schema MCP Comes First
-
-Closed-schema MCP eval should be implemented before open-schema changes because
-it isolates the runner/tooling problem from the schema-discovery problem.
-
-Closed-schema MCP proves:
-
-- the agent runner can launch and complete repeatably
-- MCP auth and tool permissions work
-- the agent can read corpus documents
-- the agent can write active backend memory
-- the exporter, form runner, and scorers produce stable artifacts
-- MCP results are comparable to the existing known-schema backend ingestor
-
-Open schema should then be a controlled delta:
-
-- same corpus
-- same form scorer
-- same backend form-fill path
-- same MCP runner structure
-- no pre-created eval definitions
-- new definition metadata export
-- light value-recovery DB score instead of strict slug headline scoring
+Build artifact and scoring support before enabling live MCP
+`--schema-mode open`. That keeps the judge stable before introducing the most
+variable component: an agent creating or choosing schema during the run.
 
 ## Definitions
 
@@ -68,61 +39,78 @@ Known schema:
 ```text
 accepted definitions/slugs already exist
   -> producer extracts values into those slugs
-  -> DB scorer checks expected values under accepted keys
-  -> form fill uses active memory
+  -> database scorer checks expected values under accepted keys
+  -> backend form fill reads active memory
 ```
 
 Open schema:
 
 ```text
-eval-specific definitions/slugs are not pre-created
+eval-specific target definitions/slugs are not pre-created
   -> producer identifies useful facts
-  -> producer creates definitions/slugs as needed
+  -> producer reuses existing visible definitions or creates user-owned ones
   -> producer stores active values
-  -> backend form fill uses active memory
-  -> scorer evaluates task success and memory diagnostics
+  -> backend form fill reads active memory
+  -> scorer evaluates form correctness, value recovery, and schema diagnostics
 ```
 
 Producer means the thing being evaluated:
 
-- MCP/Codex/Claude agent using MCP tools.
+- MCP/Claude agent using MCP tools.
 - Future backend upload/schema-discovery product flow.
 - Future manual or UI-driven flow, if it writes the same artifacts.
 
-## Target Flow
+MCP `--schema-mode known` currently means "use the existing visible backend
+schema." It is not a closed target-form-only schema. Open schema should be the
+next controlled delta: do not create eval-specific target definitions during
+setup, and require the producer to handle schema selection/creation.
 
-The first open-schema implementation should reuse the closed-schema MCP runner,
-but switch setup and scoring modes.
+## Design Principles
 
-```mermaid
-flowchart TD
-  A["Fixture corpus + validation report"] --> B["MCP closed-schema runner"]
-  B --> C["Prove runner, auth, tool use, export, form-fill, scoring"]
-  C --> D["Open-schema artifact/scorer changes"]
-  D --> E["MCP open-schema runner mode"]
-  E --> F["Agent creates definitions and active values"]
-  F --> G["Export memory snapshot with definitions"]
-  G --> H["Light DB value-recovery score"]
-  F --> I["Backend form-fill"]
-  I --> J["Form-fill score"]
-  H --> K["Open-schema combined report"]
-  J --> K
+- Keep evaluation truth clean. Scoring should not auto-correct memory, rewrite
+  slugs, hide backend mistakes, or feed score results back into the same run.
+- Keep known-schema artifacts and scorers stable unless requirements force a
+  change.
+- Add open-schema-specific artifacts instead of stretching
+  `stored-preferences.json` beyond its v1 contract.
+- Treat definition state as benchmark state. Prior eval-created definitions can
+  make a later run easier, so isolation must be recorded before live scores are
+  trusted.
+- Score active memory as the primary database signal. Suggested values can be
+  useful diagnostics, but should not count as recovered unless they are reported
+  in an explicit suggestion-only bucket.
+- Keep LLM or human schema review separate from deterministic headline scoring.
+
+## Target First Flow
+
+The first implementation should reuse the known-schema MCP runner shape and the
+existing backend form-fill path.
+
+```text
+validate-documents
+  -> setup-open-schema-memory
+  -> capture-definition-baseline
+  -> run-mcp-agent
+  -> export-memory-snapshot
+  -> score-open-schema-database
+  -> fill-form
+  -> score-form
+  -> score-open-schema-combined
 ```
 
-Future backend product flow:
+The first open-schema MCP eval should let the backend fill the form after the
+agent writes memory:
 
-```mermaid
-flowchart TD
-  A["Fixture corpus documents"] --> B["Backend upload/schema discovery"]
-  B --> C["Proposed or created definitions"]
-  C --> D["Extracted active preferences"]
-  D --> E["Memory snapshot with definitions"]
-  E --> F["Light DB value-recovery score"]
-  D --> G["Backend form-fill"]
-  G --> H["Form-fill score"]
-  F --> I["Open-schema combined report"]
-  H --> I
+```text
+agent document/schema/memory work
+  -> active backend memory
+  -> backend form-fill endpoint
+  -> deterministic form scorer
 ```
+
+That keeps attribution legible. Memory failures appear in the open-schema
+database report; backend form-fill failures appear in the form and combined
+reports.
 
 ## Primary Metric: Form Correctness
 
@@ -132,37 +120,32 @@ Question:
 Did the final filled form contain the right values and blanks?
 ```
 
-This should be the headline score for open schema. It directly measures whether
-the generated memory was useful for the user's task.
-
-Use the existing form scorer as much as possible. Its current buckets are
-already the right starting point:
+Reuse the current form scorer as the headline metric:
 
 - should-fill field correct
 - should-fill field missing
 - should-fill field wrong
-- abstention field correctly blank/skipped
-- abstention field hallucinated
-- structural skip fields excluded from primary known-field accuracy
-- structural overfills reported separately
-- unsupported fields reported separately
+- intentionally missing field correctly blank/skipped
+- intentionally missing field hallucinated
+- structural skips and overfills as diagnostics
+- unsupported fields as diagnostics
 
-For open schema, `sourceSlugAgreementRate` should be treated as diagnostic only.
-Novel slugs may be correct and useful even though they are not in the accepted
-slug map.
+For open schema, `sourceSlugAgreementRate` remains diagnostic only. A correct
+form value may come from a novel slug that is useful even though it does not
+match the accepted slug map.
 
-## Debug Metric: Active-Memory Value Recovery
+## Secondary Metric: Active-Memory Value Recovery
 
 Question:
 
 ```text
-Did the expected value appear anywhere in active memory?
+Did the expected value appear anywhere useful in active memory?
 ```
 
-This should be the first DB/memory score for open schema. It intentionally
-ignores exact slug correctness as a primary pass/fail condition.
+Open-schema database scoring should be value-led, not slug-led. Accepted slugs
+should still be preserved as diagnostics.
 
-Useful classifications for known-present facts:
+Known-present classifications:
 
 - `value_found_accepted_slug`
 - `value_found_novel_slug`
@@ -171,25 +154,43 @@ Useful classifications for known-present facts:
 - `accepted_slug_wrong_value`
 - `conflict`
 
-Useful classifications for intentionally missing facts:
+Intentionally missing classifications:
 
 - `missing_absent_correct`
 - `missing_value_hallucinated`
 - `missing_key_hallucinated`
 - `missing_hallucinated`
 
-Value matching should remain deterministic:
+Matching should stay deterministic and conservative:
 
-- dates allow known render variants
-- SSNs allow dashed and digits-only variants
-- phone numbers allow punctuation variants
-- arrays compare normalized typed values
-- short strings should avoid broad substring matching
-- near misses should be diagnostics, not accepted silently
+- Reuse existing typed normalization for dates, SSNs, A-numbers, state names,
+  enums, arrays, and booleans where possible.
+- Do not use broad substring matching for short strings.
+- Keep display-name/description similarity diagnostic. It is not proof that a
+  value is correct.
+- If the same active value plausibly matches multiple expected facts, report
+  ambiguity instead of silently choosing one.
+- Near misses should be diagnostics, not accepted silently.
 
-The existing known-schema database scorer can inform this implementation, but
-open-schema DB scoring should headline value recovery rather than accepted-slug
-accuracy.
+Useful summary fields:
+
+- `knownPresentTotal`
+- `valueFoundAnywhere`
+- `valueFoundUnderAcceptedSlug`
+- `valueFoundUnderNovelSlug`
+- `valueFoundOnlySuggestion`
+- `valueMissing`
+- `acceptedSlugWrongValue`
+- `conflict`
+- `valueRecoveryRate`
+- `acceptedSlugRecoveryRate`
+- `intentionallyMissingTotal`
+- `missingAbsentCorrect`
+- `missingHallucinated`
+- `missingAbstentionRate`
+- `novelDefinitionCount`
+- `unusedNovelDefinitionCount`
+- `unscoredActivePreferenceCount`
 
 ## Diagnostic Metric: Schema Usefulness
 
@@ -209,10 +210,12 @@ The scorer should preserve enough metadata for later review:
 - value type
 - options
 - scope
-- namespace or ownership
+- namespace and owner
+- sensitivity/core flags
 - active value
-- source type, confidence, and evidence if available
+- source type, confidence, and evidence when available
 - whether the slug matched a canonical or accepted alias slug
+- whether the definition existed before the run, if known
 
 Initial schema buckets can be simple diagnostics:
 
@@ -221,6 +224,7 @@ Initial schema buckets can be simple diagnostics:
 - `novel_review_needed`
 - `accepted_slug_wrong_value`
 - `wrong_slug_for_value`
+- `unused_novel_definition`
 
 Later reviewed buckets can be added after real outputs exist:
 
@@ -232,22 +236,37 @@ Later reviewed buckets can be added after real outputs exist:
 - `novel_form_overfit`
 
 LLM or human review should be a separate layer, not hidden inside the primary
-score.
+deterministic score.
 
 ## Artifact Contract
 
-Open-schema scoring needs definition metadata. The current
-`stored-preferences.json` stores values but not enough schema context.
+Keep known-schema artifacts stable. Add open-schema-specific artifacts.
 
-Recommended artifact:
+New open-schema artifacts:
 
-```text
-memory-snapshot.json
-```
+- `memory-snapshot.json`
+- `open-schema-database-score-report.json`
+- `open-schema-combined-score-report.json`
 
-Keep `stored-preferences.json` v1 for known-schema MCP and existing scorers.
-Open-schema should consume `memory-snapshot.json` so known-schema runner work is
-not blocked on a broader artifact migration.
+Existing artifacts to reuse:
+
+- `validation-report.json`
+- `mcp-agent-run.json`
+- `mcp-agent-prompt.md`
+- `mcp-agent-transcript.txt`
+- `filled-form.json`
+- `filled-form.pdf`
+- `form-fill-response.json`
+- `form-score-report.json`
+- `evaluation-run.json`
+
+`stored-preferences.json` can still be written for debugging and backward
+comparison, but open-schema scoring should consume `memory-snapshot.json`.
+
+### Memory Snapshot
+
+`memory-snapshot.json` should join active values, suggestions, visible
+definitions, and definition baseline metadata in one artifact.
 
 Suggested shape:
 
@@ -255,66 +274,54 @@ Suggested shape:
 {
   "schemaVersion": 1,
   "artifactType": "memory-snapshot",
-  "runId": "alex-i9-open-schema-20260615-120000",
+  "runId": "mcp-open-schema-alex-i9-test-realistic-...",
+  "evaluationMode": "mcp-open-schema",
   "userId": "alex-i9-test",
   "corpusId": "realistic",
+  "scenarioId": "alex-i9-realistic",
   "storageInput": {
     "schemaMode": "open",
     "producer": "mcp-agent",
     "statusesScored": ["ACTIVE"],
     "suggestionsWereAutoApplied": false
   },
-  "preferences": [
-    {
-      "id": "pref-id",
-      "definitionId": "definition-id",
-      "slug": "employee.legal_name",
-      "value": "Alex Jordan Rivera",
-      "status": "ACTIVE",
-      "sourceType": "INFERRED",
-      "confidence": 0.91,
-      "evidence": {}
-    }
-  ],
+  "preferences": [],
   "suggestions": [],
-  "definitions": [
-    {
-      "id": "definition-id",
-      "namespace": "USER:backend-user-id",
-      "ownerUserId": "backend-user-id",
-      "slug": "employee.legal_name",
-      "displayName": "Employee Legal Name",
-      "description": "Legal name used for onboarding and employment forms.",
-      "valueType": "STRING",
-      "scope": "GLOBAL",
-      "options": null,
-      "isSensitive": false,
-      "isCore": false,
-      "archivedAt": null
-    }
-  ],
+  "definitions": [],
+  "definitionBaseline": {
+    "capturedBeforeRun": true,
+    "preexistingDefinitionIds": [],
+    "preexistingSlugs": [],
+    "strategy": "none|fresh-user|archive-eval-owned|baseline-only"
+  },
   "diagnostics": {
     "backendUserId": "backend-user-id",
-    "exportedAt": "2026-06-15T19:00:00.000Z"
+    "exportedAt": "2026-06-17T00:00:00.000Z",
+    "graphqlUrl": "http://localhost:3000/graphql",
+    "locationMode": "global-only",
+    "locationId": null,
+    "schemaResetMode": "none|fresh-user|archive-eval-owned|baseline-only"
   }
 }
 ```
 
-Implementation notes:
+Important details:
 
-- Export definitions through existing GraphQL `exportPreferenceSchema(scope:
-  ALL)`.
-- Include all visible active definitions, not only definitions referenced by
-  preferences. This makes unused or duplicate created definitions visible.
-- Keep active preferences as the primary scored rows.
-- Keep suggestions diagnostic-only unless a later eval explicitly scores
+- Include all visible unarchived definitions, not only definitions referenced
+  by active preferences. This makes unused and duplicate created definitions
+  visible.
+- Join preferences to definitions by `definitionId` and slug where possible.
+- Record owner/namespace/scope so user-owned and global definitions are clear.
+- Include suggestions only as diagnostics unless a later eval explicitly scores
   suggestion quality.
-- The key requirement is `definitions[]` joined to value rows by
-  `definitionId` and slug where possible.
+- Record whether definitions were preexisting or created during the run when
+  the backend exposes enough metadata. If timestamps or creation provenance are
+  insufficient, record the limitation rather than inferring too much.
+- Keep token redaction behavior consistent with the existing exporter.
 
-## Open-Schema DB Report
+## Open-Schema Database Report
 
-Suggested report:
+Suggested output:
 
 ```text
 open-schema-database-score-report.json
@@ -326,17 +333,17 @@ Example known-present row:
 {
   "factKey": "identity.legalName",
   "expectedValue": "Alex Jordan Rivera",
+  "canonicalSlugs": ["profile.full_name"],
+  "acceptedAliasSlugs": ["identity.legal_name"],
   "classification": "value_found_novel_slug",
   "valueFoundAnywhere": true,
   "valueFoundUnderAcceptedSlug": false,
-  "canonicalSlugCorrect": false,
-  "acceptedAliasCorrect": false,
   "candidateRows": [
     {
       "slug": "employee.legal_name",
       "definitionId": "definition-id",
       "displayName": "Employee Legal Name",
-      "description": "Legal name used for onboarding and employment forms.",
+      "description": "Legal name used for employment forms.",
       "value": "Alex Jordan Rivera",
       "valueMatch": true,
       "schemaAssessment": "novel_review_needed"
@@ -351,7 +358,7 @@ Example intentionally missing row:
 ```json
 {
   "factKey": "contact.phone",
-  "expectedValue": null,
+  "withheldValue": null,
   "classification": "missing_absent_correct",
   "valueFoundAnywhere": false,
   "acceptedSlugHasValue": false,
@@ -359,82 +366,55 @@ Example intentionally missing row:
 }
 ```
 
-Suggested summary fields:
+The report should also preserve:
 
-- `knownPresentTotal`
-- `valueFoundAnywhere`
-- `valueFoundUnderAcceptedSlug`
-- `valueFoundUnderNovelSlug`
-- `valueMissing`
-- `acceptedSlugWrongValue`
-- `conflict`
-- `valueRecoveryRate`
-- `acceptedSlugRecoveryRate`
-- `intentionallyMissingTotal`
-- `missingAbsentCorrect`
-- `missingHallucinated`
-- `missingAbstentionRate`
-- `novelDefinitionCount`
-- `unusedNovelDefinitionCount`
-- `unscoredActivePreferenceCount`
+- ignored non-active preferences
+- suggestion-only matches
+- unscored active preferences
+- novel definitions with no active values
+- ambiguous matches
+- fixture-readiness blocking issues
 
-## Combined Report
+## Open-Schema Combined Report
 
-The existing combined report assumes known-schema DB classifications. For open
-schema, use a separate combined report or a schema-mode-aware report rather than
-forcing novel slug behavior into known-schema categories.
-
-The most useful open-schema combined attribution is:
+Suggested output:
 
 ```text
-memory value found + form correct
-memory value found + form missing
-memory value found + form wrong
-memory value missing + form correct
-memory value missing + form missing
-memory value missing + form hallucinated
-missing absent + form absent
-missing hallucinated + form hallucinated
-missing hallucinated + form other
+open-schema-combined-score-report.json
 ```
 
-`memory value missing + form correct` is important because it can reveal that
-the form-fill path found the value outside active memory, the scorer missed a
-normalization variant, or the filled-form artifact is not actually using the
-same prepared memory.
+The combined report should attribute form outcomes to open-schema memory
+outcomes without treating novel slugs as wrong by default.
 
-## Producer Approaches
+Useful stage-attribution buckets:
 
-| Approach | When | Pros | Cons |
-| --- | --- | --- | --- |
-| MCP closed schema | First, in `MCP-scoring` | Proves runner/tooling and reuses current scoring | Does not test schema discovery |
-| MCP open schema | First open-schema producer | Possible with current MCP `CREATE_DEFINITION` and `SET_PREFERENCE`; isolates backend upload changes | Agent behavior may be variable; requires good run logging |
-| Backend upload-level schema discovery | After MCP open schema | Tests product-native ingestion UX | Requires backend changes because upload currently shows valid slugs and rejects unknown slugs |
-| Agent-filled form | Later | Evaluates full delegated workflow | Harder attribution; may bypass backend memory |
-| Hard schema-quality review | Much later | Captures reuse quality and overfitting | Requires human or LLM judgment and real examples |
+- `memory_found_form_correct`
+- `memory_found_form_missing`
+- `memory_found_form_wrong`
+- `memory_missing_form_correct`
+- `memory_missing_form_missing`
+- `memory_missing_form_wrong`
+- `missing_absent_form_absent`
+- `missing_absent_form_other`
+- `missing_hallucinated_form_hallucinated`
+- `missing_hallucinated_form_other`
 
-## MCP Open-Schema Runner Requirements
+`memory_missing_form_correct` is especially important. It usually means one of:
 
-The MCP open-schema runner should build on the closed-schema MCP runner from
-`MCP-scoring`.
+- backend form fill found data outside the scored active memory snapshot;
+- the value matcher missed a valid normalization variant;
+- the filled-form artifact was produced from different state than the memory
+  snapshot;
+- the form scorer expectation is wrong.
 
-Closed-schema mode should likely look like:
+Treat that bucket as a debugging signal, not a quiet success.
 
-```bash
-pnpm eval:e2e-mcp-agent \
-  --agent claude \
-  --schema-mode known \
-  --form-mode backend \
-  --user alex-i9-test \
-  --corpus realistic \
-  --scenario alex-i9-realistic \
-  --mcp-server context-router-local \
-  --mcp-config /path/to/context-router-mcp.json \
-  --reset-memory \
-  --artifacts-root /private/tmp/alex-mcp-known
-```
+## MCP Open-Schema Runner
 
-Open-schema mode should likely look like:
+Enable open mode only after `memory-snapshot.json` and the open-schema scorers
+exist.
+
+Target command:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
@@ -444,217 +424,115 @@ pnpm eval:e2e-mcp-agent \
   --user alex-i9-test \
   --corpus realistic \
   --scenario alex-i9-realistic \
+  --artifacts-root /private/tmp/alex-mcp-open-schema \
   --mcp-server context-router-local \
-  --mcp-config /path/to/context-router-mcp.json \
-  --reset-memory \
-  --skip-ensure-definitions \
-  --artifacts-root /private/tmp/alex-mcp-open
+  --mcp-config /private/tmp/context-router-mcp.json \
+  --reset-memory
 ```
 
-Open-schema mode should:
+Runner behavior:
 
-- reset memory values for isolation
-- not pre-create eval-specific target definitions
-- optionally archive or ignore previous eval-owned definitions if repeatability
-  requires it
-- give the agent document paths and the user goal
-- allow definition creation and preference writes through MCP
-- export `memory-snapshot.json`
-- run light open-schema DB scoring
-- run backend-memory form fill
-- run form scoring
-- write an agent run artifact with prompt, schema mode, tool access, stage
-  statuses, and artifact paths
+- Do not run known-schema target-definition setup.
+- Reset active memory values when requested.
+- Capture visible definition baseline before the agent runs.
+- Record the schema isolation strategy in `mcp-agent-run.json`,
+  `memory-snapshot.json`, and `evaluation-run.json`.
+- Fail fast if MCP tools are unavailable or the completion marker is missing.
+- Continue to write partial `evaluation-run.json` after each stage.
+- Mark setup/schema-reset limitations clearly in artifacts.
+- Keep known-schema behavior unchanged.
 
-The first open-schema MCP eval should let the backend fill the form after the
-agent writes memory. This keeps attribution clearer:
+Prompt requirements:
 
-```text
-agent document/schema/memory work
-  -> active backend memory
-  -> backend form-fill endpoint
-  -> deterministic form scorer
-```
+- Include staged corpus document paths and safe titles/categories.
+- Include the scenario prompt and form purpose.
+- Tell the agent it may create definitions and store active memory through MCP.
+- Tell the agent to reuse existing definitions when they fit.
+- Tell the agent not to guess unsupported values.
+- Require the completion marker.
+- Do not expose `profile.yaml`, manifests, validation reports, field maps,
+  accepted slug maps, expected snapshots, or score outputs.
+
+Whether to include the blank target PDF or a safe field-label summary remains a
+prompt design choice. If included, it must be user-visible form context, not
+fixture answer-key data.
+
+## Definition State And Repeatability
+
+`resetMyMemory(MEMORY_ONLY)` clears preference values, not necessarily
+user-owned definitions. That matters more in open schema than known schema.
+
+Possible repeatability strategies:
+
+| Strategy | Use | Tradeoff |
+| --- | --- | --- |
+| Fresh backend user per run | Best benchmark isolation | More operational setup and auth/user management |
+| Archive/delete prior eval-owned definitions | Repeatable with one user | Needs careful guards so product definitions are not touched |
+| Baseline-only recording | First smoke/debug runs | Easy, but scores are smoke-only if prior definitions help the agent |
+
+The first implementation should support baseline-only smoke mode if cleanup is
+not solved, but it must label scores accordingly. Benchmark-reliable live
+scores need either a fresh user strategy or guarded cleanup, plus the existing
+MCP/backend identity preflight so the agent and exporter are proven to use the
+same backend user.
 
 ## Backend Upload-Level Open Schema
 
-Current document upload is known-schema only:
+Current backend document upload is known-schema only:
 
-- the extraction prompt shows valid slugs
-- the model is instructed to use only those slugs
-- unknown slugs are filtered as `UNKNOWN_SLUG`
-- definition creation is separate from upload
+- the extraction prompt shows valid slugs;
+- the model is instructed to use only those slugs;
+- unknown slugs are filtered as `UNKNOWN_SLUG`;
+- definition creation is separate from upload.
 
-A backend open-schema product flow would need a new design, likely one of:
+A later product-native open-schema flow could use one of these designs:
 
 1. Upload proposes definitions and values.
    - Backend returns `proposedDefinitions[]` plus value suggestions.
-   - User or runner applies both definitions and values.
+   - User or runner applies definitions and values.
    - Easier to review.
-   - More product work.
-
 2. Upload creates definitions automatically.
    - Backend writes definitions and values during ingestion.
-   - Easier benchmark runner.
-   - Higher risk of low-quality schema pollution.
-
+   - Easier runner.
+   - Higher risk of schema pollution.
 3. Two-pass workflow.
    - First pass discovers candidate facts and definitions.
    - Second pass extracts values into the newly created schema.
    - Better attribution.
-   - More latency and implementation complexity.
+   - More latency and complexity.
 
-Do this after MCP open-schema mode. MCP can exercise the scoring layer before
-the product upload path is redesigned.
+Do this after MCP open-schema mode proves the artifact and scoring layer.
 
-## Implementation Checkpoints
+## Things To Avoid Initially
 
-### Checkpoint 0: Closed-Schema MCP Eval
-
-Implemented under `docs/plans/evaluation/scoring/MCP-scoring/`, not this plan.
-
-End state:
-
-- MCP runner can populate known-schema memory.
-- Existing exporter and known-schema DB scorer work.
-- Backend form fill runs after MCP memory writes.
-- Existing form and combined reports are produced.
-
-### Checkpoint 1: Memory Snapshot Export
-
-Goal:
-
-- Add an enriched memory export artifact with `preferences[]` and
-  `definitions[]`.
-- Add this as a separate export path or mode rather than changing the
-  known-schema `stored-preferences.json` v1 contract.
-
-Expected tests:
-
-- schema validation for the new artifact
-- GraphQL query contract test for `exportPreferenceSchema(scope: ALL)`
-- mapper tests joining preference rows to definition metadata by `definitionId`
-  and slug
-- token redaction tests remain intact
-
-Progress report:
-
-- A run can snapshot active memory and visible schema without scoring it.
-
-### Checkpoint 2: Light Open-Schema DB Scorer
-
-Goal:
-
-- Score value recovery and abstention from `memory-snapshot.json`.
-- Preserve strict accepted-slug results as diagnostics.
-
-Expected tests:
-
-- value found under accepted slug
-- value found under novel slug
-- value missing
-- accepted slug populated with wrong value
-- intentionally missing value absent
-- intentionally missing value hallucinated
-- novel definition metadata included in candidate rows
-- fixture-readiness gating still works
-
-Progress report:
-
-- A static memory snapshot can produce
-  `open-schema-database-score-report.json`.
-
-### Checkpoint 3: Open-Schema Combined Report
-
-Goal:
-
-- Attribute form outcomes against open-schema memory outcomes.
-
-Expected tests:
-
-- value found and form correct
-- value found and form missing
-- value missing and form correct
-- missing absent and form absent
-- missing hallucinated and form hallucinated
-
-Progress report:
-
-- A memory snapshot plus filled-form snapshot can produce an open-schema
-  combined report.
-
-### Checkpoint 4: MCP Open-Schema Mode
-
-Goal:
-
-- Reuse the closed-schema MCP runner with `--schema-mode open`.
-
-Expected tests:
-
-- setup skips known-schema definition creation
-- setup still resets memory values, and either archives or namespaces prior
-  eval-created definitions if repeatability requires it
-- stage artifact paths are recorded
-- run artifact distinguishes eval fixture user and backend auth user
-- partial failure writes a useful run artifact
-- scoring stages consume the new open-schema artifacts
-
-Progress report:
-
-- One live MCP open-schema smoke can complete with form and light DB reports.
-
-### Checkpoint 5: Backend Upload-Level Discovery
-
-Goal:
-
-- Design and implement product upload schema discovery after MCP open-schema
-  has proven the scoring layer.
-
-Expected tests:
-
-- prompt/schema contract for proposed definitions
-- apply flow creates definitions before setting values
-- upload diagnostics preserve proposed and rejected definitions
-- open-schema scorer can evaluate the resulting memory snapshot
-
-Progress report:
-
-- Backend upload can run without pre-created eval definitions.
-
-### Checkpoint 6: Schema-Quality Review
-
-Goal:
-
-- Add human or LLM-assisted review of novel definitions after enough real runs
-  exist.
-
-Do not start here. The first useful data is form correctness plus value recovery.
+- Do not make schema-quality review a headline metric before reviewing real
+  outputs.
+- Do not hide form-fill mistakes by rewriting memory or auto-correcting source
+  choices during scoring.
+- Do not use LLM judgment inside deterministic score reports.
+- Do not compare open-schema value-recovery scores directly to known-schema
+  strict accepted-slug accuracy.
+- Do not treat prior user definitions as harmless. They are part of the schema
+  surface the producer sees.
+- Do not expose accepted slug maps or expected snapshots in the agent
+  workspace.
 
 ## Open Questions
 
-- Should repeated open-schema runs archive previous eval-owned definitions, use
-  a fresh backend user, or record prior definitions as run context?
-- Should the first open-schema MCP prompt expose the target form, or ask the
-  agent to prepare generally useful memory from documents?
-- Should the agent be allowed to inspect the form field map, or only the PDF and
-  corpus documents?
-- Should global catalog slugs remain available in open-schema mode, or should
-  the eval attempt to hide most existing definitions?
-- How should location-scoped definitions and values be represented in the first
-  open-schema memory snapshot?
-- When schema-quality review arrives, should it be human-only, LLM-assisted, or
-  sampled?
+- Is a fresh backend user per live run practical, or should the runner implement
+  guarded eval-owned definition cleanup first?
+- Should the first open-schema prompt include the blank target PDF, a safe
+  field-label summary, or only the form purpose?
+- Should global/core definitions count as existing accepted schema in open mode,
+  or should they be diagnostics separate from agent-created definitions?
+- Can the backend export definition/preference creation timestamps and audit
+  provenance clearly enough to identify run-created objects?
+- How strict should missing-fact hallucination be for novel broad categories
+  such as phone numbers and emails?
 
-## Recommended First Implementation After MCP Closed Schema
+## Recommended Next Step
 
-Build the smallest open-schema scoring layer that makes MCP open-schema runs
-debuggable:
-
-1. Export memory with definition metadata.
-2. Score active-memory value recovery and missing-fact abstention.
-3. Keep strict accepted-slug matches as diagnostics.
-4. Reuse the existing form scorer as the headline score.
-5. Add an open-schema combined report for attribution.
-6. Run MCP in open-schema mode.
-
-Avoid building hard schema-quality scoring before real MCP outputs exist.
+Start with `memory-snapshot.json` and the open-schema database scorer. That is
+the smallest durable foundation: it gives every future open-schema producer a
+stable artifact boundary and makes live MCP runs debuggable before prompt tuning
+or schema-quality review.
