@@ -33,7 +33,10 @@ model response, including malformed JSON cases.
 
 When extraction parses and validates, the command writes
 `open-schema-extraction.json` with evaluator-owned `factId` values such as
-`fact-0001`. Model slugs are preserved exactly.
+`fact-0001`. Model-authored slugs, labels, values, evidence document IDs, and
+quotes are preserved exactly for accepted rows. Invalid fact rows are dropped
+with diagnostics instead of aborting the whole run, so usable facts can still
+produce the headline form score.
 
 The form-fill stage writes:
 
@@ -50,15 +53,16 @@ Unless `--skip-extraction-scoring` is passed, the command also writes:
 
 ## Prompt Boundaries
 
-Stage 1 sees declared corpus documents and safe form context. The form context
-includes field names, field types, inferred labels, field policies, fill
+Stage 1 sees declared corpus documents and safe form context. The direct
+baseline uses its own prompt metadata projection. The form context includes
+field names, field types, inferred labels, approved field policies, fill
 policies, and options. It excludes fixture truth, profile facts, field-map fact
-keys, generated data-key hints, accepted slug maps, validation reports, DB
-exports, score artifacts, and previous baseline outputs.
+keys, field-map notes, generated data-key hints, accepted slug maps, validation
+reports, DB exports, score artifacts, and previous baseline outputs.
 
-Stage 2 sees extracted facts and PDF field metadata. It does not see raw source
-documents. Non-`SKIP` actions must cite `sourceFactIds`; the evaluator derives
-diagnostic source slugs from those IDs.
+Stage 2 sees extracted facts and the same safe PDF field metadata projection.
+It does not see raw source documents. Non-`SKIP` actions must cite
+`sourceFactIds`; the evaluator derives diagnostic source slugs from those IDs.
 
 ## Synthetic Snapshot Behavior
 
@@ -67,13 +71,14 @@ diagnostic source slugs from those IDs.
 model slugs by creating separate synthetic definitions and active preferences
 for each extracted fact.
 
-The only `memory-snapshot.schema.json` changes are the minimal allowances needed
-to represent synthetic no-backend snapshots truthfully:
+The `memory-snapshot.schema.json` changes are scoped to represent synthetic
+no-backend snapshots truthfully without weakening real backend export
+validation:
 
 - `definitionBaseline.strategy: "synthetic-no-backend"`;
 - `diagnostics.schemaResetMode: "synthetic-no-backend"`;
 - `diagnostics.queryName: "SyntheticDirectOpenSchemaSnapshot"`;
-- nullable `diagnostics.backendUserId`.
+- nullable `diagnostics.backendUserId` only for synthetic snapshots.
 
 ## Checkpoint Status
 
@@ -95,9 +100,9 @@ pnpm eval:verify
 
 Results:
 
-- Direct baseline tests passed: 7 tests.
-- Direct plus PR2 scorer regression tests passed: 20 tests.
-- Full eval script suite passed: 292 tests.
+- Direct baseline tests passed: 8 tests.
+- Direct plus PR2 scorer regression tests passed: 21 tests.
+- Full eval script suite passed: 293 tests.
 - Eval validation passed with the existing 11 Alex realistic warnings and no
   errors.
 - `pnpm eval:verify` passed.

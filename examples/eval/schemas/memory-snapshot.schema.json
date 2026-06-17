@@ -135,6 +135,78 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "diagnostics": {
+            "properties": {
+              "queryName": { "const": "EvalMemorySnapshotExport" }
+            },
+            "required": ["queryName"]
+          }
+        },
+        "required": ["diagnostics"]
+      },
+      "then": {
+        "properties": {
+          "definitionBaseline": {
+            "properties": {
+              "strategy": {
+                "enum": [
+                  "none",
+                  "fresh-user",
+                  "archive-eval-owned",
+                  "baseline-only"
+                ]
+              }
+            }
+          },
+          "diagnostics": {
+            "properties": {
+              "backendUserId": { "type": "string", "minLength": 1 },
+              "schemaResetMode": {
+                "enum": [
+                  "none",
+                  "fresh-user",
+                  "archive-eval-owned",
+                  "baseline-only"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "diagnostics": {
+            "properties": {
+              "queryName": { "const": "SyntheticDirectOpenSchemaSnapshot" }
+            },
+            "required": ["queryName"]
+          }
+        },
+        "required": ["diagnostics"]
+      },
+      "then": {
+        "properties": {
+          "definitionBaseline": {
+            "properties": {
+              "strategy": { "const": "synthetic-no-backend" }
+            }
+          },
+          "diagnostics": {
+            "properties": {
+              "backendUserId": { "type": "null" },
+              "schemaResetMode": { "const": "synthetic-no-backend" }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "count": { "type": "integer", "minimum": 0 },
     "stringArray": {

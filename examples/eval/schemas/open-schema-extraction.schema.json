@@ -43,10 +43,16 @@
     "diagnostics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["factCount", "unresolvedCount", "duplicateSlugGroups"],
+      "required": [
+        "factCount",
+        "unresolvedCount",
+        "droppedFactCount",
+        "duplicateSlugGroups"
+      ],
       "properties": {
         "factCount": { "$ref": "#/$defs/count" },
         "unresolvedCount": { "$ref": "#/$defs/count" },
+        "droppedFactCount": { "$ref": "#/$defs/count" },
         "duplicateSlugGroups": {
           "type": "array",
           "items": {

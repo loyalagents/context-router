@@ -53,8 +53,8 @@ Vertex sees:
   fill policy, field policy, and options.
 
 Vertex does not see fixture truth, profile facts, field-map fact keys,
-accepted slug maps, validation reports, database exports, score reports, or
-previous baseline outputs.
+field-map notes, accepted slug maps, validation reports, database exports,
+score reports, or previous baseline outputs.
 
 The output is deliberately small and model-owned:
 
@@ -85,7 +85,10 @@ The output is deliberately small and model-owned:
 ```
 
 The evaluator assigns deterministic `factId` values after parsing. The model
-authored `slug` is preserved as behavior to score diagnostically.
+authored `slug` is preserved exactly as behavior to score diagnostically.
+Malformed envelopes fail. Invalid individual fact rows are dropped with
+diagnostics so one bad row does not prevent final form scoring from the usable
+facts.
 
 ### Stage 2: Fact-Only Form Fill
 
@@ -93,7 +96,7 @@ Vertex sees:
 
 - `open-schema-extraction.json` facts with evaluator `factId` values and
   model slugs;
-- PDF field metadata and safe field policies.
+- safe PDF field metadata and safe field policies.
 
 Vertex does not see the raw documents again. Every non-`SKIP` action must cite
 `sourceFactIds`. The evaluator derives diagnostic source slugs from those fact
@@ -146,8 +149,9 @@ Stop point:
 - Convert `open-schema-extraction.json` to `synthetic-memory-snapshot.json`
   deterministically.
 - Preserve mistakes: no slug cleanup, duplicate merging, value repair,
-  missing-fact inference, evidence repair, or semantic normalization beyond
-  JSON/schema parsing.
+  missing-fact inference, evidence repair, or semantic normalization. Invalid
+  rows may be dropped with diagnostics, but accepted rows preserve model
+  authored strings exactly.
 - Reuse PR2 open-schema database and combined scorers directly.
 - Extend `memory-snapshot.schema.json` only as needed for truthful synthetic
   no-backend snapshots.

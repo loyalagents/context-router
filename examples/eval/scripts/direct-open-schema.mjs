@@ -86,11 +86,10 @@ export async function runDirectOpenSchema({
       manifest: fixture.manifest,
       documentsRoot,
     });
-    const fieldMetadata = buildPromptFieldMetadata(fixture);
-    const model = options.model ?? env.EVAL_DIRECT_OPEN_SCHEMA_MODEL;
-    if (!model) {
-      throw new Error('Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.');
-    }
+    const fieldMetadata = buildDirectOpenSchemaFieldMetadata(
+      buildPromptFieldMetadata(fixture),
+    );
+    const model = options.model;
 
     const extractionPrompt = buildExtractionPrompt({
       fixture,
@@ -396,6 +395,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   ) {
     return { kind: 'usage-error', message: '--temperature must be a number from 0 to 2.' };
   }
+  if (!options.model) {
+    return {
+      kind: 'usage-error',
+      message: 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.',
+    };
+  }
 
   options.runId = options.runId ?? generatedRunId(options, now);
   return { kind: 'ok', options };
@@ -423,6 +428,7 @@ export function usage() {
 }
 
 export function buildExtractionPrompt({ fixture, fieldMetadata, evidenceDocuments }) {
+  const safeFieldMetadata = buildDirectOpenSchemaFieldMetadata(fieldMetadata);
   return [
     'You are extracting document-supported facts useful for filling the target form.',
     '',
@@ -468,7 +474,7 @@ export function buildExtractionPrompt({ fixture, fieldMetadata, evidenceDocument
     fixture.prompt.trim(),
     '',
     'Safe target form context:',
-    JSON.stringify(buildExtractionFieldContext(fieldMetadata), null, 2),
+    JSON.stringify(buildExtractionFieldContext(safeFieldMetadata), null, 2),
     '',
     'Evidence documents:',
     evidenceDocuments.map(formatEvidenceDocument).join('\n\n'),
@@ -476,6 +482,7 @@ export function buildExtractionPrompt({ fixture, fieldMetadata, evidenceDocument
 }
 
 export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
+  const safeFieldMetadata = buildDirectOpenSchemaFieldMetadata(fieldMetadata);
   return [
     'You are filling a fillable PDF form using only the extracted facts below.',
     '',
@@ -510,7 +517,7 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     ),
     '',
     'PDF field metadata:',
-    JSON.stringify(fieldMetadata, null, 2),
+    JSON.stringify(safeFieldMetadata, null, 2),
     '',
     'Extracted facts:',
     JSON.stringify(
@@ -529,6 +536,36 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'Unresolved facts:',
     JSON.stringify(extraction.unresolved, null, 2),
   ].join('\n');
+}
+
+export function buildDirectOpenSchemaFieldMetadata(fieldMetadata) {
+  return fieldMetadata.map((field) => ({
+    fieldName: field.fieldName,
+    fieldType: field.fieldType,
+    inferredLabel: field.inferredLabel ?? null,
+    fillPolicy: field.fillPolicy ?? null,
+    fieldPolicy: directOpenSchemaFieldPolicy(field.fieldPolicy),
+    options: Array.isArray(field.options) ? [...field.options] : [],
+  }));
+}
+
+function directOpenSchemaFieldPolicy(fieldPolicy) {
+  if (!fieldPolicy || typeof fieldPolicy !== 'object' || Array.isArray(fieldPolicy)) {
+    return { action: 'fillable' };
+  }
+  const policy = {
+    action: fieldPolicy.action === 'skip' ? 'skip' : 'fillable',
+  };
+  if (typeof fieldPolicy.reason === 'string' && fieldPolicy.reason.trim()) {
+    policy.reason = fieldPolicy.reason;
+  }
+  if (typeof fieldPolicy.render === 'string' && fieldPolicy.render.trim()) {
+    policy.render = fieldPolicy.render;
+  }
+  if (Array.isArray(fieldPolicy.branchValues)) {
+    policy.branchValues = fieldPolicy.branchValues;
+  }
+  return policy;
 }
 
 export function parseJsonObjectResponse(text) {
@@ -559,28 +596,40 @@ export function validateExtractionPayload({
   provider,
 }) {
   const validationDiagnostics = [];
+  const hardDiagnostics = [];
   if (!Array.isArray(parsed.facts)) {
-    validationDiagnostics.push('facts must be an array.');
+    const diagnostic = 'facts must be an array.';
+    validationDiagnostics.push(diagnostic);
+    hardDiagnostics.push(diagnostic);
   }
   const docIds = new Set(evidenceDocuments.map((doc) => doc.id));
   const facts = [];
+  let droppedFactCount = 0;
   if (Array.isArray(parsed.facts)) {
     parsed.facts.forEach((fact, index) => {
+      const factDiagnostics = [];
       const normalized = normalizeExtractedFact({
         fact,
         index,
         docIds,
-        diagnostics: validationDiagnostics,
+        diagnostics: factDiagnostics,
       });
-      if (normalized) facts.push(normalized);
+      if (normalized) {
+        facts.push(normalized);
+      } else {
+        droppedFactCount += 1;
+      }
+      validationDiagnostics.push(...factDiagnostics);
     });
   }
 
-  const unresolved = normalizeUnresolved(parsed.unresolved, validationDiagnostics);
-  if (validationDiagnostics.length > 0) {
+  const unresolvedResult = normalizeUnresolved(parsed.unresolved);
+  validationDiagnostics.push(...unresolvedResult.validationDiagnostics);
+  if (hardDiagnostics.length > 0) {
     return {
       ok: false,
       validationDiagnostics,
+      droppedFactCount,
       extraction: null,
     };
   }
@@ -588,6 +637,7 @@ export function validateExtractionPayload({
   return {
     ok: true,
     validationDiagnostics,
+    droppedFactCount,
     extraction: {
       schemaVersion: 1,
       artifactType: 'direct-open-schema-extraction',
@@ -601,8 +651,10 @@ export function validateExtractionPayload({
       model,
       promptVersion: EXTRACTION_PROMPT_VERSION,
       facts,
-      unresolved,
-      diagnostics: buildExtractionDiagnostics(facts, unresolved),
+      unresolved: unresolvedResult.unresolved,
+      diagnostics: buildExtractionDiagnostics(facts, unresolvedResult.unresolved, {
+        droppedFactCount,
+      }),
     },
   };
 }
@@ -824,9 +876,9 @@ function normalizeExtractedFact({ fact, index, docIds, diagnostics }) {
     diagnostics.push(`${pathLabel} must be an object.`);
     return null;
   }
-  const slug = stringField(fact.slug);
-  const label = stringField(fact.label);
-  const valueType = stringField(fact.valueType);
+  const slug = modelString(fact.slug);
+  const label = modelString(fact.label);
+  const valueType = modelString(fact.valueType);
   if (!slug) diagnostics.push(`${pathLabel}.slug must be a non-empty string.`);
   if (!label) diagnostics.push(`${pathLabel}.label must be a non-empty string.`);
   if (!VALUE_TYPES.has(valueType)) {
@@ -878,8 +930,8 @@ function normalizeEvidence({ evidence, docIds, pathLabel, diagnostics }) {
       diagnostics.push(`${entryPath} must be an object.`);
       return;
     }
-    const documentId = stringField(entry.documentId);
-    const quote = stringField(entry.quote);
+    const documentId = modelString(entry.documentId);
+    const quote = modelString(entry.quote);
     if (!documentId) diagnostics.push(`${entryPath}.documentId must be a non-empty string.`);
     if (documentId && !docIds.has(documentId)) {
       diagnostics.push(`${entryPath}.documentId ${documentId} is not in the declared corpus.`);
@@ -892,29 +944,32 @@ function normalizeEvidence({ evidence, docIds, pathLabel, diagnostics }) {
   return rows.length === evidence.length ? rows : null;
 }
 
-function normalizeUnresolved(unresolved, diagnostics) {
-  if (unresolved == null) return [];
+function normalizeUnresolved(unresolved) {
+  const validationDiagnostics = [];
+  if (unresolved == null) {
+    return { unresolved: [], validationDiagnostics };
+  }
   if (!Array.isArray(unresolved)) {
-    diagnostics.push('unresolved must be an array when present.');
-    return [];
+    validationDiagnostics.push('unresolved must be an array when present.');
+    return { unresolved: [], validationDiagnostics };
   }
   const rows = [];
   unresolved.forEach((entry, index) => {
     const pathLabel = `unresolved[${index}]`;
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-      diagnostics.push(`${pathLabel} must be an object.`);
+      validationDiagnostics.push(`${pathLabel} must be an object.`);
       return;
     }
-    const label = stringField(entry.label);
-    const reason = stringField(entry.reason);
-    if (!label) diagnostics.push(`${pathLabel}.label must be a non-empty string.`);
-    if (!reason) diagnostics.push(`${pathLabel}.reason must be a non-empty string.`);
+    const label = modelString(entry.label);
+    const reason = modelString(entry.reason);
+    if (!label) validationDiagnostics.push(`${pathLabel}.label must be a non-empty string.`);
+    if (!reason) validationDiagnostics.push(`${pathLabel}.reason must be a non-empty string.`);
     if (label && reason) rows.push({ label, reason });
   });
-  return rows;
+  return { unresolved: rows, validationDiagnostics };
 }
 
-function buildExtractionDiagnostics(facts, unresolved) {
+function buildExtractionDiagnostics(facts, unresolved, { droppedFactCount = 0 } = {}) {
   const slugGroups = new Map();
   for (const fact of facts) {
     const rows = slugGroups.get(fact.slug) ?? [];
@@ -924,6 +979,7 @@ function buildExtractionDiagnostics(facts, unresolved) {
   return {
     factCount: facts.length,
     unresolvedCount: unresolved.length,
+    droppedFactCount,
     duplicateSlugGroups: [...slugGroups.entries()]
       .filter(([, factIds]) => factIds.length > 1)
       .map(([slug, factIds]) => ({ slug, factIds }))
@@ -959,6 +1015,7 @@ function buildExtractionResponseArtifact({
     validationDiagnostics: validation.validationDiagnostics,
     factCount: validation.extraction?.facts?.length ?? 0,
     unresolvedCount: validation.extraction?.unresolved?.length ?? 0,
+    droppedFactCount: validation.droppedFactCount ?? 0,
   };
 }
 
@@ -1002,6 +1059,7 @@ function invalidExtractionValidation(validationDiagnostics = []) {
   return {
     ok: false,
     validationDiagnostics,
+    droppedFactCount: 0,
     extraction: null,
   };
 }
@@ -1188,8 +1246,8 @@ function syntheticId(kind, input) {
   return `synthetic-${kind}:${createHash('sha256').update(input).digest('hex').slice(0, 16)}`;
 }
 
-function stringField(value) {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+function modelString(value) {
+  return typeof value === 'string' && value.trim() ? value : null;
 }
 
 function valueMatchesType(value, valueType) {

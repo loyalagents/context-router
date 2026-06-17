@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { loadScenarioFixture } from './eval-runner/fixtures.mjs';
 import {
+  buildDirectOpenSchemaFieldMetadata,
   buildExtractionPrompt,
   buildFactOnlyFillPrompt,
   buildSyntheticMemorySnapshot,
@@ -67,6 +68,19 @@ test('direct-open-schema CLI parses defaults and reports invalid args', async ()
   );
   assert.equal(badProvider.kind, 'usage-error');
   assert.match(badProvider.message, /provider/);
+
+  const missingModel = parseArgs(
+    [
+      '--scenario',
+      'alex-i9-realistic',
+      '--artifacts-root',
+      '/tmp/direct-open-schema',
+    ],
+    {},
+    fixedNow,
+  );
+  assert.equal(missingModel.kind, 'usage-error');
+  assert.match(missingModel.message, /EVAL_DIRECT_OPEN_SCHEMA_MODEL/);
 });
 
 test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill prompts', async () => {
@@ -97,6 +111,10 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.doesNotMatch(extractionPrompt, /open-schema-extraction\.json/);
   assert.doesNotMatch(extractionPrompt, /filled-form\.json/);
   assert.doesNotMatch(extractionPrompt, /expectedValue/);
+  assert.doesNotMatch(extractionPrompt, /profile\.yaml/);
+  assert.doesNotMatch(extractionPrompt, /intentionally missing/);
+  assert.doesNotMatch(extractionPrompt, /Elena declares this fact/);
+  assert.doesNotMatch(extractionPrompt, /corpus manifest marks/);
 
   const extraction = validExtractionArtifact({
     fixture,
@@ -124,6 +142,15 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.doesNotMatch(fillPrompt, /Evidence documents/);
   assert.doesNotMatch(fillPrompt, /Driver License Upload OCR/);
   assert.doesNotMatch(fillPrompt, /validation-report/);
+  assert.doesNotMatch(fillPrompt, /inferredDataKey/);
+  assert.doesNotMatch(fillPrompt, /profile\.yaml/);
+  assert.doesNotMatch(fillPrompt, /intentionally missing/);
+  assert.doesNotMatch(fillPrompt, /Elena declares this fact/);
+  assert.doesNotMatch(fillPrompt, /corpus manifest marks/);
+
+  const safeMetadata = buildDirectOpenSchemaFieldMetadata(fieldMetadata);
+  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'inferredDataKey')));
+  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field.fieldPolicy, 'note')));
 });
 
 test('direct-open-schema parser and extraction validation assign stable fact ids and preserve duplicate slugs', async () => {
@@ -171,7 +198,23 @@ test('direct-open-schema parser and extraction validation assign stable fact ids
     'open-schema extraction',
   );
 
-  const invalid = validateExtractionPayload({
+  const trailingSlug = validateExtractionPayload({
+    parsed: {
+      facts: [
+        fact('identity.name ', 'Legal name ', 'Alex Jordan Rivera', evidenceDocuments[0].id),
+      ],
+    },
+    fixture,
+    evidenceDocuments,
+    runId: 'test-run',
+    model: 'test-model',
+    provider: 'vertex',
+  });
+  assert.equal(trailingSlug.ok, true);
+  assert.equal(trailingSlug.extraction.facts[0].slug, 'identity.name ');
+  assert.equal(trailingSlug.extraction.facts[0].label, 'Legal name ');
+
+  const invalidFact = validateExtractionPayload({
     parsed: {
       facts: [
         {
@@ -189,9 +232,23 @@ test('direct-open-schema parser and extraction validation assign stable fact ids
     model: 'test-model',
     provider: 'vertex',
   });
-  assert.equal(invalid.ok, false);
-  assert.match(invalid.validationDiagnostics.join('\n'), /valueType/);
-  assert.match(invalid.validationDiagnostics.join('\n'), /not in the declared corpus/);
+  assert.equal(invalidFact.ok, true);
+  assert.equal(invalidFact.droppedFactCount, 1);
+  assert.equal(invalidFact.extraction.diagnostics.droppedFactCount, 1);
+  assert.deepEqual(invalidFact.extraction.facts, []);
+  assert.match(invalidFact.validationDiagnostics.join('\n'), /valueType/);
+  assert.match(invalidFact.validationDiagnostics.join('\n'), /not in the declared corpus/);
+
+  const invalidEnvelope = validateExtractionPayload({
+    parsed: { facts: 'not-an-array' },
+    fixture,
+    evidenceDocuments,
+    runId: 'test-run',
+    model: 'test-model',
+    provider: 'vertex',
+  });
+  assert.equal(invalidEnvelope.ok, false);
+  assert.match(invalidEnvelope.validationDiagnostics.join('\n'), /facts must be an array/);
 });
 
 test('direct-open-schema validates fact-only fill actions and derives source slugs', () => {
@@ -306,6 +363,55 @@ test('direct-open-schema writes form artifacts and skips diagnostic extraction s
   assert.equal(firstNameAction.sourceFactIds[0], 'fact-0002');
 });
 
+test('direct-open-schema drops invalid extracted facts and still scores usable facts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-dropped-fact-'));
+  const result = await runDirectOpenSchema({
+    repoRoot,
+    args: [
+      '--scenario',
+      'alex-i9-realistic',
+      '--artifacts-root',
+      tmp,
+      '--model',
+      'test-model',
+      '--skip-extraction-scoring',
+    ],
+    env: {},
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) =>
+      JSON.stringify({
+        facts: [
+          {
+            slug: 'identity.bad',
+            label: 'Bad',
+            valueType: 'STRING',
+            value: 'not usable',
+            evidence: [{ documentId: 'not-a-declared-doc', quote: 'not usable' }],
+          },
+          ...fakeFacts(evidenceDocuments[0].id),
+        ],
+        unresolved: [],
+      }),
+    generateFillResponse: async (_prompt, { fieldMetadata, extraction }) =>
+      JSON.stringify({
+        fillActions: fieldMetadata.map((field) => fakeActionForField(field, extraction.facts)),
+      }),
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  await assertFile(path.join(tmp, 'filled-form.json'));
+  await assertFile(path.join(tmp, 'form-score-report.json'));
+
+  const response = JSON.parse(await readFile(path.join(tmp, 'open-schema-extraction-response.json'), 'utf8'));
+  assert.equal(response.droppedFactCount, 1);
+  assert.match(response.validationDiagnostics.join('\n'), /not in the declared corpus/);
+
+  const extraction = JSON.parse(await readFile(path.join(tmp, 'open-schema-extraction.json'), 'utf8'));
+  assert.equal(extraction.diagnostics.droppedFactCount, 1);
+  assert.equal(extraction.facts[0].factId, 'fact-0002');
+  assert.equal(extraction.facts.length, 4);
+});
+
 test('direct-open-schema emits synthetic memory snapshot and PR2 diagnostic reports', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-scored-'));
   const result = await runDirectOpenSchema({
@@ -342,6 +448,14 @@ test('direct-open-schema emits synthetic memory snapshot and PR2 diagnostic repo
   assert.equal(snapshot.definitionBaseline.strategy, 'synthetic-no-backend');
   assert.equal(snapshot.storageInput.producer, 'direct-open-schema-vertex');
   await validateWithSchema(repoRoot, 'memory-snapshot.schema.json', snapshot, 'synthetic memory snapshot');
+
+  const backendLabeledSnapshot = JSON.parse(JSON.stringify(snapshot));
+  backendLabeledSnapshot.diagnostics.queryName = 'EvalMemorySnapshotExport';
+  backendLabeledSnapshot.diagnostics.schemaResetMode = 'baseline-only';
+  backendLabeledSnapshot.definitionBaseline.strategy = 'baseline-only';
+  await assert.rejects(
+    validateWithSchema(repoRoot, 'memory-snapshot.schema.json', backendLabeledSnapshot, 'backend memory snapshot'),
+  );
 
   const dbReport = JSON.parse(await readFile(path.join(tmp, 'open-schema-database-score-report.json'), 'utf8'));
   assert.equal(dbReport.scoreType, 'open-schema-database-storage');
@@ -464,6 +578,7 @@ function validExtractionArtifact({ fixture, facts }) {
     diagnostics: {
       factCount: facts.length,
       unresolvedCount: 0,
+      droppedFactCount: 0,
       duplicateSlugGroups: [],
     },
   };
