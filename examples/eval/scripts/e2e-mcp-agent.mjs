@@ -5,12 +5,19 @@ import { spawn } from 'node:child_process';
 import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runExportMemorySnapshot } from './export-memory-snapshot.mjs';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
 import { runFillForm } from './fill-form.mjs';
 import {
   loadKnownSchemaFixture,
   prepareKnownSchemaMemory,
 } from './ingestor/setup.mjs';
+import { fetchMemorySnapshotGraphql } from './memory-snapshot/client.mjs';
+import {
+  buildDefinitionBaselineArtifact,
+  normalizeDefinitionRows,
+  sortDefinitionRows,
+} from './memory-snapshot/mapper.mjs';
 import { readJson, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
 import { runScore } from './score.mjs';
 import { isFixtureId } from './shared.mjs';
@@ -25,12 +32,15 @@ const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const DEFAULT_BACKEND_URL = 'http://localhost:3000';
 const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const DEFAULT_AGENT_TIMEOUT_MS = 900_000;
-const DEFAULT_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
-const INGESTION_MODE = 'mcp-known-schema-agent';
+const KNOWN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
+const OPEN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-open-schema.md';
+const KNOWN_INGESTION_MODE = 'mcp-known-schema-agent';
+const OPEN_MEMORY_PRODUCER = 'mcp-open-schema-agent';
+const OPEN_SCHEMA_RESET_MODE = 'baseline-only';
 const CLAUDE_BUILTIN_TOOLS = 'Read,Glob,Grep';
 export const COMPLETION_MARKER = 'EVAL_MCP_AGENT_DONE';
 
-const STAGE_NAMES = [
+const KNOWN_STAGE_NAMES = [
   'validate-documents',
   'setup-memory-and-schema',
   'run-mcp-agent',
@@ -39,6 +49,18 @@ const STAGE_NAMES = [
   'fill-form',
   'score-form',
   'score-combined',
+];
+
+const OPEN_STAGE_NAMES = [
+  'validate-documents',
+  'setup-open-schema-memory',
+  'capture-definition-baseline',
+  'run-mcp-agent',
+  'export-memory-snapshot',
+  'score-open-schema-database',
+  'fill-form',
+  'score-form',
+  'score-open-schema-combined',
 ];
 
 export async function runMcpAgentE2E({
@@ -66,8 +88,10 @@ export async function runMcpAgentE2E({
   const stageRunners = {
     validate: runValidation,
     setup: prepareKnownSchemaMemory,
+    captureDefinitionBaseline,
     agent: runAgentProcess,
     exportStoredPreferences: runExportStoredPreferences,
+    exportMemorySnapshot: runExportMemorySnapshot,
     score: runScore,
     fillForm: runFillForm,
     ...runners,
@@ -130,7 +154,7 @@ export async function runMcpAgentE2E({
         },
       },
       {
-        name: 'setup-memory-and-schema',
+        name: options.schemaMode === 'open' ? 'setup-open-schema-memory' : 'setup-memory-and-schema',
         runner: async () => {
           setupResult = await stageRunners.setup({
             repoRoot,
@@ -166,6 +190,22 @@ export async function runMcpAgentE2E({
           await writeAgentRun();
         },
       },
+      ...(options.schemaMode === 'open'
+        ? [
+            {
+              name: 'capture-definition-baseline',
+              runner: () =>
+                stageRunners.captureDefinitionBaseline({
+                  repoRoot,
+                  options,
+                  artifacts,
+                  setupResult,
+                  fetchImpl,
+                  now,
+                }),
+            },
+          ]
+        : []),
       {
         name: 'run-mcp-agent',
         runner: async () => {
@@ -185,51 +225,103 @@ export async function runMcpAgentE2E({
           return result;
         },
       },
-      {
-        name: 'export-stored-preferences',
-        runner: () =>
-          stageRunners.exportStoredPreferences({
-            repoRoot,
-            args: exportArgs(options, artifacts),
-            env: {},
-            fetchImpl,
-            now,
-          }),
-        afterSuccess: async () => {
-          const storedPreferences = await readJson(artifacts.storedPreferences);
-          report.backendUserId =
-            storedPreferences.diagnostics?.backendUserId ?? report.backendUserId;
-          report.summaries.export = {
-            activePreferenceCount: storedPreferences.preferences?.length ?? 0,
-            suggestedPreferenceCount: storedPreferences.suggestions?.length ?? 0,
-          };
-        },
-      },
-      {
-        name: 'score-database',
-        runner: () =>
-          stageRunners.score({
-            repoRoot,
-            args: [
-              '--mode',
-              'database',
-              '--user',
-              options.userId,
-              '--corpus',
-              options.corpusId,
-              '--stored-preferences',
-              artifacts.storedPreferences,
-              '--validation-report',
-              artifacts.validationReport,
-              '--out',
-              artifacts.databaseScoreReport,
-            ],
-          }),
-        afterSuccess: async () => {
-          const databaseScore = await readJson(artifacts.databaseScoreReport);
-          report.summaries.databaseScore = databaseScore.summary ?? null;
-        },
-      },
+      ...(options.schemaMode === 'open'
+        ? [
+            {
+              name: 'export-memory-snapshot',
+              runner: () =>
+                stageRunners.exportMemorySnapshot({
+                  repoRoot,
+                  args: exportMemorySnapshotArgs(options, artifacts),
+                  env: {},
+                  fetchImpl,
+                  now,
+                }),
+              afterSuccess: async () => {
+                const memorySnapshot = await readJson(artifacts.memorySnapshot);
+                report.backendUserId =
+                  memorySnapshot.diagnostics?.backendUserId ?? report.backendUserId;
+                report.summaries.export = {
+                  activePreferenceCount: memorySnapshot.preferences?.length ?? 0,
+                  suggestedPreferenceCount: memorySnapshot.suggestions?.length ?? 0,
+                  definitionCount: memorySnapshot.definitions?.length ?? 0,
+                  schemaResetMode: memorySnapshot.diagnostics?.schemaResetMode ?? null,
+                };
+              },
+            },
+            {
+              name: 'score-open-schema-database',
+              runner: () =>
+                stageRunners.score({
+                  repoRoot,
+                  args: [
+                    '--mode',
+                    'open-schema-database',
+                    '--user',
+                    options.userId,
+                    '--corpus',
+                    options.corpusId,
+                    '--memory-snapshot',
+                    artifacts.memorySnapshot,
+                    '--validation-report',
+                    artifacts.validationReport,
+                    '--out',
+                    artifacts.openSchemaDatabaseScoreReport,
+                  ],
+                }),
+              afterSuccess: async () => {
+                const databaseScore = await readJson(artifacts.openSchemaDatabaseScoreReport);
+                report.summaries.databaseScore = databaseScore.summary ?? null;
+              },
+            },
+          ]
+        : [
+            {
+              name: 'export-stored-preferences',
+              runner: () =>
+                stageRunners.exportStoredPreferences({
+                  repoRoot,
+                  args: exportArgs(options, artifacts),
+                  env: {},
+                  fetchImpl,
+                  now,
+                }),
+              afterSuccess: async () => {
+                const storedPreferences = await readJson(artifacts.storedPreferences);
+                report.backendUserId =
+                  storedPreferences.diagnostics?.backendUserId ?? report.backendUserId;
+                report.summaries.export = {
+                  activePreferenceCount: storedPreferences.preferences?.length ?? 0,
+                  suggestedPreferenceCount: storedPreferences.suggestions?.length ?? 0,
+                };
+              },
+            },
+            {
+              name: 'score-database',
+              runner: () =>
+                stageRunners.score({
+                  repoRoot,
+                  args: [
+                    '--mode',
+                    'database',
+                    '--user',
+                    options.userId,
+                    '--corpus',
+                    options.corpusId,
+                    '--stored-preferences',
+                    artifacts.storedPreferences,
+                    '--validation-report',
+                    artifacts.validationReport,
+                    '--out',
+                    artifacts.databaseScoreReport,
+                  ],
+                }),
+              afterSuccess: async () => {
+                const databaseScore = await readJson(artifacts.databaseScoreReport);
+                report.summaries.databaseScore = databaseScore.summary ?? null;
+              },
+            },
+          ]),
       {
         name: 'fill-form',
         runner: () =>
@@ -282,27 +374,53 @@ export async function runMcpAgentE2E({
           report.summaries.formScore = formScore.summary ?? null;
         },
       },
-      {
-        name: 'score-combined',
-        runner: () =>
-          stageRunners.score({
-            repoRoot,
-            args: [
-              '--mode',
-              'combined',
-              '--database-report',
-              artifacts.databaseScoreReport,
-              '--form-report',
-              artifacts.formScoreReport,
-              '--out',
-              artifacts.combinedScoreReport,
-            ],
-          }),
-        afterSuccess: async () => {
-          const combinedScore = await readJson(artifacts.combinedScoreReport);
-          report.summaries.combinedScore = combinedScore.summary ?? null;
-        },
-      },
+      ...(options.schemaMode === 'open'
+        ? [
+            {
+              name: 'score-open-schema-combined',
+              runner: () =>
+                stageRunners.score({
+                  repoRoot,
+                  args: [
+                    '--mode',
+                    'open-schema-combined',
+                    '--open-schema-database-report',
+                    artifacts.openSchemaDatabaseScoreReport,
+                    '--form-report',
+                    artifacts.formScoreReport,
+                    '--out',
+                    artifacts.openSchemaCombinedScoreReport,
+                  ],
+                }),
+              afterSuccess: async () => {
+                const combinedScore = await readJson(artifacts.openSchemaCombinedScoreReport);
+                report.summaries.combinedScore = combinedScore.summary ?? null;
+              },
+            },
+          ]
+        : [
+            {
+              name: 'score-combined',
+              runner: () =>
+                stageRunners.score({
+                  repoRoot,
+                  args: [
+                    '--mode',
+                    'combined',
+                    '--database-report',
+                    artifacts.databaseScoreReport,
+                    '--form-report',
+                    artifacts.formScoreReport,
+                    '--out',
+                    artifacts.combinedScoreReport,
+                  ],
+                }),
+              afterSuccess: async () => {
+                const combinedScore = await readJson(artifacts.combinedScoreReport);
+                report.summaries.combinedScore = combinedScore.summary ?? null;
+              },
+            },
+          ]),
     ];
 
     for (const stage of stages) {
@@ -513,6 +631,63 @@ async function runMcpAgentStage({
   }
 }
 
+async function captureDefinitionBaseline({
+  repoRoot = defaultRepoRoot,
+  options,
+  artifacts,
+  setupResult,
+  fetchImpl = globalThis.fetch,
+  now = () => new Date(),
+}) {
+  if (!setupResult?.backendUserId) {
+    throw new Error('MCP setup did not provide a backend user for definition baseline capture.');
+  }
+  const capturedAt = isoTimestamp(now);
+  const responseData = await fetchMemorySnapshotGraphql({
+    graphqlUrl: options.graphqlUrl,
+    authToken: options.authToken,
+    locationId: options.locationId,
+    includeSuggestions: false,
+    fetchImpl,
+  });
+  const backendUserId = responseData?.me?.userId;
+  if (typeof backendUserId !== 'string' || backendUserId.length === 0) {
+    throw new Error('Definition baseline response did not include me.userId.');
+  }
+  if (backendUserId !== setupResult.backendUserId) {
+    throw new Error(
+      `Definition baseline backend user ${backendUserId} does not match setup backend user ${setupResult.backendUserId}.`,
+    );
+  }
+  const definitions = sortDefinitionRows(
+    normalizeDefinitionRows({
+      rows: responseData.exportPreferenceSchema,
+      label: 'exportPreferenceSchema',
+    }),
+  );
+  const artifact = buildDefinitionBaselineArtifact({
+    userId: options.userId,
+    corpusId: options.corpusId,
+    scenarioId: options.scenarioId,
+    graphqlUrl: options.graphqlUrl,
+    backendUserId,
+    definitions,
+    capturedAt,
+    schemaResetMode: OPEN_SCHEMA_RESET_MODE,
+  });
+  await writeJson(artifacts.definitionBaseline, artifact);
+  return {
+    exitCode: 0,
+    lines: [
+      'eval MCP definition baseline captured',
+      `backendUser=${backendUserId}`,
+      `definitions=${artifact.definitionIds.length}`,
+      `strategy=${artifact.strategy}`,
+      `wrote ${relativePath(repoRoot, artifacts.definitionBaseline)}`,
+    ],
+  };
+}
+
 async function runStage({ stage, report, redactionSecrets, now }) {
   const stageRecord = report.stages.find((candidate) => candidate.name === stage.name);
   stageRecord.status = 'running';
@@ -587,7 +762,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     ensureDefinitions: true,
     allowTestCommandAgent: false,
     agentTimeoutMs: DEFAULT_AGENT_TIMEOUT_MS,
-    promptTemplate: DEFAULT_PROMPT_TEMPLATE,
+    promptTemplate: null,
   };
   const valueArgs = new Set([
     '--agent',
@@ -687,16 +862,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: '--agent codex is reserved until an explicit MCP eval adapter is implemented',
     };
   }
-  if (options.schemaMode === 'open') {
+  if (!['known', 'open'].includes(options.schemaMode)) {
     return {
       kind: 'usage-error',
-      message: '--schema-mode open is reserved for a future implementation',
-    };
-  }
-  if (options.schemaMode !== 'known') {
-    return {
-      kind: 'usage-error',
-      message: 'Expected --schema-mode known',
+      message: 'Expected --schema-mode known or open',
     };
   }
   if (options.formMode === 'agent') {
@@ -709,6 +878,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     return {
       kind: 'usage-error',
       message: 'Expected --form-mode backend',
+    };
+  }
+  if (options.schemaMode === 'open' && options.agent !== 'command') {
+    return {
+      kind: 'usage-error',
+      message: '--schema-mode open currently supports the deterministic --agent command adapter only',
     };
   }
   if (options.agent === 'command' && !options.agentCommand) {
@@ -745,6 +920,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     };
   }
 
+  if (options.schemaMode === 'open') {
+    options.ensureDefinitions = false;
+  }
+  options.promptTemplate =
+    options.promptTemplate ??
+    (options.schemaMode === 'open' ? OPEN_PROMPT_TEMPLATE : KNOWN_PROMPT_TEMPLATE);
   options.documentsRoot =
     options.documentsRoot ??
     ['examples', 'eval', 'users', options.userId, 'corpora', options.corpusId].join('/');
@@ -755,11 +936,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
 export function usage() {
   return [
     'Usage:',
-    '  pnpm eval:e2e-mcp-agent --agent claude|command --schema-mode known --form-mode backend --user <userId> --corpus <corpusId> --scenario <scenarioId> --artifacts-root <dir> --mcp-server <name> [options]',
+    '  pnpm eval:e2e-mcp-agent --agent claude|command --schema-mode known|open --form-mode backend --user <userId> --corpus <corpusId> --scenario <scenarioId> --artifacts-root <dir> --mcp-server <name> [options]',
     '',
     'Notes:',
-    '  This wrapper runs a known-schema MCP memory ingestion eval through one agent session.',
-    '  Open schema and agent-filled forms are reserved and fail fast until implemented.',
+    '  This wrapper runs one MCP memory ingestion eval through one agent session.',
+    '  Known schema uses stored-preferences artifacts; open schema uses memory-snapshot artifacts.',
+    '  Open schema is enabled for the deterministic command adapter first; live Claude open-schema smoke remains reserved.',
+    '  Agent-filled forms are reserved and fail fast until implemented.',
     '  Low scores are reported but do not fail the wrapper. Runtime/setup failures stop the run.',
     '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',
     '  --agent command is test-only and is not benchmark-safe filesystem isolation.',
@@ -776,10 +959,10 @@ export function usage() {
     '  --allow-test-command-agent        Required with --agent command; marks the command adapter as test-only',
     '  --mcp-config <path>               Required with --agent claude; loaded with --strict-mcp-config',
     '  --agent-timeout-ms <ms>           Defaults to 900000',
-    '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-known-schema.md',
+    '  --prompt-template <path>          Defaults by schema mode to the MCP known/open prompt template',
     '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
     '  --reset-memory                    Clear current backend user memory before the agent run',
-    '  --skip-ensure-definitions          Do not create missing known-schema definitions',
+    '  --skip-ensure-definitions          Do not create missing known-schema definitions; forced in open mode',
     '  --location-id <locationId>         Export merged global + location view',
     '  --run-id <id>',
   ].join('\n');
@@ -1065,13 +1248,17 @@ function buildArtifacts({ repoRoot, options }) {
     mcpAgentRun: path.join(artifactsRoot, 'mcp-agent-run.json'),
     prompt: path.join(artifactsRoot, 'mcp-agent-prompt.md'),
     transcript: path.join(artifactsRoot, 'mcp-agent-transcript.txt'),
+    definitionBaseline: path.join(artifactsRoot, 'definition-baseline.json'),
+    memorySnapshot: path.join(artifactsRoot, 'memory-snapshot.json'),
     storedPreferences: path.join(artifactsRoot, 'stored-preferences.json'),
     databaseScoreReport: path.join(artifactsRoot, 'database-score-report.json'),
+    openSchemaDatabaseScoreReport: path.join(artifactsRoot, 'open-schema-database-score-report.json'),
     filledForm: path.join(artifactsRoot, 'filled-form.json'),
     filledPdf: path.join(artifactsRoot, 'filled-form.pdf'),
     formFillResponse: path.join(artifactsRoot, 'form-fill-response.json'),
     formScoreReport: path.join(artifactsRoot, 'form-score-report.json'),
     combinedScoreReport: path.join(artifactsRoot, 'combined-score-report.json'),
+    openSchemaCombinedScoreReport: path.join(artifactsRoot, 'open-schema-combined-score-report.json'),
     evaluationRun: path.join(artifactsRoot, 'evaluation-run.json'),
   };
 }
@@ -1080,7 +1267,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
   return {
     schemaVersion: 2,
     artifactType: 'evaluation-run',
-    evaluationMode: 'mcp-known-schema',
+    evaluationMode: options.schemaMode === 'open' ? 'mcp-open-schema' : 'mcp-known-schema',
     status: 'running',
     runId: options.runId,
     userId: options.userId,
@@ -1111,7 +1298,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
     },
     backendUserId: null,
     failureStage: null,
-    stages: STAGE_NAMES.map((name) => ({
+    stages: stageNamesForMode(options.schemaMode).map((name) => ({
       name,
       status: 'pending',
       startedAt: null,
@@ -1201,20 +1388,46 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
       preferenceWriteCount: null,
       definitionCreateCount: null,
     },
-    artifacts: {
-      validationReport: relativePath(repoRoot, artifacts.validationReport),
-      storedPreferences: relativePath(repoRoot, artifacts.storedPreferences),
-      databaseScoreReport: relativePath(repoRoot, artifacts.databaseScoreReport),
-      filledForm: relativePath(repoRoot, artifacts.filledForm),
-      filledPdf: relativePath(repoRoot, artifacts.filledPdf),
-      formFillResponse: relativePath(repoRoot, artifacts.formFillResponse),
-      formScoreReport: relativePath(repoRoot, artifacts.formScoreReport),
-      combinedScoreReport: relativePath(repoRoot, artifacts.combinedScoreReport),
-      evaluationRun: relativePath(repoRoot, artifacts.evaluationRun),
-    },
+    artifacts: agentRunArtifactMap({ repoRoot, options, artifacts }),
     startedAt,
     endedAt: null,
     error: null,
+  };
+}
+
+function stageNamesForMode(schemaMode) {
+  return schemaMode === 'open' ? OPEN_STAGE_NAMES : KNOWN_STAGE_NAMES;
+}
+
+function agentRunArtifactMap({ repoRoot, options, artifacts }) {
+  const common = {
+    validationReport: relativePath(repoRoot, artifacts.validationReport),
+    filledForm: relativePath(repoRoot, artifacts.filledForm),
+    filledPdf: relativePath(repoRoot, artifacts.filledPdf),
+    formFillResponse: relativePath(repoRoot, artifacts.formFillResponse),
+    formScoreReport: relativePath(repoRoot, artifacts.formScoreReport),
+    evaluationRun: relativePath(repoRoot, artifacts.evaluationRun),
+  };
+  if (options.schemaMode === 'open') {
+    return {
+      ...common,
+      definitionBaseline: relativePath(repoRoot, artifacts.definitionBaseline),
+      memorySnapshot: relativePath(repoRoot, artifacts.memorySnapshot),
+      openSchemaDatabaseScoreReport: relativePath(
+        repoRoot,
+        artifacts.openSchemaDatabaseScoreReport,
+      ),
+      openSchemaCombinedScoreReport: relativePath(
+        repoRoot,
+        artifacts.openSchemaCombinedScoreReport,
+      ),
+    };
+  }
+  return {
+    ...common,
+    storedPreferences: relativePath(repoRoot, artifacts.storedPreferences),
+    databaseScoreReport: relativePath(repoRoot, artifacts.databaseScoreReport),
+    combinedScoreReport: relativePath(repoRoot, artifacts.combinedScoreReport),
   };
 }
 
@@ -1234,6 +1447,8 @@ function artifactMapForStage({ repoRoot, artifacts, name }) {
   const map = {
     'validate-documents': { validationReport: artifacts.validationReport },
     'setup-memory-and-schema': { mcpAgentRun: artifacts.mcpAgentRun },
+    'setup-open-schema-memory': { mcpAgentRun: artifacts.mcpAgentRun },
+    'capture-definition-baseline': { definitionBaseline: artifacts.definitionBaseline },
     'run-mcp-agent': {
       mcpAgentRun: artifacts.mcpAgentRun,
       agentWorkspace: artifacts.agentWorkspaceRoot,
@@ -1243,7 +1458,11 @@ function artifactMapForStage({ repoRoot, artifacts, name }) {
       transcript: artifacts.transcript,
     },
     'export-stored-preferences': { storedPreferences: artifacts.storedPreferences },
+    'export-memory-snapshot': { memorySnapshot: artifacts.memorySnapshot },
     'score-database': { databaseScoreReport: artifacts.databaseScoreReport },
+    'score-open-schema-database': {
+      openSchemaDatabaseScoreReport: artifacts.openSchemaDatabaseScoreReport,
+    },
     'fill-form': {
       filledForm: artifacts.filledForm,
       filledPdf: artifacts.filledPdf,
@@ -1251,6 +1470,9 @@ function artifactMapForStage({ repoRoot, artifacts, name }) {
     },
     'score-form': { formScoreReport: artifacts.formScoreReport },
     'score-combined': { combinedScoreReport: artifacts.combinedScoreReport },
+    'score-open-schema-combined': {
+      openSchemaCombinedScoreReport: artifacts.openSchemaCombinedScoreReport,
+    },
   }[name];
   return Object.fromEntries(
     Object.entries(map).map(([key, value]) => [key, relativePath(repoRoot, value)]),
@@ -1270,9 +1492,39 @@ function exportArgs(options, artifacts) {
     '--auth-token',
     options.authToken,
     '--ingestion-mode',
-    INGESTION_MODE,
+    KNOWN_INGESTION_MODE,
     '--suggestions-were-auto-applied',
     'false',
+    '--run-id',
+    options.runId,
+  ];
+  if (options.locationId) args.push('--location-id', options.locationId);
+  return args;
+}
+
+function exportMemorySnapshotArgs(options, artifacts) {
+  const args = [
+    '--user',
+    options.userId,
+    '--corpus',
+    options.corpusId,
+    '--scenario',
+    options.scenarioId,
+    '--out',
+    artifacts.memorySnapshot,
+    '--graphql-url',
+    options.graphqlUrl,
+    '--auth-token',
+    options.authToken,
+    '--include-suggestions',
+    '--producer',
+    OPEN_MEMORY_PRODUCER,
+    '--schema-mode',
+    'open',
+    '--schema-reset-mode',
+    OPEN_SCHEMA_RESET_MODE,
+    '--baseline-in',
+    artifacts.definitionBaseline,
     '--run-id',
     options.runId,
   ];
@@ -1382,7 +1634,7 @@ function durationMs(startedAt, endedAt) {
 
 function generatedRunId(options, now) {
   return [
-    'mcp-known-schema',
+    options.schemaMode === 'open' ? 'mcp-open-schema' : 'mcp-known-schema',
     options.userId,
     options.corpusId,
     isoTimestamp(now).replace(/[^0-9A-Za-z]+/g, '-').replace(/^-|-$/g, ''),

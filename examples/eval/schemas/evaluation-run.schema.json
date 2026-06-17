@@ -137,12 +137,17 @@
             "validate-documents",
             "ingest-documents",
             "setup-memory-and-schema",
+            "setup-open-schema-memory",
+            "capture-definition-baseline",
             "run-mcp-agent",
             "export-stored-preferences",
+            "export-memory-snapshot",
             "score-database",
+            "score-open-schema-database",
             "fill-form",
             "score-form",
-            "score-combined"
+            "score-combined",
+            "score-open-schema-combined"
           ]
         },
         "status": {

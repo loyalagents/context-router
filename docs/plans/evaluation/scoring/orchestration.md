@@ -53,8 +53,9 @@ open-schema producer
 - [x] Add open-schema `memory-snapshot.json` export support before enabling
   live MCP open mode.
 - [x] Add open-schema scoring support before enabling live MCP open mode.
-- [ ] Enable MCP open-schema mode and label live results based on identity and
-  schema-state isolation.
+- [x] Enable MCP open-schema mode for the deterministic command adapter.
+- [ ] Label live MCP open-schema results based on identity and schema-state
+  isolation.
 
 ## Phase 1: Scorer
 
@@ -235,8 +236,9 @@ Checkpoint order:
    and deterministic schema diagnostics, plus
    `open-schema-combined-score-report.json` for attribution against the
    existing form score.
-3. Pending: MCP open-schema runner mode tests agent-driven schema discovery and
-   memory writes through existing MCP tools.
+3. Implemented in PR3: MCP open-schema runner mode tests agent-driven schema
+   discovery and memory writes through existing MCP tools using the
+   deterministic command adapter.
 4. Pending: isolation/live-smoke hardening verifies MCP/backend identity,
    records or cleans prior eval-created definitions, and labels smoke-only
    results honestly.
@@ -259,3 +261,5 @@ Design doc:
 - `docs/plans/evaluation/scoring/open-schema/pr1/implementation-summary.md`
 - `docs/plans/evaluation/scoring/open-schema/pr2/implementation-plan.md`
 - `docs/plans/evaluation/scoring/open-schema/pr2/implementation-summary.md`
+- `docs/plans/evaluation/scoring/open-schema/pr3/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr3/implementation-summary.md`

@@ -292,8 +292,18 @@ function authenticatedBackendUserId(responseData) {
 }
 
 function evaluationModeFor({ producer, schemaMode }) {
-  if (producer === 'mcp-agent' && schemaMode === 'open') return 'mcp-open-schema';
-  if (producer === 'mcp-agent' && schemaMode === 'known') return 'mcp-known-schema';
+  if (
+    (producer === 'mcp-agent' || producer === 'mcp-open-schema-agent') &&
+    schemaMode === 'open'
+  ) {
+    return 'mcp-open-schema';
+  }
+  if (
+    (producer === 'mcp-agent' || producer === 'mcp-known-schema-agent') &&
+    schemaMode === 'known'
+  ) {
+    return 'mcp-known-schema';
+  }
   return `${schemaMode}-schema`;
 }
 
