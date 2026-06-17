@@ -240,6 +240,10 @@ test('ingest-documents resets, ensures definitions, uploads, applies, exports, a
     'EvalIngestorResetMemory',
     'EvalIngestorPreferenceSchema',
   ]);
+  const resetCall = fetchMock.calls.find(
+    (call) => call.operationName === 'EvalIngestorResetMemory',
+  );
+  assert.equal(resetCall.variables.mode, 'MEMORY_ONLY');
   assert.equal(fetchMock.calls.filter((call) => call.kind === 'upload').length, 10);
   assert.equal(
     fetchMock.createDefinitionInputs.some((input) => input.slug === 'profile.full_name'),

@@ -68,8 +68,8 @@
   - Writes `mcp-agent-run.json`, prompt, transcript, and the shared
     `evaluation-run.json` stage report.
   - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
-  - Records that MCP/backend identity is not yet verified; live runs are smoke
-    results until a hard identity preflight exists.
+  - Records that MCP/backend identity is not yet verified; hard identity
+    preflight remains deferred.
   - Live Claude runs fail if the configured MCP server is unavailable, no
     `mcp__<server>__*` tools are exposed, or the required completion marker is
     missing.
@@ -119,8 +119,14 @@
     `--baseline-in`, `--include-suggestions`, and producer
     `mcp-open-schema-agent`.
   - Scores with `open-schema-database` and `open-schema-combined`.
-  - Keeps live Claude open-schema smoke reserved until identity and
-    schema-state isolation are handled.
+- [x] Open-schema Checkpoint 4 live Claude runner enablement.
+  - Accepts `--agent claude --schema-mode open --form-mode backend` with an
+    explicit Claude MCP config.
+  - Reuses the PR3 open-schema artifact chain unchanged.
+  - Adds `--reset-demo-data` for current-user demo-data reset through existing
+    backend behavior, clearing user-owned definitions before baseline capture.
+  - Keeps `--agent codex`, `--form-mode agent`, hard identity tooling, and
+    selective schema cleanup deferred.
 - [x] Open-schema direct Vertex no-storage baseline.
   - Added `pnpm eval:direct-open-schema`.
   - Runs form-aware extraction from declared corpus documents, then fills the
@@ -151,12 +157,12 @@
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Add a hard MCP/backend identity preflight so the runner can prove the
-  Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
-  exports and scores.
-- [ ] Checkpoint 4 for open schema: add identity/schema-isolation hardening and
-  run a live Claude MCP smoke labeled as smoke-only or benchmark-usable based
-  on the captured state.
+- [ ] Add MCP/backend identity hardening later if research runs need stronger
+  proof that the Claude MCP session and `EVAL_AUTH_TOKEN` resolve to the same
+  backend user.
+- [ ] Add fresh-user or guarded definition-cleanup workflows later if
+  baseline-only definition recording is not enough for repeatable open-schema
+  comparisons.
 
 ## Later
 
