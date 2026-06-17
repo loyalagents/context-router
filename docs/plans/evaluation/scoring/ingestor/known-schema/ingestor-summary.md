@@ -109,9 +109,8 @@ validation errors.
 - Run a live local backend smoke using generated Alex documents, then save a
   representative `ingestion-run.json`, exported preferences, and score report
   outside the repo or as curated examples if useful.
-- Design open-schema ingestion where the system or agent must create useful
-  definitions/slugs instead of relying on pre-created target definitions.
-- Decide whether the next open-schema track should start with MCP/Codex/Claude
-  agent evaluation or upload-level schema discovery.
+- Implement the MCP known-schema agent runner first, then use that runner shape
+  for MCP open-schema evaluation before designing upload-level schema
+  discovery.
 - Add source-fact ownership and richer missing-value fixtures if source-only
   extras become a recurring scoring ambiguity.

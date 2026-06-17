@@ -3,6 +3,21 @@ import { McpClientConfig } from '../mcp/types/mcp-authorization.types';
 
 export default registerAs('mcp', () => {
   const auth0Domain = process.env.AUTH0_DOMAIN;
+  const auth0Audience = process.env.AUTH0_AUDIENCE;
+  const serverUrl = process.env.MCP_SERVER_URL;
+  const httpPath = process.env.MCP_HTTP_PATH || '/mcp';
+  const normalizedHttpPath = httpPath.startsWith('/') ? httpPath : `/${httpPath}`;
+  const protectedResource =
+    process.env.MCP_RESOURCE ||
+    (serverUrl ? new URL(normalizedHttpPath, serverUrl).toString() : auth0Audience);
+
+  const authorizationEndpoint = auth0Domain
+    ? new URL(`https://${auth0Domain}/authorize`)
+    : undefined;
+  if (authorizationEndpoint && auth0Audience) {
+    authorizationEndpoint.searchParams.set('audience', auth0Audience);
+  }
+
   const clients: McpClientConfig[] = [
     {
       key: 'claude',
@@ -76,7 +91,7 @@ export default registerAs('mcp', () => {
     // HTTP Transport Configuration
     httpTransport: {
       enabled: process.env.MCP_HTTP_ENABLED !== 'false', // Enabled by default
-      path: process.env.MCP_HTTP_PATH || '/mcp',
+      path: httpPath,
       requireAuth: process.env.MCP_HTTP_REQUIRE_AUTH !== 'false', // JWT required by default
       allowedOrigins: process.env.MCP_HTTP_ALLOWED_ORIGINS
         ? process.env.MCP_HTTP_ALLOWED_ORIGINS.split(',')
@@ -114,23 +129,18 @@ export default registerAs('mcp', () => {
 
     // OAuth Configuration for MCP clients (Claude, ChatGPT)
     oauth: {
-      // The resource identifier - must match Auth0 API identifier and token audience
-      // TODO: Consider separating MCP_RESOURCE from AUTH0_AUDIENCE in the future if:
-      // - We move to a custom domain (MCP_RESOURCE = custom domain, AUTH0_AUDIENCE = API identifier)
-      // - We want to hide Auth0 internals from OAuth metadata
-      // For now, using AUTH0_AUDIENCE directly is simpler and avoids mismatch issues.
-      resource: process.env.AUTH0_AUDIENCE,
+      // The protected resource identifier exposed to MCP clients. Claude expects
+      // this to match the MCP URL or origin, not the Auth0 API audience.
+      resource: protectedResource,
 
       // The public-facing server URL (used for registration_endpoint in OAuth metadata)
       // This must be the actual URL where the server is accessible, not the Auth0 audience
-      serverUrl: process.env.MCP_SERVER_URL,
+      serverUrl,
 
       // Auth0 endpoints (derived from AUTH0_DOMAIN)
       auth0: {
         domain: auth0Domain,
-        authorizationEndpoint: auth0Domain
-          ? `https://${auth0Domain}/authorize`
-          : undefined,
+        authorizationEndpoint: authorizationEndpoint?.toString(),
         tokenEndpoint: auth0Domain
           ? `https://${auth0Domain}/oauth/token`
           : undefined,

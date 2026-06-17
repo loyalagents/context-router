@@ -34,6 +34,7 @@
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",
     "eval:e2e-known-schema": "node examples/eval/scripts/e2e-known-schema.mjs",
+    "eval:e2e-mcp-agent": "node examples/eval/scripts/e2e-mcp-agent.mjs",
     "eval:test": "node --test examples/eval/scripts",
     "eval:verify": "pnpm eval:test && pnpm eval:validate",
     "lint": "pnpm -r lint",

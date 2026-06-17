@@ -73,7 +73,13 @@ We likely want both open-schema surfaces:
 - MCP/Codex/Claude runner for agent-driven schema discovery.
 - Upload-level schema discovery for product document analysis.
 
-The order is not decided yet.
+Current planned order:
+
+1. Build the MCP known-schema agent runner to prove runner/tooling behavior.
+2. Extend that runner to MCP open-schema after adding memory snapshot and
+   open-schema scoring.
+3. Design upload-level open-schema discovery after MCP open-schema gives real
+   output examples.
 
 ## Initial Implementation Direction
 

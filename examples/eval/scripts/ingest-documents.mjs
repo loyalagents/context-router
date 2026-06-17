@@ -2,27 +2,18 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readJson, readYaml, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
+import { readJson, relativePath, validateWithSchema, writeJson } from './scoring/io.mjs';
 import { scoreDatabaseToFile } from './scoring/database.mjs';
 import { runExportStoredPreferences } from './export-stored-preferences.mjs';
 import { storageSpecForFact } from './scoring/slugs.mjs';
 import { collectFactKeys, effectiveForbiddenFactKeys } from './shared.mjs';
 import {
   applyPreferenceSuggestions,
-  createPreferenceDefinition,
-  fetchBackendUser,
-  fetchPreferenceSchema,
   inferMimeType,
-  resetMemory,
   setPreference,
   uploadDocumentForAnalysis,
 } from './ingestor/client.mjs';
-import {
-  buildDefinitionInput,
-  collectDefinitionTargets,
-  existingDefinitionMap,
-  summarizeDefinitionTarget,
-} from './ingestor/definitions.mjs';
+import { prepareKnownSchemaMemory } from './ingestor/setup.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,32 +53,39 @@ export async function runIngestDocuments({
   const report = initialReport({ options, startedAt });
 
   try {
-    const fixture = await loadFixture({ repoRoot, options });
+    const setup = await prepareKnownSchemaMemory({
+      repoRoot,
+      evalUserId: options.evalUserId,
+      corpusId: options.corpusId,
+      documentsRoot: options.documentsRoot,
+      graphqlUrl: options.graphqlUrl,
+      authToken: options.authToken,
+      resetMemoryEnabled: options.resetMemory,
+      ensureDefinitionsEnabled: options.ensureDefinitions,
+      fetchImpl,
+      onProgress: (partialSetup) => {
+        if (partialSetup.fixture?.manifest?.documents) {
+          report.summary.documentCount = partialSetup.fixture.manifest.documents.length;
+        }
+        if (partialSetup.backendUserId) {
+          report.backendUserId = partialSetup.backendUserId;
+        }
+        if (partialSetup.reset) {
+          report.reset = partialSetup.reset;
+        }
+        if (partialSetup.definitionSetup) {
+          report.definitionSetup = partialSetup.definitionSetup;
+          report.summary.createdDefinitionCount = report.definitionSetup.created.length;
+        }
+      },
+    });
+    const fixture = setup.fixture;
     const activeState = new Map();
     const slugPolicy = buildSlugPolicy(fixture);
     report.summary.documentCount = fixture.manifest.documents.length;
-
-    const backendUser = await fetchBackendUser({
-      graphqlUrl: options.graphqlUrl,
-      authToken: options.authToken,
-      fetchImpl,
-    });
-    report.backendUserId = backendUser.userId;
-
-    if (options.resetMemory) {
-      report.reset = await resetMemory({
-        graphqlUrl: options.graphqlUrl,
-        authToken: options.authToken,
-        fetchImpl,
-      });
-    }
-
-    const definitionTargets = collectDefinitionTargets(fixture);
-    report.definitionSetup = await ensureDefinitions({
-      options,
-      targets: definitionTargets,
-      fetchImpl,
-    });
+    report.backendUserId = setup.backendUserId;
+    if (setup.reset) report.reset = setup.reset;
+    report.definitionSetup = setup.definitionSetup;
     report.summary.createdDefinitionCount = report.definitionSetup.created.length;
 
     if (options.seedPreferencesPath) {
@@ -317,63 +315,6 @@ export function usage() {
 
 export function formatIngestDocumentsResult(result) {
   return result.lines.join('\n');
-}
-
-async function loadFixture({ repoRoot, options }) {
-  const userRoot = path.join(repoRoot, 'examples/eval/users', options.evalUserId);
-  const corpusRoot = path.join(userRoot, 'corpora', options.corpusId);
-  const [profile, manifest, storageMap] = await Promise.all([
-    readYaml(path.join(userRoot, 'profile.yaml')),
-    readJson(path.join(corpusRoot, 'manifest.json')),
-    readJson(path.join(repoRoot, 'examples/eval/scoring/fact-storage-map.v1.json')),
-  ]);
-  return {
-    profile,
-    manifest,
-    storageMap,
-    documentsRoot: path.resolve(repoRoot, options.documentsRoot),
-  };
-}
-
-async function ensureDefinitions({ options, targets, fetchImpl }) {
-  const setup = { created: [], existing: [], skipped: [] };
-  if (!options.ensureDefinitions) {
-    setup.skipped = targets.map((target) =>
-      summarizeDefinitionTarget(target, { reason: 'definition setup disabled' }),
-    );
-    return setup;
-  }
-
-  const definitions = await fetchPreferenceSchema({
-    graphqlUrl: options.graphqlUrl,
-    authToken: options.authToken,
-    fetchImpl,
-  });
-  const existing = existingDefinitionMap(definitions);
-
-  for (const target of targets) {
-    const existingDefinition = existing.get(target.slug);
-    if (existingDefinition) {
-      assertExistingDefinitionCompatible({ target, existingDefinition });
-    }
-  }
-
-  for (const target of targets) {
-    const summary = summarizeDefinitionTarget(target);
-    if (existing.has(target.slug)) {
-      setup.existing.push(summary);
-      continue;
-    }
-    await createPreferenceDefinition({
-      graphqlUrl: options.graphqlUrl,
-      authToken: options.authToken,
-      input: buildDefinitionInput(target),
-      fetchImpl,
-    });
-    existing.set(target.slug, buildDefinitionInput(target));
-    setup.created.push(summary);
-  }
-  return setup;
 }
 
 async function seedPreferences({ options, repoRoot, fetchImpl, activeState }) {
@@ -739,15 +680,6 @@ function validateSuggestionItems(suggestions, docPath) {
         throw new Error(`Document upload ${docPath} suggestion ${index} is missing ${key}.`);
       }
     }
-  }
-}
-
-function assertExistingDefinitionCompatible({ target, existingDefinition }) {
-  const actualValueType = String(existingDefinition.valueType ?? '').toUpperCase();
-  if (actualValueType !== target.valueType) {
-    throw new Error(
-      `Existing definition ${target.slug} has valueType ${actualValueType || '<missing>'}, expected ${target.valueType}.`,
-    );
   }
 }
 

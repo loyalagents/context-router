@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-14
+- Last updated: 2026-06-16
 
 ## Implemented
 
@@ -55,6 +55,27 @@
   structural fields without exposing fact keys or expected values.
 - [x] Direct-document baseline treats model-authored confidence as diagnostic
   metadata rather than a hard fill gate.
+- [x] MCP known-schema agent runner via `pnpm eval:e2e-mcp-agent`.
+  - Validates documents, prepares memory/schema, runs one Claude MCP-capable
+    agent session or explicit command test adapter, exports active memory,
+    fills the form from backend memory, and reuses existing score reports.
+  - Stages an agent workspace with declared corpus documents only. This avoids
+    exposing fixture truth through the prompt/source paths, but is not an
+    OS-level filesystem sandbox.
+  - Uses explicit Claude MCP config and a sanitized child environment for live
+    agent runs, while allowing documented Claude/headless model-provider auth
+    variables.
+  - Writes `mcp-agent-run.json`, prompt, transcript, and the shared
+    `evaluation-run.json` stage report.
+  - Reserves `--schema-mode open` and `--form-mode agent` behind usage errors.
+  - Records that MCP/backend identity is not yet verified; live runs are smoke
+    results until a hard identity preflight exists.
+  - Live Claude runs fail if the configured MCP server is unavailable, no
+    `mcp__<server>__*` tools are exposed, or the required completion marker is
+    missing.
+  - First local live Claude MCP smoke completed on 2026-06-16: 27 active
+    preferences exported, 21/22 known-present database facts correct, and 16/17
+    known form fields correct.
 
 ## Next
 
@@ -74,15 +95,21 @@
   leak scoring.
 - [ ] Add generated examples of scorer outputs for a representative ingestion
   run if useful for future reviewers.
-- [ ] Design open-schema ingestion with definition/slug creation.
-- [ ] Decide ordering for open-schema ingestion work:
-  - MCP/Codex/Claude agent runner.
-  - Upload-level schema discovery with proposed definitions.
+- [ ] Add a hard MCP/backend identity preflight so the runner can prove the
+  Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
+  exports and scores.
+- [x] Run one live known-schema Claude MCP smoke before starting open schema,
+  including a check that Claude's tool allow-list and MCP config behave as
+  expected.
+- [ ] Add open-schema memory snapshot and scoring described in
+  `docs/plans/evaluation/scoring/open-schema/brainstorm.md`:
+  - Export `memory-snapshot.json` with `preferences[]` and `definitions[]`.
+  - Add light value-recovery DB scoring.
+  - Add open-schema combined attribution.
+  - Enable `eval:e2e-mcp-agent --schema-mode open`.
 
 ## Later
 
-- [ ] Add MCP/Codex/Claude runner that produces the same artifacts as the
-  ingestor/exporter path and tests agent-driven definition/slug discovery.
 - [ ] Add upload-level schema discovery if product document analysis should
   propose or create definitions before storing values.
 - [ ] Add optional canonical-vs-alias stricter metrics.

@@ -1,11 +1,19 @@
 # MCP Agent Evaluation Design
 
 - Status: active design
-- Last updated: 2026-06-15
+- Last updated: 2026-06-16
 - Scope: evaluating Codex/Claude Code style agents that use MCP/tool access as
   an end-to-end eval producer
 - Implementation target: first build known-schema MCP memory ingestion, with a
   runner shape that can extend to open schema and agent-filled forms later
+
+Current implementation note: after PR feedback, v1 intentionally supports
+Claude plus the deterministic `command` adapter only. The live Claude path uses
+a staged workspace, explicit `--mcp-config` / `--strict-mcp-config`, and a
+sanitized child environment. The staged workspace is containment, not an
+OS-level filesystem sandbox; the `command` adapter is test-only and requires an
+explicit opt-in. Codex notes below are retained as historical design exploration
+until a similarly explicit Codex adapter is implemented.
 
 ## Summary
 
@@ -16,6 +24,7 @@ The first implementation should be:
 
 ```text
 known-schema fixture setup
+  -> shared reset/definition setup
   -> one fixed Codex/Claude agent session
   -> agent reads local corpus documents
   -> agent writes active backend memory through MCP
@@ -94,6 +103,7 @@ For MCP, the agent should be just another producer.
 
 Existing artifacts to reuse:
 
+- `validation-report.json`
 - `stored-preferences.json`
 - `database-score-report.json`
 - `filled-form.json`
@@ -173,7 +183,7 @@ Proposed command:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
-  --agent codex \
+  --agent claude \
   --schema-mode known \
   --form-mode backend \
   --user alex-i9-test \
@@ -181,6 +191,7 @@ pnpm eval:e2e-mcp-agent \
   --scenario alex-i9-realistic \
   --artifacts-root /private/tmp/alex-mcp-known \
   --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory
 ```
 
@@ -297,9 +308,10 @@ The first implementation should support:
 
 - `--schema-mode known`
 - `--form-mode backend`
-- `--agent codex` or `--agent claude`
+- `--agent claude`
 - `--mcp-server <name>`
-- `--agent-command <command>` if explicit command invocation is needed
+- `--agent-command <command>` plus `--allow-test-command-agent` for
+  deterministic tests only
 - `--agent-timeout-ms <ms>`
 - `--prompt-template <path>` optional override
 - `--model-label <label>` for artifact comparison
@@ -327,6 +339,14 @@ Known-schema setup should:
 - create definitions only as setup, not as stored values
 - avoid passing the accepted slug map to the agent
 - tell the agent to inspect visible schema through MCP
+
+Implementation note:
+
+- Extract the reset and definition-setup primitives currently private to
+  `examples/eval/scripts/ingest-documents.mjs` into shared eval helpers.
+- The MCP runner should use those helpers directly; it should not invoke
+  `eval:ingest-documents`, because that command's main job is product document
+  upload and suggestion application.
 
 Known-schema prompt intent:
 
@@ -371,11 +391,14 @@ Open-schema scoring should be added after the known-schema runner is stable:
 
 Open-schema likely needs one new artifact:
 
-- `preference-schema-snapshot.json`, or
-- `stored-preferences.json` extended with definition metadata
+- `memory-snapshot.json`
 
 The metadata should include slug, display name, description, value type, scope,
 visibility, owner/backend user, and archived state.
+
+Keep known-schema MCP on `stored-preferences.json` v1 until the open-schema
+scoring layer exists. Do not make the known-schema runner depend on the enriched
+snapshot just to satisfy future open-schema needs.
 
 ## Form Mode Strategy
 
@@ -504,7 +527,7 @@ on timeout and process exit status for hard control.
 
 ## Agent Invocation
 
-The first implementation can invoke Codex/Claude through command-line tools.
+The first implementation can invoke Claude through command-line tools.
 The runner should treat the command as a black-box agent process.
 
 Potential command strategy:
@@ -520,9 +543,9 @@ agent adapter
 The exact invocation may differ for Codex and Claude. Keep that difference in
 small adapters:
 
-- `codex` adapter
 - `claude` adapter
-- optional `command` adapter for arbitrary local experiments
+- future `codex` adapter once it has explicit MCP and workspace controls
+- optional `command` adapter for deterministic tests only
 
 Each adapter should report:
 
@@ -555,8 +578,8 @@ Suggested shape:
   "schemaMode": "known",
   "formMode": "backend",
   "agent": {
-    "provider": "codex",
-    "modelLabel": "gpt-5.4",
+    "provider": "claude",
+    "modelLabel": "claude-code",
     "mcpServer": "context-router-local",
     "timeoutMs": 900000,
     "completionMarkerObserved": true
@@ -598,9 +621,9 @@ Suggested shape:
 }
 ```
 
-The top-level `evaluation-run.json` should include the MCP stages. Since
-backwards compatibility is not required, update the schema directly rather than
-adding compatibility shims.
+The top-level `evaluation-run.json` should include the MCP stages. Update
+`evaluation-run.schema.json` from its current known-schema-only shape so it can
+validate both the existing `known-schema` wrapper and the new MCP modes.
 
 Suggested `evaluationMode` values:
 
@@ -740,6 +763,17 @@ Cons:
 
 ## Implementation Checkpoints
 
+### Checkpoint 0: Shared Setup Extraction
+
+- Extract reusable fixture loading, `resetMyMemory(MEMORY_ONLY)`, and
+  known-schema definition setup helpers from `ingest-documents`.
+- Keep `eval:ingest-documents` behavior unchanged while the MCP runner reuses
+  only the setup primitives.
+- Add focused tests proving existing definition compatibility checks still run
+  outside the upload ingestor.
+
+Checkpoint can run targeted setup/helper tests plus existing ingestor tests.
+
 ### Checkpoint 1: Prompt And Artifact Design
 
 - Add prompt template for known-schema MCP memory ingestion.
@@ -757,7 +791,8 @@ pnpm eval:validate
 
 - Add `pnpm eval:e2e-mcp-agent`.
 - Parse CLI args.
-- Write `evaluation-run.json` with MCP stage names.
+- Write `evaluation-run.json` with `evaluationMode: "mcp-known-schema"` and
+  MCP stage names.
 - Stub agent stage with an injectable test runner.
 - Reuse exporter, form runner, and scorers in the same style as
   `eval:e2e-known-schema`.
@@ -766,7 +801,7 @@ Checkpoint can run targeted tests for the wrapper without a live agent.
 
 ### Checkpoint 3: Known-Schema Setup Strategy
 
-- Reuse the existing known-schema definition setup logic where possible.
+- Reuse the extracted known-schema definition setup helpers.
 - Ensure definitions before the agent stage.
 - Reset memory when requested.
 - Do not pass accepted slug map or profile truth into the prompt.
@@ -794,7 +829,7 @@ Expected command:
 
 ```bash
 pnpm eval:e2e-mcp-agent \
-  --agent codex \
+  --agent claude \
   --schema-mode known \
   --form-mode backend \
   --user alex-i9-test \
@@ -802,6 +837,7 @@ pnpm eval:e2e-mcp-agent \
   --scenario alex-i9-realistic \
   --artifacts-root /private/tmp/alex-mcp-known \
   --mcp-server context-router-local \
+  --mcp-config /path/to/context-router-mcp.json \
   --reset-memory
 ```
 

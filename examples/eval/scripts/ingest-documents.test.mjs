@@ -278,6 +278,7 @@ test('ingest-documents fails definition setup when an existing slug has the wron
       outPath,
       '--auth-token',
       'token',
+      '--reset-memory',
     ],
     env: {},
     fetchImpl: fetchMock.fetch,
@@ -288,8 +289,18 @@ test('ingest-documents fails definition setup when an existing slug has the wron
   assert.match(result.lines.join('\n'), /Existing definition profile\.full_name has valueType BOOLEAN, expected STRING/);
   const report = JSON.parse(await readFile(outPath, 'utf8'));
   assert.equal(report.status, 'fail');
+  assert.equal(report.backendUserId, 'backend-user-123');
+  assert.equal(report.reset.preferencesDeleted, 3);
+  assert.equal(report.summary.documentCount, 10);
   assert.equal(report.documents.length, 0);
   assert.equal(fetchMock.calls.some((call) => call.kind === 'upload'), false);
+  assert.deepEqual(
+    fetchMock.calls
+      .filter((call) => call.kind === 'graphql')
+      .map((call) => call.operationName)
+      .slice(0, 3),
+    ['EvalIngestorMe', 'EvalIngestorResetMemory', 'EvalIngestorPreferenceSchema'],
+  );
 });
 
 test('ingest-documents continues after soft analysis failures, then exports and scores partial state', async () => {

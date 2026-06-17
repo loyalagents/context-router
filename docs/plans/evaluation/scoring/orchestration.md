@@ -1,7 +1,7 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-10
+- Last updated: 2026-06-16
 
 ## High-Level Flow
 
@@ -29,9 +29,12 @@ ingestor or manual/MCP run
 - [x] Implement backend-memory form-fill runner.
 - [x] Implement known-schema single-call wrapper over the existing stage
   commands.
-- [ ] Design open-schema ingestion with definition/slug creation.
-- [ ] Decide ordering for MCP/Codex/Claude runner and upload-level schema
-  discovery.
+- [x] Decide ordering for MCP/Codex/Claude runner and upload-level schema
+  discovery: build MCP known-schema first, then MCP open-schema, then
+  upload-level open-schema discovery.
+- [x] Implement MCP known-schema agent runner.
+- [x] Run live MCP known-schema Claude smoke.
+- [ ] Add open-schema memory snapshot/scoring and MCP open-schema mode.
 
 ## Phase 1: Scorer
 
@@ -151,18 +154,65 @@ Implemented in this phase:
 - skipped-stage accounting after failures
 - explicit `--validation-report` support for database scoring
 
-## Phase 6: Open-Schema Ingestion
+## Phase 6: MCP Known-Schema Agent Runner
+
+Run a local agent CLI against the configured MCP server and compare its memory
+writes with the existing backend/form scorers.
+
+```text
+validate documents
+  -> shared reset/known-schema definition setup
+  -> Claude agent reads staged local corpus and writes memory through MCP
+  -> export stored-preferences.json
+  -> score database
+  -> fill form from backend memory
+  -> score form
+  -> score combined
+```
+
+Implemented in this phase:
+
+- `pnpm eval:e2e-mcp-agent`
+- known-schema setup helper reuse without document upload
+- Claude live adapter and explicit opt-in command test adapter
+- hidden-truth-safe prompt template plus staged agent workspace containing only
+  declared documents; this is not an OS-level filesystem sandbox
+- sanitized agent environment, explicit Claude MCP config, and Claude
+  headless/cloud model-provider auth env passthrough
+- `mcp-agent-run.json`, redacted transcript, rendered prompt, and
+  `evaluation-run.json` artifacts
+- reuse of stored-preferences export, database scoring, backend form fill, form
+  scoring, and combined scoring
+
+The first live smoke completed locally on 2026-06-16 with the local backend,
+`EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing
+`context-router-local`. Live scores remain smoke-only until the runner can
+verify that the MCP session and `EVAL_AUTH_TOKEN` resolve to the same backend
+user.
+
+Design doc:
+
+- `docs/plans/evaluation/scoring/MCP-scoring/brainstorm.md`
+
+## Phase 7: Open-Schema Ingestion
 
 Open-schema ingestion starts without pre-created eval-specific definitions. The
 system or agent must choose or create useful definitions/slugs and store values.
 
-We likely want both open-schema surfaces because they test different systems:
+Planned order:
 
-- MCP/Codex/Claude agent runner: tests agent-driven schema discovery and memory
-  writes through tools.
-- Upload-level schema discovery: tests product document analysis discovering or
-  proposing definitions itself.
+1. MCP open-schema runner: tests agent-driven schema discovery and memory
+   writes through existing MCP tools.
+2. Upload-level schema discovery: tests product document analysis discovering
+   or proposing definitions itself.
 
-The order is not decided. Current document upload is known-schema only: it shows
-the model existing valid slugs and filters unknown slugs instead of creating new
-definitions.
+Open-schema scoring should use an enriched `memory-snapshot.json` with
+`preferences[]` and `definitions[]`, headline form correctness, and treat novel
+schema quality as diagnostic at first.
+
+Current document upload is known-schema only: it shows the model existing valid
+slugs and filters unknown slugs instead of creating new definitions.
+
+Design doc:
+
+- `docs/plans/evaluation/scoring/open-schema/brainstorm.md`

@@ -219,8 +219,7 @@ export class McpAuthGuard implements CanActivate {
     error: string,
     errorDescription?: string,
   ): void {
-    const resource = this.configService.get<string>('mcp.oauth.resource');
-    const resourceMetadata = `${resource}/.well-known/oauth-protected-resource`;
+    const resourceMetadata = this.getResourceMetadataUrl();
 
     // Build WWW-Authenticate header
     const parts = [`Bearer resource_metadata="${resourceMetadata}"`];
@@ -256,8 +255,7 @@ export class McpAuthGuard implements CanActivate {
     response: Response,
     requiredScope: string,
   ): void {
-    const resource = this.configService.get<string>('mcp.oauth.resource');
-    const resourceMetadata = `${resource}/.well-known/oauth-protected-resource`;
+    const resourceMetadata = this.getResourceMetadataUrl();
 
     response.setHeader(
       'WWW-Authenticate',
@@ -267,5 +265,13 @@ export class McpAuthGuard implements CanActivate {
       error: 'insufficient_scope',
       error_description: `This operation requires the '${requiredScope}' scope`,
     });
+  }
+
+  private getResourceMetadataUrl(): string {
+    const serverUrl =
+      this.configService.get<string>('mcp.oauth.serverUrl') ||
+      this.configService.get<string>('mcp.oauth.resource');
+
+    return `${serverUrl}/.well-known/oauth-protected-resource`;
   }
 }
