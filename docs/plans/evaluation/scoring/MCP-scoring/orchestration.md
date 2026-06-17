@@ -38,7 +38,8 @@ validate-documents
 - [x] Clarify known-schema MCP as existing visible backend schema, not a closed
   target-form-only schema.
 - [x] Harden backend form-fill prompt wording so field policies are
-  authoritative and semantically similar source substitutions are rejected.
+  authoritative and semantically similar source substitutions are discouraged
+  while remaining visible to scoring.
 - [ ] Add a hard MCP/backend identity preflight before using live MCP scores as
   benchmark-reliable rather than smoke-only.
 
@@ -64,9 +65,10 @@ validate-documents
   smoke result.
 - Backend form-fill prompting now tells the model to treat field policies as
   authoritative, use only allowed `sourceSlugs`, skip when no allowed source is
-  usable, and avoid semantically similar substitutions such as work email for
-  contact email. Off-policy source slug validation remains diagnostic-only so
-  score reports still capture real form-fill failures.
+  usable, and avoid semantically similar substitutions. Field-policy parsing now
+  rejects `mode=fact` policies without explicit `sourceSlugs`; off-policy source
+  slug validation remains diagnostic-only so score reports still capture real
+  form-fill failures.
 - Low scores are benchmark output, not runner failures.
 - Automated verification uses fake agent runners and local command-adapter
   tests. The first live smoke completed locally on 2026-06-16 with 27 active

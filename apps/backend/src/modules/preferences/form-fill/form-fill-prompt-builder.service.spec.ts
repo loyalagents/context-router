@@ -90,7 +90,9 @@ describe('FormFillPromptBuilderService', () => {
     );
     expect(prompt).toContain('return SKIP for that field');
     expect(prompt).toContain('Do not substitute semantically similar memories');
-    expect(prompt).toContain('do not use a work email for a contact or personal email field');
+    expect(prompt).toContain(
+      'do not swap one email, address, name, identifier, status, date, or phone number for another',
+    );
     expect(prompt).toContain('"fieldName": "CB_4"');
     expect(prompt).toContain('"groupId": "workAuthorization.citizenshipStatus"');
   });

@@ -25,12 +25,22 @@ fill end to end.
   - `mode=fact` fields may use only active memories listed in policy
     `sourceSlugs`;
   - fields should be skipped when no allowed source slug has a usable value;
-  - semantically similar memories must not be substituted, including work email
-    for contact or personal email unless explicitly allowed.
+- Generalized the no-substitution prompt wording so it applies across forms:
+  email, address, name, identifier, status, date, phone number, and other
+  same-type memories should not be swapped unless the exact source slug is
+  listed for the field.
+- Made the field-policy contract explicit by rejecting `mode=fact` policies
+  without a `factKey` or at least one `sourceSlug`, and rejecting conditional
+  policies without source slugs.
 - Kept off-policy source slug validation diagnostic-only. The eval still sees
   and scores backend form-fill mistakes truthfully instead of masking them.
 - Added prompt-builder assertions for the new authoritative policy and
   no-substitution wording.
+
+This is a shared backend form-fill behavior change, not an eval-only tweak. It
+may shift some future form failures from "wrong value" to "skipped field"; that
+is preferred for product correctness, while the eval scorer still counts the
+missing field as a real failure.
 
 ## Verification
 

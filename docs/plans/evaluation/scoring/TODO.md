@@ -83,7 +83,7 @@
   - Records that backend known-schema document ingestion and MCP known-schema
     agent runs are intentionally different producers.
   - Makes backend form-fill prompts treat field policies as authoritative and
-    reject semantically similar source substitutions.
+    instructs the model not to make semantically similar source substitutions.
   - Keeps off-policy source slug validation diagnostic-only so evaluation
     scoring still captures backend form-fill mistakes truthfully.
 
