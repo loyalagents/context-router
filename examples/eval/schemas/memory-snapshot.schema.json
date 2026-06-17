@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/memory-snapshot.schema.json",
+  "title": "Eval Memory Snapshot Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "runId",
+    "evaluationMode",
+    "userId",
+    "corpusId",
+    "storageInput",
+    "preferences",
+    "definitions",
+    "definitionBaseline",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "memory-snapshot" },
+    "runId": { "type": "string", "minLength": 1 },
+    "evaluationMode": { "type": "string", "minLength": 1 },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "scenarioId": { "type": "string", "minLength": 1 },
+    "storageInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaMode",
+        "producer",
+        "statusesScored",
+        "suggestionsWereAutoApplied"
+      ],
+      "properties": {
+        "schemaMode": { "enum": ["open", "known"] },
+        "producer": { "type": "string", "minLength": 1 },
+        "statusesScored": { "const": ["ACTIVE"] },
+        "suggestionsWereAutoApplied": { "type": "boolean" }
+      }
+    },
+    "preferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preference" }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preference" }
+    },
+    "definitions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/definition" }
+    },
+    "definitionBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capturedBeforeRun",
+        "capturedAt",
+        "strategy",
+        "preexistingDefinitionIds",
+        "preexistingSlugs",
+        "newDefinitionIds",
+        "newSlugs",
+        "removedDefinitionIds",
+        "removedSlugs"
+      ],
+      "properties": {
+        "capturedBeforeRun": { "type": "boolean" },
+        "capturedAt": { "type": ["string", "null"], "minLength": 1 },
+        "strategy": {
+          "enum": [
+            "none",
+            "fresh-user",
+            "archive-eval-owned",
+            "baseline-only"
+          ]
+        },
+        "preexistingDefinitionIds": { "$ref": "#/$defs/stringArray" },
+        "preexistingSlugs": { "$ref": "#/$defs/stringArray" },
+        "newDefinitionIds": { "$ref": "#/$defs/stringArray" },
+        "newSlugs": { "$ref": "#/$defs/stringArray" },
+        "removedDefinitionIds": { "$ref": "#/$defs/stringArray" },
+        "removedSlugs": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exportedAt",
+        "graphqlUrl",
+        "queryName",
+        "locationMode",
+        "locationId",
+        "preferencesMergedWithLocation",
+        "includeSuggestions",
+        "activePreferenceCount",
+        "suggestedPreferenceCount",
+        "definitionCount",
+        "backendUserId",
+        "schemaMode",
+        "schemaResetMode"
+      ],
+      "properties": {
+        "exportedAt": { "type": "string", "minLength": 1 },
+        "graphqlUrl": { "type": "string", "minLength": 1 },
+        "queryName": { "const": "EvalMemorySnapshotExport" },
+        "locationMode": { "enum": ["global-only", "merged-location"] },
+        "locationId": { "type": ["string", "null"] },
+        "preferencesMergedWithLocation": { "type": "boolean" },
+        "includeSuggestions": { "type": "boolean" },
+        "activePreferenceCount": { "$ref": "#/$defs/count" },
+        "suggestedPreferenceCount": { "$ref": "#/$defs/count" },
+        "definitionCount": { "$ref": "#/$defs/count" },
+        "backendUserId": { "type": "string", "minLength": 1 },
+        "schemaMode": { "enum": ["open", "known"] },
+        "schemaResetMode": {
+          "enum": [
+            "none",
+            "fresh-user",
+            "archive-eval-owned",
+            "baseline-only"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "userId",
+        "locationId",
+        "slug",
+        "definitionId",
+        "value",
+        "status",
+        "sourceType",
+        "confidence",
+        "evidence",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "userId": { "type": "string", "minLength": 1 },
+        "locationId": { "type": ["string", "null"] },
+        "slug": { "type": "string", "minLength": 1 },
+        "definitionId": { "type": "string", "minLength": 1 },
+        "value": {},
+        "status": { "type": "string", "minLength": 1 },
+        "sourceType": { "type": "string", "minLength": 1 },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {},
+        "createdAt": { "type": "string", "minLength": 1 },
+        "updatedAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "namespace",
+        "slug",
+        "displayName",
+        "ownerUserId",
+        "archivedAt",
+        "description",
+        "valueType",
+        "scope",
+        "options",
+        "isSensitive",
+        "isCore",
+        "category"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "namespace": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "displayName": { "type": ["string", "null"] },
+        "ownerUserId": { "type": ["string", "null"] },
+        "archivedAt": { "type": ["string", "null"] },
+        "description": { "type": "string" },
+        "valueType": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "options": {},
+        "isSensitive": { "type": "boolean" },
+        "isCore": { "type": "boolean" },
+        "category": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -94,6 +94,13 @@
     with artifact-first checkpoints.
   - Recorded that open-schema should prioritize final form correctness, then
     active-memory value recovery, then schema diagnostics.
+- [x] Open-schema Checkpoint 1 memory snapshot export.
+  - Added `pnpm eval:export-memory-snapshot`.
+  - Added schema-validated `memory-snapshot.json` export with active
+    preferences, optional suggestions, visible definitions, and definition
+    baseline diagnostics.
+  - Kept known-schema `stored-preferences.json` and known-schema reports
+    unchanged.
 
 ## Next
 
@@ -116,9 +123,6 @@
 - [ ] Add a hard MCP/backend identity preflight so the runner can prove the
   Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
   exports and scores.
-- [ ] Checkpoint 1 for open schema: export `memory-snapshot.json` with
-  active preferences, optional suggestions, visible definitions, and definition
-  baseline diagnostics.
 - [ ] Checkpoint 2 for open schema: add deterministic
   `open-schema-database-score-report.json` and
   `open-schema-combined-score-report.json` without changing known-schema

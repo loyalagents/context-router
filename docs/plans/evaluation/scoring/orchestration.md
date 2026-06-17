@@ -50,8 +50,9 @@ open-schema producer
   field-policy prompting before open-schema work.
 - [x] Consolidate open-schema evaluation planning into one canonical design
   doc plus checkpoint orchestration.
-- [ ] Add open-schema memory snapshot/scoring support before enabling live MCP
-  open mode.
+- [x] Add open-schema `memory-snapshot.json` export support before enabling
+  live MCP open mode.
+- [ ] Add open-schema scoring support before enabling live MCP open mode.
 - [ ] Enable MCP open-schema mode and label live results based on identity and
   schema-state isolation.
 
@@ -224,21 +225,22 @@ Design doc:
 Open-schema ingestion starts without pre-created eval-specific definitions. The
 system or agent must choose or create useful definitions/slugs and store values.
 
-Planned order:
+Checkpoint order:
 
-1. `memory-snapshot.json`: export active values, optional suggestions, visible
-   definitions, and definition-baseline diagnostics without changing
-   known-schema `stored-preferences.json`.
-2. Open-schema deterministic scoring:
+1. Implemented in PR1: `memory-snapshot.json` exports active values, optional
+   suggestions, visible definitions, and definition-baseline diagnostics without
+   changing known-schema `stored-preferences.json`.
+2. Pending: open-schema deterministic scoring:
    `open-schema-database-score-report.json` for value recovery and
    `open-schema-combined-score-report.json` for attribution against the
    existing form score.
-3. MCP open-schema runner mode: tests agent-driven schema discovery and memory
-   writes through existing MCP tools.
-4. Isolation/live-smoke hardening: verify MCP/backend identity, record or clean
-   prior eval-created definitions, and label smoke-only results honestly.
-5. Upload-level schema discovery: tests product document analysis discovering
-   or proposing definitions itself.
+3. Pending: MCP open-schema runner mode tests agent-driven schema discovery and
+   memory writes through existing MCP tools.
+4. Pending: isolation/live-smoke hardening verifies MCP/backend identity,
+   records or cleans prior eval-created definitions, and labels smoke-only
+   results honestly.
+5. Later: upload-level schema discovery tests product document analysis
+   discovering or proposing definitions itself.
 
 Open-schema scoring should use an enriched `memory-snapshot.json` with
 `preferences[]` and `definitions[]`, headline form correctness, and treat novel
@@ -251,3 +253,5 @@ Design doc:
 
 - `docs/plans/evaluation/scoring/open-schema/brainstorm.md`
 - `docs/plans/evaluation/scoring/open-schema/orchestration.md`
+- `docs/plans/evaluation/scoring/open-schema/pr1/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr1/implementation-summary.md`
