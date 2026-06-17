@@ -1,12 +1,12 @@
 # Evaluation Scoring Orchestration
 
 - Status: active plan
-- Last updated: 2026-06-16
+- Last updated: 2026-06-17
 
 ## High-Level Flow
 
-The evaluation stack is split into three implementation phases with a stable
-artifact boundary between each phase.
+The evaluation stack is split into implementation phases with stable artifact
+boundaries between producers, exporters, form runners, and scorers.
 
 ```text
 ingestor or manual/MCP run
@@ -16,6 +16,18 @@ ingestor or manual/MCP run
   -> form runner writes filled-form.json
   -> form scorer writes form-fill-score-report.json
   -> combined scorer writes combined-score-report.json
+```
+
+Open-schema work keeps that boundary and adds open-schema-specific artifacts:
+
+```text
+open-schema producer
+  -> backend state
+  -> exporter writes memory-snapshot.json
+  -> open-schema database scorer writes open-schema-database-score-report.json
+  -> backend form runner writes filled-form.json
+  -> existing form scorer writes form-score-report.json
+  -> open-schema combined scorer writes open-schema-combined-score-report.json
 ```
 
 ## Phase Checklist
@@ -36,7 +48,12 @@ ingestor or manual/MCP run
 - [x] Run live MCP known-schema Claude smoke.
 - [x] Clarify MCP known-schema terminology and harden backend form-fill
   field-policy prompting before open-schema work.
-- [ ] Add open-schema memory snapshot/scoring and MCP open-schema mode.
+- [x] Consolidate open-schema evaluation planning into one canonical design
+  doc plus checkpoint orchestration.
+- [ ] Add open-schema memory snapshot/scoring support before enabling live MCP
+  open mode.
+- [ ] Enable MCP open-schema mode and label live results based on identity and
+  schema-state isolation.
 
 ## Phase 1: Scorer
 
@@ -209,9 +226,18 @@ system or agent must choose or create useful definitions/slugs and store values.
 
 Planned order:
 
-1. MCP open-schema runner: tests agent-driven schema discovery and memory
+1. `memory-snapshot.json`: export active values, optional suggestions, visible
+   definitions, and definition-baseline diagnostics without changing
+   known-schema `stored-preferences.json`.
+2. Open-schema deterministic scoring:
+   `open-schema-database-score-report.json` for value recovery and
+   `open-schema-combined-score-report.json` for attribution against the
+   existing form score.
+3. MCP open-schema runner mode: tests agent-driven schema discovery and memory
    writes through existing MCP tools.
-2. Upload-level schema discovery: tests product document analysis discovering
+4. Isolation/live-smoke hardening: verify MCP/backend identity, record or clean
+   prior eval-created definitions, and label smoke-only results honestly.
+5. Upload-level schema discovery: tests product document analysis discovering
    or proposing definitions itself.
 
 Open-schema scoring should use an enriched `memory-snapshot.json` with
@@ -224,3 +250,4 @@ slugs and filters unknown slugs instead of creating new definitions.
 Design doc:
 
 - `docs/plans/evaluation/scoring/open-schema/brainstorm.md`
+- `docs/plans/evaluation/scoring/open-schema/orchestration.md`

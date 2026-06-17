@@ -1,7 +1,7 @@
 # Evaluation Scoring TODO
 
 - Status: active follow-up list
-- Last updated: 2026-06-16
+- Last updated: 2026-06-17
 
 ## Implemented
 
@@ -86,6 +86,14 @@
     instructs the model not to make semantically similar source substitutions.
   - Keeps off-policy source slug validation diagnostic-only so evaluation
     scoring still captures backend form-fill mistakes truthfully.
+- [x] Open-schema evaluation planning consolidation.
+  - Merged the duplicate open-schema brainstorm drafts into
+    `docs/plans/evaluation/scoring/open-schema/brainstorm.md`.
+  - Added
+    `docs/plans/evaluation/scoring/open-schema/orchestration.md`
+    with artifact-first checkpoints.
+  - Recorded that open-schema should prioritize final form correctness, then
+    active-memory value recovery, then schema diagnostics.
 
 ## Next
 
@@ -108,15 +116,19 @@
 - [ ] Add a hard MCP/backend identity preflight so the runner can prove the
   Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
   exports and scores.
-- [x] Run one live known-schema Claude MCP smoke before starting open schema,
-  including a check that Claude's tool allow-list and MCP config behave as
-  expected.
-- [ ] Add open-schema memory snapshot and scoring described in
-  `docs/plans/evaluation/scoring/open-schema/brainstorm.md`:
-  - Export `memory-snapshot.json` with `preferences[]` and `definitions[]`.
-  - Add light value-recovery DB scoring.
-  - Add open-schema combined attribution.
-  - Enable `eval:e2e-mcp-agent --schema-mode open`.
+- [ ] Checkpoint 1 for open schema: export `memory-snapshot.json` with
+  active preferences, optional suggestions, visible definitions, and definition
+  baseline diagnostics.
+- [ ] Checkpoint 2 for open schema: add deterministic
+  `open-schema-database-score-report.json` and
+  `open-schema-combined-score-report.json` without changing known-schema
+  report contracts.
+- [ ] Checkpoint 3 for open schema: enable
+  `eval:e2e-mcp-agent --schema-mode open --form-mode backend` with the
+  deterministic command adapter first.
+- [ ] Checkpoint 4 for open schema: add identity/schema-isolation hardening and
+  run a live Claude MCP smoke labeled as smoke-only or benchmark-usable based
+  on the captured state.
 
 ## Later
 
