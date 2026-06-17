@@ -101,6 +101,15 @@
     baseline diagnostics.
   - Kept known-schema `stored-preferences.json` and known-schema reports
     unchanged.
+- [x] Open-schema Checkpoint 2 static scoring.
+  - Added `pnpm eval:score --mode open-schema-database`.
+  - Added `pnpm eval:score --mode open-schema-combined`.
+  - Added schema-validated `open-schema-database-score-report.json` and
+    `open-schema-combined-score-report.json`.
+  - Scores active-memory value recovery ahead of slug correctness and keeps
+    schema quality deterministic/diagnostic.
+  - Joins open-schema memory outcomes with the existing form score report
+    without changing known-schema report contracts.
 
 ## Next
 
@@ -123,10 +132,6 @@
 - [ ] Add a hard MCP/backend identity preflight so the runner can prove the
   Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
   exports and scores.
-- [ ] Checkpoint 2 for open schema: add deterministic
-  `open-schema-database-score-report.json` and
-  `open-schema-combined-score-report.json` without changing known-schema
-  report contracts.
 - [ ] Checkpoint 3 for open schema: enable
   `eval:e2e-mcp-agent --schema-mode open --form-mode backend` with the
   deterministic command adapter first.

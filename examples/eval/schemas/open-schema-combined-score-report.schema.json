@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/open-schema-combined-score-report.schema.json",
+  "title": "Eval Open-Schema Combined Score Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scoreType",
+    "userId",
+    "corpusId",
+    "scenarioId",
+    "formId",
+    "summary",
+    "facts"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "scoreType": { "const": "open-schema-combined" },
+    "userId": { "type": "string" },
+    "corpusId": { "type": "string" },
+    "scenarioId": { "type": "string" },
+    "formId": { "type": "string" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factTotal",
+        "stageAttributionCounts",
+        "memoryStatusCounts",
+        "formStatusCounts",
+        "formCorrectWithRecoveredMemory",
+        "formCorrectWithoutRecoveredMemory"
+      ],
+      "properties": {
+        "factTotal": { "$ref": "#/$defs/count" },
+        "stageAttributionCounts": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/count" }
+        },
+        "memoryStatusCounts": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/memoryStatus" },
+          "additionalProperties": { "$ref": "#/$defs/count" }
+        },
+        "formStatusCounts": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/formStatus" },
+          "additionalProperties": { "$ref": "#/$defs/count" }
+        },
+        "formCorrectWithRecoveredMemory": { "$ref": "#/$defs/count" },
+        "formCorrectWithoutRecoveredMemory": { "$ref": "#/$defs/count" }
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/factRow" }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "databaseClassification": {
+      "enum": [
+        "open_known_present_recovered_accepted_slug",
+        "open_known_present_recovered_novel_slug",
+        "open_known_present_suggestion_only",
+        "open_known_present_wrong_value",
+        "open_known_present_missing",
+        "open_missing_absent_correct",
+        "open_missing_active_value_hallucinated",
+        "open_missing_active_key_hallucinated",
+        "open_missing_active_hallucinated",
+        "open_storage_not_scored"
+      ]
+    },
+    "formClassification": {
+      "enum": [
+        "form_known_correct",
+        "form_known_missing",
+        "form_known_wrong",
+        "form_missing_absent_correct",
+        "form_missing_hallucinated",
+        "form_unexpected",
+        "structural_skip",
+        "structural_overfilled",
+        "unsupported"
+      ]
+    },
+    "memoryStatus": {
+      "enum": [
+        "recovered",
+        "suggestion_only",
+        "wrong_value",
+        "missing",
+        "missing_absent",
+        "missing_hallucinated",
+        "not_scored"
+      ]
+    },
+    "formStatus": {
+      "enum": ["correct", "wrong", "missing", "hallucinated", "absent", "none", "other"]
+    },
+    "memorySummary": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "matchingSlug",
+        "valueRecoveredInActiveMemory",
+        "suggestionOnly"
+      ],
+      "properties": {
+        "classification": { "$ref": "#/$defs/databaseClassification" },
+        "matchingSlug": { "type": ["string", "null"] },
+        "valueRecoveredInActiveMemory": { "type": "boolean" },
+        "suggestionOnly": { "type": "boolean" }
+      }
+    },
+    "formField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fieldIndex", "pdfFieldName", "classification", "renderedValue"],
+      "properties": {
+        "fieldIndex": { "type": "integer", "minimum": 0 },
+        "pdfFieldName": { "type": "string" },
+        "classification": { "$ref": "#/$defs/formClassification" },
+        "renderedValue": {}
+      }
+    },
+    "formSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/formField" }
+        }
+      }
+    },
+    "factRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "expectedValue",
+        "memory",
+        "form",
+        "memoryClass",
+        "memoryStatus",
+        "formStatus",
+        "stageAttribution"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "expectedValue": {},
+        "memory": { "$ref": "#/$defs/memorySummary" },
+        "form": { "$ref": "#/$defs/formSummary" },
+        "memoryClass": { "$ref": "#/$defs/databaseClassification" },
+        "memoryStatus": { "$ref": "#/$defs/memoryStatus" },
+        "formStatus": { "$ref": "#/$defs/formStatus" },
+        "stageAttribution": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { scoreDatabaseToFile } from './scoring/database.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import { scoreCombinedToFile } from './scoring/combined.mjs';
+import { scoreOpenSchemaDatabaseToFile } from './scoring/open-schema-database.mjs';
+import { scoreOpenSchemaCombinedToFile } from './scoring/open-schema-combined.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,16 +61,54 @@ export async function runScore({ repoRoot = defaultRepoRoot, args = [] } = {}) {
       };
     }
 
-    const report = await scoreCombinedToFile({
+    if (options.mode === 'combined') {
+      const report = await scoreCombinedToFile({
+        repoRoot,
+        databaseReportPath: path.resolve(repoRoot, options.databaseReport),
+        formReportPath: path.resolve(repoRoot, options.formReport),
+        outPath: path.resolve(repoRoot, options.out),
+      });
+      return {
+        exitCode: 0,
+        lines: [
+          'eval score combined passed',
+          `facts=${report.summary.factTotal}`,
+          `wrote ${path.relative(repoRoot, path.resolve(repoRoot, options.out))}`,
+        ],
+      };
+    }
+
+    if (options.mode === 'open-schema-database') {
+      const report = await scoreOpenSchemaDatabaseToFile({
+        repoRoot,
+        userId: options.userId,
+        corpusId: options.corpusId,
+        memorySnapshotPath: path.resolve(repoRoot, options.memorySnapshot),
+        validationReportPath: options.validationReport
+          ? path.resolve(repoRoot, options.validationReport)
+          : undefined,
+        outPath: path.resolve(repoRoot, options.out),
+      });
+      return {
+        exitCode: report.fixtureReadiness.scorable ? 0 : 1,
+        lines: [
+          `eval score open-schema-database ${report.fixtureReadiness.scorable ? 'passed' : 'unscorable'}`,
+          `known=${report.summary.knownPresentTotal} missing=${report.summary.intentionallyMissingTotal}`,
+          `wrote ${path.relative(repoRoot, path.resolve(repoRoot, options.out))}`,
+        ],
+      };
+    }
+
+    const report = await scoreOpenSchemaCombinedToFile({
       repoRoot,
-      databaseReportPath: path.resolve(repoRoot, options.databaseReport),
+      openSchemaDatabaseReportPath: path.resolve(repoRoot, options.openSchemaDatabaseReport),
       formReportPath: path.resolve(repoRoot, options.formReport),
       outPath: path.resolve(repoRoot, options.out),
     });
     return {
       exitCode: 0,
       lines: [
-        'eval score combined passed',
+        'eval score open-schema-combined passed',
         `facts=${report.summary.factTotal}`,
         `wrote ${path.relative(repoRoot, path.resolve(repoRoot, options.out))}`,
       ],
@@ -95,10 +135,12 @@ export function parseArgs(args) {
         '--user',
         '--corpus',
         '--stored-preferences',
+        '--memory-snapshot',
         '--validation-report',
         '--scenario',
         '--filled-form',
         '--database-report',
+        '--open-schema-database-report',
         '--form-report',
         '--out',
       ].includes(arg)
@@ -114,18 +156,28 @@ export function parseArgs(args) {
     if (arg === '--user') options.userId = value;
     if (arg === '--corpus') options.corpusId = value;
     if (arg === '--stored-preferences') options.storedPreferences = value;
+    if (arg === '--memory-snapshot') options.memorySnapshot = value;
     if (arg === '--validation-report') options.validationReport = value;
     if (arg === '--scenario') options.scenarioId = value;
     if (arg === '--filled-form') options.filledForm = value;
     if (arg === '--database-report') options.databaseReport = value;
+    if (arg === '--open-schema-database-report') options.openSchemaDatabaseReport = value;
     if (arg === '--form-report') options.formReport = value;
     if (arg === '--out') options.out = value;
   }
 
-  if (!['database', 'form', 'combined'].includes(options.mode)) {
+  if (
+    ![
+      'database',
+      'form',
+      'combined',
+      'open-schema-database',
+      'open-schema-combined',
+    ].includes(options.mode)
+  ) {
     return {
       kind: 'usage-error',
-      message: 'Expected --mode database, --mode form, or --mode combined',
+      message: 'Expected --mode database, form, combined, open-schema-database, or open-schema-combined',
     };
   }
   if (!options.out) {
@@ -134,10 +186,16 @@ export function parseArgs(args) {
   if (options.mode === 'database') {
     return requireOptions(options, ['userId', 'corpusId', 'storedPreferences']);
   }
+  if (options.mode === 'open-schema-database') {
+    return requireOptions(options, ['userId', 'corpusId', 'memorySnapshot']);
+  }
   if (options.mode === 'form') {
     return requireOptions(options, ['scenarioId', 'filledForm']);
   }
-  return requireOptions(options, ['databaseReport', 'formReport']);
+  if (options.mode === 'combined') {
+    return requireOptions(options, ['databaseReport', 'formReport']);
+  }
+  return requireOptions(options, ['openSchemaDatabaseReport', 'formReport']);
 }
 
 function requireOptions(options, required) {
@@ -154,9 +212,11 @@ function optionNameForKey(key) {
     userId: '--user',
     corpusId: '--corpus',
     storedPreferences: '--stored-preferences',
+    memorySnapshot: '--memory-snapshot',
     scenarioId: '--scenario',
     filledForm: '--filled-form',
     databaseReport: '--database-report',
+    openSchemaDatabaseReport: '--open-schema-database-report',
     formReport: '--form-report',
   }[key];
 }
@@ -167,6 +227,8 @@ export function usage() {
     '  pnpm eval:score --mode database --user <userId> --corpus <corpusId> --stored-preferences <file> [--validation-report <file>] --out <file>',
     '  pnpm eval:score --mode form --scenario <scenarioId> --filled-form <file> --out <file>',
     '  pnpm eval:score --mode combined --database-report <file> --form-report <file> --out <file>',
+    '  pnpm eval:score --mode open-schema-database --user <userId> --corpus <corpusId> --memory-snapshot <file> [--validation-report <file>] --out <file>',
+    '  pnpm eval:score --mode open-schema-combined --open-schema-database-report <file> --form-report <file> --out <file>',
   ].join('\n');
 }
 

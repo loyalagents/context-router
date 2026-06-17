@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/open-schema-database-score-report.schema.json",
+  "title": "Eval Open-Schema Database Score Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scoreType",
+    "userId",
+    "corpusId",
+    "storageInput",
+    "memorySnapshot",
+    "fixtureReadiness",
+    "summary",
+    "knownPresent",
+    "intentionallyMissing",
+    "schemaDiagnostics",
+    "ignoredMemoryPreferences",
+    "unscoredActivePreferences",
+    "unscoredSuggestions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "scoreType": { "const": "open-schema-database-storage" },
+    "userId": { "type": "string" },
+    "corpusId": { "type": "string" },
+    "storageInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaMode",
+        "producer",
+        "statusesScored",
+        "suggestionsWereAutoApplied"
+      ],
+      "properties": {
+        "schemaMode": { "enum": ["open", "known"] },
+        "producer": { "type": "string", "minLength": 1 },
+        "statusesScored": { "const": ["ACTIVE"] },
+        "suggestionsWereAutoApplied": { "type": "boolean" }
+      }
+    },
+    "memorySnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "evaluationMode", "diagnostics"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "evaluationMode": { "type": "string", "minLength": 1 },
+        "diagnostics": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "fixtureReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scorable", "blockingIssues"],
+      "properties": {
+        "scorable": { "type": "boolean" },
+        "blockingIssues": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knownPresentTotal",
+        "knownPresentRecoveredActive",
+        "knownPresentRecoveredAcceptedSlug",
+        "knownPresentRecoveredNovelSlug",
+        "knownPresentSuggestionOnly",
+        "knownPresentWrongValue",
+        "knownPresentMissing",
+        "knownPresentConflict",
+        "activeValueRecoveryRate",
+        "valueRecoveryOrSuggestionRate",
+        "acceptedSlugRecoveryRate",
+        "intentionallyMissingTotal",
+        "missingAbsentCorrect",
+        "missingActiveValueHallucinated",
+        "missingActiveKeyHallucinated",
+        "missingActiveBothHallucinated",
+        "missingActiveHallucinatedTotal",
+        "missingAbstentionRate",
+        "ignoredMemoryPreferenceCount",
+        "unscoredActivePreferenceCount",
+        "unscoredSuggestionCount",
+        "duplicateSlugGroupCount",
+        "emptyDescriptionDefinitionCount",
+        "missingDefinitionPreferenceCount",
+        "missingDefinitionSuggestionCount"
+      ],
+      "properties": {
+        "knownPresentTotal": { "$ref": "#/$defs/count" },
+        "knownPresentRecoveredActive": { "$ref": "#/$defs/count" },
+        "knownPresentRecoveredAcceptedSlug": { "$ref": "#/$defs/count" },
+        "knownPresentRecoveredNovelSlug": { "$ref": "#/$defs/count" },
+        "knownPresentSuggestionOnly": { "$ref": "#/$defs/count" },
+        "knownPresentWrongValue": { "$ref": "#/$defs/count" },
+        "knownPresentMissing": { "$ref": "#/$defs/count" },
+        "knownPresentConflict": { "$ref": "#/$defs/count" },
+        "activeValueRecoveryRate": { "$ref": "#/$defs/rate" },
+        "valueRecoveryOrSuggestionRate": { "$ref": "#/$defs/rate" },
+        "acceptedSlugRecoveryRate": { "$ref": "#/$defs/rate" },
+        "intentionallyMissingTotal": { "$ref": "#/$defs/count" },
+        "missingAbsentCorrect": { "$ref": "#/$defs/count" },
+        "missingActiveValueHallucinated": { "$ref": "#/$defs/count" },
+        "missingActiveKeyHallucinated": { "$ref": "#/$defs/count" },
+        "missingActiveBothHallucinated": { "$ref": "#/$defs/count" },
+        "missingActiveHallucinatedTotal": { "$ref": "#/$defs/count" },
+        "missingAbstentionRate": { "$ref": "#/$defs/rate" },
+        "ignoredMemoryPreferenceCount": { "$ref": "#/$defs/count" },
+        "unscoredActivePreferenceCount": { "$ref": "#/$defs/count" },
+        "unscoredSuggestionCount": { "$ref": "#/$defs/count" },
+        "duplicateSlugGroupCount": { "$ref": "#/$defs/count" },
+        "emptyDescriptionDefinitionCount": { "$ref": "#/$defs/count" },
+        "missingDefinitionPreferenceCount": { "$ref": "#/$defs/count" },
+        "missingDefinitionSuggestionCount": { "$ref": "#/$defs/count" }
+      }
+    },
+    "knownPresent": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/knownPresentRow" }
+    },
+    "intentionallyMissing": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/missingRow" }
+    },
+    "schemaDiagnostics": { "$ref": "#/$defs/schemaDiagnostics" },
+    "ignoredMemoryPreferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preferenceSummary" }
+    },
+    "unscoredActivePreferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preferenceSummary" }
+    },
+    "unscoredSuggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preferenceSummary" }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "rate": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "knownClassification": {
+      "enum": [
+        "open_known_present_recovered_accepted_slug",
+        "open_known_present_recovered_novel_slug",
+        "open_known_present_suggestion_only",
+        "open_known_present_wrong_value",
+        "open_known_present_missing"
+      ]
+    },
+    "missingClassification": {
+      "enum": [
+        "open_missing_absent_correct",
+        "open_missing_active_value_hallucinated",
+        "open_missing_active_key_hallucinated",
+        "open_missing_active_hallucinated"
+      ]
+    },
+    "preferenceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slug",
+        "definitionId",
+        "value",
+        "status",
+        "sourceType",
+        "confidence"
+      ],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "slug": { "type": "string" },
+        "definitionId": { "type": ["string", "null"] },
+        "value": {},
+        "status": { "type": "string" },
+        "sourceType": { "type": ["string", "null"] },
+        "confidence": { "type": ["number", "null"] }
+      }
+    },
+    "knownPresentRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "expectedValue",
+        "canonicalSlugs",
+        "acceptedAliasSlugs",
+        "valueRecoveredInActiveMemory",
+        "recoveredUnderAcceptedSlug",
+        "recoveredUnderNovelSlug",
+        "suggestionOnly",
+        "acceptedSlugPopulated",
+        "acceptedSlugHasWrongValue",
+        "conflict",
+        "matchingActiveRows",
+        "matchingAcceptedRows",
+        "matchingNovelRows",
+        "acceptedSlugRows",
+        "acceptedWrongRows",
+        "matchingSuggestionRows",
+        "classification"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "expectedValue": {},
+        "canonicalSlugs": { "$ref": "#/$defs/stringArray" },
+        "acceptedAliasSlugs": { "$ref": "#/$defs/stringArray" },
+        "valueRecoveredInActiveMemory": { "type": "boolean" },
+        "recoveredUnderAcceptedSlug": { "type": "boolean" },
+        "recoveredUnderNovelSlug": { "type": "boolean" },
+        "suggestionOnly": { "type": "boolean" },
+        "acceptedSlugPopulated": { "type": "boolean" },
+        "acceptedSlugHasWrongValue": { "type": "boolean" },
+        "conflict": { "type": "boolean" },
+        "matchingActiveRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "matchingAcceptedRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "matchingNovelRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "acceptedSlugRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "acceptedWrongRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "matchingSuggestionRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "classification": { "$ref": "#/$defs/knownClassification" }
+      }
+    },
+    "missingRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factKey",
+        "missingKind",
+        "withheldValue",
+        "source",
+        "canonicalSlugs",
+        "acceptedAliasSlugs",
+        "activeValueFoundAnywhere",
+        "activeAcceptedSlugHasValue",
+        "suggestionValueFoundAnywhere",
+        "suggestionAcceptedSlugHasValue",
+        "activeValueRows",
+        "activeAcceptedSlugRows",
+        "suggestionValueRows",
+        "suggestionAcceptedSlugRows",
+        "classification"
+      ],
+      "properties": {
+        "factKey": { "type": "string" },
+        "missingKind": {
+          "enum": ["profile_null_missing", "withheld_value_missing"]
+        },
+        "withheldValue": {},
+        "source": { "type": "string" },
+        "canonicalSlugs": { "$ref": "#/$defs/stringArray" },
+        "acceptedAliasSlugs": { "$ref": "#/$defs/stringArray" },
+        "activeValueFoundAnywhere": { "type": "boolean" },
+        "activeAcceptedSlugHasValue": { "type": "boolean" },
+        "suggestionValueFoundAnywhere": { "type": "boolean" },
+        "suggestionAcceptedSlugHasValue": { "type": "boolean" },
+        "activeValueRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "activeAcceptedSlugRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "suggestionValueRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "suggestionAcceptedSlugRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "classification": { "$ref": "#/$defs/missingClassification" }
+      }
+    },
+    "definitionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "namespace",
+        "slug",
+        "displayName",
+        "ownerUserId",
+        "archivedAt"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "namespace": { "type": "string" },
+        "slug": { "type": "string" },
+        "displayName": { "type": ["string", "null"] },
+        "ownerUserId": { "type": ["string", "null"] },
+        "archivedAt": { "type": ["string", "null"] }
+      }
+    },
+    "schemaDiagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definitionCount",
+        "activePreferenceCount",
+        "suggestionCount",
+        "definitionBaseline",
+        "duplicateSlugGroups",
+        "emptyDescriptionDefinitions",
+        "preferencesMissingDefinitions",
+        "suggestionsMissingDefinitions"
+      ],
+      "properties": {
+        "definitionCount": { "$ref": "#/$defs/count" },
+        "activePreferenceCount": { "$ref": "#/$defs/count" },
+        "suggestionCount": { "$ref": "#/$defs/count" },
+        "definitionBaseline": { "type": "object", "additionalProperties": true },
+        "duplicateSlugGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["slug", "count", "definitionIds", "namespaces"],
+            "properties": {
+              "slug": { "type": "string" },
+              "count": { "$ref": "#/$defs/count" },
+              "definitionIds": { "$ref": "#/$defs/stringArray" },
+              "namespaces": { "$ref": "#/$defs/stringArray" }
+            }
+          }
+        },
+        "emptyDescriptionDefinitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/definitionSummary" }
+        },
+        "preferencesMissingDefinitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "suggestionsMissingDefinitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        }
+      }
+    }
+  }
+}

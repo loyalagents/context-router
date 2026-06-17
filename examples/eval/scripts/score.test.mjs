@@ -14,6 +14,8 @@ test('score CLI prints help', async () => {
   const result = await runScore({ repoRoot, args: ['--help'] });
   assert.equal(result.exitCode, 0);
   assert.match(result.lines.join('\n'), /pnpm eval:score --mode database/);
+  assert.match(result.lines.join('\n'), /--mode open-schema-database/);
+  assert.match(result.lines.join('\n'), /--mode open-schema-combined/);
 });
 
 test('score CLI reports invalid arguments clearly', async () => {
@@ -54,6 +56,39 @@ test('score CLI reports invalid arguments clearly', async () => {
   assert.equal(missingCorpus.exitCode, 2);
   assert.match(missingCorpus.lines.join('\n'), /Missing required --corpus/);
   assert.doesNotMatch(missingCorpus.lines.join('\n'), /--corpus-id/);
+
+  const missingMemorySnapshot = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'open-schema-database',
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingMemorySnapshot.exitCode, 2);
+  assert.match(missingMemorySnapshot.lines.join('\n'), /Missing required --memory-snapshot/);
+
+  const missingOpenDatabaseReport = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'open-schema-combined',
+      '--form-report',
+      '/tmp/form-fill-score-report.json',
+      '--out',
+      '/tmp/report.json',
+    ],
+  });
+  assert.equal(missingOpenDatabaseReport.exitCode, 2);
+  assert.match(
+    missingOpenDatabaseReport.lines.join('\n'),
+    /Missing required --open-schema-database-report/,
+  );
 });
 
 test('score CLI writes database, form, and combined reports', async () => {
@@ -167,6 +202,87 @@ test('score CLI writes database, form, and combined reports', async () => {
   assert.equal(JSON.parse(await readFile(combinedReportPath, 'utf8')).scoreType, 'combined');
 });
 
+test('score CLI writes open-schema database and combined reports', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-cli-open-schema-'));
+  const memorySnapshotPath = path.join(tmp, 'memory-snapshot.json');
+  const databaseReportPath = path.join(tmp, 'open-schema-database-score-report.json');
+  const formReportPath = path.join(tmp, 'form-fill-score-report.json');
+  const combinedReportPath = path.join(tmp, 'open-schema-combined-score-report.json');
+
+  await writeFile(memorySnapshotPath, jsonText(openSchemaMemorySnapshot()));
+
+  const database = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'open-schema-database',
+      '--user',
+      'alex-i9-test',
+      '--corpus',
+      'realistic',
+      '--memory-snapshot',
+      memorySnapshotPath,
+      '--out',
+      databaseReportPath,
+    ],
+  });
+  assert.equal(database.exitCode, 0);
+  assert.equal(
+    JSON.parse(await readFile(databaseReportPath, 'utf8')).scoreType,
+    'open-schema-database-storage',
+  );
+
+  await writeFile(
+    formReportPath,
+    jsonText({
+      schemaVersion: 1,
+      scoreType: 'form-fill',
+      scenarioId: 'alex-i9-realistic',
+      userId: 'alex-i9-test',
+      corpusId: 'realistic',
+      formId: 'i-9',
+      summary: formScoreSummary(),
+      fields: [
+        {
+          fieldIndex: 0,
+          pdfFieldName: 'name',
+          factKey: 'identity.legalName',
+          fieldClass: 'should-fill',
+          expectedAction: 'SET_TEXT',
+          expectedValue: 'Alex Jordan Rivera',
+          actualValue: 'Alex Jordan Rivera',
+          sourceSlugs: ['profile.full_name'],
+          sourceSlugAgrees: true,
+          snapshotClassification: 'correct',
+          classification: 'form_known_correct',
+          overfill: false,
+          overfillSeverity: null,
+          overfillReason: null,
+        },
+      ],
+    }),
+  );
+
+  const combined = await runScore({
+    repoRoot,
+    args: [
+      '--mode',
+      'open-schema-combined',
+      '--open-schema-database-report',
+      databaseReportPath,
+      '--form-report',
+      formReportPath,
+      '--out',
+      combinedReportPath,
+    ],
+  });
+  assert.equal(combined.exitCode, 0);
+  assert.equal(
+    JSON.parse(await readFile(combinedReportPath, 'utf8')).scoreType,
+    'open-schema-combined',
+  );
+});
+
 test('score CLI writes unscorable database reports and exits nonzero', async () => {
   const tempRepoRoot = await mkdtemp(path.join(os.tmpdir(), 'score-cli-unscorable-'));
   await writeMinimalUnscorableRepo(tempRepoRoot);
@@ -202,6 +318,46 @@ test('score CLI writes unscorable database reports and exits nonzero', async () 
       'realistic',
       '--stored-preferences',
       storedPreferencesPath,
+      '--out',
+      reportPath,
+    ],
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(reportPath, 'utf8'));
+  assert.equal(report.fixtureReadiness.scorable, false);
+  assert.match(result.lines.join('\n'), /unscorable/);
+});
+
+test('score CLI writes unscorable open-schema database reports and exits nonzero', async () => {
+  const tempRepoRoot = await mkdtemp(path.join(os.tmpdir(), 'score-cli-open-unscorable-'));
+  await writeMinimalUnscorableRepo(tempRepoRoot);
+  const memorySnapshotPath = path.join(tempRepoRoot, 'memory-snapshot.json');
+  const reportPath = path.join(tempRepoRoot, 'open-schema-database-score-report.json');
+
+  await writeFile(
+    memorySnapshotPath,
+    jsonText(
+      openSchemaMemorySnapshot({
+        userId: 'unscorable-user',
+        corpusId: 'realistic',
+        preferences: [],
+        definitions: [],
+      }),
+    ),
+  );
+
+  const result = await runScore({
+    repoRoot: tempRepoRoot,
+    args: [
+      '--mode',
+      'open-schema-database',
+      '--user',
+      'unscorable-user',
+      '--corpus',
+      'realistic',
+      '--memory-snapshot',
+      memorySnapshotPath,
       '--out',
       reportPath,
     ],
@@ -295,6 +451,8 @@ async function writeMinimalUnscorableRepo(tempRepoRoot) {
   for (const schemaFile of [
     'stored-preferences.schema.json',
     'database-score-report.schema.json',
+    'memory-snapshot.schema.json',
+    'open-schema-database-score-report.schema.json',
   ]) {
     await writeFile(
       path.join(targetSchemas, schemaFile),
@@ -377,4 +535,102 @@ function formScoreSummary() {
     unsupportedFieldCount: 0,
     sourceSlugAgreementRate: 1,
   };
+}
+
+function openSchemaMemorySnapshot({
+  userId = 'alex-i9-test',
+  corpusId = 'realistic',
+  preferences,
+  definitions,
+} = {}) {
+  const defaultPreference = openSchemaPreference(
+    'profile.full_name',
+    'Alex Jordan Rivera',
+    { userId },
+  );
+  const defaultDefinition = openSchemaDefinition('profile.full_name', { userId });
+  const snapshotPreferences = preferences ?? [defaultPreference];
+  const snapshotDefinitions = definitions ?? [defaultDefinition];
+  return {
+    schemaVersion: 1,
+    artifactType: 'memory-snapshot',
+    runId: 'score-cli-open-schema-test',
+    evaluationMode: 'open-schema-static',
+    userId,
+    corpusId,
+    storageInput: {
+      schemaMode: 'open',
+      producer: 'unit-test',
+      statusesScored: ['ACTIVE'],
+      suggestionsWereAutoApplied: false,
+    },
+    preferences: snapshotPreferences,
+    suggestions: [],
+    definitions: snapshotDefinitions,
+    definitionBaseline: {
+      capturedBeforeRun: true,
+      capturedAt: '2026-06-17T00:00:00.000Z',
+      strategy: 'baseline-only',
+      preexistingDefinitionIds: [],
+      preexistingSlugs: [],
+      newDefinitionIds: snapshotDefinitions.map((definition) => definition.id),
+      newSlugs: snapshotDefinitions.map((definition) => definition.slug),
+      removedDefinitionIds: [],
+      removedSlugs: [],
+    },
+    diagnostics: {
+      exportedAt: '2026-06-17T00:00:00.000Z',
+      graphqlUrl: 'http://localhost:3000/graphql',
+      queryName: 'EvalMemorySnapshotExport',
+      locationMode: 'global-only',
+      locationId: null,
+      preferencesMergedWithLocation: false,
+      includeSuggestions: false,
+      activePreferenceCount: snapshotPreferences.length,
+      suggestedPreferenceCount: 0,
+      definitionCount: snapshotDefinitions.length,
+      backendUserId: 'backend-alex',
+      schemaMode: 'open',
+      schemaResetMode: 'baseline-only',
+    },
+  };
+}
+
+function openSchemaPreference(slug, value, { userId = 'alex-i9-test' } = {}) {
+  return {
+    id: `pref-${openSchemaId(slug)}`,
+    userId,
+    locationId: null,
+    slug,
+    definitionId: `def-${openSchemaId(slug)}`,
+    value,
+    status: 'ACTIVE',
+    sourceType: 'INFERRED',
+    confidence: 0.9,
+    evidence: null,
+    createdAt: '2026-06-17T00:00:00.000Z',
+    updatedAt: '2026-06-17T00:00:00.000Z',
+  };
+}
+
+function openSchemaDefinition(slug, { userId = 'alex-i9-test' } = {}) {
+  return {
+    id: `def-${openSchemaId(slug)}`,
+    namespace: 'eval-agent',
+    slug,
+    displayName: slug,
+    ownerUserId: userId,
+    archivedAt: null,
+    description: `Definition for ${slug}`,
+    valueType: 'STRING',
+    scope: 'USER',
+    options: null,
+    isSensitive: false,
+    isCore: false,
+    category: 'profile',
+  };
+}
+
+function openSchemaId(slug) {
+  return slug.replace(/[^a-z0-9]+/gi, '-');
 }
