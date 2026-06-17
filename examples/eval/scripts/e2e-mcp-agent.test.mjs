@@ -9,6 +9,7 @@ import {
   buildAgentEnvironment,
   buildAgentInvocation,
   buildMcpAgentPrompt,
+  captureDefinitionBaseline,
   parseArgs,
   runAgentProcess,
   runMcpAgentE2E,
@@ -88,6 +89,7 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(envFallback.options.documentsRoot, 'examples/eval/users/alex-i9-test/corpora/realistic');
   assert.equal(envFallback.options.agentTimeoutMs, 900000);
   assert.equal(envFallback.options.promptTemplate, 'examples/eval/prompts/mcp-known-schema.md');
+  assert.equal(envFallback.options.ensureDefinitions, true);
   assert.match(
     envFallback.options.runId,
     /^mcp-known-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
@@ -127,12 +129,29 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(cliOverride.options.runId, 'run-123');
 
   const openSchema = parseArgs(replaceFlagValue(baseArgs, '--schema-mode', 'open'), env, fixedNow);
-  assert.equal(openSchema.kind, 'usage-error');
-  assert.match(openSchema.message, /reserved/);
+  assert.equal(openSchema.kind, 'ok');
+  assert.equal(openSchema.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.equal(openSchema.options.ensureDefinitions, false);
+  assert.match(
+    openSchema.options.runId,
+    /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
+  );
 
   const agentForm = parseArgs(replaceFlagValue(baseArgs, '--form-mode', 'agent'), env, fixedNow);
   assert.equal(agentForm.kind, 'usage-error');
   assert.match(agentForm.message, /reserved/);
+
+  const openClaude = parseArgs(
+    [
+      ...replaceFlagValue(replaceFlagValue(baseArgs, '--schema-mode', 'open'), '--agent', 'claude'),
+      '--mcp-config',
+      '/private/tmp/mcp.json',
+    ],
+    env,
+    fixedNow,
+  );
+  assert.equal(openClaude.kind, 'usage-error');
+  assert.match(openClaude.message, /command adapter/);
 
   const commandWithoutCommand = parseArgs(removeFlagValue(baseArgs, '--agent-command'), env, fixedNow);
   assert.equal(commandWithoutCommand.kind, 'usage-error');
@@ -269,6 +288,143 @@ test('mcp known-schema prompt includes safe context and excludes hidden truth', 
   }
 });
 
+test('mcp open-schema prompt permits schema creation without hidden truth leakage', async () => {
+  const parsed = parseArgs(
+    [
+      ...replaceFlagValue(baseArgs, '--schema-mode', 'open'),
+      '--auth-token',
+      'token',
+      '--run-id',
+      'prompt-open-test',
+    ],
+    {},
+    fixedNow,
+  );
+  assert.equal(parsed.kind, 'ok');
+
+  const result = await buildMcpAgentPrompt({
+    repoRoot,
+    options: parsed.options,
+  });
+  const prompt = result.prompt;
+
+  assert.match(prompt, /MCP Open-Schema Memory Ingestion Eval/);
+  assert.match(prompt, /Create useful definitions and slugs/);
+  assert.match(prompt, /Reuse existing definitions/);
+  assert.equal(prompt.includes('do not invent new definitions'), false);
+  assert.match(prompt, new RegExp(COMPLETION_MARKER));
+
+  for (const hidden of [
+    'profile.yaml',
+    'validation-report.json',
+    'fact-storage-map.v1.json',
+    'expected/filled-form.json',
+    'factContract',
+    'evaluationRole',
+    '000-00-0292',
+    '7428 Evergreen Terrace',
+    '987654321',
+    'Cascadia Hiring Cooperative',
+  ]) {
+    assert.equal(prompt.includes(hidden), false, `prompt leaked ${hidden}`);
+  }
+});
+
+test('captureDefinitionBaseline writes schema-valid baselines and rejects user mismatches', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-baseline-'));
+  const options = {
+    userId: 'alex-i9-test',
+    corpusId: 'realistic',
+    scenarioId: 'alex-i9-realistic',
+    graphqlUrl: 'http://user:pass@localhost:3000/graphql',
+    authToken: 'secret-token',
+    locationId: 'loc-1',
+  };
+  const artifacts = {
+    definitionBaseline: path.join(tmp, 'definition-baseline.json'),
+  };
+  const setupResult = {
+    backendUserId: 'backend-user-123',
+  };
+  const requests = [];
+  const result = await captureDefinitionBaseline({
+    repoRoot,
+    options,
+    artifacts,
+    setupResult,
+    now: fixedNow,
+    fetchImpl: async (url, request) => {
+      requests.push({ url, request });
+      return jsonResponse({
+        data: {
+          me: { userId: 'backend-user-123' },
+          activePreferences: [],
+          exportPreferenceSchema: [
+            definitionRow({ id: 'def-b', slug: 'zeta.value' }),
+            definitionRow({ id: 'def-a', slug: 'alpha.value' }),
+          ],
+        },
+      });
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, 'http://user:pass@localhost:3000/graphql');
+  assert.equal(requests[0].request.headers.authorization, 'Bearer secret-token');
+  assert.deepEqual(JSON.parse(requests[0].request.body).variables, {
+    locationId: 'loc-1',
+    includeSuggestions: false,
+  });
+
+  const artifact = JSON.parse(await readFile(artifacts.definitionBaseline, 'utf8'));
+  await validateWithSchema(repoRoot, 'definition-baseline.schema.json', artifact, 'definition baseline');
+  assert.equal(artifact.artifactType, 'definition-baseline');
+  assert.equal(artifact.backendUserId, 'backend-user-123');
+  assert.equal(artifact.strategy, 'baseline-only');
+  assert.deepEqual(artifact.definitionIds, ['def-a', 'def-b']);
+  assert.deepEqual(artifact.slugs, ['alpha.value', 'zeta.value']);
+  assert.equal(artifact.diagnostics.graphqlUrl, 'http://localhost:3000/graphql');
+
+  await assert.rejects(
+    captureDefinitionBaseline({
+      repoRoot,
+      options,
+      artifacts: { definitionBaseline: path.join(tmp, 'missing-user.json') },
+      setupResult,
+      now: fixedNow,
+      fetchImpl: async () =>
+        jsonResponse({
+          data: {
+            me: {},
+            activePreferences: [],
+            exportPreferenceSchema: [],
+          },
+        }),
+    }),
+    /did not include me\.userId/,
+  );
+
+  await assert.rejects(
+    captureDefinitionBaseline({
+      repoRoot,
+      options,
+      artifacts: { definitionBaseline: path.join(tmp, 'wrong-user.json') },
+      setupResult,
+      now: fixedNow,
+      fetchImpl: async () =>
+        jsonResponse({
+          data: {
+            me: { userId: 'other-backend-user' },
+            activePreferences: [],
+            exportPreferenceSchema: [],
+          },
+        }),
+    }),
+    /does not match setup backend user backend-user-123/,
+  );
+});
+
 test('mcp agent e2e runs stages in order and writes schema-valid artifacts', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-'));
   const calls = [];
@@ -338,6 +494,21 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
 
   const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
   await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  await assert.rejects(
+    validateWithSchema(
+      repoRoot,
+      'mcp-agent-run.schema.json',
+      {
+        ...mcpAgentRun,
+        artifacts: {
+          ...mcpAgentRun.artifacts,
+          memorySnapshot: 'memory-snapshot.json',
+        },
+      },
+      'MCP agent run with cross-mode artifact',
+    ),
+    /must NOT be valid/,
+  );
   assert.equal(mcpAgentRun.status, 'pass');
   assert.equal(mcpAgentRun.schemaVersion, 3);
   assert.equal(mcpAgentRun.identity.runnerBackendUserId, 'backend-user-123');
@@ -398,6 +569,138 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(argValue(exportArgs, '--suggestions-were-auto-applied'), 'false');
   assert.equal(argValue(exportArgs, '--location-id'), 'loc-1');
   assert.equal(argValue(exportArgs, '--run-id'), 'run-123');
+});
+
+test('mcp open-schema command adapter runs open stages and writes schema-valid artifacts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-e2e-'));
+  const calls = [];
+  const runners = successfulRunners({ calls });
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--location-id',
+      'loc-1',
+      '--run-id',
+      'run-open-123',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.deepEqual(
+    calls.map((call) => call.stage),
+    [
+      'validate',
+      'setup',
+      'capture-definition-baseline',
+      'agent',
+      'export-memory-snapshot',
+      'score:open-schema-database',
+      'fill-form',
+      'score:form',
+      'score:open-schema-combined',
+    ],
+  );
+
+  const setupCall = calls.find((call) => call.stage === 'setup');
+  assert.equal(setupCall.ensureDefinitionsEnabled, false);
+
+  const exportArgs = calls.find((call) => call.stage === 'export-memory-snapshot').args;
+  assert.equal(argValue(exportArgs, '--schema-mode'), 'open');
+  assert.equal(argValue(exportArgs, '--schema-reset-mode'), 'baseline-only');
+  assert.equal(argValue(exportArgs, '--baseline-in'), path.join(tmp, 'definition-baseline.json'));
+  assert.equal(argValue(exportArgs, '--producer'), 'mcp-open-schema-agent');
+  assert.equal(exportArgs.includes('--include-suggestions'), true);
+  assert.equal(argValue(exportArgs, '--location-id'), 'loc-1');
+
+  const openDatabaseArgs = calls.find((call) => call.stage === 'score:open-schema-database').args;
+  assert.equal(argValue(openDatabaseArgs, '--memory-snapshot'), path.join(tmp, 'memory-snapshot.json'));
+  assert.equal(
+    argValue(openDatabaseArgs, '--out'),
+    path.join(tmp, 'open-schema-database-score-report.json'),
+  );
+  const openCombinedArgs = calls.find((call) => call.stage === 'score:open-schema-combined').args;
+  assert.equal(
+    argValue(openCombinedArgs, '--open-schema-database-report'),
+    path.join(tmp, 'open-schema-database-score-report.json'),
+  );
+  assert.equal(
+    argValue(openCombinedArgs, '--out'),
+    path.join(tmp, 'open-schema-combined-score-report.json'),
+  );
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+  assert.equal(evaluationRun.evaluationMode, 'mcp-open-schema');
+  assert.equal(evaluationRun.settings.schemaMode, 'open');
+  assert.equal(evaluationRun.settings.ensureDefinitions, false);
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.name),
+    [
+      'validate-documents',
+      'setup-open-schema-memory',
+      'capture-definition-baseline',
+      'run-mcp-agent',
+      'export-memory-snapshot',
+      'score-open-schema-database',
+      'fill-form',
+      'score-form',
+      'score-open-schema-combined',
+    ],
+  );
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.status),
+    ['passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed'],
+  );
+  assert.match(evaluationRun.stages[2].artifacts.definitionBaseline, /definition-baseline\.json$/);
+  assert.match(evaluationRun.stages[4].artifacts.memorySnapshot, /memory-snapshot\.json$/);
+  assert.match(
+    evaluationRun.stages[5].artifacts.openSchemaDatabaseScoreReport,
+    /open-schema-database-score-report\.json$/,
+  );
+  assert.match(
+    evaluationRun.stages[8].artifacts.openSchemaCombinedScoreReport,
+    /open-schema-combined-score-report\.json$/,
+  );
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  await assert.rejects(
+    validateWithSchema(
+      repoRoot,
+      'mcp-agent-run.schema.json',
+      {
+        ...mcpAgentRun,
+        artifacts: {
+          ...mcpAgentRun.artifacts,
+          storedPreferences: 'stored-preferences.json',
+        },
+      },
+      'MCP agent run with cross-mode artifact',
+    ),
+    /must NOT be valid/,
+  );
+  assert.equal(mcpAgentRun.schemaMode, 'open');
+  assert.equal(mcpAgentRun.setup.knownSchemaDefinitionsEnsured, false);
+  assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.deepEqual(Object.keys(mcpAgentRun.artifacts).sort(), [
+    'definitionBaseline',
+    'evaluationRun',
+    'filledForm',
+    'filledPdf',
+    'formFillResponse',
+    'formScoreReport',
+    'memorySnapshot',
+    'openSchemaCombinedScoreReport',
+    'openSchemaDatabaseScoreReport',
+    'validationReport',
+  ]);
 });
 
 test('command adapter missing completion marker is diagnostic-only', async () => {
@@ -687,6 +990,169 @@ test('mcp agent e2e writes partial run and skips later stages on agent failure',
   assert.match(transcript, /\[redacted-auth-token\]/);
 });
 
+test('mcp open-schema agent failure skips memory export and later open stages', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-fail-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async () => {
+      calls.push({ stage: 'agent' });
+      return {
+        exitCode: 7,
+        lines: ['agent failed with secret-token'],
+        stdout: 'partial stdout secret-token',
+        stderr: 'bad stderr secret-token',
+        timedOut: false,
+        durationMs: 25,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--run-id',
+      'run-open-agent-failure',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /stage=run-mcp-agent/);
+  assert.equal(result.lines.join('\n').includes('secret-token'), false);
+  assert.deepEqual(calls.map((call) => call.stage), [
+    'validate',
+    'setup',
+    'capture-definition-baseline',
+    'agent',
+  ]);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  assert.equal(evaluationRun.status, 'fail');
+  assert.equal(evaluationRun.failureStage, 'run-mcp-agent');
+  assert.deepEqual(
+    evaluationRun.stages.slice(4).map((stage) => [stage.name, stage.status]),
+    [
+      ['export-memory-snapshot', 'skipped'],
+      ['score-open-schema-database', 'skipped'],
+      ['fill-form', 'skipped'],
+      ['score-form', 'skipped'],
+      ['score-open-schema-combined', 'skipped'],
+    ],
+  );
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+});
+
+test('mcp open-schema baseline failure marks baseline stage and skips later stages', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-baseline-fail-'));
+  const calls = [];
+  const runners = successfulRunners({
+    calls,
+    failures: {
+      captureDefinitionBaseline: {
+        exitCode: 1,
+        lines: ['baseline failed with secret-token'],
+      },
+    },
+  });
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--run-id',
+      'run-open-baseline-failure',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /stage=capture-definition-baseline/);
+  assert.equal(result.lines.join('\n').includes('secret-token'), false);
+  assert.match(result.lines.join('\n'), /\[redacted-auth-token\]/);
+  assert.deepEqual(calls.map((call) => call.stage), [
+    'validate',
+    'setup',
+    'capture-definition-baseline',
+  ]);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  assert.equal(evaluationRun.failureStage, 'capture-definition-baseline');
+  assert.deepEqual(
+    evaluationRun.stages.slice(3).map((stage) => [stage.name, stage.status]),
+    [
+      ['run-mcp-agent', 'skipped'],
+      ['export-memory-snapshot', 'skipped'],
+      ['score-open-schema-database', 'skipped'],
+      ['fill-form', 'skipped'],
+      ['score-form', 'skipped'],
+      ['score-open-schema-combined', 'skipped'],
+    ],
+  );
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+});
+
+test('mcp open-schema memory snapshot export failure marks export stage and skips scoring', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-export-fail-'));
+  const calls = [];
+  const runners = successfulRunners({
+    calls,
+    failures: {
+      exportMemorySnapshot: {
+        exitCode: 1,
+        lines: ['memory snapshot failed with secret-token'],
+      },
+    },
+  });
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--run-id',
+      'run-open-export-failure',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /stage=export-memory-snapshot/);
+  assert.equal(result.lines.join('\n').includes('secret-token'), false);
+  assert.deepEqual(calls.map((call) => call.stage), [
+    'validate',
+    'setup',
+    'capture-definition-baseline',
+    'agent',
+    'export-memory-snapshot',
+  ]);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  assert.equal(evaluationRun.failureStage, 'export-memory-snapshot');
+  assert.deepEqual(
+    evaluationRun.stages.slice(5).map((stage) => [stage.name, stage.status]),
+    [
+      ['score-open-schema-database', 'skipped'],
+      ['fill-form', 'skipped'],
+      ['score-form', 'skipped'],
+      ['score-open-schema-combined', 'skipped'],
+    ],
+  );
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+});
+
 test('mcp agent e2e marks agent artifact failed when the agent stage throws', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-throw-'));
   const calls = [];
@@ -851,6 +1317,42 @@ function claudeInitLine({
 }
 
 function successfulRunners({ calls, failures = {} }) {
+  const setupRunner = async ({
+    resetMemoryEnabled,
+    ensureDefinitionsEnabled,
+    documentsRoot,
+  }) => {
+    calls.push({
+      stage: 'setup',
+      resetMemoryEnabled,
+      ensureDefinitionsEnabled,
+      documentsRoot,
+    });
+    if (failures.setup) throw new Error(failures.setup);
+    return {
+      backendUserId: 'backend-user-123',
+      reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
+      definitionSetup: {
+        created: [{ slug: 'eval.contact.phone' }],
+        existing: [{ slug: 'profile.full_name' }],
+        skipped: [],
+      },
+      fixture: {
+        manifest: {
+          documents: [
+            {
+              id: 'doc-1',
+              path: 'documents/identity/001-driver-license-upload-ocr.txt',
+              title: 'Driver License Upload OCR',
+              category: 'identity',
+              outputExtension: 'txt',
+            },
+          ],
+        },
+      },
+    };
+  };
+
   return {
     validate: async ({ args }) => {
       calls.push({ stage: 'validate', args });
@@ -871,41 +1373,12 @@ function successfulRunners({ calls, failures = {} }) {
       });
       return { exitCode: 0, lines: ['validation passed'] };
     },
-    setup: async ({
-      resetMemoryEnabled,
-      ensureDefinitionsEnabled,
-      documentsRoot,
-    }) => {
-      calls.push({
-        stage: 'setup',
-        resetMemoryEnabled,
-        ensureDefinitionsEnabled,
-        documentsRoot,
-      });
-      if (failures.setup) throw new Error(failures.setup);
-      return {
-        backendUserId: 'backend-user-123',
-        reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
-        definitionSetup: {
-          created: [{ slug: 'eval.contact.phone' }],
-          existing: [{ slug: 'profile.full_name' }],
-          skipped: [],
-        },
-        fixture: {
-          manifest: {
-            documents: [
-              {
-                id: 'doc-1',
-                path: 'documents/identity/001-driver-license-upload-ocr.txt',
-                title: 'Driver License Upload OCR',
-                category: 'identity',
-                outputExtension: 'txt',
-              },
-            ],
-          },
-        },
-      };
-    },
+    setup: setupRunner,
+    setupOpenSchemaMemory: (params) =>
+      setupRunner({
+        ...params,
+        ensureDefinitionsEnabled: false,
+      }),
     agent: async ({ prompt, artifacts }) => {
       calls.push({ stage: 'agent', prompt, artifacts });
       return {
@@ -917,6 +1390,44 @@ function successfulRunners({ calls, failures = {} }) {
         durationMs: 123,
         command: 'fake-agent --token secret-token',
       };
+    },
+    captureDefinitionBaseline: async ({ artifacts, setupResult }) => {
+      calls.push({ stage: 'capture-definition-baseline', artifacts, setupResult });
+      if (failures.captureDefinitionBaseline) return failures.captureDefinitionBaseline;
+      await writeArtifact(artifacts.definitionBaseline, {
+        schemaVersion: 1,
+        artifactType: 'definition-baseline',
+        userId: 'alex-i9-test',
+        corpusId: 'realistic',
+        scenarioId: 'alex-i9-realistic',
+        backendUserId: 'backend-user-123',
+        capturedAt: '2026-06-01T12:00:00.000Z',
+        strategy: 'baseline-only',
+        definitionIds: ['def-existing'],
+        slugs: ['profile.full_name'],
+        definitions: [
+          {
+            id: 'def-existing',
+            namespace: 'user',
+            slug: 'profile.full_name',
+            displayName: 'Full name',
+            ownerUserId: null,
+            archivedAt: null,
+            description: 'Full legal name',
+            valueType: 'TEXT',
+            scope: 'USER',
+            options: null,
+            isSensitive: false,
+            isCore: true,
+            category: 'profile',
+          },
+        ],
+        diagnostics: {
+          graphqlUrl: 'http://localhost:3000/graphql',
+          definitionCount: 1,
+        },
+      });
+      return { exitCode: 0, lines: ['definition baseline captured'] };
     },
     exportStoredPreferences: async ({ args }) => {
       calls.push({ stage: 'export', args });
@@ -939,6 +1450,55 @@ function successfulRunners({ calls, failures = {} }) {
       });
       return { exitCode: 0, lines: ['export passed'] };
     },
+    exportMemorySnapshot: async ({ args }) => {
+      calls.push({ stage: 'export-memory-snapshot', args });
+      if (failures.exportMemorySnapshot) return failures.exportMemorySnapshot;
+      await writeArtifact(argValue(args, '--out'), {
+        schemaVersion: 1,
+        artifactType: 'memory-snapshot',
+        runId: argValue(args, '--run-id'),
+        evaluationMode: 'mcp-open-schema',
+        userId: argValue(args, '--user'),
+        corpusId: argValue(args, '--corpus'),
+        scenarioId: argValue(args, '--scenario'),
+        storageInput: {
+          schemaMode: argValue(args, '--schema-mode'),
+          producer: argValue(args, '--producer'),
+          statusesScored: ['ACTIVE'],
+          suggestionsWereAutoApplied: false,
+        },
+        preferences: [],
+        suggestions: [],
+        definitions: [],
+        definitionBaseline: {
+          capturedBeforeRun: true,
+          capturedAt: '2026-06-01T12:00:00.000Z',
+          strategy: 'baseline-only',
+          preexistingDefinitionIds: ['def-existing'],
+          preexistingSlugs: ['profile.full_name'],
+          newDefinitionIds: [],
+          newSlugs: [],
+          removedDefinitionIds: [],
+          removedSlugs: [],
+        },
+        diagnostics: {
+          exportedAt: '2026-06-01T12:00:00.000Z',
+          graphqlUrl: 'http://localhost:3000/graphql',
+          queryName: 'EvalMemorySnapshotExport',
+          locationMode: argValue(args, '--location-id') ? 'merged-location' : 'global-only',
+          locationId: argValue(args, '--location-id') ?? null,
+          preferencesMergedWithLocation: Boolean(argValue(args, '--location-id')),
+          includeSuggestions: args.includes('--include-suggestions'),
+          activePreferenceCount: 0,
+          suggestedPreferenceCount: 0,
+          definitionCount: 0,
+          backendUserId: 'backend-user-123',
+          schemaMode: argValue(args, '--schema-mode'),
+          schemaResetMode: argValue(args, '--schema-reset-mode'),
+        },
+      });
+      return { exitCode: 0, lines: ['memory snapshot export passed'] };
+    },
     score: async ({ args }) => {
       const mode = argValue(args, '--mode');
       calls.push({ stage: `score:${mode}`, args });
@@ -953,6 +1513,18 @@ function successfulRunners({ calls, failures = {} }) {
           schemaVersion: 1,
           scoreType: 'form-fill',
           summary: { knownFieldTotal: 1, knownFieldCorrect: 0 },
+        });
+      } else if (mode === 'open-schema-database') {
+        await writeArtifact(argValue(args, '--out'), {
+          schemaVersion: 1,
+          scoreType: 'open-schema-database-storage',
+          summary: { knownPresentTotal: 1, knownPresentRecovered: 0 },
+        });
+      } else if (mode === 'open-schema-combined') {
+        await writeArtifact(argValue(args, '--out'), {
+          schemaVersion: 1,
+          scoreType: 'open-schema-combined',
+          summary: { factTotal: 1, stageAttributionCounts: {} },
         });
       } else {
         await writeArtifact(argValue(args, '--out'), {
@@ -1008,6 +1580,33 @@ function replaceFlagValue(args, flag, value) {
   const index = args.indexOf(flag);
   assert.notEqual(index, -1);
   return [...args.slice(0, index + 1), value, ...args.slice(index + 2)];
+}
+
+function jsonResponse(payload, { ok = true, status = 200 } = {}) {
+  return {
+    ok,
+    status,
+    text: async () => JSON.stringify(payload),
+  };
+}
+
+function definitionRow(overrides = {}) {
+  return {
+    id: 'def-1',
+    namespace: 'user',
+    slug: 'profile.full_name',
+    displayName: 'Full name',
+    ownerUserId: null,
+    archivedAt: null,
+    description: 'Full legal name',
+    valueType: 'TEXT',
+    scope: 'USER',
+    options: null,
+    isSensitive: false,
+    isCore: true,
+    category: 'profile',
+    ...overrides,
+  };
 }
 
 function escapeRegExp(value) {

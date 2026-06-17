@@ -110,6 +110,17 @@
     schema quality deterministic/diagnostic.
   - Joins open-schema memory outcomes with the existing form score report
     without changing known-schema report contracts.
+- [x] Open-schema Checkpoint 3 MCP open-mode runner wiring.
+  - Enabled `pnpm eval:e2e-mcp-agent --schema-mode open --form-mode backend`
+    for the deterministic command adapter.
+  - Added `examples/eval/prompts/mcp-open-schema.md`.
+  - Captures `definition-baseline.json` before the agent stage.
+  - Exports `memory-snapshot.json` with `baseline-only`,
+    `--baseline-in`, `--include-suggestions`, and producer
+    `mcp-open-schema-agent`.
+  - Scores with `open-schema-database` and `open-schema-combined`.
+  - Keeps live Claude open-schema smoke reserved until identity and
+    schema-state isolation are handled.
 
 ## Next
 
@@ -132,9 +143,6 @@
 - [ ] Add a hard MCP/backend identity preflight so the runner can prove the
   Claude MCP session writes to the same backend user that `EVAL_AUTH_TOKEN`
   exports and scores.
-- [ ] Checkpoint 3 for open schema: enable
-  `eval:e2e-mcp-agent --schema-mode open --form-mode backend` with the
-  deterministic command adapter first.
 - [ ] Checkpoint 4 for open schema: add identity/schema-isolation hardening and
   run a live Claude MCP smoke labeled as smoke-only or benchmark-usable based
   on the captured state.

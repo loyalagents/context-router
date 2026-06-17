@@ -141,7 +141,12 @@ Stop point achieved:
 - Static memory/form artifacts produce stable open-schema DB and combined
   reports without running an agent.
 
-### Checkpoint 3: MCP Open-Mode Runner (pending)
+### Checkpoint 3: MCP Open-Mode Runner (implemented in PR3)
+
+Docs:
+
+- `docs/plans/evaluation/scoring/open-schema/pr3/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr3/implementation-summary.md`
 
 Goal:
 
@@ -153,7 +158,8 @@ Implementation notes:
 
 - Remove the reserved-mode usage error only for supported backend-form open
   mode.
-- Skip known-schema target-definition setup.
+- Skip known-schema target-definition setup by forcing definition setup off in
+  open mode.
 - Reset memory values when requested.
 - Capture definition baseline before the agent stage.
 - Add or select an open-schema prompt template that permits definition creation
@@ -169,6 +175,8 @@ Implementation notes:
   `export-memory-snapshot`, `score-open-schema-database`, and
   `score-open-schema-combined`.
 - Keep known-schema runner behavior and artifact names unchanged.
+- Keep live Claude open-schema smoke reserved until Checkpoint 4 identity and
+  schema-state isolation work.
 
 Tests:
 
@@ -182,7 +190,7 @@ Tests:
   paths.
 - Fake command-agent run completes all open-schema stages.
 
-Stop point:
+Stop point achieved:
 
 - A non-live command-adapter run completes with valid open-schema artifacts.
 

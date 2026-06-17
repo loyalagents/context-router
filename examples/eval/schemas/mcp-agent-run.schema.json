@@ -36,7 +36,7 @@
     "userId": { "type": "string", "minLength": 1 },
     "corpusId": { "type": "string", "minLength": 1 },
     "scenarioId": { "type": "string", "minLength": 1 },
-    "schemaMode": { "enum": ["known"] },
+    "schemaMode": { "enum": ["known", "open"] },
     "formMode": { "enum": ["backend"] },
     "backendUserId": { "type": ["string", "null"] },
     "agent": {
@@ -169,29 +169,82 @@
       "additionalProperties": false,
       "required": [
         "validationReport",
-        "storedPreferences",
-        "databaseScoreReport",
         "filledForm",
         "filledPdf",
         "formFillResponse",
         "formScoreReport",
-        "combinedScoreReport",
         "evaluationRun"
       ],
       "properties": {
         "validationReport": { "type": "string", "minLength": 1 },
+        "definitionBaseline": { "type": "string", "minLength": 1 },
+        "memorySnapshot": { "type": "string", "minLength": 1 },
         "storedPreferences": { "type": "string", "minLength": 1 },
         "databaseScoreReport": { "type": "string", "minLength": 1 },
+        "openSchemaDatabaseScoreReport": { "type": "string", "minLength": 1 },
         "filledForm": { "type": "string", "minLength": 1 },
         "filledPdf": { "type": "string", "minLength": 1 },
         "formFillResponse": { "type": "string", "minLength": 1 },
         "formScoreReport": { "type": "string", "minLength": 1 },
         "combinedScoreReport": { "type": "string", "minLength": 1 },
+        "openSchemaCombinedScoreReport": { "type": "string", "minLength": 1 },
         "evaluationRun": { "type": "string", "minLength": 1 }
       }
     },
     "startedAt": { "type": "string", "minLength": 1 },
     "endedAt": { "type": ["string", "null"] },
     "error": { "type": ["string", "null"] }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schemaMode": { "const": "known" } },
+        "required": ["schemaMode"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "required": [
+              "storedPreferences",
+              "databaseScoreReport",
+              "combinedScoreReport"
+            ],
+            "not": {
+              "anyOf": [
+                { "required": ["definitionBaseline"] },
+                { "required": ["memorySnapshot"] },
+                { "required": ["openSchemaDatabaseScoreReport"] },
+                { "required": ["openSchemaCombinedScoreReport"] }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "schemaMode": { "const": "open" } },
+        "required": ["schemaMode"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "required": [
+              "definitionBaseline",
+              "memorySnapshot",
+              "openSchemaDatabaseScoreReport",
+              "openSchemaCombinedScoreReport"
+            ],
+            "not": {
+              "anyOf": [
+                { "required": ["storedPreferences"] },
+                { "required": ["databaseScoreReport"] },
+                { "required": ["combinedScoreReport"] }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }
