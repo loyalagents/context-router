@@ -53,8 +53,8 @@ Implementation notes:
   by active values. Preserve `archivedAt` if the backend returns it.
 - Record `locationId`, `locationMode` (`global-only` or `merged-location`),
   and whether active preferences were exported as a merged location view.
-- Record `schemaResetMode` / baseline strategy even if the first live run is
-  smoke-only.
+- Record `schemaResetMode` / baseline strategy so live research runs can be
+  interpreted against their definition state.
 - Detect run-created definitions in v1 by diffing post-run definition IDs
   against the pre-run baseline. Slug diffs are useful diagnostics, but IDs
   should be the primary machine signal when available.
@@ -175,8 +175,7 @@ Implementation notes:
   `export-memory-snapshot`, `score-open-schema-database`, and
   `score-open-schema-combined`.
 - Keep known-schema runner behavior and artifact names unchanged.
-- Keep live Claude open-schema smoke reserved until Checkpoint 4 identity and
-  schema-state isolation work.
+- Keep live Claude open-schema runs reserved until Checkpoint 4.
 
 Tests:
 
@@ -194,42 +193,53 @@ Stop point achieved:
 
 - A non-live command-adapter run completes with valid open-schema artifacts.
 
-### Checkpoint 4: Isolation And Live Smoke (pending)
+### Checkpoint 4: Live Claude Open-Schema Runs (implemented in PR4)
+
+Docs:
+
+- `docs/plans/evaluation/scoring/open-schema/pr4/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr4/implementation-summary.md`
 
 Goal:
 
-- Make the first live MCP open-schema run clearly labeled as smoke-only or
-  benchmark-usable.
+- Enable live Claude MCP open-schema runs through the PR3 artifact chain.
+- Keep the first live open-schema runs useful for research inspection without
+  adding new identity tooling, benchmark labels, or selective schema cleanup
+  machinery.
 
 Implementation notes:
 
-- Add the hard MCP/backend identity preflight before trusting live scores as
-  benchmarks.
-- Pick one definition-state strategy for benchmark runs: fresh user or guarded
-  cleanup.
-- If only baseline recording exists, run live smoke but label the artifacts and
-  summary as contaminated-or-unknown schema state.
-- Record a clear reliability label such as `benchmarkReliability:
-  "smoke-only"` or `"benchmark-usable"` in the run artifacts. Prefer putting
-  the label in `evaluation-run.json` and `mcp-agent-run.json`; keep
-  `memory-snapshot.json` focused on raw facts such as identity verification,
-  schema reset mode, and baseline strategy.
-- Document whether the agent reused existing definitions, created new ones, or
-  was affected by prior eval-owned definitions.
+- Accept `--agent claude --schema-mode open --form-mode backend` when
+  `--mcp-config` is provided.
+- Keep `--agent codex` and `--form-mode agent` reserved.
+- Keep the command adapter available for deterministic tests.
+- Reuse the PR3 open-stage list unchanged.
+- Keep existing identity metadata:
+  `identity.verifiedSameBackendUser: false` and
+  `verificationMethod: "not-implemented"`.
+- Do not add a new MCP identity tool or a smoke/benchmark reliability label in
+  artifacts.
+- Add `--reset-demo-data` as an explicit no-new-account reset option that uses
+  existing backend demo reset behavior to delete current-user preferences,
+  user-owned definitions, locations, audit history, and MCP logs before
+  baseline capture. Keep it mutually exclusive with `--reset-memory`.
+- Recommend a dedicated eval backend account/user for cleaner live research
+  comparisons, but do not automate fresh-user creation or selective
+  eval-owned definition cleanup.
 
 Verification:
 
 - Targeted runner/scorer tests pass.
 - `pnpm eval:verify` passes if the changed eval tests are included in the
   normal suite.
-- One live Claude MCP smoke produces `memory-snapshot.json`,
+- A live Claude MCP run can produce `memory-snapshot.json`,
   `open-schema-database-score-report.json`, `form-score-report.json`, and
   `open-schema-combined-score-report.json`.
 
 Stop point:
 
-- Open-schema MCP is usable for smoke runs, and the team knows what remains
-  before treating live scores as benchmark-reliable.
+- Open-schema MCP is usable for live Claude research runs, and remaining
+  identity/schema-isolation hardening is explicitly deferred.
 
 ### Checkpoint 5: Upload-Level Schema Discovery (pending)
 

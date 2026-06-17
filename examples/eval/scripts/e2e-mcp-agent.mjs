@@ -173,6 +173,7 @@ export async function runMcpAgentE2E({
             graphqlUrl: options.graphqlUrl,
             authToken: options.authToken,
             resetMemoryEnabled: options.resetMemory,
+            resetMemoryMode: options.resetMemoryMode ?? 'MEMORY_ONLY',
             ensureDefinitionsEnabled: options.ensureDefinitions,
             fetchImpl,
           });
@@ -781,6 +782,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     authToken: env.EVAL_AUTH_TOKEN,
     modelLabel: env.EVAL_MODEL_LABEL,
     resetMemory: false,
+    resetMemoryMode: null,
     ensureDefinitions: true,
     allowTestCommandAgent: false,
     agentTimeoutMs: DEFAULT_AGENT_TIMEOUT_MS,
@@ -812,7 +814,25 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--reset-memory') {
+      if (options.resetMemoryMode === 'DEMO_DATA') {
+        return {
+          kind: 'usage-error',
+          message: '--reset-memory and --reset-demo-data are mutually exclusive',
+        };
+      }
       options.resetMemory = true;
+      options.resetMemoryMode = 'MEMORY_ONLY';
+      continue;
+    }
+    if (arg === '--reset-demo-data') {
+      if (options.resetMemoryMode === 'MEMORY_ONLY') {
+        return {
+          kind: 'usage-error',
+          message: '--reset-memory and --reset-demo-data are mutually exclusive',
+        };
+      }
+      options.resetMemory = true;
+      options.resetMemoryMode = 'DEMO_DATA';
       continue;
     }
     if (arg === '--skip-ensure-definitions') {
@@ -902,12 +922,6 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: 'Expected --form-mode backend',
     };
   }
-  if (options.schemaMode === 'open' && options.agent !== 'command') {
-    return {
-      kind: 'usage-error',
-      message: '--schema-mode open currently supports the deterministic --agent command adapter only',
-    };
-  }
   if (options.agent === 'command' && !options.agentCommand) {
     return {
       kind: 'usage-error',
@@ -963,7 +977,7 @@ export function usage() {
     'Notes:',
     '  This wrapper runs one MCP memory ingestion eval through one agent session.',
     '  Known schema uses stored-preferences artifacts; open schema uses memory-snapshot artifacts.',
-    '  Open schema is enabled for the deterministic command adapter first; live Claude open-schema smoke remains reserved.',
+    '  Open schema supports the deterministic command adapter and live Claude backend-form runs.',
     '  Agent-filled forms are reserved and fail fast until implemented.',
     '  Low scores are reported but do not fail the wrapper. Runtime/setup failures stop the run.',
     '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',
@@ -983,7 +997,8 @@ export function usage() {
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults by schema mode to the MCP known/open prompt template',
     '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
-    '  --reset-memory                    Clear current backend user memory before the agent run',
+    '  --reset-memory                    Clear current backend user memory values before the agent run',
+    '  --reset-demo-data                 Clear current backend user demo data, including user-owned definitions; requires backend ENABLE_DEMO_RESET=true',
     '  --skip-ensure-definitions          Do not create missing known-schema definitions; forced in open mode',
     '  --location-id <locationId>         Export merged global + location view',
     '  --run-id <id>',
@@ -1306,6 +1321,7 @@ function initialReport({ repoRoot, options, artifacts, startedAt }) {
     locationId: options.locationId ?? null,
     settings: {
       resetMemory: options.resetMemory,
+      resetMode: options.resetMemoryMode,
       ensureDefinitions: options.ensureDefinitions,
       autoApply: false,
       seedPreferences: false,
@@ -1379,6 +1395,7 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
     },
     setup: {
       resetMemory: options.resetMemory,
+      resetMode: options.resetMemoryMode,
       knownSchemaDefinitionsEnsured: options.ensureDefinitions,
       createdDefinitionCount: summary.createdDefinitionCount,
       existingDefinitionCount: summary.existingDefinitionCount,
@@ -1461,6 +1478,7 @@ function setupSummary(setupResult, options) {
   return {
     backendUserId: setupResult?.backendUserId ?? null,
     resetMemory: options.resetMemory,
+    resetMode: options.resetMemoryMode,
     ensureDefinitions: options.ensureDefinitions,
     createdDefinitionCount: definitionSetup.created?.length ?? 0,
     existingDefinitionCount: definitionSetup.existing?.length ?? 0,

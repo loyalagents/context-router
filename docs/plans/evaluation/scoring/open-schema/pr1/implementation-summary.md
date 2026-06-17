@@ -76,7 +76,7 @@ Results:
 - Checkpoint 2: add deterministic open-schema database and combined scorers.
 - Checkpoint 3: enable MCP `--schema-mode open --form-mode backend` with the
   deterministic command adapter first.
-- Checkpoint 4: harden identity/schema isolation and run a clearly labeled live
-  smoke.
+- Checkpoint 4: enable live Claude open-schema runs without adding identity
+  tooling or artifact reliability labels.
 - Checkpoint 5: design upload-level schema discovery after MCP open-schema
   scoring works.

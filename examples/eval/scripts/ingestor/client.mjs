@@ -60,12 +60,17 @@ export async function fetchBackendUser({ graphqlUrl, authToken, fetchImpl }) {
   return { userId };
 }
 
-export async function resetMemory({ graphqlUrl, authToken, fetchImpl }) {
+export async function resetMemory({
+  graphqlUrl,
+  authToken,
+  mode = 'MEMORY_ONLY',
+  fetchImpl,
+}) {
   const data = await graphqlRequest({
     graphqlUrl,
     authToken,
     query: RESET_MEMORY_MUTATION,
-    variables: { mode: 'MEMORY_ONLY' },
+    variables: { mode },
     fetchImpl,
     label: 'GraphQL resetMyMemory',
   });

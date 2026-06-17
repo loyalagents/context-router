@@ -54,8 +54,8 @@ open-schema producer
   live MCP open mode.
 - [x] Add open-schema scoring support before enabling live MCP open mode.
 - [x] Enable MCP open-schema mode for the deterministic command adapter.
-- [ ] Label live MCP open-schema results based on identity and schema-state
-  isolation.
+- [x] Enable live Claude MCP open-schema runs through the open-schema artifact
+  chain.
 
 ## Phase 1: Scorer
 
@@ -211,9 +211,9 @@ Implemented in this phase:
 
 The first live smoke completed locally on 2026-06-16 with the local backend,
 `EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing
-`context-router-local`. Live scores remain smoke-only until the runner can
-verify that the MCP session and `EVAL_AUTH_TOKEN` resolve to the same backend
-user. This smoke is a readiness signal for open-schema work, not an
+`context-router-local`. The run records MCP/backend identity as unverified; use
+dedicated eval users and inspect artifacts when comparing live-agent research
+results. This run is a readiness signal for open-schema work, not an
 apples-to-apples closed-schema benchmark against the backend document ingestor.
 
 Design doc:
@@ -239,9 +239,9 @@ Checkpoint order:
 3. Implemented in PR3: MCP open-schema runner mode tests agent-driven schema
    discovery and memory writes through existing MCP tools using the
    deterministic command adapter.
-4. Pending: isolation/live-smoke hardening verifies MCP/backend identity,
-   records or cleans prior eval-created definitions, and labels smoke-only
-   results honestly.
+4. Implemented in PR4: live Claude MCP open-schema runs use the same artifact
+   chain as the command adapter, while hard identity tooling and automated
+   schema cleanup remain deferred.
 5. Later: upload-level schema discovery tests product document analysis
    discovering or proposing definitions itself.
 
@@ -263,3 +263,5 @@ Design doc:
 - `docs/plans/evaluation/scoring/open-schema/pr2/implementation-summary.md`
 - `docs/plans/evaluation/scoring/open-schema/pr3/implementation-plan.md`
 - `docs/plans/evaluation/scoring/open-schema/pr3/implementation-summary.md`
+- `docs/plans/evaluation/scoring/open-schema/pr4/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr4/implementation-summary.md`

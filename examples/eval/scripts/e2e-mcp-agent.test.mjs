@@ -137,21 +137,51 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
     /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
   );
 
+  const resetDemoData = parseArgs(
+    [...replaceFlagValue(baseArgs, '--schema-mode', 'open'), '--reset-demo-data'],
+    env,
+    fixedNow,
+  );
+  assert.equal(resetDemoData.kind, 'ok');
+  assert.equal(resetDemoData.options.resetMemory, true);
+  assert.equal(resetDemoData.options.resetMemoryMode, 'DEMO_DATA');
+
+  const conflictingReset = parseArgs(
+    [...baseArgs, '--reset-memory', '--reset-demo-data'],
+    env,
+    fixedNow,
+  );
+  assert.equal(conflictingReset.kind, 'usage-error');
+  assert.match(conflictingReset.message, /mutually exclusive/);
+
   const agentForm = parseArgs(replaceFlagValue(baseArgs, '--form-mode', 'agent'), env, fixedNow);
   assert.equal(agentForm.kind, 'usage-error');
   assert.match(agentForm.message, /reserved/);
 
   const openClaude = parseArgs(
     [
-      ...replaceFlagValue(replaceFlagValue(baseArgs, '--schema-mode', 'open'), '--agent', 'claude'),
+      ...replaceFlagValue(claudeArgsWithoutConfig('/tmp/mcp-eval-artifacts'), '--schema-mode', 'open'),
       '--mcp-config',
       '/private/tmp/mcp.json',
     ],
     env,
     fixedNow,
   );
-  assert.equal(openClaude.kind, 'usage-error');
-  assert.match(openClaude.message, /command adapter/);
+  assert.equal(openClaude.kind, 'ok');
+  assert.equal(openClaude.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.equal(openClaude.options.ensureDefinitions, false);
+  assert.match(
+    openClaude.options.runId,
+    /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
+  );
+
+  const openClaudeWithoutConfig = parseArgs(
+    replaceFlagValue(claudeArgsWithoutConfig('/tmp/mcp-eval-artifacts'), '--schema-mode', 'open'),
+    env,
+    fixedNow,
+  );
+  assert.equal(openClaudeWithoutConfig.kind, 'usage-error');
+  assert.match(openClaudeWithoutConfig.message, /--mcp-config/);
 
   const commandWithoutCommand = parseArgs(removeFlagValue(baseArgs, '--agent-command'), env, fixedNow);
   assert.equal(commandWithoutCommand.kind, 'usage-error');
@@ -478,6 +508,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(evaluationRun.backendUrl, 'http://localhost:3000/');
   assert.equal(evaluationRun.graphqlUrl, 'http://localhost:3000/graphql');
   assert.equal(evaluationRun.settings.resetMemory, true);
+  assert.equal(evaluationRun.settings.resetMode, 'MEMORY_ONLY');
   assert.equal(evaluationRun.settings.ensureDefinitions, false);
   assert.equal(evaluationRun.settings.autoApply, false);
   assert.equal(evaluationRun.settings.seedPreferences, false);
@@ -524,6 +555,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(mcpAgentRun.transcript.redactedAuthSecrets, true);
   assert.equal(mcpAgentRun.transcript.mayContainCorpusPii, true);
   assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
+  assert.equal(mcpAgentRun.setup.resetMode, 'MEMORY_ONLY');
   assert.equal(mcpAgentRun.setup.createdDefinitionCount, 1);
   assert.equal(mcpAgentRun.setup.existingDefinitionCount, 1);
   assert.equal(mcpAgentRun.setup.skippedDefinitionCount, 0);
@@ -559,6 +591,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
 
   const setupCall = calls.find((call) => call.stage === 'setup');
   assert.equal(setupCall.resetMemoryEnabled, true);
+  assert.equal(setupCall.resetMemoryMode, 'MEMORY_ONLY');
   assert.equal(setupCall.ensureDefinitionsEnabled, false);
 
   const agentCall = calls.find((call) => call.stage === 'agent');
@@ -582,6 +615,7 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
       ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
       '--auth-token',
       'secret-token',
+      '--reset-demo-data',
       '--location-id',
       'loc-1',
       '--run-id',
@@ -610,6 +644,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
 
   const setupCall = calls.find((call) => call.stage === 'setup');
   assert.equal(setupCall.ensureDefinitionsEnabled, false);
+  assert.equal(setupCall.resetMemoryEnabled, true);
+  assert.equal(setupCall.resetMemoryMode, 'DEMO_DATA');
 
   const exportArgs = calls.find((call) => call.stage === 'export-memory-snapshot').args;
   assert.equal(argValue(exportArgs, '--schema-mode'), 'open');
@@ -640,6 +676,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
   assert.equal(evaluationRun.evaluationMode, 'mcp-open-schema');
   assert.equal(evaluationRun.settings.schemaMode, 'open');
   assert.equal(evaluationRun.settings.ensureDefinitions, false);
+  assert.equal(evaluationRun.settings.resetMemory, true);
+  assert.equal(evaluationRun.settings.resetMode, 'DEMO_DATA');
   assert.deepEqual(
     evaluationRun.stages.map((stage) => stage.name),
     [
@@ -688,6 +726,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
   );
   assert.equal(mcpAgentRun.schemaMode, 'open');
   assert.equal(mcpAgentRun.setup.knownSchemaDefinitionsEnsured, false);
+  assert.equal(mcpAgentRun.setup.resetMemory, true);
+  assert.equal(mcpAgentRun.setup.resetMode, 'DEMO_DATA');
   assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
   assert.deepEqual(Object.keys(mcpAgentRun.artifacts).sort(), [
     'definitionBaseline',
@@ -701,6 +741,109 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
     'openSchemaDatabaseScoreReport',
     'validationReport',
   ]);
+});
+
+test('mcp open-schema Claude adapter runs open stages and writes schema-valid artifacts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-claude-e2e-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async ({ prompt, artifacts, options }) => {
+      calls.push({ stage: 'agent', prompt, artifacts, options });
+      return {
+        exitCode: 0,
+        lines: ['claude finished'],
+        stdout: [
+          claudeInitLine({ mcpServer: 'context-router-local' }),
+          'claude wrote open-schema memory',
+          COMPLETION_MARKER,
+          '',
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+        durationMs: 123,
+        command: 'claude --mcp-config /private/tmp/context-router-mcp.json',
+        completionMarkerObserved: true,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(claudeArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--run-id',
+      'run-open-claude-123',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.deepEqual(
+    calls.map((call) => call.stage),
+    [
+      'validate',
+      'setup',
+      'capture-definition-baseline',
+      'agent',
+      'export-memory-snapshot',
+      'score:open-schema-database',
+      'fill-form',
+      'score:form',
+      'score:open-schema-combined',
+    ],
+  );
+
+  const agentCall = calls.find((call) => call.stage === 'agent');
+  assert.equal(agentCall.options.agent, 'claude');
+  assert.equal(agentCall.options.schemaMode, 'open');
+  assert.match(agentCall.prompt, /EVAL_MCP_AGENT_DONE/);
+
+  const exportArgs = calls.find((call) => call.stage === 'export-memory-snapshot').args;
+  assert.equal(argValue(exportArgs, '--schema-mode'), 'open');
+  assert.equal(argValue(exportArgs, '--schema-reset-mode'), 'baseline-only');
+  assert.equal(argValue(exportArgs, '--baseline-in'), path.join(tmp, 'definition-baseline.json'));
+  assert.equal(exportArgs.includes('--include-suggestions'), true);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+  assert.equal(evaluationRun.evaluationMode, 'mcp-open-schema');
+  assert.equal(evaluationRun.settings.agent, 'claude');
+  assert.equal(evaluationRun.settings.schemaMode, 'open');
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.name),
+    [
+      'validate-documents',
+      'setup-open-schema-memory',
+      'capture-definition-baseline',
+      'run-mcp-agent',
+      'export-memory-snapshot',
+      'score-open-schema-database',
+      'fill-form',
+      'score-form',
+      'score-open-schema-combined',
+    ],
+  );
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.status),
+    ['passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed'],
+  );
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  assert.equal(mcpAgentRun.agent.provider, 'claude');
+  assert.equal(mcpAgentRun.schemaMode, 'open');
+  assert.equal(mcpAgentRun.identity.verifiedSameBackendUser, false);
+  assert.equal(mcpAgentRun.identity.verificationMethod, 'not-implemented');
+  assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.match(mcpAgentRun.agent.command, /--strict-mcp-config/);
+  assert.match(mcpAgentRun.agent.command, /--mcp-config/);
+  assert.match(mcpAgentRun.agent.command, /context-router-mcp\.json/);
+  assert.match(mcpAgentRun.agent.command, /mcp__context-router-local__\*/);
 });
 
 test('command adapter missing completion marker is diagnostic-only', async () => {
@@ -1292,12 +1435,16 @@ function baseArgsWithArtifacts(tmp) {
   return replaceFlagValue(baseArgs, '--artifacts-root', tmp);
 }
 
+function claudeArgsWithoutConfig(tmp) {
+  return removeFlagValue(
+    removeFlag(replaceFlagValue(baseArgsWithArtifacts(tmp), '--agent', 'claude'), '--allow-test-command-agent'),
+    '--agent-command',
+  );
+}
+
 function claudeArgsWithArtifacts(tmp) {
   return [
-    ...removeFlagValue(
-      removeFlag(replaceFlagValue(baseArgsWithArtifacts(tmp), '--agent', 'claude'), '--allow-test-command-agent'),
-      '--agent-command',
-    ),
+    ...claudeArgsWithoutConfig(tmp),
     '--mcp-config',
     '/private/tmp/context-router-mcp.json',
   ];
@@ -1319,19 +1466,27 @@ function claudeInitLine({
 function successfulRunners({ calls, failures = {} }) {
   const setupRunner = async ({
     resetMemoryEnabled,
+    resetMemoryMode,
     ensureDefinitionsEnabled,
     documentsRoot,
   }) => {
     calls.push({
       stage: 'setup',
       resetMemoryEnabled,
+      resetMemoryMode,
       ensureDefinitionsEnabled,
       documentsRoot,
     });
     if (failures.setup) throw new Error(failures.setup);
     return {
       backendUserId: 'backend-user-123',
-      reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
+      reset: resetMemoryEnabled
+        ? {
+            mode: resetMemoryMode ?? 'MEMORY_ONLY',
+            preferencesDeleted: 1,
+            preferenceDefinitionsDeleted: resetMemoryMode === 'DEMO_DATA' ? 2 : 0,
+          }
+        : null,
       definitionSetup: {
         created: [{ slug: 'eval.contact.phone' }],
         existing: [{ slug: 'profile.full_name' }],

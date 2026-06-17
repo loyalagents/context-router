@@ -70,8 +70,8 @@ Known mode still writes `stored-preferences.json`,
 
 ## Remaining Checkpoints
 
-- Checkpoint 4: add MCP/backend identity hardening and schema-state isolation,
-  then run a live Claude open-schema smoke with a clear reliability label.
+- Checkpoint 4: enable live Claude open-schema runs without adding identity
+  tooling or artifact reliability labels.
 - Checkpoint 5: design upload-level schema discovery after MCP open-schema
   scoring is working.
 
