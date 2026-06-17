@@ -137,4 +137,30 @@ describe('FormFillController', () => {
       ),
     ).rejects.toThrow('fieldPolicies must be valid JSON');
   });
+
+  it('rejects fact field policies without explicit source slugs', async () => {
+    const rawPolicies = JSON.stringify({
+      schemaVersion: 1,
+      fields: [
+        {
+          fieldName: 'full_name',
+          mode: 'fact',
+          factKey: 'identity.legalName',
+        },
+      ],
+    });
+
+    await expect(
+      controller.fillPdf(
+        {
+          mimetype: 'application/pdf',
+          size: 10,
+          originalname: 'form.pdf',
+          buffer: Buffer.from('pdf'),
+        } as Express.Multer.File,
+        { user: { userId: 'user-1' } },
+        rawPolicies,
+      ),
+    ).rejects.toThrow('fact policies require at least one source slug');
+  });
 });

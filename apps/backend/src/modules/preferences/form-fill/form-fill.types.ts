@@ -65,16 +65,43 @@ const FieldConditionSchema = z.object({
   equals: z.union([z.string(), z.array(z.string())]),
 });
 
-const FieldPolicySchema = z.object({
-  fieldName: z.string(),
-  mode: z.enum(['fact', 'skip']),
-  factKey: z.string().optional(),
-  sourceSlugs: z.array(z.string()).optional().default([]),
-  when: FieldConditionSchema.optional(),
-  // Checkbox policies sharing a groupId are treated as mutually exclusive.
-  groupId: z.string().optional(),
-  reason: z.string().optional(),
-});
+const FieldPolicySchema = z
+  .object({
+    fieldName: z.string(),
+    mode: z.enum(['fact', 'skip']),
+    factKey: z.string().optional(),
+    sourceSlugs: z.array(z.string()).optional().default([]),
+    when: FieldConditionSchema.optional(),
+    // Checkbox policies sharing a groupId are treated as mutually exclusive.
+    groupId: z.string().optional(),
+    reason: z.string().optional(),
+  })
+  .superRefine((policy, ctx) => {
+    if (policy.mode === 'fact') {
+      if (!policy.factKey) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['factKey'],
+          message: 'fact policies require factKey',
+        });
+      }
+      if (policy.sourceSlugs.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['sourceSlugs'],
+          message: 'fact policies require at least one source slug',
+        });
+      }
+    }
+
+    if (policy.when && policy.when.sourceSlugs.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['when', 'sourceSlugs'],
+        message: 'conditional policies require at least one source slug',
+      });
+    }
+  });
 
 export const FormFillFieldPoliciesSchema = z.object({
   schemaVersion: z.literal(1),

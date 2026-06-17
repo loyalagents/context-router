@@ -34,6 +34,8 @@ ingestor or manual/MCP run
   upload-level open-schema discovery.
 - [x] Implement MCP known-schema agent runner.
 - [x] Run live MCP known-schema Claude smoke.
+- [x] Clarify MCP known-schema terminology and harden backend form-fill
+  field-policy prompting before open-schema work.
 - [ ] Add open-schema memory snapshot/scoring and MCP open-schema mode.
 
 ## Phase 1: Scorer
@@ -173,6 +175,8 @@ validate documents
 Implemented in this phase:
 
 - `pnpm eval:e2e-mcp-agent`
+- documented `--schema-mode known` as existing visible backend schema, not a
+  closed target-form-only schema
 - known-schema setup helper reuse without document upload
 - Claude live adapter and explicit opt-in command test adapter
 - hidden-truth-safe prompt template plus staged agent workspace containing only
@@ -183,16 +187,20 @@ Implemented in this phase:
   `evaluation-run.json` artifacts
 - reuse of stored-preferences export, database scoring, backend form fill, form
   scoring, and combined scoring
+- backend form-fill prompt hardening that treats field policies as
+  authoritative while leaving off-policy source slug validation diagnostic-only
 
 The first live smoke completed locally on 2026-06-16 with the local backend,
 `EVAL_AUTH_TOKEN`, Claude auth, and a Claude MCP config containing
 `context-router-local`. Live scores remain smoke-only until the runner can
 verify that the MCP session and `EVAL_AUTH_TOKEN` resolve to the same backend
-user.
+user. This smoke is a readiness signal for open-schema work, not an
+apples-to-apples closed-schema benchmark against the backend document ingestor.
 
 Design doc:
 
 - `docs/plans/evaluation/scoring/MCP-scoring/brainstorm.md`
+- `docs/plans/evaluation/scoring/MCP-scoring/follow-up/implementation-summary.md`
 
 ## Phase 7: Open-Schema Ingestion
 

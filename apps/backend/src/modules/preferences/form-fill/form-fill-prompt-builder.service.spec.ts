@@ -84,6 +84,15 @@ describe('FormFillPromptBuilderService', () => {
     );
 
     expect(prompt).toContain('Field policies');
+    expect(prompt).toContain('treat them as authoritative');
+    expect(prompt).toContain(
+      "use only active memories whose slug is listed in that field policy's sourceSlugs",
+    );
+    expect(prompt).toContain('return SKIP for that field');
+    expect(prompt).toContain('Do not substitute semantically similar memories');
+    expect(prompt).toContain(
+      'do not swap one email, address, name, identifier, status, date, or phone number for another',
+    );
     expect(prompt).toContain('"fieldName": "CB_4"');
     expect(prompt).toContain('"groupId": "workAuthorization.citizenshipStatus"');
   });

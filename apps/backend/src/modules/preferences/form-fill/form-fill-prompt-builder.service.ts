@@ -23,7 +23,11 @@ For text fields with maxLength metadata, return a value whose final text length 
 Every action must include sourceSlugs and confidence. Use sourceSlugs: [] only for SKIP actions.
 Use SKIP with sourceSlugs: [] and confidence: 0 when memory is missing, confidence is low, a field is unsupported, or a field should not be filled.
 Do not fill signatures, certification/declaration fields, submit buttons, or fields that require unsupported personal/legal assertions.
-When field policies are provided, treat mode=skip fields and inactive conditional branches as not fillable.
+When field policies are provided, treat them as authoritative for what each field may use.
+For mode=fact field policies, use only active memories whose slug is listed in that field policy's sourceSlugs.
+If no listed sourceSlug has a usable active memory value, return SKIP for that field.
+Do not substitute semantically similar memories for a field policy. For example, do not swap one email, address, name, identifier, status, date, or phone number for another unless that exact memory slug is explicitly listed for that field.
+Treat mode=skip fields and inactive conditional branches as not fillable.
 For grouped checkbox policies, choose only the applicable checkbox and leave the other checkboxes unchecked or skipped.
 
 Allowed response shape:
