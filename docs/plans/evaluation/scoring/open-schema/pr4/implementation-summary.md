@@ -27,6 +27,12 @@ deterministic command adapter.
 - Kept open mode exporting `memory-snapshot.json` with `baseline-only`,
   `--baseline-in`, `--include-suggestions`, and producer
   `mcp-open-schema-agent`.
+- Added `--reset-demo-data` for explicit current-user demo-data resets via
+  existing `resetMyMemory(mode: DEMO_DATA)` backend behavior. This is mutually
+  exclusive with `--reset-memory`, requires backend `ENABLE_DEMO_RESET=true`,
+  and clears user-owned definitions before baseline capture.
+- Recorded reset mode in `evaluation-run.json` settings and
+  `mcp-agent-run.json` setup metadata.
 - Kept existing identity metadata without adding a new MCP identity tool or
   artifact reliability label.
 - Added mocked Claude open-schema runner coverage for the full open-stage
@@ -43,8 +49,8 @@ default.
 
 - Later identity hardening can add stronger proof that the Claude MCP session
   and `EVAL_AUTH_TOKEN` resolve to the same backend user if research needs it.
-- Later repeatability work can add fresh-user or guarded definition-cleanup
-  workflows if baseline-only recording is not enough.
+- Later repeatability work can add fresh-user or selective eval-owned
+  definition-cleanup workflows if whole-user demo-data reset is too blunt.
 - Checkpoint 5 remains upload-level schema discovery.
 
 ## Verification

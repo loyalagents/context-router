@@ -68,6 +68,7 @@
       ],
       "properties": {
         "resetMemory": { "type": "boolean" },
+        "resetMode": { "enum": ["MEMORY_ONLY", "DEMO_DATA", null] },
         "ensureDefinitions": { "type": "boolean" },
         "autoApply": { "type": "boolean" },
         "seedPreferences": { "type": "boolean" },

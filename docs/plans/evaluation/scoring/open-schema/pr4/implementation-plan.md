@@ -21,7 +21,8 @@ outcome.
 
 - Do not add a new MCP identity tool.
 - Do not add benchmark reliability or smoke labels to artifacts.
-- Do not automate fresh-user creation or definition cleanup.
+- Do not automate fresh-user creation or selective eval-owned definition
+  cleanup.
 - Do not enable `--agent codex`.
 - Do not enable `--form-mode agent`.
 - Do not add backend upload-level schema discovery.
@@ -50,6 +51,11 @@ The only runner behavior change is CLI gating:
 - `--agent command --schema-mode open --form-mode backend` remains supported
   with the existing test-adapter opt-in flags.
 - `--agent codex` and `--form-mode agent` remain reserved.
+- `--reset-demo-data` is an explicit current-user wipe using existing
+  `resetMyMemory(mode: DEMO_DATA)` backend behavior. It is mutually exclusive
+  with `--reset-memory`, requires backend `ENABLE_DEMO_RESET=true`, and is the
+  no-new-account path for clearing user-owned open-schema definitions before
+  baseline capture.
 
 ## Artifact Contract
 
@@ -71,11 +77,18 @@ PR4 keeps the existing artifact schemas and paths:
 
 No new benchmark maturity label is added in PR4.
 
+`evaluation-run.json` and `mcp-agent-run.json` record the reset mode when a
+runner reset is requested:
+
+- `MEMORY_ONLY` for `--reset-memory`
+- `DEMO_DATA` for `--reset-demo-data`
+
 ## Tests And Verification
 
 - Parser tests cover open Claude acceptance, open prompt defaults, open run ID
   prefix, required `--mcp-config`, reserved Codex, reserved agent-form mode,
-  and existing command-adapter safeguards.
+  mutually exclusive reset flags, demo-data reset mode, and existing
+  command-adapter safeguards.
 - Mocked Claude runner coverage exercises the full open-stage order and
   validates `evaluation-run.json` and `mcp-agent-run.json`.
 - Existing command-adapter open tests continue to prove the PR3 stage chain.
@@ -102,6 +115,6 @@ pnpm eval:e2e-mcp-agent \
   --scenario alex-i9-realistic \
   --artifacts-root /tmp/context-router-open-claude \
   --mcp-server context-router-local \
-  --mcp-config /path/to/context-router-mcp.json
+  --mcp-config /path/to/context-router-mcp.json \
+  --reset-demo-data
 ```
-

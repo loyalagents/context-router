@@ -137,6 +137,23 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
     /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
   );
 
+  const resetDemoData = parseArgs(
+    [...replaceFlagValue(baseArgs, '--schema-mode', 'open'), '--reset-demo-data'],
+    env,
+    fixedNow,
+  );
+  assert.equal(resetDemoData.kind, 'ok');
+  assert.equal(resetDemoData.options.resetMemory, true);
+  assert.equal(resetDemoData.options.resetMemoryMode, 'DEMO_DATA');
+
+  const conflictingReset = parseArgs(
+    [...baseArgs, '--reset-memory', '--reset-demo-data'],
+    env,
+    fixedNow,
+  );
+  assert.equal(conflictingReset.kind, 'usage-error');
+  assert.match(conflictingReset.message, /mutually exclusive/);
+
   const agentForm = parseArgs(replaceFlagValue(baseArgs, '--form-mode', 'agent'), env, fixedNow);
   assert.equal(agentForm.kind, 'usage-error');
   assert.match(agentForm.message, /reserved/);
@@ -491,6 +508,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(evaluationRun.backendUrl, 'http://localhost:3000/');
   assert.equal(evaluationRun.graphqlUrl, 'http://localhost:3000/graphql');
   assert.equal(evaluationRun.settings.resetMemory, true);
+  assert.equal(evaluationRun.settings.resetMode, 'MEMORY_ONLY');
   assert.equal(evaluationRun.settings.ensureDefinitions, false);
   assert.equal(evaluationRun.settings.autoApply, false);
   assert.equal(evaluationRun.settings.seedPreferences, false);
@@ -537,6 +555,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(mcpAgentRun.transcript.redactedAuthSecrets, true);
   assert.equal(mcpAgentRun.transcript.mayContainCorpusPii, true);
   assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
+  assert.equal(mcpAgentRun.setup.resetMode, 'MEMORY_ONLY');
   assert.equal(mcpAgentRun.setup.createdDefinitionCount, 1);
   assert.equal(mcpAgentRun.setup.existingDefinitionCount, 1);
   assert.equal(mcpAgentRun.setup.skippedDefinitionCount, 0);
@@ -572,6 +591,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
 
   const setupCall = calls.find((call) => call.stage === 'setup');
   assert.equal(setupCall.resetMemoryEnabled, true);
+  assert.equal(setupCall.resetMemoryMode, 'MEMORY_ONLY');
   assert.equal(setupCall.ensureDefinitionsEnabled, false);
 
   const agentCall = calls.find((call) => call.stage === 'agent');
@@ -595,6 +615,7 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
       ...replaceFlagValue(baseArgsWithArtifacts(tmp), '--schema-mode', 'open'),
       '--auth-token',
       'secret-token',
+      '--reset-demo-data',
       '--location-id',
       'loc-1',
       '--run-id',
@@ -623,6 +644,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
 
   const setupCall = calls.find((call) => call.stage === 'setup');
   assert.equal(setupCall.ensureDefinitionsEnabled, false);
+  assert.equal(setupCall.resetMemoryEnabled, true);
+  assert.equal(setupCall.resetMemoryMode, 'DEMO_DATA');
 
   const exportArgs = calls.find((call) => call.stage === 'export-memory-snapshot').args;
   assert.equal(argValue(exportArgs, '--schema-mode'), 'open');
@@ -653,6 +676,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
   assert.equal(evaluationRun.evaluationMode, 'mcp-open-schema');
   assert.equal(evaluationRun.settings.schemaMode, 'open');
   assert.equal(evaluationRun.settings.ensureDefinitions, false);
+  assert.equal(evaluationRun.settings.resetMemory, true);
+  assert.equal(evaluationRun.settings.resetMode, 'DEMO_DATA');
   assert.deepEqual(
     evaluationRun.stages.map((stage) => stage.name),
     [
@@ -701,6 +726,8 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
   );
   assert.equal(mcpAgentRun.schemaMode, 'open');
   assert.equal(mcpAgentRun.setup.knownSchemaDefinitionsEnsured, false);
+  assert.equal(mcpAgentRun.setup.resetMemory, true);
+  assert.equal(mcpAgentRun.setup.resetMode, 'DEMO_DATA');
   assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
   assert.deepEqual(Object.keys(mcpAgentRun.artifacts).sort(), [
     'definitionBaseline',
@@ -1439,19 +1466,27 @@ function claudeInitLine({
 function successfulRunners({ calls, failures = {} }) {
   const setupRunner = async ({
     resetMemoryEnabled,
+    resetMemoryMode,
     ensureDefinitionsEnabled,
     documentsRoot,
   }) => {
     calls.push({
       stage: 'setup',
       resetMemoryEnabled,
+      resetMemoryMode,
       ensureDefinitionsEnabled,
       documentsRoot,
     });
     if (failures.setup) throw new Error(failures.setup);
     return {
       backendUserId: 'backend-user-123',
-      reset: resetMemoryEnabled ? { preferencesDeleted: 1 } : null,
+      reset: resetMemoryEnabled
+        ? {
+            mode: resetMemoryMode ?? 'MEMORY_ONLY',
+            preferencesDeleted: 1,
+            preferenceDefinitionsDeleted: resetMemoryMode === 'DEMO_DATA' ? 2 : 0,
+          }
+        : null,
       definitionSetup: {
         created: [{ slug: 'eval.contact.phone' }],
         existing: [{ slug: 'profile.full_name' }],

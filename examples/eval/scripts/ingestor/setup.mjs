@@ -42,6 +42,7 @@ export async function prepareKnownSchemaMemory({
   graphqlUrl,
   authToken,
   resetMemoryEnabled = false,
+  resetMemoryMode = 'MEMORY_ONLY',
   ensureDefinitionsEnabled = true,
   fetchImpl,
   onProgress,
@@ -68,6 +69,7 @@ export async function prepareKnownSchemaMemory({
     ? await resetMemory({
         graphqlUrl,
         authToken,
+        mode: resetMemoryMode,
         fetchImpl,
       })
     : null;

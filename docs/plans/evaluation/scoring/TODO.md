@@ -123,8 +123,10 @@
   - Accepts `--agent claude --schema-mode open --form-mode backend` with an
     explicit Claude MCP config.
   - Reuses the PR3 open-schema artifact chain unchanged.
+  - Adds `--reset-demo-data` for current-user demo-data reset through existing
+    backend behavior, clearing user-owned definitions before baseline capture.
   - Keeps `--agent codex`, `--form-mode agent`, hard identity tooling, and
-    automated schema cleanup deferred.
+    selective schema cleanup deferred.
 
 ## Next
 

@@ -204,7 +204,8 @@ Goal:
 
 - Enable live Claude MCP open-schema runs through the PR3 artifact chain.
 - Keep the first live open-schema runs useful for research inspection without
-  adding new identity tooling, benchmark labels, or schema cleanup machinery.
+  adding new identity tooling, benchmark labels, or selective schema cleanup
+  machinery.
 
 Implementation notes:
 
@@ -218,8 +219,13 @@ Implementation notes:
   `verificationMethod: "not-implemented"`.
 - Do not add a new MCP identity tool or a smoke/benchmark reliability label in
   artifacts.
+- Add `--reset-demo-data` as an explicit no-new-account reset option that uses
+  existing backend demo reset behavior to delete current-user preferences,
+  user-owned definitions, locations, audit history, and MCP logs before
+  baseline capture. Keep it mutually exclusive with `--reset-memory`.
 - Recommend a dedicated eval backend account/user for cleaner live research
-  comparisons, but do not automate fresh-user creation or definition cleanup.
+  comparisons, but do not automate fresh-user creation or selective
+  eval-owned definition cleanup.
 
 Verification:
 
