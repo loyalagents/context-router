@@ -143,7 +143,7 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
 
   const openClaude = parseArgs(
     [
-      ...replaceFlagValue(replaceFlagValue(baseArgs, '--schema-mode', 'open'), '--agent', 'claude'),
+      ...replaceFlagValue(claudeArgsWithoutConfig('/tmp/mcp-eval-artifacts'), '--schema-mode', 'open'),
       '--mcp-config',
       '/private/tmp/mcp.json',
     ],
@@ -157,6 +157,14 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
     openClaude.options.runId,
     /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
   );
+
+  const openClaudeWithoutConfig = parseArgs(
+    replaceFlagValue(claudeArgsWithoutConfig('/tmp/mcp-eval-artifacts'), '--schema-mode', 'open'),
+    env,
+    fixedNow,
+  );
+  assert.equal(openClaudeWithoutConfig.kind, 'usage-error');
+  assert.match(openClaudeWithoutConfig.message, /--mcp-config/);
 
   const commandWithoutCommand = parseArgs(removeFlagValue(baseArgs, '--agent-command'), env, fixedNow);
   assert.equal(commandWithoutCommand.kind, 'usage-error');
@@ -1400,12 +1408,16 @@ function baseArgsWithArtifacts(tmp) {
   return replaceFlagValue(baseArgs, '--artifacts-root', tmp);
 }
 
+function claudeArgsWithoutConfig(tmp) {
+  return removeFlagValue(
+    removeFlag(replaceFlagValue(baseArgsWithArtifacts(tmp), '--agent', 'claude'), '--allow-test-command-agent'),
+    '--agent-command',
+  );
+}
+
 function claudeArgsWithArtifacts(tmp) {
   return [
-    ...removeFlagValue(
-      removeFlag(replaceFlagValue(baseArgsWithArtifacts(tmp), '--agent', 'claude'), '--allow-test-command-agent'),
-      '--agent-command',
-    ),
+    ...claudeArgsWithoutConfig(tmp),
     '--mcp-config',
     '/private/tmp/context-router-mcp.json',
   ];
