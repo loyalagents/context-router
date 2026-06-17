@@ -329,6 +329,46 @@ test('score CLI writes unscorable database reports and exits nonzero', async () 
   assert.match(result.lines.join('\n'), /unscorable/);
 });
 
+test('score CLI writes unscorable open-schema database reports and exits nonzero', async () => {
+  const tempRepoRoot = await mkdtemp(path.join(os.tmpdir(), 'score-cli-open-unscorable-'));
+  await writeMinimalUnscorableRepo(tempRepoRoot);
+  const memorySnapshotPath = path.join(tempRepoRoot, 'memory-snapshot.json');
+  const reportPath = path.join(tempRepoRoot, 'open-schema-database-score-report.json');
+
+  await writeFile(
+    memorySnapshotPath,
+    jsonText(
+      openSchemaMemorySnapshot({
+        userId: 'unscorable-user',
+        corpusId: 'realistic',
+        preferences: [],
+        definitions: [],
+      }),
+    ),
+  );
+
+  const result = await runScore({
+    repoRoot: tempRepoRoot,
+    args: [
+      '--mode',
+      'open-schema-database',
+      '--user',
+      'unscorable-user',
+      '--corpus',
+      'realistic',
+      '--memory-snapshot',
+      memorySnapshotPath,
+      '--out',
+      reportPath,
+    ],
+  });
+
+  assert.equal(result.exitCode, 1);
+  const report = JSON.parse(await readFile(reportPath, 'utf8'));
+  assert.equal(report.fixtureReadiness.scorable, false);
+  assert.match(result.lines.join('\n'), /unscorable/);
+});
+
 test('score CLI database mode can use an explicit validation report', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-cli-validation-report-'));
   const storedPreferencesPath = path.join(tmp, 'stored-preferences.json');
@@ -411,6 +451,8 @@ async function writeMinimalUnscorableRepo(tempRepoRoot) {
   for (const schemaFile of [
     'stored-preferences.schema.json',
     'database-score-report.schema.json',
+    'memory-snapshot.schema.json',
+    'open-schema-database-score-report.schema.json',
   ]) {
     await writeFile(
       path.join(targetSchemas, schemaFile),
@@ -495,33 +537,44 @@ function formScoreSummary() {
   };
 }
 
-function openSchemaMemorySnapshot() {
-  const preference = openSchemaPreference('profile.full_name', 'Alex Jordan Rivera');
-  const definition = openSchemaDefinition('profile.full_name');
+function openSchemaMemorySnapshot({
+  userId = 'alex-i9-test',
+  corpusId = 'realistic',
+  preferences,
+  definitions,
+} = {}) {
+  const defaultPreference = openSchemaPreference(
+    'profile.full_name',
+    'Alex Jordan Rivera',
+    { userId },
+  );
+  const defaultDefinition = openSchemaDefinition('profile.full_name', { userId });
+  const snapshotPreferences = preferences ?? [defaultPreference];
+  const snapshotDefinitions = definitions ?? [defaultDefinition];
   return {
     schemaVersion: 1,
     artifactType: 'memory-snapshot',
     runId: 'score-cli-open-schema-test',
     evaluationMode: 'open-schema-static',
-    userId: 'alex-i9-test',
-    corpusId: 'realistic',
+    userId,
+    corpusId,
     storageInput: {
       schemaMode: 'open',
       producer: 'unit-test',
       statusesScored: ['ACTIVE'],
       suggestionsWereAutoApplied: false,
     },
-    preferences: [preference],
+    preferences: snapshotPreferences,
     suggestions: [],
-    definitions: [definition],
+    definitions: snapshotDefinitions,
     definitionBaseline: {
       capturedBeforeRun: true,
       capturedAt: '2026-06-17T00:00:00.000Z',
       strategy: 'baseline-only',
       preexistingDefinitionIds: [],
       preexistingSlugs: [],
-      newDefinitionIds: [definition.id],
-      newSlugs: [definition.slug],
+      newDefinitionIds: snapshotDefinitions.map((definition) => definition.id),
+      newSlugs: snapshotDefinitions.map((definition) => definition.slug),
       removedDefinitionIds: [],
       removedSlugs: [],
     },
@@ -533,9 +586,9 @@ function openSchemaMemorySnapshot() {
       locationId: null,
       preferencesMergedWithLocation: false,
       includeSuggestions: false,
-      activePreferenceCount: 1,
+      activePreferenceCount: snapshotPreferences.length,
       suggestedPreferenceCount: 0,
-      definitionCount: 1,
+      definitionCount: snapshotDefinitions.length,
       backendUserId: 'backend-alex',
       schemaMode: 'open',
       schemaResetMode: 'baseline-only',
@@ -543,10 +596,10 @@ function openSchemaMemorySnapshot() {
   };
 }
 
-function openSchemaPreference(slug, value) {
+function openSchemaPreference(slug, value, { userId = 'alex-i9-test' } = {}) {
   return {
     id: `pref-${openSchemaId(slug)}`,
-    userId: 'alex-i9-test',
+    userId,
     locationId: null,
     slug,
     definitionId: `def-${openSchemaId(slug)}`,
@@ -560,13 +613,13 @@ function openSchemaPreference(slug, value) {
   };
 }
 
-function openSchemaDefinition(slug) {
+function openSchemaDefinition(slug, { userId = 'alex-i9-test' } = {}) {
   return {
     id: `def-${openSchemaId(slug)}`,
     namespace: 'eval-agent',
     slug,
     displayName: slug,
-    ownerUserId: 'alex-i9-test',
+    ownerUserId: userId,
     archivedAt: null,
     description: `Definition for ${slug}`,
     valueType: 'STRING',

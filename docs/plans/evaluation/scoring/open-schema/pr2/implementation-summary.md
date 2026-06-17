@@ -50,6 +50,10 @@ slug recovery, unscored active preferences, unscored suggestions, duplicate
 definition slugs, empty definition descriptions, missing `definitionId`
 references, and definition baseline ID/slug diffs.
 
+Summary diagnostics include a row-level conflict count and separate
+intentionally-missing hallucination counters for value-only, key-only,
+both-value-and-key, and total active hallucinations.
+
 ## Combined Report Behavior
 
 `open-schema-combined-score-report.json` uses `scoreType:
@@ -78,8 +82,8 @@ pnpm eval:verify
 
 Results:
 
-- Targeted open-schema scorer and score CLI tests passed: 11 tests.
-- Full eval script test suite passed: 277 tests.
+- Targeted open-schema scorer and score CLI tests passed: 13 tests.
+- Full eval script test suite passed: 279 tests.
 - Eval validation passed with the existing 11 Alex realism warnings and no
   errors.
 - `pnpm eval:verify` passed.

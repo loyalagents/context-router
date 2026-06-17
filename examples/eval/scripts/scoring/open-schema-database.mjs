@@ -356,7 +356,7 @@ function buildOpenDatabaseSummary({
   const recoveredOrSuggested = knownPresent.filter(
     (row) => row.valueRecoveredInActiveMemory || row.suggestionOnly,
   ).length;
-  const missingActiveHallucinated =
+  const missingActiveHallucinatedTotal =
     (missingCounts.open_missing_active_value_hallucinated ?? 0) +
     (missingCounts.open_missing_active_key_hallucinated ?? 0) +
     (missingCounts.open_missing_active_hallucinated ?? 0);
@@ -374,6 +374,7 @@ function buildOpenDatabaseSummary({
       knownCounts.open_known_present_wrong_value ?? 0,
     knownPresentMissing:
       knownCounts.open_known_present_missing ?? 0,
+    knownPresentConflict: knownPresent.filter((row) => row.conflict).length,
     activeValueRecoveryRate: rate(activeRecovered, knownPresent.length),
     valueRecoveryOrSuggestionRate: rate(recoveredOrSuggested, knownPresent.length),
     acceptedSlugRecoveryRate: rate(
@@ -386,7 +387,9 @@ function buildOpenDatabaseSummary({
       missingCounts.open_missing_active_value_hallucinated ?? 0,
     missingActiveKeyHallucinated:
       missingCounts.open_missing_active_key_hallucinated ?? 0,
-    missingActiveHallucinated,
+    missingActiveBothHallucinated:
+      missingCounts.open_missing_active_hallucinated ?? 0,
+    missingActiveHallucinatedTotal,
     missingAbstentionRate: rate(
       missingCounts.open_missing_absent_correct ?? 0,
       intentionallyMissing.length,

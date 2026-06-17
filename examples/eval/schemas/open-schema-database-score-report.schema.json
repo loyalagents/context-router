@@ -27,12 +27,18 @@
     "corpusId": { "type": "string" },
     "storageInput": {
       "type": "object",
-      "additionalProperties": true,
-      "required": ["schemaMode", "producer", "statusesScored"],
+      "additionalProperties": false,
+      "required": [
+        "schemaMode",
+        "producer",
+        "statusesScored",
+        "suggestionsWereAutoApplied"
+      ],
       "properties": {
         "schemaMode": { "enum": ["open", "known"] },
         "producer": { "type": "string", "minLength": 1 },
-        "statusesScored": { "const": ["ACTIVE"] }
+        "statusesScored": { "const": ["ACTIVE"] },
+        "suggestionsWereAutoApplied": { "type": "boolean" }
       }
     },
     "memorySnapshot": {
@@ -68,6 +74,7 @@
         "knownPresentSuggestionOnly",
         "knownPresentWrongValue",
         "knownPresentMissing",
+        "knownPresentConflict",
         "activeValueRecoveryRate",
         "valueRecoveryOrSuggestionRate",
         "acceptedSlugRecoveryRate",
@@ -75,7 +82,8 @@
         "missingAbsentCorrect",
         "missingActiveValueHallucinated",
         "missingActiveKeyHallucinated",
-        "missingActiveHallucinated",
+        "missingActiveBothHallucinated",
+        "missingActiveHallucinatedTotal",
         "missingAbstentionRate",
         "ignoredMemoryPreferenceCount",
         "unscoredActivePreferenceCount",
@@ -93,6 +101,7 @@
         "knownPresentSuggestionOnly": { "$ref": "#/$defs/count" },
         "knownPresentWrongValue": { "$ref": "#/$defs/count" },
         "knownPresentMissing": { "$ref": "#/$defs/count" },
+        "knownPresentConflict": { "$ref": "#/$defs/count" },
         "activeValueRecoveryRate": { "$ref": "#/$defs/rate" },
         "valueRecoveryOrSuggestionRate": { "$ref": "#/$defs/rate" },
         "acceptedSlugRecoveryRate": { "$ref": "#/$defs/rate" },
@@ -100,7 +109,8 @@
         "missingAbsentCorrect": { "$ref": "#/$defs/count" },
         "missingActiveValueHallucinated": { "$ref": "#/$defs/count" },
         "missingActiveKeyHallucinated": { "$ref": "#/$defs/count" },
-        "missingActiveHallucinated": { "$ref": "#/$defs/count" },
+        "missingActiveBothHallucinated": { "$ref": "#/$defs/count" },
+        "missingActiveHallucinatedTotal": { "$ref": "#/$defs/count" },
         "missingAbstentionRate": { "$ref": "#/$defs/rate" },
         "ignoredMemoryPreferenceCount": { "$ref": "#/$defs/count" },
         "unscoredActivePreferenceCount": { "$ref": "#/$defs/count" },

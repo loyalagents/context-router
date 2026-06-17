@@ -23,7 +23,9 @@ test('open-schema database scorer validates memory snapshots and classifies acti
   const preferences = [
     preference('agent.zzz.note', 'outside fixture z'),
     preference('identity.legal_name', 'Wrong Legal Name'),
+    preference('agent.zzz.full_name', 'Alex Jordan Rivera'),
     preference('profile.full_name', 'Alex Jordan Rivera'),
+    preference('agent.aaa.full_name', 'Alex Jordan Rivera'),
     preference('agent.identity.given_name', 'Alex'),
     preference('profile.email', 'wrong@example.test'),
     preference('contact.phone', ''),
@@ -44,6 +46,8 @@ test('open-schema database scorer validates memory snapshots and classifies acti
   const definitions = [
     definition('profile.full_name'),
     definition('identity.legal_name'),
+    definition('agent.aaa.full_name'),
+    definition('agent.zzz.full_name'),
     definition('agent.identity.given_name'),
     definition('profile.email'),
     definition('contact.phone'),
@@ -82,6 +86,11 @@ test('open-schema database scorer validates memory snapshots and classifies acti
     'open_known_present_recovered_accepted_slug',
   );
   assert.equal(row(report, 'identity.legalName').conflict, true);
+  assert.equal(report.summary.knownPresentConflict, 1);
+  assert.deepEqual(
+    row(report, 'identity.legalName').matchingActiveRows.map((candidate) => candidate.slug),
+    ['agent.aaa.full_name', 'agent.zzz.full_name', 'profile.full_name'],
+  );
   assert.deepEqual(
     row(report, 'identity.legalName').acceptedWrongRows.map((candidate) => candidate.slug),
     ['identity.legal_name'],
@@ -111,9 +120,11 @@ test('open-schema database scorer validates memory snapshots and classifies acti
   assert.equal(missingPhone.classification, 'open_missing_absent_correct');
   assert.equal(missingPhone.suggestionAcceptedSlugHasValue, true);
   assert.equal(missingPhone.activeAcceptedSlugHasValue, false);
+  assert.equal(report.summary.missingActiveBothHallucinated, 0);
+  assert.equal(report.summary.missingActiveHallucinatedTotal, 0);
 
   assert.equal(report.schemaDiagnostics.definitionCount, definitions.length);
-  assert.equal(report.schemaDiagnostics.activePreferenceCount, 8);
+  assert.equal(report.schemaDiagnostics.activePreferenceCount, 10);
   assert.equal(report.schemaDiagnostics.suggestionCount, 3);
   assert.deepEqual(report.schemaDiagnostics.definitionBaseline.newDefinitionIds, [
     'def-agent-identity-given-name',
@@ -152,13 +163,49 @@ test('open-schema database scorer validates memory snapshots and classifies acti
   );
 });
 
+test('open-schema database summary distinguishes missing-fact hallucination buckets', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-open-db-missing-'));
+  const snapshotPath = path.join(tmp, 'memory-snapshot.json');
+  const reportPath = path.join(tmp, 'open-schema-database-score-report.json');
+  await writeFile(
+    snapshotPath,
+    jsonText(
+      memorySnapshot({
+        preferences: [preference('contact.phone', '503-555-0199')],
+        definitions: [definition('contact.phone')],
+      }),
+    ),
+  );
+
+  const report = await scoreOpenSchemaDatabaseToFile({
+    repoRoot,
+    userId: USER_ID,
+    corpusId: CORPUS_ID,
+    memorySnapshotPath: snapshotPath,
+    outPath: reportPath,
+  });
+
+  assert.equal(
+    missingRow(report, 'contact.phone').classification,
+    'open_missing_active_key_hallucinated',
+  );
+  assert.equal(report.summary.missingActiveKeyHallucinated, 1);
+  assert.equal(report.summary.missingActiveBothHallucinated, 0);
+  assert.equal(report.summary.missingActiveHallucinatedTotal, 1);
+});
+
 test('open-schema database scorer rejects mismatched and malformed memory snapshots', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-open-db-invalid-'));
-  const mismatchPath = path.join(tmp, 'mismatched-memory-snapshot.json');
+  const userMismatchPath = path.join(tmp, 'user-mismatched-memory-snapshot.json');
+  const corpusMismatchPath = path.join(tmp, 'corpus-mismatched-memory-snapshot.json');
   const malformedPath = path.join(tmp, 'malformed-memory-snapshot.json');
   await writeFile(
-    mismatchPath,
+    userMismatchPath,
     jsonText(memorySnapshot({ userId: 'other-user', definitions: [definition('profile.full_name')] })),
+  );
+  await writeFile(
+    corpusMismatchPath,
+    jsonText(memorySnapshot({ corpusId: 'other-corpus', definitions: [definition('profile.full_name')] })),
   );
   await writeFile(malformedPath, jsonText({ schemaVersion: 1 }));
 
@@ -167,10 +214,20 @@ test('open-schema database scorer rejects mismatched and malformed memory snapsh
       repoRoot,
       userId: USER_ID,
       corpusId: CORPUS_ID,
-      memorySnapshotPath: mismatchPath,
+      memorySnapshotPath: userMismatchPath,
       outPath: path.join(tmp, 'mismatch-report.json'),
     }),
     /memory-snapshot userId other-user does not match alex-i9-test/,
+  );
+  await assert.rejects(
+    scoreOpenSchemaDatabaseToFile({
+      repoRoot,
+      userId: USER_ID,
+      corpusId: CORPUS_ID,
+      memorySnapshotPath: corpusMismatchPath,
+      outPath: path.join(tmp, 'corpus-mismatch-report.json'),
+    }),
+    /memory-snapshot corpusId other-corpus does not match realistic/,
   );
   await assert.rejects(
     scoreOpenSchemaDatabaseToFile({

@@ -164,6 +164,7 @@ function openDatabaseReport({ knownPresent = [], intentionallyMissing = [] } = {
       schemaMode: 'open',
       producer: 'unit-test',
       statusesScored: ['ACTIVE'],
+      suggestionsWereAutoApplied: false,
     },
     memorySnapshot: {
       runId: 'run-open-combined-test',
@@ -214,6 +215,7 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
     knownPresentMissing: knownPresent.filter(
       (row) => row.classification === 'open_known_present_missing',
     ).length,
+    knownPresentConflict: knownPresent.filter((row) => row.conflict).length,
     activeValueRecoveryRate: null,
     valueRecoveryOrSuggestionRate: null,
     acceptedSlugRecoveryRate: null,
@@ -227,7 +229,10 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
     missingActiveKeyHallucinated: intentionallyMissing.filter(
       (row) => row.classification === 'open_missing_active_key_hallucinated',
     ).length,
-    missingActiveHallucinated: intentionallyMissing.filter((row) =>
+    missingActiveBothHallucinated: intentionallyMissing.filter(
+      (row) => row.classification === 'open_missing_active_hallucinated',
+    ).length,
+    missingActiveHallucinatedTotal: intentionallyMissing.filter((row) =>
       row.classification.startsWith('open_missing_active_'),
     ).length,
     missingAbstentionRate: null,
