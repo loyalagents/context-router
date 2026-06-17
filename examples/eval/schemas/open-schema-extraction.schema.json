@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/examples/eval/schemas/open-schema-extraction.schema.json",
+  "title": "Direct Open-Schema Extraction Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "runId",
+    "evaluationMode",
+    "scenarioId",
+    "userId",
+    "corpusId",
+    "formId",
+    "provider",
+    "model",
+    "promptVersion",
+    "facts",
+    "unresolved",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "direct-open-schema-extraction" },
+    "runId": { "type": "string", "minLength": 1 },
+    "evaluationMode": { "const": "direct-vertex-open-schema" },
+    "scenarioId": { "type": "string", "minLength": 1 },
+    "userId": { "type": "string", "minLength": 1 },
+    "corpusId": { "type": "string", "minLength": 1 },
+    "formId": { "type": "string", "minLength": 1 },
+    "provider": { "const": "vertex" },
+    "model": { "type": "string", "minLength": 1 },
+    "promptVersion": { "const": "direct-open-schema-extraction-v1" },
+    "facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fact" }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unresolved" }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factCount", "unresolvedCount", "duplicateSlugGroups"],
+      "properties": {
+        "factCount": { "$ref": "#/$defs/count" },
+        "unresolvedCount": { "$ref": "#/$defs/count" },
+        "duplicateSlugGroups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["slug", "factIds"],
+            "properties": {
+              "slug": { "type": "string", "minLength": 1 },
+              "factIds": {
+                "type": "array",
+                "minItems": 2,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "count": { "type": "integer", "minimum": 0 },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factId",
+        "slug",
+        "label",
+        "valueType",
+        "value",
+        "confidence",
+        "evidence"
+      ],
+      "properties": {
+        "factId": { "type": "string", "pattern": "^fact-[0-9]{4}$" },
+        "slug": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "valueType": { "enum": ["STRING", "BOOLEAN", "ENUM", "ARRAY"] },
+        "value": {},
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["documentId", "quote"],
+            "properties": {
+              "documentId": { "type": "string", "minLength": 1 },
+              "quote": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "unresolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "reason"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
