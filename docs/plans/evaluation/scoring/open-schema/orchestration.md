@@ -26,7 +26,12 @@ live MCP `--schema-mode open`.
 
 ## Checkpoints
 
-### Checkpoint 1: Memory Snapshot Export
+### Checkpoint 1: Memory Snapshot Export (implemented in PR1)
+
+Docs:
+
+- `docs/plans/evaluation/scoring/open-schema/pr1/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr1/implementation-summary.md`
 
 Goal:
 
@@ -61,20 +66,21 @@ Tests:
 
 - `memory-snapshot.schema.json` validates representative artifacts.
 - GraphQL query contract validates against `apps/backend/src/schema.gql`.
-- Mapper joins preferences to definitions by `definitionId` and slug.
+- Preference rows preserve `definitionId` so later scorers can join them to
+  exported definitions without changing the raw memory snapshot.
 - Definitions with no active value are preserved.
-- Active preferences with missing definition metadata are diagnostic, not
-  dropped.
 - Location diagnostics distinguish global-only from merged-location exports.
 - Pre-run baseline and post-run definitions identify new definition IDs.
+- Malformed preference/definition rows, user mismatches, GraphQL errors, and
+  HTTP errors fail clearly.
 - Auth tokens remain redacted from CLI errors and artifacts.
 
-Stop point:
+Stop point achieved:
 
 - A static backend export can write a valid `memory-snapshot.json` with baseline
   and location diagnostics; no agent changes are required yet.
 
-### Checkpoint 2: Open-Schema Scorers
+### Checkpoint 2: Open-Schema Scorers (pending)
 
 Goal:
 
@@ -116,7 +122,7 @@ Stop point:
 - Static memory/form artifacts produce stable open-schema DB and combined
   reports without running an agent.
 
-### Checkpoint 3: MCP Open-Mode Runner
+### Checkpoint 3: MCP Open-Mode Runner (pending)
 
 Goal:
 
@@ -161,7 +167,7 @@ Stop point:
 
 - A non-live command-adapter run completes with valid open-schema artifacts.
 
-### Checkpoint 4: Isolation And Live Smoke
+### Checkpoint 4: Isolation And Live Smoke (pending)
 
 Goal:
 
@@ -198,7 +204,7 @@ Stop point:
 - Open-schema MCP is usable for smoke runs, and the team knows what remains
   before treating live scores as benchmark-reliable.
 
-### Checkpoint 5: Upload-Level Schema Discovery
+### Checkpoint 5: Upload-Level Schema Discovery (pending)
 
 Goal:
 
