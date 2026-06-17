@@ -26,7 +26,7 @@ open-schema producer
   -> exporter writes memory-snapshot.json
   -> open-schema database scorer writes open-schema-database-score-report.json
   -> backend form runner writes filled-form.json
-  -> existing form scorer writes form-score-report.json
+  -> existing form scorer writes form-fill-score-report.json
   -> open-schema combined scorer writes open-schema-combined-score-report.json
 ```
 
@@ -52,7 +52,7 @@ open-schema producer
   doc plus checkpoint orchestration.
 - [x] Add open-schema `memory-snapshot.json` export support before enabling
   live MCP open mode.
-- [ ] Add open-schema scoring support before enabling live MCP open mode.
+- [x] Add open-schema scoring support before enabling live MCP open mode.
 - [ ] Enable MCP open-schema mode and label live results based on identity and
   schema-state isolation.
 
@@ -230,8 +230,9 @@ Checkpoint order:
 1. Implemented in PR1: `memory-snapshot.json` exports active values, optional
    suggestions, visible definitions, and definition-baseline diagnostics without
    changing known-schema `stored-preferences.json`.
-2. Pending: open-schema deterministic scoring:
-   `open-schema-database-score-report.json` for value recovery and
+2. Implemented in PR2: open-schema deterministic scoring:
+   `open-schema-database-score-report.json` for active-memory value recovery
+   and deterministic schema diagnostics, plus
    `open-schema-combined-score-report.json` for attribution against the
    existing form score.
 3. Pending: MCP open-schema runner mode tests agent-driven schema discovery and
@@ -242,9 +243,10 @@ Checkpoint order:
 5. Later: upload-level schema discovery tests product document analysis
    discovering or proposing definitions itself.
 
-Open-schema scoring should use an enriched `memory-snapshot.json` with
-`preferences[]` and `definitions[]`, headline form correctness, and treat novel
-schema quality as diagnostic at first.
+Open-schema scoring now uses an enriched `memory-snapshot.json` with
+`preferences[]` and `definitions[]`, headlines active-memory value recovery for
+storage, joins that with existing form correctness, and treats novel schema
+quality as deterministic diagnostics at first.
 
 Current document upload is known-schema only: it shows the model existing valid
 slugs and filters unknown slugs instead of creating new definitions.
@@ -255,3 +257,5 @@ Design doc:
 - `docs/plans/evaluation/scoring/open-schema/orchestration.md`
 - `docs/plans/evaluation/scoring/open-schema/pr1/implementation-plan.md`
 - `docs/plans/evaluation/scoring/open-schema/pr1/implementation-summary.md`
+- `docs/plans/evaluation/scoring/open-schema/pr2/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr2/implementation-summary.md`

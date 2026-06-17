@@ -162,7 +162,7 @@ export function buildFixtureReadiness(validationReport) {
   };
 }
 
-function collectKnownPresentFactKeys(validationReport, profileFacts) {
+export function collectKnownPresentFactKeys(validationReport, profileFacts) {
   const proven = new Set();
   for (const doc of validationReport.corpusTruth?.documents ?? []) {
     for (const factKey of doc.declaredFacts?.provenPresent ?? []) {
@@ -173,7 +173,7 @@ function collectKnownPresentFactKeys(validationReport, profileFacts) {
   return [...proven].sort();
 }
 
-async function collectMissingFactEntries({ repoRoot, manifest, profileFacts, profile }) {
+export async function collectMissingFactEntries({ repoRoot, manifest, profileFacts, profile }) {
   const entries = new Map();
   for (const missing of manifest.intentionallyMissing ?? []) {
     entries.set(missing.factKey, {

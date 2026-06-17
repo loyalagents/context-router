@@ -81,7 +81,12 @@ Stop point achieved:
 - A static backend export can write a valid `memory-snapshot.json` with baseline
   and location diagnostics; no agent changes are required yet.
 
-### Checkpoint 2: Open-Schema Scorers (pending)
+### Checkpoint 2: Static Open-Schema Scorers (implemented in PR2)
+
+Docs:
+
+- `docs/plans/evaluation/scoring/open-schema/pr2/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/pr2/implementation-summary.md`
 
 Goal:
 
@@ -92,15 +97,27 @@ Goal:
 
 Implementation notes:
 
-- Keep the top-level checkpoint compact, but implement in this internal order:
-  `memory-snapshot.schema.json`, `open-schema-database-score-report.schema.json`,
-  open-schema DB scorer, `open-schema-combined-score-report.schema.json`, then
-  open-schema combined scorer.
+- Add `pnpm eval:score --mode open-schema-database` and
+  `--mode open-schema-combined`.
+- Add open-schema-specific report schemas without changing known-schema
+  `database-score-report.json`, `combined-score-report.json`, or
+  `stored-preferences.json`.
+- Validate `memory-snapshot.json` and require matching `userId` / `corpusId`
+  before scoring.
 - Reuse fixture-readiness logic and deterministic normalization from the
   known-schema database scorer.
-- Score known-present facts by value recovery first.
-- Preserve accepted canonical/alias slug matches as diagnostics.
-- Keep suggestions diagnostic except for an explicit suggestion-only bucket.
+- Score known-present facts by active-memory value recovery first:
+  accepted-slug recovery, novel-slug recovery, suggestion-only recovery, wrong
+  active value, and missing active value.
+- Preserve accepted canonical/alias slug matches and conflicts as diagnostics.
+- Keep suggestions diagnostic except for the explicit suggestion-only
+  known-present bucket.
+- Score intentionally missing facts by active-memory hallucination first:
+  absent correctly, withheld value found, accepted missing key populated, or
+  both.
+- Add deterministic schema diagnostics for definition counts, copied baseline
+  diffs, duplicate slug groups, empty descriptions, missing `definitionId`
+  references, and unscored active/suggested rows.
 - Reuse the existing form scorer without changing known-schema form report
   semantics.
 
@@ -117,8 +134,9 @@ Tests:
 - Ambiguous matching remains diagnostic.
 - Combined attribution covers memory-found, memory-missing, missing-absent, and
   missing-hallucinated form outcomes.
+- Known-schema score CLI modes continue to parse and pass existing tests.
 
-Stop point:
+Stop point achieved:
 
 - Static memory/form artifacts produce stable open-schema DB and combined
   reports without running an agent.

@@ -1,0 +1,326 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import {
+  scoreOpenMissingFact,
+  scoreOpenSchemaDatabaseToFile,
+} from './open-schema-database.mjs';
+import { jsonText } from '../shared.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const repoRoot = path.resolve(path.dirname(__filename), '../../../..');
+const USER_ID = 'alex-i9-test';
+const CORPUS_ID = 'realistic';
+const TIMESTAMP = '2026-06-17T00:00:00.000Z';
+
+test('open-schema database scorer validates memory snapshots and classifies active-memory recovery', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-open-db-'));
+  const snapshotPath = path.join(tmp, 'memory-snapshot.json');
+  const reportPath = path.join(tmp, 'open-schema-database-score-report.json');
+  const preferences = [
+    preference('agent.zzz.note', 'outside fixture z'),
+    preference('identity.legal_name', 'Wrong Legal Name'),
+    preference('profile.full_name', 'Alex Jordan Rivera'),
+    preference('agent.identity.given_name', 'Alex'),
+    preference('profile.email', 'wrong@example.test'),
+    preference('contact.phone', ''),
+    preference('agent.aaa.note', 'outside fixture a'),
+    preference('agent.missing.definition', 'outside fixture missing definition', {
+      definitionId: 'def-not-exported',
+    }),
+    preference('agent.ignored', 'ignored value', { status: 'SUGGESTED' }),
+  ];
+  const suggestions = [
+    preference('agent.identity.family_name', 'Rivera', { status: 'SUGGESTED' }),
+    preference('contact.phone', '503-555-0199', { status: 'SUGGESTED' }),
+    preference('agent.suggestion.missing.definition', 'outside suggestion', {
+      status: 'SUGGESTED',
+      definitionId: 'def-suggestion-not-exported',
+    }),
+  ];
+  const definitions = [
+    definition('profile.full_name'),
+    definition('identity.legal_name'),
+    definition('agent.identity.given_name'),
+    definition('profile.email'),
+    definition('contact.phone'),
+    definition('agent.aaa.note'),
+    definition('agent.zzz.note'),
+    definition('agent.ignored'),
+    definition('agent.identity.family_name'),
+    definition('agent.empty.description', { description: '' }),
+    definition('agent.duplicate', {
+      id: 'def-duplicate-a',
+      namespace: 'eval-agent-a',
+    }),
+    definition('agent.duplicate', {
+      id: 'def-duplicate-b',
+      namespace: 'eval-agent-b',
+    }),
+  ];
+  await writeFile(
+    snapshotPath,
+    jsonText(memorySnapshot({ preferences, suggestions, definitions })),
+  );
+
+  const report = await scoreOpenSchemaDatabaseToFile({
+    repoRoot,
+    userId: USER_ID,
+    corpusId: CORPUS_ID,
+    memorySnapshotPath: snapshotPath,
+    outPath: reportPath,
+  });
+  const written = JSON.parse(await readFile(reportPath, 'utf8'));
+
+  assert.equal(written.scoreType, 'open-schema-database-storage');
+  assert.equal(report.fixtureReadiness.scorable, true);
+  assert.equal(
+    row(report, 'identity.legalName').classification,
+    'open_known_present_recovered_accepted_slug',
+  );
+  assert.equal(row(report, 'identity.legalName').conflict, true);
+  assert.deepEqual(
+    row(report, 'identity.legalName').acceptedWrongRows.map((candidate) => candidate.slug),
+    ['identity.legal_name'],
+  );
+  assert.equal(
+    row(report, 'identity.firstName').classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(row(report, 'identity.firstName').matchingNovelRows[0].slug, 'agent.identity.given_name');
+  assert.equal(
+    row(report, 'identity.lastName').classification,
+    'open_known_present_suggestion_only',
+  );
+  assert.equal(row(report, 'identity.lastName').matchingSuggestionRows[0].slug, 'agent.identity.family_name');
+  assert.equal(
+    row(report, 'contact.email').classification,
+    'open_known_present_wrong_value',
+  );
+  assert.equal(row(report, 'contact.email').acceptedSlugHasWrongValue, true);
+  assert.ok(
+    report.knownPresent.some(
+      (candidate) => candidate.classification === 'open_known_present_missing',
+    ),
+  );
+
+  const missingPhone = missingRow(report, 'contact.phone');
+  assert.equal(missingPhone.classification, 'open_missing_absent_correct');
+  assert.equal(missingPhone.suggestionAcceptedSlugHasValue, true);
+  assert.equal(missingPhone.activeAcceptedSlugHasValue, false);
+
+  assert.equal(report.schemaDiagnostics.definitionCount, definitions.length);
+  assert.equal(report.schemaDiagnostics.activePreferenceCount, 8);
+  assert.equal(report.schemaDiagnostics.suggestionCount, 3);
+  assert.deepEqual(report.schemaDiagnostics.definitionBaseline.newDefinitionIds, [
+    'def-agent-identity-given-name',
+    'def-duplicate-a',
+  ]);
+  assert.deepEqual(report.schemaDiagnostics.definitionBaseline.removedSlugs, [
+    'removed.slug',
+  ]);
+  assert.deepEqual(report.schemaDiagnostics.duplicateSlugGroups, [
+    {
+      slug: 'agent.duplicate',
+      count: 2,
+      definitionIds: ['def-duplicate-a', 'def-duplicate-b'],
+      namespaces: ['eval-agent-a', 'eval-agent-b'],
+    },
+  ]);
+  assert.deepEqual(
+    report.schemaDiagnostics.emptyDescriptionDefinitions.map((candidate) => candidate.slug),
+    ['agent.empty.description'],
+  );
+  assert.deepEqual(
+    report.schemaDiagnostics.preferencesMissingDefinitions.map((candidate) => candidate.slug),
+    ['agent.missing.definition'],
+  );
+  assert.deepEqual(
+    report.schemaDiagnostics.suggestionsMissingDefinitions.map((candidate) => candidate.slug),
+    ['agent.suggestion.missing.definition'],
+  );
+  assert.deepEqual(
+    report.ignoredMemoryPreferences.map((candidate) => candidate.slug),
+    ['agent.ignored'],
+  );
+  assert.deepEqual(
+    report.unscoredActivePreferences.map((candidate) => candidate.slug),
+    ['agent.aaa.note', 'agent.missing.definition', 'agent.zzz.note'],
+  );
+});
+
+test('open-schema database scorer rejects mismatched and malformed memory snapshots', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-open-db-invalid-'));
+  const mismatchPath = path.join(tmp, 'mismatched-memory-snapshot.json');
+  const malformedPath = path.join(tmp, 'malformed-memory-snapshot.json');
+  await writeFile(
+    mismatchPath,
+    jsonText(memorySnapshot({ userId: 'other-user', definitions: [definition('profile.full_name')] })),
+  );
+  await writeFile(malformedPath, jsonText({ schemaVersion: 1 }));
+
+  await assert.rejects(
+    scoreOpenSchemaDatabaseToFile({
+      repoRoot,
+      userId: USER_ID,
+      corpusId: CORPUS_ID,
+      memorySnapshotPath: mismatchPath,
+      outPath: path.join(tmp, 'mismatch-report.json'),
+    }),
+    /memory-snapshot userId other-user does not match alex-i9-test/,
+  );
+  await assert.rejects(
+    scoreOpenSchemaDatabaseToFile({
+      repoRoot,
+      userId: USER_ID,
+      corpusId: CORPUS_ID,
+      memorySnapshotPath: malformedPath,
+      outPath: path.join(tmp, 'malformed-report.json'),
+    }),
+    /memory snapshot failed memory-snapshot.schema.json/,
+  );
+});
+
+test('open-schema missing fact scoring detects withheld active-memory value leaks', () => {
+  const baseEntry = {
+    factKey: 'contact.phone',
+    missingKind: 'withheld_value_missing',
+    withheldValue: '503-555-0199',
+    source: 'test',
+  };
+  const storageMap = {
+    facts: {
+      'contact.phone': {
+        canonicalSlugs: ['contact.phone'],
+        acceptedAliasSlugs: [],
+      },
+    },
+  };
+
+  assert.equal(
+    scoreOpenMissingFact({
+      entry: baseEntry,
+      profile: { facts: {} },
+      storageMap,
+      activePreferences: [preference('agent.phone.note', '503-555-0199')],
+      suggestions: [],
+      usedPreferenceIndexes: new Set(),
+      usedSuggestionIndexes: new Set(),
+    }).classification,
+    'open_missing_active_value_hallucinated',
+  );
+  assert.equal(
+    scoreOpenMissingFact({
+      entry: baseEntry,
+      profile: { facts: {} },
+      storageMap,
+      activePreferences: [preference('contact.phone', '503-555-0199')],
+      suggestions: [],
+      usedPreferenceIndexes: new Set(),
+      usedSuggestionIndexes: new Set(),
+    }).classification,
+    'open_missing_active_hallucinated',
+  );
+});
+
+function memorySnapshot({
+  userId = USER_ID,
+  corpusId = CORPUS_ID,
+  preferences = [],
+  suggestions = [],
+  definitions = [],
+} = {}) {
+  return {
+    schemaVersion: 1,
+    artifactType: 'memory-snapshot',
+    runId: 'open-schema-static-test',
+    evaluationMode: 'open-schema-static',
+    userId,
+    corpusId,
+    storageInput: {
+      schemaMode: 'open',
+      producer: 'unit-test',
+      statusesScored: ['ACTIVE'],
+      suggestionsWereAutoApplied: false,
+    },
+    preferences,
+    suggestions,
+    definitions,
+    definitionBaseline: {
+      capturedBeforeRun: true,
+      capturedAt: TIMESTAMP,
+      strategy: 'baseline-only',
+      preexistingDefinitionIds: ['def-profile-full-name', 'def-removed'],
+      preexistingSlugs: ['profile.full_name', 'removed.slug'],
+      newDefinitionIds: ['def-agent-identity-given-name', 'def-duplicate-a'],
+      newSlugs: ['agent.identity.given_name', 'agent.duplicate'],
+      removedDefinitionIds: ['def-removed'],
+      removedSlugs: ['removed.slug'],
+    },
+    diagnostics: {
+      exportedAt: TIMESTAMP,
+      graphqlUrl: 'http://localhost:3000/graphql',
+      queryName: 'EvalMemorySnapshotExport',
+      locationMode: 'global-only',
+      locationId: null,
+      preferencesMergedWithLocation: false,
+      includeSuggestions: true,
+      activePreferenceCount: preferences.filter((candidate) => candidate.status === 'ACTIVE').length,
+      suggestedPreferenceCount: suggestions.length,
+      definitionCount: definitions.length,
+      backendUserId: 'backend-alex',
+      schemaMode: 'open',
+      schemaResetMode: 'baseline-only',
+    },
+  };
+}
+
+function preference(slug, value, options = {}) {
+  return {
+    id: options.id ?? `pref-${slug.replace(/[^a-z0-9]+/gi, '-')}`,
+    userId: USER_ID,
+    locationId: null,
+    slug,
+    definitionId: options.definitionId ?? definitionIdForSlug(slug),
+    value,
+    status: options.status ?? 'ACTIVE',
+    sourceType: 'INFERRED',
+    confidence: 0.9,
+    evidence: null,
+    createdAt: TIMESTAMP,
+    updatedAt: TIMESTAMP,
+  };
+}
+
+function definition(slug, options = {}) {
+  return {
+    id: options.id ?? definitionIdForSlug(slug),
+    namespace: options.namespace ?? 'eval-agent',
+    slug,
+    displayName: options.displayName ?? slug,
+    ownerUserId: options.ownerUserId ?? USER_ID,
+    archivedAt: options.archivedAt ?? null,
+    description: options.description ?? `Definition for ${slug}`,
+    valueType: options.valueType ?? 'STRING',
+    scope: options.scope ?? 'USER',
+    options: options.options ?? null,
+    isSensitive: options.isSensitive ?? false,
+    isCore: options.isCore ?? false,
+    category: options.category ?? 'profile',
+  };
+}
+
+function definitionIdForSlug(slug) {
+  return `def-${slug.replace(/[^a-z0-9]+/gi, '-')}`;
+}
+
+function row(report, factKey) {
+  return report.knownPresent.find((candidate) => candidate.factKey === factKey);
+}
+
+function missingRow(report, factKey) {
+  return report.intentionallyMissing.find((candidate) => candidate.factKey === factKey);
+}
