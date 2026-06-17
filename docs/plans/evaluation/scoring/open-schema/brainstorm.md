@@ -468,13 +468,13 @@ Possible repeatability strategies:
 | --- | --- | --- |
 | Fresh backend user per run | Best benchmark isolation | More operational setup and auth/user management |
 | Archive/delete prior eval-owned definitions | Repeatable with one user | Needs careful guards so product definitions are not touched |
-| Baseline-only recording | First smoke/debug runs | Easy, but scores are smoke-only if prior definitions help the agent |
+| Baseline-only recording | First research/debug runs | Easy, but prior definitions can affect comparisons |
 
-The first implementation should support baseline-only smoke mode if cleanup is
-not solved, but it must label scores accordingly. Benchmark-reliable live
-scores need either a fresh user strategy or guarded cleanup, plus the existing
-MCP/backend identity preflight so the agent and exporter are proven to use the
-same backend user.
+The first live implementation should support baseline-only recording and make
+definition diffs visible in artifacts. Cleaner comparisons should use a
+dedicated eval backend account/user until fresh-user or guarded cleanup tooling
+is worth the added complexity. Hard MCP/backend identity proof can remain later
+work unless the research process needs stronger guarantees.
 
 ## Backend Upload-Level Open Schema
 

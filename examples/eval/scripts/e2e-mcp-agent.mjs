@@ -902,12 +902,6 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: 'Expected --form-mode backend',
     };
   }
-  if (options.schemaMode === 'open' && options.agent !== 'command') {
-    return {
-      kind: 'usage-error',
-      message: '--schema-mode open currently supports the deterministic --agent command adapter only',
-    };
-  }
   if (options.agent === 'command' && !options.agentCommand) {
     return {
       kind: 'usage-error',
@@ -963,7 +957,7 @@ export function usage() {
     'Notes:',
     '  This wrapper runs one MCP memory ingestion eval through one agent session.',
     '  Known schema uses stored-preferences artifacts; open schema uses memory-snapshot artifacts.',
-    '  Open schema is enabled for the deterministic command adapter first; live Claude open-schema smoke remains reserved.',
+    '  Open schema supports the deterministic command adapter and live Claude backend-form runs.',
     '  Agent-filled forms are reserved and fail fast until implemented.',
     '  Low scores are reported but do not fail the wrapper. Runtime/setup failures stop the run.',
     '  Prefer EVAL_AUTH_TOKEN over --auth-token to avoid shell history and process-list exposure.',

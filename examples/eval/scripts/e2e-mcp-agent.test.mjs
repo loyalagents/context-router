@@ -150,8 +150,13 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
     env,
     fixedNow,
   );
-  assert.equal(openClaude.kind, 'usage-error');
-  assert.match(openClaude.message, /command adapter/);
+  assert.equal(openClaude.kind, 'ok');
+  assert.equal(openClaude.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.equal(openClaude.options.ensureDefinitions, false);
+  assert.match(
+    openClaude.options.runId,
+    /^mcp-open-schema-alex-i9-test-realistic-2026-06-01T12-00-00-000Z$/,
+  );
 
   const commandWithoutCommand = parseArgs(removeFlagValue(baseArgs, '--agent-command'), env, fixedNow);
   assert.equal(commandWithoutCommand.kind, 'usage-error');
@@ -701,6 +706,109 @@ test('mcp open-schema command adapter runs open stages and writes schema-valid a
     'openSchemaDatabaseScoreReport',
     'validationReport',
   ]);
+});
+
+test('mcp open-schema Claude adapter runs open stages and writes schema-valid artifacts', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-open-claude-e2e-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async ({ prompt, artifacts, options }) => {
+      calls.push({ stage: 'agent', prompt, artifacts, options });
+      return {
+        exitCode: 0,
+        lines: ['claude finished'],
+        stdout: [
+          claudeInitLine({ mcpServer: 'context-router-local' }),
+          'claude wrote open-schema memory',
+          COMPLETION_MARKER,
+          '',
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+        durationMs: 123,
+        command: 'claude --mcp-config /private/tmp/context-router-mcp.json',
+        completionMarkerObserved: true,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(claudeArgsWithArtifacts(tmp), '--schema-mode', 'open'),
+      '--auth-token',
+      'secret-token',
+      '--run-id',
+      'run-open-claude-123',
+    ],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.deepEqual(
+    calls.map((call) => call.stage),
+    [
+      'validate',
+      'setup',
+      'capture-definition-baseline',
+      'agent',
+      'export-memory-snapshot',
+      'score:open-schema-database',
+      'fill-form',
+      'score:form',
+      'score:open-schema-combined',
+    ],
+  );
+
+  const agentCall = calls.find((call) => call.stage === 'agent');
+  assert.equal(agentCall.options.agent, 'claude');
+  assert.equal(agentCall.options.schemaMode, 'open');
+  assert.match(agentCall.prompt, /EVAL_MCP_AGENT_DONE/);
+
+  const exportArgs = calls.find((call) => call.stage === 'export-memory-snapshot').args;
+  assert.equal(argValue(exportArgs, '--schema-mode'), 'open');
+  assert.equal(argValue(exportArgs, '--schema-reset-mode'), 'baseline-only');
+  assert.equal(argValue(exportArgs, '--baseline-in'), path.join(tmp, 'definition-baseline.json'));
+  assert.equal(exportArgs.includes('--include-suggestions'), true);
+
+  const evaluationRun = JSON.parse(await readFile(path.join(tmp, 'evaluation-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'evaluation-run.schema.json', evaluationRun, 'evaluation run');
+  assert.equal(evaluationRun.evaluationMode, 'mcp-open-schema');
+  assert.equal(evaluationRun.settings.agent, 'claude');
+  assert.equal(evaluationRun.settings.schemaMode, 'open');
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.name),
+    [
+      'validate-documents',
+      'setup-open-schema-memory',
+      'capture-definition-baseline',
+      'run-mcp-agent',
+      'export-memory-snapshot',
+      'score-open-schema-database',
+      'fill-form',
+      'score-form',
+      'score-open-schema-combined',
+    ],
+  );
+  assert.deepEqual(
+    evaluationRun.stages.map((stage) => stage.status),
+    ['passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed', 'passed'],
+  );
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  await validateWithSchema(repoRoot, 'mcp-agent-run.schema.json', mcpAgentRun, 'MCP agent run');
+  assert.equal(mcpAgentRun.agent.provider, 'claude');
+  assert.equal(mcpAgentRun.schemaMode, 'open');
+  assert.equal(mcpAgentRun.identity.verifiedSameBackendUser, false);
+  assert.equal(mcpAgentRun.identity.verificationMethod, 'not-implemented');
+  assert.equal(mcpAgentRun.prompt.templatePath, 'examples/eval/prompts/mcp-open-schema.md');
+  assert.match(mcpAgentRun.agent.command, /--strict-mcp-config/);
+  assert.match(mcpAgentRun.agent.command, /--mcp-config/);
+  assert.match(mcpAgentRun.agent.command, /context-router-mcp\.json/);
+  assert.match(mcpAgentRun.agent.command, /mcp__context-router-local__\*/);
 });
 
 test('command adapter missing completion marker is diagnostic-only', async () => {
