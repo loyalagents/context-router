@@ -438,6 +438,9 @@ function enrichField(field, index) {
     index,
     pdfFieldName,
     type,
+    ...(field instanceof PDFTextField && field.getMaxLength() !== undefined
+      ? { maxLength: field.getMaxLength() }
+      : {}),
     options,
     inferredLabel: inferred.label,
     inferredDataKey: inferred.dataKey,

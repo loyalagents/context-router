@@ -12,6 +12,7 @@ import {
   buildPromptFieldMetadata,
   fillPdfFromActions,
   loadEvidenceDocuments,
+  normalizeTextValueForPdfField,
 } from './fill-form-from-docs.mjs';
 import { generateWithVertex } from './generate.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
@@ -490,6 +491,7 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'Return exactly one fill action for every PDF field in the metadata list.',
     'Use exact case-sensitive fieldName values from the field metadata.',
     'For dropdown, radio, and option-list fields, use exact option value strings from the metadata.',
+    'For text fields with maxLength metadata, return a value whose final text length is at or below maxLength.',
     'Field policy is authoritative.',
     'When fieldPolicy.action is "skip", return SKIP for that field even if extracted facts contain plausible values.',
     'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
@@ -542,6 +544,7 @@ export function buildDirectOpenSchemaFieldMetadata(fieldMetadata) {
   return fieldMetadata.map((field) => ({
     fieldName: field.fieldName,
     fieldType: field.fieldType,
+    ...(typeof field.maxLength === 'number' ? { maxLength: field.maxLength } : {}),
     inferredLabel: field.inferredLabel ?? null,
     fillPolicy: field.fillPolicy ?? null,
     fieldPolicy: directOpenSchemaFieldPolicy(field.fieldPolicy),
@@ -851,6 +854,7 @@ function buildExtractionFieldContext(fieldMetadata) {
   return fieldMetadata.map((field) => ({
     fieldName: field.fieldName,
     fieldType: field.fieldType,
+    ...(typeof field.maxLength === 'number' ? { maxLength: field.maxLength } : {}),
     inferredLabel: field.inferredLabel,
     fillPolicy: field.fillPolicy,
     fieldPolicy: field.fieldPolicy,
@@ -1102,6 +1106,12 @@ function invalidFactFillActionReason({ action, field, factById, provenanceDiagno
     const optionValues = new Set(field.options ?? []);
     if (!optionValues.has(action.value)) {
       return `selected option "${action.value}" is not available`;
+    }
+  }
+  if (action.action === 'SET_TEXT' && typeof field.maxLength === 'number') {
+    const valueLength = normalizeTextValueForPdfField(action).length;
+    if (valueLength > field.maxLength) {
+      return `text length ${valueLength} exceeds PDF field maxLength ${field.maxLength}`;
     }
   }
   if (action.action === 'SKIP') return null;

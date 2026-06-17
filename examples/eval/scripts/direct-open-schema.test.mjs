@@ -102,6 +102,7 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
 
   assert.match(extractionPrompt, /Safe target form context/);
   assert.match(extractionPrompt, /First Name Given Name/);
+  assert.match(extractionPrompt, /"maxLength": 1/);
   assert.match(extractionPrompt, /documentId: alex-i9-test-realistic-001/);
   assert.doesNotMatch(extractionPrompt, /factKey/);
   assert.doesNotMatch(extractionPrompt, /inferredDataKey/);
@@ -139,6 +140,7 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.match(fillPrompt, /Extracted facts/);
   assert.match(fillPrompt, /fact-0001/);
   assert.match(fillPrompt, /sourceFactIds/);
+  assert.match(fillPrompt, /"maxLength": 1/);
   assert.doesNotMatch(fillPrompt, /Evidence documents/);
   assert.doesNotMatch(fillPrompt, /Driver License Upload OCR/);
   assert.doesNotMatch(fillPrompt, /validation-report/);
@@ -151,6 +153,11 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   const safeMetadata = buildDirectOpenSchemaFieldMetadata(fieldMetadata);
   assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'inferredDataKey')));
   assert.ok(safeMetadata.every((field) => !Object.hasOwn(field.fieldPolicy, 'note')));
+  assert.equal(
+    safeMetadata.find((field) => field.fieldName === 'Employee Middle Initial (if any)')
+      ?.maxLength,
+    1,
+  );
 });
 
 test('direct-open-schema parser and extraction validation assign stable fact ids and preserve duplicate slugs', async () => {
@@ -254,6 +261,7 @@ test('direct-open-schema parser and extraction validation assign stable fact ids
 test('direct-open-schema validates fact-only fill actions and derives source slugs', () => {
   const fields = [
     { fieldName: 'Name', fieldType: 'text', options: [] },
+    { fieldName: 'Middle', fieldType: 'text', maxLength: 1, options: [] },
     { fieldName: 'State', fieldType: 'dropdown', options: ['OR'] },
     { fieldName: 'Missing', fieldType: 'text', options: [] },
   ];
@@ -278,6 +286,13 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
         value: 'Alex',
         sourceFactIds: ['fact-0001'],
         confidence: 0.7,
+      },
+      {
+        fieldName: 'Middle',
+        action: 'SET_TEXT',
+        value: 'Jordan',
+        sourceFactIds: ['fact-0001'],
+        confidence: 0.9,
       },
       {
         fieldName: 'State',
@@ -307,6 +322,12 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
     },
   ]);
   assert.equal(result.diagnostics.lowConfidenceCount, 1);
+  assert.equal(
+    result.diagnostics.invalidActionReasonCounts[
+      'text length 6 exceeds PDF field maxLength 1'
+    ],
+    1,
+  );
   assert.equal(
     result.diagnostics.invalidActionReasonCounts['selected option "WA" is not available'],
     1,

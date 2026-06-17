@@ -90,6 +90,7 @@ test('fill-form-from-docs builds an evidence prompt without fixture truth', asyn
   assert.equal(evidenceDocuments.length, fixture.manifest.documents.length);
   assert.match(prompt, /doc:alex-i9-test-realistic-001/);
   assert.match(prompt, /First Name Given Name/);
+  assert.match(prompt, /"maxLength": 1/);
   assert.match(prompt, /Driver License Upload OCR/);
   assert.match(prompt, /"fieldPolicy"/);
   assert.match(prompt, /"manual_attestation"/);
@@ -111,6 +112,11 @@ test('fill-form-from-docs builds an evidence prompt without fixture truth', asyn
     action: 'skip',
     reason: 'manual_attestation',
   });
+  assert.equal(
+    fieldMetadata.find((field) => field.fieldName === 'Employee Middle Initial (if any)')
+      ?.maxLength,
+    1,
+  );
 });
 
 test('fill-form-from-docs parses plain and fenced JSON model responses', () => {
@@ -143,6 +149,12 @@ test('fill-form-from-docs validates action edge cases', () => {
     {
       fieldName: 'Other',
       fieldType: 'text',
+      options: [],
+    },
+    {
+      fieldName: 'Middle',
+      fieldType: 'text',
+      maxLength: 1,
       options: [],
     },
     {
@@ -198,6 +210,13 @@ test('fill-form-from-docs validates action edge cases', () => {
         confidence: 0.6,
       },
       {
+        fieldName: 'Middle',
+        action: 'SET_TEXT',
+        value: 'Jordan',
+        sourceSlugs: ['doc:doc-1'],
+        confidence: 1,
+      },
+      {
         fieldName: 'NoConfidence',
         action: 'SET_TEXT',
         value: 'accepted',
@@ -218,6 +237,12 @@ test('fill-form-from-docs validates action edge cases', () => {
   assert.equal(result.diagnostics.lowConfidenceCount, 1);
   assert.equal(
     result.diagnostics.invalidActionReasonCounts['missing source document ref'],
+    1,
+  );
+  assert.equal(
+    result.diagnostics.invalidActionReasonCounts[
+      'text length 6 exceeds PDF field maxLength 1'
+    ],
     1,
   );
   assert.match(result.warnings.join('\n'), /unknown field/);

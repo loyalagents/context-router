@@ -333,6 +333,7 @@ export function buildPromptFieldMetadata(fixture) {
     return {
       fieldName: generated.pdfFieldName,
       fieldType: generated.type,
+      ...(typeof generated.maxLength === 'number' ? { maxLength: generated.maxLength } : {}),
       inferredLabel: generated.inferredLabel ?? null,
       inferredDataKey: generated.inferredDataKey ?? null,
       fillPolicy: generated.fillPolicy ?? null,
@@ -350,6 +351,7 @@ export function buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments }) 
     'Return exactly one fill action for every PDF field in the metadata list.',
     'Use exact case-sensitive fieldName values from the field metadata.',
     'For dropdown, radio, and option-list fields, use exact option value strings from the metadata.',
+    'For text fields with maxLength metadata, return a value whose final text length is at or below maxLength.',
     'Field policy is authoritative.',
     'When fieldPolicy.action is "skip", return SKIP for that field even if the evidence contains plausible values.',
     'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
@@ -639,6 +641,12 @@ function invalidActionReason({ action, field, docRefs }) {
       return `selected option "${action.value}" is not available`;
     }
   }
+  if (action.action === 'SET_TEXT' && typeof field.maxLength === 'number') {
+    const valueLength = normalizeTextValueForPdfField(action).length;
+    if (valueLength > field.maxLength) {
+      return `text length ${valueLength} exceeds PDF field maxLength ${field.maxLength}`;
+    }
+  }
   if (action.action === 'SKIP') return null;
   if (!Array.isArray(action.sourceSlugs) || action.sourceSlugs.length === 0) {
     return 'missing source document ref';
@@ -711,7 +719,7 @@ function formatEvidenceDocument(doc) {
   ].filter((line) => line != null).join('\n');
 }
 
-function normalizeTextValueForPdfField(action) {
+export function normalizeTextValueForPdfField(action) {
   const value = action.value ?? '';
   if (!isSocialSecurityNumberAction(action)) return value;
   const digits = value.replace(/\D/g, '');
@@ -719,9 +727,10 @@ function normalizeTextValueForPdfField(action) {
 }
 
 function isSocialSecurityNumberAction(action) {
+  const sourceSlugs = Array.isArray(action.sourceSlugs) ? action.sourceSlugs : [];
   return (
     action.fieldName === 'US Social Security Number' ||
-    action.sourceSlugs.some((slug) => slug.endsWith('.identity.ssn') || slug === 'identity.ssn')
+    sourceSlugs.some((slug) => slug.endsWith('.identity.ssn') || slug === 'identity.ssn')
   );
 }
 
