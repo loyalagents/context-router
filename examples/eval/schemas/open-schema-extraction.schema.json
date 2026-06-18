@@ -31,7 +31,7 @@
     "formId": { "type": "string", "minLength": 1 },
     "provider": { "const": "vertex" },
     "model": { "type": "string", "minLength": 1 },
-    "promptVersion": { "const": "direct-open-schema-extraction-v1" },
+    "promptVersion": { "const": "direct-open-schema-extraction-v4" },
     "facts": {
       "type": "array",
       "items": { "$ref": "#/$defs/fact" }

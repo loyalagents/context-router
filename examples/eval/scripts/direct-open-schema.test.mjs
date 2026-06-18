@@ -100,10 +100,25 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
     evidenceDocuments,
   });
 
-  assert.match(extractionPrompt, /Safe target form context/);
-  assert.match(extractionPrompt, /First Name Given Name/);
-  assert.match(extractionPrompt, /"maxLength": 1/);
+  assert.match(extractionPrompt, /durable, document-supported user facts and preferences/);
+  assert.match(extractionPrompt, /You are not filling a form in this stage/);
+  assert.match(extractionPrompt, /Return no more than 40 facts/);
+  assert.match(extractionPrompt, /at most two evidence entries/);
+  assert.match(extractionPrompt, /JSON-safe substring/);
+  assert.match(extractionPrompt, /"slug": "category\.fact_name"/);
+  assert.match(extractionPrompt, /"label": "Human readable fact label"/);
+  assert.match(extractionPrompt, /"quote": "short exact supporting substring"/);
   assert.match(extractionPrompt, /documentId: alex-i9-test-realistic-001/);
+  assert.doesNotMatch(extractionPrompt, /Use concise model-authored slugs/);
+  assert.doesNotMatch(extractionPrompt, /Slug exactness is diagnostic/);
+  assert.doesNotMatch(extractionPrompt, /"slug": "identity\.legal_name"/);
+  assert.doesNotMatch(extractionPrompt, /"value": "Alex Rivera"/);
+  assert.doesNotMatch(extractionPrompt, /"label": "Phone number"/);
+  assert.doesNotMatch(extractionPrompt, /Scenario prompt/);
+  assert.doesNotMatch(extractionPrompt, /Safe target form context/);
+  assert.doesNotMatch(extractionPrompt, /Fill i-9/);
+  assert.doesNotMatch(extractionPrompt, /First Name Given Name/);
+  assert.doesNotMatch(extractionPrompt, /"maxLength": 1/);
   assert.doesNotMatch(extractionPrompt, /factKey/);
   assert.doesNotMatch(extractionPrompt, /inferredDataKey/);
   assert.doesNotMatch(extractionPrompt, /seedPreferences/);
@@ -593,7 +608,7 @@ function validExtractionArtifact({ fixture, facts }) {
     formId: fixture.scenario.formId,
     provider: 'vertex',
     model: 'test-model',
-    promptVersion: 'direct-open-schema-extraction-v1',
+    promptVersion: 'direct-open-schema-extraction-v4',
     facts,
     unresolved: [],
     diagnostics: {

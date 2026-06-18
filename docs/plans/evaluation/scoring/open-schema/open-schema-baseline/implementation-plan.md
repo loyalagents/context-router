@@ -43,18 +43,17 @@ is the only supported provider in v1.
 
 ## Architecture
 
-### Stage 1: Form-Aware Extraction
+### Stage 1: Form-Agnostic Open-Schema Extraction
 
 Vertex sees:
 
-- all declared corpus documents from the scenario manifest;
-- the scenario prompt;
-- safe target form context: PDF field names, field types, inferred labels,
-  fill policy, field policy, and options.
+- general instructions to extract durable user facts/preferences;
+- all declared corpus documents from the scenario manifest.
 
-Vertex does not see fixture truth, profile facts, field-map fact keys,
-field-map notes, accepted slug maps, validation reports, database exports,
-score reports, or previous baseline outputs.
+Vertex does not see the scenario prompt, target form context, PDF field names,
+fixture truth, profile facts, field-map fact keys, field-map notes, accepted
+slug maps, validation reports, database exports, score reports, or previous
+baseline outputs.
 
 The output is deliberately small and model-owned:
 
@@ -62,23 +61,23 @@ The output is deliberately small and model-owned:
 {
   "facts": [
     {
-      "slug": "identity.legal_name",
-      "label": "Legal name",
+      "slug": "category.fact_name",
+      "label": "Human readable fact label",
       "valueType": "STRING",
-      "value": "Alex Rivera",
-      "confidence": 0.92,
+      "value": "document-supported value",
+      "confidence": 0.9,
       "evidence": [
         {
-          "documentId": "alex-i9-test-realistic-001",
-          "quote": "short supporting quote"
+          "documentId": "document-id-from-list",
+          "quote": "short exact supporting substring"
         }
       ]
     }
   ],
   "unresolved": [
     {
-      "label": "Phone number",
-      "reason": "No current document contains it."
+      "label": "Human readable missing or ambiguous fact",
+      "reason": "Why the documents do not establish it."
     }
   ]
 }
@@ -89,6 +88,11 @@ authored `slug` is preserved exactly as behavior to score diagnostically.
 Malformed envelopes fail. Invalid individual fact rows are dropped with
 diagnostics so one bad row does not prevent final form scoring from the usable
 facts.
+
+The prompt bounds extraction to a compact general-purpose fact set and asks for
+short JSON-safe evidence snippets. That keeps the stricter form-agnostic
+baseline from turning into an exhaustive corpus dump while still letting Vertex
+decide which facts/preferences are generally useful.
 
 ### Stage 2: Fact-Only Form Fill
 
@@ -196,8 +200,9 @@ pnpm eval:verify
 
 ## Design Notes
 
-- Stage 1 is intentionally form-aware because this baseline measures whether
-  Vertex can solve the target form from all source docs without storage.
+- Stage 1 is intentionally form-agnostic because this baseline measures whether
+  Vertex can extract useful open-schema user facts from source docs before it
+  sees a target form.
 - The form response shape is not considered over-engineered for the benchmark:
   it is the minimum structured interface needed to fill the actual PDF and run
   deterministic form scoring.

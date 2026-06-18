@@ -53,12 +53,13 @@ Unless `--skip-extraction-scoring` is passed, the command also writes:
 
 ## Prompt Boundaries
 
-Stage 1 sees declared corpus documents and safe form context. The direct
-baseline uses its own prompt metadata projection. The form context includes
-field names, field types, inferred labels, approved field policies, fill
-policies, and options. It excludes fixture truth, profile facts, field-map fact
-keys, field-map notes, generated data-key hints, accepted slug maps, validation
-reports, DB exports, score artifacts, and previous baseline outputs.
+Stage 1 sees general open-schema extraction instructions and declared corpus
+documents. It does not see the scenario prompt, target form context, field
+names, field types, inferred labels, field policies, fixture truth, profile
+facts, field-map fact keys, field-map notes, generated data-key hints, accepted
+slug maps, validation reports, DB exports, score artifacts, or previous
+baseline outputs. The prompt asks for a compact bounded extraction with short
+JSON-safe evidence snippets, not an exhaustive corpus dump.
 
 Stage 2 sees extracted facts and the same safe PDF field metadata projection.
 It does not see raw source documents. Non-`SKIP` actions must cite

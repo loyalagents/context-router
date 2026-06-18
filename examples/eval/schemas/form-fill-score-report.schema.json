@@ -139,6 +139,11 @@
           ]
         },
         "classification": { "$ref": "#/$defs/classification" },
+        "exactTextMatch": { "type": ["boolean", "null"] },
+        "renderVariant": {
+          "type": ["string", "null"],
+          "enum": ["case_only", null]
+        },
         "overfill": { "type": "boolean" },
         "overfillSeverity": {
           "type": ["string", "null"],
