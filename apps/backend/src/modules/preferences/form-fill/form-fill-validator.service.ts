@@ -10,6 +10,10 @@ import {
   SkippedFieldSummary,
   ValidatedFillAction,
 } from './form-fill.types';
+import type {
+  FormFactResolutionConflict,
+  ResolvedFormFact,
+} from './form-fact-resolution';
 import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
 
 export interface FormFillValidationResult {
@@ -23,6 +27,8 @@ export interface FormFillValidationResult {
 export interface FormFillValidationOptions {
   fieldPolicies?: FormFillFieldPolicies;
   activePreferenceValues?: Map<string, unknown>;
+  resolvedFacts?: ResolvedFormFact[];
+  resolutionConflicts?: FormFactResolutionConflict[];
 }
 
 @Injectable()
@@ -39,6 +45,15 @@ export class FormFillValidatorService {
     const fieldOrder = new Map(fields.map((field, index) => [field.name, index]));
     const policyByFieldName = new Map(
       options.fieldPolicies?.fields.map((policy) => [policy.fieldName, policy]) ?? [],
+    );
+    const resolvedFactByKey = new Map(
+      (options.resolvedFacts ?? []).map((fact) => [fact.factKey, fact]),
+    );
+    const conflictByFactKey = new Map(
+      (options.resolutionConflicts ?? []).map((conflict) => [
+        conflict.factKey,
+        conflict,
+      ]),
     );
     const actionByFieldName = new Map<string, AiFillAction>();
     const validationEvents: FormFillValidationEvent[] = [];
@@ -76,6 +91,8 @@ export class FormFillValidatorService {
         confidenceThreshold,
         policyByFieldName.get(field.name),
         options.activePreferenceValues ?? new Map(),
+        resolvedFactByKey,
+        conflictByFactKey,
         validationEvents,
       );
 
@@ -140,6 +157,8 @@ export class FormFillValidatorService {
     confidenceThreshold: number,
     policy: FormFillFieldPolicy | undefined,
     activePreferenceValues: Map<string, unknown>,
+    resolvedFactByKey: Map<string, ResolvedFormFact>,
+    conflictByFactKey: Map<string, FormFactResolutionConflict>,
     validationEvents: FormFillValidationEvent[],
   ): string | null {
     if (!field.supported) {
@@ -178,7 +197,17 @@ export class FormFillValidatorService {
       return reason;
     }
 
-    if (policy?.when && !this.conditionIsActive(policy.when, activePreferenceValues)) {
+    if (
+      policy?.when &&
+      !this.conditionIsActive(
+        policy.when,
+        activePreferenceValues,
+        resolvedFactByKey,
+        conflictByFactKey,
+        field.name,
+        validationEvents,
+      )
+    ) {
       const reason = `field policy inactive: ${policy.when.factKey}`;
       validationEvents.push({
         kind: 'policy_inactive_blocked',
@@ -186,6 +215,20 @@ export class FormFillValidatorService {
         message: reason,
       });
       return reason;
+    }
+
+    if (policy?.mode === 'fact' && policy.factKey) {
+      const conflict = conflictByFactKey.get(policy.factKey);
+      if (conflict) {
+        const reason = `field policy conflict: ${policy.factKey}`;
+        validationEvents.push({
+          kind: 'policy_fact_conflict_blocked',
+          fieldName: field.name,
+          factKey: policy.factKey,
+          message: reason,
+        });
+        return reason;
+      }
     }
 
     if (action.sourceSlugs.length === 0) {
@@ -220,9 +263,25 @@ export class FormFillValidatorService {
 
     if (policy?.mode === 'fact' && policy.sourceSlugs.length > 0) {
       const allowedSlugs = new Set(policy.sourceSlugs);
-      const offPolicySlugs = action.sourceSlugs.filter(
-        (slug) => !allowedSlugs.has(slug),
-      );
+      const resolvedFact = policy.factKey
+        ? resolvedFactByKey.get(policy.factKey)
+        : undefined;
+      const offPolicySlugs: string[] = [];
+      for (const slug of action.sourceSlugs) {
+        if (allowedSlugs.has(slug)) continue;
+        if (resolvedFact?.sourceSlugs.includes(slug)) {
+          validationEvents.push({
+            kind: 'policy_source_slug_resolved',
+            fieldName: field.name,
+            factKey: policy.factKey,
+            sourceSlug: slug,
+            resolutionKind: resolvedFact.resolutionKind,
+            message: `source slug resolved to field policy fact ${policy.factKey}: ${slug}`,
+          });
+          continue;
+        }
+        offPolicySlugs.push(slug);
+      }
       if (offPolicySlugs.length > 0) {
         validationEvents.push({
           kind: 'policy_source_slug_off_policy',
@@ -247,15 +306,46 @@ export class FormFillValidatorService {
   private conditionIsActive(
     condition: FormFillFieldCondition,
     activePreferenceValues: Map<string, unknown>,
+    resolvedFactByKey: Map<string, ResolvedFormFact>,
+    conflictByFactKey: Map<string, FormFactResolutionConflict>,
+    fieldName: string,
+    validationEvents: FormFillValidationEvent[],
   ): boolean {
-    const sourceSlugs = condition.sourceSlugs ?? [];
-    if (sourceSlugs.length === 0) {
+    const conflict = conflictByFactKey.get(condition.factKey);
+    if (conflict) {
+      validationEvents.push({
+        kind: 'policy_condition_conflict_blocked',
+        fieldName,
+        factKey: condition.factKey,
+        message: `field policy condition conflict: ${condition.factKey}`,
+      });
       return false;
     }
 
     const expected = Array.isArray(condition.equals)
       ? condition.equals
       : [condition.equals];
+
+    const resolvedFact = resolvedFactByKey.get(condition.factKey);
+    if (resolvedFact) {
+      const active = this.valueMatchesExpected(resolvedFact.value, expected);
+      if (active) {
+        validationEvents.push({
+          kind: 'policy_condition_resolved',
+          fieldName,
+          factKey: condition.factKey,
+          sourceSlug: resolvedFact.sourceSlugs[0],
+          resolutionKind: resolvedFact.resolutionKind,
+          message: `field policy condition resolved from canonical fact ${condition.factKey}`,
+        });
+      }
+      return active;
+    }
+
+    const sourceSlugs = condition.sourceSlugs ?? [];
+    if (sourceSlugs.length === 0) {
+      return false;
+    }
 
     return sourceSlugs.some((slug) => {
       if (!activePreferenceValues.has(slug)) {

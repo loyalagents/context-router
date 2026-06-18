@@ -590,6 +590,203 @@ describe('FormFillValidatorService', () => {
     expect(result.validationEvents).toEqual([]);
   });
 
+  it('activates conditional policies from resolved canonical facts', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['work_auth.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['work_auth.citizenship_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['work_auth.citizenship_status', 'alien authorized to work'],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'workAuthorization.citizenshipStatus',
+            value: 'alien authorized to work',
+            sourceSlugs: ['work_auth.citizenship_status'],
+            resolutionKind: 'alias',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['work_authorization.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: ['work_authorization.citizenship_status'],
+                equals: [
+                  'alien authorized to work',
+                  'noncitizen authorized to work',
+                ],
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'newsletter_opt_in' }),
+    ]);
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_condition_resolved',
+          fieldName: 'newsletter_opt_in',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlug: 'work_auth.citizenship_status',
+        }),
+        expect.objectContaining({
+          kind: 'policy_source_slug_resolved',
+          fieldName: 'newsletter_opt_in',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlug: 'work_auth.citizenship_status',
+        }),
+      ]),
+    );
+  });
+
+  it('fails conditional policies closed when a resolved canonical fact conflicts', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['work_auth.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['work_auth.citizenship_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['work_auth.citizenship_status', 'alien authorized to work'],
+        ]),
+        resolvedFacts: [],
+        resolutionConflicts: [
+          {
+            factKey: 'workAuthorization.citizenshipStatus',
+            sourceSlugs: [
+              'work_auth.citizenship_status',
+              'work_authorization.citizenship_status',
+            ],
+            values: ['alien authorized to work', 'lawful permanent resident'],
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['work_authorization.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: ['work_authorization.citizenship_status'],
+                equals: 'alien authorized to work',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'newsletter_opt_in',
+          reason: 'field policy inactive: workAuthorization.citizenshipStatus',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_condition_conflict_blocked',
+          fieldName: 'newsletter_opt_in',
+          factKey: 'workAuthorization.citizenshipStatus',
+        }),
+        expect.objectContaining({
+          kind: 'policy_inactive_blocked',
+          fieldName: 'newsletter_opt_in',
+        }),
+      ]),
+    );
+  });
+
+  it('allows derived source slugs for the resolved field policy fact', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'J',
+          sourceSlugs: ['profile.middle_name'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['profile.middle_name']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['profile.middle_name', 'Jordan'],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'identity.middleInitial',
+            value: 'J',
+            sourceSlugs: ['profile.middle_name'],
+            resolutionKind: 'derived',
+            derivedFromFactKey: 'identity.middleName',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'profile.full_name',
+              mode: 'fact',
+              factKey: 'identity.middleInitial',
+              sourceSlugs: ['eval.identity.middle_initial'],
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'profile.full_name',
+        action: 'SET_TEXT',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual([
+      expect.objectContaining({
+        kind: 'policy_source_slug_resolved',
+        fieldName: 'profile.full_name',
+        factKey: 'identity.middleInitial',
+        sourceSlug: 'profile.middle_name',
+        resolutionKind: 'derived',
+      }),
+    ]);
+  });
+
   it('records a warning event for applied active slugs outside field policy slugs without blocking the fill', () => {
     const result = service.validate(
       [

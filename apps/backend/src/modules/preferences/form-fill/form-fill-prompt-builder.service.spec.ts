@@ -86,14 +86,63 @@ describe('FormFillPromptBuilderService', () => {
     expect(prompt).toContain('Field policies');
     expect(prompt).toContain('treat them as authoritative');
     expect(prompt).toContain(
-      "use only active memories whose slug is listed in that field policy's sourceSlugs",
+      "use only active memories whose slug is listed in that field policy's sourceSlugs or whose slug is listed on a resolved form fact",
     );
     expect(prompt).toContain('return SKIP for that field');
     expect(prompt).toContain('Do not substitute semantically similar memories');
     expect(prompt).toContain(
-      'do not swap one email, address, name, identifier, status, date, or phone number for another',
+      'unless that exact memory slug is explicitly listed for that field or in resolved form facts',
     );
     expect(prompt).toContain('"fieldName": "CB_4"');
     expect(prompt).toContain('"groupId": "workAuthorization.citizenshipStatus"');
+  });
+
+  it('includes resolved form facts when provided', () => {
+    const fields: PdfFieldMetadata[] = [
+      {
+        name: 'Employee Middle Initial (if any)',
+        type: 'text',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const prompt = service.buildPrompt(
+      fields,
+      [
+        {
+          slug: 'profile.middle_name',
+          value: 'Jordan',
+        },
+      ],
+      {
+        schemaVersion: 1,
+        fields: [
+          {
+            fieldName: 'Employee Middle Initial (if any)',
+            mode: 'fact',
+            factKey: 'identity.middleInitial',
+            sourceSlugs: ['eval.identity.middle_initial'],
+          },
+        ],
+      },
+      [
+        {
+          factKey: 'identity.middleInitial',
+          value: 'J',
+          sourceSlugs: ['profile.middle_name'],
+          resolutionKind: 'derived',
+          derivedFromFactKey: 'identity.middleName',
+        },
+      ],
+    );
+
+    expect(prompt).toContain('Resolved form facts');
+    expect(prompt).toContain('"factKey": "identity.middleInitial"');
+    expect(prompt).toContain('"value": "J"');
+    expect(prompt).toContain('"sourceSlugs": [');
+    expect(prompt).toContain('"profile.middle_name"');
+    expect(prompt).toContain('"resolutionKind": "derived"');
+    expect(prompt).toContain('"derivedFromFactKey": "identity.middleName"');
   });
 });

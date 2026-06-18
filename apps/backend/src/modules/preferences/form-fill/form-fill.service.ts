@@ -7,6 +7,7 @@ import { PdfFieldExtractorService } from './pdf-field-extractor.service';
 import { FormFillPromptBuilderService } from './form-fill-prompt-builder.service';
 import { FormFillValidatorService } from './form-fill-validator.service';
 import { PdfFieldFillerService } from './pdf-field-filler.service';
+import { resolveFormFacts } from './form-fact-resolution';
 import {
   FormFillFieldPolicies,
   FormFillAiResponseSchema,
@@ -78,14 +79,20 @@ export class FormFillService {
       stage = 'preference_load';
       const preferences =
         await this.preferenceService.getActivePreferences(userId);
+      const activePreferenceInputs = preferences.map((preference) => ({
+        slug: preference.slug,
+        value: preference.value,
+        description: preference.description,
+      }));
+      const formFactResolution = resolveFormFacts({
+        activePreferences: activePreferenceInputs,
+        fieldPolicies,
+      });
       const prompt = this.promptBuilder.buildPrompt(
         extracted.fields,
-        preferences.map((preference) => ({
-          slug: preference.slug,
-          value: preference.value,
-          description: preference.description,
-        })),
+        activePreferenceInputs,
         fieldPolicies,
+        formFactResolution.facts,
       );
 
       stage = 'ai_generation';
@@ -109,6 +116,8 @@ export class FormFillService {
               preference.value,
             ]),
           ),
+          resolvedFacts: formFactResolution.facts,
+          resolutionConflicts: formFactResolution.conflicts,
         },
       );
 
