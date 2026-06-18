@@ -127,11 +127,22 @@
     backend behavior, clearing user-owned definitions before baseline capture.
   - Keeps `--agent codex`, `--form-mode agent`, hard identity tooling, and
     selective schema cleanup deferred.
+- [x] Open-schema direct Vertex no-storage baseline.
+  - Added `pnpm eval:direct-open-schema`.
+  - Runs form-aware extraction from declared corpus documents, then fills the
+    form from extracted facts only.
+  - Writes `open-schema-extraction-response.json`,
+    `open-schema-extraction.json`, `direct-open-schema-fill-response.json`,
+    `filled-form.json`, `filled-form.pdf`, and `form-score-report.json`.
+  - Optionally emits synthetic PR2-compatible open-schema diagnostic reports
+    without using backend memory, MCP tools, GraphQL, or database writes.
 
 ## Next
 
 - [ ] Document the live direct-document baseline comparison in an example
   folder if the Pro/Flash/E2E results are useful as a durable reference.
+- [ ] Decide whether direct Vertex open-schema comparison tooling needs
+  `evaluation-run.json`; v1 intentionally leaves it out unless needed.
 - [ ] Document the completed live known-schema E2E smoke in an example folder
   with `evaluation-run.json`, score reports, filled PDF, and qualitative notes.
 - [ ] Inspect the live E2E score rows to separate ingestion/storage failures

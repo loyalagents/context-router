@@ -75,7 +75,8 @@
             "none",
             "fresh-user",
             "archive-eval-owned",
-            "baseline-only"
+            "baseline-only",
+            "synthetic-no-backend"
           ]
         },
         "preexistingDefinitionIds": { "$ref": "#/$defs/stringArray" },
@@ -107,7 +108,12 @@
       "properties": {
         "exportedAt": { "type": "string", "minLength": 1 },
         "graphqlUrl": { "type": "string", "minLength": 1 },
-        "queryName": { "const": "EvalMemorySnapshotExport" },
+        "queryName": {
+          "enum": [
+            "EvalMemorySnapshotExport",
+            "SyntheticDirectOpenSchemaSnapshot"
+          ]
+        },
         "locationMode": { "enum": ["global-only", "merged-location"] },
         "locationId": { "type": ["string", "null"] },
         "preferencesMergedWithLocation": { "type": "boolean" },
@@ -115,19 +121,92 @@
         "activePreferenceCount": { "$ref": "#/$defs/count" },
         "suggestedPreferenceCount": { "$ref": "#/$defs/count" },
         "definitionCount": { "$ref": "#/$defs/count" },
-        "backendUserId": { "type": "string", "minLength": 1 },
+        "backendUserId": { "type": ["string", "null"], "minLength": 1 },
         "schemaMode": { "enum": ["open", "known"] },
         "schemaResetMode": {
           "enum": [
             "none",
             "fresh-user",
             "archive-eval-owned",
-            "baseline-only"
+            "baseline-only",
+            "synthetic-no-backend"
           ]
         }
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "diagnostics": {
+            "properties": {
+              "queryName": { "const": "EvalMemorySnapshotExport" }
+            },
+            "required": ["queryName"]
+          }
+        },
+        "required": ["diagnostics"]
+      },
+      "then": {
+        "properties": {
+          "definitionBaseline": {
+            "properties": {
+              "strategy": {
+                "enum": [
+                  "none",
+                  "fresh-user",
+                  "archive-eval-owned",
+                  "baseline-only"
+                ]
+              }
+            }
+          },
+          "diagnostics": {
+            "properties": {
+              "backendUserId": { "type": "string", "minLength": 1 },
+              "schemaResetMode": {
+                "enum": [
+                  "none",
+                  "fresh-user",
+                  "archive-eval-owned",
+                  "baseline-only"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "diagnostics": {
+            "properties": {
+              "queryName": { "const": "SyntheticDirectOpenSchemaSnapshot" }
+            },
+            "required": ["queryName"]
+          }
+        },
+        "required": ["diagnostics"]
+      },
+      "then": {
+        "properties": {
+          "definitionBaseline": {
+            "properties": {
+              "strategy": { "const": "synthetic-no-backend" }
+            }
+          },
+          "diagnostics": {
+            "properties": {
+              "backendUserId": { "type": "null" },
+              "schemaResetMode": { "const": "synthetic-no-backend" }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "count": { "type": "integer", "minimum": 0 },
     "stringArray": {

@@ -187,6 +187,61 @@ test('form scorer reports missing, wrong, hallucinated, unsupported, and source-
   );
 });
 
+test('form scorer counts safe case-only render variants as correct diagnostics', async () => {
+  const snapshot = JSON.parse(
+    await readFile(
+      path.join(
+        repoRoot,
+        'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+      ),
+      'utf8',
+    ),
+  );
+  const unit = snapshot.fields.find(
+    (field) => field.fieldMap.factKey === 'address.current.unit',
+  );
+  unit.classification = 'incorrect';
+  unit.actual.value = 'APT 12B';
+  const city = snapshot.fields.find(
+    (field) => field.fieldMap.factKey === 'address.current.city',
+  );
+  city.classification = 'incorrect';
+  city.actual.value = 'SACRAMENTO';
+  const email = snapshot.fields.find((field) => field.fieldMap.factKey === 'contact.email');
+  email.classification = 'incorrect';
+  email.actual.value = 'ELENA.MARQUEZ@EXAMPLE.TEST';
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-case-variant-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  const report = await scoreForm({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+    filledFormPath,
+  });
+
+  assert.equal(report.summary.knownFieldCorrect, 12);
+  assert.equal(report.summary.knownFieldWrong, 1);
+  for (const factKey of ['address.current.unit', 'address.current.city']) {
+    const row = report.fields.find((field) => field.factKey === factKey);
+    assert.equal(row.classification, 'form_known_correct');
+    assert.equal(row.exactTextMatch, false);
+    assert.equal(row.renderVariant, 'case_only');
+  }
+  const emailRow = report.fields.find((field) => field.factKey === 'contact.email');
+  assert.equal(emailRow.classification, 'form_known_wrong');
+  assert.equal(emailRow.exactTextMatch, false);
+  assert.equal(emailRow.renderVariant, null);
+
+  await validateWithSchema(
+    repoRoot,
+    'form-fill-score-report.schema.json',
+    report,
+    'form fill score report',
+  );
+});
+
 test('form scorer rejects filled-form snapshots with mismatched fixture identity', async () => {
   const snapshot = JSON.parse(
     await readFile(

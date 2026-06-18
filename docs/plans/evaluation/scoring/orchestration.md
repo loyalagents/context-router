@@ -30,6 +30,17 @@ open-schema producer
   -> open-schema combined scorer writes open-schema-combined-score-report.json
 ```
 
+The direct Vertex open-schema baseline is a no-storage comparison path:
+
+```text
+source documents + safe form context
+  -> direct Vertex extraction writes open-schema-extraction.json
+  -> direct Vertex fact-only fill writes filled-form.json
+  -> form scorer writes form-score-report.json
+  -> optional synthetic memory snapshot
+  -> optional open-schema diagnostic scorers
+```
+
 ## Phase Checklist
 
 - [x] Brainstorm scoring, exporter, and ingestor boundaries.
@@ -56,6 +67,7 @@ open-schema producer
 - [x] Enable MCP open-schema mode for the deterministic command adapter.
 - [x] Enable live Claude MCP open-schema runs through the open-schema artifact
   chain.
+- [x] Implement direct Vertex open-schema no-storage baseline.
 
 ## Phase 1: Scorer
 

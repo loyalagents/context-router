@@ -5,6 +5,20 @@ import { readJson, validateWithSchema, writeJson } from './io.mjs';
 import { rate } from './normalize.mjs';
 import { storageSpecForFact } from './slugs.mjs';
 
+const SAFE_CASE_VARIANT_FACT_KEYS = new Set([
+  'address.current.city',
+  'address.current.country',
+  'address.current.street',
+  'address.current.unit',
+  'employment.company',
+  'employment.title',
+  'identity.firstName',
+  'identity.lastName',
+  'identity.legalName',
+  'identity.middleInitial',
+  'identity.otherLastNames',
+]);
+
 export async function scoreFormToFile({
   repoRoot,
   scenarioId,
@@ -77,6 +91,13 @@ function scoreField({ field, fixture, storageMap }) {
     factKey && sourceSlugs.length > 0
       ? sourceSlugs.some((slug) => storage.acceptedSlugs.includes(slug))
       : false;
+  const renderDiagnostics = buildRenderDiagnostics({
+    field,
+    fieldClass,
+    factKey,
+    expectedValue,
+    actualValue,
+  });
 
   return {
     fieldIndex: field.fieldIndex,
@@ -89,7 +110,9 @@ function scoreField({ field, fixture, storageMap }) {
     sourceSlugs,
     sourceSlugAgrees,
     snapshotClassification: field.classification,
-    classification: mapFormClassification(field, fieldClass),
+    classification: mapFormClassification(field, fieldClass, renderDiagnostics),
+    exactTextMatch: renderDiagnostics.exactTextMatch,
+    renderVariant: renderDiagnostics.renderVariant,
     overfill: overfill.overfill,
     overfillSeverity: overfill.overfillSeverity,
     overfillReason: overfill.overfillReason,
@@ -125,7 +148,7 @@ function classifyFieldDenominator(field) {
   return 'structural-skip';
 }
 
-function mapFormClassification(field, fieldClass) {
+function mapFormClassification(field, fieldClass, renderDiagnostics = {}) {
   if (fieldClass === 'unsupported') return 'unsupported';
   if (fieldClass === 'structural-skip') {
     return field.classification === 'hallucinated'
@@ -145,10 +168,47 @@ function mapFormClassification(field, fieldClass) {
     return 'form_unexpected';
   }
   if (field.classification === 'correct') return 'form_known_correct';
+  if (
+    fieldClass === 'should-fill' &&
+    field.classification === 'incorrect' &&
+    renderDiagnostics.renderVariant === 'case_only'
+  ) {
+    return 'form_known_correct';
+  }
   if (field.classification === 'missing') return 'form_known_missing';
   if (field.classification === 'incorrect') return 'form_known_wrong';
   if (field.classification === 'hallucinated') return 'form_known_wrong';
   return 'form_unexpected';
+}
+
+function buildRenderDiagnostics({
+  field,
+  fieldClass,
+  factKey,
+  expectedValue,
+  actualValue,
+}) {
+  if (field.expected?.action !== 'SET_TEXT') {
+    return { exactTextMatch: null, renderVariant: null };
+  }
+  const exactTextMatch = expectedValue === actualValue;
+  if (
+    fieldClass === 'should-fill' &&
+    field.classification === 'incorrect' &&
+    isSafeCaseOnlyVariant({ field, factKey, expectedValue, actualValue })
+  ) {
+    return { exactTextMatch, renderVariant: 'case_only' };
+  }
+  return { exactTextMatch, renderVariant: null };
+}
+
+function isSafeCaseOnlyVariant({ field, factKey, expectedValue, actualValue }) {
+  if (!SAFE_CASE_VARIANT_FACT_KEYS.has(factKey)) return false;
+  if (field.fieldMap?.render) return false;
+  if (expectedValue == null || actualValue == null) return false;
+  const expectedText = String(expectedValue);
+  const actualText = String(actualValue);
+  return expectedText !== actualText && expectedText.toLowerCase() === actualText.toLowerCase();
 }
 
 function structuralOverfill(field, fieldClass) {

@@ -29,6 +29,7 @@
     "eval:run": "node examples/eval/scripts/run.mjs",
     "eval:fill-form": "node examples/eval/scripts/fill-form.mjs",
     "eval:fill-form-from-docs": "node examples/eval/scripts/fill-form-from-docs.mjs",
+    "eval:direct-open-schema": "node examples/eval/scripts/direct-open-schema.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
     "eval:compare-runs": "node examples/eval/scripts/compare-runs.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",

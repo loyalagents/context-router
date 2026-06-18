@@ -24,6 +24,24 @@ validate-documents
 The first implementation should support static artifact scoring before enabling
 live MCP `--schema-mode open`.
 
+Direct Vertex no-storage comparison is intentionally separate from the backend
+MCP flow:
+
+```text
+declared source documents + safe form context
+  -> direct Vertex open-schema extraction
+  -> fact-only direct Vertex form fill
+  -> score-form
+  -> optional synthetic memory snapshot
+  -> optional score-open-schema-database
+  -> optional score-open-schema-combined
+```
+
+Docs:
+
+- `docs/plans/evaluation/scoring/open-schema/open-schema-baseline/implementation-plan.md`
+- `docs/plans/evaluation/scoring/open-schema/open-schema-baseline/implementation-summary.md`
+
 ## Checkpoints
 
 ### Checkpoint 1: Memory Snapshot Export (implemented in PR1)
