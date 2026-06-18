@@ -658,6 +658,162 @@ describe('FormFillValidatorService', () => {
     );
   });
 
+  it('temporarily activates work authorization conditions from normalized active values', () => {
+    const workAuthorizationFields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_4',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+      {
+        name: 'USCIS ANumber',
+        type: 'text',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'CB_4',
+          action: 'CHECK',
+          sourceSlugs: ['profile.citizenship_immigration_status'],
+          confidence: 0.95,
+        },
+        {
+          fieldName: 'USCIS ANumber',
+          action: 'SET_TEXT',
+          value: '987654321',
+          sourceSlugs: ['profile.uscis_number'],
+          confidence: 0.95,
+        },
+      ],
+      workAuthorizationFields,
+      new Set([
+        'profile.citizenship_immigration_status',
+        'profile.uscis_number',
+      ]),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          [
+            'profile.citizenship_immigration_status',
+            'An alien authorized to work',
+          ],
+          ['profile.uscis_number', '987654321'],
+        ]),
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_4',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['work_auth.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: [],
+                equals: 'alien authorized to work',
+              },
+            },
+            {
+              fieldName: 'USCIS ANumber',
+              mode: 'fact',
+              factKey: 'workAuthorization.uscisANumber',
+              sourceSlugs: ['work_auth.uscis_number'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: [],
+                equals: 'alien authorized to work',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'CB_4', action: 'CHECK' }),
+      expect.objectContaining({
+        fieldName: 'USCIS ANumber',
+        action: 'SET_TEXT',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_condition_active_value_matched',
+          fieldName: 'CB_4',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlug: 'profile.citizenship_immigration_status',
+        }),
+        expect.objectContaining({
+          kind: 'policy_condition_active_value_matched',
+          fieldName: 'USCIS ANumber',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlug: 'profile.citizenship_immigration_status',
+        }),
+      ]),
+    );
+  });
+
+  it('does not apply active-value condition fallback to unrelated fact keys', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'newsletter_opt_in',
+          action: 'CHECK',
+          sourceSlugs: ['profile.newsletter_opt_in'],
+          confidence: 0.95,
+        },
+      ],
+      fields,
+      new Set(['profile.newsletter_opt_in', 'profile.citizenship_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['profile.newsletter_opt_in', true],
+          ['profile.citizenship_status', 'An alien authorized to work'],
+        ]),
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'newsletter_opt_in',
+              mode: 'fact',
+              factKey: 'preferences.newsletterOptIn',
+              sourceSlugs: ['profile.newsletter_opt_in'],
+              when: {
+                factKey: 'preferences.newsletterOptIn',
+                sourceSlugs: [],
+                equals: 'alien authorized to work',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'newsletter_opt_in',
+          reason: 'field policy inactive: preferences.newsletterOptIn',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_condition_active_value_matched',
+        }),
+      ]),
+    );
+  });
+
   it('fails conditional policies closed when a resolved canonical fact conflicts', () => {
     const result = service.validate(
       [

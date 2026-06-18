@@ -16,6 +16,10 @@ import type {
 } from './form-fact-resolution';
 import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
 
+const ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS = new Set([
+  'workAuthorization.citizenshipStatus',
+]);
+
 export interface FormFillValidationResult {
   validActions: ValidatedFillAction[];
   filledFields: FilledFieldSummary[];
@@ -328,7 +332,11 @@ export class FormFillValidatorService {
 
     const resolvedFact = resolvedFactByKey.get(condition.factKey);
     if (resolvedFact) {
-      const active = this.valueMatchesExpected(resolvedFact.value, expected);
+      const active = this.valueMatchesExpected(
+        condition.factKey,
+        resolvedFact.value,
+        expected,
+      );
       if (active) {
         validationEvents.push({
           kind: 'policy_condition_resolved',
@@ -343,28 +351,90 @@ export class FormFillValidatorService {
     }
 
     const sourceSlugs = condition.sourceSlugs ?? [];
-    if (sourceSlugs.length === 0) {
+    if (sourceSlugs.length > 0) {
+      return sourceSlugs.some((slug) => {
+        if (!activePreferenceValues.has(slug)) {
+          // Conditional policies fail closed when the gating fact is unavailable.
+          return false;
+        }
+        return this.valueMatchesExpected(
+          condition.factKey,
+          activePreferenceValues.get(slug),
+          expected,
+        );
+      });
+    }
+
+    // TODO(form-fill-validation): replace this narrow open-schema fallback with
+    // explicit field-to-memory mapping validation. See
+    // docs/plans/evaluation/scoring/form-filling-improvements/validation-todo.md.
+    return this.conditionMatchesAnyActivePreferenceValue(
+      condition,
+      expected,
+      activePreferenceValues,
+      fieldName,
+      validationEvents,
+    );
+  }
+
+  private valueMatchesExpected(
+    factKey: string,
+    value: unknown,
+    expected: string[],
+  ): boolean {
+    if (Array.isArray(value)) {
+      return value.some((entry) =>
+        this.valueMatchesExpected(factKey, entry, expected),
+      );
+    }
+
+    const normalizedValue = this.normalizedConditionValue(factKey, value);
+    return expected.some(
+      (candidate) =>
+        this.normalizedConditionValue(factKey, candidate) === normalizedValue,
+    );
+  }
+
+  private conditionMatchesAnyActivePreferenceValue(
+    condition: FormFillFieldCondition,
+    expected: string[],
+    activePreferenceValues: Map<string, unknown>,
+    fieldName: string,
+    validationEvents: FormFillValidationEvent[],
+  ): boolean {
+    if (!ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS.has(condition.factKey)) {
       return false;
     }
 
-    return sourceSlugs.some((slug) => {
-      if (!activePreferenceValues.has(slug)) {
-        // Conditional policies fail closed when the gating fact is unavailable.
-        return false;
+    for (const [sourceSlug, value] of activePreferenceValues) {
+      if (!this.valueMatchesExpected(condition.factKey, value, expected)) {
+        continue;
       }
-      return this.valueMatchesExpected(activePreferenceValues.get(slug), expected);
-    });
-  }
-
-  private valueMatchesExpected(value: unknown, expected: string[]): boolean {
-    if (Array.isArray(value)) {
-      return value.some((entry) => this.valueMatchesExpected(entry, expected));
+      validationEvents.push({
+        kind: 'policy_condition_active_value_matched',
+        fieldName,
+        factKey: condition.factKey,
+        sourceSlug,
+        message: `field policy condition matched active memory value for ${condition.factKey}`,
+      });
+      return true;
     }
 
-    const normalizedValue = String(value).trim().toLocaleLowerCase();
-    return expected.some(
-      (candidate) => candidate.trim().toLocaleLowerCase() === normalizedValue,
-    );
+    return false;
+  }
+
+  private normalizedConditionValue(factKey: string, value: unknown): string {
+    const normalized = String(value ?? '')
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/[.]/g, '')
+      .replace(/\s+/g, ' ');
+
+    if (factKey === 'workAuthorization.citizenshipStatus') {
+      return normalized.replace(/^an?\s+/, '');
+    }
+
+    return normalized;
   }
 
   private applyCheckboxGroupPolicies({
