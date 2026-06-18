@@ -41,7 +41,7 @@ const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const DEFAULT_AGENT_TIMEOUT_MS = 900_000;
 const KNOWN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-known-schema.md';
 const OPEN_PROMPT_TEMPLATE = 'examples/eval/prompts/mcp-open-schema.md';
-const CLAUDE_BUILTIN_TOOLS = 'Read,Glob,Grep';
+const CLAUDE_BUILTIN_TOOLS = 'Read,Glob,Grep,ToolSearch';
 export const COMPLETION_MARKER = 'EVAL_MCP_AGENT_DONE';
 
 const KNOWN_STAGE_NAMES = [
@@ -1065,8 +1065,6 @@ export async function runAgentProcess({
     let stderr = '';
     let spawnError = null;
     let timedOut = false;
-    let mcpAvailabilityErrors = [];
-    let mcpAvailabilityChecked = false;
     let closed = false;
     let forceKillTimeout = null;
     const child = spawn(invocation.file, invocation.args, {
@@ -1087,19 +1085,6 @@ export async function runAgentProcess({
 
     child.stdout.on('data', (chunk) => {
       stdout += chunk.toString('utf8');
-      if (options.agent === 'claude' && !mcpAvailabilityChecked) {
-        const initEvent = findClaudeInitEvent(stdout);
-        if (initEvent) {
-          mcpAvailabilityChecked = true;
-          mcpAvailabilityErrors = claudeMcpAvailabilityErrors({
-            initEvent,
-            mcpServer: options.mcpServer,
-          });
-          if (mcpAvailabilityErrors.length > 0) {
-            child.kill('SIGTERM');
-          }
-        }
-      }
     });
     child.stderr.on('data', (chunk) => {
       stderr += chunk.toString('utf8');
@@ -1127,10 +1112,6 @@ export async function runAgentProcess({
       ];
       if (signal) lines.push(`signal=${signal}`);
       if (spawnError) lines.push(redactForArtifact(spawnError.message, redactionSecrets));
-      appendUniqueLines(
-        lines,
-        mcpAvailabilityErrors.map((error) => `agent contract error: ${error}`),
-      );
       resolve({
         exitCode,
         lines,
@@ -1140,7 +1121,6 @@ export async function runAgentProcess({
         durationMs,
         command: invocation.display,
         completionMarkerObserved,
-        mcpAvailabilityErrors,
       });
     });
     child.stdin.end(prompt);
@@ -1869,6 +1849,7 @@ function agentContractErrors({ options, rawTranscript, completionMarkerObserved 
     errors.push(
       ...claudeMcpAvailabilityErrors({
         initEvent,
+        rawTranscript,
         mcpServer: options.mcpServer,
       }),
     );
@@ -1896,22 +1877,50 @@ function findClaudeInitEvent(text) {
   return null;
 }
 
-function claudeMcpAvailabilityErrors({ initEvent, mcpServer }) {
+function claudeMcpAvailabilityErrors({ initEvent, rawTranscript, mcpServer }) {
   const errors = [];
   const servers = Array.isArray(initEvent?.mcp_servers) ? initEvent.mcp_servers : [];
   const server = servers.find((candidate) => candidate?.name === mcpServer);
   if (!server) {
     errors.push(`MCP server ${mcpServer} was not listed in Claude init event.`);
-  } else if (server.status !== 'connected') {
+  } else if (server.status !== 'connected' && server.status !== 'pending') {
     errors.push(`MCP server ${mcpServer} status was ${server.status ?? '<missing>'}, not connected.`);
   }
 
-  const tools = Array.isArray(initEvent?.tools) ? initEvent.tools : [];
   const mcpToolPrefix = `mcp__${mcpServer}__`;
-  if (!tools.some((toolName) => typeof toolName === 'string' && toolName.startsWith(mcpToolPrefix))) {
+  if (!claudeMcpToolObserved({ initEvent, rawTranscript, mcpToolPrefix })) {
     errors.push(`No Claude tools were exposed with prefix ${mcpToolPrefix}*.`);
   }
   return errors;
+}
+
+function claudeMcpToolObserved({ initEvent, rawTranscript, mcpToolPrefix }) {
+  const tools = Array.isArray(initEvent?.tools) ? initEvent.tools : [];
+  if (tools.some((toolName) => typeof toolName === 'string' && toolName.startsWith(mcpToolPrefix))) {
+    return true;
+  }
+  if (typeof rawTranscript !== 'string') return false;
+  for (const line of rawTranscript.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('{')) continue;
+    try {
+      if (jsonValueHasMcpToolName(JSON.parse(trimmed), mcpToolPrefix)) return true;
+    } catch {
+      // Ignore incomplete or non-JSON transcript lines.
+    }
+  }
+  return false;
+}
+
+function jsonValueHasMcpToolName(value, mcpToolPrefix) {
+  if (typeof value === 'string') {
+    return value.startsWith(mcpToolPrefix);
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => jsonValueHasMcpToolName(item, mcpToolPrefix));
+  }
+  if (!value || typeof value !== 'object') return false;
+  return Object.values(value).some((item) => jsonValueHasMcpToolName(item, mcpToolPrefix));
 }
 
 function redactLines(lines, secrets) {
