@@ -149,15 +149,43 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
           },
         ],
       },
+      {
+        factId: 'fact-0002',
+        slug: 'work-authorization.foreign_passport_number',
+        label: 'Foreign Passport Number',
+        valueType: 'STRING',
+        value: 'XK1234567',
+        confidence: 0.95,
+        evidence: [
+          {
+            documentId: evidenceDocuments[0].id,
+            quote: 'XK1234567',
+          },
+        ],
+      },
+    ],
+    unresolved: [
+      {
+        label: 'Passport Country of Issuance',
+        reason: 'The documents do not establish the country of issuance.',
+      },
     ],
   });
   const fillPrompt = buildFactOnlyFillPrompt({ fieldMetadata, extraction });
   assert.match(fillPrompt, /Extracted facts/);
   assert.match(fillPrompt, /fact-0001/);
+  assert.match(fillPrompt, /fact-0002/);
+  assert.match(fillPrompt, /XK1234567/);
+  assert.match(fillPrompt, /Foreign Passport Number and Country of IssuanceRow1/);
+  assert.match(fillPrompt, /compound or noisy/);
+  assert.match(fillPrompt, /clearly matches part of the field name/);
+  assert.match(fillPrompt, /Treat inferredLabel as a weak hint/);
   assert.match(fillPrompt, /sourceFactIds/);
   assert.match(fillPrompt, /"maxLength": 1/);
   assert.doesNotMatch(fillPrompt, /Evidence documents/);
   assert.doesNotMatch(fillPrompt, /Driver License Upload OCR/);
+  assert.doesNotMatch(fillPrompt, /Unresolved facts/);
+  assert.doesNotMatch(fillPrompt, /Passport Country of Issuance/);
   assert.doesNotMatch(fillPrompt, /validation-report/);
   assert.doesNotMatch(fillPrompt, /inferredDataKey/);
   assert.doesNotMatch(fillPrompt, /profile\.yaml/);
@@ -392,6 +420,7 @@ test('direct-open-schema writes form artifacts and skips diagnostic extraction s
 
   const fillResponse = JSON.parse(await readFile(path.join(tmp, 'direct-open-schema-fill-response.json'), 'utf8'));
   assert.equal(fillResponse.artifactType, 'direct-open-schema-fill-response');
+  assert.equal(fillResponse.promptVersion, 'direct-open-schema-fill-v2');
   assert.equal(fillResponse.validActionCount, 4);
   const firstNameAction = fillResponse.parsed.fillActions.find(
     (action) => action.fieldName === 'First Name Given Name',
@@ -596,7 +625,7 @@ function textAction(fieldName, value, factId) {
   };
 }
 
-function validExtractionArtifact({ fixture, facts }) {
+function validExtractionArtifact({ fixture, facts, unresolved = [] }) {
   return {
     schemaVersion: 1,
     artifactType: 'direct-open-schema-extraction',
@@ -610,10 +639,10 @@ function validExtractionArtifact({ fixture, facts }) {
     model: 'test-model',
     promptVersion: 'direct-open-schema-extraction-v4',
     facts,
-    unresolved: [],
+    unresolved,
     diagnostics: {
       factCount: facts.length,
-      unresolvedCount: 0,
+      unresolvedCount: unresolved.length,
       droppedFactCount: 0,
       duplicateSlugGroups: [],
     },

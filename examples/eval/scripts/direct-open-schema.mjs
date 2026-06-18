@@ -36,7 +36,7 @@ const PROVIDERS = new Set(['vertex']);
 const VALUE_TYPES = new Set(['STRING', 'BOOLEAN', 'ENUM', 'ARRAY']);
 const FILL_ACTIONS = new Set(['SET_TEXT', 'CHECK', 'UNCHECK', 'SELECT_OPTION', 'SKIP']);
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
-const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v1';
+const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v2';
 const DIRECT_OPEN_SCHEMA_PRODUCER = 'direct-open-schema-vertex';
 const DIRECT_OPEN_SCHEMA_EVALUATION_MODE = 'direct-vertex-open-schema';
 const SYNTHETIC_SNAPSHOT_QUERY_NAME = 'SyntheticDirectOpenSchemaSnapshot';
@@ -493,6 +493,8 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'Field policy is authoritative.',
     'When fieldPolicy.action is "skip", return SKIP for that field even if extracted facts contain plausible values.',
     'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
+    'Some PDF field names are compound or noisy. If a fillable text field name contains multiple concepts, fill the value supported by an extracted fact when it clearly matches part of the field name. Do not skip solely because another related concept is missing, unless the field policy requires a combined value.',
+    'Treat inferredLabel as a weak hint; the exact fieldName and fieldPolicy are more authoritative.',
     'Use SKIP when extracted facts are missing, contradicted, stale, ambiguous, or the field requires a signature/manual attestation.',
     'Do not infer or invent values that are not present in extracted facts.',
     'Every non-SKIP action must include at least one sourceFactIds entry using factId values from the extracted facts.',
@@ -532,9 +534,6 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
       null,
       2,
     ),
-    '',
-    'Unresolved facts:',
-    JSON.stringify(extraction.unresolved, null, 2),
   ].join('\n');
 }
 

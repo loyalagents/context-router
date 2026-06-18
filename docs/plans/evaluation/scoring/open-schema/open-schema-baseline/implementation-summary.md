@@ -61,9 +61,13 @@ slug maps, validation reports, DB exports, score artifacts, or previous
 baseline outputs. The prompt asks for a compact bounded extraction with short
 JSON-safe evidence snippets, not an exhaustive corpus dump.
 
-Stage 2 sees extracted facts and the same safe PDF field metadata projection.
-It does not see raw source documents. Non-`SKIP` actions must cite
-`sourceFactIds`; the evaluator derives diagnostic source slugs from those IDs.
+Stage 2 sees accepted extracted facts and the same safe PDF field metadata
+projection. It does not see raw source documents or Stage 1 `unresolved[]`
+diagnostics. Non-`SKIP` actions must cite `sourceFactIds`; the evaluator derives
+diagnostic source slugs from those IDs. The prompt treats generated
+`inferredLabel` values as weak hints and tells Vertex not to skip compound/noisy
+fillable text fields solely because one related concept is missing when an
+extracted fact clearly matches another part of the field name.
 
 ## Synthetic Snapshot Behavior
 

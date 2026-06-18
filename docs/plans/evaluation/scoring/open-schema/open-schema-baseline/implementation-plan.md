@@ -98,13 +98,17 @@ decide which facts/preferences are generally useful.
 
 Vertex sees:
 
-- `open-schema-extraction.json` facts with evaluator `factId` values and
-  model slugs;
+- `open-schema-extraction.json` accepted facts with evaluator `factId` values
+  and model slugs;
 - safe PDF field metadata and safe field policies.
 
-Vertex does not see the raw documents again. Every non-`SKIP` action must cite
-`sourceFactIds`. The evaluator derives diagnostic source slugs from those fact
-IDs for existing form artifacts.
+Vertex does not see the raw documents again or the Stage 1 `unresolved[]`
+diagnostics. Every non-`SKIP` action must cite `sourceFactIds`. The evaluator
+derives diagnostic source slugs from those fact IDs for existing form artifacts.
+The fill prompt treats generated `inferredLabel` values as weak hints and asks
+Vertex not to skip compound/noisy text fields solely because one related concept
+is missing when an extracted fact clearly matches another part of the field
+name.
 
 ## Artifacts
 
