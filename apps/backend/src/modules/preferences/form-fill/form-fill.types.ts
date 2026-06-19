@@ -44,12 +44,20 @@ export interface FormFillValidationEvent {
     | 'policy_inactive_blocked'
     | 'policy_structural_skip_blocked'
     | 'policy_source_slug_off_policy'
+    | 'policy_condition_resolved'
+    | 'policy_condition_active_value_matched'
+    | 'policy_condition_conflict_blocked'
+    | 'policy_fact_conflict_blocked'
+    | 'policy_source_slug_resolved'
     | 'pdf_text_max_length_blocked'
     | 'checkbox_group_conflict';
   fieldName: string;
   message: string;
   confidence?: number;
   groupId?: string;
+  factKey?: string;
+  sourceSlug?: string;
+  resolutionKind?: string;
   maxLength?: number;
   valueLength?: number;
 }

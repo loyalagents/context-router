@@ -6,6 +6,11 @@
 - Run id: `mcp-open-schema-alex-i9-test-realistic-2026-06-17T07-52-57-059Z`
 - Last updated: 2026-06-17
 
+Implementation follow-up:
+
+- `implementation-plan.md`
+- `implementation-summary.md`
+
 ## Context
 
 The first live Claude open-schema MCP run completed successfully end to end:

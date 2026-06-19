@@ -200,6 +200,14 @@ describe('FormFillService', () => {
       expect.any(Array),
       expect.any(Array),
       fieldPolicies,
+      expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'workAuthorization.citizenshipStatus',
+          value: 'alien authorized to work',
+          sourceSlugs: ['profile.citizenship_status'],
+          resolutionKind: 'policy_source',
+        }),
+      ]),
     );
     expect(validator.validate).toHaveBeenCalledWith(
       expect.any(Array),
@@ -211,6 +219,13 @@ describe('FormFillService', () => {
         activePreferenceValues: new Map([
           ['profile.citizenship_status', 'alien authorized to work'],
         ]),
+        resolvedFacts: expect.arrayContaining([
+          expect.objectContaining({
+            factKey: 'workAuthorization.citizenshipStatus',
+            sourceSlugs: ['profile.citizenship_status'],
+          }),
+        ]),
+        resolutionConflicts: [],
       }),
     );
     expect(result.summary.validationEvents).toEqual([
@@ -219,6 +234,119 @@ describe('FormFillService', () => {
         fieldName: 'CB_4',
       }),
     ]);
+  });
+
+  it('passes derived middle initial facts to prompt and validation', async () => {
+    const pdfBytes = Buffer.from('filled pdf');
+    const fieldPolicies = {
+      schemaVersion: 1 as const,
+      fields: [
+        {
+          fieldName: 'Employee Middle Initial (if any)',
+          mode: 'fact' as const,
+          factKey: 'identity.middleInitial',
+          sourceSlugs: ['eval.identity.middle_initial'],
+        },
+      ],
+    };
+    fieldExtractor.extractFields.mockResolvedValue({
+      hasXfa: false,
+      fields: [
+        {
+          name: 'Employee Middle Initial (if any)',
+          type: 'text',
+          options: [],
+          supported: true,
+        },
+      ],
+    });
+    preferenceService.getActivePreferences.mockResolvedValue([
+      {
+        slug: 'profile.middle_name',
+        value: 'Jordan',
+        description: 'Middle name',
+      },
+    ]);
+    promptBuilder.buildPrompt.mockReturnValue('prompt');
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'Employee Middle Initial (if any)',
+          action: 'SET_TEXT',
+          value: 'J',
+          sourceSlugs: ['profile.middle_name'],
+          confidence: 0.95,
+        },
+      ],
+    });
+    validator.validate.mockReturnValue({
+      validActions: [
+        {
+          fieldName: 'Employee Middle Initial (if any)',
+          fieldType: 'text',
+          action: 'SET_TEXT',
+          value: 'J',
+          sourceSlugs: ['profile.middle_name'],
+          confidence: 0.95,
+        },
+      ],
+      filledFields: [
+        {
+          pdfFieldName: 'Employee Middle Initial (if any)',
+          fieldType: 'text',
+          sourceSlugs: ['profile.middle_name'],
+          confidence: 0.95,
+        },
+      ],
+      skippedFields: [],
+      warnings: [],
+      validationEvents: [
+        {
+          kind: 'policy_source_slug_resolved',
+          fieldName: 'Employee Middle Initial (if any)',
+          factKey: 'identity.middleInitial',
+          sourceSlug: 'profile.middle_name',
+          resolutionKind: 'derived',
+          message:
+            'source slug resolved to field policy fact identity.middleInitial: profile.middle_name',
+        },
+      ],
+    });
+    pdfFiller.fillPdf.mockResolvedValue(pdfBytes);
+
+    await service.fillPdfForm(
+      'user-1',
+      Buffer.from('input pdf'),
+      'i9.pdf',
+      fieldPolicies,
+    );
+
+    expect(promptBuilder.buildPrompt.mock.calls[0][3]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          factKey: 'identity.middleInitial',
+          value: 'J',
+          sourceSlugs: ['profile.middle_name'],
+          resolutionKind: 'derived',
+          derivedFromFactKey: 'identity.middleName',
+        }),
+      ]),
+    );
+    expect(validator.validate).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Array),
+      new Set(['profile.middle_name']),
+      expect.any(Number),
+      expect.objectContaining({
+        resolvedFacts: expect.arrayContaining([
+          expect.objectContaining({
+            factKey: 'identity.middleInitial',
+            sourceSlugs: ['profile.middle_name'],
+            resolutionKind: 'derived',
+          }),
+        ]),
+      }),
+    );
   });
 
   it('returns partial with a non-null filled PDF artifact when fields are skipped', async () => {

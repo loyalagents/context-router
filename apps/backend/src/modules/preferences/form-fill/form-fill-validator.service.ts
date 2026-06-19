@@ -10,7 +10,15 @@ import {
   SkippedFieldSummary,
   ValidatedFillAction,
 } from './form-fill.types';
+import type {
+  FormFactResolutionConflict,
+  ResolvedFormFact,
+} from './form-fact-resolution';
 import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
+
+const ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS = new Set([
+  'workAuthorization.citizenshipStatus',
+]);
 
 export interface FormFillValidationResult {
   validActions: ValidatedFillAction[];
@@ -23,6 +31,8 @@ export interface FormFillValidationResult {
 export interface FormFillValidationOptions {
   fieldPolicies?: FormFillFieldPolicies;
   activePreferenceValues?: Map<string, unknown>;
+  resolvedFacts?: ResolvedFormFact[];
+  resolutionConflicts?: FormFactResolutionConflict[];
 }
 
 @Injectable()
@@ -39,6 +49,15 @@ export class FormFillValidatorService {
     const fieldOrder = new Map(fields.map((field, index) => [field.name, index]));
     const policyByFieldName = new Map(
       options.fieldPolicies?.fields.map((policy) => [policy.fieldName, policy]) ?? [],
+    );
+    const resolvedFactByKey = new Map(
+      (options.resolvedFacts ?? []).map((fact) => [fact.factKey, fact]),
+    );
+    const conflictByFactKey = new Map(
+      (options.resolutionConflicts ?? []).map((conflict) => [
+        conflict.factKey,
+        conflict,
+      ]),
     );
     const actionByFieldName = new Map<string, AiFillAction>();
     const validationEvents: FormFillValidationEvent[] = [];
@@ -76,6 +95,8 @@ export class FormFillValidatorService {
         confidenceThreshold,
         policyByFieldName.get(field.name),
         options.activePreferenceValues ?? new Map(),
+        resolvedFactByKey,
+        conflictByFactKey,
         validationEvents,
       );
 
@@ -140,6 +161,8 @@ export class FormFillValidatorService {
     confidenceThreshold: number,
     policy: FormFillFieldPolicy | undefined,
     activePreferenceValues: Map<string, unknown>,
+    resolvedFactByKey: Map<string, ResolvedFormFact>,
+    conflictByFactKey: Map<string, FormFactResolutionConflict>,
     validationEvents: FormFillValidationEvent[],
   ): string | null {
     if (!field.supported) {
@@ -178,7 +201,17 @@ export class FormFillValidatorService {
       return reason;
     }
 
-    if (policy?.when && !this.conditionIsActive(policy.when, activePreferenceValues)) {
+    if (
+      policy?.when &&
+      !this.conditionIsActive(
+        policy.when,
+        activePreferenceValues,
+        resolvedFactByKey,
+        conflictByFactKey,
+        field.name,
+        validationEvents,
+      )
+    ) {
       const reason = `field policy inactive: ${policy.when.factKey}`;
       validationEvents.push({
         kind: 'policy_inactive_blocked',
@@ -186,6 +219,20 @@ export class FormFillValidatorService {
         message: reason,
       });
       return reason;
+    }
+
+    if (policy?.mode === 'fact' && policy.factKey) {
+      const conflict = conflictByFactKey.get(policy.factKey);
+      if (conflict) {
+        const reason = `field policy conflict: ${policy.factKey}`;
+        validationEvents.push({
+          kind: 'policy_fact_conflict_blocked',
+          fieldName: field.name,
+          factKey: policy.factKey,
+          message: reason,
+        });
+        return reason;
+      }
     }
 
     if (action.sourceSlugs.length === 0) {
@@ -220,9 +267,25 @@ export class FormFillValidatorService {
 
     if (policy?.mode === 'fact' && policy.sourceSlugs.length > 0) {
       const allowedSlugs = new Set(policy.sourceSlugs);
-      const offPolicySlugs = action.sourceSlugs.filter(
-        (slug) => !allowedSlugs.has(slug),
-      );
+      const resolvedFact = policy.factKey
+        ? resolvedFactByKey.get(policy.factKey)
+        : undefined;
+      const offPolicySlugs: string[] = [];
+      for (const slug of action.sourceSlugs) {
+        if (allowedSlugs.has(slug)) continue;
+        if (resolvedFact?.sourceSlugs.includes(slug)) {
+          validationEvents.push({
+            kind: 'policy_source_slug_resolved',
+            fieldName: field.name,
+            factKey: policy.factKey,
+            sourceSlug: slug,
+            resolutionKind: resolvedFact.resolutionKind,
+            message: `source slug resolved to field policy fact ${policy.factKey}: ${slug}`,
+          });
+          continue;
+        }
+        offPolicySlugs.push(slug);
+      }
       if (offPolicySlugs.length > 0) {
         validationEvents.push({
           kind: 'policy_source_slug_off_policy',
@@ -247,9 +310,19 @@ export class FormFillValidatorService {
   private conditionIsActive(
     condition: FormFillFieldCondition,
     activePreferenceValues: Map<string, unknown>,
+    resolvedFactByKey: Map<string, ResolvedFormFact>,
+    conflictByFactKey: Map<string, FormFactResolutionConflict>,
+    fieldName: string,
+    validationEvents: FormFillValidationEvent[],
   ): boolean {
-    const sourceSlugs = condition.sourceSlugs ?? [];
-    if (sourceSlugs.length === 0) {
+    const conflict = conflictByFactKey.get(condition.factKey);
+    if (conflict) {
+      validationEvents.push({
+        kind: 'policy_condition_conflict_blocked',
+        fieldName,
+        factKey: condition.factKey,
+        message: `field policy condition conflict: ${condition.factKey}`,
+      });
       return false;
     }
 
@@ -257,24 +330,111 @@ export class FormFillValidatorService {
       ? condition.equals
       : [condition.equals];
 
-    return sourceSlugs.some((slug) => {
-      if (!activePreferenceValues.has(slug)) {
-        // Conditional policies fail closed when the gating fact is unavailable.
-        return false;
+    const resolvedFact = resolvedFactByKey.get(condition.factKey);
+    if (resolvedFact) {
+      const active = this.valueMatchesExpected(
+        condition.factKey,
+        resolvedFact.value,
+        expected,
+      );
+      if (active) {
+        validationEvents.push({
+          kind: 'policy_condition_resolved',
+          fieldName,
+          factKey: condition.factKey,
+          sourceSlug: resolvedFact.sourceSlugs[0],
+          resolutionKind: resolvedFact.resolutionKind,
+          message: `field policy condition resolved from canonical fact ${condition.factKey}`,
+        });
       }
-      return this.valueMatchesExpected(activePreferenceValues.get(slug), expected);
-    });
-  }
-
-  private valueMatchesExpected(value: unknown, expected: string[]): boolean {
-    if (Array.isArray(value)) {
-      return value.some((entry) => this.valueMatchesExpected(entry, expected));
+      return active;
     }
 
-    const normalizedValue = String(value).trim().toLocaleLowerCase();
-    return expected.some(
-      (candidate) => candidate.trim().toLocaleLowerCase() === normalizedValue,
+    const sourceSlugs = condition.sourceSlugs ?? [];
+    if (sourceSlugs.length > 0) {
+      return sourceSlugs.some((slug) => {
+        if (!activePreferenceValues.has(slug)) {
+          // Conditional policies fail closed when the gating fact is unavailable.
+          return false;
+        }
+        return this.valueMatchesExpected(
+          condition.factKey,
+          activePreferenceValues.get(slug),
+          expected,
+        );
+      });
+    }
+
+    // TODO(form-fill-validation): replace this narrow open-schema fallback with
+    // explicit field-to-memory mapping validation. See
+    // docs/plans/evaluation/scoring/form-filling-improvements/validation-todo.md.
+    return this.conditionMatchesAnyActivePreferenceValue(
+      condition,
+      expected,
+      activePreferenceValues,
+      fieldName,
+      validationEvents,
     );
+  }
+
+  private valueMatchesExpected(
+    factKey: string,
+    value: unknown,
+    expected: string[],
+  ): boolean {
+    if (Array.isArray(value)) {
+      return value.some((entry) =>
+        this.valueMatchesExpected(factKey, entry, expected),
+      );
+    }
+
+    const normalizedValue = this.normalizedConditionValue(factKey, value);
+    return expected.some(
+      (candidate) =>
+        this.normalizedConditionValue(factKey, candidate) === normalizedValue,
+    );
+  }
+
+  private conditionMatchesAnyActivePreferenceValue(
+    condition: FormFillFieldCondition,
+    expected: string[],
+    activePreferenceValues: Map<string, unknown>,
+    fieldName: string,
+    validationEvents: FormFillValidationEvent[],
+  ): boolean {
+    if (!ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS.has(condition.factKey)) {
+      return false;
+    }
+
+    for (const [sourceSlug, value] of activePreferenceValues) {
+      if (!this.valueMatchesExpected(condition.factKey, value, expected)) {
+        continue;
+      }
+      validationEvents.push({
+        kind: 'policy_condition_active_value_matched',
+        fieldName,
+        factKey: condition.factKey,
+        sourceSlug,
+        message: `field policy condition matched active memory value for ${condition.factKey}`,
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  private normalizedConditionValue(factKey: string, value: unknown): string {
+    const normalized = String(value ?? '')
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/[.]/g, '')
+      .replace(/\s+/g, ' ');
+
+    if (factKey === 'workAuthorization.citizenshipStatus') {
+      return normalized.replace(/^an?\s+/, '');
+    }
+
+    return normalized;
   }
 
   private applyCheckboxGroupPolicies({

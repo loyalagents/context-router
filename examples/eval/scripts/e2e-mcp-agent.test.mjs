@@ -239,8 +239,11 @@ test('mcp agent builds isolated Claude invocation and sanitized child environmen
   assert.equal(invocation.args.includes('--strict-mcp-config'), true);
   assert.equal(argValue(invocation.args, '--mcp-config'), '/private/tmp/context-router-mcp.json');
   assert.equal(argValue(invocation.args, '--settings'), '/private/tmp/claude-settings.json');
-  assert.equal(argValue(invocation.args, '--tools'), 'Read,Glob,Grep');
-  assert.equal(argValue(invocation.args, '--allowedTools'), 'Read,Glob,Grep,mcp__context-router-local__*');
+  assert.equal(argValue(invocation.args, '--tools'), 'Read,Glob,Grep,ToolSearch');
+  assert.equal(
+    argValue(invocation.args, '--allowedTools'),
+    'Read,Glob,Grep,ToolSearch,mcp__context-router-local__*',
+  );
 
   const childEnv = buildAgentEnvironment({
     PATH: '/usr/bin',
@@ -844,6 +847,78 @@ test('mcp open-schema Claude adapter runs open stages and writes schema-valid ar
   assert.match(mcpAgentRun.agent.command, /--mcp-config/);
   assert.match(mcpAgentRun.agent.command, /context-router-mcp\.json/);
   assert.match(mcpAgentRun.agent.command, /mcp__context-router-local__\*/);
+});
+
+test('mcp agent e2e accepts deferred Claude MCP tools when init is pending', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-agent-e2e-claude-deferred-tools-'));
+  const calls = [];
+  const runners = {
+    ...successfulRunners({ calls }),
+    agent: async () => {
+      calls.push({ stage: 'agent' });
+      return {
+        exitCode: 0,
+        lines: ['claude used deferred MCP tools'],
+        stdout: [
+          claudeInitLine({
+            mcpServer: 'context-router-local',
+            serverStatus: 'pending',
+            tools: ['Read', 'Glob', 'Grep', 'ToolSearch'],
+          }),
+          JSON.stringify({
+            type: 'user',
+            message: {
+              role: 'user',
+              content: [
+                {
+                  type: 'tool_result',
+                  content: [
+                    {
+                      type: 'tool_reference',
+                      tool_name: 'mcp__context-router-local__listPreferenceSlugs',
+                    },
+                  ],
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: 'assistant',
+            message: {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'tool_use',
+                  name: 'mcp__context-router-local__listPreferenceSlugs',
+                  input: {},
+                },
+              ],
+            },
+          }),
+          COMPLETION_MARKER,
+          '',
+        ].join('\n'),
+        stderr: '',
+        timedOut: false,
+        durationMs: 10,
+        completionMarkerObserved: true,
+      };
+    },
+  };
+
+  const result = await runMcpAgentE2E({
+    repoRoot,
+    args: [...claudeArgsWithArtifacts(tmp), '--auth-token', 'token', '--run-id', 'run-claude-deferred-tools'],
+    env: {},
+    runners,
+    now: fixedNow,
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+
+  const mcpAgentRun = JSON.parse(await readFile(path.join(tmp, 'mcp-agent-run.json'), 'utf8'));
+  assert.equal(mcpAgentRun.status, 'pass');
+  assert.equal(mcpAgentRun.agent.completionMarkerObserved, true);
 });
 
 test('command adapter missing completion marker is diagnostic-only', async () => {
