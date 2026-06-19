@@ -14,7 +14,7 @@ export async function loadScenarioFixture({ repoRoot, scenarioId }) {
   const [profile, seedPreferences, manifest, fieldMap, fieldsGenerated, prompt] =
     await Promise.all([
       readYaml(path.join(userRoot, 'profile.yaml')),
-      readJson(path.join(userRoot, 'seed-preferences.generated.json')),
+      readOptionalJson(path.join(userRoot, 'seed-preferences.generated.json'), []),
       readJson(path.join(corpusRoot, 'manifest.json')),
       readJson(path.join(formRoot, 'field-map.json')),
       readJson(path.join(formRoot, 'fields.generated.json')),
@@ -88,6 +88,15 @@ function joinFixtureFields(fieldMap, fieldsGenerated) {
 
 async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, 'utf8'));
+}
+
+async function readOptionalJson(filePath, fallback) {
+  try {
+    return await readJson(filePath);
+  } catch (error) {
+    if (error.code === 'ENOENT') return fallback;
+    throw error;
+  }
 }
 
 async function readYaml(filePath) {

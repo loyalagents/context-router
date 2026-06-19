@@ -151,7 +151,8 @@ derived-value scorer complexity for the first packet.
 Exit criteria:
 
 - profile validates;
-- seed preferences regenerate deterministically if seed mappings changed;
+- seed preferences are omitted for open-schema packet fixtures, or regenerate
+  deterministically if an optional known-schema seed bridge is used;
 - intentionally missing facts are explicit.
 
 ### Checkpoint 5: Add Minimal Field Maps

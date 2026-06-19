@@ -44,11 +44,13 @@ Create a profile skeleton from an existing field map:
 pnpm eval:scaffold --init-user --user <userId> --display-name "<Name>" --form i-9
 ```
 
-Fill in `users/<userId>/profile.yaml`. Keep facts in `facts:` and keep
-`seedPreferences[]` as the explicit bridge from local fact keys to backend
-preference slugs.
+Fill in `users/<userId>/profile.yaml`. Keep canonical truth in `facts:`.
+For known-schema seed fixtures, add `seedPreferences[]` as the explicit bridge
+from local fact keys to backend preference slugs. Open-schema packet fixtures
+can omit that bridge and rely on corpus evidence instead.
 
-Then regenerate seeds and validate:
+Then regenerate seeds when the profile includes `seedPreferences[]`, and
+validate:
 
 ```bash
 pnpm eval:derive-seeds

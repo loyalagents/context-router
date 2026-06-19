@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 2,
+  "formId": "fw4",
+  "fields": [
+    {
+      "fieldIndex": 0,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_01[0]",
+      "mode": "fact",
+      "factKey": "identity.firstName",
+      "note": "W-4 Step 1(a) first name and middle initial field. V1 maps the first name only to avoid derived/joined field rendering."
+    },
+    {
+      "fieldIndex": 1,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_02[0]",
+      "mode": "fact",
+      "factKey": "identity.lastName",
+      "note": "W-4 Step 1(a) last name."
+    },
+    {
+      "fieldIndex": 2,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_03[0]",
+      "mode": "fact",
+      "factKey": "address.current.streetLine",
+      "note": "W-4 Step 1(a) address line. V1 uses a form-ready street line including unit."
+    },
+    {
+      "fieldIndex": 3,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_04[0]",
+      "mode": "fact",
+      "factKey": "address.current.cityStateZip",
+      "note": "W-4 Step 1(a) combined city, state, and ZIP field. Store a form-ready value in the packet profile for v1."
+    },
+    {
+      "fieldIndex": 4,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_05[0]",
+      "mode": "fact",
+      "factKey": "identity.ssn",
+      "render": "digits-only",
+      "note": "W-4 Step 1(b) Social Security number."
+    },
+    {
+      "fieldIndex": 5,
+      "pdfFieldName": "topmostSubform[0].Page1[0].c1_1[0]",
+      "mode": "fact",
+      "factKey": "tax.filingStatus",
+      "when": {
+        "factKey": "tax.filingStatus",
+        "equals": "single or married filing separately"
+      },
+      "note": "W-4 Step 1(c) single or married filing separately checkbox."
+    },
+    {
+      "fieldIndex": 6,
+      "pdfFieldName": "topmostSubform[0].Page1[0].c1_1[1]",
+      "mode": "fact",
+      "factKey": "tax.filingStatus",
+      "when": {
+        "factKey": "tax.filingStatus",
+        "equals": "married filing jointly or qualifying surviving spouse"
+      },
+      "note": "W-4 Step 1(c) married filing jointly or qualifying surviving spouse checkbox."
+    },
+    {
+      "fieldIndex": 7,
+      "pdfFieldName": "topmostSubform[0].Page1[0].c1_1[2]",
+      "mode": "fact",
+      "factKey": "tax.filingStatus",
+      "when": {
+        "factKey": "tax.filingStatus",
+        "equals": "head of household"
+      },
+      "note": "W-4 Step 1(c) head of household checkbox."
+    },
+    {
+      "fieldIndex": 8,
+      "pdfFieldName": "topmostSubform[0].Page1[0].c1_2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 2(c) multiple-jobs checkbox is skipped in v1."
+    },
+    {
+      "fieldIndex": 9,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step3_ReadOrder[0].f1_06[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 3(a) computed dependent credit amount is skipped in v1."
+    },
+    {
+      "fieldIndex": 10,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Step3_ReadOrder[0].f1_07[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 3(b) computed dependent credit amount is skipped in v1."
+    },
+    {
+      "fieldIndex": 11,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_08[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 3 total credits field is skipped in v1."
+    },
+    {
+      "fieldIndex": 12,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_09[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 4(a) other income field is skipped in v1."
+    },
+    {
+      "fieldIndex": 13,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_10[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 4(b) deductions field is skipped in v1."
+    },
+    {
+      "fieldIndex": 14,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_11[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "W-4 Step 4(c) extra withholding field is skipped in v1."
+    },
+    {
+      "fieldIndex": 15,
+      "pdfFieldName": "topmostSubform[0].Page1[0].c1_3[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Exempt-from-withholding claim is a current tax certification and skipped in v1."
+    },
+    {
+      "fieldIndex": 16,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_12[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Employee signature requires current-form action."
+    },
+    {
+      "fieldIndex": 17,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_13[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Employee signature date is part of the current-form attestation."
+    },
+    {
+      "fieldIndex": 18,
+      "pdfFieldName": "topmostSubform[0].Page1[0].f1_14[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Employer-only section is skipped in v1."
+    },
+    {
+      "fieldIndex": 19,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_01[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 20,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_02[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 21,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_03[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 22,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_04[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 23,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_05[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 24,
+      "pdfFieldName": "topmostSubform[0].Page3[0].f3_06[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Multiple Jobs Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 25,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_01[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 26,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_02[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 27,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_03[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 28,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_04[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 29,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_05[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 30,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_06[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 31,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_07[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 32,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_08[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 33,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_09[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 34,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_10[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 35,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_11[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 36,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_12[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 37,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_13[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 38,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_14[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 39,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_15[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 40,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_16[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 41,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_17[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 42,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_18[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 43,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_19[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 44,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_20[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 45,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_21[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 46,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_22[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    },
+    {
+      "fieldIndex": 47,
+      "pdfFieldName": "topmostSubform[0].Page4[0].f4_23[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Deductions Worksheet is skipped in v1."
+    }
+  ]
+}

@@ -232,6 +232,55 @@ Caveats:
 
 - The form-fill flow can technically fill signature and employer-only fields, but
   those should be skipped unless the user supplied them for this run.
+- The first v1 field map scores only Step 1 identity/address/SSN and filing
+  status. It skips Step 2, Step 3, Step 4, exemption, signature, employer-only,
+  and worksheet fields to keep the packet-small vertical slice simple.
+- The visible W-4 has one street-address line and one combined city/state/ZIP
+  field. The v1 map expects form-ready `address.current.streetLine` and
+  `address.current.cityStateZip` facts rather than adding derived field
+  rendering before the first packet works.
+
+## `direct-deposit-sf1199a-24/form.pdf`
+
+Inventory: 4 pages, 213 AcroForm fields after `pdf-lib` removes unsupported XFA
+data: 174 text, 36 checkbox, 3 button. Pages 1-3 are duplicate copies of the
+same SF 1199A direct-deposit sign-up form. Page 4 is instructions and sample
+check material without generated fillable fields.
+
+Needed payee information:
+
+- Payee name, mailing address, city, state, ZIP code, and telephone number.
+- Depositor account type: checking or savings.
+- Name of the person entitled to payment, if different from the payee.
+- Claim or payroll ID number, if applicable to the payment source.
+- Type of government payment, such as Social Security, Supplemental Security
+  Income, Railroad Retirement, Civil Service Retirement, VA Compensation or
+  Pension, federal salary or civilian pay, military active/retired/survivor
+  pay, or another specified payment type.
+- Optional allotment type and amount, if the form is being used for allotment
+  of payment.
+
+Needed financial-institution information:
+
+- Name and address of the financial institution.
+- Routing number and check digit.
+- Depositor account number.
+- Depositor account title.
+- Financial-institution representative name, telephone number, signature, and
+  date.
+
+Caveats:
+
+- The first v1 field map scores only the first form copy and skips the duplicate
+  copy pages so repeated identity/address facts are not triple-counted.
+- The street-address line uses a form-ready `address.current.streetLine` fact so
+  unit/apartment information can be included without derived field rendering.
+- The official form splits depositor account number and routing number into
+  one-character fields. The v1 map skips those split digit boxes until the eval
+  has either a digit-position renderer or explicit form-ready digit facts.
+- Payee certifications, joint-account-holder certifications, representative
+  signatures, and signature dates should be skipped unless explicitly supplied
+  for the current form run.
 
 ## `i-9.pdf`
 
