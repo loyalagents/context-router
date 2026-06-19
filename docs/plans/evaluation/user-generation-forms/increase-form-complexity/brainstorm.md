@@ -2,181 +2,281 @@
 
 - Status: temporary brainstorm
 - Last updated: 2026-06-19
-- Scope: ideas for making evaluation corpora larger and harder, especially to
-  test open-schema memory, direct Vertex baselines, and form filling under
-  larger context windows
+- Scope: concise synthesis for making form evaluation harder by increasing
+  context size, improving document realism, and reusing one dossier across
+  multiple forms while keeping the implementation simple
 
 ## Summary
 
-Increasing context complexity is a good next evaluation direction, but it should
-be done as a controlled ladder instead of one large hard fixture. Bigger context
-can mean more documents, longer documents, more irrelevant facts, conflicting
-facts, stale facts, other-person facts, or harder extraction formats. Those
-failure modes should be separated enough that score reports explain what broke.
-
-Recommended ladder:
+The highest-leverage direction is a shared dossier eval:
 
 ```text
-small: current realistic corpus
-medium: 2-3x documents/tokens with mostly benign distractors
-large: 5-10x documents/tokens with stale, conflicting, and other-person facts
-stress: near model/context/tool limits, used only after the lower tiers are stable
+one synthetic user profile
+  -> one larger, realistic document corpus
+  -> one ingestion/memory setup
+  -> several normal one-form scenarios
 ```
 
-For each tier, compare:
+This makes the model handle more context and more realistic evidence without
+requiring a complex new runner. Each form can still be evaluated separately.
+The multi-form behavior comes from sharing the same user, corpus, and memory
+setup.
 
-- MCP open-schema run;
-- known-schema run, where applicable;
-- backend form fill from stored memory;
-- direct Vertex open-schema baseline;
-- existing one-shot direct document baseline, if useful.
+There are two useful tracks:
 
-The headline metric should remain final form correctness. Active-memory value
-recovery, missing-value abstention, schema quality, slug agreement, and latency
-should be diagnostics that explain why the form did or did not work.
+- Context-only expansion: grow an existing I-9 corpus while preserving the same
+  expected I-9 output. This isolates the effect of more context.
+- Packet expansion: create one richer dossier that can fill I-9, W-4, and
+  direct deposit from the same memory. This tests reusable memory.
 
-## Scenario Ideas
+## Keep-It-Simple Rules
 
-1. More documents, same target facts
-   - Keep the same I-9 target facts, but add 20-50 extra documents such as HR
-     notices, policy docs, receipts, facility memos, and onboarding reminders.
-   - Measures whether the agent can ignore irrelevant context.
+- Keep `profile.yaml` as the only canonical truth file.
+- Add difficulty through corpus data first: more documents, longer documents,
+  stale facts, other-person facts, blank-form samples, and realistic boilerplate.
+- Reuse the existing V2 `manifest.json` shape: `forms[]`, document roles,
+  source specs, fact contracts, challenge tags, and intentionally missing facts.
+- Add multiple one-form scenarios that point to the same user and corpus before
+  adding any new multi-form runner concept.
+- Map only a small field subset when adding a form. Skip signatures,
+  attestations, employer-only fields, certification boxes, and ambiguous fields.
+- Change one difficulty knob at a time so regressions are explainable.
 
-2. Longer source documents
-   - Expand current fixtures with realistic boilerplate, headers, footers,
-     signatures, legal disclaimers, repeated tables, and unrelated sections.
-   - Measures extraction from long individual documents rather than many short
-     documents.
+## Context Size Ladder
 
-3. Distractor identity facts
-   - Add documents that mention a manager, HR representative, spouse,
-     emergency contact, former tenant, or prior applicant.
-   - Measures whether facts are attributed to the evaluated user, not another
-     person in the corpus.
+| Tier | Shape | Purpose |
+| --- | --- | --- |
+| current | Existing 10-document Alex I-9 corpus, about 22 KB | Baseline realistic fixture. |
+| `realistic-medium` | 20-30 docs, roughly 50-100 KB | More context with mostly benign distractors and same target truth. |
+| `realistic-large` | 40-60 docs, roughly 150-300 KB | Stale facts, conflicts, other-person facts, repeated sections. |
+| `packet-medium` | 25-40 docs, 2-3 forms | Same dossier fills several forms from one memory setup. |
+| `stress` | 75-100+ docs or one very large form | Optional context-limit testing after lower tiers are stable. |
 
-4. Stale versus current values
-   - Include an old address, old email, prior work authorization date, and prior
-     legal name, then include newer authoritative evidence.
-   - Measures recency and authority reasoning.
+For every tier, record document count, byte count, and estimated token count.
+When only adding distractors, keep expected form output unchanged.
 
-5. Conflicting evidence
-   - Add two plausible documents that disagree on a value such as address,
-     passport number, or work authorization expiration date.
-   - Measures whether the system chooses the best-supported value and exposes
-     conflict diagnostics.
+## First Packet Recommendation
 
-6. Form-irrelevant durable memory
-   - Add facts not needed for the current form, such as work email, start date,
-     department, manager, preferred name, employee ID, or office location.
-   - Measures whether open schema stores reusable facts, not only form answers.
+Start with a new-hire packet:
 
-7. Form-relevant sparse evidence
-   - Put a critical value in only one low-signal document, such as SSN in a card
-     OCR transcript or I-94 number in a noisy export.
-   - Measures recall under noise.
+- I-9: already mapped and useful as the anchor.
+- W-4: already has a PDF fixture; add a minimal field map.
+- Direct deposit: add a small direct-deposit form fixture.
 
-8. Intentionally missing with distractors
-   - Keep phone intentionally missing, but add fax numbers, HR phone numbers,
-     support numbers, ticket numbers, document IDs, and other phone-like text.
-   - Measures abstention and hallucination resistance.
+Direct deposit can be either:
 
-9. Multi-form reuse
-   - Ingest once, then fill I-9 plus another onboarding form using the same
-     memory snapshot.
-   - Measures whether storage creates reusable memory instead of overfitting to
-     one target form.
+- a simple synthetic payroll direct-deposit form, easiest for a first pass; or
+- official SF 1199A, more realistic but potentially more PDF-mapping work.
 
-10. Fresh user versus contaminated user
-    - Run open schema against a user with no eval-created definitions, then
-      against a user with generic profile definitions, then against a user with
-      stale or awkward definitions.
-    - Measures schema contamination and reuse behavior.
+The first pass should map only obvious fields:
 
-11. Document order sensitivity
-    - Run the same corpus with shuffled document order.
-    - Measures whether extraction depends too much on first-seen evidence.
+- identity and address fields;
+- SSN where appropriate;
+- W-4 filing status and simple withholding fields;
+- direct-deposit bank name, routing number, account number, account type, and
+  account holder name.
 
-12. Chunk boundary stress
-    - Split related evidence across distant documents or sections, such as name
-      in one document, date of birth in another, and work authorization category
-      in a third.
-    - Measures cross-document synthesis.
+## User Strategy
 
-13. Noisy OCR and formatting
-    - Add spacing errors, broken lines, repeated headers, table extraction
-      artifacts, date variants, and partial OCR mistakes.
-    - Measures realistic ingestion resilience.
+Prefer a new synthetic user for the packet.
 
-14. Value shape variants
-    - Add facts that can naturally be scalar or array values, such as other last
-      names, aliases, addresses, citizenship statuses, and prior employers.
-    - Directly targets scorer issues like scalar `Santos` versus array
-      `["Santos"]`.
+Why:
 
-15. Derived value checks
-    - Store source facts like full middle name, then require a form value like
-      middle initial.
-    - Measures whether scoring and form fill handle derived values without
-      pretending the database had the exact target field.
+- Alex remains a stable I-9 comparison.
+- Tax, banking, payroll, and direct-deposit facts can be added freely.
+- The packet can be tuned around multi-form reuse instead of preserving a
+  previously useful fixture.
 
-16. Direct Vertex comparison at every tier
-    - For each larger corpus tier, run the no-storage direct Vertex baseline:
-      all documents at once, extract open facts, then fill the form from those
-      facts.
-    - Measures whether storage is failing or whether the raw model also
-      struggles with the larger context.
+Extending Alex is still useful for a context-only I-9 expansion because it keeps
+the existing I-9 expected output comparable.
 
-## Measurement Notes
+## Profile Facts To Add
 
-Useful metrics:
+For the new-hire packet, keep the profile narrow:
 
-- final form correctness;
+- identity: legal name, first/middle/last, middle initial, other last names,
+  date of birth, SSN;
+- contact and address: email, phone or intentional null, current address;
+- work authorization: I-9 citizenship/status and relevant identifiers;
+- employment: employer, title, worker id, start date, work email;
+- tax: filing status, multiple-jobs flag, dependents, other income, deductions,
+  extra withholding, exemption claim;
+- banking: institution name, routing number, account number, account type,
+  account holder name.
+
+Do not add signatures, certifications, or current-form legal attestations as
+durable profile facts unless the eval explicitly needs to test them.
+
+## Document Families
+
+Use source-native document shapes instead of generic prose.
+
+High-signal extraction docs:
+
+- driver-license OCR transcript;
+- SSN card OCR transcript;
+- work-authorization upload receipt;
+- payroll profile export;
+- W-4 setup export or draft;
+- direct-deposit setup confirmation;
+- bank letter or voided-check OCR transcript.
+
+Corroborating docs:
+
+- offer email;
+- HR onboarding profile export;
+- employee profile export;
+- lease or utility bill for address;
+- payroll welcome email.
+
+Noise and instruction docs:
+
+- employee handbook excerpt;
+- benefits overview;
+- blank W-4 instruction packet;
+- sample direct-deposit packet;
+- company "how to complete your I-9" guide.
+
+Adversarial docs:
+
+- stale recruiter export with old address or email;
+- old benefits profile with stale phone;
+- other employee sample W-4;
+- company directory with manager and HR phone numbers;
+- support ticket that mentions the user plus non-user identifiers.
+
+## Realism Notes
+
+Good fixture docs should look like the systems that produced them:
+
+- OCR transcript: filename, capture time, crop regions, confidence scores,
+  redaction flags, status, extracted text blocks.
+- Portal export: account id, export timestamp, nested fields, internal codes,
+  null fields, audit metadata.
+- Email: sender, recipients, date, subject, quoted thread, signature block.
+- Ticket: requester, assignee, ticket id, status, update log, stale values,
+  final resolution.
+- Statement or bank letter: institution name, statement period, masked account,
+  address block, transaction-like or account-summary rows.
+
+Public forms and sample templates are useful as structure references. Copy
+layout, labels, section order, and density; do not copy real personal data.
+All canonical values should still come from `profile.yaml`.
+
+## Difficulty Knobs
+
+Add these independently:
+
+- Volume: more documents with the same truth.
+- Length: longer documents with realistic boilerplate.
+- Density: more facts per document.
+- Sparsity: one critical fact appears only once.
+- Recency: old value plus current value.
+- Authority: low-authority mention versus high-authority source.
+- Ownership: user fact versus spouse, manager, landlord, HR, or other employee
+  fact.
+- Shape: scalar versus array, full name versus split name, masked versus
+  unmasked identifiers, date format variants.
+- Derivation: middle name to middle initial, address parts to one field,
+  citizenship status to checkbox.
+- Missingness: true null surrounded by phone-like, date-like, and id-like
+  distractors.
+- Form reuse: same fact needed by several forms under different labels.
+- Instruction noise: blank forms, instructions, policies, and sample values
+  that should not become user memory.
+- Order sensitivity: same corpus with shuffled document order.
+
+## Packet Ideas After New Hire
+
+Housing and income packet:
+
+- Forms: rental application, SNAP/benefits first pages, optionally W-4.
+- Useful facts: current and prior addresses, landlords, rent amounts,
+  employment, income, household members, vehicles, emergency contact,
+  references, benefits flags.
+- Main value: household and third-party attribution.
+
+Student-aid packet:
+
+- Forms: FAFSA subset, rental or campus housing, optionally SNAP.
+- Useful facts: student identity, school list, dependency status, parent or
+  spouse facts, income, assets, benefits, household size.
+- Main value: very large realistic form context, but should come later.
+
+Security-dossier stress:
+
+- Forms: SF-86, mostly as a stress and abstention target.
+- Useful facts: residence history, employment history, education, foreign
+  travel, relatives, financial/legal history.
+- Main value: extreme context size; not a good first correctness benchmark.
+
+## Measurement
+
+Keep final form correctness as the headline. Add diagnostics that explain why a
+form did or did not work:
+
 - active-memory value recovery;
+- shared-fact correctness across forms;
 - recovered-but-derived values;
 - recovered-but-different-shape values;
 - intentionally missing abstention;
-- overfill and hallucination counts;
-- unscored active preferences;
+- stale-value false positives;
+- other-person false positives;
+- overfill and hallucinated skip fields;
 - duplicate or low-quality schema definitions;
+- unscored active preferences;
 - runtime and model cost;
-- document count and approximate token count.
+- document count, byte count, and estimated token count.
 
-The recent open-schema run suggests the form scorer can be correct while the
-database scorer under-credits useful stored facts. Bigger-context evals should
-therefore keep final form correctness as the headline while improving diagnostic
-labels for derived values and value-shape equivalence.
+Direct Vertex/open-schema baselines are useful at every tier. They help
+separate storage failures from raw model/context failures.
 
 ## Suggested First Slice
 
-Start with three variants of the existing `alex-i9-realistic` corpus:
+Create one `packet-medium` new-hire corpus before attempting a 100-document
+benchmark.
 
-1. `realistic-medium`
-   - Roughly 2-3x the current document/token count.
-   - Mostly benign distractors.
-   - No intentional conflicts beyond current stale-contact style data.
+```text
+user: new synthetic new-hire user
+corpus: packet-medium
+forms: i-9, fw4, direct-deposit
+documents: 25-35
+target size: 60-120 KB
+```
 
-2. `realistic-large`
-   - Roughly 5-10x the current document/token count.
-   - Includes stale facts, other-person facts, and a few low-risk conflicts.
+Steps:
 
-3. `realistic-large-noisy`
-   - Same target truth as `realistic-large`.
-   - Adds OCR noise, table artifacts, awkward formatting, and phone-like
-     distractors.
+1. Add or choose the direct-deposit form.
+2. Add a minimal W-4 field map and direct-deposit field map.
+3. Create the new user profile with tax and banking facts.
+4. Create or generate the packet corpus.
+5. Add three one-form scenarios:
+   - `*-i9-packet-medium`
+   - `*-fw4-packet-medium`
+   - `*-direct-deposit-packet-medium`
+6. Run all three against the same ingested memory setup.
+7. Add a lightweight packet comparison report only after the separate form runs
+   are stable.
 
-Each variant should preserve the same final I-9 expected output at first. That
-keeps comparisons simple: if the final form score changes, the context increase
-is the likely cause.
+## Avoid For Now
+
+- Mapping all FAFSA or SF-86 fields before the small packet works.
+- Adding scanned binary/image OCR as the first complexity jump.
+- Introducing a new multi-form scenario schema before shared one-form scenarios
+  prove useful.
+- Generating 100 documents in one pass.
+- Mixing many new forms, many new facts, and new scorer behavior in one batch.
+- Letting public sample values or blank-form examples count as user evidence.
 
 ## Open Questions
 
-- Should larger corpora be hand-authored first, generated from templates, or
-  generated by a corpus-expansion script?
-- Should context size be measured by document count, byte count, estimated token
-  count, or all three?
-- Should the medium and large variants share the same truth files, or should
-  they introduce new facts that expand the benchmark truth?
-- How much form-irrelevant durable memory should count as required for
-  open-schema memory recovery?
-- Should document-order sensitivity be a separate runner option or separate
-  materialized corpora?
+- Should direct deposit use a simple synthetic PDF first, official SF 1199A
+  first, or both in separate tiers?
+- Should W-4 tax choices be explicit profile facts or derived from a small tax
+  profile?
+- Should context size reporting start with bytes only, then add estimated
+  tokens later?
+- Should blank form instructions be included in the corpus as noise, or only in
+  the form-fill prompt path?
+- Should packet-level reporting live in `compare-runs` or as a separate small
+  summary script?
