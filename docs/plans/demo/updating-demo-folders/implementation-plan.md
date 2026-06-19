@@ -3,7 +3,7 @@
 Status note, 2026-05-18: this historical demo-folder plan is superseded. The
 old `examples/memory-demo` fixture shape was removed, and the current local eval
 fixture contract lives under `examples/eval/`. See
-`docs/plans/evaluation/user-generation-forms/orchestration-plan.md` and
+`docs/plans/evaluation/user-generation-forms/SUMMARY.md` and
 `examples/eval/README.md`.
 
 ## Summary

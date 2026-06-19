@@ -3,7 +3,7 @@
 Status note, 2026-05-18: this summary remains accurate for the profile-memory
 backend and web changes, but the demo fixture paths it mentions were later
 superseded by the eval fixture tree. The current eval fixture contract lives in
-`docs/plans/evaluation/user-generation-forms/orchestration-plan.md` and
+`docs/plans/evaluation/user-generation-forms/SUMMARY.md` and
 `examples/eval/README.md`.
 
 ## Shipped Behavior

@@ -367,7 +367,7 @@ export class FormFillValidatorService {
 
     // TODO(form-fill-validation): replace this narrow open-schema fallback with
     // explicit field-to-memory mapping validation. See
-    // docs/plans/evaluation/scoring/form-filling-improvements/validation-todo.md.
+    // docs/plans/evaluation/scoring/TODO.md.
     return this.conditionMatchesAnyActivePreferenceValue(
       condition,
       expected,

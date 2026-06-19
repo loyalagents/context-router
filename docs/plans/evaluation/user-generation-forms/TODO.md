@@ -1,21 +1,8 @@
 # User Generation Forms TODO
 
-This file tracks weaknesses in the current eval fixture approach and possible
-future improvements. It is intentionally separate from the batch summaries so
-follow-up work does not get lost after a batch is marked complete.
-
-## Current Strengths
-
-- The fixture tree has a stable home at `examples/eval/`.
-- `profile.yaml` is the source of truth for user facts.
-- Generated seed preferences are deterministic and validate against the backend
-  preference catalog.
-- Template scaffold generation is repeatable, cheap, and safe to review.
-- Fixture validation catches schema, reference, field-map, corpus inventory,
-  seed, coverage, and snapshot-shape problems.
-- The current runner gives deterministic backend form-fill snapshots without
-  real LLM calls, Auth0, UI automation, deployed services, or document-analysis
-  ingestion.
+- Status: active follow-up list
+- Last updated: 2026-06-19
+- Current state: [`SUMMARY.md`](SUMMARY.md)
 
 ## Current Weaknesses
 
@@ -32,37 +19,16 @@ follow-up work does not get lost after a batch is marked complete.
 - The current deterministic runner hydrates backend memory directly from
   `profile.yaml` and generated seeds. It does not test whether an AI can extract
   facts from documents.
-- Corpus documents are not ingested through the document-analysis path.
+- The deterministic `eval:run` path does not ingest corpus documents. Live
+  known-schema ingestion exists, but there is still no extraction-result
+  snapshot/scorer that directly compares extracted facts to profile-backed
+  truth.
 - There is no extraction-result snapshot contract yet.
 - There is no benchmark tiering by difficulty, document realism, or ambiguity.
 - There is no formal measure for stale, conflicting, partial, redacted, noisy,
   or adversarial documents.
 - Only I-9 currently has a field map, so multi-form generality is still mostly
   theoretical.
-
-## Extraction Experimentation Notes
-
-The current scaffolded documents are useful as a deterministic baseline, but
-they should not be treated as a full extraction benchmark.
-
-They are helpful for:
-
-- proving fixture plumbing works
-- proving the expected fact keys are represented somewhere
-- checking that validation catches fixture drift
-- creating stable downstream form-fill snapshots
-- detecting regressions in simple, known cases
-
-They are weak for:
-
-- measuring real AI extraction quality
-- testing robustness against varied writing styles
-- testing layout and formatting noise
-- testing stale or conflicting documents
-- testing missing or ambiguous facts
-- testing whether the model can reject irrelevant documents
-- testing whether the model can distinguish user facts from employer,
-  household, third-party, or historical facts
 
 ## Recommended Benchmark Tiers
 
@@ -134,7 +100,7 @@ Possible approaches:
 Any LLM polish should preserve profile facts, avoid introducing new canonical
 facts, and pass validation before output is accepted.
 
-### Tier 5: Document-Ingestion Eval Runner
+### Tier 5: Extraction Scoring For Document Ingestion
 
 Purpose:
 
@@ -152,12 +118,13 @@ profile.yaml ground truth
 ```
 
 This should be separate from the current deterministic hydration runner. The
-current runner answers "can known memory fill the form?" An ingestion runner
-would answer "can the system extract the right memory from documents?"
+current runner answers "can known memory fill the form?" An extraction-scored
+ingestion flow would answer "can the system extract the right memory from
+documents?"
 
 ## Potential Improvements
 
-### Template Library
+### Template Library And Form Coverage
 
 - Add more templates per category so users targeting the same form do not get
   identical document shapes.
@@ -167,6 +134,8 @@ would answer "can the system extract the right memory from documents?"
   documents.
 - Add work-authorization templates beyond the current I-9 starter set.
 - Add tax templates only when W-4 field-map work begins.
+- Add field maps for forms beyond I-9 only when the existing I-9 path is less
+  brittle.
 
 ### Corpus Configuration
 
@@ -177,13 +146,17 @@ would answer "can the system extract the right memory from documents?"
   `redacted-id`, `third-party-fact`, or `noise`.
 - Keep profile facts authoritative; do not duplicate canonical facts into the
   manifest.
+- Generate and review multiple realistic corpora per form/status branch. Keep
+  Alex as the alien-authorized I-9 corpus, then add or refresh corpora for U.S.
+  citizen, noncitizen national, lawful permanent resident, and
+  missing/ambiguous work-authorization cases.
 
 ### Realistic Corpus Generation
 
 - Use V2 `manifest.json` as the canonical authored contract for large
   AI-authored realistic corpora.
 - Have `pnpm eval:plan-corpus` write or update the V2 manifest directly; do
-  not reintroduce a split `corpus-plan.json` projection step.
+  not reintroduce a separate planning projection file.
 - Generate and review a small preview set before producing a committed
   100-document corpus.
 - Record the generation model, call count, validation status, and snapshot
@@ -191,7 +164,17 @@ would answer "can the system extract the right memory from documents?"
 - Consider adding a command-backed generation provider after the first Vertex
   path proves useful. The provider should use a stable stdin/stdout contract so
   Claude CLI, Codex CLI, or another local tool can be swapped in without
-  changing corpus-plan semantics.
+  changing V2 manifest semantics.
+- Build a small sanitized source exemplar library for each realistic artifact
+  family, such as OCR transcript, uploaded card receipt, resident portal export,
+  utility JSON export, copied email, onboarding YAML export, stale ticket, and
+  newsletter noise.
+- Add source-family-specific prompt templates so generated artifacts use
+  source-native structure, common labels, appropriate density, and realistic
+  failure modes instead of generic prose.
+- Add a realism-focused repair mode after the correctness repair loop is
+  stable. It should preserve validated facts while improving document genre,
+  source voice, density, native signals, and incidental context.
 
 ### File Format Expansion
 
@@ -216,6 +199,17 @@ would answer "can the system extract the right memory from documents?"
 - Add checks for accidentally declaring ignored/noise document facts.
 - Add checks that intentionally missing facts are not present in document text,
   not only absent from manifest `factKeys[]`.
+- Add deterministic nested field/value proof for generated structured exports,
+  especially native I-9 YAML records where values appear under nested
+  `field_id` / `value` shapes.
+- Add source-fact ownership metadata or lint support so validators can
+  distinguish canonical user facts from source-owned values such as office
+  phones, account numbers, ticket IDs, support emails, and system identifiers.
+- Add warning-level realism lint coverage for source-native structure, such as
+  structured export blocks, raw email headers, OCR field blocks, and ticket
+  event logs.
+- Harden stale and conflicting cue validation without blocking legitimate
+  guardrail documents.
 - Add warning-level rules before introducing new hard errors.
 
 ### Extraction Evaluation
@@ -227,6 +221,8 @@ would answer "can the system extract the right memory from documents?"
 - Keep extraction scoring separate from form-fill scoring at first.
 - Record false positives separately from missing facts; hallucinated facts are
   usually more dangerous than omissions.
+- Add an extraction snapshot and scoring stage for document-ingestion runs only
+  after corpus truth and extraction contracts are stable.
 
 ### Review Workflow
 
@@ -234,6 +230,10 @@ would answer "can the system extract the right memory from documents?"
   fixtures.
 - Use snapshot updates only through supported runner commands.
 - Review diffs at the field/fact level, not only at the file level.
+- Add a manual realism scorecard for promoted corpora with per-document notes on
+  native source shape, plausible length, density, formatting, incidental
+  metadata, contradiction clarity, and whether a real user might plausibly have
+  the file.
 - Prefer small batches: one new user, one new form map, or one new runner
   capability at a time.
 
@@ -242,8 +242,8 @@ would answer "can the system extract the right memory from documents?"
 1. Generate and validate a Samir realistic corpus using the unified V2
    manifest flow, then scale toward 100 documents after a small preview passes.
 2. Design an extraction snapshot contract.
-3. Add a document-ingestion eval runner that compares extracted facts to
-   profile-backed ground truth.
+3. Add extraction scoring for document-ingestion runs that compares extracted
+   facts to profile-backed ground truth.
 4. Add richer text-like file formats once the first text corpus is stable.
 5. Add a command-backed generation provider if Vertex-only generation is too
    limiting.

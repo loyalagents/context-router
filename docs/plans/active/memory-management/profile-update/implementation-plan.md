@@ -3,7 +3,7 @@
 Status note, 2026-05-18: the profile-memory backend work described here has
 shipped, but the demo fixture paths in this historical plan are superseded. The
 current eval fixture contract lives in
-`docs/plans/evaluation/user-generation-forms/orchestration-plan.md` and
+`docs/plans/evaluation/user-generation-forms/SUMMARY.md` and
 `examples/eval/README.md`.
 
 ## Summary
