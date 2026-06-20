@@ -1,7 +1,7 @@
 # Increase Form Complexity Orchestration
 
-- Status: temporary orchestration plan
-- Last updated: 2026-06-19
+- Status: temporary orchestration plan; first fixture slice implemented
+- Last updated: 2026-06-20
 - Scope: checkpoints for building a more complex dossier first, then evaluating
   multiple forms from that same dossier
 
@@ -36,6 +36,33 @@ direct no-memory baseline:
 Known-schema can help get fixtures working, but results should compare the
 open-schema stored-memory path against the open direct/no-memory baseline.
 
+## Current Implementation Status
+
+The first fixture slice is implemented. See
+`first-few-steps/implementation-summary.md` for the file-level summary.
+
+Completed:
+
+- chose the new-hire packet forms: I-9, W-4, and direct deposit;
+- added the official SF 1199A direct-deposit fixture;
+- added minimal field maps for W-4 and SF 1199A;
+- created the `maya-chen-newhire` packet subject;
+- made Maya a truth-only open-schema packet profile with no
+  `seedPreferences[]`;
+- added form-ready address facts: `address.current.streetLine` and
+  `address.current.cityStateZip`;
+- made profile-only users validate before they have corpora;
+- kept seed-backed fixture loading strict for profiles that still declare
+  `seedPreferences[]`;
+- removed unrelated FAFSA/SF-86 generated-manifest churn from this slice.
+
+Remaining before live evaluation:
+
+- plan and build `packet-small`;
+- add one-form scenarios that share the same user and corpus;
+- run the open-schema stored-memory path and the open direct/no-memory baseline;
+- build `packet-medium` only after the small vertical slice works.
+
 ## Phase 1: Make A More Complex Dossier
 
 ### Checkpoint 1: Choose The Form Packet
@@ -57,7 +84,12 @@ Exit criteria:
 
 ### Checkpoint 2: Add Direct Deposit Form
 
-Two options:
+Status: complete for the first slice.
+
+The packet uses the official SF 1199A direct-deposit form. The first map is
+narrow and intentionally scores only the first copy of the repeated form pages.
+
+Original options considered:
 
 - Simple synthetic payroll direct-deposit PDF: fastest and easiest to map.
 - Official SF 1199A: more realistic and easy to source, but potentially more
@@ -66,14 +98,16 @@ Two options:
 Either is acceptable for the first pass. If using an official form, keep the
 field map narrow and do not attempt to fill certification or agency-only fields.
 
-Map only obvious fields:
+Map only obvious fields in v1:
 
 - account holder name;
 - address if present;
 - bank name;
-- routing number;
-- account number;
 - account type.
+
+Routing number and account number remain in the profile, but the official SF
+1199A exposes them as one-character boxes. The v1 field map skips those boxes
+until there is a digit-position renderer or explicit form-ready digit facts.
 
 Skip signatures, certifications, agency/employer-only fields, and ambiguous
 payment identifiers.
@@ -89,6 +123,8 @@ Exit criteria:
 
 ### Checkpoint 3: Create A New User
 
+Status: complete for the first slice.
+
 Create a new synthetic new-hire user for the packet.
 
 Why:
@@ -101,10 +137,13 @@ Why:
 Exit criteria:
 
 - new user id is chosen;
+- first packet user is `maya-chen-newhire`;
 - profile owner is known before adding facts or documents;
 - Alex remains available as a stable I-9 realistic baseline.
 
 ### Checkpoint 4: Extend Profile Facts
+
+Status: complete for the first slice.
 
 Add only facts required by the first packet. The user still needs the normal
 base I-9/profile facts: identity, contact, current address, work authorization,
@@ -132,6 +171,15 @@ banking:
   accountHolderName:
 ```
 
+Maya also uses form-ready address facts for simple field mapping:
+
+```yaml
+address:
+  current:
+    streetLine:
+    cityStateZip:
+```
+
 Keep durable facts in `profile.yaml`. Use nulls for intentionally missing facts.
 Do not add signatures or legal attestations unless a specific scenario is
 testing explicit current-form consent.
@@ -157,6 +205,8 @@ Exit criteria:
 
 ### Checkpoint 5: Add Minimal Field Maps
 
+Status: complete for the first slice.
+
 Keep mapping narrow.
 
 I-9:
@@ -165,14 +215,16 @@ I-9:
 
 W-4:
 
-- map employee name, address, SSN, filing status, and simple withholding fields;
+- map employee name, address, SSN, and filing status;
 - skip signature, employer-only, worksheet, computed, and ambiguous
   certification fields.
 
 Direct deposit:
 
-- map account holder, bank name, routing number, account number, account type,
-  and address if the form exposes it;
+- map account holder, bank name, account type, address, nullable phone, and
+  payee/person-entitled name;
+- defer routing number and account number because SF 1199A uses split
+  one-character boxes;
 - skip signature and certification fields.
 
 Exit criteria:
@@ -405,17 +457,18 @@ Exit criteria:
 
 ## Suggested Order
 
-1. Create the new user profile with base, tax, and banking facts.
-2. Add direct deposit form fixture and minimal field map.
-3. Add W-4 minimal field map.
+1. Done: create the new user profile with base, tax, and banking facts.
+2. Done: add direct deposit form fixture and minimal field map.
+3. Done: add W-4 minimal field map.
 4. Plan and validate `packet-small`.
-5. Run live open-schema and direct no-memory baseline on `packet-small`.
-6. Plan `packet-medium`.
-7. Generate or author `packet-medium` documents in small batches.
-8. Validate `packet-medium`.
-9. Add one-form scenarios for each form and corpus.
-10. Run the shared-memory open-schema eval and direct no-memory baseline.
-11. Add packet-level reporting with per-form, overall, and stored-vs-direct
+5. Add one-form scenarios for `packet-small`.
+6. Run live open-schema and direct no-memory baseline on `packet-small`.
+7. Plan `packet-medium`.
+8. Generate or author `packet-medium` documents in small batches.
+9. Validate `packet-medium`.
+10. Add one-form scenarios for `packet-medium`.
+11. Run the shared-memory open-schema eval and direct no-memory baseline.
+12. Add packet-level reporting with per-form, overall, and stored-vs-direct
     scores.
 
 ## Deferred Work

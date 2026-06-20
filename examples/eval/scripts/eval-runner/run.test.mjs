@@ -107,6 +107,38 @@ test('run plan prefers seed slugs and creates only Elena eval-only facts', async
   );
 });
 
+test('scenario fixture requires generated seeds when profile declares seed preferences', async (t) => {
+  const root = await copyRepo(t);
+  await rm(
+    path.join(root, 'examples/eval/users/elena-marquez/seed-preferences.generated.json'),
+  );
+
+  await assert.rejects(
+    loadScenarioFixture({
+      repoRoot: root,
+      scenarioId: 'elena-marquez-i9-template-smoke',
+    }),
+    /Profile declares seedPreferences\[\], but generated seed preferences are missing/,
+  );
+});
+
+test('scenario fixture allows omitted seed preferences without a generated seed file', async (t) => {
+  const root = await copyRepo(t);
+  const userRoot = path.join(root, 'examples/eval/users/elena-marquez');
+  const profilePath = path.join(userRoot, 'profile.yaml');
+  const profile = await readFile(profilePath, 'utf8');
+  await writeFile(profilePath, profile.replace(/\nseedPreferences:\n[\s\S]*$/, '\n'));
+  await rm(path.join(userRoot, 'seed-preferences.generated.json'));
+
+  const fixture = await loadScenarioFixture({
+    repoRoot: root,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+  });
+
+  assert.deepEqual(fixture.seedPreferences, []);
+  assert.equal(fixture.profile.seedPreferences, undefined);
+});
+
 test('runner value rendering and eval slug derivation are deterministic', () => {
   assert.equal(evalSlugForFactKey('address.current.postalCode'), 'eval.address.current.postal_code');
   assert.equal(valueTypeFor(['email']), 'ARRAY');

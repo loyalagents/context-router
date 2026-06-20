@@ -11,10 +11,10 @@ export async function loadScenarioFixture({ repoRoot, scenarioId }) {
   const corpusRoot = path.join(userRoot, 'corpora', scenario.corpusId);
   const formRoot = path.join(evalRoot, 'forms', scenario.formId);
 
-  const [profile, seedPreferences, manifest, fieldMap, fieldsGenerated, prompt] =
+  const profile = await readYaml(path.join(userRoot, 'profile.yaml'));
+  const [seedPreferences, manifest, fieldMap, fieldsGenerated, prompt] =
     await Promise.all([
-      readYaml(path.join(userRoot, 'profile.yaml')),
-      readOptionalJson(path.join(userRoot, 'seed-preferences.generated.json'), []),
+      readSeedPreferences({ userRoot, profile }),
       readJson(path.join(corpusRoot, 'manifest.json')),
       readJson(path.join(formRoot, 'field-map.json')),
       readJson(path.join(formRoot, 'fields.generated.json')),
@@ -90,11 +90,21 @@ async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, 'utf8'));
 }
 
-async function readOptionalJson(filePath, fallback) {
+async function readSeedPreferences({ userRoot, profile }) {
+  if (profile.seedPreferences === undefined) return [];
+  if (!Array.isArray(profile.seedPreferences)) {
+    throw new Error('profile.seedPreferences must be an array when present.');
+  }
+
+  const generatedPath = path.join(userRoot, 'seed-preferences.generated.json');
   try {
-    return await readJson(filePath);
+    return await readJson(generatedPath);
   } catch (error) {
-    if (error.code === 'ENOENT') return fallback;
+    if (error.code === 'ENOENT') {
+      throw new Error(
+        `Profile declares seedPreferences[], but generated seed preferences are missing at ${generatedPath}. Run pnpm eval:derive-seeds.`,
+      );
+    }
     throw error;
   }
 }
