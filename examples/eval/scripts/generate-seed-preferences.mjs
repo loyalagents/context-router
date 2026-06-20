@@ -12,7 +12,9 @@ const repoRoot = path.resolve(__dirname, '../../..');
 const usersRoot = path.join(repoRoot, 'examples/eval/users');
 
 async function main() {
-  const userIds = await readdir(usersRoot);
+  const userIds = (await readdir(usersRoot, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 
   for (const userId of userIds.sort()) {
     const userRoot = path.join(usersRoot, userId);
@@ -27,6 +29,8 @@ async function main() {
     }
 
     const profile = parse(profileSource);
+    if (!Array.isArray(profile.seedPreferences)) continue;
+
     const rows = deriveSeedPreferences(profile);
     const outputPath = path.join(userRoot, 'seed-preferences.generated.json');
     await writeFile(outputPath, jsonText(rows));

@@ -4,7 +4,7 @@
   "title": "Eval Synthetic User Profile",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "userId", "displayName", "facts", "seedPreferences"],
+  "required": ["schemaVersion", "userId", "displayName", "facts"],
   "properties": {
     "schemaVersion": {
       "const": 1
@@ -24,6 +24,7 @@
     },
     "seedPreferences": {
       "type": "array",
+      "description": "Optional known-schema seed bridge. Open-schema packet fixtures can omit this and rely on corpus evidence instead.",
       "items": {
         "type": "object",
         "additionalProperties": false,

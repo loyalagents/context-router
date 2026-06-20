@@ -101,6 +101,9 @@ export async function runValidation({
       const corpusIds = await listDirectories(
         path.join(ctx.evalRoot, 'users', userId, 'corpora'),
       );
+      if (corpusIds.length === 0) {
+        await validateUserProfile(ctx, userId);
+      }
       for (const corpusId of corpusIds) {
         await validateUserCorpus(ctx, userId, corpusId);
       }
@@ -123,6 +126,9 @@ export async function runValidation({
       : await listDirectories(
           path.join(ctx.evalRoot, 'users', parsed.options.userId, 'corpora'),
         );
+    if (corpusIds.length === 0) {
+      await validateUserProfile(ctx, parsed.options.userId);
+    }
     for (const corpusId of corpusIds) {
       await validateUserCorpus(ctx, parsed.options.userId, corpusId);
     }
@@ -481,6 +487,16 @@ async function validateUserCorpus(ctx, userId, corpusId) {
   return { profile, manifest, profileFacts, formMaps };
 }
 
+async function validateUserProfile(ctx, userId) {
+  const userRoot = path.join(ctx.evalRoot, 'users', userId);
+  const profilePath = path.join(userRoot, 'profile.yaml');
+  const profile = await validateProfile(ctx, userId, profilePath);
+  if (profile) {
+    await validateSeedPreferences(ctx, userRoot, profile, collectFactKeys(profile.facts ?? {}));
+  }
+  return profile;
+}
+
 async function validateProfile(ctx, userId, profilePath) {
   const profile = await readYamlFile(ctx, profilePath);
   if (!profile) return null;
@@ -583,8 +599,13 @@ async function validateSeedPreferences(ctx, userRoot, profile, profileFacts) {
   const profilePath = path.join(userRoot, 'profile.yaml');
   const generatedPath = path.join(userRoot, 'seed-preferences.generated.json');
   const slugs = new Set();
+  const entries = profile.seedPreferences;
 
-  for (const [index, entry] of (profile.seedPreferences ?? []).entries()) {
+  if (!Array.isArray(entries)) {
+    return;
+  }
+
+  for (const [index, entry] of entries.entries()) {
     if (slugs.has(entry.slug)) {
       addIssue(ctx, {
         code: 'SEED_DUPLICATE_SLUG',

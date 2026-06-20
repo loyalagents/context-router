@@ -1,0 +1,56 @@
+schemaVersion: 1
+userId: maya-chen-newhire
+displayName: Maya Chen
+facts:
+  identity:
+    legalName: Maya Lin Chen
+    firstName: Maya
+    middleName: Lin
+    middleInitial: L
+    lastName: Chen
+    otherLastNames: []
+    dateOfBirth: 1991-02-22
+    ssn: 000-00-0417
+  contact:
+    email: maya.chen@example.test
+    phone: null
+  address:
+    current:
+      street: 2846 Ashbury Street
+      unit: Apt 3D
+      streetLine: 2846 Ashbury Street Apt 3D
+      city: Oakland
+      state: CA
+      postalCode: "94609"
+      cityStateZip: Oakland, CA 94609
+  workAuthorization:
+    citizenshipStatus: U.S. citizen
+    uscisANumber: null
+    workAuthorizationExpirationDate: null
+    i94AdmissionNumber: null
+    foreignPassportNumber: null
+    foreignPassportCountry: null
+  employment:
+    company: Pacific Ledger Cooperative
+    title: Client Operations Associate
+    startDate: 2026-07-06
+    workEmail: maya.chen@pacificledger.example.test
+    workerId: PLC-20418
+  tax:
+    filingStatus: single or married filing separately
+    multipleJobs: false
+    dependentsUnder17: 0
+    otherDependents: 0
+    otherIncome: null
+    deductions: null
+    extraWithholding: null
+    exemptionClaim: false
+  banking:
+    accountHolderName: Maya Lin Chen
+    institutionName: Bay Harbor Credit Union
+    accountType: checking
+    routingNumber: "091000019"
+    accountNumber: "740182936451"
+  communication:
+    preferredChannels:
+      - email

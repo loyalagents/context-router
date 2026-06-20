@@ -58,15 +58,17 @@ User facts live in `users/<userId>/profile.yaml`. Fact keys are local fixture
 paths such as `identity.legalName` and `address.current.postalCode`.
 
 MCP preference slugs are separate backend memory identifiers such as
-`profile.full_name`. The only current bridge between local fact keys and MCP
-slugs is `profile.yaml` `seedPreferences[]`, which is projected into
+`profile.full_name`. For known-schema fixtures, `profile.yaml` can include an
+optional `seedPreferences[]` bridge from local fact keys to MCP slugs. When
+present, it is projected into
 `users/<userId>/seed-preferences.generated.json`.
 
 Seed projection is strict: `seedPreferences[]` supports one `slug` and one
 `factKey` per entry, with no joining or coercion. Null facts are omitted from
 generated seed preferences; empty arrays are emitted because they are explicit
-data. Form-fill rendering is separate runner behavior and may render array
-facts as scalar field values when a PDF field is scalar.
+data. Open-schema packet fixtures can omit `seedPreferences[]` entirely and rely
+on corpus evidence. Form-fill rendering is separate runner behavior and may
+render array facts as scalar field values when a PDF field is scalar.
 
 Corpus manifests use `schemaVersion: 2`. `corpusKind` identifies the corpus
 shape:

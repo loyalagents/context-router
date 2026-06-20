@@ -1,0 +1,1505 @@
+{
+  "schemaVersion": 2,
+  "formId": "direct-deposit-sf1199a-24",
+  "fields": [
+    {
+      "fieldIndex": 0,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payname[0]",
+      "mode": "fact",
+      "factKey": "identity.legalName",
+      "note": "Section 1 payee name."
+    },
+    {
+      "fieldIndex": 1,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xcheck[0]",
+      "mode": "fact",
+      "factKey": "banking.accountType",
+      "when": {
+        "factKey": "banking.accountType",
+        "equals": "checking"
+      },
+      "note": "Depositor account type: checking."
+    },
+    {
+      "fieldIndex": 2,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xsvgs[0]",
+      "mode": "fact",
+      "factKey": "banking.accountType",
+      "when": {
+        "factKey": "banking.accountType",
+        "equals": "savings"
+      },
+      "note": "Depositor account type: savings."
+    },
+    {
+      "fieldIndex": 3,
+      "pdfFieldName": "topmostSubform[0].Page1[0].paystreet[0]",
+      "mode": "fact",
+      "factKey": "address.current.streetLine",
+      "note": "Section 1 payee street address, including unit when present."
+    },
+    {
+      "fieldIndex": 4,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 5,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 6,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 7,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 8,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 9,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 10,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 11,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 12,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct9[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 13,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct10[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 14,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct11[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 15,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct12[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 16,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct13[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 17,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct14[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 18,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct15[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 19,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct16[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 20,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acct17[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 21,
+      "pdfFieldName": "topmostSubform[0].Page1[0].paycity[0]",
+      "mode": "fact",
+      "factKey": "address.current.city",
+      "note": "Section 1 payee city."
+    },
+    {
+      "fieldIndex": 22,
+      "pdfFieldName": "topmostSubform[0].Page1[0].paystate[0]",
+      "mode": "fact",
+      "factKey": "address.current.state",
+      "note": "Section 1 payee state."
+    },
+    {
+      "fieldIndex": 23,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payzip[0]",
+      "mode": "fact",
+      "factKey": "address.current.postalCode",
+      "note": "Section 1 payee ZIP code."
+    },
+    {
+      "fieldIndex": 24,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payphone[0]",
+      "mode": "fact",
+      "factKey": "contact.phone",
+      "note": "Intentionally nullable user phone; distractor phone numbers should not be used."
+    },
+    {
+      "fieldIndex": 25,
+      "pdfFieldName": "topmostSubform[0].Page1[0].entname[0]",
+      "mode": "fact",
+      "factKey": "identity.legalName",
+      "note": "Person entitled to payment; same synthetic payee for v1."
+    },
+    {
+      "fieldIndex": 26,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xss[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 27,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xssi[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 28,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xrr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 29,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xcsr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 30,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xva[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 31,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xfed[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 32,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xact[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 33,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xret[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 34,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xsurv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 35,
+      "pdfFieldName": "topmostSubform[0].Page1[0].xother[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 36,
+      "pdfFieldName": "topmostSubform[0].Page1[0].active[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 37,
+      "pdfFieldName": "topmostSubform[0].Page1[0].retire[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 38,
+      "pdfFieldName": "topmostSubform[0].Page1[0].surv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 39,
+      "pdfFieldName": "topmostSubform[0].Page1[0].other[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government payment type selection is outside the v1 direct-deposit packet scope."
+    },
+    {
+      "fieldIndex": 40,
+      "pdfFieldName": "topmostSubform[0].Page1[0].prefix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Claim or payroll ID number is outside the first direct-deposit packet field subset."
+    },
+    {
+      "fieldIndex": 41,
+      "pdfFieldName": "topmostSubform[0].Page1[0].idno[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Claim or payroll ID number is outside the first direct-deposit packet field subset."
+    },
+    {
+      "fieldIndex": 42,
+      "pdfFieldName": "topmostSubform[0].Page1[0].suffix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Claim or payroll ID number is outside the first direct-deposit packet field subset."
+    },
+    {
+      "fieldIndex": 43,
+      "pdfFieldName": "topmostSubform[0].Page1[0].paytype[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Allotment-only field is not applicable to the v1 packet."
+    },
+    {
+      "fieldIndex": 44,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payamt[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Allotment-only field is not applicable to the v1 packet."
+    },
+    {
+      "fieldIndex": 45,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payeesign1[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 46,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payeedate1[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 47,
+      "pdfFieldName": "topmostSubform[0].Page1[0].jointsign1[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 48,
+      "pdfFieldName": "topmostSubform[0].Page1[0].jointdate1[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 49,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payeesign2[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 50,
+      "pdfFieldName": "topmostSubform[0].Page1[0].payeedate2[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 51,
+      "pdfFieldName": "topmostSubform[0].Page1[0].jointsign2[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 52,
+      "pdfFieldName": "topmostSubform[0].Page1[0].jointdate2[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 53,
+      "pdfFieldName": "topmostSubform[0].Page1[0].agcyname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government agency fields are not user-memory fields for v1."
+    },
+    {
+      "fieldIndex": 54,
+      "pdfFieldName": "topmostSubform[0].Page1[0].agcyaddr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Government agency fields are not user-memory fields for v1."
+    },
+    {
+      "fieldIndex": 55,
+      "pdfFieldName": "topmostSubform[0].Page1[0].inst[0]",
+      "mode": "fact",
+      "factKey": "banking.institutionName",
+      "note": "Section 3 financial institution name/address field; v1 stores the institution name."
+    },
+    {
+      "fieldIndex": 56,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 57,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 58,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 59,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 60,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 61,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 62,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 63,
+      "pdfFieldName": "topmostSubform[0].Page1[0].rout8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 64,
+      "pdfFieldName": "topmostSubform[0].Page1[0].ckdigit[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+    },
+    {
+      "fieldIndex": 65,
+      "pdfFieldName": "topmostSubform[0].Page1[0].acctitle[0]",
+      "mode": "fact",
+      "factKey": "banking.accountHolderName",
+      "note": "Depositor account title / account holder name."
+    },
+    {
+      "fieldIndex": 66,
+      "pdfFieldName": "topmostSubform[0].Page1[0].repname[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 67,
+      "pdfFieldName": "topmostSubform[0].Page1[0].repsign[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 68,
+      "pdfFieldName": "topmostSubform[0].Page1[0].repphone[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 69,
+      "pdfFieldName": "topmostSubform[0].Page1[0].repdate[0]",
+      "mode": "skip",
+      "reason": "manual_attestation",
+      "note": "Signature, certification, representative, or date field requires current-form action and is skipped for memory-only fill."
+    },
+    {
+      "fieldIndex": 70,
+      "pdfFieldName": "topmostSubform[0].Page1[0].Reset[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "PDF reset button is not a fillable user-data field."
+    },
+    {
+      "fieldIndex": 71,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 72,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xsvgs[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 73,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xcheck[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 74,
+      "pdfFieldName": "topmostSubform[0].Page2[0].paystreet[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 75,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 76,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 77,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 78,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 79,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 80,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 81,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 82,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 83,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct9[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 84,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct10[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 85,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct11[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 86,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct12[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 87,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct13[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 88,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct14[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 89,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct15[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 90,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct16[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 91,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acct17[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 92,
+      "pdfFieldName": "topmostSubform[0].Page2[0].paycity[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 93,
+      "pdfFieldName": "topmostSubform[0].Page2[0].paystate[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 94,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payzip[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 95,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payphone[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 96,
+      "pdfFieldName": "topmostSubform[0].Page2[0].entname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 97,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xss[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 98,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xssi[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 99,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xrr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 100,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xcsr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 101,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xva[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 102,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xfed[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 103,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xact[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 104,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xret[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 105,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xsurv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 106,
+      "pdfFieldName": "topmostSubform[0].Page2[0].xother[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 107,
+      "pdfFieldName": "topmostSubform[0].Page2[0].active[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 108,
+      "pdfFieldName": "topmostSubform[0].Page2[0].retire[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 109,
+      "pdfFieldName": "topmostSubform[0].Page2[0].surv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 110,
+      "pdfFieldName": "topmostSubform[0].Page2[0].other[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 111,
+      "pdfFieldName": "topmostSubform[0].Page2[0].prefix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 112,
+      "pdfFieldName": "topmostSubform[0].Page2[0].idno[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 113,
+      "pdfFieldName": "topmostSubform[0].Page2[0].suffix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 114,
+      "pdfFieldName": "topmostSubform[0].Page2[0].paytype[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 115,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payamt[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 116,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payeesign1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 117,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payeedate1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 118,
+      "pdfFieldName": "topmostSubform[0].Page2[0].jointsign1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 119,
+      "pdfFieldName": "topmostSubform[0].Page2[0].jointdate1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 120,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payeesign2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 121,
+      "pdfFieldName": "topmostSubform[0].Page2[0].payeedate2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 122,
+      "pdfFieldName": "topmostSubform[0].Page2[0].jointsign2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 123,
+      "pdfFieldName": "topmostSubform[0].Page2[0].jointdate2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 124,
+      "pdfFieldName": "topmostSubform[0].Page2[0].agcyname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 125,
+      "pdfFieldName": "topmostSubform[0].Page2[0].agcyaddr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 126,
+      "pdfFieldName": "topmostSubform[0].Page2[0].inst[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 127,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 128,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 129,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 130,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 131,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 132,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 133,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 134,
+      "pdfFieldName": "topmostSubform[0].Page2[0].rout8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 135,
+      "pdfFieldName": "topmostSubform[0].Page2[0].ckdigit[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 136,
+      "pdfFieldName": "topmostSubform[0].Page2[0].acctitle[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 137,
+      "pdfFieldName": "topmostSubform[0].Page2[0].repname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 138,
+      "pdfFieldName": "topmostSubform[0].Page2[0].repsign[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 139,
+      "pdfFieldName": "topmostSubform[0].Page2[0].repphone[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 140,
+      "pdfFieldName": "topmostSubform[0].Page2[0].repdate[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 141,
+      "pdfFieldName": "topmostSubform[0].Page2[0].Reset[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 142,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 143,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xsvgs[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 144,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xcheck[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 145,
+      "pdfFieldName": "topmostSubform[0].Page3[0].paystreet[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 146,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 147,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 148,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 149,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 150,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 151,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 152,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 153,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 154,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct9[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 155,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct10[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 156,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct11[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 157,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct12[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 158,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct13[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 159,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct14[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 160,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct15[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 161,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct16[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 162,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acct17[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 163,
+      "pdfFieldName": "topmostSubform[0].Page3[0].paycity[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 164,
+      "pdfFieldName": "topmostSubform[0].Page3[0].paystate[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 165,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payzip[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 166,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payphone[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 167,
+      "pdfFieldName": "topmostSubform[0].Page3[0].entname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 168,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xss[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 169,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xssi[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 170,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xrr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 171,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xcsr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 172,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xva[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 173,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xfed[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 174,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xact[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 175,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xret[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 176,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xsurv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 177,
+      "pdfFieldName": "topmostSubform[0].Page3[0].xother[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 178,
+      "pdfFieldName": "topmostSubform[0].Page3[0].active[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 179,
+      "pdfFieldName": "topmostSubform[0].Page3[0].retire[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 180,
+      "pdfFieldName": "topmostSubform[0].Page3[0].surv[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 181,
+      "pdfFieldName": "topmostSubform[0].Page3[0].other[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 182,
+      "pdfFieldName": "topmostSubform[0].Page3[0].prefix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 183,
+      "pdfFieldName": "topmostSubform[0].Page3[0].idno[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 184,
+      "pdfFieldName": "topmostSubform[0].Page3[0].suffix[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 185,
+      "pdfFieldName": "topmostSubform[0].Page3[0].paytype[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 186,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payamt[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 187,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payeesign1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 188,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payeedate1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 189,
+      "pdfFieldName": "topmostSubform[0].Page3[0].jointsign1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 190,
+      "pdfFieldName": "topmostSubform[0].Page3[0].jointdate1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 191,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payeesign2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 192,
+      "pdfFieldName": "topmostSubform[0].Page3[0].payeedate2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 193,
+      "pdfFieldName": "topmostSubform[0].Page3[0].jointsign2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 194,
+      "pdfFieldName": "topmostSubform[0].Page3[0].jointdate2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 195,
+      "pdfFieldName": "topmostSubform[0].Page3[0].agcyname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 196,
+      "pdfFieldName": "topmostSubform[0].Page3[0].agcyaddr[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 197,
+      "pdfFieldName": "topmostSubform[0].Page3[0].inst[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 198,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout1[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 199,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout2[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 200,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout3[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 201,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout4[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 202,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout5[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 203,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout6[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 204,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout7[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 205,
+      "pdfFieldName": "topmostSubform[0].Page3[0].rout8[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 206,
+      "pdfFieldName": "topmostSubform[0].Page3[0].ckdigit[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 207,
+      "pdfFieldName": "topmostSubform[0].Page3[0].acctitle[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 208,
+      "pdfFieldName": "topmostSubform[0].Page3[0].repname[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 209,
+      "pdfFieldName": "topmostSubform[0].Page3[0].repsign[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 210,
+      "pdfFieldName": "topmostSubform[0].Page3[0].repphone[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 211,
+      "pdfFieldName": "topmostSubform[0].Page3[0].repdate[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    },
+    {
+      "fieldIndex": 212,
+      "pdfFieldName": "topmostSubform[0].Page3[0].Reset[0]",
+      "mode": "skip",
+      "reason": "out_of_scope",
+      "note": "Duplicate copy page skipped for v1 scoring to avoid triple-counting the same form facts."
+    }
+  ]
+}
