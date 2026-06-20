@@ -261,7 +261,11 @@ test('buildFormFillFieldPolicies derives policies from field and storage maps', 
   const address = policies.fields.find(
     (field) => field.fieldName === 'Address Street Number and Name',
   );
-  assert.deepEqual(address.sourceSlugs, ['eval.address.current.street']);
+  assert.deepEqual(address.sourceSlugs, [
+    'profile.address.street',
+    'address.current.street',
+    'eval.address.current.street',
+  ]);
 
   const signature = policies.fields.find(
     (field) => field.fieldName === 'Signature of Employee',

@@ -1,0 +1,35 @@
+source_system: HarborHire
+saved_timestamp: "2026-06-25T13:04:00-07:00"
+status: section_1_draft_ready_for_employee_review
+worker_id: PLC-20418
+assigned_reviewer: Priya Shah
+field_ids:
+  - last_name_family_name
+  - first_name_given_name
+  - middle_initial
+  - address_street_number_and_name
+  - apt_number
+  - city_or_town
+  - state
+  - zip_code
+  - date_of_birth
+  - social_security_number
+  - employee_email_address
+  - citizenship_status
+i9_section_1_draft:
+  last_name_family_name: Chen
+  first_name_given_name: Maya
+  middle_initial: L
+  address_street_number_and_name: 2846 Ashbury Street
+  apt_number: Apt 3D
+  city_or_town: Oakland
+  state: CA
+  zip_code: "94609"
+  date_of_birth: 1991-02-22
+  social_security_number: 000-00-0417
+  employee_email_address: maya.chen@example.test
+  citizenship_status: U.S. citizen
+citizenship_checkbox_review:
+  selected_branch: U.S. citizen
+  noncitizen_identifier_fields: not_applicable_for_selected_branch
+review_note: Section 1 facts were copied from the accepted identity and HR records for worker id PLC-20418.

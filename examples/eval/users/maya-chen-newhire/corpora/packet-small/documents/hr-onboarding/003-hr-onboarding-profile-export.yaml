@@ -1,0 +1,33 @@
+source_system: HarborHire
+exported_timestamp: "2026-06-25T11:18:00-07:00"
+status: active_new_hire_profile
+worker_id: PLC-20418
+assigned_reviewer: Priya Shah
+field_ids:
+  - employee_name
+  - contact_email
+  - home_address
+  - employment_assignment
+employee_profile:
+  legal_name: Maya Lin Chen
+  first_name: Maya
+  middle_initial: L
+  last_name: Chen
+  contact_email: maya.chen@example.test
+  home_address:
+    street_line: 2846 Ashbury Street Apt 3D
+    city_state_zip: Oakland, CA 94609
+    street: 2846 Ashbury Street
+    unit: Apt 3D
+    city: Oakland
+    state: CA
+    postal_code: "94609"
+employment_assignment:
+  company: Pacific Ledger Cooperative
+  title: Client Operations Associate
+  start_date: 2026-07-06
+  work_email: maya.chen@pacificledger.example.test
+  onboarding_status: packet_documents_ready
+review_notes:
+  - Profile is current for first-day paperwork.
+  - Direct tax and deposit forms should use the formatted address line above.

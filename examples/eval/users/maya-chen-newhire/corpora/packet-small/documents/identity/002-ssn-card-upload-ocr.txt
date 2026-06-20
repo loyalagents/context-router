@@ -1,0 +1,14 @@
+HarborHire Secure Identity Intake
+source system: HarborHire
+upload batch id: HH-UPL-MC-20418
+source filename: maya-chen-ssn-card.png
+document category: Social Security card OCR transcript
+status: reviewed_current
+OCR confidence: name 0.99, number 0.99
+
+card_name_line: Maya Lin Chen
+social_security_number: 000-00-0417
+redaction_state: full value visible to evaluator role for payroll onboarding
+
+reviewer note: the uploaded card was tied to worker id PLC-20418 and accepted for employment packet preparation.
+storage note: the original image remains in the secure document vault; this export is the text transcript used for onboarding review.

@@ -8,7 +8,7 @@ facts:
     middleName: Lin
     middleInitial: L
     lastName: Chen
-    otherLastNames: []
+    otherLastNames: null
     dateOfBirth: 1991-02-22
     ssn: 000-00-0417
   contact:
