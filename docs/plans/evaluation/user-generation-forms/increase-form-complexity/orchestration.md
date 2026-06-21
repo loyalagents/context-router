@@ -406,6 +406,13 @@ clearly before comparing stored-memory results against a truncated direct
 baseline. Otherwise the stored-vs-direct delta is confounded by baseline
 truncation.
 
+Packet-small address caveat: W-4 and direct deposit use form-ready composite
+address facts (`address.current.streetLine` and
+`address.current.cityStateZip`). The corpus explicitly contains those strings,
+but the first live run should inspect whether open-schema memory stored the
+composite address facts or only atomic address facts before interpreting any
+stored-memory versus direct-baseline address delta.
+
 Exit criteria:
 
 - `packet-small` open-schema run completes;

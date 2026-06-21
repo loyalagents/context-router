@@ -66,6 +66,7 @@ pnpm eval:validate --scenario maya-chen-newhire-fw4-packet-small
 pnpm eval:validate --scenario maya-chen-newhire-direct-deposit-packet-small
 node --test examples/eval/scripts/scoring/open-schema-database.test.mjs examples/eval/scripts/validate.test.mjs
 node --test --test-name-pattern "buildFormFillFieldPolicies derives policies from field and storage maps" examples/eval/scripts/fill-form.test.mjs
+node --test --test-name-pattern "buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slugs" examples/eval/scripts/fill-form.test.mjs
 pnpm eval:test
 ```
 
@@ -100,8 +101,16 @@ local or remote eval environment.
 
 - This is a small correctness/plumbing corpus, not the harder context-size
   benchmark.
+- W-4 and direct deposit use form-ready composite address facts
+  (`address.current.streetLine` and `address.current.cityStateZip`). The corpus
+  explicitly contains those strings, but the first live run should inspect
+  whether open-schema memory stored the composite facts or only atomic address
+  facts before interpreting stored-memory versus direct-baseline address misses.
 - Direct deposit routing and account number facts are present in the dossier and
   storage map, but SF 1199A split digit boxes remain skipped in the form map.
+- Open-schema database recovery currently counts atomic and form-ready address
+  facts separately, so address recovery can be noisy until derived/equivalence
+  scoring exists.
 - `N=1` remains the first target once live runs are configured.
 - Packet-level reporting is not implemented yet.
 
@@ -111,7 +120,9 @@ Run the live `packet-small` comparison in a configured environment:
 
 1. reset Maya's memory;
 2. run open-schema memory setup once on `packet-small`;
-3. fill I-9, W-4, and direct deposit from that same memory;
-4. run `eval:direct-open-schema` once per scenario;
-5. compare stored-memory versus direct no-memory results before building
+3. inspect the memory snapshot for composite address facts before interpreting
+   address-related misses;
+4. fill I-9, W-4, and direct deposit from that same memory;
+5. run `eval:direct-open-schema` once per scenario;
+6. compare stored-memory versus direct no-memory results before building
    `packet-medium`.
