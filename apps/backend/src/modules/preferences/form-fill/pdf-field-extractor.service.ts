@@ -24,20 +24,11 @@ export class PdfFieldExtractorService {
   async extractFields(fileBuffer: Buffer): Promise<ExtractedPdfFields> {
     const pdfDoc = await PDFDocument.load(fileBuffer);
     const hasXfa = this.hasXfa(pdfDoc);
-
-    if (hasXfa) {
-      return {
-        hasXfa,
-        fields: [],
-      };
-    }
+    const form = pdfDoc.getForm();
 
     return {
       hasXfa,
-      fields: pdfDoc
-        .getForm()
-        .getFields()
-        .map((field) => this.toMetadata(field)),
+      fields: form.getFields().map((field) => this.toMetadata(field)),
     };
   }
 

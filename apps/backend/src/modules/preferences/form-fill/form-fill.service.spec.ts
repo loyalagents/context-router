@@ -405,7 +405,75 @@ describe('FormFillService', () => {
     });
   });
 
-  it('returns unsupported_format for XFA without calling AI', async () => {
+  it('fills AcroForm fields when the source PDF also contains XFA data', async () => {
+    const pdfBytes = Buffer.from('filled xfa hybrid pdf');
+    fieldExtractor.extractFields.mockResolvedValue({
+      hasXfa: true,
+      fields: [
+        {
+          name: 'profile.full_name',
+          type: 'text',
+          options: [],
+          supported: true,
+        },
+      ],
+    });
+    preferenceService.getActivePreferences.mockResolvedValue([
+      {
+        slug: 'profile.full_name',
+        value: 'Alex Rivera',
+        description: 'Full name',
+      },
+    ]);
+    promptBuilder.buildPrompt.mockReturnValue('prompt');
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.95,
+        },
+      ],
+    });
+    validator.validate.mockReturnValue({
+      validActions: [
+        {
+          fieldName: 'profile.full_name',
+          fieldType: 'text',
+          action: 'SET_TEXT',
+          value: 'Alex Rivera',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.95,
+        },
+      ],
+      filledFields: [
+        {
+          pdfFieldName: 'profile.full_name',
+          fieldType: 'text',
+          sourceSlugs: ['profile.full_name'],
+          confidence: 0.95,
+        },
+      ],
+      skippedFields: [],
+      warnings: [],
+    });
+    pdfFiller.fillPdf.mockResolvedValue(pdfBytes);
+
+    const result = await service.fillPdfForm(
+      'user-1',
+      Buffer.from('xfa hybrid pdf'),
+      'xfa-hybrid.pdf',
+    );
+
+    expect(result.status).toBe('success');
+    expect(result.filledPdfBase64).toBe(pdfBytes.toString('base64'));
+    expect(aiStructuredService.generateStructured).toHaveBeenCalledTimes(1);
+    expect(pdfFiller.fillPdf).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns no_fillable_fields for XFA PDFs without AcroForm fields', async () => {
     fieldExtractor.extractFields.mockResolvedValue({
       hasXfa: true,
       fields: [],
@@ -418,7 +486,7 @@ describe('FormFillService', () => {
     );
 
     expect(result).toMatchObject({
-      status: 'unsupported_format',
+      status: 'no_fillable_fields',
       filledPdfBase64: null,
       summary: {
         totalFields: 0,
