@@ -658,7 +658,7 @@ describe('FormFillValidatorService', () => {
     );
   });
 
-  it('temporarily activates work authorization conditions from normalized active values', () => {
+  it('activates conditional policies from normalized active values when listed source slugs are absent', () => {
     const workAuthorizationFields: PdfFieldMetadata[] = [
       {
         name: 'CB_4',
@@ -714,7 +714,7 @@ describe('FormFillValidatorService', () => {
               sourceSlugs: ['work_auth.citizenship_status'],
               when: {
                 factKey: 'workAuthorization.citizenshipStatus',
-                sourceSlugs: [],
+                sourceSlugs: ['work_auth.citizenship_status'],
                 equals: 'alien authorized to work',
               },
             },
@@ -725,7 +725,7 @@ describe('FormFillValidatorService', () => {
               sourceSlugs: ['work_auth.uscis_number'],
               when: {
                 factKey: 'workAuthorization.citizenshipStatus',
-                sourceSlugs: [],
+                sourceSlugs: ['work_auth.citizenship_status'],
                 equals: 'alien authorized to work',
               },
             },
@@ -759,7 +759,7 @@ describe('FormFillValidatorService', () => {
     );
   });
 
-  it('does not apply active-value condition fallback to unrelated fact keys', () => {
+  it('does not activate active-value condition fallback when no active value matches', () => {
     const result = service.validate(
       [
         {
@@ -775,7 +775,7 @@ describe('FormFillValidatorService', () => {
       {
         activePreferenceValues: new Map<string, unknown>([
           ['profile.newsletter_opt_in', true],
-          ['profile.citizenship_status', 'An alien authorized to work'],
+          ['profile.citizenship_status', 'lawful permanent resident'],
         ]),
         fieldPolicies: {
           schemaVersion: 1,
@@ -943,7 +943,7 @@ describe('FormFillValidatorService', () => {
     ]);
   });
 
-  it('records a warning event for applied active slugs outside field policy slugs without blocking the fill', () => {
+  it('accepts applied active slugs outside field policy slugs without recording an off-policy warning', () => {
     const result = service.validate(
       [
         {
@@ -978,13 +978,7 @@ describe('FormFillValidatorService', () => {
         action: 'SET_TEXT',
       }),
     ]);
-    expect(result.validationEvents).toEqual([
-      expect.objectContaining({
-        kind: 'policy_source_slug_off_policy',
-        fieldName: 'profile.full_name',
-        message: 'source slug not listed in field policy: profile.legal_name',
-      }),
-    ]);
+    expect(result.validationEvents).toEqual([]);
   });
 
   it('keeps the highest-confidence checkbox action in a policy group', () => {

@@ -25,13 +25,12 @@ For text fields with maxLength metadata, return a value whose final text length 
 Every action must include sourceSlugs and confidence. Use sourceSlugs: [] only for SKIP actions.
 Use SKIP with sourceSlugs: [] and confidence: 0 when memory is missing, confidence is low, a field is unsupported, or a field should not be filled.
 Do not fill signatures, certification/declaration fields, submit buttons, or fields that require unsupported personal/legal assertions.
-When field policies are provided, treat them as authoritative for what each field may use.
-For mode=fact field policies, use only active memories whose slug is listed in that field policy's sourceSlugs or whose slug is listed on a resolved form fact with the same canonical factKey.
-If no listed sourceSlug or resolved form fact has a usable active memory value, return SKIP for that field.
-Use sourceSlugs from the raw active memory, not the canonical factKey.
-Do not substitute semantically similar memories for a field policy. For example, do not swap one email, address, name, identifier, status, date, or phone number for another unless that exact memory slug is explicitly listed for that field or in resolved form facts.
-Do not invent your own resolved form facts.
-Treat mode=skip fields and inactive conditional branches as not fillable.
+When field policies are provided, treat them as authoritative for field intent and skip rules.
+For mode=fact field policies, factKey, field notes, and policy metadata describe the target value. sourceSlugs are hints/examples/aliases and are not exhaustive.
+You may use any active memory whose value supports the target field, including multiple active memories when the field requires a composed value.
+Use sourceSlugs from the raw active memories actually used. Do not cite canonical factKeys, resolved form facts, or any sourceSlug that is not present in active memory.
+Do not invent memories, values, or resolved form facts. If active memory is missing, contradicted, stale, ambiguous, or insufficient, return SKIP for that field.
+Do not fill mode=skip fields, inactive conditional branches, signatures, manual attestations, out-of-scope fields, or unsupported fields.
 For grouped checkbox policies, choose only the applicable checkbox and leave the other checkboxes unchecked or skipped.
 
 Allowed response shape:
