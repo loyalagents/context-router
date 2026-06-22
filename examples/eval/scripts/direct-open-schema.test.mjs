@@ -182,6 +182,10 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.match(fillPrompt, /targetFactKey/);
   assert.match(fillPrompt, /semanticNote/);
   assert.match(fillPrompt, /strongest field-meaning hints/);
+  assert.match(fillPrompt, /render dates as MMDDYYYY/);
+  assert.match(fillPrompt, /combine street plus unit\/apartment/);
+  assert.match(fillPrompt, /render as City, ST ZIP/);
+  assert.match(fillPrompt, /component sourceFactIds/);
   assert.match(fillPrompt, /Treat inferredLabel as a weak fallback hint/);
   assert.match(fillPrompt, /sourceFactIds/);
   assert.match(fillPrompt, /"maxLength": 1/);

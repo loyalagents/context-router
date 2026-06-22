@@ -154,6 +154,10 @@ export function factValueVariants(factKey, value) {
     }
   }
 
+  if (factKey === 'tax.filingStatus') {
+    variants.add(raw.toLocaleLowerCase().replace(/\s+/g, ' '));
+  }
+
   if (factKey === 'address.current.street') {
     for (const variant of streetSuffixVariants(raw)) {
       variants.add(variant);

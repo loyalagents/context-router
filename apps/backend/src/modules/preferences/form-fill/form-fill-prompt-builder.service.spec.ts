@@ -94,6 +94,9 @@ describe('FormFillPromptBuilderService', () => {
     expect(prompt).toContain('including multiple active memories');
     expect(prompt).toContain('raw active memories actually used');
     expect(prompt).toContain('Do not fill mode=skip fields');
+    expect(prompt).toContain('render dates as MMDDYYYY');
+    expect(prompt).toContain('combine street plus unit/apartment');
+    expect(prompt).toContain('render as City, ST ZIP');
     expect(prompt).toContain('return SKIP for that field');
     expect(prompt).not.toContain('use only active memories whose slug is listed');
     expect(prompt).not.toContain('Do not substitute semantically similar memories');

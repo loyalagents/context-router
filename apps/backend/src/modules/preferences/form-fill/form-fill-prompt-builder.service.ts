@@ -31,6 +31,9 @@ You may use any active memory whose value supports the target field, including m
 Use sourceSlugs from the raw active memories actually used. Do not cite canonical factKeys, resolved form facts, or any sourceSlug that is not present in active memory.
 Do not invent memories, values, or resolved form facts. If active memory is missing, contradicted, stale, ambiguous, or insufficient, return SKIP for that field.
 Do not fill mode=skip fields, inactive conditional branches, signatures, manual attestations, out-of-scope fields, or unsupported fields.
+For fields named like mmddyyyy, render dates as MMDDYYYY.
+For address.current.streetLine fields, combine street plus unit/apartment when both active memories exist, and cite all component sourceSlugs.
+For address.current.cityStateZip fields, render as City, ST ZIP, and cite city, state, and postal code sourceSlugs.
 For grouped checkbox policies, choose only the applicable checkbox and leave the other checkboxes unchecked or skipped.
 
 Allowed response shape:

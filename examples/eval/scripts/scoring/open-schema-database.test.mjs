@@ -5,6 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
+  scoreOpenKnownFact,
   scoreOpenMissingFact,
   scoreOpenSchemaDatabaseToFile,
 } from './open-schema-database.mjs';
@@ -281,6 +282,108 @@ test('open-schema missing fact scoring detects withheld active-memory value leak
     }).classification,
     'open_missing_active_hallucinated',
   );
+});
+
+test('open-schema known fact scoring derives address composites from active component facts', () => {
+  const profile = {
+    facts: {
+      address: {
+        current: {
+          street: '2846 Ashbury Street',
+          unit: 'Apt 3D',
+          streetLine: '2846 Ashbury Street Apt 3D',
+          city: 'Oakland',
+          state: 'CA',
+          postalCode: '94609',
+          cityStateZip: 'Oakland, CA 94609',
+        },
+      },
+    },
+  };
+  const storageMap = {
+    facts: {
+      'address.current.streetLine': {
+        canonicalSlugs: ['profile.address.street_line'],
+        acceptedAliasSlugs: [],
+      },
+      'address.current.cityStateZip': {
+        canonicalSlugs: ['profile.address.city_state_zip'],
+        acceptedAliasSlugs: [],
+      },
+    },
+  };
+  const activePreferences = [
+    preference('profile.address_street', '2846 Ashbury Street'),
+    preference('profile.address_apt', 'Apt 3D'),
+    preference('profile.address_city', 'Oakland'),
+    preference('profile.address_state', 'CA'),
+    preference('profile.address_zip', '94609'),
+  ];
+
+  const streetLine = scoreOpenKnownFact({
+    factKey: 'address.current.streetLine',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const cityStateZip = scoreOpenKnownFact({
+    factKey: 'address.current.cityStateZip',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(
+    streetLine.classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(streetLine.matchingNovelRows[0].slug, 'derived.address.current.streetLine');
+  assert.equal(
+    cityStateZip.classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(
+    cityStateZip.matchingNovelRows[0].slug,
+    'derived.address.current.cityStateZip',
+  );
+});
+
+test('open-schema address composite derivation stays missing when a required component is absent', () => {
+  const profile = {
+    facts: {
+      address: {
+        current: {
+          street: '2846 Ashbury Street',
+          unit: 'Apt 3D',
+          streetLine: '2846 Ashbury Street Apt 3D',
+        },
+      },
+    },
+  };
+  const result = scoreOpenKnownFact({
+    factKey: 'address.current.streetLine',
+    profile,
+    storageMap: {
+      facts: {
+        'address.current.streetLine': {
+          canonicalSlugs: ['profile.address.street_line'],
+          acceptedAliasSlugs: [],
+        },
+      },
+    },
+    activePreferences: [preference('profile.address_street', '2846 Ashbury Street')],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_missing');
 });
 
 function memorySnapshot({

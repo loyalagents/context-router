@@ -205,6 +205,27 @@ export function scoreOpenKnownFact({
     }
   });
 
+  const derivedActiveMatch = derivedCompositeActiveMatch({
+    factKey,
+    profile,
+    expectedValue,
+    activePreferences,
+  });
+  if (matchingActiveRows.length === 0 && derivedActiveMatch) {
+    const derivedRow = derivedPreferenceSummary({
+      factKey,
+      value: expectedValue,
+      sourceRows: derivedActiveMatch.rows.map(({ preference }) =>
+        preferenceSummary(preference),
+      ),
+    });
+    matchingActiveRows.push(derivedRow);
+    matchingNovelRows.push(derivedRow);
+    for (const { index } of derivedActiveMatch.rows) {
+      usedPreferenceIndexes.add(index);
+    }
+  }
+
   const recoveredUnderAcceptedSlug = matchingAcceptedRows.length > 0;
   const recoveredUnderNovelSlug =
     !recoveredUnderAcceptedSlug && matchingNovelRows.length > 0;
@@ -238,6 +259,90 @@ export function scoreOpenKnownFact({
       acceptedSlugHasWrongValue,
     }),
   };
+}
+
+function derivedCompositeActiveMatch({
+  factKey,
+  profile,
+  expectedValue,
+  activePreferences,
+}) {
+  if (factKey === 'address.current.streetLine') {
+    const street = getComponentMatch({
+      factKey: 'address.current.street',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    const unitExpected = getFactValue(profile.facts ?? {}, 'address.current.unit');
+    const unit = getComponentMatch({
+      factKey: 'address.current.unit',
+      profile,
+      activePreferences,
+      required: !isAbsentValue(unitExpected),
+    });
+    if (!street || unit === null) return null;
+    const rows = unit ? [street, unit] : [street];
+    return derivedValueMatchesExpected({ factKey, expectedValue, rows })
+      ? { rows }
+      : null;
+  }
+
+  if (factKey === 'address.current.cityStateZip') {
+    const city = getComponentMatch({
+      factKey: 'address.current.city',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    const state = getComponentMatch({
+      factKey: 'address.current.state',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    const postalCode = getComponentMatch({
+      factKey: 'address.current.postalCode',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    if (!city || !state || !postalCode) return null;
+    const rows = [city, state, postalCode];
+    return derivedValueMatchesExpected({ factKey, expectedValue, rows })
+      ? { rows }
+      : null;
+  }
+
+  return null;
+}
+
+function getComponentMatch({ factKey, profile, activePreferences, required }) {
+  const expected = getFactValue(profile.facts ?? {}, factKey);
+  if (isAbsentValue(expected)) return required ? null : undefined;
+  for (let index = 0; index < activePreferences.length; index += 1) {
+    const preference = activePreferences[index];
+    if (valueMatchesFact(factKey, expected, preference.value)) {
+      return { index, preference };
+    }
+  }
+  return null;
+}
+
+function derivedValueMatchesExpected({ factKey, expectedValue, rows }) {
+  if (factKey === 'address.current.streetLine') {
+    const value = rows.map(({ preference }) => preference.value).join(' ');
+    return valueMatchesFact(factKey, expectedValue, value);
+  }
+  if (factKey === 'address.current.cityStateZip') {
+    const [city, state, postalCode] = rows.map(({ preference }) => preference.value);
+    return valueMatchesFact(
+      factKey,
+      expectedValue,
+      `${city}, ${state} ${postalCode}`,
+    );
+  }
+  return false;
 }
 
 export function scoreOpenMissingFact({
@@ -465,6 +570,18 @@ function preferenceSummary(preference) {
     status: preference.status,
     sourceType: preference.sourceType ?? null,
     confidence: preference.confidence ?? null,
+  };
+}
+
+function derivedPreferenceSummary({ factKey, value, sourceRows }) {
+  return {
+    id: null,
+    slug: `derived.${factKey}`,
+    definitionId: null,
+    value,
+    status: ACTIVE_STATUS,
+    sourceType: `DERIVED:${sourceRows.map((row) => row.slug).join('+')}`,
+    confidence: null,
   };
 }
 
