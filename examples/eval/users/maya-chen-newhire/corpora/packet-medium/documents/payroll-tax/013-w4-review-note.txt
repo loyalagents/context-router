@@ -1,28 +1,101 @@
-Source system: LedgerPay
-Exported timestamp: 2026-06-25T14:16:00-07:00
-Worker id: PLC-20418
-Status: payroll reviewer accepted
-Field ids: review.tax_filing_status, review.ssn_confirmation, review.status
+export_metadata:
+  source_system: LedgerPay
+  export_id: lp-exp-a8b3c1d4-e5f6-4a9b-8c7d-1e2f3a4b5c6d
+  export_timestamp: 2026-06-25T13:28:00-07:00
+  export_format_version: 1.2
+  data_context:
+    domain: payroll_tax_management
+    sub_domain: employee_withholding
+    event_type: form_submission_review
 
-Reviewer assigned: North Bay Payroll Team
-Filing status reviewed: single or married filing separately
-SSN confirmation value: 000-00-0417
-Reviewer note: The filing status and Social Security number match the saved W-4 setup. No dependent credit amount was entered in this first packet.
+review_task:
+  task_id: rev-w4-98765-20260625-01
+  task_type: new_employee_form_verification
+  status: needs_review
+  priority: medium
+  created_at: 2026-06-25T13:28:00-07:00
+  assigned_queue: payroll_specialist_group
+  assigned_reviewer: null
+  worker_context:
+    worker_id: PLC-20418
+    employment_status: pending_start
 
-W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+source_document:
+  document_type: federal_w4
+  form_year: 2026
+  submission_channel: api_integration
+  source_system_ref: nh-onboard-portal-sub-xyz123
+  submission_timestamp: 2026-06-25T13:28:00-07:00
 
-W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+imported_data_payload:
+  schema_version: w4_v3.1
+  data_fields:
+    - field_id: employee_ssn
+      field_name: "Employee's Social Security Number"
+      value: 000-00-0417
+      is_pii: true
+      validation_status: valid_format
+    - field_id: filing_status
+      field_name: "Step 1(c) Filing Status"
+      value: "single or married filing separately"
+      validation_status: valid_selection
+    - field_id: multiple_jobs_check
+      field_name: "Step 2(c) Multiple Jobs Checkbox"
+      value: not_imported
+      validation_status: null
+    - field_id: dependents_amount
+      field_name: "Step 3 Claim Dependents Amount"
+      value: not_imported
+      validation_status: null
+    - field_id: other_income_amount
+      field_name: "Step 4(a) Other Income"
+      value: not_imported
+      validation_status: null
+    - field_id: deductions_amount
+      field_name: "Step 4(b) Deductions"
+      value: not_imported
+      validation_status: null
+    - field_id: extra_withholding_amount
+      field_name: "Step 4(c) Extra Withholding"
+      value: not_imported
+      validation_status: null
+    - field_id: exempt_claim
+      field_name: "Claim for Exemption"
+      value: not_imported
+      validation_status: null
+    - field_id: nonresident_alien_status
+      field_name: "Nonresident Alien Status"
+      value: not_imported
+      validation_status: null
 
-W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+system_review_log:
+  - entry_timestamp: 2026-06-25T13:28:00.512Z
+    actor_id: system_ingest_service
+    event_type: record_creation
+    notes:
+      - "Received new employee tax form submission via API."
+      - "Record created for worker ID PLC-20418."
+      - "Assigning review task rev-w4-98765-20260625-01."
+  - entry_timestamp: 2026-06-25T13:28:01.105Z
+    actor_id: system_rules_engine_v2
+    event_type: automated_validation
+    notes:
+      - "Executing ruleset 'new_hire_w4_v3'."
+      - "Rule check: SSN format is valid."
+      - "Rule check: Filing status is a recognized value."
+      - "Rule check: Optional fields (Steps 2-4) are not present in this import slice; this is an expected condition for this source."
+      - "Rule result: Form requires manual payroll specialist review as per standard operating procedure for all new hires."
+      - "Status set to 'needs_review'."
 
-W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-
-W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-
-W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-
-W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-
-W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-
-W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+reviewer_instructions:
+  title: "Instructions for Payroll Specialist"
+  instruction_set:
+    - step: 1
+      description: "Verify the employee's filing status election."
+      details: "The system has imported 'single or married filing separately'. This is the primary data point for review in this task."
+    - step: 2
+      description: "Acknowledge the state of optional fields."
+      details: "No data was imported for Step 2 (Multiple Jobs), Step 3 (Dependents), or Step 4 (Other Adjustments). This is not an error. No action is required on these fields based on this record."
+    - step: 3
+      description: "Do not finalize or approve based solely on this record."
+      details: "This review task is for initial verification only. Do not proceed with activating the withholding in the payroll system or marking the review as 'completed' or 'approved'. Await further system or supervisory instruction."

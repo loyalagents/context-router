@@ -1,35 +1,91 @@
 {
-  "source_system": "LedgerPay",
-  "exported_timestamp": "2026-06-25T14:05:00-07:00",
-  "worker_id": "PLC-20418",
-  "status": "tax_profile_current",
-  "field_ids": [
-    "tax.filing_status",
-    "tax.multiple_jobs",
-    "tax.dependents_under_17",
-    "tax.other_dependents",
-    "tax.exemption_claim"
-  ],
-  "filing_status": "single or married filing separately",
-  "multiple_jobs": false,
-  "dependents_under_17": 0,
-  "other_dependents": 0,
-  "exemption_claim": false,
-  "reviewer_note": "Current payroll tax profile mirrors the saved W-4 setup and contains no extra withholding worksheet values.",
-  "audit_notes": [
-    "Payroll tax profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Payroll tax profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Payroll tax profile handling note: operational context is present without adding extra current personal facts.",
-    "Payroll tax profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Payroll tax profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Payroll tax profile handling note: operational context is present without adding extra current personal facts.",
-    "Payroll tax profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Payroll tax profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Payroll tax profile handling note: operational context is present without adding extra current personal facts.",
-    "Payroll tax profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Payroll tax profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Payroll tax profile handling note: operational context is present without adding extra current personal facts.",
-    "Payroll tax profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Payroll tax profile audit note: the export keeps worker id, document status, and review queue visible."
-  ]
+  "export_metadata": {
+    "export_id": "exp-a9b3c1d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "source_system": "LedgerPay",
+    "export_timestamp": "2026-06-25T11:18:00-07:00",
+    "data_schema_version": "v2.1.4",
+    "notes": "This data represents the employee's current tax withholding profile as of the export timestamp."
+  },
+  "payroll_tax_profile": {
+    "profile_id": "ptp-c35f2a1b-9876-4abc-8def-1234567890ab",
+    "worker_id": "PLC-20418",
+    "profile_status": "Active",
+    "last_updated": "2026-06-25T11:17:55-07:00",
+    "created_at": "2026-06-25T11:15:20-07:00",
+    "federal_withholding": {
+      "form_id": "fed-w4-2026-06-25-a1b2",
+      "form_type": "Form W-4",
+      "form_version": "2020 or later",
+      "status": "Active",
+      "effective_date": "2026-06-25",
+      "elections": {
+        "filing_status": "single or married filing separately",
+        "multiple_jobs_or_spouse_works": null,
+        "dependents": {
+          "qualifying_children_under_17_amount": null,
+          "other_dependents_amount": null,
+          "total_dependents_amount": null
+        },
+        "other_adjustments": {
+          "other_income_amount": null,
+          "deductions_amount": null,
+          "extra_withholding_amount": null
+        },
+        "is_exempt": null,
+        "is_nonresident_alien": null
+      },
+      "source": "Employee Onboarding Portal",
+      "submitted_at": "2026-06-25T11:17:55-07:00"
+    },
+    "state_withholding": [
+      {
+        "state_id": "st-de-1",
+        "state_code": "DE",
+        "work_location_state": true,
+        "residence_state": true,
+        "status": "Awaiting Employee Input",
+        "form_type": "DE-W4",
+        "elections": {
+          "filing_status": null,
+          "allowances": null,
+          "additional_allowances": null,
+          "additional_amount": null,
+          "is_exempt": null
+        },
+        "last_updated": null,
+        "submitted_at": null
+      }
+    ],
+    "local_withholding": [],
+    "review_status": {
+      "requires_review": false,
+      "reviewer_assigned": null,
+      "last_reviewed_at": null,
+      "notes": []
+    },
+    "audit_trail": [
+      {
+        "event_id": "evt-7f8e9d0c-1b2a-4c5d-6e7f-8a9b0c1d2e3f",
+        "timestamp": "2026-06-25T11:18:00-07:00",
+        "event_type": "PROFILE_EXPORTED",
+        "actor": "System:LedgerPay",
+        "details": "Payroll tax profile exported for integration."
+      },
+      {
+        "event_id": "evt-3a4b5c6d-7e8f-9a0b-1c2d-3e4f5a6b7c8d",
+        "timestamp": "2026-06-25T11:17:55-07:00",
+        "event_type": "FEDERAL_W4_SUBMITTED",
+        "actor": "Employee:PLC-20418",
+        "source_ip": "198.51.100.2",
+        "details": "Employee submitted Federal Form W-4 via Onboarding Portal. Filing Status: single or married filing separately. No other elections made."
+      },
+      {
+        "event_id": "evt-1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+        "timestamp": "2026-06-25T11:15:20-07:00",
+        "event_type": "PROFILE_CREATED",
+        "actor": "System:HRIS",
+        "details": "Payroll tax profile provisioned for new hire PLC-20418."
+      }
+    ]
+  }
 }

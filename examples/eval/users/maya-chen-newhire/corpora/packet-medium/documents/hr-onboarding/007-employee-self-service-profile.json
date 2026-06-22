@@ -1,33 +1,107 @@
 {
-  "source_system": "HarborHire",
-  "exported_timestamp": "2026-06-25T12:02:00-07:00",
-  "worker_id": "PLC-20418",
-  "status": "employee_profile_current",
-  "field_ids": [
-    "profile.legal_name",
-    "profile.personal_email",
-    "profile.mailing_address.street_line",
-    "profile.mailing_address.city_state_zip"
-  ],
-  "legal_name": "Maya Lin Chen",
-  "personal_email": "maya.chen@gmail.test",
-  "mailing_address": {
-    "street_line": "2846 Ashbury Street Apt 3D",
-    "city_state_zip": "Oakland, CA 94609"
+  "export_metadata": {
+    "source_system": "HarborHire",
+    "export_id": "a8c3d1e4-9b0f-4e6a-8d1c-5f7b3a2d9c0e",
+    "exported_at": "2026-06-25T11:18:00-07:00",
+    "export_type": "employee_profile_snapshot",
+    "schema_version": "2.3.1"
   },
-  "reviewer_note": "Current self-service profile export confirmed the personal email and mailing address used by onboarding.",
-  "audit_notes": [
-    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
-    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
-    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
-    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
-    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
-    "Employee self service profile handling note: operational context is present without adding extra current personal facts."
-  ]
+  "employee_data": {
+    "profile_id": "prof_1a2b3c4d5e6f7g8h",
+    "worker_id": "PLC-20418",
+    "profile_status": "pending_review",
+    "created_at": "2026-06-24T15:45:12Z",
+    "last_updated_at": "2026-06-25T10:05:30Z",
+    "personal_info": {
+      "legal_name_full": "Maya Lin Chen",
+      "legal_first_name": "Maya",
+      "legal_middle_name": "Lin",
+      "legal_last_name": "Chen",
+      "preferred_name": null,
+      "pronouns": null,
+      "date_of_birth": null,
+      "ssn_last4": null
+    },
+    "contact_info": {
+      "email": {
+        "personal": "maya.chen@gmail.test",
+        "work": null
+      },
+      "phone_numbers": {
+        "mobile": null,
+        "work": null,
+        "home": null
+      },
+      "mailing_address": {
+        "line1": "2846 Ashbury Street Apt 3D",
+        "line2": null,
+        "city": "Oakland",
+        "state": "CA",
+        "postal_code": "94609",
+        "country": "USA",
+        "full_address": "2846 Ashbury Street Apt 3D, Oakland, CA 94609",
+        "last_validated_at": "2026-06-25T10:05:28Z"
+      }
+    },
+    "employment_info": {
+      "title": null,
+      "department": null,
+      "cost_center": null,
+      "start_date": null,
+      "employment_type": null,
+      "work_location": null
+    },
+    "onboarding_status": {
+      "overall_progress": "in_progress",
+      "assigned_reviewer": "hr_specialist_pool",
+      "tasks": [
+        {
+          "task_id": "onboard-i9",
+          "task_name": "I-9 Employment Eligibility",
+          "status": "not_started",
+          "due_date": "2026-07-15"
+        },
+        {
+          "task_id": "onboard-w4",
+          "task_name": "Federal Tax Withholding (W-4)",
+          "status": "not_started",
+          "due_date": "2026-07-12"
+        },
+        {
+          "task_id": "onboard-dd",
+          "task_name": "Direct Deposit Setup",
+          "status": "pending_employee_action",
+          "due_date": "2026-07-12"
+        },
+        {
+          "task_id": "onboard-benefits",
+          "task_name": "Benefits Enrollment",
+          "status": "not_started",
+          "due_date": "2026-08-10"
+        },
+        {
+          "task_id": "onboard-policy-ack",
+          "task_name": "Handbook & Policy Acknowledgment",
+          "status": "not_started",
+          "due_date": "2026-07-12"
+        }
+      ]
+    },
+    "audit_history": [
+      {
+        "event_id": "evt_987654",
+        "timestamp": "2026-06-24T15:45:12Z",
+        "actor_id": "system_import",
+        "event_type": "PROFILE_CREATED",
+        "details": "Employee profile created via automated new hire sync."
+      },
+      {
+        "event_id": "evt_987655",
+        "timestamp": "2026-06-25T10:05:30Z",
+        "actor_id": "user:PLC-20418",
+        "event_type": "PROFILE_UPDATED",
+        "details": "User self-service update. Fields changed: mailing_address, email.personal."
+      }
+    ]
+  }
 }

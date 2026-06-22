@@ -1,32 +1,63 @@
-Source filename: bay-harbor-verification-letter-mc.pdf
-Timestamp: 2026-06-26T09:52:00-07:00
-Status: bank letter OCR accepted
-OCR confidence: 0.94 average
-Document category: account verification letter
+--- OCR EXPORT DATA ---
+Source Filename: BHCU_Verification_Chen_M_06252026.pdf
+Export Timestamp: 2026-06-26T09:52:00-07:00
+OCR Engine: Tesseract 5.3.1
+OCR Confidence: 97.8%
+Status: Completed
 
-Institution: Bay Harbor Credit Union
-Account holder: Maya Lin Chen
-Account type: checking
-Routing number: 091000019
-Account number: 740182936451
-Letter note: The institution confirms the account is eligible for ACH payroll deposits. The letter is attached to the payroll setup case for worker id PLC-20418.
+------------------------------------------------------------------
 
-Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+[LOGO] Bay Harbor Credit Union
 
-Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+100 Embarcadero Center, San Francisco, CA 94111
+(800) 555-2229 | www.bayharborcu.org
 
-Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+June 25, 2026
 
-Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+To Whom It May Concern:
 
-Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+RE: Account Verification Letter
+Customer Name: Maya Lin Chen
+Reference ID: PLC-20418
 
-Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+This letter is provided at the direct request of our member, Maya Lin Chen, to confirm their account details with Bay Harbor Credit Union. All information contained herein is accurate as of the date this letter was generated.
 
-Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+We are pleased to confirm the following account information:
 
-Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+Account Holder Name:             Maya Lin Chen
+Account Number:                  740182936451
+Account Type:                    Total Access Checking
+Routing Transit Number (ABA):    091000019
+Account Opened On:               March 12, 2022
+Account Status:                  Active and in Good Standing
 
-Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+The account listed above is a personal checking account and has been maintained responsibly since its inception. Bay Harbor Credit Union is a member-owned financial cooperative, and we value the relationship we have with our members.
 
-Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+This verification letter is intended solely for the purpose of confirming the existence and status of the specified account. It is not a statement of account balance, nor does it represent a guarantee of funds, a line of credit, or a commitment to lend. The information provided is confidential and should be handled with care. Bay Harbor Credit Union assumes no liability for any decisions made based on the information provided in this letter.
+
+For security purposes, this letter does not include the account balance. If balance information is required, separate authorization from the account holder will be necessary. This document is not negotiable and is valid only in its original or verified digital format. Any unauthorized alteration of this letter is strictly prohibited and may be subject to legal action.
+
+About Bay Harbor Credit Union:
+Founded in 1955, Bay Harbor Credit Union is a leading financial institution serving the communities of the San Francisco Bay Area. Our mission is to provide our members with affordable financial services, including savings and checking accounts, loans, mortgages, and investment services. We are committed to financial education and community involvement. As a not-for-profit cooperative, our earnings are returned to our members in the form of lower loan rates, higher savings yields, and fewer fees.
+
+Security and Privacy:
+We are committed to protecting our members' financial information. This communication is subject to the terms and conditions outlined in our Privacy Policy, a copy of which is available on our website at www.bayharborcu.org/privacy. We use industry-standard security measures to ensure that your information is safe.
+
+Verification of this Document:
+Should you need to verify the authenticity of this letter, please do not hesitate to contact our Member Services department at the phone number listed above. Please be prepared to provide the Reference ID (PLC-20418) and the date of this letter. Please note that our representatives will not be able to disclose any additional account information without explicit consent from the member.
+
+Thank you for your understanding.
+
+Sincerely,
+
+David R. Sterling
+Branch Manager
+Bay Harbor Credit Union - Embarcadero Branch
+100 Embarcadero Center
+San Francisco, CA 94111
+
+------------------------------------------------------------------
+Federally Insured by NCUA.     Equal Housing Lender.
+This is an electronically generated document. A physical signature is not required for verification when received directly from Bay Harbor Credit Union's official systems.
+
+--- END OF EXPORT ---

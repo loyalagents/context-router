@@ -1,25 +1,72 @@
-Source system: LedgerPay Knowledge Base
-Timestamp: 2026-06-01T08:00:00-07:00
-Status: active policy page
-Policy id: LP-W4-HELP-2026
-Owner group: payroll operations
+ID: W4-INSTR-001
+Version: 2.3
+Status: Published
+Published: 2026-06-01T08:00:00-07:00
+Owner: Payroll Department
+Source System: LedgerPay Knowledge Base
 
-Employees should review filing status choices in the payroll portal before signing a federal withholding form. The help page describes single, married filing jointly, head of household, multiple job, dependent, and extra withholding sections in general terms.
+Title: How to Complete Your Form W-4 for Federal Tax Withholding
 
-The article includes screenshots of blank fields and sample labels, but it is not an employee record and does not provide personal tax elections. It reminds reviewers to use the employee's current payroll setup instead of examples shown in the help page.
+Purpose
+----------------------------------------------------------------------
+This document provides instructions on how to complete Form W-4, Employee's Withholding Certificate. The W-4 tells the company how much federal income tax to withhold from your pay. It is important to complete this form accurately to avoid having too much or too little tax withheld.
 
-W-4 instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+You will complete your Form W-4 electronically in LedgerPay, our payroll system. These instructions are for federal withholding only. State tax withholding forms are completed separately, if applicable.
 
-W-4 instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+Completing the Form W-4
+----------------------------------------------------------------------
+The electronic Form W-4 in LedgerPay mirrors the official IRS form. It is divided into five steps. Steps 1 and 5 are required for all employees. Steps 2, 3, and 4 are optional but will help ensure your withholding is accurate for your personal financial situation.
 
-W-4 instructions handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Step 1: Enter Personal Information
+This step includes your name, address, Social Security number, and filing status. Your name, address, and SSN will be pre-populated in LedgerPay based on the information you provided during onboarding. Please verify that it is correct.
 
-W-4 instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+You must select a filing status:
+  - Single or Married filing separately
+  - Married filing jointly (or Qualifying widow(er))
+  - Head of household
 
-W-4 instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+Choose the filing status you expect to use when you file your annual tax return. If you are married but want to withhold at the higher "Single or Married filing separately" rate, you may select that option.
 
-W-4 instructions handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Step 2: Multiple Jobs or Spouse Works
+Complete this step only if you (1) hold more than one job at a time or (2) are married filing jointly and your spouse also works. If this does not apply to you, you may skip this step.
 
-W-4 instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+The form provides three options to calculate your withholding across multiple jobs. You only need to use one method, and it should only be done on the W-4 for ONE of your jobs (typically the highest paying one).
 
-W-4 instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+  (a) Use the IRS's Tax Withholding Estimator at www.irs.gov/W4App. This is the most accurate method.
+  (b) Use the Multiple Jobs Worksheet on page 3 of the IRS Form W-4 and enter the result in Step 4(c).
+  (c) Check the box in Step 2(c) if there are only two jobs total for your household and they have similar pay.
+
+If you do not account for multiple household incomes, you will likely have too little tax withheld.
+
+Step 3: Claim Dependents
+If you have dependents, you can claim them here to reduce your withholding.
+
+  - Qualifying Children: Multiply the number of qualifying children under age 17 by $2,000.
+  - Other Dependents: Multiply the number of other dependents by $500.
+
+Enter the total dollar amount on the line for Step 3. LedgerPay will perform the calculation for you.
+
+Step 4: Other Adjustments (Optional)
+This step is for other financial situations that affect your tax liability.
+
+  (a) Other Income (not from jobs): Enter any other estimated income you expect for the year that won't have withholding (e.g., interest, dividends, retirement income).
+  (b) Deductions: If you expect to claim deductions other than the standard deduction, use the Deductions Worksheet on page 3 of the IRS Form W-4 and enter the result here.
+  (c) Extra Withholding: Enter any additional amount of tax you want withheld from each paycheck.
+
+How to Submit in LedgerPay
+----------------------------------------------------------------------
+1. Log in to your LedgerPay employee portal.
+2. Navigate to: My Profile > Payroll > Tax Withholding.
+3. Select "Federal Withholding" to open the electronic Form W-4.
+4. Complete the steps as described above. The system will guide you.
+5. Review your entries and provide your electronic signature to submit the form.
+
+Changes take effect within 1-2 pay cycles.
+
+Reviewing and Updating Your W-4
+----------------------------------------------------------------------
+You can update your W-4 at any time during the year if your personal or financial situation changes (e.g., marriage, birth of a child, change in income). It is recommended to perform a "paycheck checkup" at least once a year using the IRS Tax Withholding Estimator to ensure your withholding is on track.
+
+Disclaimer
+----------------------------------------------------------------------
+The information provided here is for general guidance only. The company, including its HR and Payroll staff, cannot provide individual tax advice. For questions about your specific tax situation or how to complete the Form W-4, please consult a qualified tax professional.

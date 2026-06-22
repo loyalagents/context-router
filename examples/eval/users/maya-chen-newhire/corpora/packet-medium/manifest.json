@@ -236,12 +236,17 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "identity verification evidence only: split name fields, date of birth, SSN, verification status, reviewer metadata, field ids, and source audit metadata",
+          "include only the identity verification task or record; omit sibling onboarding tasks entirely, even as null, pending, not_started, blocked, or prerequisite rows"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "I-9, W-4, tax withholding, direct deposit, background check, employment eligibility, completed onboarding, approved workflow, or cleared status sections",
+          "sibling onboarding task inventory rows for I-9, W-4, tax withholding, direct deposit, background check, or employment eligibility",
+          "completed or approved statuses for target form workflows that are outside the identity verification fact contract"
         ],
         "lengthTarget": {
           "minChars": 1674,
@@ -346,9 +351,9 @@
     },
     {
       "id": "maya-chen-newhire-packet-medium-005",
-      "path": "documents/work-authorization/005-work-authorization-review-checklist.txt",
+      "path": "documents/work-authorization/005-work-authorization-intake-field-export.txt",
       "category": "work-authorization",
-      "title": "Work Authorization Review Checklist",
+      "title": "Work Authorization Intake Field Export",
       "outputExtension": "txt",
       "sourceSpec": {
         "artifactType": "system-export",
@@ -372,12 +377,17 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "work authorization intake field export may include the included legal name and citizenship status plus neutral profile/export metadata",
+          "if signature, signed-date, Section 2 certification, or completion fields are native to the source shape, leave them blank, null, omitted, or pending rather than filled",
+          "this source is not an I-9 task, checklist, or completion record; it may include only legal name, citizenship status, worker id, field ids, neutral export metadata, and non-lifecycle review routing metadata",
+          "YAML-like export text should use fields and note values, not # comments"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "Section 1 completion, employee signature, signature method, signed date, completion timestamp, section1_complete audit events, employer certification, Section 2 completion, I-9 completed, onboarding complete, completed W-4, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts"
         ],
         "lengthTarget": {
           "minChars": 1587,
@@ -430,12 +440,15 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "HR profile may include included identity, contact, address, and employment facts plus neutral profile/export metadata",
+          "workflow or task summaries may appear only as pending or in-progress shell metadata; do not assert completed I-9, W-4, direct-deposit, benefits, or onboarding-complete lifecycle facts unless those facts are included"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "onboarding complete, profile approved, completed W-4, completed I-9, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts"
         ],
         "lengthTarget": {
           "minChars": 2020,
@@ -478,7 +491,7 @@
       "sourceSpec": {
         "artifactType": "system-export",
         "sourceFamily": "hr-onboarding",
-        "captureMode": "yaml-system-export",
+        "captureMode": "json-system-export",
         "timelineRefs": [
           "onboardingProfileExportAt"
         ],
@@ -497,12 +510,15 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "employee self-service profile may include included legal name, email, address, and neutral profile/export metadata",
+          "omit onboarding task inventories and compliance workflow history; if a native self-service profile includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion"
         ],
         "lengthTarget": {
           "minChars": 1721,
@@ -616,12 +632,14 @@
           "message id",
           "sender",
           "recipient",
-          "thread status"
+          "thread status",
+          "recipient may use Maya's legal name with a redacted, omitted, or name-only email address because current personal email is not included for this source"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated tax data",
-          "signature attestation"
+          "signature attestation",
+          "invented user recipient email address such as maya.l.chen@email.com; do not invent Maya's personal email for the To field"
         ],
         "lengthTarget": {
           "minChars": 1978,
@@ -677,12 +695,15 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "company directory profile may include included name, company, title, work email, directory provisioning metadata, and neutral audit metadata",
+          "omit onboarding task inventories and compliance workflow history; if a native directory export includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion"
         ],
         "lengthTarget": {
           "minChars": 1630,
@@ -793,7 +814,7 @@
       "sourceSpec": {
         "artifactType": "system-export",
         "sourceFamily": "payroll-tax",
-        "captureMode": "yaml-system-export",
+        "captureMode": "json-system-export",
         "timelineRefs": [
           "onboardingProfileExportAt"
         ],
@@ -813,9 +834,9 @@
           "reviewer assigned",
           "field ids",
           "audit metadata",
-          "tax.filingStatus is the only W-4 election value included for this source; optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, and state withholding fields may appear only as null, blank, not_imported, or omitted",
-          "review notes may say optional withholding fields were not imported or were not in the corroboration export without implying no, false, zero, unchecked, or standard elections",
-          "state tax profile sections may be present as empty, pending, or not_imported metadata, but should not contain allowance counts, extra withholding amounts, or default withholding calculations"
+          "tax.filingStatus is the only W-4 election value included for this source; include the exact filing-status text from Required person details in a native field",
+          "prefer omitting optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, and state withholding sections entirely; if native shape requires them, use only silent null, blank, or not_imported fields without explanatory notes",
+          "omit state withholding profile sections unless they can remain empty metadata with no not_configured, default, fallback, calculation, or first-payroll-cycle prose"
         ],
         "riskyDetailMenu": [
           "new user phone number",
@@ -824,7 +845,8 @@
           "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
           "state DE 4 allowance counts, additional allowance counts, or additional withholding amounts unless present in required person details",
           "default withholding calculations such as Single, 0 allowances, even in validation notes, reviewer notes, warnings, or explanatory prose",
-          "completed validation notes that convert absent optional fields into factual defaults"
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard calculation, standard system assumptions, default withholding, state withholding not_configured, pending employee confirmation, or first payroll cycle fallback prose"
         ],
         "lengthTarget": {
           "minChars": 1798,
@@ -859,7 +881,7 @@
         "sourceFamily": "payroll-tax",
         "captureMode": "yaml-system-export",
         "timelineRefs": [
-          "onboardingProfileExportAt"
+          "w4SavedAt"
         ],
         "worldRefs": [
           "employer.payrollSystem",
@@ -876,12 +898,27 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "review note for worker PLC-20418 only; use worker id and included SSN, and omit legal-name fields because no current name fact is included for this source",
+          "tax.filingStatus is the only W-4 election value included for this source",
+          "primary artifact timestamp fields such as export_timestamp, created_at, submitted_at, generated_at, or source_timestamp should use w4SavedAt exactly or be omitted",
+          "review lifecycle should stay pending or needs_review at w4SavedAt; omit completed review, approved, active-in-payroll, system-update-success, or post-submission status events",
+          "optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, and local withholding fields may appear only as null, blank, not_imported, or omitted",
+          "review notes may describe payroll review of the included filing status and may say optional election fields were not_imported in this export, but must not imply no, none, false, zero, unchecked, standard, not present, not included, not detected, no changes, or default elections",
+          "YAML-like review text should use fields and note values, not # comments; do not explain omitted optional fields as absent in prose",
+          "do not include next-step instructions that ask a reviewer to verify withholding calculations, apply standard assumptions, activate withholding, or mark review_completed"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "any person name other than Maya Chen; invented names such as Marina Serrano, John Smith, Jane Doe, or sample-person names",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "prose that says optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, or local elections were not detected, not present, not included, no changes, absent, none, zero, or not selected",
+          "review_completed, approved, cleared, active_in_payroll, system_update_success, review completion timestamps, or any lifecycle event after w4SavedAt",
+          "state DE 4 allowance counts, additional allowance counts, extra withholding amounts, local withholding assertions, or default withholding calculations such as Single with 0 allowances",
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard system assumptions, standard calculation, default withholding, active after review, verify withholding calculation, mark review_completed, or manual review should confirm setup prose"
         ],
         "lengthTarget": {
           "minChars": 1624,
@@ -930,12 +967,14 @@
         "safeDetailMenu": [
           "policy id",
           "version",
-          "owner group"
+          "owner group",
+          "W-4 and tax-withholding guidance topic: federal Form W-4, filing status, optional W-4 steps, employee self-service W-4 update workflow, and withholding review guidance"
         ],
         "riskyDetailMenu": [
           "current user identifier",
           "private bank data",
-          "signature attestation"
+          "signature attestation",
+          "direct-deposit, banking, routing number, account number, payment elections, ACH, prenote, or payroll bank setup guidance"
         ],
         "lengthTarget": {
           "minChars": 1636,
@@ -981,12 +1020,14 @@
         "safeDetailMenu": [
           "policy id",
           "version",
-          "owner group"
+          "owner group",
+          "blank or sample federal W-4 packet topic with placeholder W-4 fields only; clearly mark the packet as blank, sample, or for reference and do not include current user data"
         ],
         "riskyDetailMenu": [
           "current user identifier",
           "private bank data",
-          "signature attestation"
+          "signature attestation",
+          "direct-deposit authorization, banking, routing number, account number, payment elections, ACH, prenote, or payroll bank setup fields"
         ],
         "lengthTarget": {
           "minChars": 1434,
@@ -1338,12 +1379,15 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "benefits enrollment profile may include included identity, address, contact email, enrollment window, benefits-plan metadata, and neutral export metadata",
+          "omit tax withholding, direct-deposit, payment-election, broad onboarding checklist, and default benefits-election statuses unless those facts are included"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "tax withholding sections, direct-deposit sections, payment election status, not_configured banking status, not_submitted tax status, waived_default benefits elections, not_enrolled benefits defaults, or broad worker profile snapshots"
         ],
         "lengthTarget": {
           "minChars": 1844,
@@ -1398,12 +1442,21 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "payroll preview may include the included employment.company and employment.title values exactly",
+          "use worker id for person identity; omit employee name, work email, hire date, service date, start date, tax elections, and direct-deposit status unless those facts are included",
+          "keep this as a narrow payroll preview shell: worker id, company, job title, preview run metadata, empty earnings/deductions/taxes arrays if native to the export, and audit rows about preview generation",
+          "omit validation-summary, readiness-check, onboarding-checklist, personal-information, contact, tax-withholding, direct-deposit, compensation, and broad worker-profile sections entirely",
+          "omitted workflow facts must be omitted, not represented as missing, blocked, not on file, unconfigured, pending employee action, or calculation blockers"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "invented employee name, alternate person identity, work email, personal email, hire date, service date, start date, tax elections, direct deposit status, or payroll account details",
+          "wrong-person values such as John Smith, j.smith, Marina Serrano, Jane Doe, or sample-person names",
+          "validation_summary sections, readiness checks, onboarding checklist ids, pending employee action statuses, default payroll/tax/banking fallback prose, employment status values, taxWithholding sections, directDeposit sections, personalInformation sections, contactInformation sections, compensation sections, or broad worker profile snapshots",
+          "employment dates that differ from required person details or allowed source context"
         ],
         "lengthTarget": {
           "minChars": 1510,
@@ -1525,12 +1578,15 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "audit log should focus on included personal email and work email profile events plus neutral export/audit metadata",
+          "omit unrelated document checklist history, I-9/W-4/direct-deposit lifecycle events, onboarding-complete status, and profile approval events"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "onboarding completed, profile approved, I-9 completed, W-4 completed, direct deposit not submitted, direct deposit completed, document checklist status, or broad onboarding lifecycle history"
         ],
         "lengthTarget": {
           "minChars": 1538,
@@ -1715,12 +1771,18 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "stale Maya worker-id onboarding export only: use the allowed worker id, avoid person-name fields unless blank/redacted/not_imported, and clearly mark stale, superseded, archived, do-not-use, or low-authority status",
+          "stale employment fields should be absent, null, not_imported, superseded, or explicitly do-not-use; do not make this record look current or authoritative",
+          "omit onboarding task due dates, target first-day dates, and start-date-like task fields; stale task rows may use generic status metadata without exact date values"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "alternate person identity or names such as Eleanor Vance, Marcus Vance, Jane Doe, John Smith, or any other non-Maya person attached to PLC-20418",
+          "current-looking employment title, current start date, active profile status, authoritative status, or stale record without a clear stale/superseded/do-not-use marker",
+          "task due dates, first-day dates, start-date-like checklist dates, or blocked task prose that can be mistaken for current employment facts"
         ],
         "lengthTarget": {
           "minChars": 1749,

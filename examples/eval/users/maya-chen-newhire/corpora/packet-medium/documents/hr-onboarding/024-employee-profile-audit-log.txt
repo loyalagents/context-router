@@ -1,25 +1,94 @@
-Source system: HarborHire
-Exported timestamp: 2026-06-26T08:42:00-07:00
-Worker id: PLC-20418
-Status: audit log current
-Field ids: audit.personal_email, audit.work_email, audit.change_status
+source_system: HarborHire
+export_timestamp: 2026-06-25T11:18:00-07:00
+export_type: ProfileAuditLog
+export_request_id: exp-8901c4a2-66d2-4c8f-a0f1-c43d99b2d11e
+subject_worker_id: PLC-20418
+subject_profile_status: Active
+reviewer_assignment:
+  reviewer_id: hr_specialist_71
+  queue: Onboarding-Tier1-Review
+  assigned_at: 2026-06-23T09:00:15-07:00
 
-Audit entry 1: personal_email confirmed as maya.chen@gmail.test
-Audit entry 2: work_email provisioned as maya.chen@pacificledger.test
-Reviewer note: Personal email is used for employee-entered forms. Work email is company directory context and should not replace the personal email on employee-completed forms.
+change_history:
+  - id: evt_a1b2c3d4
+    timestamp: 2026-06-15T13:45:10-07:00
+    event_type: PROFILE_CREATED
+    actor:
+      type: API
+      name: RecruitingSystem-Connector
+    source:
+      ip_address: 203.0.113.25
+      user_agent: Greenhouse-Webhook-Client/2.1
+    description: New hire profile created via ATS integration.
+    changes: []
 
-Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+  - id: evt_e5f6g7h8
+    timestamp: 2026-06-15T17:12:33-07:00
+    event_type: FIELD_UPDATE
+    actor:
+      type: User
+      username: maya.chen
+    source:
+      ip_address: 72.190.44.102
+      user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36
+    description: User completed 'Personal Information' task.
+    changes:
+      - field_id: contact.email
+        field_name: Personal Email
+        old_value: null
+        new_value: maya.chen@gmail.test
+      - field_id: contact.phone_mobile
+        field_name: Mobile Phone Number
+        old_value: null
+        new_value: not_provided
 
-Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+  - id: evt_i9j0k1l2
+    timestamp: 2026-06-16T10:05:00-07:00
+    event_type: USER_LOGIN
+    actor:
+      type: User
+      username: maya.chen
+    source:
+      ip_address: 72.190.44.102
+      user_agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1
+    description: User session started to review documents.
 
-Employee profile audit log handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+  - id: evt_m3n4o5p6
+    timestamp: 2026-06-22T16:45:50-07:00
+    event_type: FIELD_UPDATE
+    actor:
+      type: System
+      name: IdentityProvisioningSvc
+    source:
+      ip_address: 10.1.5.30
+      user_agent: HarborHire-Internal-API-Client/1.8
+    description: Work email address populated from directory service.
+    changes:
+      - field_id: employment.work_email
+        field_name: Work Email
+        old_value: null
+        new_value: maya.chen@pacificledger.test
 
-Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+  - id: evt_q7r8s9t0
+    timestamp: 2026-06-24T14:30:18-07:00
+    event_type: PROFILE_VIEW
+    actor:
+      type: AdminUser
+      username: hr_specialist_71
+    source:
+      ip_address: 10.2.10.155
+      user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36
+    description: Profile viewed by assigned HR reviewer.
+    changes: []
 
-Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-
-Employee profile audit log handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-
-Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-
-Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+  - id: evt_u1v2w3x4
+    timestamp: 2026-06-25T11:18:00-07:00
+    event_type: DATA_EXPORT
+    actor:
+      type: System
+      name: IntegrationService_Audit
+    source:
+      ip_address: 10.1.5.31
+      user_agent: HarborHire-Internal-API-Client/1.8
+    description: Profile audit log exported for system record.
+    changes: []

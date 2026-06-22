@@ -1,33 +1,104 @@
-Source system: LedgerPay Training Library
-Timestamp: 2026-06-07T13:00:00-07:00
-Status: sample employee record only
-Sample packet id: SAMPLE-DD-JA-2026
+LedgerPay Payroll System - Data Export
+Export Timestamp: 2026-06-01T08:00:00-07:00
+Export Type: Sample Packet (Direct Deposit)
+Status: FOR TRAINING PURPOSES ONLY
 
-Sample employee: Jordan Avery
-Sample worker id: PLC-SAMPLE-771
-Sample email: jordan.avery@example.test
-Sample address: 77 Sample Market Street, San Francisco, CA 94105
-Sample bank: Sample City Credit Union
-Sample routing number: 122105278
-Sample account number: 881200445566
-Sample contact number: 415-555-0166
+******************************************************************
+*               EXAMPLE ONLY - NOT FOR PRODUCTION USE            *
+******************************************************************
 
-Training note: This record is for a sample employee only. It is not an active onboarding record and is not tied to the current packet's worker id.
+This document is a sample direct deposit authorization packet generated for training and demonstration purposes. The employee information, bank details, and transaction data contained herein are fictitious.
 
-Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+------------------------------------------------------------------
+SECTION 1: POLICY & DOCUMENT METADATA
+------------------------------------------------------------------
+Policy ID: DD-POL-V3.1
+Version: 3.1
+Effective Date: 2026-06-01
+Owner Group: Payroll Operations
+Subject: Sample Direct Deposit Authorization Packet
 
-Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+------------------------------------------------------------------
+SECTION 2: INSTRUCTIONS & OVERVIEW (SAMPLE)
+------------------------------------------------------------------
+This packet demonstrates the process for setting up direct deposit in the LedgerPay system. It shows the information required and the format of the confirmation you will receive after submission.
 
-Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+To set up your own direct deposit, please navigate to the "Payment Elections" section of your employee profile. You will need the following information for each account:
 
-Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+- Financial Institution Name
+- Account Type (e.g., Checking or Savings)
+- ABA Routing Number (a 9-digit number)
+- Bank Account Number
 
-Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+You can add up to three (3) accounts for deposit. You can choose to deposit a specific flat amount or a percentage of your net pay into each account. One account must be designated to receive the remainder of your pay.
 
-Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+The following sections contain a completed example for a sample employee.
 
-Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+*** DO NOT USE THE INFORMATION BELOW FOR YOUR OWN SETUP ***
 
-Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+------------------------------------------------------------------
+SECTION 3: SAMPLE EMPLOYEE DATA
+------------------------------------------------------------------
+This action is being performed for the following sample employee profile:
 
-Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Employee Name:      Jordan Avery
+Worker ID:          PLC-SAMPLE-771
+System Role:        Sample Employee
+
+------------------------------------------------------------------
+SECTION 4: SAMPLE DIRECT DEPOSIT AUTHORIZATION FORM
+------------------------------------------------------------------
+--- EXAMPLE - DIRECT DEPOSIT ELECTION SUBMISSION ---
+Submission Date: 2026-06-01
+Submission Time: 07:55:12 PST
+Status: Submitted (This is a sample record)
+
+Account 1
+---------------------
+Bank Name:         First Example Bank
+Account Type:      Checking
+Routing Number:    099000009
+Account Number:    ************1234
+Deposit Type:      Percentage
+Deposit Value:     60%
+
+Account 2
+---------------------
+Bank Name:         Sample Federal Credit Union
+Account Type:      Savings
+Routing Number:    011100011
+Account Number:    ************5678
+Deposit Type:      Fixed Amount
+Deposit Value:     $250.00
+
+Account 3
+---------------------
+Bank Name:         First Example Bank
+Account Type:      Checking
+Routing Number:    099000009
+Account Number:    ************1234
+Deposit Type:      Remainder
+Deposit Value:     N/A (All remaining funds)
+
+--- END OF EXAMPLE FORM ---
+
+------------------------------------------------------------------
+SECTION 5: SAMPLE TRANSACTION CONFIRMATION
+------------------------------------------------------------------
+--- EXAMPLE - CONFIRMATION RECEIPT ---
+
+System: LedgerPay
+Transaction Type: Direct Deposit Election Update
+Worker ID: PLC-SAMPLE-771
+Employee: Jordan Avery
+Timestamp: 2026-06-01 07:56:01 PST
+Status: SUCCESS (SAMPLE TRANSACTION)
+
+Your direct deposit elections have been successfully submitted for processing. Please allow 1-2 pay cycles for these changes to take full effect. A pre-notification (pre-note) transaction will be sent to the financial institutions to verify the account information. You will be notified via system alert if any issues are detected during verification.
+
+Summary of Submitted Elections:
+1. First Example Bank (Checking, ...1234): 60% of net pay
+2. Sample Federal Credit Union (Savings, ...5678): $250.00 fixed amount
+3. First Example Bank (Checking, ...1234): Remainder of net pay
+
+*** This is a sample confirmation. No actual changes have been made to any employee's payroll data. ***

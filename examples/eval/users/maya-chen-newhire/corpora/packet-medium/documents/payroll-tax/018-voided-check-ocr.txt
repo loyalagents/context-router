@@ -1,31 +1,183 @@
-Source filename: bay-harbor-voided-check-mc.png
-Timestamp: 2026-06-26T09:58:00-07:00
-Status: voided check image accepted
-OCR confidence: 0.91 average
+//================================================================
+// OCR SYSTEM EXPORT
+//================================================================
+Source File:         check_img_PLC-20418.tiff
+Export Timestamp:    2026-06-26T09:58:00-07:00
+OCR Engine:          VisionCapture Pro v9.2
+Processing ID:       8a9c3b7f-0e1d-4f9a-8c6b-2d1e4f9a0b1c
+Worker Context:      PLC-20418
+Document Class:      FINANCIAL_DOCUMENT
+Document Sub-Type:   VOIDED_CHECK
+Overall Confidence:  91.5%
+Status:              COMPLETED
 
-Check image text:
-Account holder line: Maya Lin Chen
-Routing transit line: 091000019
-Account number line: 740182936451
-Check status stamp: VOID
-Review note: Payroll reviewer matched the routing and account number to the current direct deposit profile before the account was marked ready for deposit.
+//----------------------------------------------------------------
+// RAW TEXT EXTRACTION
+//----------------------------------------------------------------
 
-Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+[Block 1]
+Maya Lin Chen
 
-Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+[Block 2]
+101
 
-Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+[Block 3]
+DATE ________
 
-Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+[Block 4]
+PAY TO THE
+ORDER OF ____________________________________
 
-Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+[Block 5]
+$ |_________|
 
-Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+[Block 6]
+_____________________________________________ DOLLARS
 
-Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+[Block 7]
+BAY HARBOR CREDIT UNION
+[illegible] Security feature details [illegible]
 
-Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+[Block 8]
+MEMO _____________________
 
-Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+[Block 9]
+____________________
+Signature
 
-Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+[Block 10 - MICR]
+|:091000019|: 740182936451|' 101
+
+[Block 11 - Overlay]
+V O I D
+
+//----------------------------------------------------------------
+// STRUCTURED DATA ANALYSIS
+//----------------------------------------------------------------
+
+{
+  "page": 1,
+  "language": "en",
+  "text_blocks": [
+    {
+      "id": "block_1",
+      "type": "NAME_ADDRESS",
+      "confidence": 98.7,
+      "bounding_box": [100, 150, 450, 190],
+      "text": "Maya Lin Chen",
+      "lines": [
+        {"text": "Maya Lin Chen", "confidence": 98.7}
+      ]
+    },
+    {
+      "id": "block_2",
+      "type": "CHECK_NUMBER",
+      "confidence": 99.9,
+      "bounding_box": [1700, 150, 1850, 180],
+      "text": "101",
+      "lines": [
+        {"text": "101", "confidence": 99.9}
+      ]
+    },
+    {
+      "id": "block_3",
+      "type": "DATE_FIELD",
+      "confidence": 95.1,
+      "bounding_box": [1400, 250, 1850, 280],
+      "text": "DATE ________",
+      "lines": [
+        {"text": "DATE ________", "confidence": 95.1}
+      ]
+    },
+    {
+      "id": "block_4",
+      "type": "PAYEE_FIELD",
+      "confidence": 96.3,
+      "bounding_box": [100, 400, 1300, 500],
+      "text": "PAY TO THE\nORDER OF ____________________________________",
+      "lines": [
+        {"text": "PAY TO THE", "confidence": 97.2},
+        {"text": "ORDER OF ____________________________________", "confidence": 95.4}
+      ]
+    },
+    {
+      "id": "block_5",
+      "type": "AMOUNT_BOX",
+      "confidence": 94.8,
+      "bounding_box": [1450, 400, 1850, 450],
+      "text": "$ |_________|",
+      "lines": [
+        {"text": "$ |_________|", "confidence": 94.8}
+      ]
+    },
+    {
+      "id": "block_6",
+      "type": "AMOUNT_TEXT",
+      "confidence": 96.0,
+      "bounding_box": [100, 550, 1850, 600],
+      "text": "_____________________________________________ DOLLARS",
+      "lines": [
+        {"text": "_____________________________________________ DOLLARS", "confidence": 96.0}
+      ]
+    },
+    {
+      "id": "block_7",
+      "type": "BANK_NAME",
+      "confidence": 99.2,
+      "bounding_box": [100, 700, 600, 780],
+      "text": "BAY HARBOR CREDIT UNION",
+      "lines": [
+        {"text": "BAY HARBOR CREDIT UNION", "confidence": 99.2}
+      ]
+    },
+    {
+      "id": "block_8",
+      "type": "MEMO_FIELD",
+      "confidence": 97.5,
+      "bounding_box": [100, 850, 650, 890],
+      "text": "MEMO _____________________",
+      "lines": [
+        {"text": "MEMO _____________________", "confidence": 97.5}
+      ]
+    },
+    {
+      "id": "block_9",
+      "type": "SIGNATURE_FIELD",
+      "confidence": 98.1,
+      "bounding_box": [1200, 850, 1850, 920],
+      "text": "____________________\nSignature",
+      "lines": [
+        {"text": "____________________", "confidence": 98.8},
+        {"text": "Signature", "confidence": 97.4}
+      ]
+    },
+    {
+      "id": "block_10",
+      "type": "MICR_LINE",
+      "confidence": 99.8,
+      "bounding_box": [100, 1000, 1850, 1100],
+      "text": "|:091000019|: 740182936451|' 101",
+      "micr_parse": {
+        "routing": "091000019",
+        "account": "740182936451",
+        "check_num": "101",
+        "confidence": 99.9
+      }
+    },
+    {
+      "id": "block_11",
+      "type": "OVERLAY_STAMP",
+      "confidence": 85.0,
+      "bounding_box": [200, 300, 1700, 900],
+      "text": "V O I D",
+      "notes": "Large, red ink stamp detected, partially obscuring underlying fields. Text is widely spaced. Confirmed as VOID stamp.",
+      "lines": [
+        {"text": "V O I D", "confidence": 85.0}
+      ]
+    }
+  ]
+}
+
+//================================================================
+// END OF EXPORT
+//================================================================

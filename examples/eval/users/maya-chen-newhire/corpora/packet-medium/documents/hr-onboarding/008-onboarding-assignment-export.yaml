@@ -1,25 +1,98 @@
-source_system: HarborHire
-exported_timestamp: "2026-06-25T12:22:00-07:00"
-worker_id: PLC-20418
-status: onboarding_assignment_active
-field_ids:
-  - assignment.company
-  - assignment.title
-  - assignment.start_date
-  - assignment.worker_id
-reviewer_assigned: Priya Shah
-assignment:
-  company: Pacific Ledger Cooperative
-  title: Client Operations Associate
-  start_date: "2026-07-06"
-  worker_id: PLC-20418
-queue_note: The active assignment routes payroll, I-9, tax, and direct-deposit tasks to the same worker id.
-#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+export_details:
+  source_system: "HarborHire"
+  export_id: "exp-a78b4c3e-1b9f-4d5a-8e21-f09c6a3b2d10"
+  generated_at: "2026-06-25T11:18:00-07:00"
+  export_reason: "Data sync for downstream payroll provisioning"
+  schema_version: "2.1"
+onboarding_record:
+  record_id: "rec-9a8b7c6d-5e4f-3a2b-1c0d-9e8f7a6b5c4d"
+  worker_id: "PLC-20418"
+  profile_status: "Awaiting Employee Action"
+  created_at: "2026-06-23T09:45:12Z"
+  last_modified: "2026-06-25T10:55:00Z"
+  key_dates:
+    start_date: "2026-07-06"
+    onboarding_due_date: "2026-07-06"
+  position_details:
+    company_name: "Pacific Ledger Cooperative"
+    job_title: "Client Operations Associate"
+    requisition_id: "REQ-2026-088"
+    department: null
+    cost_center: null
+    manager_id: null
+  candidate_data:
+    legal_name: null
+    preferred_name: null
+    contact:
+      personal_email: null
+      phone_mobile: null
+  onboarding_checklist:
+    - task_id: "pers_info_v2"
+      name: "Complete Personal Information"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-01"
+      reviewer: "hr-specialist"
+      description: "Provide your legal name, address, and emergency contacts. This information is required for your employee file."
+    - task_id: "i9_section1_v1"
+      name: "Form I-9, Section 1"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-06"
+      reviewer: "hr-coordinator"
+      description: "Complete Section 1 of the Form I-9 to verify your identity and authorization to work in the United States. Must be completed on or before your first day."
+    - task_id: "fed_w4_2026_v1"
+      name: "Federal Tax Withholding (Form W-4)"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-06"
+      reviewer: "payroll-team"
+      description: "Submit your W-4 form to determine federal income tax withholding."
+    - task_id: "state_tax_v1"
+      name: "State Tax Withholding Form"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-06"
+      reviewer: "payroll-team"
+      description: "Submit your state-specific tax withholding form."
+    - task_id: "direct_deposit_v2"
+      name: "Direct Deposit Enrollment"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-01"
+      reviewer: "payroll-team"
+      description: "Set up your bank account(s) for payroll. You may add up to three accounts."
+    - task_id: "handbook_ack_v3"
+      name: "Employee Handbook Acknowledgement"
+      status: "Not Started"
+      is_required: true
+      assigned_to: "new-hire"
+      due_date: "2026-07-10"
+      reviewer: null
+      description: "Review and acknowledge receipt of the Pacific Ledger Cooperative Employee Handbook."
+  system_logs:
+    - log_id: 897541
+      timestamp: "2026-06-23T09:45:12Z"
+      actor: "API_INTEGRATION_USER"
+      event: "RECORD_CREATE"
+      notes: "Record created from Greenhouse ATS for hired candidate."
+    - log_id: 897542
+      timestamp: "2026-06-23T09:45:13Z"
+      actor: "SYSTEM"
+      event: "CHECKLIST_ASSIGN"
+      notes: "Assigned checklist 'US Full-Time Salaried v4.2'."
+    - log_id: 897599
+      timestamp: "2026-06-23T10:05:00Z"
+      actor: "j.avery@pacificledger.coop"
+      event: "REVIEWER_UPDATE"
+      notes: "Manually assigned 'hr-coordinator' as reviewer for task 'i9_section1_v1'."
+    - log_id: 898103
+      timestamp: "2026-06-25T10:55:00Z"
+      actor: "SYSTEM"
+      event: "STATUS_CHANGE"
+      notes: "Status changed from 'Pre-boarding' to 'Awaiting Employee Action'."

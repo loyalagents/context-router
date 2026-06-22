@@ -1,24 +1,104 @@
-source_system: Pacific Ledger Benefits
-exported_timestamp: "2026-06-26T11:05:00-07:00"
-worker_id: PLC-20418
-status: benefits_profile_ready
-field_ids:
-  - benefits.legal_name
-  - benefits.personal_email
-  - benefits.address.street_line
-  - benefits.address.city_state_zip
-legal_name: Maya Lin Chen
-personal_email: maya.chen@gmail.test
-mailing_address:
-  street_line: 2846 Ashbury Street Apt 3D
-  city_state_zip: Oakland, CA 94609
-reviewer_note: Benefits enrollment uses the same current mailing address and personal email as the onboarding packet.
-#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+export_metadata:
+  source_system: "HarborHire"
+  export_timestamp: "2026-06-25T11:18:00-07:00"
+  export_id: "b1f6c7a9-d3e0-4f5b-8a2c-9e1d0f8b4a5c"
+  data_format_version: "1.2"
+  record_type: "BENEFITS_ENROLLMENT_PROFILE"
+profile:
+  worker_id: "PLC-20418"
+  profile_status: "AWAITING_EMPLOYEE_ELECTIONS"
+  profile_created_at: "2026-06-23T09:00:15Z"
+  profile_last_updated_at: "2026-06-23T09:00:15Z"
+  assigned_reviewer: "benefits.admin@workforce.corp"
+  employee_details:
+    legal_name: "Maya Lin Chen"
+    contact_information:
+      primary_email: "maya.chen@gmail.test"
+      secondary_email: null
+      primary_phone: null
+    mailing_address:
+      street_line_1: "2846 Ashbury Street Apt 3D"
+      street_line_2: null
+      city_state_zip: "Oakland, CA 94609"
+      city: "Oakland"
+      state: "CA"
+      postal_code: "94609"
+      country: "USA"
+  enrollment_period:
+    window_status: "OPEN"
+    start_date: "2026-06-23"
+    end_date: "2026-07-22"
+    days_remaining: 27
+    description: "New Hire Enrollment Window"
+  available_plans:
+    - plan_id: "MED-PPO-01"
+      plan_name: "Gold PPO Plan"
+      carrier: "United Health Services"
+      plan_type: "Medical"
+      status: "pending_election"
+      plan_summary_url: "/documents/UHS_Gold_PPO_Summary.pdf"
+      coverage_options:
+        - level_id: "EE"
+          description: "Employee Only"
+          monthly_cost: 155.00
+        - level_id: "EE_SP"
+          description: "Employee + Spouse/Partner"
+          monthly_cost: 410.50
+        - level_id: "EE_CH"
+          description: "Employee + Child(ren)"
+          monthly_cost: 320.00
+        - level_id: "FAM"
+          description: "Family"
+          monthly_cost: 625.75
+    - plan_id: "MED-HMO-02"
+      plan_name: "Silver HMO Plan"
+      carrier: "Kaiser Permanente"
+      plan_type: "Medical"
+      status: "pending_election"
+      plan_summary_url: "/documents/KP_Silver_HMO_Summary.pdf"
+      coverage_options:
+        - level_id: "EE"
+          description: "Employee Only"
+          monthly_cost: 95.50
+        - level_id: "EE_SP"
+          description: "Employee + Spouse/Partner"
+          monthly_cost: 290.00
+        - level_id: "EE_CH"
+          description: "Employee + Child(ren)"
+          monthly_cost: 215.25
+        - level_id: "FAM"
+          description: "Family"
+          monthly_cost: 450.00
+    - plan_id: "DENT-PPO-11"
+      plan_name: "Comprehensive Dental PPO"
+      carrier: "MetLife Dental"
+      plan_type: "Dental"
+      status: "pending_election"
+      plan_summary_url: "/documents/MetLife_Dental_PPO_Summary.pdf"
+      coverage_options:
+        - level_id: "EE"
+          description: "Employee Only"
+          monthly_cost: 18.50
+        - level_id: "EE_SP"
+          description: "Employee + Spouse/Partner"
+          monthly_cost: 38.00
+        - level_id: "FAM"
+          description: "Family"
+          monthly_cost: 62.25
+    - plan_id: "VIS-VSP-21"
+      plan_name: "Vision Choice Plan"
+      carrier: "VSP Vision Care"
+      plan_type: "Vision"
+      status: "pending_election"
+      plan_summary_url: "/documents/VSP_Vision_Choice_Summary.pdf"
+      coverage_options:
+        - level_id: "EE"
+          description: "Employee Only"
+          monthly_cost: 7.80
+        - level_id: "EE_SP"
+          description: "Employee + Spouse/Partner"
+          monthly_cost: 12.50
+        - level_id: "FAM"
+          description: "Family"
+          monthly_cost: 21.15
+...

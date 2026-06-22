@@ -1,31 +1,112 @@
-Source system: HarborHire
-Exported timestamp: 2026-06-24T10:02:00-07:00
-Worker id: PLC-20418
-Status: identity verification matched
-Field ids: candidate.first_name, candidate.middle_initial, candidate.last_name, candidate.date_of_birth, candidate.ssn
+---
+source_system: HarborHire
+export_format_version: v1.3.2
+export_timestamp: 2026-06-25T11:18:00-07:00
+record_type: identity_verification_intake
+record_id: idv_rec_89c3e0a5-714a-4b0d-821f-9e6b7d2f4c10
+worker_id: PLC-20418
 
-Reviewer assigned: Priya Shah
-First name: Maya
-Middle name observed: Lin
-Middle initial stored: L
-Last name: Chen
-Date of birth: 1991-02-22
-Social Security number: 000-00-0417
+profile_summary:
+  candidate_id: cand_774910
+  new_hire_id: PLC-20418
+  profile_status: pending_verification
+  created_at: 2026-06-25T10:45:12Z
+  updated_at: 2026-06-25T10:50:33Z
+  full_name_display: Maya L Chen
 
-Reviewer note: The split-name fields agree with the legal-name text. No other last names were supplied in the intake note. The record was kept as a current identity cross-check for payroll and I-9 preparation.
+personal_information:
+  name_components:
+    first_name: Maya
+    middle_initial: L
+    last_name: Chen
+    suffix: null
+    prefix: null
+  demographics:
+    date_of_birth: 1991-02-22
+  national_identifiers:
+    - type: SSN
+      value: 000-00-0417
+      country: USA
+      verification_status: unverified
+  contact_details:
+    email_address: # REDACTED FOR PRIVACY
+    phone_number: null
+    mailing_address: null
 
-Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+identity_verification_task:
+  task_id: idv_task_b10a229c-5d6c-4f8a-9e1b-d4f1e3c2b0a8
+  task_type: PII_SELF_ATTESTATION
+  task_status: pending_manual_review
+  priority: high
+  due_date: 2026-06-28T23:59:59Z
+  assigned_to: id_verification_specialists_q
+  reviewer_assigned: null
+  verification_outcome: null
+  outcome_notes: null
 
-Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+submitted_data:
+  submission_id: sub_e0f4a1b9-3c7d-4b8a-8a1e-c5e9f8d7c6b5
+  submission_timestamp: 2026-06-25T10:45:10Z
+  submission_channel: harborhire_new_hire_portal
+  source_ip_address: 192.168.1.101 # Internal network access
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36
+  data_fields_provided:
+    - field_name: first_name
+      field_label: "First Name"
+      value: Maya
+      is_required: true
+      validation_status: passed_format_check
+    - field_name: middle_initial
+      field_label: "Middle Initial (Optional)"
+      value: L
+      is_required: false
+      validation_status: passed_format_check
+    - field_name: last_name
+      field_label: "Last Name"
+      value: Chen
+      is_required: true
+      validation_status: passed_format_check
+    - field_name: date_of_birth
+      field_label: "Date of Birth (YYYY-MM-DD)"
+      value: "1991-02-22"
+      is_required: true
+      validation_status: passed_format_check
+    - field_name: ssn
+      field_label: "Social Security Number (SSN)"
+      value: # MASKED FOR DISPLAY
+      is_required: true
+      validation_status: passed_format_check
+      # Note: Full value is stored encrypted and used for verification checks.
 
-Identity verification note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-
-Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-
-Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-
-Identity verification note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-
-Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-
-Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+audit_log:
+  - timestamp: 2026-06-25T10:45:10.875Z
+    event_type: data_submission
+    actor_id: cand_774910
+    actor_type: candidate
+    details: "Candidate submitted PII via the onboarding portal."
+  - timestamp: 2026-06-25T10:45:12.110Z
+    event_type: record_creation
+    actor_id: system
+    actor_type: service
+    details: "Identity verification record created for worker PLC-20418."
+  - timestamp: 2026-06-25T10:45:15.450Z
+    event_type: automated_check_initiated
+    actor_id: system
+    actor_type: service
+    details: "Initiated automated pre-screening checks against internal databases."
+  - timestamp: 2026-06-25T10:50:33.005Z
+    event_type: status_change
+    actor_id: system
+    actor_type: service
+    details: "Automated checks inconclusive. Record status changed to 'pending_manual_review'."
+  - timestamp: 2026-06-25T10:50:33.150Z
+    event_type: assignment
+    actor_id: system_router
+    actor_type: service
+    details: "Task assigned to queue 'id_verification_specialists_q'."
+  - timestamp: 2026-06-25T11:18:00.000-07:00
+    event_type: data_export
+    actor_id: api_user_integration_01
+    actor_type: service_account
+    details: "Record data exported via API call."
+...

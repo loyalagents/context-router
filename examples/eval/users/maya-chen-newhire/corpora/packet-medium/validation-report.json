@@ -8,7 +8,7 @@
     "scenarios": 0,
     "templates": 7,
     "errors": 0,
-    "warnings": 4
+    "warnings": 46
   },
   "corpusTruth": {
     "summary": {
@@ -160,7 +160,7 @@
       },
       {
         "id": "maya-chen-newhire-packet-medium-005",
-        "path": "documents/work-authorization/005-work-authorization-review-checklist.txt",
+        "path": "documents/work-authorization/005-work-authorization-intake-field-export.txt",
         "declaredFacts": {
           "provenPresent": [
             "identity.legalName",
@@ -909,11 +909,251 @@
   "issues": [
     {
       "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/0/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-001 length 3570 is outside sourceSpec target 1806-3206.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/1/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-002 length 3408 is outside sourceSpec target 1424-2824.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/2/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-003 length 3652 is outside sourceSpec target 1674-3074.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/3/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-004 length 3485 is outside sourceSpec target 1925-3325.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_TXT_MARKDOWN_STYLE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/4",
+      "message": "Document maya-chen-newhire-packet-medium-005 is a .txt file but contains Markdown-like formatting.",
+      "fix": "Use plain text formatting or change the planned file extension."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/4/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-005 length 3065 is outside sourceSpec target 1587-2987.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/5/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-006 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/7/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-008 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/7/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-008 length 3666 is outside sourceSpec target 1756-3156.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/8",
+      "message": "Document maya-chen-newhire-packet-medium-009 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/8/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-009 length 3429 is outside sourceSpec target 1978-3378.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
       "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
       "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
-      "pointer": "/documents/19",
-      "message": "Document maya-chen-newhire-packet-medium-020 contains phone-like text while contact.phone is intentionally missing.",
+      "pointer": "/documents/8",
+      "message": "Document maya-chen-newhire-packet-medium-009 contains phone-like text while contact.phone is intentionally missing.",
       "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/9/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-010 length 3243 is outside sourceSpec target 1630-3030.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/11",
+      "message": "Document maya-chen-newhire-packet-medium-012 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/11/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-012 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/11",
+      "message": "Document maya-chen-newhire-packet-medium-012 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/12/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-013 length 3996 is outside sourceSpec target 1624-3024.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/13/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-medium-014 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/13/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-014 length 4779 is outside sourceSpec target 1636-3036.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/14/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-medium-015 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/14/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-015 length 4427 is outside sourceSpec target 1434-2834.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/15/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-016 length 4479 is outside sourceSpec target 2364-3764.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/16",
+      "message": "Document maya-chen-newhire-packet-medium-017 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/16/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-017 length 3931 is outside sourceSpec target 1935-3335.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/16",
+      "message": "Document maya-chen-newhire-packet-medium-017 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/17/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-018 length 4753 is outside sourceSpec target 1797-3197.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/18/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-019 length 5547 is outside sourceSpec target 1883-3283.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/19/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-020 length 4423 is outside sourceSpec target 1863-3263.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/20/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-021 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/20/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-021 length 3425 is outside sourceSpec target 1844-3244.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/21/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-022 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
     },
     {
       "level": "warning",
@@ -925,11 +1165,107 @@
     },
     {
       "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/22/sourceSpec/nativeSignals/0",
+      "message": "Document maya-chen-newhire-packet-medium-023 is missing native source signal \"source system\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
       "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
       "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
       "pointer": "/documents/22",
       "message": "Document maya-chen-newhire-packet-medium-023 contains phone-like text while contact.phone is intentionally missing.",
       "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/23/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-024 length 2966 is outside sourceSpec target 1538-2938.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/24/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-medium-025 is missing native source signal \"ticket id\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/25/sourceSpec/nativeSignals/4",
+      "message": "Document maya-chen-newhire-packet-medium-026 is missing native source signal \"reviewer note\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/25/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-026 length 4051 is outside sourceSpec target 1942-3342.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/26/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-medium-027 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/26/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-027 length 4185 is outside sourceSpec target 1749-3149.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/27/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-028 length 4310 is outside sourceSpec target 1784-3184.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/28/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-medium-029 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/28/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-029 length 4438 is outside sourceSpec target 1751-3151.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/29/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-medium-030 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-medium/manifest.json",
+      "pointer": "/documents/29/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-medium-030 length 4544 is outside sourceSpec target 1972-3372.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
     },
     {
       "level": "warning",

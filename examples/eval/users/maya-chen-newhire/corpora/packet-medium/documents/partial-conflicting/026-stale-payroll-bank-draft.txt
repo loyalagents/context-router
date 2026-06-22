@@ -1,30 +1,67 @@
-Source system: LedgerPay
-Ticket id: LP-ARCHIVE-STALE-BANK
-Exported timestamp: 2026-06-10T10:44:00-07:00
-Worker id: PLC-20418
-Status: inactive and superseded old bank draft - do not use
-Field ids: draft.old_bank_name, draft.old_account_suffix, draft.archive_status
+Source System: LedgerPay SupportLink
+Export Timestamp: 2026-06-25T15:18:00-07:00
 
-Old bank name: Harbor Neighborhood Bank
-Old account ending: 8821
-Reviewer note: This stale draft was started before the current Bay Harbor account verification arrived. The old bank draft is inactive and should not be used for current direct deposit.
+------------------------------------------------------------------
+TICKET DETAILS
+------------------------------------------------------------------
 
-Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+Ticket ID:        PAY-75519
+Subject:          URGENT: ACH Rejection for New Hire Maya Chen
+Status:           Closed
+Priority:         High
+Queue:            Tier 2 Payroll Operations
+Created:          2026-06-24T09:12:41-07:00
+Last Updated:     2026-06-25T14:55:10-07:00
+Submitter:        Brenda Mills (Payroll Admin)
+Assignee:         Frank Miller (Payroll Specialist)
 
-Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+------------------------------------------------------------------
+TICKET HISTORY
+------------------------------------------------------------------
 
-Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+COMMENT (Brenda Mills) - 2026-06-24T09:12:41-07:00
+--------------------------------------------------
+Team,
 
-Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+We have a critical issue. The ACH transfer for new employee Maya Chen (ID: MCHEN-8934) was rejected from our main payroll run this morning. The error from LedgerPay is "R03 - No Account/Unable to Locate Account".
 
-Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+The direct deposit information was entered during her onboarding last week. The details we processed were for Harbor Neighborhood Bank.
 
-Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Routing: 226070656
+Account: 5590...8172 (masked)
 
-Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+I've attached the ACH return file to the internal ticket record. We need to figure out what went wrong and ensure she is paid. I've initiated the process for an off-cycle paper check, but we must resolve the electronic payment issue before the next pay period.
 
-Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+Please investigate the source of the data entry and confirm the details with the employee.
 
-Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
 
-Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+COMMENT (Frank Miller) - 2026-06-24T13:20:05-07:00
+--------------------------------------------------
+Assigning to myself. Reviewing the onboarding records and LedgerPay entry logs.
+
+The information provided (Harbor Neighborhood Bank, RTN 226070656, Acct ...8172) was entered into LedgerPay on 2026-06-17 from the new hire onboarding portal. There are no other direct deposit records for this employee in the system's history.
+
+I have reached out to Maya Chen via her work email to ask her to verify the banking details she provided. I suspect she may have made a typo or provided details for a closed account. Will update once I hear back.
+
+
+COMMENT (Frank Miller) - 2026-06-25T10:03:15-07:00
+--------------------------------------------------
+Update: I received a response from Maya Chen.
+
+She confirmed that the Harbor Neighborhood Bank account is an old account that she recently closed. She had apparently updated her banking information in the self-service portal yesterday morning, but it was after the payroll processing deadline for the current pay period.
+
+It seems our process pulled the initial, stale onboarding data before her correction could propagate for the payroll batch. The new information she submitted is for a different financial institution entirely.
+
+
+RESOLUTION NOTE (Frank Miller) - 2026-06-25T14:55:10-07:00
+--------------------------------------------------
+Status: Closed -> Resolved
+
+Root Cause: The ACH rejection was caused by stale banking information being used for the initial payroll run. The employee, Maya Chen, had provided details for a closed account with Harbor Neighborhood Bank during her initial onboarding. She later updated this information, but the change was not effective in time for the payroll cutoff.
+
+Resolution Steps:
+1.  Payroll Admin (Brenda Mills) has already processed an off-cycle check to ensure the employee is paid for the current period without further delay.
+2.  I have verified that the employee's new, correct direct deposit information is now active in LedgerPay. It will be used for all subsequent payrolls.
+3.  The old, invalid banking details associated with Harbor Neighborhood Bank have been flagged as obsolete and purged from the employee's active payment profile to prevent this from happening again.
+
+This ticket is now closed. No further action is required. The system operated as expected, but the timing of the data update caused the one-time failure.

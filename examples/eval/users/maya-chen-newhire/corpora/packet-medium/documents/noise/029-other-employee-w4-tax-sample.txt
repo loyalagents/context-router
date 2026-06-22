@@ -1,30 +1,94 @@
-Source system: LedgerPay Training Library
-Timestamp: 2026-06-18T16:10:00-07:00
-Status: sample employee tax record only
-Sample packet id: SAMPLE-W4-RP-2026
+Source System: HR Knowledge Base
+Article ID: TAX-US-W4-EX-001
+Version: 2.1
+Status: Published
+Owner Group: Payroll Support
+Published: 2026-06-01T08:00:00-07:00
 
-Sample employee: Riley Park
-Sample worker id: PLC-SAMPLE-884
-Sample email: riley.park@example.test
-Sample filing status: head of household
-Sample dependent credit: training example only
+Title: Example: How to Complete Your Form W-4
 
-Training note: This record belongs to a different sample employee and is used to show payroll reviewers how W-4 sections can vary. It is not connected to the active packet worker id.
+This article provides a detailed example of a completed Form W-4, Employee's Withholding Certificate. Use this guide to help you understand how to fill out your own W-4 in LedgerPay.
 
-Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+IMPORTANT: This is a sample form for a fictional employee. The values shown are for illustrative purposes only. Do not copy these values directly. Your personal and financial situation will determine the correct entries for your own form. Consult a tax professional for personalized advice.
 
-Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+--- EXAMPLE FORM W-4 ---
 
-Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Form W-4 (2026)
+Employee’s Withholding Certificate
+Department of the Treasury
+Internal Revenue Service
 
-Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+Step 1: Enter Personal Information
 
-Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+(a) First name and middle initial: John A.
+    Last name: Sample
+    Address: 123 Example Lane
+    City or town, state, and ZIP code: Anytown, CA 94000
 
-Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+(b) Social security number: ***-**-6789
 
-Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+(c) Filing Status (check only one box):
+    [ ] Single or Married filing separately
+    [X] Married filing jointly or Qualifying widow(er)
+    [ ] Head of household
 
-Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+Complete Steps 2–4 ONLY if they apply to you; otherwise, skip to Step 5. See page 2 for more information on each step, who can claim exemption from withholding, when to use the online estimator, and privacy.
 
-Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+Step 2: Multiple Jobs or Spouse Works
+Complete this step if you (1) hold more than one job at a time, or (2) are married filing jointly and your spouse also works. The correct amount of withholding depends on the income earned from all of these jobs.
+
+Do only one of the following:
+(a) Use the estimator at www.irs.gov/W4App for most accurate withholding; or
+(b) Use the Multiple Jobs Worksheet on page 3 and enter the result in Step 4(c) below for roughly accurate withholding; or
+(c) If there are only two jobs in your household, you may check this box. Do the same on Form W-4 for the other job. This option is accurate for jobs with similar pay; otherwise, more tax than necessary may be withheld. [ ]
+
+TIP: For the highest accuracy, we recommend using the IRS Tax Withholding Estimator.
+
+Step 3: Claim Dependents
+If your total income will be $200,000 or less ($400,000 or less if married filing jointly):
+Multiply the number of qualifying children under age 17 by $2,000 -> $ 2000
+Multiply the number of other dependents by $500 . . . . . . . -> $  500
+Add the amounts above and enter the total here . . . . . . . . . . 3. $ 2500
+
+Step 4: Other Adjustments (optional)
+(a) Other income (not from jobs). If you want tax withheld for other
+    income you expect this year that won’t have withholding, such as
+    interest, dividends, and retirement income, enter the amount of
+    other income here. This is not your taxed income. . . . . . . . . 4(a) $
+
+(b) Deductions. If you expect to claim deductions other than the
+    standard deduction and want to reduce your withholding, use the
+    Deductions Worksheet on page 3 and enter the result here. . . . . 4(b) $ 8000
+
+(c) Extra withholding. Enter any additional tax you want withheld
+    each pay period. . . . . . . . . . . . . . . . . . . . . . 4(c) $ 25.00
+
+Step 5: Sign Here
+Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.
+Employee’s signature (This form is not valid unless you sign it.)
+[Signature on file in LedgerPay system]
+
+Date: [Date of submission]
+
+Employer's name and address
+[Employer Name]
+[Employer Address]
+[City, State, ZIP]
+
+Employer identification number (EIN)
+**-***1234
+
+--- END OF EXAMPLE FORM ---
+
+Instructions for LedgerPay:
+1. Log in to the LedgerPay employee portal.
+2. Navigate to "My Pay" > "Tax Withholding".
+3. Click "Update W-4".
+4. The system will guide you through a wizard that corresponds to the steps on the paper form.
+5. Enter your personal information in Step 1.
+6. If Step 2 applies to you, use the IRS estimator and enter the resulting values into the LedgerPay wizard.
+7. Enter any dependent amounts from Step 3.
+8. Enter any optional adjustments from Step 4.
+9. Review your entries and provide your electronic signature to submit the form.
+
+Your changes will typically be reflected in the next payroll cycle after they are processed. You can update your W-4 at any time during the year if your personal or financial situation changes.

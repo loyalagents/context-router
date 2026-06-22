@@ -1,32 +1,59 @@
-source_system: LedgerPay
-exported_timestamp: "2026-06-25T13:28:00-07:00"
-worker_id: PLC-20418
-status: current_w4_setup_saved
-field_ids:
-  - w4.first_name
-  - w4.last_name
-  - w4.ssn
-  - w4.address.street_line
-  - w4.address.city_state_zip
-  - w4.filing_status
-employee:
-  first_name: Maya
-  last_name: Chen
-  ssn: "000-00-0417"
-  address:
-    street_line: 2846 Ashbury Street Apt 3D
-    city_state_zip: Oakland, CA 94609
-tax:
-  filing_status: single or married filing separately
-reviewer_note: W-4 setup is current and ready for payroll form rendering.
-#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
-#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
-#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
-#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+export_id: "exp-fedwh-9c8a1b9e-e8b2-4d2c-9a4f-5f0d3e1a0b7c"
+source_system: "LedgerPay"
+export_type: "FederalWithholdingUpdate"
+exported_at: "2026-06-25T13:28:00-07:00"
+payload:
+  worker_id: "PLC-20418"
+  personal_information:
+    first_name: "Maya"
+    last_name: "Chen"
+    ssn: "000-00-0417"
+    address:
+      street_line_1: "2846 Ashbury Street Apt 3D"
+      street_line_2: null
+      city: "Oakland"
+      state_province: "CA"
+      postal_code: "94609"
+      country: "USA"
+      display_address: "2846 Ashbury Street Apt 3D, Oakland, CA 94609"
+  tax_withholding_election:
+    form_type: "W-4"
+    form_year: "2026"
+    submitted_at: "2026-06-25T13:28:00-07:00"
+    status: "pending_review"
+    elections:
+      federal:
+        filing_status:
+          code: "SINGLE_OR_MARRIED_FILING_SEPARATELY"
+          description: "single or married filing separately"
+        multiple_jobs_or_spouse_works: not_imported
+        claim_dependents_amount: not_imported
+        other_income_amount: not_imported
+        deductions_amount: not_imported
+        extra_withholding_amount: not_imported
+  metadata:
+    status_history:
+      - timestamp: "2026-06-25T13:28:00-07:00"
+        status: "SUBMITTED"
+        actor: "PLC-20418"
+        source: "EmployeeSelfServicePortal"
+        note: "Employee submitted federal withholding changes."
+      - timestamp: "2026-06-25T13:28:01-07:00"
+        status: "ROUTED_FOR_REVIEW"
+        actor: "System"
+        source: "LedgerPay.WorkflowEngine"
+        note: "Change routed to payroll review queue."
+    review_queue: "North Bay Payroll Team"
+    field_validations:
+      - field_id: "personal_information.first_name"
+        status: "valid"
+      - field_id: "personal_information.last_name"
+        status: "valid"
+      - field_id: "personal_information.ssn"
+        status: "valid"
+      - field_id: "personal_information.address"
+        status: "valid"
+      - field_id: "tax_withholding_election.elections.federal.filing_status"
+        status: "valid"
+    reviewer_notes:
+      - "Data for optional W-4 sections (Step 2, 3, 4) was not provided by the employee and is not included in this export. No default values have been assumed."
