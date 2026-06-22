@@ -1,8 +1,8 @@
 # Increase Form Complexity Orchestration
 
-- Status: temporary orchestration plan; packet-small fixture slice implemented,
-  live packet-small evaluation pending
-- Last updated: 2026-06-20
+- Status: temporary orchestration plan; packet-small live vertical slice
+  complete, packet-medium pending
+- Last updated: 2026-06-22
 - Scope: checkpoints for building a more complex dossier first, then evaluating
   multiple forms from that same dossier
 
@@ -61,13 +61,31 @@ Completed:
 - added 8 hand-authored realistic packet-small documents;
 - added one-form scenarios for I-9, W-4, and SF 1199A direct deposit;
 - expanded open-schema storage-map coverage for packet-specific address, tax,
-  and banking facts.
+  and banking facts;
+- added `eval:e2e-mcp-packet` so MCP open-schema ingestion runs once and then
+  fills all packet forms from the same shared memory;
+- ran the live `packet-small` MCP stored-memory path and direct open-schema
+  no-memory baselines.
 
-Remaining after the packet-small fixture slice:
+Packet-small result:
 
-- run the open-schema stored-memory path and the open direct/no-memory baseline;
-- compare the packet-small stored-memory and direct baseline results;
-- build `packet-medium` only after the small vertical slice works.
+```text
+artifact root: /private/tmp/packet-small-clear-email-domains-20260622T010738Z
+MCP shared memory: 24/24 known facts recovered, 2/2 missing facts absent
+MCP forms:         I-9 12/12, W-4 6/6, direct deposit 9/9
+Direct forms:      I-9 12/12, W-4 6/6, direct deposit 9/9
+```
+
+Interpretation: packet-small is a clean vertical slice. On this small corpus,
+stored MCP memory and direct no-memory form filling are tied on form accuracy.
+The stored-memory path shows the stronger packet-level memory signal because one
+shared memory snapshot recovered all 24 known packet facts before filling all
+three forms.
+
+Remaining before packet-medium:
+
+- checkpoint packet-small fixture, runner, and doc changes;
+- plan and build `packet-medium`.
 
 ## Phase 1: Make A More Complex Dossier
 
@@ -359,10 +377,7 @@ Exit criteria:
 
 ### Checkpoint 9: Run The Shared-Memory Evaluation
 
-Status: pending. The packet-small fixture and scenarios validate, but the first
-implementation environment did not have a running local backend, eval auth, or
-model/GCP configuration, so live stored-memory and direct baseline runs were not
-performed.
+Status: complete for `packet-small`; pending for `packet-medium`.
 
 The intended behavior is:
 
@@ -408,24 +423,44 @@ truncation.
 
 Packet-small address caveat: W-4 and direct deposit use form-ready composite
 address facts (`address.current.streetLine` and
-`address.current.cityStateZip`). The corpus explicitly contains those strings,
-but the first live run should inspect whether open-schema memory stored the
-composite address facts or only atomic address facts before interpreting any
-stored-memory versus direct-baseline address delta.
+`address.current.cityStateZip`). Open-schema database scoring now derives these
+composites from active atomic address components when needed. Form scoring stays
+strict, so missing apartment text or malformed `City, ST ZIP` still counts as a
+form-fill error.
+
+Packet-small live result:
+
+```text
+artifact root: /private/tmp/packet-small-clear-email-domains-20260622T010738Z
+MCP shared memory: 24/24 known facts recovered, 2/2 missing facts absent
+MCP forms:         I-9 12/12, W-4 6/6, direct deposit 9/9
+Direct forms:      I-9 12/12, W-4 6/6, direct deposit 9/9
+```
+
+Direct extraction recovered all known packet facts for I-9 and direct deposit.
+The W-4 direct extraction recovered 22/24 known packet facts, missing
+`banking.accountNumber` and `identity.middleInitial`; those misses did not
+affect the W-4 form score because the mapped W-4 fields do not use those facts.
 
 Exit criteria:
 
-- `packet-small` open-schema run completes;
+- `packet-small` open-schema run completes; done;
 - `packet-medium` open-schema run completes;
 - direct no-memory baseline input size is checked against the evidence cap, or
   documented as safely below it;
-- all three forms are filled from the same memory setup for each corpus;
-- direct no-memory baseline outputs exist for each form and corpus;
+- all three forms are filled from the same memory setup for each corpus; done
+  for `packet-small`;
+- direct no-memory baseline outputs exist for each form and corpus; done for
+  `packet-small`;
 - per-form stored-memory and direct-baseline score reports exist for each
-  corpus;
+  corpus; done for `packet-small`;
 - failures can be traced to extraction, memory storage, or form-fill behavior.
 
 ### Checkpoint 10: Add Packet-Level Reporting
+
+Status: complete enough for packet-medium. `eval:e2e-mcp-packet` writes one
+packet artifact, per-scenario score paths, and a concise `qualitySummary` so
+`status: pass` is not mistaken for perfect scoring.
 
 Keep per-form reports and add a small overall packet summary. The packet summary
 should not replace per-form scores; it should make cross-form results easier to
@@ -469,6 +504,14 @@ Score decomposition should stay simple:
 - detailed per-field reports remain the source of truth for tracing exactly
   what went wrong.
 
+Packet-small reporting caveats learned from the first run:
+
+- `status: pass` means the pipeline completed, not that every field was correct.
+- `sourceSlugAgreementRate` is diagnostic only for open-schema runs; correct
+  values can cite novel active slugs.
+- SF 1199A split account/routing digit boxes are intentionally skipped/not
+  scored in v1.
+
 Exit criteria:
 
 - packet summary includes both per-form scores and an overall score;
@@ -484,13 +527,15 @@ Exit criteria:
 3. Done: add W-4 minimal field map.
 4. Done: plan, author, and validate `packet-small`.
 5. Done: add one-form scenarios for `packet-small`.
-6. Next: run live open-schema and direct no-memory baseline on `packet-small`.
-7. Plan `packet-medium`.
-8. Generate or author `packet-medium` documents in small batches.
-9. Validate `packet-medium`.
-10. Add one-form scenarios for `packet-medium`.
-11. Run the shared-memory open-schema eval and direct no-memory baseline.
-12. Add packet-level reporting with per-form, overall, and stored-vs-direct
+6. Done: run live open-schema and direct no-memory baseline on `packet-small`.
+7. Done: add packet `qualitySummary` reporting cleanup.
+8. Next: checkpoint packet-small changes.
+9. Plan `packet-medium`.
+10. Generate or author `packet-medium` documents in small batches.
+11. Validate `packet-medium`.
+12. Add one-form scenarios for `packet-medium`.
+13. Run the shared-memory open-schema eval and direct no-memory baseline.
+14. Add packet-level reporting with per-form, overall, and stored-vs-direct
     scores.
 
 ## Deferred Work
@@ -500,7 +545,6 @@ Exit criteria:
 - Scanned-image OCR fixtures.
 - New multi-form scenario schema.
 - Large 100-document corpus generation.
-- Automated packet runner before the manual shared-memory path works.
 - Explicit conflict documents before stale and other-person challenge cases are
   stable.
 - Repeat-run variance reporting beyond single-run directional numbers.

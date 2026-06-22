@@ -1,8 +1,7 @@
 # Packet-Small Implementation Summary
 
-- Status: implemented fixture slice; live run pending local backend/auth/model
-  setup
-- Last updated: 2026-06-20
+- Status: implemented and live-verified as the first open-schema packet slice
+- Last updated: 2026-06-22
 - Scope: `packet-small` corpus and one-form scenarios for
   `maya-chen-newhire`
 
@@ -21,7 +20,11 @@ Created the first shared-dossier packet for Maya Chen:
   tax filing status, and banking facts;
 - expanded high-confidence document validation so packet-specific address, tax,
   and banking facts are checked in source bodies;
-- updated the field-policy test expectation for the new address storage slugs.
+- updated the field-policy test expectation for the new address storage slugs;
+- clarified the I-9 email field intent so Section 1 uses the employee
+  personal/contact email, not employer-issued work email;
+- changed Maya's fixture emails to make the personal/work distinction clearer:
+  `maya.chen@gmail.test` and `maya.chen@pacificledger.test`.
 
 ## Final Corpus Shape
 
@@ -67,6 +70,7 @@ pnpm eval:validate --scenario maya-chen-newhire-direct-deposit-packet-small
 node --test examples/eval/scripts/scoring/open-schema-database.test.mjs examples/eval/scripts/validate.test.mjs
 node --test --test-name-pattern "buildFormFillFieldPolicies derives policies from field and storage maps" examples/eval/scripts/fill-form.test.mjs
 node --test --test-name-pattern "buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slugs" examples/eval/scripts/fill-form.test.mjs
+pnpm --filter backend exec jest src/modules/preferences/form-fill --runInBand
 pnpm eval:test
 ```
 
@@ -83,46 +87,73 @@ unsupportedDeclaredFacts: 0
 
 ## Live-Run Status
 
-Not run in this environment.
+Live packet-small run completed successfully.
 
-Readiness check results:
+Artifact root:
 
-- local backend health check at `http://localhost:3000/health` could not
-  connect;
-- `EVAL_BACKEND_URL`, `EVAL_GRAPHQL_URL`, `EVAL_AUTH_TOKEN`, and
-  `EVAL_MODEL_LABEL` were unset;
-- GCP/Vertex env vars checked here were unset.
+```text
+/private/tmp/packet-small-clear-email-domains-20260622T010738Z
+```
 
-This means the fixture slice is validated, but the open-schema stored-memory run
-and direct open-schema no-memory baselines still need to be run in a configured
-local or remote eval environment.
+MCP stored-memory packet result:
+
+```text
+shared memory score: 24/24 known facts recovered
+missing facts:       2/2 correctly absent
+I-9 form:            12/12 known fields correct
+W-4 form:             6/6 known fields correct
+direct deposit form:  9/9 known fields correct
+```
+
+Direct open-schema no-memory baseline result from the same artifact root:
+
+```text
+I-9 form:            12/12 known fields correct
+W-4 form:             6/6 known fields correct
+direct deposit form:  9/9 known fields correct
+```
+
+Direct extraction diagnostics:
+
+```text
+I-9 extraction memory score:            24/24 known facts recovered
+W-4 extraction memory score:            22/24 known facts recovered
+direct-deposit extraction memory score: 24/24 known facts recovered
+```
+
+The two W-4 direct extraction misses were `banking.accountNumber` and
+`identity.middleInitial`. They did not affect the W-4 form score because those
+facts are not used by the mapped W-4 fields.
+
+Interpretation: packet-small now shows parity between stored-memory MCP and
+direct no-memory form filling on small context. The stored-memory path has the
+stronger shared packet-level memory signal: one shared memory snapshot recovered
+all 24 known packet facts before filling all three forms.
 
 ## Known Limitations
 
 - This is a small correctness/plumbing corpus, not the harder context-size
   benchmark.
-- W-4 and direct deposit use form-ready composite address facts
-  (`address.current.streetLine` and `address.current.cityStateZip`). The corpus
-  explicitly contains those strings, but the first live run should inspect
-  whether open-schema memory stored the composite facts or only atomic address
-  facts before interpreting stored-memory versus direct-baseline address misses.
-- Direct deposit routing and account number facts are present in the dossier and
-  storage map, but SF 1199A split digit boxes remain skipped in the form map.
-- Open-schema database recovery currently counts atomic and form-ready address
-  facts separately, so address recovery can be noisy until derived/equivalence
-  scoring exists.
-- `N=1` remains the first target once live runs are configured.
-- Packet-level reporting is not implemented yet.
+- Results are `N=1` and should be treated as directional until repeat runs are
+  added.
+- Direct deposit routing and account number facts are present in the dossier,
+  memory score, and direct extraction diagnostics, but SF 1199A split
+  one-character digit boxes remain skipped/not scored in the v1 form map.
+- `sourceSlugAgreementRate` is diagnostic only for open-schema runs. Values can
+  be correct under novel active slugs, so it should not be used as a headline
+  metric.
+- `status: pass` in packet artifacts means the pipeline completed. Use the
+  memory and form score summaries to judge quality.
+- The direct baseline has a 200K-character evidence cap. This is not blocking
+  for packet-small or the planned packet-medium size, but it matters for future
+  larger tiers.
+- Packet-level reporting now includes a basic `qualitySummary` for MCP packet
+  runs. Direct-baseline deltas still live in separate direct artifacts and
+  comparison scripts.
 
 ## Next Step
 
-Run the live `packet-small` comparison in a configured environment:
+Before building `packet-medium`:
 
-1. reset Maya's memory;
-2. run open-schema memory setup once on `packet-small`;
-3. inspect the memory snapshot for composite address facts before interpreting
-   address-related misses;
-4. fill I-9, W-4, and direct deposit from that same memory;
-5. run `eval:direct-open-schema` once per scenario;
-6. compare stored-memory versus direct no-memory results before building
-   `packet-medium`.
+1. checkpoint the packet-small fixture and runner changes;
+2. plan packet-medium from the now-clean packet-small baseline.

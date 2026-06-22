@@ -13,7 +13,7 @@ employee_profile:
   first_name: Maya
   middle_initial: L
   last_name: Chen
-  contact_email: maya.chen@example.test
+  contact_email: maya.chen@gmail.test
   home_address:
     street_line: 2846 Ashbury Street Apt 3D
     city_state_zip: Oakland, CA 94609
@@ -26,7 +26,7 @@ employment_assignment:
   company: Pacific Ledger Cooperative
   title: Client Operations Associate
   start_date: 2026-07-06
-  work_email: maya.chen@pacificledger.example.test
+  work_email: maya.chen@pacificledger.test
   onboarding_status: packet_documents_ready
 review_notes:
   - Profile is current for first-day paperwork.
