@@ -202,6 +202,29 @@ test('document prompt includes file type instructions and missing facts', () => 
   assert.match(prompt, /contact.phone/);
   assert.doesNotMatch(prompt, /Phone is missing|Leave it blank/);
   assert.match(prompt, /Samir Arun Desai/);
+
+  const yamlPrompt = buildDocumentPrompt({
+    profile: {
+      facts: {
+        identity: { legalName: 'Samir Arun Desai' },
+      },
+    },
+    corpusPlan: {
+      intentionallyMissing: [],
+      artifactWorld: {},
+    },
+    doc: {
+      id: '002',
+      path: 'documents/identity/002-id.yaml',
+      outputExtension: 'yaml',
+      factContract: { include: ['identity.legalName'], forbid: [] },
+      sourceSpec: sourceSpec(),
+      evaluationRole: evaluationRole(),
+    },
+  });
+
+  assert.match(yamlPrompt, /Output format: valid YAML only/);
+  assert.match(yamlPrompt, /Quote YAML scalar strings that contain colons, braces, brackets/);
 });
 
 test('document prompt nudges native source formats and length targets', () => {
@@ -234,6 +257,21 @@ test('document prompt nudges native source formats and length targets', () => {
   assert.match(prompt, /within its minChars\/maxChars range/);
   assert.match(prompt, /OCR and plain-text exports should use native label\/value lines/);
   assert.match(prompt, /JSON and YAML exports should use native field ids or keys/);
+  assert.match(prompt, /avoid comments; put explanatory notes in native fields/);
+  assert.match(prompt, /Use provided timeline values for the artifact primary source, export, created, or submitted timestamp/);
+  assert.match(prompt, /Additional operational timestamps, status rows, support notes, and source-system metadata may be added for realism/);
+  assert.match(prompt, /chronologically plausible/);
+  assert.match(prompt, /do not change freshness, authority, stale\/current interpretation/);
+  assert.match(prompt, /provide competing values for target form fields/);
+  assert.match(prompt, /Invented details are allowed only as incidental operational metadata/);
+  assert.match(prompt, /do not invent values that could plausibly fill a target form field/);
+  assert.match(prompt, /update the current employee profile/);
+  assert.match(prompt, /Required person details, Allowed source context, native blank\/null\/not_imported values/);
+  assert.match(prompt, /Do not synthesize plausible values for missing canonical profile facts/);
+  assert.match(prompt, /employer name, employer address, job title, department, start date/);
+  assert.match(prompt, /Treat sourceSpec\.safeDetailMenu as allowed construction guidance/);
+  assert.match(prompt, /sourceSpec\.riskyDetailMenu as disallowed drift/);
+  assert.match(prompt, /temporal, state, or optional-field bounds/);
   assert.match(prompt, /fields beyond the required person details/);
   assert.match(prompt, /blank, null, or not_imported/);
   assert.match(prompt, /do not supply factual defaults such as false, 0, unknown/);

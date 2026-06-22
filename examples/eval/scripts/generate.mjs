@@ -415,6 +415,7 @@ function fileTypeRules(doc) {
       'Output format: valid YAML only.',
       'Do not wrap YAML in markdown fences.',
       'Do not include trailing prose or explanatory text outside the YAML document.',
+      'Quote YAML scalar strings that contain colons, braces, brackets, leading special characters, or values that could otherwise be parsed incorrectly.',
     ].join('\n');
   }
   if (extension === 'txt') {
@@ -435,7 +436,11 @@ function sourceFormatRules(doc) {
     'When sourceSpec.lengthTarget is present, aim to keep the body within its minChars/maxChars range.',
     'Email artifacts must use raw email headers exactly like From:, To:, Date:, and Subject:, not Markdown-bold header labels.',
     'OCR and plain-text exports should use native label/value lines, OCR-like blocks, or raw export text instead of Markdown headings or bold labels.',
-    'JSON and YAML exports should use native field ids or keys and avoid prose comments.',
+    'JSON and YAML exports should use native field ids or keys and avoid comments; put explanatory notes in native fields such as notes, reviewer_notes, or status_history[].note.',
+    'Use provided timeline values for the artifact primary source, export, created, or submitted timestamp when applicable. Additional operational timestamps, status rows, support notes, and source-system metadata may be added for realism when they are clearly incidental, chronologically plausible, within any sourceSpec temporal bounds or time ranges, and do not change freshness, authority, stale/current interpretation, or provide competing values for target form fields.',
+    'Invented details are allowed only as incidental operational metadata; do not invent values that could plausibly fill a target form field or update the current employee profile. For those fields, use Required person details, Allowed source context, native blank/null/not_imported values, or omit the field.',
+    'Do not synthesize plausible values for missing canonical profile facts such as employer name, employer address, job title, department, start date, phone, tax elections, work authorization values, or banking values. If the value is not in Required person details or Allowed source context, leave it blank/null/not_imported or omit it.',
+    'Treat sourceSpec.safeDetailMenu as allowed construction guidance and sourceSpec.riskyDetailMenu as disallowed drift. When a safe or risky detail names temporal, state, or optional-field bounds, follow those bounds strictly.',
     'Native source artifacts may include fields beyond the required person details, but user-person fields not present in Required person details or Allowed source context must stay blank, null, or not_imported; do not supply factual defaults such as false, 0, unknown, or placeholder old values.',
   ];
 

@@ -49,6 +49,7 @@
       "portalExportId": "LP-DD-20418-MED"
     },
     "stale": {
+      "recruitingSystem": "HarborHire Recruiting Archive",
       "oldAddress": "910 Juniper Avenue Apt 12, Berkeley, CA 94704",
       "oldEmail": "maya.chen@oldmail.test",
       "oldBank": "Harbor Neighborhood Bank",
@@ -297,12 +298,17 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "Section 1 employee-entered fields only; Section 2, employer certification, document inspection, employer business name, employer business address, employer representative, employer contact fields, and first-day fields should be pending, null, not_started, or omitted unless exact source context provides them",
+          "employee telephone number should use a native blank/null value because no current user phone is provided",
+          "audit metadata may describe Section 1 drafting or export events but must not imply completed employer review or certification"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "invented employee_first_day_of_employment, employer certification date, employer business name, employer business address, employer representative, employer contact fields, Section 2 document inspection values, or completed reviewer attestation",
+          "current job title, department, hire date, or employment start date values unless present in required person details or allowed source context"
         ],
         "lengthTarget": {
           "minChars": 1925,
@@ -735,15 +741,19 @@
           "review queue",
           "field ids mapped to W-4 Step 1",
           "field-level validation statuses",
-          "status history with saved and payroll-reviewed rows",
-          "reviewer note explaining no extra withholding worksheet values",
-          "if later W-4 sections appear, keep them as empty or not imported rather than adding numeric personal values"
+          "temporal bounds: submitted_at and the primary artifact timestamp should use w4SavedAt when present; incidental operational timestamps may be plausible same-day pending-review metadata but must not imply approval, activation, or completed review",
+          "state bounds: artifact state is saved/submitted and pending payroll review; future work may appear only as pending_action or next_step, not as completed approved, activated, or reviewed log rows",
+          "status history may include saved/submitted and routing-to-review rows, but not completed review or approval rows unless exact source context provides them",
+          "reviewer note explaining optional W-4 sections were not imported in this export without implying false, zero, no, unchecked, or no-additional-withholding values",
+          "optional field bounds: if W-4 Step 2, Step 3, or Step 4 fields appear, each optional field must be null, blank, not_imported, or omitted rather than a factual default"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
           "signature attestation",
           "values for W-4 Step 2, Step 3, or Step 4 unless present in required person details",
+          "false, 0, $0, no, none, unchecked, standard election, or no additional withholding values for optional W-4 fields not present in required person details",
+          "approved, activated, reviewed, next payroll cycle, next_business_day completed rows, or future completed payroll events",
           "generic source note, audit note, or handling note filler",
           "repeated prose added only to satisfy length"
         ],
@@ -802,12 +812,19 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "tax.filingStatus is the only W-4 election value included for this source; optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, and state withholding fields may appear only as null, blank, not_imported, or omitted",
+          "review notes may say optional withholding fields were not imported or were not in the corroboration export without implying no, false, zero, unchecked, or standard elections",
+          "state tax profile sections may be present as empty, pending, or not_imported metadata, but should not contain allowance counts, extra withholding amounts, or default withholding calculations"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "state DE 4 allowance counts, additional allowance counts, or additional withholding amounts unless present in required person details",
+          "default withholding calculations such as Single, 0 allowances, even in validation notes, reviewer notes, warnings, or explanatory prose",
+          "completed validation notes that convert absent optional fields into factual defaults"
         ],
         "lengthTarget": {
           "minChars": 1798,
@@ -1002,7 +1019,7 @@
         "sourceFamily": "payroll-tax",
         "captureMode": "yaml-system-export",
         "timelineRefs": [
-          "onboardingProfileExportAt"
+          "directDepositSavedAt"
         ],
         "worldRefs": [
           "employer.payrollSystem",
@@ -1020,12 +1037,20 @@
           "profile status",
           "reviewer assigned",
           "field ids",
-          "audit metadata"
+          "audit metadata",
+          "direct-deposit profile details only: deposit profile id, account holder, institution, account type, routing/account numbers, verification status, allocation, and payroll-system audit metadata",
+          "artifact should be a direct-deposit confirmation export, not a broad worker profile snapshot",
+          "worker identity may be limited to worker id and included name/address facts; omit employment, tax, work-authorization, W-4, and I-9 sections entirely",
+          "review notes may discuss direct-deposit verification only; do not mention W-4, I-9, tax withholding, work authorization, job, department, hire-date, or employment-status facts"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "invented current job title, department, hire date, employment status, or employment start date",
+          "worker profile snapshot, employmentProfile, taxWithholding, workAuthorization, W-4 status, I-9 verification status, onboarding completion date, compliance reviewer, or other profile sections outside the direct-deposit setup",
+          "default tax withholding prose, pending tax setup prose, pending I-9 prose, or any statement about how the employee will be taxed",
+          "banking values that differ from required person details"
         ],
         "lengthTarget": {
           "minChars": 2364,
@@ -1232,14 +1257,16 @@
       "title": "Sample Direct Deposit Packet Jordan",
       "outputExtension": "txt",
       "sourceSpec": {
-        "artifactType": "instruction-or-policy-page",
+        "artifactType": "completed-sample-direct-deposit-packet",
         "sourceFamily": "noise",
-        "captureMode": "plain-text-knowledge-base-export",
+        "captureMode": "plain-text-sample-packet-export",
         "timelineRefs": [
           "policyPublishedAt"
         ],
         "worldRefs": [
-          "employer.payrollSystem"
+          "employer.payrollSystem",
+          "sample.employeeName",
+          "sample.workerId"
         ],
         "nativeSignals": [
           "source system",
@@ -1249,12 +1276,18 @@
         "safeDetailMenu": [
           "policy id",
           "version",
-          "owner group"
+          "owner group",
+          "completed example packet for sample employee Jordan Avery using sample worker id PLC-SAMPLE-771",
+          "sample labels, training watermark, example-only status, and placeholder bank fields that are clearly not Maya's information",
+          "plain-text packet sections that demonstrate direct-deposit setup without current user identifiers"
         ],
         "riskyDetailMenu": [
           "current user identifier",
           "private bank data",
-          "signature attestation"
+          "signature attestation",
+          "generic policy article with no sample employee",
+          "Maya Chen name, worker id, email, address, or bank values",
+          "sample details that could be mistaken for current user direct-deposit information"
         ],
         "lengthTarget": {
           "minChars": 1863,
@@ -1410,7 +1443,8 @@
         ],
         "worldRefs": [
           "employer.onboardingSystem",
-          "employer.workerId"
+          "employer.workerId",
+          "support.hrDeskPhone"
         ],
         "nativeSignals": [
           "source system",
@@ -1424,10 +1458,10 @@
           "queue",
           "assignee",
           "requester",
-          "activity log with two or three timestamped updates",
+          "activity log with two or three updates; use supportTicketAt for ticket creation when present, and allow plausible same-day or next-business-day operational timing only if it does not create competing target form facts",
           "field correction summary",
           "resolution note",
-          "internal note that support desk phone numbers are contact-channel metadata, not Maya's phone",
+          "internal note that support desk phone numbers are contact-channel metadata, not Maya's phone; if an exact support number is included, use support.hrDeskPhone",
           "generic prior-value labels without inventing explicit old address or email values"
         ],
         "riskyDetailMenu": [
@@ -1537,6 +1571,7 @@
         "worldRefs": [
           "employer.onboardingSystem",
           "employer.workerId",
+          "stale.recruitingSystem",
           "stale.oldEmail",
           "stale.oldAddress"
         ],
@@ -1548,12 +1583,14 @@
           "reviewer note"
         ],
         "safeDetailMenu": [
-          "recruiting archive export header",
+          "recruiting archive export header using stale.recruitingSystem exactly as the source system",
           "superseded or do-not-use status",
           "old candidate profile id distinct from current worker id",
           "archived contact fields using allowed stale.oldEmail and stale.oldAddress exactly",
           "stale-value review note",
-          "short timeline showing archive retained for reconciliation only",
+          "temporal bounds: exported timestamp must use staleRecruiterExportedAt exactly; any other recruiting history must be clearly pre-export or archive-time and must preserve the stale/superseded role",
+          "short timeline may include generic pre-export recruiting/archive steps and an archive-time closeout, but should not add current employment facts",
+          "state bounds: archive export contains only stale information; operational detail must not make this record look current or authoritative",
           "resolution note pointing to active onboarding profile as authority"
         ],
         "riskyDetailMenu": [
@@ -1561,6 +1598,8 @@
           "unrelated identifier",
           "legal attestation",
           "alternate stale email or stale address values not present in allowed source context",
+          "current-looking employment title, current department, current role, or recruiting-stage facts that could compete with current employment form fields",
+          "after-export events that modify the archive or make stale values look current",
           "generic source note, audit note, or handling note filler",
           "repeated prose added only to satisfy length"
         ],
