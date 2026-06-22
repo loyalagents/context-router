@@ -1075,6 +1075,16 @@ function createCorpusTruthDocument(doc) {
   };
 }
 
+function unsupportedDeclaredFactReason({ expectedUse, factKey }) {
+  if (!['extract', 'corroborate'].includes(expectedUse)) {
+    return `expectedUse is ${JSON.stringify(expectedUse)} instead of "extract" or "corroborate"`;
+  }
+  if (!isHighConfidenceFactKey(factKey)) {
+    return 'the fact key has no high-confidence deterministic check';
+  }
+  return 'the declared fact is not eligible for deterministic checking';
+}
+
 function getEffectiveForbiddenEntries({
   manifest,
   doc,
@@ -1158,6 +1168,15 @@ function validateDocumentProse(ctx, {
   for (const [factIndex, factKey] of factKeys.entries()) {
     if (!checksBodyForDeclaredFacts || !isHighConfidenceFactKey(factKey)) {
       truth.declaredFacts.unsupported.push(factKey);
+      const reason = unsupportedDeclaredFactReason({ expectedUse, factKey });
+      addIssue(ctx, {
+        level: 'warning',
+        code: 'DOCUMENT_FACT_UNSUPPORTED_FOR_SCORING',
+        file: manifestPath,
+        pointer: `${pointer}/factContract/include/${factIndex}`,
+        message: `Document ${doc.id} declares ${factKey}, but validation cannot prove this fact for scoring because ${reason}.`,
+        fix: 'Remove this fact from factContract.include[] or add deterministic validation support before using it as scored corpus truth.',
+      });
       continue;
     }
 
