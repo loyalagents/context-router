@@ -1,0 +1,34 @@
+From: Priya Shah <priya.shah@pacificledger.test>
+To: maya.chen@gmail.test
+Date: 2026-06-21T16:35:00-07:00
+Subject: Offer details and onboarding start
+Message id: PLC-HR-20260621-20418
+
+Hello Maya Lin Chen,
+
+This note confirms the offer details for Pacific Ledger Cooperative. The role is Client Operations Associate, with a planned start date of 2026-07-06. Your work email for internal systems is maya.chen@pacificledger.test.
+
+The onboarding packet will use your personal email for employee-provided forms and the work email for internal company systems. The payroll team will connect the same worker id to tax and deposit setup after your profile is active.
+
+Regards,
+Priya Shah
+
+Offer email source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Offer email audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Offer email handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Offer email source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Offer email audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Offer email handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Offer email source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Offer email audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Offer email handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Offer email source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

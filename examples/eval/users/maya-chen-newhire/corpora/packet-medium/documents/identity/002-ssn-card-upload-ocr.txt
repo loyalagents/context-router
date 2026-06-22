@@ -1,0 +1,27 @@
+Source filename: maya-chen-ssn-card-packet-medium.png
+Upload batch id: HH-UPL-MC-20418-MED
+Timestamp: 2026-06-24T09:46:00-07:00
+Status: verified identity support document
+OCR confidence: 0.97 average
+
+Document category: Social Security card image transcript
+Name line: Maya Lin Chen
+Number line: 000-00-0417
+Review note: The card name matches the legal-name block in the identity packet. The identifier was read from the uploaded image and routed to restricted payroll verification.
+Field ids: ssn_card.name, ssn_card.number, review.status
+
+SSN OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+SSN OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+SSN OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+SSN OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+SSN OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+SSN OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+SSN OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+SSN OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

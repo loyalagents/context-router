@@ -1,0 +1,28 @@
+Source system: HarborHire Recruiting Archive
+Ticket id: HH-ARCHIVE-STALE-ADDR
+Exported timestamp: 2026-05-19T09:20:00-07:00
+Worker id: RECRUITING-OLD-20418
+Status: superseded old recruiter record - do not use for current onboarding
+Field ids: recruiting.old_email, recruiting.old_address, recruiting.archive_status
+
+Archived email: maya.chen@oldmail.test
+Archived mailing address: 910 Juniper Avenue Apt 12, Berkeley, CA 94704
+Reviewer note: This stale recruiter profile was retained only to explain why an earlier contact record differs from the active onboarding packet. It is old and superseded.
+
+Stale recruiter profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale recruiter profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale recruiter profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Stale recruiter profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale recruiter profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale recruiter profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Stale recruiter profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale recruiter profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale recruiter profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

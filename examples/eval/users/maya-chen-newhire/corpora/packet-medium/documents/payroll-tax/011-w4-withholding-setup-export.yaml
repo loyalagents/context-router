@@ -1,0 +1,32 @@
+source_system: LedgerPay
+exported_timestamp: "2026-06-25T13:28:00-07:00"
+worker_id: PLC-20418
+status: current_w4_setup_saved
+field_ids:
+  - w4.first_name
+  - w4.last_name
+  - w4.ssn
+  - w4.address.street_line
+  - w4.address.city_state_zip
+  - w4.filing_status
+employee:
+  first_name: Maya
+  last_name: Chen
+  ssn: "000-00-0417"
+  address:
+    street_line: 2846 Ashbury Street Apt 3D
+    city_state_zip: Oakland, CA 94609
+tax:
+  filing_status: single or married filing separately
+reviewer_note: W-4 setup is current and ready for payroll form rendering.
+#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: W-4 setup handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: W-4 setup source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: W-4 setup audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

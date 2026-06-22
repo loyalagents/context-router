@@ -1,0 +1,24 @@
+source_system: Pacific Ledger Benefits
+exported_timestamp: "2026-06-26T11:05:00-07:00"
+worker_id: PLC-20418
+status: benefits_profile_ready
+field_ids:
+  - benefits.legal_name
+  - benefits.personal_email
+  - benefits.address.street_line
+  - benefits.address.city_state_zip
+legal_name: Maya Lin Chen
+personal_email: maya.chen@gmail.test
+mailing_address:
+  street_line: 2846 Ashbury Street Apt 3D
+  city_state_zip: Oakland, CA 94609
+reviewer_note: Benefits enrollment uses the same current mailing address and personal email as the onboarding packet.
+#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Benefits enrollment profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Benefits enrollment profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Benefits enrollment profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

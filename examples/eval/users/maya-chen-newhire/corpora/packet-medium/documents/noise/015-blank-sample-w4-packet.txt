@@ -1,0 +1,22 @@
+Source system: LedgerPay Training Library
+Timestamp: 2026-06-04T10:00:00-07:00
+Status: active sample form packet
+Training id: LP-SAMPLE-W4-2026
+
+This packet shows a blank federal withholding form and a generic training walkthrough for payroll staff. Example rows use placeholder labels such as Employee First Name, Employee Last Name, Address Line, City State ZIP, and Social Security Number.
+
+The packet is not tied to any worker id and does not contain a real employee tax election. It is included in the onboarding library so payroll reviewers can see field order and section labels.
+
+Blank sample W-4 packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Blank sample W-4 packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Blank sample W-4 packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Blank sample W-4 packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Blank sample W-4 packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Blank sample W-4 packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Blank sample W-4 packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

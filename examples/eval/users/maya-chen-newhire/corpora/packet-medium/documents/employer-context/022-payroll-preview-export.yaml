@@ -1,0 +1,21 @@
+source_system: LedgerPay
+exported_timestamp: "2026-06-26T11:30:00-07:00"
+worker_id: PLC-20418
+status: payroll_preview_pending_first_pay
+field_ids:
+  - payroll.worker_id
+  - payroll.company
+  - payroll.title
+preview:
+  worker_id: PLC-20418
+  company: Pacific Ledger Cooperative
+  title: Client Operations Associate
+reviewer_note: Payroll preview is current employment context only. It does not include completed pay statements or additional tax calculations.
+#note: Payroll preview export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Payroll preview export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Payroll preview export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Payroll preview export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Payroll preview export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Payroll preview export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Payroll preview export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Payroll preview export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

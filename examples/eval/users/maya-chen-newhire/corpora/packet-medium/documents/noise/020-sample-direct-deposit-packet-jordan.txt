@@ -1,0 +1,33 @@
+Source system: LedgerPay Training Library
+Timestamp: 2026-06-07T13:00:00-07:00
+Status: sample employee record only
+Sample packet id: SAMPLE-DD-JA-2026
+
+Sample employee: Jordan Avery
+Sample worker id: PLC-SAMPLE-771
+Sample email: jordan.avery@example.test
+Sample address: 77 Sample Market Street, San Francisco, CA 94105
+Sample bank: Sample City Credit Union
+Sample routing number: 122105278
+Sample account number: 881200445566
+Sample contact number: 415-555-0166
+
+Training note: This record is for a sample employee only. It is not an active onboarding record and is not tied to the current packet's worker id.
+
+Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Sample direct deposit packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Sample direct deposit packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Sample direct deposit packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

@@ -1,0 +1,30 @@
+Source system: LedgerPay Knowledge Base
+Timestamp: 2026-06-02T09:00:00-07:00
+Status: active support FAQ
+FAQ id: LP-PAYROLL-SUPPORT-2026
+
+Payroll support phone: 510-555-0188
+Bank verification desk phone: 415-555-0133
+Support note: These phone numbers belong to service desks for payroll and banking verification questions. They are not employee contact values and do not identify any person in an onboarding packet.
+
+The FAQ covers missing bank letters, rejected ACH deposits, blank tax fields, and how support tickets are routed. It provides general handling rules and no current employee facts.
+
+Payroll support FAQ source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Payroll support FAQ audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Payroll support FAQ handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Payroll support FAQ source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Payroll support FAQ audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Payroll support FAQ handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Payroll support FAQ source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Payroll support FAQ audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Payroll support FAQ handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Payroll support FAQ source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

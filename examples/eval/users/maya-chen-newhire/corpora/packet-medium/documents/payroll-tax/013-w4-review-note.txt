@@ -1,0 +1,28 @@
+Source system: LedgerPay
+Exported timestamp: 2026-06-25T14:16:00-07:00
+Worker id: PLC-20418
+Status: payroll reviewer accepted
+Field ids: review.tax_filing_status, review.ssn_confirmation, review.status
+
+Reviewer assigned: North Bay Payroll Team
+Filing status reviewed: single or married filing separately
+SSN confirmation value: 000-00-0417
+Reviewer note: The filing status and Social Security number match the saved W-4 setup. No dependent credit amount was entered in this first packet.
+
+W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+W-4 review note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+W-4 review note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+W-4 review note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

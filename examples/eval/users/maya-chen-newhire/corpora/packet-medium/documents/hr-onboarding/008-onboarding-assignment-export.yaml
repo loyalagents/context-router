@@ -1,0 +1,25 @@
+source_system: HarborHire
+exported_timestamp: "2026-06-25T12:22:00-07:00"
+worker_id: PLC-20418
+status: onboarding_assignment_active
+field_ids:
+  - assignment.company
+  - assignment.title
+  - assignment.start_date
+  - assignment.worker_id
+reviewer_assigned: Priya Shah
+assignment:
+  company: Pacific Ledger Cooperative
+  title: Client Operations Associate
+  start_date: "2026-07-06"
+  worker_id: PLC-20418
+queue_note: The active assignment routes payroll, I-9, tax, and direct-deposit tasks to the same worker id.
+#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Onboarding assignment source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Onboarding assignment audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Onboarding assignment handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

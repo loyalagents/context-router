@@ -1,0 +1,30 @@
+Source system: LedgerPay
+Ticket id: LP-ARCHIVE-STALE-BANK
+Exported timestamp: 2026-06-10T10:44:00-07:00
+Worker id: PLC-20418
+Status: inactive and superseded old bank draft - do not use
+Field ids: draft.old_bank_name, draft.old_account_suffix, draft.archive_status
+
+Old bank name: Harbor Neighborhood Bank
+Old account ending: 8821
+Reviewer note: This stale draft was started before the current Bay Harbor account verification arrived. The old bank draft is inactive and should not be used for current direct deposit.
+
+Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Stale payroll bank draft audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Stale payroll bank draft handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Stale payroll bank draft source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

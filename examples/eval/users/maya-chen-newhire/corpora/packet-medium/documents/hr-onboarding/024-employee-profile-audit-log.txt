@@ -1,0 +1,25 @@
+Source system: HarborHire
+Exported timestamp: 2026-06-26T08:42:00-07:00
+Worker id: PLC-20418
+Status: audit log current
+Field ids: audit.personal_email, audit.work_email, audit.change_status
+
+Audit entry 1: personal_email confirmed as maya.chen@gmail.test
+Audit entry 2: work_email provisioned as maya.chen@pacificledger.test
+Reviewer note: Personal email is used for employee-entered forms. Work email is company directory context and should not replace the personal email on employee-completed forms.
+
+Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Employee profile audit log handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Employee profile audit log handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Employee profile audit log source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Employee profile audit log audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

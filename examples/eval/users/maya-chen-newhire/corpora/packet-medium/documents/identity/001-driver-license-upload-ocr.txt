@@ -1,0 +1,38 @@
+Source filename: maya-chen-dl-front-packet-medium.png
+Upload batch id: HH-UPL-MC-20418-MED
+Timestamp: 2026-06-24T09:42:00-07:00
+Status: verified current identity document
+OCR confidence: 0.96 average
+Review queue: HarborHire identity intake
+
+Document type: California driver license front image
+Name block: Maya Lin Chen
+Date of birth: February 22, 1991
+Address block:
+2846 Ashbury Street
+Apt 3D
+Oakland, CA 94609
+
+Extracted text regions:
+Region A, upper name line, confidence 0.98: Maya Lin Chen
+Region B, date block, confidence 0.95: 1991-02-22
+Region C, address line one, confidence 0.94: 2846 Ashbury Street
+Region D, address line two, confidence 0.93: Apt 3D
+Region E, city state postal, confidence 0.96: Oakland, CA 94609
+The reviewer marked the address and date block as readable and current for onboarding profile comparison.
+
+Driver license OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Driver license OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Driver license OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Driver license OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Driver license OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Driver license OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Driver license OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Driver license OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

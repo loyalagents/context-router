@@ -1,7 +1,7 @@
 # Increase Form Complexity Orchestration
 
 - Status: temporary orchestration plan; packet-small live vertical slice
-  complete, packet-medium pending
+  complete, packet-medium fixture implemented and live run pending
 - Last updated: 2026-06-22
 - Scope: checkpoints for building a more complex dossier first, then evaluating
   multiple forms from that same dossier
@@ -39,9 +39,11 @@ open-schema stored-memory path against the open direct/no-memory baseline.
 
 ## Current Implementation Status
 
-The first fixture slice and the `packet-small` fixture slice are implemented.
+The first fixture slice, the `packet-small` fixture slice, and the
+`packet-medium` fixture are implemented.
 See `first-few-steps/implementation-summary.md` and
-`small-packet/implementation-summary.md` for the file-level summaries.
+`small-packet/implementation-summary.md` for the file-level summaries. See
+`medium-packet/implementation-summary.md` for the packet-medium fixture summary.
 
 Completed:
 
@@ -65,7 +67,13 @@ Completed:
 - added `eval:e2e-mcp-packet` so MCP open-schema ingestion runs once and then
   fills all packet forms from the same shared memory;
 - ran the live `packet-small` MCP stored-memory path and direct open-schema
-  no-memory baselines.
+  no-memory baselines;
+- implemented `packet-medium` as a 30-document, 68 KB corpus with obvious stale
+  and other-person challenge documents;
+- added one-form `packet-medium` scenarios for I-9, W-4, and SF 1199A direct
+  deposit;
+- validated `packet-medium` with zero errors and four expected phone-distractor
+  warnings.
 
 Packet-small result:
 
@@ -82,10 +90,12 @@ The stored-memory path shows the stronger packet-level memory signal because one
 shared memory snapshot recovered all 24 known packet facts before filling all
 three forms.
 
-Remaining before packet-medium:
+Remaining for packet-medium live evaluation:
 
-- checkpoint packet-small fixture, runner, and doc changes;
-- plan and build `packet-medium`.
+- run the live `packet-medium` MCP stored-memory path;
+- run the direct open-schema no-memory baselines for all three packet-medium
+  forms;
+- compare packet-small and packet-medium.
 
 ## Phase 1: Make A More Complex Dossier
 
@@ -298,7 +308,8 @@ Exit criteria:
 
 ### Checkpoint 7: Build The Packet Corpus
 
-Status: complete for `packet-small`; pending for `packet-medium`.
+Status: complete for `packet-small`; fixture complete for `packet-medium`.
+Packet-medium live evaluation remains pending.
 
 Generate or author the document bodies in small batches.
 
@@ -337,15 +348,16 @@ Review for:
 Exit criteria:
 
 - `packet-small` validates and is easy to inspect;
-- `packet-medium` validates;
+- `packet-medium` validates; done;
 - `validation-report.json` is regenerated if this becomes a committed fixture;
-- document count and byte count are recorded for each corpus.
+- document count and byte count are recorded for each corpus; done for
+  `packet-medium` in `medium-packet/implementation-summary.md`.
 
 ## Phase 2: Evaluate Multiple Forms From The Same Dossier
 
 ### Checkpoint 8: Add Separate One-Form Scenarios
 
-Status: complete for `packet-small`; pending for `packet-medium`.
+Status: complete for `packet-small` and `packet-medium`.
 
 Do not start with a new multi-form scenario format.
 
@@ -377,7 +389,7 @@ Exit criteria:
 
 ### Checkpoint 9: Run The Shared-Memory Evaluation
 
-Status: complete for `packet-small`; pending for `packet-medium`.
+Status: complete for `packet-small`; pending live run for `packet-medium`.
 
 The intended behavior is:
 
@@ -529,12 +541,12 @@ Exit criteria:
 5. Done: add one-form scenarios for `packet-small`.
 6. Done: run live open-schema and direct no-memory baseline on `packet-small`.
 7. Done: add packet `qualitySummary` reporting cleanup.
-8. Next: checkpoint packet-small changes.
-9. Plan `packet-medium`.
-10. Generate or author `packet-medium` documents in small batches.
-11. Validate `packet-medium`.
-12. Add one-form scenarios for `packet-medium`.
-13. Run the shared-memory open-schema eval and direct no-memory baseline.
+8. Done: checkpoint packet-small changes.
+9. Done: plan `packet-medium`.
+10. Done: author `packet-medium` documents.
+11. Done: validate `packet-medium`.
+12. Done: add one-form scenarios for `packet-medium`.
+13. Next: run the shared-memory open-schema eval and direct no-memory baseline.
 14. Add packet-level reporting with per-form, overall, and stored-vs-direct
     scores.
 

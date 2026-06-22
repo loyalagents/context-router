@@ -1,0 +1,32 @@
+Source filename: bay-harbor-verification-letter-mc.pdf
+Timestamp: 2026-06-26T09:52:00-07:00
+Status: bank letter OCR accepted
+OCR confidence: 0.94 average
+Document category: account verification letter
+
+Institution: Bay Harbor Credit Union
+Account holder: Maya Lin Chen
+Account type: checking
+Routing number: 091000019
+Account number: 740182936451
+Letter note: The institution confirms the account is eligible for ACH payroll deposits. The letter is attached to the payroll setup case for worker id PLC-20418.
+
+Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Bank verification letter audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Bank verification letter handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Bank verification letter source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

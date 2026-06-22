@@ -1,0 +1,31 @@
+Source system: HarborHire
+Exported timestamp: 2026-06-24T10:02:00-07:00
+Worker id: PLC-20418
+Status: identity verification matched
+Field ids: candidate.first_name, candidate.middle_initial, candidate.last_name, candidate.date_of_birth, candidate.ssn
+
+Reviewer assigned: Priya Shah
+First name: Maya
+Middle name observed: Lin
+Middle initial stored: L
+Last name: Chen
+Date of birth: 1991-02-22
+Social Security number: 000-00-0417
+
+Reviewer note: The split-name fields agree with the legal-name text. No other last names were supplied in the intake note. The record was kept as a current identity cross-check for payroll and I-9 preparation.
+
+Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Identity verification note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Identity verification note handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Identity verification note source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Identity verification note audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

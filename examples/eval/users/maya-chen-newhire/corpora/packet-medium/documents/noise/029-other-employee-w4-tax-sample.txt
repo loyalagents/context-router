@@ -1,0 +1,30 @@
+Source system: LedgerPay Training Library
+Timestamp: 2026-06-18T16:10:00-07:00
+Status: sample employee tax record only
+Sample packet id: SAMPLE-W4-RP-2026
+
+Sample employee: Riley Park
+Sample worker id: PLC-SAMPLE-884
+Sample email: riley.park@example.test
+Sample filing status: head of household
+Sample dependent credit: training example only
+
+Training note: This record belongs to a different sample employee and is used to show payroll reviewers how W-4 sections can vary. It is not connected to the active packet worker id.
+
+Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Other employee W-4 sample source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee W-4 sample audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee W-4 sample handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

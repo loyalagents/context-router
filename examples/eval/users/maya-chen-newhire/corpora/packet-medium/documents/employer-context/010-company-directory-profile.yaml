@@ -1,0 +1,25 @@
+source_system: Pacific Ledger Directory
+exported_timestamp: "2026-06-26T09:12:00-07:00"
+worker_id: PLC-20418
+status: pending_start_visible_to_hr
+field_ids:
+  - directory.first_name
+  - directory.last_name
+  - directory.title
+  - directory.company
+  - directory.work_email
+profile:
+  first_name: Maya
+  last_name: Chen
+  title: Client Operations Associate
+  company: Pacific Ledger Cooperative
+  work_email: maya.chen@pacificledger.test
+reviewer_note: Directory data is company-owned context and is not the employee personal email used for I-9 Section 1.
+#note: Company directory profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Company directory profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Company directory profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Company directory profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Company directory profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Company directory profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Company directory profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Company directory profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

@@ -1,0 +1,22 @@
+source_system: HarborHire
+exported_timestamp: "2026-06-12T08:10:00-07:00"
+worker_id: PLC-20418
+status: old superseded onboarding export do not use
+field_ids:
+  - archive.old_title
+  - archive.old_start_date
+  - archive.archive_status
+old_assignment:
+  title: Operations Coordinator
+  start_date: "2026-06-15"
+  department: client onboarding queue
+reviewer_note: This old export was superseded after the final offer details were accepted. It remains in the archive for audit history only.
+#note: Stale onboarding export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Stale onboarding export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Stale onboarding export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Stale onboarding export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Stale onboarding export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Stale onboarding export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Stale onboarding export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Stale onboarding export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Stale onboarding export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

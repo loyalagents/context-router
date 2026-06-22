@@ -1,0 +1,30 @@
+Source system: HarborHire Training Library
+Timestamp: 2026-06-18T15:35:00-07:00
+Status: sample employee record only
+Sample packet id: SAMPLE-HR-JA-2026
+
+Sample employee: Jordan Avery
+Sample worker id: PLC-SAMPLE-771
+Sample email: jordan.avery@example.test
+Sample address: 77 Sample Market Street, San Francisco, CA 94105
+Sample title: Training Packet Associate
+
+Training note: This sample packet shows how a completed onboarding packet can look for a different person. It is not an active worker record for the packet being filled.
+
+Other employee sample packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee sample packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee sample packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Other employee sample packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee sample packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee sample packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Other employee sample packet source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Other employee sample packet audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Other employee sample packet handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

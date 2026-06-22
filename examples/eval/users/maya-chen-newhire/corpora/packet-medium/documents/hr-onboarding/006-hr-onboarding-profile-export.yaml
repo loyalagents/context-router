@@ -1,0 +1,38 @@
+source_system: HarborHire
+exported_timestamp: "2026-06-25T11:18:00-07:00"
+worker_id: PLC-20418
+status: active_onboarding_profile
+field_ids:
+  - employee.first_name
+  - employee.last_name
+  - employee.middle_initial
+  - employee.legal_name
+  - employee.personal_email
+  - employee.address.street_line
+  - employee.address.city_state_zip
+  - employment.company
+  - employment.title
+  - employment.start_date
+reviewer_assigned: Priya Shah
+employee:
+  first_name: Maya
+  last_name: Chen
+  middle_initial: L
+  legal_name: Maya Lin Chen
+  personal_email: maya.chen@gmail.test
+  address:
+    street_line: 2846 Ashbury Street Apt 3D
+    city_state_zip: Oakland, CA 94609
+employment:
+  company: Pacific Ledger Cooperative
+  title: Client Operations Associate
+  start_date: "2026-07-06"
+#note: HR onboarding profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: HR onboarding profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: HR onboarding profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: HR onboarding profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: HR onboarding profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: HR onboarding profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: HR onboarding profile source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: HR onboarding profile audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: HR onboarding profile handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

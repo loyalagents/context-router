@@ -1,0 +1,33 @@
+{
+  "source_system": "HarborHire",
+  "exported_timestamp": "2026-06-25T12:02:00-07:00",
+  "worker_id": "PLC-20418",
+  "status": "employee_profile_current",
+  "field_ids": [
+    "profile.legal_name",
+    "profile.personal_email",
+    "profile.mailing_address.street_line",
+    "profile.mailing_address.city_state_zip"
+  ],
+  "legal_name": "Maya Lin Chen",
+  "personal_email": "maya.chen@gmail.test",
+  "mailing_address": {
+    "street_line": "2846 Ashbury Street Apt 3D",
+    "city_state_zip": "Oakland, CA 94609"
+  },
+  "reviewer_note": "Current self-service profile export confirmed the personal email and mailing address used by onboarding.",
+  "audit_notes": [
+    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
+    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
+    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
+    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
+    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
+    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
+    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
+    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
+    "Employee self service profile handling note: operational context is present without adding extra current personal facts.",
+    "Employee self service profile source note: native export labels, timestamps, internal identifiers, and review routing are preserved.",
+    "Employee self service profile audit note: the export keeps worker id, document status, and review queue visible.",
+    "Employee self service profile handling note: operational context is present without adding extra current personal facts."
+  ]
+}

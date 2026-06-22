@@ -1,0 +1,35 @@
+source_system: LedgerPay
+exported_timestamp: "2026-06-26T10:12:00-07:00"
+worker_id: PLC-20418
+status: direct_deposit_profile_current
+field_ids:
+  - direct_deposit.account_holder_name
+  - direct_deposit.institution_name
+  - direct_deposit.account_type
+  - direct_deposit.routing_number
+  - direct_deposit.account_number
+  - direct_deposit.address.street_line
+  - direct_deposit.address.city
+  - direct_deposit.address.state
+  - direct_deposit.address.postal_code
+account_holder_name: Maya Lin Chen
+institution_name: Bay Harbor Credit Union
+account_type: checking
+routing_number: "091000019"
+account_number: "740182936451"
+mailing_address:
+  street_line: 2846 Ashbury Street Apt 3D
+  city: Oakland
+  state: CA
+  postal_code: "94609"
+reviewer_note: Current direct deposit confirmation is linked to the active worker id and ready for payroll form use.
+#note: Direct deposit confirmation source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Direct deposit confirmation audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Direct deposit confirmation handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Direct deposit confirmation source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Direct deposit confirmation audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Direct deposit confirmation handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Direct deposit confirmation source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: Direct deposit confirmation audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: Direct deposit confirmation handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: Direct deposit confirmation source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.

@@ -1,0 +1,41 @@
+source_system: HarborHire
+exported_timestamp: "2026-06-25T13:04:00-07:00"
+worker_id: PLC-20418
+status: current_draft_saved
+field_ids:
+  - i9.employee.first_name
+  - i9.employee.last_name
+  - i9.employee.middle_initial
+  - i9.employee.date_of_birth
+  - i9.employee.ssn
+  - i9.employee.address.street
+  - i9.employee.address.unit
+  - i9.employee.address.city
+  - i9.employee.address.state
+  - i9.employee.address.postal_code
+  - i9.employee.email
+  - i9.employee.citizenship_status
+employee:
+  first_name: Maya
+  last_name: Chen
+  middle_initial: L
+  date_of_birth: "1991-02-22"
+  ssn: "000-00-0417"
+  address:
+    street: 2846 Ashbury Street
+    unit: Apt 3D
+    city: Oakland
+    state: CA
+    postal_code: "94609"
+  email: maya.chen@gmail.test
+work_authorization:
+  citizenship_status: U.S. citizen
+reviewer_note: Current Section 1 draft data was saved from the employee intake packet and is ready for form-fill review.
+#note: I-9 draft export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: I-9 draft export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: I-9 draft export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: I-9 draft export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: I-9 draft export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+#note: I-9 draft export handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+#note: I-9 draft export source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+#note: I-9 draft export audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.

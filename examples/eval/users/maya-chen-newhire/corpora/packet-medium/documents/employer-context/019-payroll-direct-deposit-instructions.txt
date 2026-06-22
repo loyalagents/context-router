@@ -1,0 +1,27 @@
+Source system: LedgerPay Knowledge Base
+Timestamp: 2026-06-01T09:15:00-07:00
+Status: active policy page
+Policy id: LP-DD-SETUP-2026
+Owner group: payroll operations
+
+The direct deposit article explains how employees enter a bank name, account type, routing number, and account number in the portal. It also explains that reviewers should ignore screenshots and use only the employee's current deposit profile or attached bank verification.
+
+Payroll support questions route to the North Bay Payroll Team. The page describes general ACH timing, bank rejection messages, and retry handling but does not list any employee-specific account data.
+
+Direct deposit instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Direct deposit instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Direct deposit instructions handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Direct deposit instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Direct deposit instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Direct deposit instructions handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Direct deposit instructions source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Direct deposit instructions audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Direct deposit instructions handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.

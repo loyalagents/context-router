@@ -1,0 +1,31 @@
+Source filename: bay-harbor-voided-check-mc.png
+Timestamp: 2026-06-26T09:58:00-07:00
+Status: voided check image accepted
+OCR confidence: 0.91 average
+
+Check image text:
+Account holder line: Maya Lin Chen
+Routing transit line: 091000019
+Account number line: 740182936451
+Check status stamp: VOID
+Review note: Payroll reviewer matched the routing and account number to the current direct deposit profile before the account was marked ready for deposit.
+
+Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
+
+Voided check OCR audit note: The source keeps the same person, worker id, document status, and review queue visible where the native system would show them.
+
+Voided check OCR handling note: The surrounding text adds operational context, approvals, export metadata, field identifiers, and queue notes without adding extra current personal facts.
+
+Voided check OCR source note: The record preserves native labels, status markers, timestamps, internal identifiers, and review routing so the packet reads like a system artifact rather than a summary.
