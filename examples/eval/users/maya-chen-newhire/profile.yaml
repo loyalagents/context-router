@@ -12,7 +12,7 @@ facts:
     dateOfBirth: 1991-02-22
     ssn: 000-00-0417
   contact:
-    email: maya.chen@example.test
+    email: maya.chen@gmail.test
     phone: null
   address:
     current:
@@ -34,7 +34,7 @@ facts:
     company: Pacific Ledger Cooperative
     title: Client Operations Associate
     startDate: 2026-07-06
-    workEmail: maya.chen@pacificledger.example.test
+    workEmail: maya.chen@pacificledger.test
     workerId: PLC-20418
   tax:
     filingStatus: single or married filing separately

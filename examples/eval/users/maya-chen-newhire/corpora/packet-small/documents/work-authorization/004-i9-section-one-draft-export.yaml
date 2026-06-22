@@ -27,7 +27,7 @@ i9_section_1_draft:
   zip_code: "94609"
   date_of_birth: 1991-02-22
   social_security_number: 000-00-0417
-  employee_email_address: maya.chen@example.test
+  employee_email_address: maya.chen@gmail.test
   citizenship_status: U.S. citizen
 citizenship_checkbox_review:
   selected_branch: U.S. citizen
