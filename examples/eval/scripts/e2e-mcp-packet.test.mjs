@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -110,6 +110,50 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
     fillForm: [],
     score: [],
   };
+  const formSummaries = {
+    'maya-chen-newhire-i9-packet-small': {
+      knownFieldTotal: 12,
+      knownFieldCorrect: 12,
+      knownFieldMissing: 0,
+      knownFieldWrong: 0,
+      knownFieldAccuracy: 1,
+      abstentionFieldTotal: 2,
+      abstentionFieldAbsentCorrect: 2,
+      abstentionFieldHallucinated: 0,
+      structuralOverfillCount: 0,
+      manualAttestationOverfillCount: 0,
+      outOfScopeOverfillCount: 0,
+      unmappedOverfillCount: 0,
+    },
+    'maya-chen-newhire-fw4-packet-small': {
+      knownFieldTotal: 6,
+      knownFieldCorrect: 6,
+      knownFieldMissing: 0,
+      knownFieldWrong: 0,
+      knownFieldAccuracy: 1,
+      abstentionFieldTotal: 0,
+      abstentionFieldAbsentCorrect: 0,
+      abstentionFieldHallucinated: 0,
+      structuralOverfillCount: 0,
+      manualAttestationOverfillCount: 0,
+      outOfScopeOverfillCount: 0,
+      unmappedOverfillCount: 0,
+    },
+    'maya-chen-newhire-direct-deposit-packet-small': {
+      knownFieldTotal: 9,
+      knownFieldCorrect: 9,
+      knownFieldMissing: 0,
+      knownFieldWrong: 0,
+      knownFieldAccuracy: 1,
+      abstentionFieldTotal: 1,
+      abstentionFieldAbsentCorrect: 1,
+      abstentionFieldHallucinated: 0,
+      structuralOverfillCount: 0,
+      manualAttestationOverfillCount: 0,
+      outOfScopeOverfillCount: 0,
+      unmappedOverfillCount: 0,
+    },
+  };
 
   const result = await runMcpPacketE2E({
     repoRoot,
@@ -190,12 +234,24 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
         calls.score.push(args);
         const out = valueAfter(args, '--out');
         const mode = valueAfter(args, '--mode');
+        const scenarioId = valueAfter(args, '--scenario');
+        const summary = mode === 'open-schema-database'
+          ? {
+              knownPresentTotal: 24,
+              knownPresentRecoveredActive: 24,
+              activeValueRecoveryRate: 1,
+              intentionallyMissingTotal: 2,
+              missingAbsentCorrect: 2,
+            }
+          : mode === 'form'
+            ? formSummaries[scenarioId]
+            : { mode };
         await writeFile(
           out,
           jsonText({
             schemaVersion: 1,
             scoreType: mode,
-            summary: { mode },
+            summary,
           }),
         );
         return { exitCode: 0, lines: [`score ${mode} ok`] };
@@ -225,6 +281,49 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
     calls.score.filter((args) => valueAfter(args, '--mode') === 'open-schema-combined').length,
     scenarioIds.length,
   );
+  const report = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.deepEqual(report.qualitySummary, {
+    memoryKnownRecovered: '24/24',
+    memoryMissingAbsent: '2/2',
+    memoryActiveValueRecoveryRate: 1,
+    knownFieldCorrect: '27/27',
+    knownFieldWrong: 0,
+    knownFieldMissing: 0,
+    knownFieldAccuracy: 1,
+    averagePerFormAccuracy: 1,
+    abstentionAbsentCorrect: '3/3',
+    abstentionFieldHallucinated: 0,
+    overfillCount: 0,
+    perScenario: {
+      'maya-chen-newhire-i9-packet-small': {
+        knownFieldCorrect: '12/12',
+        knownFieldWrong: 0,
+        knownFieldMissing: 0,
+        knownFieldAccuracy: 1,
+        abstentionAbsentCorrect: '2/2',
+        abstentionFieldHallucinated: 0,
+        overfillCount: 0,
+      },
+      'maya-chen-newhire-fw4-packet-small': {
+        knownFieldCorrect: '6/6',
+        knownFieldWrong: 0,
+        knownFieldMissing: 0,
+        knownFieldAccuracy: 1,
+        abstentionAbsentCorrect: null,
+        abstentionFieldHallucinated: 0,
+        overfillCount: 0,
+      },
+      'maya-chen-newhire-direct-deposit-packet-small': {
+        knownFieldCorrect: '9/9',
+        knownFieldWrong: 0,
+        knownFieldMissing: 0,
+        knownFieldAccuracy: 1,
+        abstentionAbsentCorrect: '1/1',
+        abstentionFieldHallucinated: 0,
+        overfillCount: 0,
+      },
+    },
+  });
 });
 
 function valueAfter(args, flag) {

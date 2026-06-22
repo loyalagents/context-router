@@ -147,13 +147,13 @@ all 24 known packet facts before filling all three forms.
 - The direct baseline has a 200K-character evidence cap. This is not blocking
   for packet-small or the planned packet-medium size, but it matters for future
   larger tiers.
-- Packet-level reporting exists as a basic wrapper artifact, but it should get a
-  clearer `qualitySummary` before packet-medium runs.
+- Packet-level reporting now includes a basic `qualitySummary` for MCP packet
+  runs. Direct-baseline deltas still live in separate direct artifacts and
+  comparison scripts.
 
 ## Next Step
 
 Before building `packet-medium`:
 
-1. add a clearer packet `qualitySummary` to `packet-evaluation-run.json`;
-2. checkpoint the packet-small fixture and runner changes;
-3. plan packet-medium from the now-clean packet-small baseline.
+1. checkpoint the packet-small fixture and runner changes;
+2. plan packet-medium from the now-clean packet-small baseline.

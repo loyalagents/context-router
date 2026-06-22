@@ -214,6 +214,7 @@ export async function runMcpPacketE2E({
     }
     report.summaries.databaseScore =
       (await readJson(artifacts.openSchemaDatabaseScoreReport)).summary ?? null;
+    report.qualitySummary = buildPacketQualitySummary(report);
     await writeReport();
 
     for (const scenarioId of options.scenarioIds) {
@@ -290,11 +291,13 @@ export async function runMcpPacketE2E({
         combinedScoreSummary:
           (await readJson(scenarioArtifacts.openSchemaCombinedScoreReport)).summary ?? null,
       };
+      report.qualitySummary = buildPacketQualitySummary(report);
       await writeReport();
     }
 
     report.status = 'pass';
     report.endedAt = isoTimestamp(now);
+    report.qualitySummary = buildPacketQualitySummary(report);
     await writeReport();
     return {
       exitCode: 0,
@@ -628,6 +631,7 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
       agent: null,
       databaseScore: null,
     },
+    qualitySummary: null,
     scenarios: {},
     startedAt,
     endedAt: null,
@@ -675,6 +679,107 @@ function setupSummary(setupResult, options) {
     existingDefinitionCount: definitionSetup.existing?.length ?? 0,
     skippedDefinitionCount: definitionSetup.skipped?.length ?? 0,
   };
+}
+
+function buildPacketQualitySummary(report) {
+  const databaseScore = report.summaries?.databaseScore ?? {};
+  const scenarioEntries = Object.entries(report.scenarios ?? {});
+  const formSummaries = scenarioEntries
+    .map(([, scenario]) => scenario.formScoreSummary)
+    .filter(Boolean);
+
+  const knownFieldCorrectTotal = sumNumbers(formSummaries, 'knownFieldCorrect');
+  const knownFieldTotal = sumNumbers(formSummaries, 'knownFieldTotal');
+  const knownFieldWrong = sumNumbers(formSummaries, 'knownFieldWrong');
+  const knownFieldMissing = sumNumbers(formSummaries, 'knownFieldMissing');
+  const abstentionFieldAbsentCorrect = sumNumbers(formSummaries, 'abstentionFieldAbsentCorrect');
+  const abstentionFieldTotal = sumNumbers(formSummaries, 'abstentionFieldTotal');
+  const abstentionFieldHallucinated = sumNumbers(formSummaries, 'abstentionFieldHallucinated');
+  const overfillCount = sumNumbers(formSummaries, 'structuralOverfillCount')
+    + sumNumbers(formSummaries, 'manualAttestationOverfillCount')
+    + sumNumbers(formSummaries, 'outOfScopeOverfillCount')
+    + sumNumbers(formSummaries, 'unmappedOverfillCount');
+  const formAccuracies = formSummaries
+    .map((summary) => summary.knownFieldAccuracy)
+    .filter((value) => typeof value === 'number');
+
+  return {
+    memoryKnownRecovered: ratioString(
+      databaseScore.knownPresentRecoveredActive,
+      databaseScore.knownPresentTotal,
+    ),
+    memoryMissingAbsent: ratioString(
+      databaseScore.missingAbsentCorrect,
+      databaseScore.intentionallyMissingTotal,
+    ),
+    memoryActiveValueRecoveryRate:
+      typeof databaseScore.activeValueRecoveryRate === 'number'
+        ? databaseScore.activeValueRecoveryRate
+        : null,
+    knownFieldCorrect: ratioString(knownFieldCorrectTotal, knownFieldTotal),
+    knownFieldWrong,
+    knownFieldMissing,
+    knownFieldAccuracy: ratioNumber(knownFieldCorrectTotal, knownFieldTotal),
+    averagePerFormAccuracy: formAccuracies.length
+      ? roundMetric(formAccuracies.reduce((total, value) => total + value, 0) / formAccuracies.length)
+      : null,
+    abstentionAbsentCorrect: ratioString(abstentionFieldAbsentCorrect, abstentionFieldTotal),
+    abstentionFieldHallucinated,
+    overfillCount,
+    perScenario: Object.fromEntries(
+      scenarioEntries.map(([scenarioId, scenario]) => [
+        scenarioId,
+        scenarioQualitySummary(scenario.formScoreSummary),
+      ]),
+    ),
+  };
+}
+
+function scenarioQualitySummary(formScoreSummary) {
+  if (!formScoreSummary) return null;
+  return {
+    knownFieldCorrect: ratioString(
+      formScoreSummary.knownFieldCorrect,
+      formScoreSummary.knownFieldTotal,
+    ),
+    knownFieldWrong: numberOrNull(formScoreSummary.knownFieldWrong),
+    knownFieldMissing: numberOrNull(formScoreSummary.knownFieldMissing),
+    knownFieldAccuracy: numberOrNull(formScoreSummary.knownFieldAccuracy),
+    abstentionAbsentCorrect: ratioString(
+      formScoreSummary.abstentionFieldAbsentCorrect,
+      formScoreSummary.abstentionFieldTotal,
+    ),
+    abstentionFieldHallucinated: numberOrNull(formScoreSummary.abstentionFieldHallucinated),
+    overfillCount: numberOrNull(formScoreSummary.structuralOverfillCount)
+      + numberOrNull(formScoreSummary.manualAttestationOverfillCount)
+      + numberOrNull(formScoreSummary.outOfScopeOverfillCount)
+      + numberOrNull(formScoreSummary.unmappedOverfillCount),
+  };
+}
+
+function sumNumbers(items, key) {
+  return items.reduce((total, item) => total + numberOrNull(item?.[key]), 0);
+}
+
+function numberOrNull(value) {
+  return typeof value === 'number' ? value : 0;
+}
+
+function ratioString(numerator, denominator) {
+  if (typeof numerator !== 'number' || typeof denominator !== 'number') return null;
+  if (denominator === 0) return null;
+  return `${numerator}/${denominator}`;
+}
+
+function ratioNumber(numerator, denominator) {
+  if (typeof numerator !== 'number' || typeof denominator !== 'number' || denominator === 0) {
+    return null;
+  }
+  return roundMetric(numerator / denominator);
+}
+
+function roundMetric(value) {
+  return Number(value.toFixed(3));
 }
 
 async function writeClaudeSettings({ artifacts, options }) {

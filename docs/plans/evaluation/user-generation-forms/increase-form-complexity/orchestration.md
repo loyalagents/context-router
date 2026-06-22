@@ -84,7 +84,6 @@ three forms.
 
 Remaining before packet-medium:
 
-- add a clearer packet `qualitySummary` so future runs are easier to read;
 - checkpoint packet-small fixture, runner, and doc changes;
 - plan and build `packet-medium`.
 
@@ -459,9 +458,9 @@ Exit criteria:
 
 ### Checkpoint 10: Add Packet-Level Reporting
 
-Status: partially complete. `eval:e2e-mcp-packet` writes one packet artifact and
-per-scenario score paths. Before `packet-medium`, add a concise
-`qualitySummary` so `status: pass` cannot be mistaken for perfect scoring.
+Status: complete enough for packet-medium. `eval:e2e-mcp-packet` writes one
+packet artifact, per-scenario score paths, and a concise `qualitySummary` so
+`status: pass` is not mistaken for perfect scoring.
 
 Keep per-form reports and add a small overall packet summary. The packet summary
 should not replace per-form scores; it should make cross-form results easier to
@@ -529,13 +528,14 @@ Exit criteria:
 4. Done: plan, author, and validate `packet-small`.
 5. Done: add one-form scenarios for `packet-small`.
 6. Done: run live open-schema and direct no-memory baseline on `packet-small`.
-7. Next: add packet `qualitySummary` reporting cleanup.
-8. Plan `packet-medium`.
-9. Generate or author `packet-medium` documents in small batches.
-10. Validate `packet-medium`.
-11. Add one-form scenarios for `packet-medium`.
-12. Run the shared-memory open-schema eval and direct no-memory baseline.
-13. Add packet-level reporting with per-form, overall, and stored-vs-direct
+7. Done: add packet `qualitySummary` reporting cleanup.
+8. Next: checkpoint packet-small changes.
+9. Plan `packet-medium`.
+10. Generate or author `packet-medium` documents in small batches.
+11. Validate `packet-medium`.
+12. Add one-form scenarios for `packet-medium`.
+13. Run the shared-memory open-schema eval and direct no-memory baseline.
+14. Add packet-level reporting with per-form, overall, and stored-vs-direct
     scores.
 
 ## Deferred Work
