@@ -175,7 +175,8 @@
       "fieldIndex": 22,
       "pdfFieldName": "Employees E-mail Address",
       "mode": "fact",
-      "factKey": "contact.email"
+      "factKey": "contact.email",
+      "note": "For I-9 Section 1, use the employee's personal/contact email address. Do not use employer-issued work email."
     },
     {
       "fieldIndex": 23,
