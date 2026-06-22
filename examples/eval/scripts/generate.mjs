@@ -298,11 +298,26 @@ export function buildDocumentPrompt({ profile, corpusPlan, doc }) {
     'Use the allowed source context only for incidental source metadata.',
     'Do not add new personal details for the user.',
     'Include each required person detail in a natural place for this artifact.',
+    'For every Required person detail with a concrete non-null value, preserve the exact literal value shown there at least once in a native field or label/value line. If the artifact also splits a combined value into subfields, add a native combined/display field for the same value.',
     'Do not include excluded person-detail values.',
     'For absent person details, omit the detail unless this source has a native field for it; then use only the native blank/null value.',
+    'If an email artifact needs a user recipient address that is not included in Required person details or Allowed source context, use a name-only recipient, native redaction, or native omitted value; do not invent a plausible email address.',
+    'Do not assert lifecycle, completion, approval, validation, or configuration facts for target workflows such as I-9, W-4, direct deposit, benefits, or onboarding completion unless those facts are included in Required person details or explicitly allowed by sourceSpec.safeDetailMenu.',
     'Do not comment on, explain, or justify absent person details.',
     'Noise artifacts must not contain user-specific current identifiers.',
     'Stale or conflicting artifacts must make their stale, superseded, or do-not-use status clear.',
+    'The artifact must match the document identity and topic below; do not switch to a different policy, form, or artifact topic just because it is plausible for the same source family.',
+    '',
+    'Document identity:',
+    JSON.stringify(
+      {
+        id: doc.id,
+        path: doc.path,
+        title: doc.title,
+      },
+      null,
+      2,
+    ),
     '',
     'Artifact source spec:',
     JSON.stringify(doc.sourceSpec ?? {}, null, 2),
@@ -408,6 +423,7 @@ function fileTypeRules(doc) {
       'Output format: valid JSON only.',
       'Do not wrap JSON in markdown fences.',
       'Do not include comments, trailing prose, or explanatory text outside the JSON value.',
+      'Return the native JSON object directly; do not place YAML, Markdown, or plain text inside string fields such as body, content, or text.',
     ].join('\n');
   }
   if (extension === 'yaml') {
@@ -415,6 +431,7 @@ function fileTypeRules(doc) {
       'Output format: valid YAML only.',
       'Do not wrap YAML in markdown fences.',
       'Do not include trailing prose or explanatory text outside the YAML document.',
+      'Quote YAML scalar strings that contain colons, braces, brackets, leading special characters, or values that could otherwise be parsed incorrectly.',
     ].join('\n');
   }
   if (extension === 'txt') {
@@ -431,16 +448,29 @@ function fileTypeRules(doc) {
 }
 
 function sourceFormatRules(doc) {
+  const captureMode = doc.sourceSpec?.captureMode ?? '';
   const lines = [
     'When sourceSpec.lengthTarget is present, aim to keep the body within its minChars/maxChars range.',
     'Email artifacts must use raw email headers exactly like From:, To:, Date:, and Subject:, not Markdown-bold header labels.',
     'OCR and plain-text exports should use native label/value lines, OCR-like blocks, or raw export text instead of Markdown headings or bold labels.',
-    'JSON and YAML exports should use native field ids or keys and avoid prose comments.',
+    'JSON and YAML exports should use native field ids or keys and avoid comments; put explanatory notes in native fields such as notes, reviewer_notes, or status_history[].note.',
+    'Use provided timeline values for the artifact primary source, export, created, or submitted timestamp when applicable. Additional operational timestamps, status rows, support notes, and source-system metadata may be added for realism when they are clearly incidental, chronologically plausible, within any sourceSpec temporal bounds or time ranges, and do not change freshness, authority, stale/current interpretation, or provide competing values for target form fields.',
+    'When exactly one sourceSpec.timelineRefs value is provided, any primary artifact timestamp field such as export_timestamp, exported_at, created_at, submitted_at, generated_at, or source_timestamp must use that anchor value exactly or be omitted; do not invent a nearby competing primary timestamp.',
+    'Invented details are allowed only as incidental operational metadata; do not invent values that could plausibly fill a target form field or update the current employee profile. For those fields, use Required person details, Allowed source context, native blank/null/not_imported values, or omit the field.',
+    'Do not synthesize plausible values for missing canonical profile facts such as employer name, employer address, job title, department, start date, phone, tax elections, work authorization values, or banking values. If the value is not in Required person details or Allowed source context, leave it blank/null/not_imported or omit it.',
+    'Treat sourceSpec.safeDetailMenu as allowed construction guidance and sourceSpec.riskyDetailMenu as disallowed drift. When a safe or risky detail names temporal, state, or optional-field bounds, follow those bounds strictly.',
+    'Native source artifacts may include fields beyond the required person details, but user-person fields not present in Required person details or Allowed source context must stay blank, null, or not_imported; do not supply factual defaults such as false, 0, unknown, or placeholder old values.',
   ];
+
+  if (/json|ya?ml/i.test(captureMode)) {
+    lines.push(
+      'Because sourceSpec.captureMode is JSON/YAML-style, do not include JSON/YAML comments (#, //, or /* */), even when the file extension is .txt; encode labels and explanations as native fields instead.',
+    );
+  }
 
   if (planDocumentFactKeys(doc).includes('identity.legalName')) {
     lines.push(
-      'Because identity.legalName is required, include either a native combined legal-name field or clearly labeled first/middle/last name fields.',
+      'Because identity.legalName is required, include a native combined legal-name field with the exact required value; first/middle/last name fields may also appear when native to the artifact.',
     );
   }
 

@@ -628,6 +628,34 @@ test('prose checks require high-confidence declared values in document bodies', 
   assertHasCode(result, 'DOCUMENT_FACT_VALUE_MISSING');
 });
 
+test('unsupported include facts are visible warnings without failing validation', async (t) => {
+  const root = await copyRepo(t);
+  const manifestPath = path.join(
+    root,
+    'examples/eval/users/elena-marquez/corpora/template-smoke/manifest.json',
+  );
+  const manifest = await readJson(manifestPath);
+  manifest.documents[0].factContract.include.push('communication.preferredChannels');
+  await writeJson(manifestPath, manifest);
+
+  const result = await runValidation({
+    repoRoot: root,
+    args: ['--user', 'elena-marquez', '--corpus', 'template-smoke'],
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.summary.errors, 0);
+  assertHasCode(result, 'DOCUMENT_FACT_UNSUPPORTED_FOR_SCORING');
+  assert.ok(
+    result.issues.some(
+      (issue) =>
+        issue.code === 'DOCUMENT_FACT_UNSUPPORTED_FOR_SCORING' &&
+        issue.level === 'warning',
+    ),
+  );
+  assert.equal(result.report.corpusTruth.summary.unsupportedDeclaredFacts, 1);
+});
+
 test('prose checks prove declared work authorization document values deterministically', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = alexManifestPath(root);

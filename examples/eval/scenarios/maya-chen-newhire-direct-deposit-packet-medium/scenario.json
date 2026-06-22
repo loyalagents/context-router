@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "maya-chen-newhire-direct-deposit-packet-medium",
+  "description": "Live open-schema direct-deposit form-fill scenario for Maya Chen using the packet-medium shared dossier.",
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-medium",
+  "formId": "direct-deposit-sf1199a-24",
+  "expectedSnapshots": []
+}

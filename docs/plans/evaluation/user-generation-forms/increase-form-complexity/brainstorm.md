@@ -1,7 +1,7 @@
 # Increase Evaluation Context Complexity Brainstorm
 
 - Status: temporary brainstorm
-- Last updated: 2026-06-19
+- Last updated: 2026-06-22
 - Scope: concise synthesis for making form evaluation harder by increasing
   context size, improving document realism, and reusing one dossier across
   multiple forms while keeping the implementation simple
@@ -21,6 +21,14 @@ This makes the model handle more context and more realistic evidence without
 requiring a complex new runner. Each form can still be evaluated separately.
 The multi-form behavior comes from sharing the same user, corpus, and memory
 setup.
+
+Current packet status:
+
+- `packet-small` is implemented and live-verified as the plumbing/correctness
+  slice.
+- `packet-medium` is implemented as a 30-document, 68 KB fixture with obvious
+  stale and other-person distractors; live MCP/direct evaluation is the next
+  step.
 
 There are two useful tracks:
 
@@ -49,7 +57,7 @@ There are two useful tracks:
 | current | Existing 10-document Alex I-9 corpus, about 22 KB | Baseline realistic fixture. |
 | `realistic-medium` | 20-30 docs, roughly 50-100 KB | More context with mostly benign distractors and same target truth. |
 | `realistic-large` | 40-60 docs, roughly 150-300 KB | Stale facts, conflicts, other-person facts, repeated sections. |
-| `packet-medium` | 25-40 docs, 2-3 forms | Same dossier fills several forms from one memory setup. |
+| `packet-medium` | 30 docs, about 68 KB, 3 forms | Same dossier fills several forms from one memory setup; obvious stale and other-person v1 distractors. |
 | `stress` | 75-100+ docs or one very large form | Optional context-limit testing after lower tiers are stable. |
 
 For every tier, record document count, byte count, and estimated token count.
@@ -144,6 +152,11 @@ Adversarial docs:
 - other employee sample W-4;
 - company directory with manager and HR phone numbers;
 - support ticket that mentions the user plus non-user identifiers.
+
+For `packet-medium` v1, stale and other-person docs are intentionally obvious:
+stale docs say `old`, `superseded`, or `do not use`, and other-person docs use
+sample people and sample worker ids. Keep the TODO to make these cases subtler
+later once the obvious boundary is working.
 
 ## Realism Notes
 
