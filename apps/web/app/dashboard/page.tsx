@@ -79,7 +79,15 @@ export default async function Dashboard() {
 
   return (
     <div className="p-10">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <a
+          href="/api/debug/token"
+          className="inline-block px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-800 transition"
+        >
+          Debug Token
+        </a>
+      </div>
 
       {error ? (
         <div className="p-4 bg-red-100 text-red-700 rounded mb-6">
