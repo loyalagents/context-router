@@ -28,3 +28,13 @@ test('matches typed arrays exactly', () => {
   );
 });
 
+test('matches tax filing status casing and spacing variants', () => {
+  assert.equal(
+    valueMatchesFact(
+      'tax.filingStatus',
+      'single or married filing separately',
+      'Single or Married filing separately',
+    ),
+    true,
+  );
+});

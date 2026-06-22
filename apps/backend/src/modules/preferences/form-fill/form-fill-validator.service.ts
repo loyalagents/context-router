@@ -16,10 +16,6 @@ import type {
 } from './form-fact-resolution';
 import { normalizeTextValueForPdfField } from './pdf-text-value-normalization';
 
-const ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS = new Set([
-  'workAuthorization.citizenshipStatus',
-]);
-
 export interface FormFillValidationResult {
   validActions: ValidatedFillAction[];
   filledFields: FilledFieldSummary[];
@@ -265,14 +261,9 @@ export class FormFillValidatorService {
       }
     }
 
-    if (policy?.mode === 'fact' && policy.sourceSlugs.length > 0) {
-      const allowedSlugs = new Set(policy.sourceSlugs);
-      const resolvedFact = policy.factKey
-        ? resolvedFactByKey.get(policy.factKey)
-        : undefined;
-      const offPolicySlugs: string[] = [];
+    if (policy?.mode === 'fact' && policy.factKey) {
+      const resolvedFact = resolvedFactByKey.get(policy.factKey);
       for (const slug of action.sourceSlugs) {
-        if (allowedSlugs.has(slug)) continue;
         if (resolvedFact?.sourceSlugs.includes(slug)) {
           validationEvents.push({
             kind: 'policy_source_slug_resolved',
@@ -282,16 +273,7 @@ export class FormFillValidatorService {
             resolutionKind: resolvedFact.resolutionKind,
             message: `source slug resolved to field policy fact ${policy.factKey}: ${slug}`,
           });
-          continue;
         }
-        offPolicySlugs.push(slug);
-      }
-      if (offPolicySlugs.length > 0) {
-        validationEvents.push({
-          kind: 'policy_source_slug_off_policy',
-          fieldName: field.name,
-          message: `source slug not listed in field policy: ${offPolicySlugs.join(', ')}`,
-        });
       }
     }
 
@@ -352,22 +334,28 @@ export class FormFillValidatorService {
 
     const sourceSlugs = condition.sourceSlugs ?? [];
     if (sourceSlugs.length > 0) {
-      return sourceSlugs.some((slug) => {
+      let checkedActiveListedSlug = false;
+      for (const slug of sourceSlugs) {
         if (!activePreferenceValues.has(slug)) {
-          // Conditional policies fail closed when the gating fact is unavailable.
-          return false;
+          continue;
         }
-        return this.valueMatchesExpected(
-          condition.factKey,
-          activePreferenceValues.get(slug),
-          expected,
-        );
-      });
+        checkedActiveListedSlug = true;
+        if (
+          this.valueMatchesExpected(
+            condition.factKey,
+            activePreferenceValues.get(slug),
+            expected,
+          )
+        ) {
+          return true;
+        }
+      }
+
+      if (checkedActiveListedSlug) {
+        return false;
+      }
     }
 
-    // TODO(form-fill-validation): replace this narrow open-schema fallback with
-    // explicit field-to-memory mapping validation. See
-    // docs/plans/evaluation/scoring/TODO.md.
     return this.conditionMatchesAnyActivePreferenceValue(
       condition,
       expected,
@@ -402,10 +390,6 @@ export class FormFillValidatorService {
     fieldName: string,
     validationEvents: FormFillValidationEvent[],
   ): boolean {
-    if (!ACTIVE_VALUE_CONDITION_FALLBACK_FACT_KEYS.has(condition.factKey)) {
-      return false;
-    }
-
     for (const [sourceSlug, value] of activePreferenceValues) {
       if (!this.valueMatchesExpected(condition.factKey, value, expected)) {
         continue;
@@ -509,8 +493,7 @@ export class FormFillValidatorService {
       for (let index = validationEvents.length - 1; index >= 0; index -= 1) {
         const event = validationEvents[index];
         if (
-          (event.kind === 'low_confidence_applied' ||
-            event.kind === 'policy_source_slug_off_policy') &&
+          event.kind === 'low_confidence_applied' &&
           blockedFieldNames.has(event.fieldName)
         ) {
           validationEvents.splice(index, 1);

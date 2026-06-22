@@ -1,4 +1,4 @@
-import { PDFDocument, PDFName } from 'pdf-lib';
+import { PDFDict, PDFDocument, PDFName } from 'pdf-lib';
 import { PdfFieldExtractorService } from './pdf-field-extractor.service';
 
 async function createFillablePdf(): Promise<Buffer> {
@@ -52,6 +52,20 @@ async function createXfaPdf(): Promise<Buffer> {
     pdfDoc.context.obj({
       XFA: ['template', '<xdp:xdp />'],
     }),
+  );
+
+  return Buffer.from(await pdfDoc.save());
+}
+
+async function createFillableXfaPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.load(await createFillablePdf());
+  const acroForm = pdfDoc.catalog.lookup(PDFName.of('AcroForm'));
+  if (!(acroForm instanceof PDFDict)) {
+    throw new Error('expected AcroForm dictionary');
+  }
+  acroForm.set(
+    PDFName.of('XFA'),
+    pdfDoc.context.obj(['template', '<xdp:xdp />']),
   );
 
   return Buffer.from(await pdfDoc.save());
@@ -123,5 +137,25 @@ describe('PdfFieldExtractorService', () => {
 
     expect(result.hasXfa).toBe(true);
     expect(result.fields).toEqual([]);
+  });
+
+  it('extracts AcroForm fields from PDFs that also contain XFA data', async () => {
+    const result = await service.extractFields(await createFillableXfaPdf());
+
+    expect(result.hasXfa).toBe(true);
+    expect(result.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'profile.full_name',
+          type: 'text',
+          supported: true,
+        }),
+        expect.objectContaining({
+          name: 'newsletter_opt_in',
+          type: 'checkbox',
+          supported: true,
+        }),
+      ]),
+    );
   });
 });

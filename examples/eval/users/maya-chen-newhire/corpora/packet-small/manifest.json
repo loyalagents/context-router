@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 2,
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-small",
+  "seed": "maya-chen-newhire__packet-small",
+  "corpusKind": "realistic-generated",
+  "forms": [
+    "i-9",
+    "fw4",
+    "direct-deposit-sf1199a-24"
+  ],
+  "purpose": "Small realistic new-hire packet corpus for validating one shared dossier across I-9, W-4, and direct deposit before building packet-medium.",
+  "artifactWorld": {
+    "schemaVersion": 1,
+    "seed": "maya-chen-newhire__packet-small",
+    "timeline": {
+      "identityUploadAt": "2026-06-24T09:42:00-07:00",
+      "ssnUploadAt": "2026-06-24T09:46:00-07:00",
+      "onboardingProfileExportAt": "2026-06-25T11:18:00-07:00",
+      "i9DraftSavedAt": "2026-06-25T13:04:00-07:00",
+      "w4SavedAt": "2026-06-25T13:28:00-07:00",
+      "directDepositSavedAt": "2026-06-26T10:12:00-07:00",
+      "payrollGuidePublishedAt": "2026-06-01T08:00:00-07:00",
+      "samplePacketExportedAt": "2026-06-18T15:35:00-07:00"
+    },
+    "employer": {
+      "name": "Pacific Ledger Cooperative",
+      "onboardingSystem": "HarborHire",
+      "payrollSystem": "LedgerPay",
+      "hrCoordinator": "Priya Shah",
+      "payrollCoordinator": "North Bay Payroll Team",
+      "workerId": "PLC-20418",
+      "workEmail": "maya.chen@pacificledger.example.test"
+    },
+    "identityCapture": {
+      "uploadBatchId": "HH-UPL-MC-20418",
+      "licenseImageName": "maya-chen-dl-front.png",
+      "ssnImageName": "maya-chen-ssn-card.png"
+    },
+    "banking": {
+      "institutionName": "Bay Harbor Credit Union",
+      "depositProfileId": "DD-MC-418",
+      "portalExportId": "LP-DD-20418"
+    },
+    "sample": {
+      "employeeName": "Jordan Avery",
+      "workerId": "PLC-SAMPLE-771",
+      "packetId": "SAMPLE-DD-W4-2026"
+    }
+  },
+  "factContractDefaults": {
+    "forbid": [
+      "contact.phone"
+    ]
+  },
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9",
+        "direct-deposit-sf1199a-24"
+      ],
+      "reason": "Maya's packet profile declares contact.phone as null for the first packet-small slice.",
+      "expectedBehavior": "Leave phone fields blank; do not borrow a support, employer, bank, or sample person's number."
+    }
+  ],
+  "documents": [
+    {
+      "id": "maya-chen-newhire-packet-small-001",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
+      "category": "identity",
+      "title": "Driver License Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-driver-license-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "identityCapture.licenseImageName",
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "upload batch id",
+          "source filename",
+          "OCR confidence",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "document type",
+          "issuing state",
+          "redacted license number",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra tax identifier",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 500,
+          "maxChars": 1400
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.dateOfBirth",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "address-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-002",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+      "category": "identity",
+      "title": "SSN Card Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-ssn-card-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "ssnUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "identityCapture.ssnImageName",
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "upload batch id",
+          "source filename",
+          "OCR confidence",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "document category",
+          "redaction status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra user address",
+          "extra immigration identifier",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 420,
+          "maxChars": 1100
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-003",
+      "path": "documents/hr-onboarding/003-hr-onboarding-profile-export.yaml",
+      "category": "hr-onboarding",
+      "title": "HR Onboarding Profile Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "onboarding-profile-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "employer.hrCoordinator",
+          "employer.workEmail"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "employment start date",
+          "work email"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "bank account data",
+          "tax election data",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 650,
+          "maxChars": 1800
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.legalName",
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "employment.company",
+          "employment.title",
+          "employment.startDate"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "hr-profile",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-004",
+      "path": "documents/work-authorization/004-i9-section-one-draft-export.yaml",
+      "category": "work-authorization",
+      "title": "I-9 Section One Draft Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "i9-section-one-draft-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-form-draft-export",
+        "timelineRefs": [
+          "i9DraftSavedAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "employer.hrCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "saved timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "section one status",
+          "citizenship checkbox",
+          "employee review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "extra immigration identifier not used by U.S. citizen branch",
+          "signature or legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 700,
+          "maxChars": 1900
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.dateOfBirth",
+          "identity.ssn",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email",
+          "workAuthorization.citizenshipStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "i9-field-export",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-005",
+      "path": "documents/payroll-tax/005-w4-withholding-setup-export.yaml",
+      "category": "payroll-tax",
+      "title": "W-4 Withholding Setup Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "w4-withholding-setup-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-form-draft-export",
+        "timelineRefs": [
+          "w4SavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "employer.payrollCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "saved timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "filing status",
+          "withholding setup status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "bank account data",
+          "signature or legal attestation",
+          "computed worksheet values"
+        ],
+        "lengthTarget": {
+          "minChars": 620,
+          "maxChars": 1700
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.ssn",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "tax.filingStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "w4-field-export",
+          "tax-election"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-006",
+      "path": "documents/payroll-tax/006-direct-deposit-portal-confirmation.yaml",
+      "category": "payroll-tax",
+      "title": "Direct Deposit Portal Confirmation",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "direct-deposit-portal-confirmation",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "directDepositSavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "banking.institutionName",
+          "banking.depositProfileId",
+          "banking.portalExportId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "worker id",
+          "status",
+          "timestamp"
+        ],
+        "safeDetailMenu": [
+          "deposit profile id",
+          "account type",
+          "bank name",
+          "masked account suffix"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "signature or legal attestation",
+          "agency-only certification fields"
+        ],
+        "lengthTarget": {
+          "minChars": 620,
+          "maxChars": 1700
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.streetLine",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "banking.accountHolderName",
+          "banking.institutionName",
+          "banking.accountType",
+          "banking.routingNumber",
+          "banking.accountNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "direct-deposit",
+          "banking"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-007",
+      "path": "documents/employer-context/007-payroll-direct-deposit-instructions.md",
+      "category": "employer-context",
+      "title": "Payroll Direct Deposit Instructions",
+      "outputExtension": "md",
+      "sourceSpec": {
+        "artifactType": "payroll-direct-deposit-instructions",
+        "sourceFamily": "employer-context",
+        "captureMode": "markdown-knowledge-base-export",
+        "timelineRefs": [
+          "payrollGuidePublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.payrollCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "published timestamp",
+          "status",
+          "document type"
+        ],
+        "safeDetailMenu": [
+          "payroll portal instructions",
+          "deposit timing",
+          "blank form guidance"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "specific employee bank account data",
+          "specific employee tax identifier"
+        ],
+        "lengthTarget": {
+          "minChars": 500,
+          "maxChars": 1400
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "instruction-noise",
+          "blank-form-guidance"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-small-008",
+      "path": "documents/noise/008-other-employee-sample-packet.md",
+      "category": "noise",
+      "title": "Other Employee Sample Packet",
+      "outputExtension": "md",
+      "sourceSpec": {
+        "artifactType": "other-employee-sample-packet",
+        "sourceFamily": "noise",
+        "captureMode": "markdown-training-sample",
+        "timelineRefs": [
+          "samplePacketExportedAt"
+        ],
+        "worldRefs": [
+          "sample.employeeName",
+          "sample.workerId",
+          "sample.packetId"
+        ],
+        "nativeSignals": [
+          "document type",
+          "exported timestamp",
+          "worker id",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "sample worker id",
+          "sample employee name",
+          "training packet label"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "Maya-owned banking values",
+          "Maya-owned tax identifier"
+        ],
+        "lengthTarget": {
+          "minChars": 520,
+          "maxChars": 1400
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "other-person",
+          "sample-packet"
+        ]
+      }
+    }
+  ]
+}

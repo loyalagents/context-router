@@ -56,16 +56,6 @@ export class FormFillService {
     try {
       const extracted = await this.fieldExtractor.extractFields(fileBuffer);
 
-      if (extracted.hasXfa) {
-        return this.emptyResponse(
-          fillId,
-          'unsupported_format',
-          filename,
-          outputFilename,
-          ['XFA forms are not supported.'],
-        );
-      }
-
       if (extracted.fields.length === 0) {
         return this.emptyResponse(
           fillId,

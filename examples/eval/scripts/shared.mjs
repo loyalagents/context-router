@@ -154,6 +154,10 @@ export function factValueVariants(factKey, value) {
     }
   }
 
+  if (factKey === 'tax.filingStatus') {
+    variants.add(raw.toLocaleLowerCase().replace(/\s+/g, ' '));
+  }
+
   if (factKey === 'address.current.street') {
     for (const variant of streetSuffixVariants(raw)) {
       variants.add(variant);
@@ -187,13 +191,21 @@ export function isHighConfidenceFactKey(factKey) {
     factKey === 'identity.otherLastNames' ||
     factKey === 'identity.dateOfBirth' ||
     factKey === 'address.current.street' ||
+    factKey === 'address.current.streetLine' ||
     factKey === 'address.current.unit' ||
     factKey === 'address.current.city' ||
+    factKey === 'address.current.cityStateZip' ||
     factKey === 'address.current.postalCode' ||
     factKey === 'address.current.state' ||
+    factKey === 'banking.accountHolderName' ||
+    factKey === 'banking.accountNumber' ||
+    factKey === 'banking.accountType' ||
+    factKey === 'banking.institutionName' ||
+    factKey === 'banking.routingNumber' ||
     factKey === 'employment.company' ||
     factKey === 'employment.title' ||
     factKey === 'employment.startDate' ||
+    factKey === 'tax.filingStatus' ||
     factKey === 'workAuthorization.uscisANumber' ||
     factKey === 'workAuthorization.workAuthorizationExpirationDate' ||
     factKey === 'workAuthorization.i94AdmissionNumber' ||

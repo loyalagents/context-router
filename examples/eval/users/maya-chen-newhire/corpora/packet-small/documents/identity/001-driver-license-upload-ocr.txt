@@ -1,0 +1,25 @@
+HarborHire ID Intake Export
+source system: HarborHire
+upload batch id: HH-UPL-MC-20418
+source filename: maya-chen-dl-front.png
+document type: California driver license front image OCR
+status: reviewed_current
+OCR confidence: name 0.99, date of birth 0.98, address block 0.97
+
+captured_name:
+  family_name: Chen
+  given_names: Maya Lin
+  full_name: Maya Lin Chen
+
+date_of_birth: 1991-02-22
+date_of_birth_display: 02-22-1991
+
+mailing_address:
+  line_1: 2846 Ashbury Street
+  line_2: Apt 3D
+  city: Oakland
+  state: CA
+  postal_code: 94609
+
+review queue note: identity document matched the new-hire profile for worker id PLC-20418.
+license metadata: California issue source, license number redacted by the intake exporter.

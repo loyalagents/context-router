@@ -11,6 +11,7 @@ import {
   buildPromptFieldMetadata,
   fillPdfFromActions,
   loadEvidenceDocuments,
+  normalizeTextValueForPdfField,
   parseArgs,
   parseModelResponse,
   runFillFormFromDocs,
@@ -72,6 +73,37 @@ test('fill-form-from-docs parseArgs handles env model fallback and CLI override'
   assert.equal(cliOverride.kind, 'ok');
   assert.equal(cliOverride.options.model, 'cli-model');
   assert.equal(cliOverride.options.temperature, 0.6);
+});
+
+test('fill-form-from-docs normalizes mmddyyyy dates and SSNs for PDF fields', () => {
+  assert.equal(
+    normalizeTextValueForPdfField({
+      fieldName: 'Date of Birth mmddyyyy',
+      value: '1991-02-22',
+    }),
+    '02221991',
+  );
+  assert.equal(
+    normalizeTextValueForPdfField({
+      fieldName: 'Date of Birth mmddyyyy',
+      value: '19910222',
+    }),
+    '02221991',
+  );
+  assert.equal(
+    normalizeTextValueForPdfField({
+      fieldName: 'Date of Birth mmddyyyy',
+      value: '02221991',
+    }),
+    '02221991',
+  );
+  assert.equal(
+    normalizeTextValueForPdfField({
+      fieldName: 'US Social Security Number',
+      value: '000-00-0417',
+    }),
+    '000000417',
+  );
 });
 
 test('fill-form-from-docs builds an evidence prompt without fixture truth', async () => {

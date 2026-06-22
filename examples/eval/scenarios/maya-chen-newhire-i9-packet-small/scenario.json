@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "maya-chen-newhire-i9-packet-small",
+  "description": "Live open-schema I-9 form-fill scenario for Maya Chen using the packet-small shared dossier.",
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-small",
+  "formId": "i-9",
+  "expectedSnapshots": []
+}

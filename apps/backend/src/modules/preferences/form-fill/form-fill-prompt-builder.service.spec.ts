@@ -84,15 +84,22 @@ describe('FormFillPromptBuilderService', () => {
     );
 
     expect(prompt).toContain('Field policies');
-    expect(prompt).toContain('treat them as authoritative');
+    expect(prompt).toContain('field intent and skip rules');
     expect(prompt).toContain(
-      "use only active memories whose slug is listed in that field policy's sourceSlugs or whose slug is listed on a resolved form fact",
+      'sourceSlugs are hints/examples/aliases and are not exhaustive',
     );
+    expect(prompt).toContain(
+      'You may use any active memory whose value supports the target field',
+    );
+    expect(prompt).toContain('including multiple active memories');
+    expect(prompt).toContain('raw active memories actually used');
+    expect(prompt).toContain('Do not fill mode=skip fields');
+    expect(prompt).toContain('render dates as MMDDYYYY');
+    expect(prompt).toContain('combine street plus unit/apartment');
+    expect(prompt).toContain('render as City, ST ZIP');
     expect(prompt).toContain('return SKIP for that field');
-    expect(prompt).toContain('Do not substitute semantically similar memories');
-    expect(prompt).toContain(
-      'unless that exact memory slug is explicitly listed for that field or in resolved form facts',
-    );
+    expect(prompt).not.toContain('use only active memories whose slug is listed');
+    expect(prompt).not.toContain('Do not substitute semantically similar memories');
     expect(prompt).toContain('"fieldName": "CB_4"');
     expect(prompt).toContain('"groupId": "workAuthorization.citizenshipStatus"');
   });

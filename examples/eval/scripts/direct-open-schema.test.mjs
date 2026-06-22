@@ -179,7 +179,14 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.match(fillPrompt, /Foreign Passport Number and Country of IssuanceRow1/);
   assert.match(fillPrompt, /compound or noisy/);
   assert.match(fillPrompt, /clearly matches part of the field name/);
-  assert.match(fillPrompt, /Treat inferredLabel as a weak hint/);
+  assert.match(fillPrompt, /targetFactKey/);
+  assert.match(fillPrompt, /semanticNote/);
+  assert.match(fillPrompt, /strongest field-meaning hints/);
+  assert.match(fillPrompt, /render dates as MMDDYYYY/);
+  assert.match(fillPrompt, /combine street plus unit\/apartment/);
+  assert.match(fillPrompt, /render as City, ST ZIP/);
+  assert.match(fillPrompt, /component sourceFactIds/);
+  assert.match(fillPrompt, /Treat inferredLabel as a weak fallback hint/);
   assert.match(fillPrompt, /sourceFactIds/);
   assert.match(fillPrompt, /"maxLength": 1/);
   assert.doesNotMatch(fillPrompt, /Evidence documents/);
@@ -192,15 +199,78 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.doesNotMatch(fillPrompt, /intentionally missing/);
   assert.doesNotMatch(fillPrompt, /Elena declares this fact/);
   assert.doesNotMatch(fillPrompt, /corpus manifest marks/);
+  assert.doesNotMatch(fillPrompt, /expectedValue/);
 
   const safeMetadata = buildDirectOpenSchemaFieldMetadata(fieldMetadata);
   assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'inferredDataKey')));
-  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field.fieldPolicy, 'note')));
+  assert.ok(safeMetadata.some((field) => Object.hasOwn(field, 'targetFactKey')));
+  assert.ok(safeMetadata.some((field) => Object.hasOwn(field, 'semanticNote')));
+  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'expectedValue')));
   assert.equal(
     safeMetadata.find((field) => field.fieldName === 'Employee Middle Initial (if any)')
       ?.maxLength,
     1,
   );
+});
+
+test('direct-open-schema exposes safe W-4 semantic field metadata for opaque fields', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'maya-chen-newhire-fw4-packet-small',
+  });
+  const safeMetadata = buildDirectOpenSchemaFieldMetadata(
+    buildPromptFieldMetadata(fixture),
+  );
+  const fields = new Map(safeMetadata.map((field) => [field.fieldName, field]));
+
+  assert.equal(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_02[0]')?.targetFactKey,
+    'identity.lastName',
+  );
+  assert.match(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_02[0]')?.semanticNote,
+    /last name/i,
+  );
+  assert.equal(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_03[0]')?.targetFactKey,
+    'address.current.streetLine',
+  );
+  assert.match(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_03[0]')?.semanticNote,
+    /address line/i,
+  );
+  assert.equal(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_04[0]')?.targetFactKey,
+    'address.current.cityStateZip',
+  );
+  assert.match(
+    fields.get('topmostSubform[0].Page1[0].Step1a[0].f1_04[0]')?.semanticNote,
+    /city, state, and ZIP/i,
+  );
+  assert.deepEqual(
+    fields.get('topmostSubform[0].Page1[0].c1_1[0]')?.condition,
+    {
+      factKey: 'tax.filingStatus',
+      equals: 'single or married filing separately',
+    },
+  );
+  assert.deepEqual(
+    fields.get('topmostSubform[0].Page1[0].c1_2[0]')?.fieldPolicy,
+    {
+      action: 'skip',
+      reason: 'out_of_scope',
+    },
+  );
+  assert.equal(
+    fields.get('topmostSubform[0].Page1[0].c1_2[0]')?.skipReason,
+    'out_of_scope',
+  );
+  assert.match(
+    fields.get('topmostSubform[0].Page1[0].c1_2[0]')?.semanticNote,
+    /skipped in v1/i,
+  );
+  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'expectedValue')));
+  assert.ok(safeMetadata.every((field) => !Object.hasOwn(field, 'inferredDataKey')));
 });
 
 test('direct-open-schema parser and extraction validation assign stable fact ids and preserve duplicate slugs', async () => {
@@ -307,6 +377,12 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
     { fieldName: 'Middle', fieldType: 'text', maxLength: 1, options: [] },
     { fieldName: 'State', fieldType: 'dropdown', options: ['OR'] },
     { fieldName: 'Missing', fieldType: 'text', options: [] },
+    {
+      fieldName: 'Routing Check Digit',
+      fieldType: 'text',
+      fieldPolicy: { action: 'skip', reason: 'out_of_scope' },
+      options: [],
+    },
   ];
   const facts = [
     {
@@ -351,6 +427,13 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
         sourceFactIds: ['missing-fact'],
         confidence: 0.9,
       },
+      {
+        fieldName: 'Routing Check Digit',
+        action: 'SET_TEXT',
+        value: '1',
+        sourceFactIds: ['fact-0001'],
+        confidence: 0.9,
+      },
     ],
   });
   assert.equal(result.ok, true);
@@ -373,6 +456,10 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
   );
   assert.equal(
     result.diagnostics.invalidActionReasonCounts['selected option "WA" is not available'],
+    1,
+  );
+  assert.equal(
+    result.diagnostics.invalidActionReasonCounts['field policy skip: out_of_scope'],
     1,
   );
   assert.equal(result.provenanceDiagnostics.unknownSourceFactIdCount, 1);
@@ -420,7 +507,7 @@ test('direct-open-schema writes form artifacts and skips diagnostic extraction s
 
   const fillResponse = JSON.parse(await readFile(path.join(tmp, 'direct-open-schema-fill-response.json'), 'utf8'));
   assert.equal(fillResponse.artifactType, 'direct-open-schema-fill-response');
-  assert.equal(fillResponse.promptVersion, 'direct-open-schema-fill-v2');
+  assert.equal(fillResponse.promptVersion, 'direct-open-schema-fill-v3');
   assert.equal(fillResponse.validActionCount, 4);
   const firstNameAction = fillResponse.parsed.fillActions.find(
     (action) => action.fieldName === 'First Name Given Name',

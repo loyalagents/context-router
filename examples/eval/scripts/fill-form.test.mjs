@@ -261,7 +261,11 @@ test('buildFormFillFieldPolicies derives policies from field and storage maps', 
   const address = policies.fields.find(
     (field) => field.fieldName === 'Address Street Number and Name',
   );
-  assert.deepEqual(address.sourceSlugs, ['eval.address.current.street']);
+  assert.deepEqual(address.sourceSlugs, [
+    'profile.address.street',
+    'address.current.street',
+    'eval.address.current.street',
+  ]);
 
   const signature = policies.fields.find(
     (field) => field.fieldName === 'Signature of Employee',
@@ -271,6 +275,71 @@ test('buildFormFillFieldPolicies derives policies from field and storage maps', 
     mode: 'skip',
     reason: 'manual_attestation',
   });
+});
+
+test('buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slugs', async () => {
+  const storageMap = JSON.parse(
+    await readFile(
+      path.join(repoRoot, 'examples/eval/scoring/fact-storage-map.v1.json'),
+      'utf8',
+    ),
+  );
+
+  const fw4 = await fieldPoliciesForScenario({
+    scenarioId: 'maya-chen-newhire-fw4-packet-small',
+    storageMap,
+  });
+  assertFieldSourceSlugs(fw4, 'tax.filingStatus', [
+    'eval.tax.filing_status',
+    'tax.filing_status',
+    'tax.filingStatus',
+    'profile.tax.filing_status',
+  ]);
+  assertFieldSourceSlugs(fw4, 'address.current.streetLine', [
+    'profile.address.street_line',
+    'address.current.street_line',
+    'address.current.streetLine',
+    'profile.address.line1',
+    'eval.address.current.street_line',
+  ]);
+  assertFieldSourceSlugs(fw4, 'address.current.cityStateZip', [
+    'profile.address.city_state_zip',
+    'address.current.city_state_zip',
+    'address.current.cityStateZip',
+    'eval.address.current.city_state_zip',
+  ]);
+
+  const directDeposit = await fieldPoliciesForScenario({
+    scenarioId: 'maya-chen-newhire-direct-deposit-packet-small',
+    storageMap,
+  });
+  assertFieldSourceSlugs(directDeposit, 'banking.accountType', [
+    'eval.banking.account_type',
+    'banking.account_type',
+    'banking.accountType',
+    'profile.banking.account_type',
+  ]);
+  assertFieldSourceSlugs(directDeposit, 'banking.institutionName', [
+    'eval.banking.institution_name',
+    'banking.institution_name',
+    'banking.institutionName',
+    'profile.banking.institution_name',
+  ]);
+  assertFieldSourceSlugs(directDeposit, 'banking.accountHolderName', [
+    'eval.banking.account_holder_name',
+    'banking.account_holder_name',
+    'banking.accountHolderName',
+    'profile.banking.account_holder_name',
+  ]);
+  assertFieldSourceSlugs(directDeposit, 'address.current.streetLine', [
+    'profile.address.street_line',
+    'address.current.street_line',
+    'address.current.streetLine',
+    'profile.address.line1',
+    'eval.address.current.street_line',
+  ]);
+  assertNoFactPolicy(directDeposit, 'banking.routingNumber');
+  assertNoFactPolicy(directDeposit, 'banking.accountNumber');
 });
 
 test('fill-form writes filled-form, filled PDF, redacted response, and form score report', async () => {
@@ -646,6 +715,31 @@ test('alex realistic scenario validates without an expected filled-form snapshot
   });
   assert.equal(validation.exitCode, 0);
 });
+
+async function fieldPoliciesForScenario({ scenarioId, storageMap }) {
+  const fixture = await loadScenarioFixture({ repoRoot, scenarioId });
+  return buildFormFillFieldPolicies({ fixture, storageMap });
+}
+
+function assertFieldSourceSlugs(policies, factKey, sourceSlugs) {
+  const fields = policies.fields.filter(
+    (field) => field.mode === 'fact' && field.factKey === factKey,
+  );
+  assert.ok(fields.length > 0, `expected at least one field policy for ${factKey}`);
+  for (const field of fields) {
+    assert.deepEqual(field.sourceSlugs, sourceSlugs, field.fieldName);
+  }
+}
+
+function assertNoFactPolicy(policies, factKey) {
+  assert.equal(
+    policies.fields.some(
+      (field) => field.mode === 'fact' && field.factKey === factKey,
+    ),
+    false,
+    `expected no field policy for ${factKey}`,
+  );
+}
 
 function baseArgs(outPath) {
   return [

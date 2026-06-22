@@ -1,0 +1,22 @@
+source_system: LedgerPay
+export_id: LP-DD-20418
+generated_timestamp: "2026-06-26T10:12:00-07:00"
+status: direct_deposit_profile_confirmed
+worker_id: PLC-20418
+deposit_profile_id: DD-MC-418
+account_holder:
+  legal_name: Maya Lin Chen
+  name_on_account: Maya Lin Chen
+mailing_address:
+  street_line: 2846 Ashbury Street Apt 3D
+  city: Oakland
+  state: CA
+  postal_code: "94609"
+financial_institution:
+  institution_name: Bay Harbor Credit Union
+  account_type: checking
+  routing_number: "091000019"
+  account_number: "740182936451"
+  account_suffix_for_display: "6451"
+review_note: The payroll portal stored this account for worker id PLC-20418 as the current direct deposit destination.
+certification_state: employee_attestation_not_exported

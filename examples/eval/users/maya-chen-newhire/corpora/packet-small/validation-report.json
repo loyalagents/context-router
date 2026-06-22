@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "summary": {
+    "profiles": 1,
+    "corpora": 1,
+    "forms": 3,
+    "scenarios": 0,
+    "templates": 7,
+    "errors": 0,
+    "warnings": 0
+  },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 8,
+      "factsProvenPresent": 47,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 0,
+      "factsProvenAbsent": 0,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 6,
+      "skippedAbsenceChecks": 2,
+      "invalidAbsenceChecks": 0,
+      "withheldValuesProvenAbsent": 0,
+      "withheldValuesPresent": 0,
+      "withheldValuesSkipped": 0,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": []
+    },
+    "documents": [
+      {
+        "id": "maya-chen-newhire-packet-small-001",
+        "path": "documents/identity/001-driver-license-upload-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-002",
+        "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-003",
+        "path": "documents/hr-onboarding/003-hr-onboarding-profile-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.middleInitial",
+            "identity.legalName",
+            "contact.email",
+            "address.current.streetLine",
+            "address.current.cityStateZip",
+            "employment.company",
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-004",
+        "path": "documents/work-authorization/004-i9-section-one-draft-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.middleInitial",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-005",
+        "path": "documents/payroll-tax/005-w4-withholding-setup-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.ssn",
+            "address.current.streetLine",
+            "address.current.cityStateZip",
+            "tax.filingStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-006",
+        "path": "documents/payroll-tax/006-direct-deposit-portal-confirmation.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.streetLine",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "banking.accountHolderName",
+            "banking.institutionName",
+            "banking.accountType",
+            "banking.routingNumber",
+            "banking.accountNumber"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-007",
+        "path": "documents/employer-context/007-payroll-direct-deposit-instructions.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-small-008",
+        "path": "documents/noise/008-other-employee-sample-packet.md",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": []
+        }
+      }
+    ]
+  },
+  "issues": []
+}

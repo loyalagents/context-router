@@ -16,6 +16,104 @@
       "acceptedAliasSlugs": ["contact.phone", "profile.phone", "profile.phone_number"],
       "valueType": "string"
     },
+    "address.current.city": {
+      "canonicalSlugs": ["profile.address.city"],
+      "acceptedAliasSlugs": ["address.current.city", "eval.address.current.city"],
+      "valueType": "string"
+    },
+    "address.current.cityStateZip": {
+      "canonicalSlugs": ["profile.address.city_state_zip"],
+      "acceptedAliasSlugs": [
+        "address.current.city_state_zip",
+        "address.current.cityStateZip",
+        "eval.address.current.city_state_zip"
+      ],
+      "valueType": "string"
+    },
+    "address.current.postalCode": {
+      "canonicalSlugs": ["profile.address.postal_code"],
+      "acceptedAliasSlugs": [
+        "address.current.postal_code",
+        "address.current.postalCode",
+        "profile.address.zip",
+        "eval.address.current.postal_code"
+      ],
+      "valueType": "string"
+    },
+    "address.current.state": {
+      "canonicalSlugs": ["profile.address.state"],
+      "acceptedAliasSlugs": ["address.current.state", "eval.address.current.state"],
+      "valueType": "string"
+    },
+    "address.current.street": {
+      "canonicalSlugs": ["profile.address.street"],
+      "acceptedAliasSlugs": ["address.current.street", "eval.address.current.street"],
+      "valueType": "string"
+    },
+    "address.current.streetLine": {
+      "canonicalSlugs": ["profile.address.street_line"],
+      "acceptedAliasSlugs": [
+        "address.current.street_line",
+        "address.current.streetLine",
+        "profile.address.line1",
+        "eval.address.current.street_line"
+      ],
+      "valueType": "string"
+    },
+    "address.current.unit": {
+      "canonicalSlugs": ["profile.address.unit"],
+      "acceptedAliasSlugs": [
+        "address.current.unit",
+        "profile.address.apartment",
+        "eval.address.current.unit"
+      ],
+      "valueType": "string"
+    },
+    "banking.accountHolderName": {
+      "canonicalSlugs": ["eval.banking.account_holder_name"],
+      "acceptedAliasSlugs": [
+        "banking.account_holder_name",
+        "banking.accountHolderName",
+        "profile.banking.account_holder_name"
+      ],
+      "valueType": "string"
+    },
+    "banking.accountNumber": {
+      "canonicalSlugs": ["eval.banking.account_number"],
+      "acceptedAliasSlugs": [
+        "banking.account_number",
+        "banking.accountNumber",
+        "profile.banking.account_number"
+      ],
+      "valueType": "string"
+    },
+    "banking.accountType": {
+      "canonicalSlugs": ["eval.banking.account_type"],
+      "acceptedAliasSlugs": [
+        "banking.account_type",
+        "banking.accountType",
+        "profile.banking.account_type"
+      ],
+      "valueType": "string"
+    },
+    "banking.institutionName": {
+      "canonicalSlugs": ["eval.banking.institution_name"],
+      "acceptedAliasSlugs": [
+        "banking.institution_name",
+        "banking.institutionName",
+        "profile.banking.institution_name"
+      ],
+      "valueType": "string"
+    },
+    "banking.routingNumber": {
+      "canonicalSlugs": ["eval.banking.routing_number"],
+      "acceptedAliasSlugs": [
+        "banking.routing_number",
+        "banking.routingNumber",
+        "profile.banking.routing_number"
+      ],
+      "valueType": "string"
+    },
     "workAuthorization.citizenshipStatus": {
       "canonicalSlugs": ["eval.work_authorization.citizenship_status"],
       "acceptedAliasSlugs": [
@@ -39,6 +137,15 @@
       "acceptedAliasSlugs": ["identity.first_name", "eval.identity.first_name"],
       "valueType": "string"
     },
+    "identity.dateOfBirth": {
+      "canonicalSlugs": ["profile.date_of_birth"],
+      "acceptedAliasSlugs": [
+        "identity.date_of_birth",
+        "identity.dateOfBirth",
+        "eval.identity.date_of_birth"
+      ],
+      "valueType": "string"
+    },
     "identity.lastName": {
       "canonicalSlugs": ["profile.last_name"],
       "acceptedAliasSlugs": ["identity.last_name", "eval.identity.last_name"],
@@ -54,9 +161,27 @@
       ],
       "valueType": "string"
     },
+    "identity.middleInitial": {
+      "canonicalSlugs": ["profile.middle_initial"],
+      "acceptedAliasSlugs": [
+        "identity.middle_initial",
+        "identity.middleInitial",
+        "eval.identity.middle_initial"
+      ],
+      "valueType": "string"
+    },
     "identity.ssn": {
       "canonicalSlugs": ["eval.identity.ssn"],
       "acceptedAliasSlugs": ["identity.ssn", "profile.ssn"],
+      "valueType": "string"
+    },
+    "tax.filingStatus": {
+      "canonicalSlugs": ["eval.tax.filing_status"],
+      "acceptedAliasSlugs": [
+        "tax.filing_status",
+        "tax.filingStatus",
+        "profile.tax.filing_status"
+      ],
       "valueType": "string"
     }
   }

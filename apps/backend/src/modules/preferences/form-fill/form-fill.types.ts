@@ -43,7 +43,6 @@ export interface FormFillValidationEvent {
     | 'low_confidence_applied'
     | 'policy_inactive_blocked'
     | 'policy_structural_skip_blocked'
-    | 'policy_source_slug_off_policy'
     | 'policy_condition_resolved'
     | 'policy_condition_active_value_matched'
     | 'policy_condition_conflict_blocked'

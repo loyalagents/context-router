@@ -330,7 +330,7 @@ export async function loadEvidenceDocuments({ manifest, documentsRoot }) {
 export function buildPromptFieldMetadata(fixture) {
   return fixture.joinedFields.map(({ fieldMap, generated }) => {
     const options = optionValuesForField(generated, fixture.fieldsGenerated);
-    return {
+    const metadata = {
       fieldName: generated.pdfFieldName,
       fieldType: generated.type,
       ...(typeof generated.maxLength === 'number' ? { maxLength: generated.maxLength } : {}),
@@ -340,10 +340,25 @@ export function buildPromptFieldMetadata(fixture) {
       fieldPolicy: promptFieldPolicy(fieldMap),
       options,
     };
+    if (fieldMap?.mode === 'fact' && typeof fieldMap.factKey === 'string' && fieldMap.factKey.trim()) {
+      metadata.targetFactKey = fieldMap.factKey;
+    }
+    const semanticNote = safeSemanticNote(fieldMap?.note);
+    if (semanticNote) {
+      metadata.semanticNote = semanticNote;
+    }
+    if (fieldMap?.when && typeof fieldMap.when === 'object') {
+      metadata.condition = promptFieldCondition(fieldMap.when);
+    }
+    if (fieldMap?.mode === 'skip') {
+      metadata.skipReason = fieldMap.reason ?? 'structural_skip';
+    }
+    return metadata;
   });
 }
 
 export function buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments }) {
+  const promptFieldMetadata = buildDirectFormPromptFieldMetadata(fieldMetadata);
   return [
     'You are filling a fillable PDF form using only the supplied evidence documents.',
     '',
@@ -380,11 +395,24 @@ export function buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments }) 
     ),
     '',
     'PDF field metadata:',
-    JSON.stringify(fieldMetadata, null, 2),
+    JSON.stringify(promptFieldMetadata, null, 2),
     '',
     'Evidence documents:',
     evidenceDocuments.map(formatEvidenceDocument).join('\n\n'),
   ].join('\n');
+}
+
+function buildDirectFormPromptFieldMetadata(fieldMetadata) {
+  return fieldMetadata.map((field) => ({
+    fieldName: field.fieldName,
+    fieldType: field.fieldType,
+    ...(typeof field.maxLength === 'number' ? { maxLength: field.maxLength } : {}),
+    inferredLabel: field.inferredLabel ?? null,
+    inferredDataKey: field.inferredDataKey ?? null,
+    fillPolicy: field.fillPolicy ?? null,
+    fieldPolicy: field.fieldPolicy ?? { action: 'fillable' },
+    options: Array.isArray(field.options) ? [...field.options] : [],
+  }));
 }
 
 function promptFieldPolicy(fieldMap) {
@@ -399,8 +427,36 @@ function promptFieldPolicy(fieldMap) {
   if (fieldMap?.when) {
     policy.branchValues = conditionExpectedValues(fieldMap.when);
   }
-  if (fieldMap?.note) policy.note = fieldMap.note;
+  const note = safeSemanticNote(fieldMap?.note);
+  if (note) policy.note = note;
   return policy;
+}
+
+function safeSemanticNote(note) {
+  if (typeof note !== 'string' || !note.trim()) return null;
+  if (
+    /profile\.ya?ml/i.test(note) ||
+    /corpus manifest/i.test(note) ||
+    /intentionally missing/i.test(note) ||
+    /declares this fact/i.test(note)
+  ) {
+    return null;
+  }
+  return note;
+}
+
+function promptFieldCondition(condition) {
+  const normalized = {};
+  if (typeof condition.factKey === 'string' && condition.factKey.trim()) {
+    normalized.factKey = condition.factKey;
+  }
+  if (Object.hasOwn(condition, 'equals')) {
+    normalized.equals = condition.equals;
+  }
+  if (Object.hasOwn(condition, 'includes')) {
+    normalized.includes = condition.includes;
+  }
+  return normalized;
 }
 
 export function parseModelResponse(text) {
@@ -721,9 +777,60 @@ function formatEvidenceDocument(doc) {
 
 export function normalizeTextValueForPdfField(action) {
   const value = action.value ?? '';
+  if (isMmddyyyyAction(action)) return normalizeMmddyyyy(value);
   if (!isSocialSecurityNumberAction(action)) return value;
   const digits = value.replace(/\D/g, '');
   return digits.length === 9 ? digits : value;
+}
+
+function isMmddyyyyAction(action) {
+  return /\bmm\s*dd\s*yyyy\b/i.test(action.fieldName ?? '');
+}
+
+function normalizeMmddyyyy(value) {
+  const trimmed = String(value).trim();
+  const isoMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (isoMatch) {
+    return formatMmddyyyy(isoMatch[1], isoMatch[2], isoMatch[3]) ?? value;
+  }
+  const slashMatch = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (slashMatch) {
+    return formatMmddyyyy(slashMatch[3], slashMatch[1], slashMatch[2]) ?? value;
+  }
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length !== 8) return value;
+  const yearFirst = formatMmddyyyy(
+    digits.slice(0, 4),
+    digits.slice(4, 6),
+    digits.slice(6, 8),
+  );
+  if (yearFirst) return yearFirst;
+  const alreadyMmddyyyy = formatMmddyyyy(
+    digits.slice(4, 8),
+    digits.slice(0, 2),
+    digits.slice(2, 4),
+  );
+  return alreadyMmddyyyy ? digits : value;
+}
+
+function formatMmddyyyy(rawYear, rawMonth, rawDay) {
+  const year = Number(rawYear);
+  const month = Number(rawMonth);
+  const day = Number(rawDay);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    year < 1900 ||
+    year > 2099 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > new Date(Date.UTC(year, month, 0)).getUTCDate()
+  ) {
+    return null;
+  }
+  return `${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}${String(year).padStart(4, '0')}`;
 }
 
 function isSocialSecurityNumberAction(action) {

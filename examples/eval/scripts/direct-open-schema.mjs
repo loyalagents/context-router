@@ -36,7 +36,7 @@ const PROVIDERS = new Set(['vertex']);
 const VALUE_TYPES = new Set(['STRING', 'BOOLEAN', 'ENUM', 'ARRAY']);
 const FILL_ACTIONS = new Set(['SET_TEXT', 'CHECK', 'UNCHECK', 'SELECT_OPTION', 'SKIP']);
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
-const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v2';
+const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v3';
 const DIRECT_OPEN_SCHEMA_PRODUCER = 'direct-open-schema-vertex';
 const DIRECT_OPEN_SCHEMA_EVALUATION_MODE = 'direct-vertex-open-schema';
 const SYNTHETIC_SNAPSHOT_QUERY_NAME = 'SyntheticDirectOpenSchemaSnapshot';
@@ -494,7 +494,11 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'When fieldPolicy.action is "skip", return SKIP for that field even if extracted facts contain plausible values.',
     'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
     'Some PDF field names are compound or noisy. If a fillable text field name contains multiple concepts, fill the value supported by an extracted fact when it clearly matches part of the field name. Do not skip solely because another related concept is missing, unless the field policy requires a combined value.',
-    'Treat inferredLabel as a weak hint; the exact fieldName and fieldPolicy are more authoritative.',
+    'Use targetFactKey and semanticNote as the strongest field-meaning hints when present. They describe what value the field wants, not a required extracted slug.',
+    'For fields named like mmddyyyy, render dates as MMDDYYYY.',
+    'For address.current.streetLine fields, combine street plus unit/apartment when both extracted facts exist, and cite all component sourceFactIds.',
+    'For address.current.cityStateZip fields, render as City, ST ZIP, and cite city, state, and postal code sourceFactIds.',
+    'Treat inferredLabel as a weak fallback hint; the exact fieldName and fieldPolicy remain authoritative.',
     'Use SKIP when extracted facts are missing, contradicted, stale, ambiguous, or the field requires a signature/manual attestation.',
     'Do not infer or invent values that are not present in extracted facts.',
     'Every non-SKIP action must include at least one sourceFactIds entry using factId values from the extracted facts.',
@@ -538,15 +542,28 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
 }
 
 export function buildDirectOpenSchemaFieldMetadata(fieldMetadata) {
-  return fieldMetadata.map((field) => ({
-    fieldName: field.fieldName,
-    fieldType: field.fieldType,
-    ...(typeof field.maxLength === 'number' ? { maxLength: field.maxLength } : {}),
-    inferredLabel: field.inferredLabel ?? null,
-    fillPolicy: field.fillPolicy ?? null,
-    fieldPolicy: directOpenSchemaFieldPolicy(field.fieldPolicy),
-    options: Array.isArray(field.options) ? [...field.options] : [],
-  }));
+  return fieldMetadata.map((field) => {
+    const metadata = {
+      fieldName: field.fieldName,
+      fieldType: field.fieldType,
+      ...(typeof field.maxLength === 'number' ? { maxLength: field.maxLength } : {}),
+      inferredLabel: field.inferredLabel ?? null,
+      fillPolicy: field.fillPolicy ?? null,
+      fieldPolicy: directOpenSchemaFieldPolicy(field.fieldPolicy),
+      options: Array.isArray(field.options) ? [...field.options] : [],
+    };
+    const targetFactKey = modelString(field.targetFactKey);
+    if (targetFactKey) metadata.targetFactKey = targetFactKey;
+    const semanticNote =
+      directOpenSchemaSemanticNote(field.semanticNote) ??
+      directOpenSchemaSemanticNote(field.fieldPolicy?.note);
+    if (semanticNote) metadata.semanticNote = semanticNote;
+    const condition = directOpenSchemaCondition(field.condition);
+    if (condition) metadata.condition = condition;
+    const skipReason = modelString(field.skipReason);
+    if (skipReason) metadata.skipReason = skipReason;
+    return metadata;
+  });
 }
 
 function directOpenSchemaFieldPolicy(fieldPolicy) {
@@ -566,6 +583,36 @@ function directOpenSchemaFieldPolicy(fieldPolicy) {
     policy.branchValues = fieldPolicy.branchValues;
   }
   return policy;
+}
+
+function directOpenSchemaCondition(condition) {
+  if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
+    return null;
+  }
+  const normalized = {};
+  const factKey = modelString(condition.factKey);
+  if (factKey) normalized.factKey = factKey;
+  if (Object.hasOwn(condition, 'equals')) {
+    normalized.equals = condition.equals;
+  }
+  if (Object.hasOwn(condition, 'includes')) {
+    normalized.includes = condition.includes;
+  }
+  return Object.keys(normalized).length > 0 ? normalized : null;
+}
+
+function directOpenSchemaSemanticNote(note) {
+  const value = modelString(note);
+  if (!value) return null;
+  if (
+    /profile\.ya?ml/i.test(value) ||
+    /corpus manifest/i.test(value) ||
+    /intentionally missing/i.test(value) ||
+    /declares this fact/i.test(value)
+  ) {
+    return null;
+  }
+  return value;
 }
 
 export function parseJsonObjectResponse(text) {
@@ -1077,6 +1124,9 @@ function invalidFillValidation(validationDiagnostics = []) {
 function invalidFactFillActionReason({ action, field, factById, provenanceDiagnostics }) {
   if (!FILL_ACTIONS.has(action.action)) {
     return `unsupported action ${String(action.action)}`;
+  }
+  if (field.fieldPolicy?.action === 'skip' && action.action !== 'SKIP') {
+    return `field policy skip: ${field.fieldPolicy.reason ?? field.skipReason ?? 'structural_skip'}`;
   }
   if (action.action !== 'SKIP' && !isCompatible(action.action, field.fieldType)) {
     return `action ${action.action} is not compatible with ${field.fieldType} fields`;

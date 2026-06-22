@@ -1,0 +1,24 @@
+source_system: LedgerPay
+saved_timestamp: "2026-06-25T13:28:00-07:00"
+status: employee_withholding_setup_saved
+worker_id: PLC-20418
+assigned_queue: North Bay Payroll Team
+field_ids:
+  - w4_first_name
+  - w4_last_name
+  - w4_social_security_number
+  - w4_address_line
+  - w4_city_state_zip
+  - w4_filing_status
+w4_employee_information:
+  first_name: Maya
+  last_name: Chen
+  social_security_number: 000-00-0417
+  address_line: 2846 Ashbury Street Apt 3D
+  city_state_zip: Oakland, CA 94609
+w4_step_1_filing_status:
+  selected_option: single or married filing separately
+  multiple_jobs: false
+  dependents_under_17: 0
+  other_dependents: 0
+review_note: Worksheet and extra withholding fields remain outside the first packet-small mapping.
