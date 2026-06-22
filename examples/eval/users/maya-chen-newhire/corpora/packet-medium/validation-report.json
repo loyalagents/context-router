@@ -15,7 +15,7 @@
       "documentsChecked": 30,
       "factsProvenPresent": 93,
       "factsMissing": 0,
-      "unsupportedDeclaredFacts": 6,
+      "unsupportedDeclaredFacts": 0,
       "factsProvenAbsent": 10,
       "forbiddenFactsPresent": 0,
       "warningOnlyAbsenceChecks": 20,
@@ -25,28 +25,7 @@
       "withheldValuesPresent": 0,
       "withheldValuesSkipped": 10,
       "hardFailures": 0,
-      "unsupportedDeclaredFactKeys": [
-        {
-          "factKey": "employment.workerId",
-          "count": 2
-        },
-        {
-          "factKey": "tax.dependentsUnder17",
-          "count": 1
-        },
-        {
-          "factKey": "tax.exemptionClaim",
-          "count": 1
-        },
-        {
-          "factKey": "tax.multipleJobs",
-          "count": 1
-        },
-        {
-          "factKey": "tax.otherDependents",
-          "count": 1
-        }
-      ]
+      "unsupportedDeclaredFactKeys": []
     },
     "documents": [
       {
@@ -283,9 +262,7 @@
             "employment.startDate"
           ],
           "missing": [],
-          "unsupported": [
-            "employment.workerId"
-          ]
+          "unsupported": []
         },
         "forbiddenFacts": {
           "provenAbsent": [],
@@ -406,12 +383,7 @@
             "tax.filingStatus"
           ],
           "missing": [],
-          "unsupported": [
-            "tax.multipleJobs",
-            "tax.dependentsUnder17",
-            "tax.otherDependents",
-            "tax.exemptionClaim"
-          ]
+          "unsupported": []
         },
         "forbiddenFacts": {
           "provenAbsent": [],
@@ -693,9 +665,7 @@
             "employment.title"
           ],
           "missing": [],
-          "unsupported": [
-            "employment.workerId"
-          ]
+          "unsupported": []
         },
         "forbiddenFacts": {
           "provenAbsent": [],

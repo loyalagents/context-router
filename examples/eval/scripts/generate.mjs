@@ -436,6 +436,7 @@ function sourceFormatRules(doc) {
     'Email artifacts must use raw email headers exactly like From:, To:, Date:, and Subject:, not Markdown-bold header labels.',
     'OCR and plain-text exports should use native label/value lines, OCR-like blocks, or raw export text instead of Markdown headings or bold labels.',
     'JSON and YAML exports should use native field ids or keys and avoid prose comments.',
+    'Native source artifacts may include fields beyond the required person details, but user-person fields not present in Required person details or Allowed source context must stay blank, null, or not_imported; do not supply factual defaults such as false, 0, unknown, or placeholder old values.',
   ];
 
   if (planDocumentFactKeys(doc).includes('identity.legalName')) {

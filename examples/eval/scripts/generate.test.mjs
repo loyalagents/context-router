@@ -234,6 +234,9 @@ test('document prompt nudges native source formats and length targets', () => {
   assert.match(prompt, /within its minChars\/maxChars range/);
   assert.match(prompt, /OCR and plain-text exports should use native label\/value lines/);
   assert.match(prompt, /JSON and YAML exports should use native field ids or keys/);
+  assert.match(prompt, /fields beyond the required person details/);
+  assert.match(prompt, /blank, null, or not_imported/);
+  assert.match(prompt, /do not supply factual defaults such as false, 0, unknown/);
   assert.match(prompt, /native combined legal-name field or clearly labeled first\/middle\/last name fields/);
   assert.match(prompt, /"minChars": 1000/);
   assert.match(prompt, /"maxChars": 2800/);

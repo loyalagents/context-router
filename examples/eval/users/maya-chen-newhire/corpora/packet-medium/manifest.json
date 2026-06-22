@@ -567,8 +567,7 @@
         "include": [
           "employment.company",
           "employment.title",
-          "employment.startDate",
-          "employment.workerId"
+          "employment.startDate"
         ],
         "forbid": []
       },
@@ -716,11 +715,12 @@
         "sourceFamily": "payroll-tax",
         "captureMode": "yaml-system-export",
         "timelineRefs": [
-          "onboardingProfileExportAt"
+          "w4SavedAt"
         ],
         "worldRefs": [
           "employer.payrollSystem",
-          "employer.workerId"
+          "employer.workerId",
+          "employer.payrollCoordinator"
         ],
         "nativeSignals": [
           "source system",
@@ -730,18 +730,25 @@
           "status"
         ],
         "safeDetailMenu": [
-          "profile status",
-          "reviewer assigned",
-          "field ids",
-          "audit metadata"
+          "payroll export id",
+          "employee self-service saved timestamp",
+          "review queue",
+          "field ids mapped to W-4 Step 1",
+          "field-level validation statuses",
+          "status history with saved and payroll-reviewed rows",
+          "reviewer note explaining no extra withholding worksheet values",
+          "if later W-4 sections appear, keep them as empty or not imported rather than adding numeric personal values"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated bank data",
-          "signature attestation"
+          "signature attestation",
+          "values for W-4 Step 2, Step 3, or Step 4 unless present in required person details",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
         ],
         "lengthTarget": {
-          "minChars": 2046,
+          "minChars": 450,
           "maxChars": 3446
         }
       },
@@ -809,11 +816,7 @@
       },
       "factContract": {
         "include": [
-          "tax.filingStatus",
-          "tax.multipleJobs",
-          "tax.dependentsUnder17",
-          "tax.otherDependents",
-          "tax.exemptionClaim"
+          "tax.filingStatus"
         ],
         "forbid": []
       },
@@ -1376,7 +1379,6 @@
       },
       "factContract": {
         "include": [
-          "employment.workerId",
           "employment.company",
           "employment.title"
         ],
@@ -1421,15 +1423,23 @@
           "ticket status",
           "queue",
           "assignee",
-          "resolution note"
+          "requester",
+          "activity log with two or three timestamped updates",
+          "field correction summary",
+          "resolution note",
+          "internal note that support desk phone numbers are contact-channel metadata, not Maya's phone",
+          "generic prior-value labels without inventing explicit old address or email values"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated identifier",
-          "legal attestation"
+          "legal attestation",
+          "specific old incorrect address or email values not present in allowed source context",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
         ],
         "lengthTarget": {
-          "minChars": 2006,
+          "minChars": 500,
           "maxChars": 3406
         }
       },
@@ -1522,11 +1532,13 @@
         "sourceFamily": "partial-conflicting",
         "captureMode": "plain-text-ticket-export",
         "timelineRefs": [
-          "supportTicketAt"
+          "staleRecruiterExportedAt"
         ],
         "worldRefs": [
           "employer.onboardingSystem",
-          "employer.workerId"
+          "employer.workerId",
+          "stale.oldEmail",
+          "stale.oldAddress"
         ],
         "nativeSignals": [
           "source system",
@@ -1536,18 +1548,24 @@
           "reviewer note"
         ],
         "safeDetailMenu": [
-          "ticket status",
-          "queue",
-          "assignee",
-          "resolution note"
+          "recruiting archive export header",
+          "superseded or do-not-use status",
+          "old candidate profile id distinct from current worker id",
+          "archived contact fields using allowed stale.oldEmail and stale.oldAddress exactly",
+          "stale-value review note",
+          "short timeline showing archive retained for reconciliation only",
+          "resolution note pointing to active onboarding profile as authority"
         ],
         "riskyDetailMenu": [
           "new user phone number",
           "unrelated identifier",
-          "legal attestation"
+          "legal attestation",
+          "alternate stale email or stale address values not present in allowed source context",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
         ],
         "lengthTarget": {
-          "minChars": 1806,
+          "minChars": 450,
           "maxChars": 3206
         }
       },
