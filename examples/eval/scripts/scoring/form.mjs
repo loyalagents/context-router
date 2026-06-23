@@ -171,7 +171,7 @@ function mapFormClassification(field, fieldClass, renderDiagnostics = {}) {
   if (
     fieldClass === 'should-fill' &&
     field.classification === 'incorrect' &&
-    renderDiagnostics.renderVariant === 'case_only'
+    renderDiagnostics.renderVariant
   ) {
     return 'form_known_correct';
   }
@@ -199,6 +199,13 @@ function buildRenderDiagnostics({
   ) {
     return { exactTextMatch, renderVariant: 'case_only' };
   }
+  if (
+    fieldClass === 'should-fill' &&
+    field.classification === 'incorrect' &&
+    isSafeStreetLineUnitCommaVariant({ field, factKey, expectedValue, actualValue })
+  ) {
+    return { exactTextMatch, renderVariant: 'street_line_unit_comma' };
+  }
   return { exactTextMatch, renderVariant: null };
 }
 
@@ -209,6 +216,22 @@ function isSafeCaseOnlyVariant({ field, factKey, expectedValue, actualValue }) {
   const expectedText = String(expectedValue);
   const actualText = String(actualValue);
   return expectedText !== actualText && expectedText.toLowerCase() === actualText.toLowerCase();
+}
+
+function isSafeStreetLineUnitCommaVariant({ field, factKey, expectedValue, actualValue }) {
+  if (factKey !== 'address.current.streetLine') return false;
+  if (field.fieldMap?.render) return false;
+  if (expectedValue == null || actualValue == null) return false;
+  const expectedText = normalizeStreetLineUnitComma(expectedValue);
+  const actualText = normalizeStreetLineUnitComma(actualValue);
+  return expectedText !== '' && expectedText === actualText && String(expectedValue) !== String(actualValue);
+}
+
+function normalizeStreetLineUnitComma(value) {
+  return String(value)
+    .trim()
+    .replace(/\s*,\s*(?=(?:apt|apartment|unit|ste|suite|#)\b|#)/gi, ' ')
+    .replace(/\s+/g, ' ');
 }
 
 function structuralOverfill(field, fieldClass) {

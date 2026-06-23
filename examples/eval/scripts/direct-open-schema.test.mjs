@@ -187,6 +187,7 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.match(fillPrompt, /render dates as MMDDYYYY/);
   assert.match(fillPrompt, /combine street plus unit\/apartment/);
   assert.match(fillPrompt, /render as City, ST ZIP/);
+  assert.match(fillPrompt, /Do not return UNCHECK for inactive conditional branches/);
   assert.match(fillPrompt, /component sourceFactIds/);
   assert.match(fillPrompt, /Treat inferredLabel as a weak fallback hint/);
   assert.match(fillPrompt, /sourceFactIds/);
@@ -378,6 +379,21 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
     { fieldName: 'Name', fieldType: 'text', options: [] },
     { fieldName: 'Middle', fieldType: 'text', maxLength: 1, options: [] },
     { fieldName: 'State', fieldType: 'dropdown', options: ['OR'] },
+    {
+      fieldName: 'Citizen',
+      fieldType: 'checkbox',
+      condition: { factKey: 'workAuthorization.citizenshipStatus', equals: 'U.S. citizen' },
+      options: [],
+    },
+    {
+      fieldName: 'LPR',
+      fieldType: 'checkbox',
+      condition: {
+        factKey: 'workAuthorization.citizenshipStatus',
+        equals: 'lawful permanent resident',
+      },
+      options: [],
+    },
     { fieldName: 'Missing', fieldType: 'text', options: [] },
     {
       fieldName: 'Routing Check Digit',
@@ -396,6 +412,15 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
       confidence: 0.9,
       evidence: [{ documentId: 'doc-1', quote: 'Alex Jordan Rivera' }],
     },
+    {
+      factId: 'fact-0002',
+      slug: 'work_authorization.citizenship_status',
+      label: 'Citizenship status',
+      valueType: 'ENUM',
+      value: 'A citizen of the United States',
+      confidence: 0.9,
+      evidence: [{ documentId: 'doc-1', quote: 'A citizen of the United States' }],
+    },
   ];
   const result = validateFactFillActions({
     fields,
@@ -413,6 +438,18 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
         action: 'SET_TEXT',
         value: 'Jordan',
         sourceFactIds: ['fact-0001'],
+        confidence: 0.9,
+      },
+      {
+        fieldName: 'Citizen',
+        action: 'CHECK',
+        sourceFactIds: ['fact-0002'],
+        confidence: 0.9,
+      },
+      {
+        fieldName: 'LPR',
+        action: 'UNCHECK',
+        sourceFactIds: ['fact-0002'],
         confidence: 0.9,
       },
       {
@@ -448,6 +485,14 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
       sourceSlugs: ['identity.legal_name'],
       confidence: 0.7,
     },
+    {
+      fieldName: 'Citizen',
+      fieldType: 'checkbox',
+      action: 'CHECK',
+      value: undefined,
+      sourceSlugs: ['work_authorization.citizenship_status'],
+      confidence: 0.9,
+    },
   ]);
   assert.equal(result.diagnostics.lowConfidenceCount, 1);
   assert.equal(
@@ -464,6 +509,7 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
     result.diagnostics.invalidActionReasonCounts['field policy skip: out_of_scope'],
     1,
   );
+  assert.equal(result.diagnostics.invalidActionReasonCounts['conditional field inactive'], 1);
   assert.equal(result.provenanceDiagnostics.unknownSourceFactIdCount, 1);
 });
 

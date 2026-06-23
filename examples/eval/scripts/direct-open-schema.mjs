@@ -16,6 +16,7 @@ import {
 } from './fill-form-from-docs.mjs';
 import { generateWithVertex } from './generate.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
+import { valueMatchesFact } from './scoring/normalize.mjs';
 import { scoreOpenSchemaCombinedToFile } from './scoring/open-schema-combined.mjs';
 import { scoreOpenSchemaDatabaseToFile } from './scoring/open-schema-database.mjs';
 import {
@@ -495,6 +496,7 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'Field policy is authoritative.',
     'When fieldPolicy.action is "skip", return SKIP for that field even if extracted facts contain plausible values.',
     'Never fill fields with skip reasons manual_attestation, out_of_scope, or unmapped.',
+    'For conditional checkbox branches that do not match the extracted facts, return SKIP. Do not return UNCHECK for inactive conditional branches.',
     'Some PDF field names are compound or noisy. If a fillable text field name contains multiple concepts, fill the value supported by an extracted fact when it clearly matches part of the field name. Do not skip solely because another related concept is missing, unless the field policy requires a combined value.',
     'Use targetFactKey and semanticNote as the strongest field-meaning hints when present. They describe what value the field wants, not a required extracted slug.',
     'For fields named like mmddyyyy, render dates as MMDDYYYY.',
@@ -1162,7 +1164,48 @@ function invalidFactFillActionReason({ action, field, factById, provenanceDiagno
       return `unknown source fact id "${String(factId)}"`;
     }
   }
+  if (
+    field.fieldType === 'checkbox' &&
+    field.condition &&
+    !conditionSatisfiedByActionSources({ action, condition: field.condition, factById })
+  ) {
+    return 'conditional field inactive';
+  }
   return null;
+}
+
+function conditionSatisfiedByActionSources({ action, condition, factById }) {
+  if (!condition || typeof condition !== 'object') return true;
+  if (!Array.isArray(action.sourceFactIds) || action.sourceFactIds.length === 0) {
+    return false;
+  }
+  const sourceFacts = action.sourceFactIds
+    .map((factId) => factById.get(factId))
+    .filter(Boolean);
+  if (sourceFacts.length === 0) return false;
+  const factKey = typeof condition.factKey === 'string' ? condition.factKey : null;
+  if (Object.hasOwn(condition, 'equals')) {
+    return sourceFacts.some((fact) =>
+      conditionValueMatches({ factKey, expected: condition.equals, actual: fact.value }),
+    );
+  }
+  if (Object.hasOwn(condition, 'includes')) {
+    const expectedValues = Array.isArray(condition.includes)
+      ? condition.includes
+      : [condition.includes];
+    return sourceFacts.some((fact) =>
+      expectedValues.some((expected) =>
+        conditionValueMatches({ factKey, expected, actual: fact.value }),
+      ),
+    );
+  }
+  return true;
+}
+
+function conditionValueMatches({ factKey, expected, actual }) {
+  return factKey
+    ? valueMatchesFact(factKey, expected, actual)
+    : String(expected ?? '').trim() === String(actual ?? '').trim();
 }
 
 function sourceSlugsForAction(action, factById) {

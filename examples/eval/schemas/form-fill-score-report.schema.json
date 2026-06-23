@@ -142,7 +142,7 @@
         "exactTextMatch": { "type": ["boolean", "null"] },
         "renderVariant": {
           "type": ["string", "null"],
-          "enum": ["case_only", null]
+          "enum": ["case_only", "street_line_unit_comma", null]
         },
         "overfill": { "type": "boolean" },
         "overfillSeverity": {

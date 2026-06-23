@@ -393,7 +393,10 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
         accountType: 'checking',
       },
       identity: {
+        firstName: 'Maya',
         middleName: 'Lin',
+        lastName: 'Chen',
+        legalName: 'Maya Lin Chen',
         middleInitial: 'L',
       },
       tax: {
@@ -414,6 +417,10 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
         canonicalSlugs: ['profile.middle_initial'],
         acceptedAliasSlugs: [],
       },
+      'identity.legalName': {
+        canonicalSlugs: ['profile.full_name'],
+        acceptedAliasSlugs: [],
+      },
       'tax.filingStatus': {
         canonicalSlugs: ['eval.tax.filing_status'],
         acceptedAliasSlugs: ['tax.federal_filing_status'],
@@ -426,7 +433,9 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
   };
   const activePreferences = [
     preference('direct_deposit.account_type', 'Checking'),
-    preference('identity.middle_name', 'Lin'),
+    preference('personal.name.first', 'Maya'),
+    preference('personal.name.middle', 'Lin'),
+    preference('personal.name.last', 'Chen'),
     preference('tax.federal_filing_status', 'Single or Married Filing Separately'),
     preference(
       'work_authorization.citizenship_status',
@@ -445,6 +454,15 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
   });
   const middleInitial = scoreOpenKnownFact({
     factKey: 'identity.middleInitial',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const legalName = scoreOpenKnownFact({
+    factKey: 'identity.legalName',
     profile,
     storageMap,
     activePreferences,
@@ -481,6 +499,11 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
   );
   assert.equal(middleInitial.matchingNovelRows[0].slug, 'derived.identity.middleInitial');
   assert.equal(
+    legalName.classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(legalName.matchingNovelRows[0].slug, 'derived.identity.legalName');
+  assert.equal(
     filingStatus.classification,
     'open_known_present_recovered_accepted_slug',
   );
@@ -488,6 +511,39 @@ test('open-schema database scorer accepts packet-medium alias and semantic equiv
     citizenshipStatus.classification,
     'open_known_present_recovered_accepted_slug',
   );
+});
+
+test('open-schema legal-name derivation stays missing without a required name component', () => {
+  const result = scoreOpenKnownFact({
+    factKey: 'identity.legalName',
+    profile: {
+      facts: {
+        identity: {
+          firstName: 'Maya',
+          middleName: 'Lin',
+          lastName: 'Chen',
+          legalName: 'Maya Lin Chen',
+        },
+      },
+    },
+    storageMap: {
+      facts: {
+        'identity.legalName': {
+          canonicalSlugs: ['profile.full_name'],
+          acceptedAliasSlugs: [],
+        },
+      },
+    },
+    activePreferences: [
+      preference('personal.name.first', 'Maya'),
+      preference('personal.name.last', 'Chen'),
+    ],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_missing');
 });
 
 test('open-schema middle-initial derivation stays missing without middle-name memory', () => {
