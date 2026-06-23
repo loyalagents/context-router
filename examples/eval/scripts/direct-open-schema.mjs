@@ -102,6 +102,7 @@ export async function runDirectOpenSchema({
           env,
           model,
           temperature: options.temperature,
+          responseMimeType: 'application/json',
         }));
     const rawExtractionText = await extractionProvider(extractionPrompt, {
       fixture,
@@ -163,6 +164,7 @@ export async function runDirectOpenSchema({
           env,
           model,
           temperature: options.temperature,
+          responseMimeType: 'application/json',
         }));
     const rawFillText = await fillProvider(fillPrompt, {
       fixture,
@@ -432,17 +434,17 @@ export function buildExtractionPrompt({ evidenceDocuments }) {
     'You are not filling a form in this stage. You do not know the future scenario or target form.',
     '',
     'Return JSON only. Do not include markdown fences or explanatory wrapper text.',
-    'Return no more than 40 facts. Keep the output compact but broad enough to support future forms, applications, support workflows, or user-profile tasks.',
+    'Return no more than 30 facts. Keep the output compact and focused on durable current facts needed across a new-hire packet.',
     'Do not return backend definitions, backend preference rows, memory snapshots, synthetic IDs, run metadata, or schema diagnostics.',
     'Extract only values supported by the supplied evidence documents.',
     'Do not infer or invent missing values.',
-    'Extract broadly useful current facts such as names, contact details, addresses, dates, identifiers, status or eligibility details, document numbers, employer/school/household facts, and explicit user preferences when supported.',
+    'Extract durable current new-hire packet facts such as names, contact details, addresses, dates, identifiers, citizenship or eligibility status, tax elections, employer facts, and direct-deposit banking facts.',
     'Prefer current authoritative sources. Skip stale, noise, third-party, contradicted, or transient operational details unless needed to represent a current conflict or durable user preference.',
-    'Do not exhaustively extract every account setting, message id, ticket id, notification flag, internal workflow status, or historical artifact.',
+    'Skip sample, other-person, stale, ticket/log/audit metadata, internal workflow status, message ids, timestamps, notification flags, and operational notes.',
     'Preserve values as stated in evidence; do not render values for an unknown form.',
     'Use valueType STRING, BOOLEAN, ENUM, or ARRAY.',
-    'For each fact, include at most two evidence entries.',
-    'Each evidence.quote must be a short JSON-safe substring from the document, 160 characters or fewer, with no line breaks. Avoid snippets containing double quote characters; choose a nearby shorter supporting substring when possible.',
+    'For each fact, include exactly one evidence entry.',
+    'Each evidence.quote must be a short JSON-safe substring from the document, 120 characters or fewer, with no line breaks. Avoid snippets containing double quote characters; choose a nearby shorter supporting substring when possible.',
     'Evidence quotes must support the value, not only the surrounding topic.',
     'Use unresolved[] sparingly for user-relevant facts that the documents explicitly indicate are missing, unknown, or ambiguous. Do not add unresolved items just because a possible future form might ask for them.',
     '',

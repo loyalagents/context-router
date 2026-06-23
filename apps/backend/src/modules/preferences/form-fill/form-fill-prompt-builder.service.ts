@@ -29,8 +29,10 @@ When field policies are provided, treat them as authoritative for field intent a
 For mode=fact field policies, factKey, field notes, and policy metadata describe the target value. sourceSlugs are hints/examples/aliases and are not exhaustive.
 You may use any active memory whose value supports the target field, including multiple active memories when the field requires a composed value.
 Use sourceSlugs from the raw active memories actually used. Do not cite canonical factKeys, resolved form facts, or any sourceSlug that is not present in active memory.
+When Resolved form facts lists the target factKey, prefer its sourceSlugs exactly; those are active memory slugs that already resolved to the form fact.
 Do not invent memories, values, or resolved form facts. If active memory is missing, contradicted, stale, ambiguous, or insufficient, return SKIP for that field.
 Do not fill mode=skip fields, inactive conditional branches, signatures, manual attestations, out-of-scope fields, or unsupported fields.
+For employee email fields, use the user's personal/contact email. Do not use employer-issued work email unless the field explicitly asks for work email.
 For fields named like mmddyyyy, render dates as MMDDYYYY.
 For address.current.streetLine fields, combine street plus unit/apartment when both active memories exist, and cite all component sourceSlugs.
 For address.current.cityStateZip fields, render as City, ST ZIP, and cite city, state, and postal code sourceSlugs.

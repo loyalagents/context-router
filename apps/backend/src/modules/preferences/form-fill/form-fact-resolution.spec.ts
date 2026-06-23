@@ -67,6 +67,38 @@ describe('form fact resolution', () => {
     });
   });
 
+  it('maps packet-specific open-schema slugs to canonical form facts', () => {
+    const result = resolveFormFacts({
+      activePreferences: [
+        {
+          slug: 'tax.federal_filing_status',
+          value: 'single or married filing separately',
+        },
+        { slug: 'direct_deposit.account_type', value: 'Checking' },
+        {
+          slug: 'work_authorization.citizenship_status',
+          value: 'A citizen of the United States',
+        },
+      ],
+    });
+
+    expect(fact(result.facts, 'tax.filingStatus')).toMatchObject({
+      value: 'single or married filing separately',
+      sourceSlugs: ['tax.federal_filing_status'],
+      resolutionKind: 'alias',
+    });
+    expect(fact(result.facts, 'banking.accountType')).toMatchObject({
+      value: 'Checking',
+      sourceSlugs: ['direct_deposit.account_type'],
+      resolutionKind: 'alias',
+    });
+    expect(fact(result.facts, 'workAuthorization.citizenshipStatus')).toMatchObject({
+      value: 'A citizen of the United States',
+      sourceSlugs: ['work_authorization.citizenship_status'],
+      resolutionKind: 'alias',
+    });
+  });
+
   it('does not derive middle initial when a direct middle initial is present', () => {
     const fieldPolicies: FormFillFieldPolicies = {
       schemaVersion: 1,

@@ -158,6 +158,10 @@ export function factValueVariants(factKey, value) {
     variants.add(raw.toLocaleLowerCase().replace(/\s+/g, ' '));
   }
 
+  if (factKey === 'banking.accountType') {
+    variants.add(raw.toLocaleLowerCase().replace(/\s+/g, ' '));
+  }
+
   if (factKey === 'address.current.street') {
     for (const variant of streetSuffixVariants(raw)) {
       variants.add(variant);
@@ -488,7 +492,11 @@ function normalizeNameComparisonText(value) {
 
 function citizenshipStatusVariants(raw) {
   const normalized = normalizeSearchText(raw).replace(/\./g, '');
-  if (normalized.includes('us citizen') || normalized.includes('united states citizen')) {
+  if (
+    normalized.includes('us citizen') ||
+    normalized.includes('united states citizen') ||
+    normalized.includes('citizen of the united states')
+  ) {
     return [
       'U.S. citizen',
       'U. S. citizen',

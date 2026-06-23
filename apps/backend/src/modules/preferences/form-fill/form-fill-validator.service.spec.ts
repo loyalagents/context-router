@@ -759,6 +759,145 @@ describe('FormFillValidatorService', () => {
     );
   });
 
+  it('activates citizenship checkbox conditions from equivalent citizen wording', () => {
+    const checkboxFields: PdfFieldMetadata[] = [
+      {
+        name: 'CB_1',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'CB_1',
+          action: 'CHECK',
+          sourceSlugs: ['work_authorization.citizenship_status'],
+          confidence: 0.95,
+        },
+      ],
+      checkboxFields,
+      new Set(['work_authorization.citizenship_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          [
+            'work_authorization.citizenship_status',
+            'A citizen of the United States',
+          ],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'workAuthorization.citizenshipStatus',
+            value: 'A citizen of the United States',
+            sourceSlugs: ['work_authorization.citizenship_status'],
+            resolutionKind: 'alias',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_1',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['eval.work_authorization.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: ['eval.work_authorization.citizenship_status'],
+                equals: 'U.S. citizen',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({ fieldName: 'CB_1', action: 'CHECK' }),
+    ]);
+  });
+
+  it('activates W-4 filing status conditions from federal filing status memory', () => {
+    const checkboxFields: PdfFieldMetadata[] = [
+      {
+        name: 'topmostSubform[0].Page1[0].c1_1[0]',
+        type: 'checkbox',
+        options: [],
+        supported: true,
+      },
+    ];
+
+    const result = service.validate(
+      [
+        {
+          fieldName: 'topmostSubform[0].Page1[0].c1_1[0]',
+          action: 'CHECK',
+          sourceSlugs: ['tax.federal_filing_status'],
+          confidence: 0.95,
+        },
+      ],
+      checkboxFields,
+      new Set(['tax.federal_filing_status']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          [
+            'tax.federal_filing_status',
+            'Single or Married Filing Separately',
+          ],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'tax.filingStatus',
+            value: 'Single or Married Filing Separately',
+            sourceSlugs: ['tax.federal_filing_status'],
+            resolutionKind: 'alias',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'topmostSubform[0].Page1[0].c1_1[0]',
+              mode: 'fact',
+              factKey: 'tax.filingStatus',
+              sourceSlugs: ['tax.filing_status'],
+              when: {
+                factKey: 'tax.filingStatus',
+                sourceSlugs: ['tax.filing_status'],
+                equals: 'single or married filing separately',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'topmostSubform[0].Page1[0].c1_1[0]',
+        action: 'CHECK',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_condition_resolved',
+          factKey: 'tax.filingStatus',
+          sourceSlug: 'tax.federal_filing_status',
+        }),
+        expect.objectContaining({
+          kind: 'policy_source_slug_resolved',
+          factKey: 'tax.filingStatus',
+          sourceSlug: 'tax.federal_filing_status',
+        }),
+      ]),
+    );
+  });
+
   it('does not activate active-value condition fallback when no active value matches', () => {
     const result = service.validate(
       [

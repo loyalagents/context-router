@@ -291,6 +291,7 @@ test('buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slug
   });
   assertFieldSourceSlugs(fw4, 'tax.filingStatus', [
     'eval.tax.filing_status',
+    'tax.federal_filing_status',
     'tax.filing_status',
     'tax.filingStatus',
     'profile.tax.filing_status',
@@ -317,6 +318,7 @@ test('buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slug
     'eval.banking.account_type',
     'banking.account_type',
     'banking.accountType',
+    'direct_deposit.account_type',
     'profile.banking.account_type',
   ]);
   assertFieldSourceSlugs(directDeposit, 'banking.institutionName', [

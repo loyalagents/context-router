@@ -314,6 +314,20 @@ function derivedCompositeActiveMatch({
       : null;
   }
 
+  if (factKey === 'identity.middleInitial') {
+    const middleName = getComponentMatch({
+      factKey: 'identity.middleName',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    if (!middleName) return null;
+    const value = String(middleName.preference.value ?? '').trim().slice(0, 1);
+    return valueMatchesFact(factKey, expectedValue, value)
+      ? { rows: [middleName], value }
+      : null;
+  }
+
   return null;
 }
 

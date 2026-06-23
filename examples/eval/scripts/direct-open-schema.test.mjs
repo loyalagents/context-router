@@ -102,8 +102,10 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
 
   assert.match(extractionPrompt, /durable, document-supported user facts and preferences/);
   assert.match(extractionPrompt, /You are not filling a form in this stage/);
-  assert.match(extractionPrompt, /Return no more than 40 facts/);
-  assert.match(extractionPrompt, /at most two evidence entries/);
+  assert.match(extractionPrompt, /Return no more than 30 facts/);
+  assert.match(extractionPrompt, /durable current new-hire packet facts/);
+  assert.match(extractionPrompt, /Skip sample, other-person, stale/);
+  assert.match(extractionPrompt, /exactly one evidence entry/);
   assert.match(extractionPrompt, /JSON-safe substring/);
   assert.match(extractionPrompt, /"slug": "category\.fact_name"/);
   assert.match(extractionPrompt, /"label": "Human readable fact label"/);

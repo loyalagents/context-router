@@ -92,6 +92,7 @@
       "acceptedAliasSlugs": [
         "banking.account_type",
         "banking.accountType",
+        "direct_deposit.account_type",
         "profile.banking.account_type"
       ],
       "valueType": "string"
@@ -178,6 +179,7 @@
     "tax.filingStatus": {
       "canonicalSlugs": ["eval.tax.filing_status"],
       "acceptedAliasSlugs": [
+        "tax.federal_filing_status",
         "tax.filing_status",
         "tax.filingStatus",
         "profile.tax.filing_status"

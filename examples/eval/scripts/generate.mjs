@@ -477,7 +477,7 @@ function sourceFormatRules(doc) {
   return lines.join('\n');
 }
 
-export async function generateWithVertex(prompt, { env, model, temperature }) {
+export async function generateWithVertex(prompt, { env, model, temperature, responseMimeType }) {
   if (!env.GCP_PROJECT_ID) {
     throw new Error('Set GCP_PROJECT_ID before using --backend vertex.');
   }
@@ -488,7 +488,10 @@ export async function generateWithVertex(prompt, { env, model, temperature }) {
   });
   const generativeModel = vertexAI.getGenerativeModel({
     model,
-    generationConfig: { temperature },
+    generationConfig: {
+      temperature,
+      ...(responseMimeType ? { responseMimeType } : {}),
+    },
   });
   const result = await generativeModel.generateContent({
     contents: [
