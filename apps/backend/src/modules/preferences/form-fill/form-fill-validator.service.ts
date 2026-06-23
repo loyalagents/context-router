@@ -415,7 +415,19 @@ export class FormFillValidatorService {
       .replace(/\s+/g, ' ');
 
     if (factKey === 'workAuthorization.citizenshipStatus') {
-      return normalized.replace(/^an?\s+/, '');
+      const withoutArticle = normalized.replace(/^an?\s+/, '');
+      if (
+        withoutArticle.includes('us citizen') ||
+        withoutArticle.includes('united states citizen') ||
+        withoutArticle.includes('citizen of the united states')
+      ) {
+        return 'us citizen';
+      }
+      return withoutArticle;
+    }
+
+    if (factKey === 'tax.filingStatus') {
+      return normalized;
     }
 
     return normalized;

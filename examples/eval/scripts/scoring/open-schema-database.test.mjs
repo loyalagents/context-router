@@ -386,6 +386,194 @@ test('open-schema address composite derivation stays missing when a required com
   assert.equal(result.classification, 'open_known_present_missing');
 });
 
+test('open-schema database scorer accepts packet-medium alias and semantic equivalents', () => {
+  const profile = {
+    facts: {
+      banking: {
+        accountType: 'checking',
+      },
+      identity: {
+        firstName: 'Maya',
+        middleName: 'Lin',
+        lastName: 'Chen',
+        legalName: 'Maya Lin Chen',
+        middleInitial: 'L',
+      },
+      tax: {
+        filingStatus: 'single or married filing separately',
+      },
+      workAuthorization: {
+        citizenshipStatus: 'U.S. citizen',
+      },
+    },
+  };
+  const storageMap = {
+    facts: {
+      'banking.accountType': {
+        canonicalSlugs: ['eval.banking.account_type'],
+        acceptedAliasSlugs: ['direct_deposit.account_type'],
+      },
+      'identity.middleInitial': {
+        canonicalSlugs: ['profile.middle_initial'],
+        acceptedAliasSlugs: [],
+      },
+      'identity.legalName': {
+        canonicalSlugs: ['profile.full_name'],
+        acceptedAliasSlugs: [],
+      },
+      'tax.filingStatus': {
+        canonicalSlugs: ['eval.tax.filing_status'],
+        acceptedAliasSlugs: ['tax.federal_filing_status'],
+      },
+      'workAuthorization.citizenshipStatus': {
+        canonicalSlugs: ['eval.work_authorization.citizenship_status'],
+        acceptedAliasSlugs: ['work_authorization.citizenship_status'],
+      },
+    },
+  };
+  const activePreferences = [
+    preference('direct_deposit.account_type', 'Checking'),
+    preference('personal.name.first', 'Maya'),
+    preference('personal.name.middle', 'Lin'),
+    preference('personal.name.last', 'Chen'),
+    preference('tax.federal_filing_status', 'Single or Married Filing Separately'),
+    preference(
+      'work_authorization.citizenship_status',
+      'A citizen of the United States',
+    ),
+  ];
+
+  const accountType = scoreOpenKnownFact({
+    factKey: 'banking.accountType',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const middleInitial = scoreOpenKnownFact({
+    factKey: 'identity.middleInitial',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const legalName = scoreOpenKnownFact({
+    factKey: 'identity.legalName',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const filingStatus = scoreOpenKnownFact({
+    factKey: 'tax.filingStatus',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+  const citizenshipStatus = scoreOpenKnownFact({
+    factKey: 'workAuthorization.citizenshipStatus',
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(
+    accountType.classification,
+    'open_known_present_recovered_accepted_slug',
+  );
+  assert.equal(
+    middleInitial.classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(middleInitial.matchingNovelRows[0].slug, 'derived.identity.middleInitial');
+  assert.equal(
+    legalName.classification,
+    'open_known_present_recovered_novel_slug',
+  );
+  assert.equal(legalName.matchingNovelRows[0].slug, 'derived.identity.legalName');
+  assert.equal(
+    filingStatus.classification,
+    'open_known_present_recovered_accepted_slug',
+  );
+  assert.equal(
+    citizenshipStatus.classification,
+    'open_known_present_recovered_accepted_slug',
+  );
+});
+
+test('open-schema legal-name derivation stays missing without a required name component', () => {
+  const result = scoreOpenKnownFact({
+    factKey: 'identity.legalName',
+    profile: {
+      facts: {
+        identity: {
+          firstName: 'Maya',
+          middleName: 'Lin',
+          lastName: 'Chen',
+          legalName: 'Maya Lin Chen',
+        },
+      },
+    },
+    storageMap: {
+      facts: {
+        'identity.legalName': {
+          canonicalSlugs: ['profile.full_name'],
+          acceptedAliasSlugs: [],
+        },
+      },
+    },
+    activePreferences: [
+      preference('personal.name.first', 'Maya'),
+      preference('personal.name.last', 'Chen'),
+    ],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_missing');
+});
+
+test('open-schema middle-initial derivation stays missing without middle-name memory', () => {
+  const result = scoreOpenKnownFact({
+    factKey: 'identity.middleInitial',
+    profile: {
+      facts: {
+        identity: {
+          middleName: 'Lin',
+          middleInitial: 'L',
+        },
+      },
+    },
+    storageMap: {
+      facts: {
+        'identity.middleInitial': {
+          canonicalSlugs: ['profile.middle_initial'],
+          acceptedAliasSlugs: [],
+        },
+      },
+    },
+    activePreferences: [preference('identity.middle_name', 'Wrong')],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_missing');
+});
+
 function memorySnapshot({
   userId = USER_ID,
   corpusId = CORPUS_ID,

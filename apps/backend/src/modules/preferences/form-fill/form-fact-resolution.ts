@@ -35,6 +35,12 @@ interface CandidateFact {
 }
 
 const EXPLICIT_ALIAS_FACT_KEYS = new Map<string, string>([
+  ['direct_deposit.account_type', 'banking.accountType'],
+  ['tax.federal_filing_status', 'tax.filingStatus'],
+  [
+    'work_authorization.citizenship_status',
+    'workAuthorization.citizenshipStatus',
+  ],
   ['work_auth.citizenship_status', 'workAuthorization.citizenshipStatus'],
   [
     'work_auth.expiration_date',

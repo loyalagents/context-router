@@ -314,6 +314,48 @@ function derivedCompositeActiveMatch({
       : null;
   }
 
+  if (factKey === 'identity.legalName') {
+    const firstName = getComponentMatch({
+      factKey: 'identity.firstName',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    const middleNameExpected = getFactValue(profile.facts ?? {}, 'identity.middleName');
+    const middleName = getComponentMatch({
+      factKey: 'identity.middleName',
+      profile,
+      activePreferences,
+      required: !isAbsentValue(middleNameExpected),
+    });
+    const lastName = getComponentMatch({
+      factKey: 'identity.lastName',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    if (!firstName || middleName === null || !lastName) return null;
+    const rows = middleName ? [firstName, middleName, lastName] : [firstName, lastName];
+    const value = rows.map(({ preference }) => preference.value).join(' ');
+    return valueMatchesFact(factKey, expectedValue, value)
+      ? { rows, value }
+      : null;
+  }
+
+  if (factKey === 'identity.middleInitial') {
+    const middleName = getComponentMatch({
+      factKey: 'identity.middleName',
+      profile,
+      activePreferences,
+      required: true,
+    });
+    if (!middleName) return null;
+    const value = String(middleName.preference.value ?? '').trim().slice(0, 1);
+    return valueMatchesFact(factKey, expectedValue, value)
+      ? { rows: [middleName], value }
+      : null;
+  }
+
   return null;
 }
 

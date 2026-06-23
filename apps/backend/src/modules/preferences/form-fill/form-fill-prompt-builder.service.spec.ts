@@ -93,6 +93,9 @@ describe('FormFillPromptBuilderService', () => {
     );
     expect(prompt).toContain('including multiple active memories');
     expect(prompt).toContain('raw active memories actually used');
+    expect(prompt).toContain('prefer its sourceSlugs exactly');
+    expect(prompt).toContain('personal/contact email');
+    expect(prompt).toContain('Do not use employer-issued work email');
     expect(prompt).toContain('Do not fill mode=skip fields');
     expect(prompt).toContain('render dates as MMDDYYYY');
     expect(prompt).toContain('combine street plus unit/apartment');

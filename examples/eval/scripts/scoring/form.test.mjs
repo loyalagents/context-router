@@ -242,6 +242,47 @@ test('form scorer counts safe case-only render variants as correct diagnostics',
   );
 });
 
+test('form scorer counts street-line comma before unit as a safe render variant', async () => {
+  const snapshot = JSON.parse(
+    await readFile(
+      path.join(
+        repoRoot,
+        'examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json',
+      ),
+      'utf8',
+    ),
+  );
+  const street = snapshot.fields.find(
+    (field) => field.fieldMap.factKey === 'address.current.street',
+  );
+  street.fieldMap.factKey = 'address.current.streetLine';
+  street.expected.value = '2846 Ashbury Street Apt 3D';
+  street.actual.value = '2846 Ashbury Street, Apt 3D';
+  street.classification = 'incorrect';
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-street-line-variant-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  const report = await scoreForm({
+    repoRoot,
+    scenarioId: 'elena-marquez-i9-template-smoke',
+    filledFormPath,
+  });
+
+  const row = report.fields.find((field) => field.factKey === 'address.current.streetLine');
+  assert.equal(row.classification, 'form_known_correct');
+  assert.equal(row.exactTextMatch, false);
+  assert.equal(row.renderVariant, 'street_line_unit_comma');
+
+  await validateWithSchema(
+    repoRoot,
+    'form-fill-score-report.schema.json',
+    report,
+    'form fill score report',
+  );
+});
+
 test('form scorer rejects filled-form snapshots with mismatched fixture identity', async () => {
   const snapshot = JSON.parse(
     await readFile(
