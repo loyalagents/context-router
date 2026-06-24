@@ -8,6 +8,7 @@ import {
   buildDocumentPrompt,
   normalizeGeneratedText,
   parseArgs,
+  resolveVertexApiEndpoint,
   runGenerate,
 } from './generate.mjs';
 
@@ -80,6 +81,15 @@ test('generate arg parser protects previews and concurrency', () => {
       '/private/tmp/preview',
     ]).kind,
     'usage-error',
+  );
+});
+
+test('resolveVertexApiEndpoint uses global host for global Vertex models', () => {
+  assert.equal(resolveVertexApiEndpoint({}, 'us-central1'), undefined);
+  assert.equal(resolveVertexApiEndpoint({}, 'global'), 'aiplatform.googleapis.com');
+  assert.equal(
+    resolveVertexApiEndpoint({ VERTEX_API_ENDPOINT: 'custom-aiplatform.example.test' }, 'global'),
+    'custom-aiplatform.example.test',
   );
 });
 
