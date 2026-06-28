@@ -39,6 +39,56 @@ describe('FormFillValidatorService', () => {
     service = new FormFillValidatorService();
   });
 
+  function validateCitizenshipCheckbox(
+    action: AiFillAction,
+    resolvedValue = 'A citizen of the United States',
+  ) {
+    const citizenshipStatusSlug = 'work_authorization.citizenship_status';
+
+    return service.validate(
+      [action],
+      [
+        {
+          name: 'CB_1',
+          type: 'checkbox',
+          options: [],
+          supported: true,
+        },
+      ],
+      new Set([citizenshipStatusSlug]),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          [citizenshipStatusSlug, resolvedValue],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'workAuthorization.citizenshipStatus',
+            value: resolvedValue,
+            sourceSlugs: [citizenshipStatusSlug],
+            resolutionKind: 'alias',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'CB_1',
+              mode: 'fact',
+              factKey: 'workAuthorization.citizenshipStatus',
+              sourceSlugs: ['eval.work_authorization.citizenship_status'],
+              when: {
+                factKey: 'workAuthorization.citizenshipStatus',
+                sourceSlugs: ['eval.work_authorization.citizenship_status'],
+                equals: 'U.S. citizen',
+              },
+            },
+          ],
+        },
+      },
+    );
+  }
+
   it('validates supported actions and adds implicit skips for omitted fields', () => {
     const result = service.validate(
       [
@@ -818,6 +868,154 @@ describe('FormFillValidatorService', () => {
     expect(result.validActions).toEqual([
       expect.objectContaining({ fieldName: 'CB_1', action: 'CHECK' }),
     ]);
+  });
+
+  it('checks active checkbox policies from resolved facts when the AI skips the field', () => {
+    const result = validateCitizenshipCheckbox({
+      fieldName: 'CB_1',
+      action: 'SKIP',
+      sourceSlugs: [],
+      confidence: 0.6,
+      skipReason: 'missing direct evidence',
+    });
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'CB_1',
+        action: 'CHECK',
+        sourceSlugs: ['work_authorization.citizenship_status'],
+        confidence: 1,
+      }),
+    ]);
+    expect(result.filledFields).toEqual([
+      expect.objectContaining({
+        pdfFieldName: 'CB_1',
+        sourceSlugs: ['work_authorization.citizenship_status'],
+        confidence: 1,
+      }),
+    ]);
+    expect(result.skippedFields).toEqual([]);
+    expect(result.validationEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_checkbox_checked_from_resolved_fact',
+          fieldName: 'CB_1',
+          factKey: 'workAuthorization.citizenshipStatus',
+          sourceSlug: 'work_authorization.citizenship_status',
+          resolutionKind: 'alias',
+        }),
+      ]),
+    );
+  });
+
+  it('checks active checkbox policies from resolved facts when the AI unchecks the field', () => {
+    const result = validateCitizenshipCheckbox({
+      fieldName: 'CB_1',
+      action: 'UNCHECK',
+      sourceSlugs: ['work_authorization.citizenship_status'],
+      confidence: 0.95,
+    });
+
+    expect(result.validActions).toEqual([
+      expect.objectContaining({
+        fieldName: 'CB_1',
+        action: 'CHECK',
+        sourceSlugs: ['work_authorization.citizenship_status'],
+        confidence: 1,
+      }),
+    ]);
+    expect(result.skippedFields).toEqual([]);
+  });
+
+  it('does not check skipped checkbox policies when the resolved condition is inactive', () => {
+    const result = validateCitizenshipCheckbox(
+      {
+        fieldName: 'CB_1',
+        action: 'SKIP',
+        sourceSlugs: [],
+        confidence: 0.6,
+        skipReason: 'missing direct evidence',
+      },
+      'lawful permanent resident',
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual([
+      expect.objectContaining({
+        pdfFieldName: 'CB_1',
+        reason: 'missing direct evidence',
+      }),
+    ]);
+    expect(result.validationEvents).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_checkbox_checked_from_resolved_fact',
+        }),
+      ]),
+    );
+  });
+
+  it('does not fill skipped non-checkbox policies from resolved facts', () => {
+    const result = service.validate(
+      [
+        {
+          fieldName: 'profile.full_name',
+          action: 'SKIP',
+          sourceSlugs: [],
+          confidence: 0.6,
+          skipReason: 'AI skipped text field',
+        },
+      ],
+      fields,
+      new Set(['profile.legal_name']),
+      0.75,
+      {
+        activePreferenceValues: new Map<string, unknown>([
+          ['profile.legal_name', 'Alex Rivera'],
+        ]),
+        resolvedFacts: [
+          {
+            factKey: 'identity.legalName',
+            value: 'Alex Rivera',
+            sourceSlugs: ['profile.legal_name'],
+            resolutionKind: 'alias',
+          },
+        ],
+        fieldPolicies: {
+          schemaVersion: 1,
+          fields: [
+            {
+              fieldName: 'profile.full_name',
+              mode: 'fact',
+              factKey: 'identity.legalName',
+              sourceSlugs: ['profile.legal_name'],
+              when: {
+                factKey: 'identity.legalName',
+                sourceSlugs: ['profile.legal_name'],
+                equals: 'Alex Rivera',
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.validActions).toEqual([]);
+    expect(result.skippedFields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pdfFieldName: 'profile.full_name',
+          reason: 'AI skipped text field',
+        }),
+      ]),
+    );
+    expect(result.validationEvents).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          kind: 'policy_checkbox_checked_from_resolved_fact',
+        }),
+      ]),
+    );
   });
 
   it('activates W-4 filing status conditions from federal filing status memory', () => {

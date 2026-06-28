@@ -55,6 +55,8 @@ export class FormFillValidatorService {
         conflict,
       ]),
     );
+    const activePreferenceValues =
+      options.activePreferenceValues ?? new Map<string, unknown>();
     const actionByFieldName = new Map<string, AiFillAction>();
     const validationEvents: FormFillValidationEvent[] = [];
 
@@ -90,7 +92,7 @@ export class FormFillValidatorService {
         activePreferenceSlugs,
         confidenceThreshold,
         policyByFieldName.get(field.name),
-        options.activePreferenceValues ?? new Map(),
+        activePreferenceValues,
         resolvedFactByKey,
         conflictByFactKey,
         validationEvents,
@@ -130,6 +132,18 @@ export class FormFillValidatorService {
         confidence: action.confidence,
       });
     }
+
+    this.enforceActiveCheckboxPolicies({
+      validActions,
+      filledFields,
+      skippedFields,
+      fields,
+      activePreferenceSlugs,
+      resolvedFactByKey,
+      conflictByFactKey,
+      policyByFieldName,
+      validationEvents,
+    });
 
     const groupAdjusted = this.applyCheckboxGroupPolicies({
       validActions,
@@ -287,6 +301,155 @@ export class FormFillValidatorService {
     }
 
     return null;
+  }
+
+  private enforceActiveCheckboxPolicies({
+    validActions,
+    filledFields,
+    skippedFields,
+    fields,
+    activePreferenceSlugs,
+    resolvedFactByKey,
+    conflictByFactKey,
+    policyByFieldName,
+    validationEvents,
+  }: {
+    validActions: ValidatedFillAction[];
+    filledFields: FilledFieldSummary[];
+    skippedFields: SkippedFieldSummary[];
+    fields: PdfFieldMetadata[];
+    activePreferenceSlugs: Set<string>;
+    resolvedFactByKey: Map<string, ResolvedFormFact>;
+    conflictByFactKey: Map<string, FormFactResolutionConflict>;
+    policyByFieldName: Map<string, FormFillFieldPolicy>;
+    validationEvents: FormFillValidationEvent[];
+  }): void {
+    const validActionByFieldName = new Map(
+      validActions.map((action) => [action.fieldName, action]),
+    );
+
+    for (const field of fields) {
+      const existingAction = validActionByFieldName.get(field.name);
+      if (existingAction?.action === 'CHECK') {
+        continue;
+      }
+
+      const policy = policyByFieldName.get(field.name);
+      if (
+        field.type !== 'checkbox' ||
+        !field.supported ||
+        policy?.mode !== 'fact' ||
+        !policy.when
+      ) {
+        continue;
+      }
+
+      if (
+        conflictByFactKey.has(policy.when.factKey) ||
+        (policy.factKey && conflictByFactKey.has(policy.factKey))
+      ) {
+        continue;
+      }
+
+      const resolvedFact = resolvedFactByKey.get(policy.when.factKey);
+      if (!resolvedFact) {
+        continue;
+      }
+
+      const expected = Array.isArray(policy.when.equals)
+        ? policy.when.equals
+        : [policy.when.equals];
+      if (
+        !this.valueMatchesExpected(
+          policy.when.factKey,
+          resolvedFact.value,
+          expected,
+        )
+      ) {
+        continue;
+      }
+
+      const sourceSlugs = Array.from(
+        new Set(
+          resolvedFact.sourceSlugs.filter((slug) =>
+            activePreferenceSlugs.has(slug),
+          ),
+        ),
+      );
+      if (sourceSlugs.length === 0) {
+        continue;
+      }
+
+      this.removeFieldEntries(
+        field.name,
+        validActions,
+        filledFields,
+        skippedFields,
+      );
+      this.removeLowConfidenceEvents(field.name, validationEvents);
+
+      validActions.push({
+        fieldName: field.name,
+        fieldType: field.type,
+        action: 'CHECK',
+        sourceSlugs,
+        confidence: 1,
+      });
+      filledFields.push({
+        pdfFieldName: field.name,
+        fieldType: field.type,
+        sourceSlugs,
+        confidence: 1,
+      });
+      validationEvents.push({
+        kind: 'policy_checkbox_checked_from_resolved_fact',
+        fieldName: field.name,
+        factKey: policy.when.factKey,
+        sourceSlug: sourceSlugs[0],
+        resolutionKind: resolvedFact.resolutionKind,
+        message: `field policy checked active checkbox from resolved fact ${policy.when.factKey}`,
+      });
+    }
+  }
+
+  private removeFieldEntries(
+    fieldName: string,
+    validActions: ValidatedFillAction[],
+    filledFields: FilledFieldSummary[],
+    skippedFields: SkippedFieldSummary[],
+  ): void {
+    for (let index = validActions.length - 1; index >= 0; index -= 1) {
+      if (validActions[index].fieldName === fieldName) {
+        validActions.splice(index, 1);
+      }
+    }
+
+    for (let index = filledFields.length - 1; index >= 0; index -= 1) {
+      if (filledFields[index].pdfFieldName === fieldName) {
+        filledFields.splice(index, 1);
+      }
+    }
+
+    for (let index = skippedFields.length - 1; index >= 0; index -= 1) {
+      if (skippedFields[index].pdfFieldName === fieldName) {
+        skippedFields.splice(index, 1);
+      }
+    }
+  }
+
+  private removeLowConfidenceEvents(
+    fieldName: string,
+    validationEvents: FormFillValidationEvent[],
+  ): void {
+    for (let index = validationEvents.length - 1; index >= 0; index -= 1) {
+      const event = validationEvents[index];
+      if (
+        event.kind === 'low_confidence_applied' &&
+        event.fieldName === fieldName
+      ) {
+        validationEvents.splice(index, 1);
+      }
+    }
   }
 
   private conditionIsActive(
