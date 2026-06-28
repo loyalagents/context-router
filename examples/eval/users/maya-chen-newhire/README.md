@@ -19,6 +19,10 @@ I-9, W-4, and direct deposit form filling.
   direct-deposit proof documents, and withholds clean employment title/start
   values so the current banking and employment facts require parsing the harder
   conflict/ownership-bearing documents.
+- `packet-hard-required-v2`: score-moving required-evidence packet. It starts
+  from v1, keeps the employment correction-thread difficulty, and makes scored
+  direct-deposit institution/type evidence require resolving an ACH prenote
+  reconciliation row with former Redwood and Noah worker-mismatch decoys.
 
 ## Required-Hard Evidence Paths
 
@@ -26,6 +30,11 @@ In `packet-hard-required-v1`, current banking facts are intended to come only
 from `documents/payroll-tax/031-ledgerpay-deposit-change-audit.yaml`. Current
 employment title and start date are intended to come only from
 `documents/hr-onboarding/035-hr-support-correction-thread.txt`.
+
+In `packet-hard-required-v2`, current direct-deposit institution/type are
+intended to come from
+`documents/payroll-tax/037-ledgerpay-ach-prenote-reconciliation.yaml`, after
+matching the active deposit profile and account ending from doc `031`.
 
 The packet is still a fixture-only eval change. Maya's `profile.yaml`, the form
 maps, runners, backend, MCP behavior, and scorers are unchanged.

@@ -39,6 +39,53 @@ function stripMarkdownFences(text: string): string {
   return cleaned.trim();
 }
 
+interface NullFillActionValue {
+  index: number;
+  action: string;
+  fieldName: string;
+}
+
+function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] {
+  if (!parsed || typeof parsed !== 'object') {
+    return [];
+  }
+
+  const fillActions = (parsed as { fillActions?: unknown }).fillActions;
+  if (!Array.isArray(fillActions)) {
+    return [];
+  }
+
+  return fillActions.flatMap((action, index) => {
+    if (!action || typeof action !== 'object') {
+      return [];
+    }
+
+    const fillAction = action as {
+      action?: unknown;
+      fieldName?: unknown;
+      value?: unknown;
+    };
+
+    if (fillAction.value !== null) {
+      return [];
+    }
+
+    return [
+      {
+        index,
+        action:
+          typeof fillAction.action === 'string'
+            ? fillAction.action
+            : '<non-string-action>',
+        fieldName:
+          typeof fillAction.fieldName === 'string'
+            ? fillAction.fieldName
+            : '<non-string-field>',
+      },
+    ];
+  });
+}
+
 @Injectable()
 export class VertexAiStructuredService implements AiStructuredOutputPort {
   private readonly logger = new Logger(VertexAiStructuredService.name);
@@ -110,6 +157,8 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
       );
     }
 
+    this.logNormalizedNullFillActionValues(operationName, parsed);
+
     // Step 2: Zod validation
     const result = schema.safeParse(parsed);
 
@@ -179,6 +228,31 @@ Please respond with corrected, valid JSON only. No markdown fences.`;
       retriesRemaining,
       operationName,
       file,
+    );
+  }
+
+  private logNormalizedNullFillActionValues(
+    operationName: string,
+    parsed: unknown,
+  ): void {
+    if (operationName !== 'formFill.fillActions') {
+      return;
+    }
+
+    const nullValues = normalizedNullFillActionValues(parsed);
+    if (nullValues.length === 0) {
+      return;
+    }
+
+    const actions = nullValues
+      .map(
+        (entry) =>
+          `${entry.index}:${entry.action}:${JSON.stringify(entry.fieldName)}`,
+      )
+      .join(', ');
+
+    this.logger.warn(
+      `[${operationName}] Normalized null fill action value(s) to omitted values: count=${nullValues.length} actions=${actions}`,
     );
   }
 }
