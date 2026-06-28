@@ -716,6 +716,10 @@ function buildPacketQualitySummary(report) {
       typeof databaseScore.activeValueRecoveryRate === 'number'
         ? databaseScore.activeValueRecoveryRate
         : null,
+    memoryOwnershipClean: `${databaseScore.ownershipDecoyClean ?? 0}/${databaseScore.ownershipDecoyTotal ?? 0}`,
+    memoryOwnershipForbiddenLeaks:
+      (databaseScore.ownershipDecoyForbiddenActiveLeak ?? 0)
+      + (databaseScore.ownershipDecoyForbiddenSuggestionLeak ?? 0),
     knownFieldCorrect: ratioString(knownFieldCorrectTotal, knownFieldTotal),
     knownFieldWrong,
     knownFieldMissing,

@@ -15,6 +15,8 @@ const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '../../../..');
 const USER_ID = 'alex-i9-test';
 const CORPUS_ID = 'realistic';
+const MAYA_USER_ID = 'maya-chen-newhire';
+const MAYA_HARD_OWNERSHIP_CORPUS_ID = 'packet-hard-ownership-v1';
 const TIMESTAMP = '2026-06-17T00:00:00.000Z';
 
 test('open-schema database scorer validates memory snapshots and classifies active-memory recovery', async () => {
@@ -162,6 +164,12 @@ test('open-schema database scorer validates memory snapshots and classifies acti
     report.unscoredActivePreferences.map((candidate) => candidate.slug),
     ['agent.aaa.note', 'agent.missing.definition', 'agent.zzz.note'],
   );
+  assert.equal(report.summary.ownershipDecoyTotal, 0);
+  assert.equal(report.summary.ownershipDecoyClean, 0);
+  assert.equal(report.summary.ownershipDecoyAllowedScoped, 0);
+  assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 0);
+  assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 0);
+  assert.deepEqual(report.ownershipDecoyAudit, []);
 });
 
 test('open-schema database summary distinguishes missing-fact hallucination buckets', async () => {
@@ -240,6 +248,68 @@ test('open-schema database scorer rejects mismatched and malformed memory snapsh
     }),
     /memory snapshot failed memory-snapshot.schema.json/,
   );
+});
+
+test('open-schema database ownership audit allows scoped emergency contact values', async () => {
+  const report = await scoreMayaOwnershipReport({
+    preferences: [
+      preference('identity.emergency_contact.primary_phone', '415-555-0182'),
+    ],
+  });
+
+  const elenaPhone = ownershipRow(report, 'elenaChen', 'phone');
+  assert.equal(elenaPhone.classification, 'allowed_scoped');
+  assert.deepEqual(
+    elenaPhone.allowedActiveRows.map((candidate) => candidate.slug),
+    ['identity.emergency_contact.primary_phone'],
+  );
+  assert.deepEqual(elenaPhone.forbiddenActiveRows, []);
+  assert.equal(report.summary.ownershipDecoyAllowedScoped, 1);
+  assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 0);
+  assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 0);
+});
+
+test('open-schema database ownership audit flags active and suggestion decoy leaks', async () => {
+  const report = await scoreMayaOwnershipReport({
+    preferences: [
+      preference('contact.phone', '415-555-0182'),
+      preference('eval.banking.routing_number', '122105278'),
+      preference('banking.account_number', '663904228017'),
+      preference('tax.extra_withholding', 75),
+    ],
+    suggestions: [
+      preference('tax.filing_status', 'Head of Household', {
+        status: 'SUGGESTED',
+      }),
+    ],
+  });
+
+  assert.equal(
+    ownershipRow(report, 'elenaChen', 'phone').classification,
+    'forbidden_active_leak',
+  );
+  assert.equal(
+    ownershipRow(report, 'noahKim', 'routingNumber').classification,
+    'forbidden_active_leak',
+  );
+  assert.equal(
+    ownershipRow(report, 'noahKim', 'accountNumber').classification,
+    'forbidden_active_leak',
+  );
+  assert.equal(
+    ownershipRow(report, 'taylorBrooks', 'extraWithholding').classification,
+    'forbidden_active_leak',
+  );
+  assert.equal(
+    ownershipRow(report, 'taylorBrooks', 'filingStatus').classification,
+    'forbidden_suggestion_leak',
+  );
+  assert.equal(
+    ownershipRow(report, 'ariPatel', 'accountNumber').classification,
+    'clean',
+  );
+  assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 4);
+  assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 1);
 });
 
 test('open-schema missing fact scoring detects withheld active-memory value leaks', () => {
@@ -671,4 +741,42 @@ function row(report, factKey) {
 
 function missingRow(report, factKey) {
   return report.intentionallyMissing.find((candidate) => candidate.factKey === factKey);
+}
+
+function ownershipRow(report, ownerKey, valueLabel) {
+  const row = report.ownershipDecoyAudit.find(
+    (candidate) =>
+      candidate.ownerKey === ownerKey && candidate.valueLabel === valueLabel,
+  );
+  assert.ok(row, `missing ownership row ${ownerKey}.${valueLabel}`);
+  return row;
+}
+
+async function scoreMayaOwnershipReport({ preferences = [], suggestions = [] } = {}) {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-open-db-ownership-'));
+  const snapshotPath = path.join(tmp, 'memory-snapshot.json');
+  const reportPath = path.join(tmp, 'open-schema-database-score-report.json');
+  const definitions = [...preferences, ...suggestions].map((candidate) =>
+    definition(candidate.slug),
+  );
+  await writeFile(
+    snapshotPath,
+    jsonText(
+      memorySnapshot({
+        userId: MAYA_USER_ID,
+        corpusId: MAYA_HARD_OWNERSHIP_CORPUS_ID,
+        preferences,
+        suggestions,
+        definitions,
+      }),
+    ),
+  );
+
+  return scoreOpenSchemaDatabaseToFile({
+    repoRoot,
+    userId: MAYA_USER_ID,
+    corpusId: MAYA_HARD_OWNERSHIP_CORPUS_ID,
+    memorySnapshotPath: snapshotPath,
+    outPath: reportPath,
+  });
 }

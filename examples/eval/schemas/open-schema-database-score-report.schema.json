@@ -15,6 +15,7 @@
     "summary",
     "knownPresent",
     "intentionallyMissing",
+    "ownershipDecoyAudit",
     "schemaDiagnostics",
     "ignoredMemoryPreferences",
     "unscoredActivePreferences",
@@ -91,7 +92,12 @@
         "duplicateSlugGroupCount",
         "emptyDescriptionDefinitionCount",
         "missingDefinitionPreferenceCount",
-        "missingDefinitionSuggestionCount"
+        "missingDefinitionSuggestionCount",
+        "ownershipDecoyTotal",
+        "ownershipDecoyClean",
+        "ownershipDecoyAllowedScoped",
+        "ownershipDecoyForbiddenActiveLeak",
+        "ownershipDecoyForbiddenSuggestionLeak"
       ],
       "properties": {
         "knownPresentTotal": { "$ref": "#/$defs/count" },
@@ -118,7 +124,12 @@
         "duplicateSlugGroupCount": { "$ref": "#/$defs/count" },
         "emptyDescriptionDefinitionCount": { "$ref": "#/$defs/count" },
         "missingDefinitionPreferenceCount": { "$ref": "#/$defs/count" },
-        "missingDefinitionSuggestionCount": { "$ref": "#/$defs/count" }
+        "missingDefinitionSuggestionCount": { "$ref": "#/$defs/count" },
+        "ownershipDecoyTotal": { "$ref": "#/$defs/count" },
+        "ownershipDecoyClean": { "$ref": "#/$defs/count" },
+        "ownershipDecoyAllowedScoped": { "$ref": "#/$defs/count" },
+        "ownershipDecoyForbiddenActiveLeak": { "$ref": "#/$defs/count" },
+        "ownershipDecoyForbiddenSuggestionLeak": { "$ref": "#/$defs/count" }
       }
     },
     "knownPresent": {
@@ -128,6 +139,10 @@
     "intentionallyMissing": {
       "type": "array",
       "items": { "$ref": "#/$defs/missingRow" }
+    },
+    "ownershipDecoyAudit": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ownershipDecoyRow" }
     },
     "schemaDiagnostics": { "$ref": "#/$defs/schemaDiagnostics" },
     "ignoredMemoryPreferences": {
@@ -169,6 +184,14 @@
         "open_missing_active_value_hallucinated",
         "open_missing_active_key_hallucinated",
         "open_missing_active_hallucinated"
+      ]
+    },
+    "ownershipClassification": {
+      "enum": [
+        "clean",
+        "allowed_scoped",
+        "forbidden_active_leak",
+        "forbidden_suggestion_leak"
       ]
     },
     "preferenceSummary": {
@@ -305,6 +328,60 @@
           "items": { "$ref": "#/$defs/preferenceSummary" }
         },
         "classification": { "$ref": "#/$defs/missingClassification" }
+      }
+    },
+    "ownershipDecoyRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ownerKey",
+        "ownerName",
+        "valueLabel",
+        "value",
+        "allowedSlugPrefixes",
+        "forbiddenFactKeys",
+        "forbiddenSlugs",
+        "matchingActiveRows",
+        "matchingSuggestionRows",
+        "allowedActiveRows",
+        "forbiddenActiveRows",
+        "allowedSuggestionRows",
+        "forbiddenSuggestionRows",
+        "classification"
+      ],
+      "properties": {
+        "ownerKey": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "valueLabel": { "type": "string" },
+        "value": {},
+        "allowedSlugPrefixes": { "$ref": "#/$defs/stringArray" },
+        "forbiddenFactKeys": { "$ref": "#/$defs/stringArray" },
+        "forbiddenSlugs": { "$ref": "#/$defs/stringArray" },
+        "matchingActiveRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "matchingSuggestionRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "allowedActiveRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "forbiddenActiveRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "allowedSuggestionRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "forbiddenSuggestionRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
+        "classification": { "$ref": "#/$defs/ownershipClassification" }
       }
     },
     "definitionSummary": {

@@ -10,6 +10,22 @@ import {
 } from './database.mjs';
 
 const ACTIVE_STATUS = 'ACTIVE';
+const OWNERSHIP_CLEAN = 'clean';
+const OWNERSHIP_ALLOWED_SCOPED = 'allowed_scoped';
+const OWNERSHIP_FORBIDDEN_ACTIVE_LEAK = 'forbidden_active_leak';
+const OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK = 'forbidden_suggestion_leak';
+
+const EMERGENCY_CONTACT_ALLOWED_PREFIXES = [
+  'identity.emergency_contact.',
+  'identity.emergencyContact.',
+  'emergency_contact.',
+  'emergencyContact.',
+];
+const MANAGER_ALLOWED_PREFIXES = [
+  'manager.',
+  'employment.manager.',
+  'team.manager.',
+];
 
 export async function scoreOpenSchemaDatabaseToFile({
   repoRoot,
@@ -119,6 +135,13 @@ export async function scoreOpenSchemaDatabase({
       usedSuggestionIndexes,
     }),
   );
+  const ownershipDecoyAudit = scoreOwnershipDecoyAudit({
+    manifest,
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions,
+  });
 
   const unscoredActivePreferences = activePreferences
     .filter((_preference, index) => !usedPreferenceIndexes.has(index))
@@ -148,14 +171,504 @@ export async function scoreOpenSchemaDatabase({
       unscoredActivePreferences,
       unscoredSuggestions,
       schemaDiagnostics,
+      ownershipDecoyAudit,
     }),
     knownPresent,
     intentionallyMissing,
+    ownershipDecoyAudit,
     schemaDiagnostics,
     ignoredMemoryPreferences,
     unscoredActivePreferences,
     unscoredSuggestions,
   };
+}
+
+export function scoreOwnershipDecoyAudit({
+  manifest,
+  profile,
+  storageMap,
+  activePreferences,
+  suggestions,
+}) {
+  return buildOwnershipDecoyCases({ manifest, profile, storageMap })
+    .map((auditCase) =>
+      scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }),
+    )
+    .sort(compareOwnershipDecoyRows);
+}
+
+function buildOwnershipDecoyCases({ manifest, profile, storageMap }) {
+  const decoys = manifest.artifactWorld?.ownershipDecoys;
+  if (!isRecord(decoys)) return [];
+  const cases = [];
+  const addCase = ({
+    ownerKey,
+    ownerName,
+    valueLabel,
+    value,
+    forbiddenFactKeys,
+    allowedSlugPrefixes = [],
+  }) => {
+    if (isAbsentValue(value)) return;
+    const normalizedForbiddenFactKeys = unique(forbiddenFactKeys);
+    cases.push({
+      ownerKey,
+      ownerName,
+      valueLabel,
+      value,
+      allowedSlugPrefixes: unique(allowedSlugPrefixes).sort(),
+      forbiddenFactKeys: normalizedForbiddenFactKeys.sort(),
+      forbiddenSlugs: slugsForForbiddenFactKeys({
+        factKeys: normalizedForbiddenFactKeys,
+        profile,
+        storageMap,
+      }),
+    });
+  };
+
+  const noah = decoys.noahKim;
+  if (isRecord(noah)) {
+    addBankingDecoyCases({ addCase, ownerKey: 'noahKim', owner: noah });
+    addCase({
+      ownerKey: 'noahKim',
+      ownerName: noah.name,
+      valueLabel: 'workerId',
+      value: noah.workerId,
+      forbiddenFactKeys: ['employment.workerId'],
+    });
+  }
+
+  const elena = decoys.elenaChen;
+  if (isRecord(elena)) {
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'name',
+      value: elena.name,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['identity.legalName'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'phone',
+      value: elena.phone,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['contact.phone'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'email',
+      value: elena.email,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['contact.email'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'street',
+      value: elena.street,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.street', 'address.current.streetLine'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'unit',
+      value: elena.unit,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.unit', 'address.current.streetLine'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'streetLine',
+      value: joinParts([elena.street, elena.unit], ' '),
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.streetLine'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'city',
+      value: elena.city,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.city', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'state',
+      value: elena.state,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.state', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'postalCode',
+      value: elena.postalCode,
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.postalCode', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'elenaChen',
+      ownerName: elena.name,
+      valueLabel: 'cityStateZip',
+      value: cityStateZip(elena),
+      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['address.current.cityStateZip'],
+    });
+  }
+
+  const victor = decoys.victorAlvarez;
+  if (isRecord(victor)) {
+    addCase({
+      ownerKey: 'victorAlvarez',
+      ownerName: victor.name,
+      valueLabel: 'name',
+      value: victor.name,
+      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['identity.legalName'],
+    });
+    addCase({
+      ownerKey: 'victorAlvarez',
+      ownerName: victor.name,
+      valueLabel: 'email',
+      value: victor.email,
+      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['contact.email', 'employment.workEmail'],
+    });
+    addCase({
+      ownerKey: 'victorAlvarez',
+      ownerName: victor.name,
+      valueLabel: 'phone',
+      value: victor.phone,
+      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['contact.phone'],
+    });
+    addCase({
+      ownerKey: 'victorAlvarez',
+      ownerName: victor.name,
+      valueLabel: 'role',
+      value: victor.role,
+      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['employment.title'],
+    });
+    addCase({
+      ownerKey: 'victorAlvarez',
+      ownerName: victor.name,
+      valueLabel: 'workerId',
+      value: victor.workerId,
+      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
+      forbiddenFactKeys: ['employment.workerId'],
+    });
+  }
+
+  const ari = decoys.ariPatel;
+  if (isRecord(ari)) {
+    addBankingDecoyCases({ addCase, ownerKey: 'ariPatel', owner: ari });
+    addCase({
+      ownerKey: 'ariPatel',
+      ownerName: ari.name,
+      valueLabel: 'workerId',
+      value: ari.workerId,
+      forbiddenFactKeys: ['employment.workerId'],
+    });
+    addCase({
+      ownerKey: 'ariPatel',
+      ownerName: ari.name,
+      valueLabel: 'filingStatus',
+      value: ari.filingStatus,
+      forbiddenFactKeys: ['tax.filingStatus'],
+    });
+  }
+
+  const taylor = decoys.taylorBrooks;
+  if (isRecord(taylor)) {
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'name',
+      value: taylor.name,
+      forbiddenFactKeys: ['identity.legalName'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'ssn',
+      value: taylor.ssn,
+      forbiddenFactKeys: ['identity.ssn'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'streetLine',
+      value: taylor.street,
+      forbiddenFactKeys: ['address.current.street', 'address.current.streetLine'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'cityStateZip',
+      value: taylor.cityStateZip,
+      forbiddenFactKeys: ['address.current.cityStateZip'],
+    });
+    const cityState = parseCityStateZip(taylor.cityStateZip);
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'city',
+      value: cityState.city,
+      forbiddenFactKeys: ['address.current.city', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'state',
+      value: cityState.state,
+      forbiddenFactKeys: ['address.current.state', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'postalCode',
+      value: cityState.postalCode,
+      forbiddenFactKeys: ['address.current.postalCode', 'address.current.cityStateZip'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'filingStatus',
+      value: taylor.filingStatus,
+      forbiddenFactKeys: ['tax.filingStatus'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'multipleJobs',
+      value: taylor.multipleJobs,
+      forbiddenFactKeys: ['tax.multipleJobs'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'qualifyingChildrenAmount',
+      value: taylor.qualifyingChildrenAmount,
+      forbiddenFactKeys: ['tax.dependentsUnder17', 'tax.qualifyingChildrenAmount'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'otherDependentsAmount',
+      value: taylor.otherDependentsAmount,
+      forbiddenFactKeys: ['tax.otherDependents', 'tax.otherDependentsAmount'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'otherIncome',
+      value: taylor.otherIncome,
+      forbiddenFactKeys: ['tax.otherIncome'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'deductions',
+      value: taylor.deductions,
+      forbiddenFactKeys: ['tax.deductions'],
+    });
+    addCase({
+      ownerKey: 'taylorBrooks',
+      ownerName: taylor.name,
+      valueLabel: 'extraWithholding',
+      value: taylor.extraWithholding,
+      forbiddenFactKeys: ['tax.extraWithholding'],
+    });
+  }
+
+  return cases;
+}
+
+function addBankingDecoyCases({ addCase, ownerKey, owner }) {
+  const ownerName = owner.name;
+  addCase({
+    ownerKey,
+    ownerName,
+    valueLabel: 'name',
+    value: owner.name,
+    forbiddenFactKeys: ['banking.accountHolderName', 'identity.legalName'],
+  });
+  addCase({
+    ownerKey,
+    ownerName,
+    valueLabel: 'institutionName',
+    value: owner.institutionName,
+    forbiddenFactKeys: ['banking.institutionName'],
+  });
+  addCase({
+    ownerKey,
+    ownerName,
+    valueLabel: 'routingNumber',
+    value: owner.routingNumber,
+    forbiddenFactKeys: ['banking.routingNumber'],
+  });
+  addCase({
+    ownerKey,
+    ownerName,
+    valueLabel: 'accountNumber',
+    value: owner.accountNumber,
+    forbiddenFactKeys: ['banking.accountNumber'],
+  });
+  addCase({
+    ownerKey,
+    ownerName,
+    valueLabel: 'accountType',
+    value: owner.accountType,
+    forbiddenFactKeys: ['banking.accountType'],
+  });
+}
+
+function scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }) {
+  const matchingActiveRows = sortPreferenceSummaries(
+    activePreferences
+      .filter((preference) => valueContainsOwnershipValue(auditCase.value, preference.value))
+      .map(preferenceSummary),
+  );
+  const matchingSuggestionRows = sortPreferenceSummaries(
+    suggestions
+      .filter((preference) => valueContainsOwnershipValue(auditCase.value, preference.value))
+      .map(preferenceSummary),
+  );
+  const allowedActiveRows = matchingActiveRows.filter((row) =>
+    slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const allowedSuggestionRows = matchingSuggestionRows.filter((row) =>
+    slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const forbiddenActiveRows = matchingActiveRows.filter(
+    (row) => !slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const forbiddenSuggestionRows = matchingSuggestionRows.filter(
+    (row) => !slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+
+  return {
+    ...auditCase,
+    matchingActiveRows,
+    matchingSuggestionRows,
+    allowedActiveRows,
+    forbiddenActiveRows,
+    allowedSuggestionRows,
+    forbiddenSuggestionRows,
+    classification: classifyOwnershipDecoy({
+      matchingActiveRows,
+      matchingSuggestionRows,
+      forbiddenActiveRows,
+      forbiddenSuggestionRows,
+    }),
+  };
+}
+
+function classifyOwnershipDecoy({
+  matchingActiveRows,
+  matchingSuggestionRows,
+  forbiddenActiveRows,
+  forbiddenSuggestionRows,
+}) {
+  if (forbiddenActiveRows.length > 0) return OWNERSHIP_FORBIDDEN_ACTIVE_LEAK;
+  if (forbiddenSuggestionRows.length > 0) return OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK;
+  if (matchingActiveRows.length > 0 || matchingSuggestionRows.length > 0) {
+    return OWNERSHIP_ALLOWED_SCOPED;
+  }
+  return OWNERSHIP_CLEAN;
+}
+
+function slugsForForbiddenFactKeys({ factKeys, profile, storageMap }) {
+  return unique(
+    factKeys.flatMap((factKey) => {
+      const storage = storageSpecForFact(factKey, { profile, storageMap });
+      return [
+        ...storage.acceptedSlugs,
+        factKey,
+        snakeFactKey(factKey),
+        `profile.${snakeFactKey(factKey)}`,
+      ];
+    }),
+  ).sort();
+}
+
+function valueContainsOwnershipValue(expected, actual) {
+  const expectedVariants = ownershipScalarVariants(expected);
+  return flattenScalarValues(actual).some((value) => {
+    for (const variant of ownershipScalarVariants(value)) {
+      if (expectedVariants.has(variant)) return true;
+    }
+    return false;
+  });
+}
+
+function flattenScalarValues(value) {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.flatMap(flattenScalarValues);
+  if (isRecord(value)) return Object.values(value).flatMap(flattenScalarValues);
+  return [value];
+}
+
+function ownershipScalarVariants(value) {
+  const normalized = normalizeOwnershipScalar(value);
+  if (!normalized) return new Set();
+  const variants = new Set([normalized]);
+  const raw = String(value);
+  const digits = raw.replace(/\D/g, '');
+  if (digits && digits !== raw) variants.add(digits);
+  return variants;
+}
+
+function normalizeOwnershipScalar(value) {
+  if (value == null) return '';
+  return String(value).trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
+function slugIsAllowed(slug, allowedSlugPrefixes) {
+  return allowedSlugPrefixes.some((prefix) => {
+    if (prefix.endsWith('.')) {
+      return slug === prefix.slice(0, -1) || slug.startsWith(prefix);
+    }
+    return slug === prefix || slug.startsWith(`${prefix}.`);
+  });
+}
+
+function joinParts(parts, separator) {
+  const filtered = parts.filter((part) => !isAbsentValue(part));
+  return filtered.length ? filtered.join(separator) : null;
+}
+
+function cityStateZip(value) {
+  return joinParts([value.city, joinParts([value.state, value.postalCode], ' ')], ', ');
+}
+
+function parseCityStateZip(value) {
+  const match = String(value ?? '').match(/^(.*),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+  if (!match) return { city: null, state: null, postalCode: null };
+  return { city: match[1], state: match[2], postalCode: match[3] };
+}
+
+function snakeFactKey(factKey) {
+  return factKey
+    .split('.')
+    .map((segment) =>
+      segment
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+        .toLowerCase(),
+    )
+    .join('.');
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function scoreOpenKnownFact({
@@ -494,9 +1007,11 @@ function buildOpenDatabaseSummary({
   unscoredActivePreferences,
   unscoredSuggestions,
   schemaDiagnostics,
+  ownershipDecoyAudit,
 }) {
   const knownCounts = countByClassification(knownPresent);
   const missingCounts = countByClassification(intentionallyMissing);
+  const ownershipCounts = countByClassification(ownershipDecoyAudit);
   const activeRecovered = knownPresent.filter(
     (row) => row.valueRecoveredInActiveMemory,
   ).length;
@@ -551,6 +1066,14 @@ function buildOpenDatabaseSummary({
       schemaDiagnostics.preferencesMissingDefinitions.length,
     missingDefinitionSuggestionCount:
       schemaDiagnostics.suggestionsMissingDefinitions.length,
+    ownershipDecoyTotal: ownershipDecoyAudit.length,
+    ownershipDecoyClean: ownershipCounts[OWNERSHIP_CLEAN] ?? 0,
+    ownershipDecoyAllowedScoped:
+      ownershipCounts[OWNERSHIP_ALLOWED_SCOPED] ?? 0,
+    ownershipDecoyForbiddenActiveLeak:
+      ownershipCounts[OWNERSHIP_FORBIDDEN_ACTIVE_LEAK] ?? 0,
+    ownershipDecoyForbiddenSuggestionLeak:
+      ownershipCounts[OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK] ?? 0,
   };
 }
 
@@ -655,6 +1178,14 @@ function compareDefinitionSummaries(left, right) {
     left.slug.localeCompare(right.slug) ||
     left.namespace.localeCompare(right.namespace) ||
     left.id.localeCompare(right.id)
+  );
+}
+
+function compareOwnershipDecoyRows(left, right) {
+  return (
+    left.ownerKey.localeCompare(right.ownerKey) ||
+    left.valueLabel.localeCompare(right.valueLabel) ||
+    String(left.value).localeCompare(String(right.value))
   );
 }
 
