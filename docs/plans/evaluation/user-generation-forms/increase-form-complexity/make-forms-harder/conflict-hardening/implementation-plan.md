@@ -37,10 +37,7 @@ both the isolated conflict packet and the cumulative packet.
 1. Update this plan first.
    - Incorporate any final choices about conflict document count and exact
      losing values.
-   - Incorporate review feedback from `implementation-feedback-a.md` and
-     `implementation-feedback-1.md`.
-   - Incorporate the narrow numeric-decoy consistency fix from
-     `implementation-feedback-2.md`.
+   - Incorporate implementation-review decisions before updating the summary.
    - State that `implementation-summary.md` and `orchestration.md` are updated
      only at the end.
 
