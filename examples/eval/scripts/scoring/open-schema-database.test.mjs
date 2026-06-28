@@ -255,6 +255,7 @@ test('open-schema database ownership audit allows scoped emergency contact value
   const report = await scoreMayaOwnershipReport({
     preferences: [
       preference('identity.emergency_contact.primary_phone', '415-555-0182'),
+      preference('contact.emergency_contact.primary_phone', '415-555-0182'),
     ],
   });
 
@@ -262,13 +263,38 @@ test('open-schema database ownership audit allows scoped emergency contact value
   assert.equal(elenaPhone.classification, 'allowed_scoped');
   assert.deepEqual(
     elenaPhone.allowedActiveRows.map((candidate) => candidate.slug),
-    ['identity.emergency_contact.primary_phone'],
+    [
+      'contact.emergency_contact.primary_phone',
+      'identity.emergency_contact.primary_phone',
+    ],
   );
   assert.deepEqual(elenaPhone.forbiddenActiveRows, []);
   assert.equal(report.summary.ownershipDecoyTotal, 42);
   assert.equal(report.summary.ownershipDecoyAllowedScoped, 1);
   assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 0);
   assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 0);
+});
+
+test('open-schema database ownership audit allows configured manager scoped values', async () => {
+  const report = await scoreMayaOwnershipReport({
+    preferences: [
+      preference('identity.manager_name', 'Victor Alvarez'),
+      preference('team.member.manager_name', 'Victor Alvarez'),
+      preference('employer.team.manager_name', 'Victor Alvarez'),
+    ],
+  });
+
+  const victorName = ownershipRow(report, 'victorAlvarez', 'name');
+  assert.equal(victorName.classification, 'allowed_scoped');
+  assert.deepEqual(
+    victorName.allowedActiveRows.map((candidate) => candidate.slug),
+    [
+      'employer.team.manager_name',
+      'identity.manager_name',
+      'team.member.manager_name',
+    ],
+  );
+  assert.deepEqual(victorName.forbiddenActiveRows, []);
 });
 
 test('open-schema database ownership audit flags active and suggestion decoy leaks', async () => {
@@ -312,6 +338,39 @@ test('open-schema database ownership audit flags active and suggestion decoy lea
   );
   assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 4);
   assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 1);
+});
+
+test('open-schema database ownership audit keeps boolean decoys scoped to configured fact families', async () => {
+  const unrelatedBooleanReport = await scoreMayaOwnershipReport({
+    preferences: [
+      preference('identity.work_authorization_is_citizen', true),
+    ],
+  });
+
+  const cleanMultipleJobs = ownershipRow(
+    unrelatedBooleanReport,
+    'taylorBrooks',
+    'multipleJobs',
+  );
+  assert.equal(cleanMultipleJobs.classification, 'clean');
+  assert.deepEqual(cleanMultipleJobs.matchingActiveRows, []);
+
+  const forbiddenBooleanReport = await scoreMayaOwnershipReport({
+    preferences: [
+      preference('tax.multiple_jobs', true),
+    ],
+  });
+
+  const leakedMultipleJobs = ownershipRow(
+    forbiddenBooleanReport,
+    'taylorBrooks',
+    'multipleJobs',
+  );
+  assert.equal(leakedMultipleJobs.classification, 'forbidden_active_leak');
+  assert.deepEqual(
+    leakedMultipleJobs.forbiddenActiveRows.map((candidate) => candidate.slug),
+    ['tax.multiple_jobs'],
+  );
 });
 
 test('open-schema database ownership audit is configured by manifest rows', () => {

@@ -251,12 +251,12 @@ function resolveOwnershipOwnerName({ manifest, rule, index }) {
 function scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }) {
   const matchingActiveRows = sortPreferenceSummaries(
     activePreferences
-      .filter((preference) => valueContainsOwnershipValue(auditCase.value, preference.value))
+      .filter((preference) => ownershipValueMatchesPreference(auditCase, preference))
       .map(preferenceSummary),
   );
   const matchingSuggestionRows = sortPreferenceSummaries(
     suggestions
-      .filter((preference) => valueContainsOwnershipValue(auditCase.value, preference.value))
+      .filter((preference) => ownershipValueMatchesPreference(auditCase, preference))
       .map(preferenceSummary),
   );
   const allowedActiveRows = matchingActiveRows.filter((row) =>
@@ -315,6 +315,15 @@ function slugsForForbiddenFactKeys({ factKeys, profile, storageMap }) {
       ];
     }),
   ).sort();
+}
+
+function ownershipValueMatchesPreference(auditCase, preference) {
+  if (!valueContainsOwnershipValue(auditCase.value, preference.value)) return false;
+  if (typeof auditCase.value !== 'boolean') return true;
+  return (
+    slugIsAllowed(preference.slug, auditCase.allowedSlugPrefixes) ||
+    slugIsAllowed(preference.slug, auditCase.forbiddenSlugs)
+  );
 }
 
 function valueContainsOwnershipValue(expected, actual) {

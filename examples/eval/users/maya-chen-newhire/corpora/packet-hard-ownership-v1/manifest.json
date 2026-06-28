@@ -184,7 +184,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "identity.legalName"
@@ -198,7 +200,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "contact.phone"
@@ -212,7 +216,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "contact.email"
@@ -226,7 +232,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.street",
@@ -241,7 +249,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.unit",
@@ -256,7 +266,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.streetLine"
@@ -270,7 +282,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.city",
@@ -285,7 +299,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.state",
@@ -300,7 +316,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.postalCode",
@@ -315,7 +333,9 @@
         "identity.emergency_contact.",
         "identity.emergencyContact.",
         "emergency_contact.",
-        "emergencyContact."
+        "emergencyContact.",
+        "contact.emergency_contact.",
+        "contact.emergencyContact."
       ],
       "forbiddenFactKeys": [
         "address.current.cityStateZip"
@@ -328,7 +348,10 @@
       "allowedSlugPrefixes": [
         "manager.",
         "employment.manager.",
-        "team.manager."
+        "team.manager.",
+        "team.member.",
+        "employer.team.",
+        "identity.manager_name"
       ],
       "forbiddenFactKeys": [
         "identity.legalName"
