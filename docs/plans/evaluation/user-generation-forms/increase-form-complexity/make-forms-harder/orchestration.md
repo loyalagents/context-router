@@ -42,12 +42,18 @@ Recommended first packets:
 ```text
 packet-hard-ownership-v1
 packet-hard-conflict-v1
+packet-hard-required-v1
 ```
 
-Keep each packet focused on one main difficulty family. Do not combine
-ownership, temporal validity, weak evidence, subtle authority conflicts, and
-new form mapping in the first pass. A focused packet makes failures easier to
-interpret.
+Keep the first ownership and conflict packets focused on one main difficulty
+family. Do not combine ownership, temporal validity, weak evidence, subtle
+authority conflicts, and new form mapping in the first pass. A focused packet
+makes failures easier to interpret.
+
+After the focused packets are understood, add a required-evidence packet. That
+packet can combine ownership and conflict because its purpose is different: it
+removes clean baseline proof paths so ignoring the hard documents should miss
+or misfill specific facts.
 
 ## Recommended PR Shape
 
@@ -66,6 +72,10 @@ Recommended PRs:
    manifest metadata, validation report, three scenarios, and implementation
    summary. Implemented and validated in `conflict-hardening/`.
 5. Conflict live-results summary and any tiny directly related cleanup.
+6. Required-hard packet fixture: start from the conflict packet, add the
+   ownership decoy needed for direct deposit, remove clean proof paths for
+   banking and employment title/start, add scenarios, validation report, and
+   implementation summary. Tracked in `required-hardening/`.
 
 Split a PR when it changes shared eval tooling, scoring contracts, backend form
 fill behavior, MCP behavior, or runner semantics. Keep new difficulty families
@@ -73,6 +83,9 @@ separate from each other even when the fixture mechanics are similar.
 
 Do not combine ownership and conflict in the same first fixture PR. That
 boundary matters more than separating skeleton creation from document authoring.
+Combining them later is useful once the review question changes from "which
+difficulty family caused this failure?" to "does the agent actually need to
+read the hard documents to recover required facts?"
 
 ## Current Ownership Fixture Status
 
@@ -150,6 +163,50 @@ signal is whether Redwood Mutual Bank, `121042882`, `618270449305`,
 `Operations Support Specialist`, `2026-06-30`, `head of household`, `913`,
 `2475`, or `127` appear in active memory, extracted facts, filled forms,
 wrong-fact counts, or overfill counts compared with `packet-medium`.
+
+## Current Required-Hard Fixture Status
+
+`packet-hard-required-v1` is the next combined fixture after ownership and
+conflict. It is designed to address a lesson from the first live checks: the
+ownership and conflict packets added adversarial noise and useful leakage
+signals, but the clean `packet-medium` evidence was still sufficient for the
+main scored form fields.
+
+Implementation docs:
+
+- `required-hardening/implementation-plan.md`
+- `required-hardening/implementation-summary.md`
+
+Fixture shape:
+
+- one new corpus: `packet-hard-required-v1`;
+- based on `packet-hard-conflict-v1`, preserving conflict docs `031`-`035`;
+- removes clean direct-deposit proof docs `016`, `017`, and `018`;
+- adds Noah Kim's payment-election export as a current-looking ownership decoy;
+- withholds exact employment title/start from clean docs `006`, `008`, `009`,
+  `010`, and `022`;
+- makes current banking facts available only through doc `031`;
+- makes current employment title/start available only through doc `035`;
+- three independent one-form scenarios for I-9, W-4, and direct deposit;
+- no runner, scorer, backend, MCP, form-map, schema, or Maya profile changes.
+
+Validation status:
+
+```text
+focused corpus validation: 0 errors, 41 warnings
+scenario validations:      0 errors, 41 warnings each
+whole-tree validation:     0 errors, 192 warnings
+```
+
+Static checks confirmed that current banking values appear in document bodies
+only in doc `031`, current employment title/start appear only in doc `035`,
+banking manifest includes point only at doc `031`, and employment title/start
+manifest includes point only at doc `035`.
+
+The expected live-run signal is whether direct and MCP paths still recover the
+current banking and employment facts when those facts require parsing the hard
+evidence documents, and whether stale or non-Maya values leak into active
+memory or filled forms.
 
 ## Difficulty Order
 
