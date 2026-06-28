@@ -69,15 +69,27 @@ export async function runMcpPacketE2E({
   const artifacts = buildPacketArtifacts({ repoRoot, options });
   const report = initialPacketReport({ repoRoot, options, artifacts, startedAt: isoTimestamp(now) });
   let setupResult = null;
+  let activeFailureContext = {
+    stage: 'initialize',
+    scenarioId: null,
+    artifacts: {},
+  };
 
   const writeReport = async () => {
     await writeJson(artifacts.packetRun, report);
   };
+  const setActiveStage = (stage, scenarioId = null, stageArtifacts = {}) => {
+    activeFailureContext = { stage, scenarioId, artifacts: stageArtifacts };
+  };
 
   try {
+    setActiveStage('initialize');
     await mkdir(artifacts.artifactsRoot, { recursive: true });
     await writeReport();
 
+    setActiveStage('validate-corpus', null, {
+      validationReport: relativePath(repoRoot, artifacts.validationReport),
+    });
     const corpusValidation = await stageRunners.validate({
       repoRoot,
       args: [
@@ -92,19 +104,37 @@ export async function runMcpPacketE2E({
       ],
     });
     if (corpusValidation.exitCode !== 0) {
-      throw new Error(formatValidationResult(corpusValidation));
+      throw packetStageError({
+        stage: 'validate-corpus',
+        result: {
+          ...corpusValidation,
+          lines: corpusValidation.lines ?? [formatValidationResult(corpusValidation)],
+        },
+        artifacts: activeFailureContext.artifacts,
+        authToken: options.authToken,
+      });
     }
 
     for (const scenarioId of options.scenarioIds) {
+      setActiveStage('validate-scenario', scenarioId);
       const scenarioValidation = await stageRunners.validate({
         repoRoot,
         args: ['--scenario', scenarioId],
       });
       if (scenarioValidation.exitCode !== 0) {
-        throw new Error(formatValidationResult(scenarioValidation));
+        throw packetStageError({
+          stage: 'validate-scenario',
+          scenarioId,
+          result: {
+            ...scenarioValidation,
+            lines: scenarioValidation.lines ?? [formatValidationResult(scenarioValidation)],
+          },
+          authToken: options.authToken,
+        });
       }
     }
 
+    setActiveStage('setup-open-schema-memory');
     setupResult = await stageRunners.setupOpenSchemaMemory({
       repoRoot,
       evalUserId: options.userId,
@@ -121,6 +151,10 @@ export async function runMcpPacketE2E({
     report.summaries.setup = setupSummary(setupResult, options);
     await writeReport();
 
+    setActiveStage('export-definition-baseline', null, {
+      definitionBaseline: relativePath(repoRoot, artifacts.definitionBaseline),
+      memorySnapshotBeforeAgent: relativePath(repoRoot, artifacts.memorySnapshotBeforeAgent),
+    });
     const definitionBaseline = await stageRunners.exportMemorySnapshot({
       repoRoot,
       args: exportMemorySnapshotArgs({
@@ -133,14 +167,26 @@ export async function runMcpPacketE2E({
       now,
     });
     if (definitionBaseline.exitCode !== 0) {
-      throw new Error(formatExportMemorySnapshotResult(definitionBaseline));
+      throw packetStageError({
+        stage: 'export-definition-baseline',
+        result: {
+          ...definitionBaseline,
+          lines: definitionBaseline.lines ?? [formatExportMemorySnapshotResult(definitionBaseline)],
+        },
+        artifacts: activeFailureContext.artifacts,
+        authToken: options.authToken,
+      });
     }
 
+    setActiveStage('prepare-agent-workspace');
     const workspace = await prepareAgentWorkspace({
       repoRoot,
       artifacts,
       options,
       fixture: setupResult.fixture,
+    });
+    setActiveStage('build-agent-prompt', null, {
+      prompt: relativePath(repoRoot, artifacts.prompt),
     });
     const prompt = await buildPacketMcpAgentPrompt({
       repoRoot,
@@ -151,6 +197,9 @@ export async function runMcpPacketE2E({
     await writeText(artifacts.prompt, prompt);
     await writeClaudeSettings({ artifacts, options });
 
+    setActiveStage('run-mcp-agent', null, {
+      transcript: relativePath(repoRoot, artifacts.transcript),
+    });
     const agentResult = await stageRunners.agent({
       repoRoot,
       options,
@@ -161,13 +210,19 @@ export async function runMcpPacketE2E({
     });
     await writeText(artifacts.transcript, packetTranscript({ repoRoot, options, artifacts, agentResult }));
     if (agentResult.exitCode !== 0 || agentResult.timedOut || !agentResult.completionMarkerObserved) {
-      throw new Error(
-        [
-          'packet MCP agent failed',
-          ...(agentResult.lines ?? []),
-          `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
-        ].join('\n'),
-      );
+      throw packetStageError({
+        stage: 'run-mcp-agent',
+        result: {
+          exitCode: Number.isInteger(agentResult.exitCode) ? agentResult.exitCode : 1,
+          lines: [
+            'packet MCP agent failed',
+            ...(agentResult.lines ?? []),
+            `transcript=${relativePath(repoRoot, artifacts.transcript)}`,
+          ],
+        },
+        artifacts: activeFailureContext.artifacts,
+        authToken: options.authToken,
+      });
     }
     report.summaries.agent = {
       exitCode: agentResult.exitCode,
@@ -177,6 +232,9 @@ export async function runMcpPacketE2E({
     };
     await writeReport();
 
+    setActiveStage('export-memory-snapshot', null, {
+      memorySnapshot: relativePath(repoRoot, artifacts.memorySnapshot),
+    });
     const exportResult = await stageRunners.exportMemorySnapshot({
       repoRoot,
       args: exportMemorySnapshotArgs({
@@ -189,9 +247,23 @@ export async function runMcpPacketE2E({
       now,
     });
     if (exportResult.exitCode !== 0) {
-      throw new Error(formatExportMemorySnapshotResult(exportResult));
+      throw packetStageError({
+        stage: 'export-memory-snapshot',
+        result: {
+          ...exportResult,
+          lines: exportResult.lines ?? [formatExportMemorySnapshotResult(exportResult)],
+        },
+        artifacts: activeFailureContext.artifacts,
+        authToken: options.authToken,
+      });
     }
 
+    setActiveStage('score-open-schema-database', null, {
+      openSchemaDatabaseScoreReport: relativePath(
+        repoRoot,
+        artifacts.openSchemaDatabaseScoreReport,
+      ),
+    });
     const databaseScore = await stageRunners.score({
       repoRoot,
       args: [
@@ -210,7 +282,13 @@ export async function runMcpPacketE2E({
       ],
     });
     if (databaseScore.exitCode !== 0) {
-      throw new Error(databaseScore.lines?.join('\n') || 'open-schema database score failed');
+      throw packetStageError({
+        stage: 'score-open-schema-database',
+        result: databaseScore,
+        fallbackMessage: 'open-schema database score failed',
+        artifacts: activeFailureContext.artifacts,
+        authToken: options.authToken,
+      });
     }
     report.summaries.databaseScore =
       (await readJson(artifacts.openSchemaDatabaseScoreReport)).summary ?? null;
@@ -220,6 +298,17 @@ export async function runMcpPacketE2E({
     for (const scenarioId of options.scenarioIds) {
       const scenarioArtifacts = artifacts.scenarios[scenarioId];
       await mkdir(scenarioArtifacts.root, { recursive: true });
+      const scenarioArtifactPaths = {
+        filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
+        filledPdf: relativePath(repoRoot, scenarioArtifacts.filledPdf),
+        formFillResponse: relativePath(repoRoot, scenarioArtifacts.formFillResponse),
+        formScoreReport: relativePath(repoRoot, scenarioArtifacts.formScoreReport),
+        openSchemaCombinedScoreReport: relativePath(
+          repoRoot,
+          scenarioArtifacts.openSchemaCombinedScoreReport,
+        ),
+      };
+      setActiveStage('fill-form', scenarioId, scenarioArtifactPaths);
       const fillResult = await stageRunners.fillForm({
         repoRoot,
         args: [
@@ -241,9 +330,17 @@ export async function runMcpPacketE2E({
         ...(pdfFieldReader ? { pdfFieldReader } : {}),
       });
       if (fillResult.exitCode !== 0) {
-        throw new Error(fillResult.lines?.join('\n') || `form fill failed: ${scenarioId}`);
+        throw packetStageError({
+          stage: 'fill-form',
+          scenarioId,
+          result: fillResult,
+          fallbackMessage: `form fill failed: ${scenarioId}`,
+          artifacts: scenarioArtifactPaths,
+          authToken: options.authToken,
+        });
       }
 
+      setActiveStage('score-form', scenarioId, scenarioArtifactPaths);
       const formScore = await stageRunners.score({
         repoRoot,
         args: [
@@ -258,9 +355,17 @@ export async function runMcpPacketE2E({
         ],
       });
       if (formScore.exitCode !== 0) {
-        throw new Error(formScore.lines?.join('\n') || `form score failed: ${scenarioId}`);
+        throw packetStageError({
+          stage: 'score-form',
+          scenarioId,
+          result: formScore,
+          fallbackMessage: `form score failed: ${scenarioId}`,
+          artifacts: scenarioArtifactPaths,
+          authToken: options.authToken,
+        });
       }
 
+      setActiveStage('score-open-schema-combined', scenarioId, scenarioArtifactPaths);
       const combinedScore = await stageRunners.score({
         repoRoot,
         args: [
@@ -275,7 +380,14 @@ export async function runMcpPacketE2E({
         ],
       });
       if (combinedScore.exitCode !== 0) {
-        throw new Error(combinedScore.lines?.join('\n') || `combined score failed: ${scenarioId}`);
+        throw packetStageError({
+          stage: 'score-open-schema-combined',
+          scenarioId,
+          result: combinedScore,
+          fallbackMessage: `combined score failed: ${scenarioId}`,
+          artifacts: scenarioArtifactPaths,
+          authToken: options.authToken,
+        });
       }
 
       report.scenarios[scenarioId] = {
@@ -312,16 +424,24 @@ export async function runMcpPacketE2E({
   } catch (error) {
     report.status = 'fail';
     report.endedAt = isoTimestamp(now);
-    report.error = error?.stack ?? error?.message ?? String(error);
+    const failure = failureFromError({
+      error,
+      activeFailureContext,
+      options,
+    });
+    failure.scoredScenarioIds = Object.keys(report.scenarios ?? {});
+    failure.notScoredScenarioIds = options.scenarioIds.filter(
+      (scenarioId) => !Object.hasOwn(report.scenarios ?? {}, scenarioId),
+    );
+    report.failureStage = failure.stage;
+    report.failureKind = failure.kind;
+    report.failure = failure;
+    report.error = failure.message;
+    report.qualitySummary = buildPacketQualitySummary(report);
     await writeReport().catch(() => {});
     return {
       exitCode: 1,
-      lines: [
-        'eval e2e-mcp-packet failed',
-        '',
-        error?.stack ?? error?.message ?? String(error),
-        `packet-run=${relativePath(repoRoot, artifacts.packetRun)}`,
-      ],
+      lines: failureLines({ repoRoot, artifacts, report, failure }),
       error,
       report,
     };
@@ -635,6 +755,9 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     scenarios: {},
     startedAt,
     endedAt: null,
+    failureStage: null,
+    failureKind: null,
+    failure: null,
     error: null,
   };
 }
@@ -759,6 +882,147 @@ function scenarioQualitySummary(formScoreSummary) {
       + numberOrNull(formScoreSummary.outOfScopeOverfillCount)
       + numberOrNull(formScoreSummary.unmappedOverfillCount),
   };
+}
+
+class PacketStageError extends Error {
+  constructor(failure) {
+    super(failure.message);
+    this.name = 'PacketStageError';
+    this.failure = failure;
+  }
+}
+
+function packetStageError({
+  stage,
+  scenarioId = null,
+  result,
+  fallbackMessage,
+  artifacts = {},
+  authToken,
+}) {
+  const lines = Array.isArray(result?.lines) ? result.lines : [];
+  const message = lines.join('\n').trim() || fallbackMessage || `Stage ${stage} failed.`;
+  return new PacketStageError(
+    buildFailure({
+      stage,
+      scenarioId,
+      kind: classifyFailureKind({ stage, message }),
+      message,
+      lines,
+      artifacts,
+      authToken,
+    }),
+  );
+}
+
+function failureFromError({ error, activeFailureContext, options }) {
+  if (error instanceof PacketStageError) return { ...error.failure };
+  const message = error?.stack ?? error?.message ?? String(error);
+  const stage = activeFailureContext?.stage ?? 'unknown';
+  return buildFailure({
+    stage,
+    scenarioId: activeFailureContext?.scenarioId ?? null,
+    kind: classifyFailureKind({ stage, message }),
+    message,
+    lines: [message],
+    artifacts: activeFailureContext?.artifacts ?? {},
+    authToken: options.authToken,
+  });
+}
+
+function buildFailure({
+  stage,
+  scenarioId = null,
+  kind,
+  message,
+  lines = [],
+  artifacts = {},
+  authToken,
+}) {
+  const redactedLines = redactLines(lines.length ? lines : [message], authToken)
+    .map(compactLine)
+    .filter(Boolean);
+  const redactedMessage = compactMessage(
+    redactSecret(message || redactedLines.join('\n') || `Stage ${stage} failed.`, authToken),
+  );
+  return {
+    stage,
+    scenarioId,
+    kind,
+    message: redactedMessage,
+    lines: redactedLines,
+    artifacts,
+  };
+}
+
+function classifyFailureKind({ stage, message }) {
+  const text = message || '';
+  if (stage === 'fill-form') {
+    if (/AI response failed validation|Zod validation failed|Invalid input/i.test(text)) {
+      return 'form_fill_structured_output_validation';
+    }
+    if (/Form-fill response status was failed/i.test(text)) {
+      return 'form_fill_backend_failed_status';
+    }
+    if (/Form-fill request failed with HTTP/i.test(text)) {
+      return 'form_fill_http_error';
+    }
+    if (/not valid JSON|missing string field|missing summary|did not include|not supported/i.test(text)) {
+      return 'form_fill_response_contract';
+    }
+    if (/PDF|parse|invalid/i.test(text)) return 'form_fill_pdf_read';
+    return 'form_fill_failed';
+  }
+  if (stage === 'run-mcp-agent') return 'agent_failed';
+  if (stage.startsWith('validate-')) return 'validation_failed';
+  if (stage.startsWith('score-')) return 'score_failed';
+  if (stage.startsWith('export-')) return 'memory_export_failed';
+  if (stage === 'setup-open-schema-memory') return 'memory_setup_failed';
+  return 'stage_failed';
+}
+
+function failureLines({ repoRoot, artifacts, report, failure }) {
+  const lines = [
+    'eval e2e-mcp-packet failed',
+    `stage=${failure.stage}`,
+    failure.scenarioId ? `scenario=${failure.scenarioId}` : null,
+    `kind=${failure.kind}`,
+    failure.artifacts?.formFillResponse
+      ? `response=${failure.artifacts.formFillResponse}`
+      : null,
+    report.qualitySummary?.memoryKnownRecovered
+      ? `memory-known=${report.qualitySummary.memoryKnownRecovered}`
+      : null,
+    report.qualitySummary?.knownFieldCorrect
+      ? `known-fields-so-far=${report.qualitySummary.knownFieldCorrect}`
+      : null,
+    failure.notScoredScenarioIds?.length
+      ? `not-scored-scenarios=${failure.notScoredScenarioIds.join(',')}`
+      : null,
+    `packet-run=${relativePath(repoRoot, artifacts.packetRun)}`,
+    '',
+    ...failure.lines,
+  ];
+  return lines.filter((line) => line !== null && line !== undefined && line !== '');
+}
+
+function redactLines(lines, secret) {
+  return lines.map((line) => redactSecret(String(line), secret));
+}
+
+function redactSecret(text, secret) {
+  if (!secret) return text;
+  return text.split(secret).join('[redacted-auth-token]');
+}
+
+function compactLine(value) {
+  const line = value.replace(/\s+/g, ' ').trim();
+  return line ? line.slice(0, 1_000) : null;
+}
+
+function compactMessage(value) {
+  const message = value.trim();
+  return message ? message.slice(0, 6_000) : 'Packet evaluation failed.';
 }
 
 function sumNumbers(items, key) {
