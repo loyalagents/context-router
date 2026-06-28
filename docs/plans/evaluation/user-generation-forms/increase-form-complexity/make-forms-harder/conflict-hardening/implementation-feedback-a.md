@@ -1,131 +1,59 @@
-# Conflict Hardening PR4 Plan Feedback
+# Implementation Feedback A
 
-- Status: review feedback
-- Reviewed: 2026-06-28
-- Scope: `packet-hard-conflict-v1` fixture plan in `implementation-plan.md`
+## Summary
 
-## Overall Assessment
+The `packet-hard-conflict-v1` fixture looks sound. It is based on
+`packet-medium`, has the expected five conflict/temporal challenge documents,
+keeps current Maya truth supported by authoritative records, and the three new
+scenarios point at the new corpus correctly. I did not find a fixture-blocking
+correctness issue.
 
-The PR4 plan is directionally sound and close to implementation-ready. The
-largest correct decision is basing `packet-hard-conflict-v1` on
-`packet-medium`, not `packet-hard-ownership-v1`, so conflict and temporal
-failures remain attributable. The fixture-only boundary is also right: no
-runner, scorer, backend, MCP, form-map, schema, or Maya profile changes should
-be required for this PR.
+One PR-scope caveat: the latest fixture commit is fixture/docs-only, but the
+current branch history also contains older backend/eval-script commits. If this
+is opened as a fixture-only PR against `main`, confirm the PR diff excludes
+those unrelated commits or broaden the PR scope and validation notes.
 
-I would proceed after tightening the plan in the areas below.
+## Findings
 
-## What Looks Strong
+- No blocking fixture findings.
 
-- The packet isolates one difficulty family: conflict and temporal validity.
-- The plan preserves the current shared-dossier shape: one Maya corpus and
-  three normal one-form scenarios.
-- The proposed winning values match current `profile.yaml` truth.
-- The plan uses existing V2 manifest fields instead of adding schema or scorer
-  concepts prematurely.
-- The validation gate mirrors the ownership fixture PR and keeps live
-  MCP/direct artifacts out of the fixture PR.
+- Scope caveat: comparing the branch after `8944b8e` to `HEAD` includes
+  non-fixture changes under `apps/backend/src/modules/preferences/form-fill/`
+  and `examples/eval/scripts/direct-open-schema*.mjs`. The conflict fixture
+  commit itself (`1af8039`) is scoped correctly, but the PR base matters for the
+  "fixture-only" claim.
 
-## Recommended Plan Adjustments
+## Should Address Before PR
 
-### 1. Separate Inherited Stale Cases From New PR4 Signal
+- Confirm the PR diff is scoped to the conflict fixture/docs/scenarios, or
+  explicitly document and validate the older non-fixture code changes if they
+  are intentionally part of the PR.
 
-`packet-medium` already contains stale/conflicting material:
+## Nice To Have
 
-- `025-stale-recruiter-profile.txt`: old email and old address.
-- `026-stale-payroll-bank-draft.txt`: old bank, routing, and masked account.
-- `027-stale-onboarding-export.yaml`: stale onboarding/employment guardrail.
+- No fixture change is needed for the whitespace-only copied-document delta in
+  `examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/documents/work-authorization/005-work-authorization-intake-field-export.txt:38`.
+  The change removes trailing whitespace and is validation-clean. Restore byte
+  parity only if exact copied-baseline parity becomes a repo convention.
 
-Because PR4 is intentionally copied from `packet-medium`, the implementation
-summary should include two leakage tables:
+## Validation Run
 
-- inherited `packet-medium` stale values;
-- new PR4 losing values.
+- `git status --short`: clean before writing this feedback file.
+- `git diff --stat`: no working-tree diff before writing this feedback file.
+- `git diff -- examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1`: no working-tree diff before writing this feedback file.
+- `git diff -- examples/eval/scenarios`: no working-tree diff before writing this feedback file.
+- `rg "packet-medium|maya-chen-newhire__packet-medium|packet-hard-ownership|maya-chen-newhire__packet-hard-ownership" ...packet-hard-conflict-v1 ...scenarios`: no stale copied corpus/scenario identifiers found.
+- `diff -qr packet-medium/documents packet-hard-conflict-v1/documents`: only new docs `031`-`035` plus the whitespace-only copied-doc delta noted above.
+- `node examples/eval/scripts/validate.mjs --user maya-chen-newhire --corpus packet-hard-conflict-v1`: passed, 0 errors / 46 warnings.
+- `node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-i9-packet-hard-conflict-v1`: passed, 0 errors / 46 warnings.
+- `node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-fw4-packet-hard-conflict-v1`: passed, 0 errors / 46 warnings.
+- `node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-direct-deposit-packet-hard-conflict-v1`: passed, 0 errors / 46 warnings.
+- `node examples/eval/scripts/validate.mjs --user maya-chen-newhire --corpus packet-medium`: passed, 0 errors / 46 warnings, confirming the focused warning count is inherited.
+- `node --test examples/eval/scripts`: passed, 314 tests / 0 failures.
+- `git diff --check HEAD`: passed.
 
-Live-run interpretation should attribute failures to PR4 only when the leaked
-value is one of the new losing values, or when the failure rate/regression is
-clearly worse than the same `packet-medium` baseline.
+## Open Questions
 
-Also make the suggested losing values distinct from `packet-medium`, not only
-from ownership decoys. In particular, `Operations Coordinator` already exists
-as `artifactWorld.stale.oldTitle`, and `2026-06-22` is noisy in existing
-timestamp fields. Prefer a unique losing title and a start date such as
-`2026-06-30` if the point is manual-searchable leakage.
-
-### 2. Add A Manual Evidence Contract For Losing Values
-
-The validator proves current profile facts and forbidden current values. It
-does not prove that each intended losing value actually appears only in the
-intended document. Add an explicit implementation-summary checklist with:
-
-- document id and path;
-- losing fact family;
-- losing value;
-- winning current value;
-- source-native cue that makes the loser lose;
-- expected live artifact search target.
-
-Before acceptance, grep the committed corpus for every losing value and confirm
-it appears only where intended. For mixed before/after documents, also confirm
-the winning value is present and listed in `factContract.include`.
-
-### 3. Be Precise About `expectedUse`
-
-For mixed before/after documents, use `expectedUse: corroborate`,
-`freshness: mixed`, and include only the current after/approved Maya facts that
-the body proves.
-
-For pure stale, draft, or lower-authority documents, keep
-`factContract.include` empty, use `expectedUse: guardrail`, and put the affected
-current fact paths in `factContract.forbid`.
-
-For `035-hr-support-correction-thread.txt`, decide this before authoring:
-
-- if the body contains current Maya facts worth proving, make it
-  `corroborate`/`mixed` and include those current facts;
-- if it is only a low-authority correction/guardrail note, make it
-  `guardrail` with no includes.
-
-Avoid `guardrail` plus `include`; the validator will not prove declared facts
-for guardrail documents.
-
-### 4. Call Out Manual-Only Checks
-
-Some proposed losing W-4 values are useful traps but are not currently mapped
-or scored form fields, especially other income, deductions, extra withholding,
-and multiple-jobs-style values. They can still leak into active memory as
-unscored preferences, but they should not be presented as automated form-score
-coverage in PR4.
-
-The strongest automatically visible W-4 conflict in this plan is filing status,
-because it maps to the W-4 checkbox branch. Keep the other tax values, but
-label them manual leakage checks unless scorer/form-map work is intentionally
-split into a later PR.
-
-### 5. Strengthen Acceptance Reporting
-
-In addition to the planned commands, require the implementation summary to
-record:
-
-- focused corpus `corpusTruth.summary`;
-- warning counts by code, split into inherited vs new where practical;
-- confirmation that `factsMissing`, `unsupportedDeclaredFacts`,
-  `forbiddenFactsPresent`, and `withheldValuesPresent` are all zero;
-- any new `DOCUMENT_STALE_CUE_MISSING` warnings with document-specific
-  rationale, not just a count.
-
-The live follow-up should search both stored-memory and direct artifacts:
-
-- `memory-snapshot.json`;
-- open-schema database score report `knownPresent`, `unscoredActivePreferences`,
-  and `unscoredSuggestions`;
-- direct `extraction.json`;
-- per-form `filled-form.json` score details.
-
-## Bottom Line
-
-The plan should stay fixture-only and should remain based on `packet-medium`.
-The main improvement is making attribution unambiguous: new PR4 losing values
-must be unique, explicitly documented, grep-verified in the corpus, and
-searched in live artifacts separately from inherited `packet-medium` stale
-values.
+- Is the intended PR base the parent of `1af8039`, or will this branch be
+  opened against `main` with the older form-fill/direct-open-schema commits
+  included?

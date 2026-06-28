@@ -1,221 +1,165 @@
-# Conflict Hardening PR4 Plan Feedback (Review 1)
+# Implementation Feedback 1
 
-- Status: review feedback
+> Note on this file: it previously held a **plan-stage** review titled
+> "Conflict Hardening PR4 Plan Feedback (Review 1)". That content is preserved in
+> git history. This pass reviews the **implemented** `packet-hard-conflict-v1`
+> fixture, not the plan.
+
+- Status: review feedback (implementation)
 - Reviewed: 2026-06-27
-- Scope: `packet-hard-conflict-v1` fixture plan in `implementation-plan.md`
-- Method: read against the live validator (`examples/eval/scripts/validate.mjs`),
-  the manifest schema (`examples/eval/schemas/manifest.schema.json`), the
-  current `profile.yaml`, and the `packet-medium` / `packet-hard-ownership-v1`
-  corpora.
+- Scope: implemented `packet-hard-conflict-v1` corpus, the three new scenarios,
+  and the conflict-hardening docs (`orchestration.md`,
+  `implementation-summary.md`).
+- Method: read all five new conflict documents and their manifest entries
+  against `profile.yaml`, the manifest `artifactWorld`, and the
+  `packet-medium` / `packet-hard-ownership-v1` corpora; ran the validator and
+  grep checks listed under Validation Run.
 
-This is an independent second pass. It complements the existing
-`implementation-feedback-a.md`; where it agrees I say so briefly, and the new
-material is in sections 2–5, which are grounded in the validator code and grep
-results against the committed corpus.
+## Summary
 
-## 1. Overall Assessment
+The fixture is sound and ships the intended difficulty family. It is correctly
+based on `packet-medium` (not on the ownership packet), the copied documents are
+re-identified to `packet-hard-conflict-v1` with no stale `packet-medium` or
+`maya-chen-newhire__packet-medium` tokens, all five conflict documents are
+realistic and clearly harder than the existing stale docs, current Maya truth
+stays supported by authoritative records, the manifest metadata matches the
+document bodies, losing values are scoped only to their intended documents, and
+the three scenarios point at the new corpus. Focused validation is 0 errors / 46
+warnings, all inherited from the copied baseline; the new docs `031`–`035`
+introduce no warnings. I did not find a fixture-blocking correctness defect.
 
-Proceed after the fixes below. The plan is fixture-only, isolates one
-difficulty family, and correctly bases the packet on `packet-medium` rather
-than `packet-hard-ownership-v1` so conflict/temporal failures stay
-attributable. I verified the load-bearing assumptions and they hold:
+The main thing worth a decision before merge is about packaging rather than the
+fixture itself: the branch carries non-fixture commits. The standing residual
+risk is that this packet has no scorable assertion that the winning value beats
+the losing value — leakage detection is entirely manual.
 
-- Every manifest value the plan uses is a valid enum:
-  `category` (`payroll-tax`, `hr-onboarding`, `employer-context`,
-  `partial-conflicting`), `expectedUse` (`corroborate`, `guardrail`),
-  `freshness` (`mixed`, `stale`), and `authority` (`low`/`medium`/`high`) all
-  exist in `manifest.schema.json`. `challengeTags` is a free-form
-  kebab-case array, so all suggested tags are accepted.
-- The stated winning values exactly match `profile.yaml` (address
-  `2846 Ashbury Street Apt 3D`, email `maya.chen@gmail.test`, title
-  `Client Operations Associate`, start date `2026-07-06`, bank
-  `Bay Harbor Credit Union` / `091000019` / `740182936451` / checking, filing
-  status `single or married filing separately`, with `otherIncome`,
-  `deductions`, `extraWithholding` all `null`).
-- The `031`–`035` numbering is consistent: `packet-medium` ends at `030`, and
-  documents live in per-category subdirectories, so the new files slot in the
-  same way the ownership packet's `031`–`035` did.
-- `artifactWorld.conflictDecoys` is safe to add: `artifactWorld` accepts
-  arbitrary keys (the ownership packet added decoy entities there and validated
-  clean).
+This is an independent second implementation pass. An earlier implementation
+review already exists in `implementation-feedback-a.md`; where I confirm its
+findings I say so.
 
-## 2. Losing-Value Collisions — Three Of The Recommended Values Are Not Unique
+## Findings
 
-This is the most important correctness issue and it is concrete. I grepped the
-rendered `packet-medium` corpus for each recommended losing value:
+Ordered by severity.
 
-| Recommended losing value | Hits in `packet-medium` | Verdict |
-| --- | --- | --- |
-| `Redwood Mutual Bank` | 0 | unique, keep |
-| routing `121042882` | 0 | unique, keep |
-| account `618270449305` | 0 | unique, keep |
-| `1724 Parker Street ...` | 0 | unique, keep |
-| `maya.l.chen@personalmail.test` | 0 | unique, keep |
-| `Operations Coordinator` | 1 (manifest only) | **collides** |
-| `2026-06-22` | 6 (3 doc bodies) | **collides** |
-| `head of household` | 6 (3 doc bodies) | **collides** |
+1. **Branch carries non-fixture changes (PR scope).** `git diff main...HEAD`
+   includes more than the fixture:
+   - `apps/backend/src/modules/preferences/form-fill/form-fill-validator.service.ts`
+     (+ `.spec.ts` and `form-fill.types.ts`) — from the earlier
+     "harden form filling" commits (`c0cfc3f`, `a2c09fb`).
+   - `examples/eval/scripts/direct-open-schema.mjs`,
+     `direct-open-schema.test.mjs`, and `direct-open-schema-packet.mjs`.
+   The conflict-fixture commit (`1af8039`) is itself scoped correctly, but if
+   this is opened as a "fixture-only" PR against `main`, the diff will not be
+   fixture-only. Either base the PR on the parent of `1af8039`, or broaden the
+   PR description/validation to cover the backend form-fill and eval-script
+   changes. This confirms the scope caveat in `implementation-feedback-a.md`.
 
-Details that matter for attribution:
+2. **No scorable winner/loser assertion (design limitation, by design).** The
+   entire conflict signal lives in `evaluationRole.challengeTags` and the private
+   `artifactWorld.conflictDecoys` object. Neither the validator nor any test
+   asserts that the winning value beats the losing value; a regression where
+   `Redwood Mutual Bank`, `1724 Parker Street`, `Operations Support Specialist`,
+   `head of household`, etc. ends up stored or filled would pass validation and
+   the eval test suite silently. This is consistent with `orchestration.md`
+   ("Future Scoring Notes" and Non-Goals) and is acceptable for a fixture-only
+   PR, but it is the real residual risk and should be the headline of the
+   deferred live-run readout. The manual leakage checklist in
+   `implementation-summary.md:160-178` is currently the only safety net.
 
-- **`Operations Coordinator`** is already `artifactWorld.stale.oldTitle` in the
-  `packet-medium` manifest. It does not currently appear in any *document body*
-  (the single hit is metadata), so a body grep would still find only the new
-  `033`. But reusing the established "old title" token conflates the inherited
-  stale-title concept with the new conflict-title signal and makes human
-  reasoning harder. Pick a title that is not `oldTitle` and not Maya truth, e.g.
-  `Operations Support Specialist`.
-- **`2026-06-22`** is the worst choice. It appears in three *current/legitimate*
-  document bodies, including `hr-onboarding/006-hr-onboarding-profile-export.yaml`
-  (a corroborating, current HR profile) plus `024-employee-profile-audit-log.txt`
-  and `027-stale-onboarding-export.yaml`. It is also distinct from the existing
-  `artifactWorld.stale.oldStartDate` (`2026-06-15`). Using it as the losing
-  start date means a leaked `2026-06-22` cannot be attributed to PR4 at all, and
-  may not even be wrong. Choose a date that is 0-hits in `packet-medium` and not
-  adjacent to real timeline dates, e.g. `2026-06-30`.
-- **`head of household`** already appears in three sample/instruction docs
-  (`noise/015-blank-sample-w4-packet.txt`,
-  `noise/029-other-employee-w4-tax-sample.txt`,
-  `employer-context/014-w4-instructions.txt`). As a *memory-leakage grep marker*
-  it is therefore non-unique. It is still meaningful as a *form-fill* conflict,
-  because filing status maps to the W-4 checkbox branch and form scoring is
-  value-independent — but note that filing-status options are a tiny closed set,
-  so any losing status will collide with the existing W-4 samples. Treat
-  filing-status leakage as a form-score signal, not a grep signal, and say so in
-  the summary.
+3. **Null-valued tax decoys are manual-only (correctly documented).** `913`,
+   `2475`, `127` map to `tax.otherIncome` / `tax.deductions` /
+   `tax.extraWithholding`, which are `null` in `profile.yaml`, so
+   `factContract.forbid` is a no-op for them and `034` only forbids
+   `tax.filingStatus`. The summary states this accurately
+   (`implementation-summary.md:74-78`). No change needed; just make sure the
+   live-run actually runs the field-labeled searches (`otherIncome: 913`, etc.),
+   since they are the only coverage for these values.
 
-Recommendation: regenerate the "Suggested Losing Values" table so every losing
-value is grep-verified 0-hits in **both** `packet-medium` and
-`packet-hard-ownership-v1`, and add a grep step to the acceptance gate (see
-section 6). `feedback-a` raised the title/start-date overlap; the filing-status
-collision is additional and the start-date case is worse than described (it is
-in a current doc body, not just "noisy timestamps").
+4. **`035` is a `corroborate` document that contains losing values (nit /
+   note for future scorer authors).** `035-hr-support-correction-thread.txt`
+   carries the losing employment values (`Operations Support Specialist`,
+   `2026-06-30`) in its body and is `expectedUse: corroborate` with an empty
+   `forbid`. This is intentional and correct for a correction thread (it names
+   the lower-authority staging values, then confirms the current HR profile), and
+   it is needed so the doc can prove `employment.title` / `employment.startDate`.
+   Worth recording for whoever later builds a leakage scorer: `corroborate` here
+   does **not** imply "free of losing values," so a naive "any conflictDecoy
+   value in a non-guardrail doc = failure" rule would mis-flag `031`, `032`, and
+   `035`.
 
-## 3. `forbid` On Null Tax Facts Is A Validator No-Op
+## Non-Blocking Notes
 
-The plan's manifest rules say, for pure stale/lower-authority documents, "put
-the affected current Maya fact paths in `factContract.forbid` so the stale
-document is not allowed to contain the winning value." For the W-4 draft (`034`)
-the affected facts are `tax.otherIncome`, `tax.deductions`, and
-`tax.extraWithholding` — all `null` in `profile.yaml`.
+- `005-work-authorization-intake-field-export.txt:38` differs from the
+  `packet-medium` original by trailing-whitespace cleanup. No fixture change is
+  recommended; restore byte parity only if exact copied-baseline parity becomes
+  a repo convention.
 
-In `validate.mjs`, the forbidden-fact check resolves the fact's *current profile
-value* and, when that value is `null`, **skips the body check entirely**
-(`if (factState.value == null) { ... continue; }`). So forbidding those three
-tax paths produces no enforcement at all — there is no winning value string to
-forbid because the winning state is "blank." The forbid is meaningful only for
-facts with a concrete current value, i.e. `tax.filingStatus`
-(`single or married filing separately`).
+## Should Address Before PR
 
-Consequences to fix in the plan:
+- Decide and document the PR base/scope (Finding #1). State explicitly whether
+  the backend form-fill and `direct-open-schema*` changes are part of this PR or
+  belong to an earlier one.
 
-- Do not present `forbid` on `otherIncome` / `deductions` / `extraWithholding`
-  as protection. State plainly that these losing tax values (`450`, `1800`,
-  `60`) are **manual-leakage-only** checks: they are not mapped/scored form
-  fields and not enforceable via `forbid`. They can still leak into active
-  memory as unscored preferences, which is worth a manual grep, but the plan
-  should not imply validator coverage. (This sharpens `feedback-a` section 4
-  with the validator-level reason.)
-- For `034`, the only validator-meaningful forbid is `tax.filingStatus`, and the
-  only automatically visible conflict is the filing-status checkbox on the W-4
-  form.
+## Nice To Have
 
-## 4. `DOCUMENT_STALE_CUE_MISSING` Is Mandatory For Stale/Guardrail/Conflicting Docs
+- In the deferred live-run summary, lead with the winner/loser outcome per fact
+  family (Finding #2) and explicitly run the field-labeled numeric/filing-status
+  searches (Finding #3), since those are not validator-enforced.
 
-The validator raises `DOCUMENT_STALE_CUE_MISSING` whenever
-`freshness === 'stale'` **or** `expectedUse === 'guardrail'` **or**
-`category === 'partial-conflicting'` and the body lacks a stale cue. The cue
-regex matches `stale|superseded|former|old|inactive|returned|do not use|
-do-not-use|outdated`.
+## Validation Run
 
-This directly governs the new conflict docs:
+```text
+node examples/eval/scripts/validate.mjs --user maya-chen-newhire --corpus packet-hard-conflict-v1
+  -> errors=0 warnings=46 (all on inherited docs 020-030; none on 031-035)
 
-- `033` (stale + guardrail) and `034` (stale + guardrail) **must** contain one
-  of those cue words, or they each emit a warning.
-- Any document the plan routes to `category: partial-conflicting` (see section
-  5) auto-inherits the same requirement regardless of its freshness.
-- `031`/`032` (`mixed` + `corroborate`) and a `corroborate` choice for `035` do
-  **not** trigger it.
+node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-i9-packet-hard-conflict-v1
+node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-fw4-packet-hard-conflict-v1
+node examples/eval/scripts/validate.mjs --scenario maya-chen-newhire-direct-deposit-packet-hard-conflict-v1
+  -> each: errors=0 warnings=46
+```
 
-There is a real design tension here worth naming in the plan: the brainstorm
-wants the loser to be inferable from *source-native* cues (timestamp, draft
-status, approval state) without "screaming trap," but the validator forces an
-explicit lexical cue into stale/guardrail bodies. The good news is the cue
-vocabulary (`former`, `old`, `superseded`, `outdated`) is natural in a
-before/after or draft record ("former mailing address," "superseded by approved
-profile"), so this is satisfiable without eval-flavored language. The plan
-should make a deliberate choice rather than leaving it as "avoided or
-explicitly explained": for `033`/`034`, commit to including a natural stale cue
-so these documents validate clean, and reserve the "explain the warning" path
-for genuine exceptions only.
+Spot checks I ran:
 
-## 5. Internal Contradiction On Category Assignment
+- Identifiers: all 35 manifest document ids are
+  `maya-chen-newhire-packet-hard-conflict-v1-001..035`; `corpusId`, top-level
+  `seed`, and `artifactWorld.seed` are all `...packet-hard-conflict-v1`;
+  `rg packet-medium` over the corpus and scenarios = 0 hits.
+- Corpus truth summary (committed `validation-report.json`):
+  `factsProvenPresent=103`, `factsMissing=0`, `unsupportedDeclaredFacts=0`,
+  `forbiddenFactsPresent=0`, `withheldValuesPresent=0`, `factsProvenAbsent=13`.
+  Report is freshly regenerated (127 `packet-hard-conflict-v1` refs, 0
+  `packet-medium` refs).
+- Losing-value scoping: `Redwood Mutual Bank|121042882|618270449305|1724 Parker
+  Street|maya.l.chen@personalmail.test|Operations Support Specialist|2026-06-30`
+  = 0 hits in `packet-medium` and `packet-hard-ownership-v1`; within the new
+  corpus each appears only in its intended doc (bank → `031`, address/email →
+  `032`, employment → `033` + `035`). Bare `913|2475|127` = 0 hits in the other
+  two corpora and only in `034`.
+- Winning-value support: `Bay Harbor Credit Union` / `091000019` /
+  `740182936451` corroborated by `016`/`017`/`018` + `031.after`; current
+  address/email by `006`/`007`/`021`/... + `032.current_values`; title/start
+  date `Client Operations Associate` / `2026-07-06` by `006`/`008`/`009` + `035`.
+- Manifest fidelity: all `factContract.include`/`forbid` paths resolve to real
+  `profile.yaml` facts; all `sourceSpec.worldRefs` and `timelineRefs` for
+  `031`–`035` resolve in `artifactWorld` (`conflictDecoys`, `employer`,
+  `banking`, `timeline`).
+- Temporal realism: draft/before timestamps precede their approved/after
+  counterparts (W-4 draft `2026-06-24T11:26` < approved `w4SavedAt`
+  `2026-06-25T13:28`; recruiter draft `2026-06-18` < finalized offer
+  `2026-06-21T16:35`; profile/deposit audits exported after their approval
+  events). Document body timestamps match the `artifactWorld.timeline` refs.
+- Diff vs `packet-medium/documents`: only the five new files plus the
+  whitespace-only delta on `005`.
 
-The plan contradicts itself on `partial-conflicting`:
+I did not re-run `node --test examples/eval/scripts` (the summary and
+`implementation-feedback-a.md` report 314 passing); nothing I changed would
+affect it.
 
-- The per-document list (Key Changes §4) assigns `033 → employer-context` and
-  `034 → payroll-tax`.
-- The "Manifest Rules" section says "Use `category: partial-conflicting` for
-  pure stale or losing-value documents when that best matches the existing
-  packet style."
+## Open Questions
 
-`033` (recruiter draft, stale) and `034` (W-4 draft, stale) are exactly the
-"pure stale/losing-value" documents that rule points at, and `packet-medium`'s
-existing stale docs (`025`/`026`/`027`) all live under `partial-conflicting`.
-An implementer cannot follow both instructions. Resolve it explicitly. I would
-lean toward `partial-conflicting` for `033`/`034` to match the established
-packet style (note this auto-triggers the section 4 stale-cue requirement, which
-is fine), and keep `031`/`032` in their source families (`payroll-tax` /
-`hr-onboarding`) since they are mixed corroborating audits. Whatever the choice,
-state it once and remove the conflicting guidance.
-
-## 6. Smaller, Grounded Notes
-
-- **Anticipate new `DOCUMENT_SOURCE_PHONE_PRESENT` warnings.** `contact.phone`
-  is intentionally missing, and the validator warns when a body contains
-  phone-like text in that state. The conflict docs most likely to carry phone
-  numbers are `032` (HR profile change history) and `035` (support thread). The
-  ownership packet hit exactly this and documented it; the conflict plan's
-  acceptance list does not mention it. Either keep phone strings out of those
-  bodies or pre-declare the expected warnings, the way the ownership summary
-  did.
-- **`guardrail` documents cannot prove includes.** The validator only checks
-  declared `include` facts for `extract`/`corroborate` documents
-  (`checksBodyForDeclaredFacts`). So for `035`, the choice is binary, as
-  `feedback-a` noted: `corroborate` + `mixed` *with* the current facts it proves,
-  or `guardrail` with `include: []`. A `guardrail` doc with a non-empty
-  `include` will not prove those facts (and `expectedUse: ignore` with includes
-  hard-fails via `MANIFEST_IGNORE_FACT_KEYS`, though the plan doesn't use
-  `ignore`). Decide `035` before authoring.
-- **Avoid `partial-conflicting` + high-authority + current + extract.** The
-  validator flags that exact combination
-  (`MANIFEST_CONFLICTING_HIGH_AUTHORITY_EXTRACT`). None of the planned docs use
-  `extract`, so this is just a guardrail to keep in mind if a doc is later
-  promoted.
-
-## 7. Acceptance-Gate Additions
-
-Beyond the commands already listed, the gate should require:
-
-- a grep over the committed corpus confirming each **new losing value** appears
-  only in its intended document, and is 0-hits in `packet-medium` and
-  `packet-hard-ownership-v1` before the new docs are added;
-- two leakage tables in the summary (inherited `packet-medium` stale values vs.
-  new PR4 losing values), so live-run attribution is unambiguous — agree with
-  `feedback-a` here;
-- warning counts split by code, with any `DOCUMENT_STALE_CUE_MISSING` or new
-  `DOCUMENT_SOURCE_PHONE_PRESENT` warnings explained per-document, not just
-  counted;
-- explicit confirmation that `factsMissing`, `unsupportedDeclaredFacts`,
-  `forbiddenFactsPresent`, and `withheldValuesPresent` are all zero on the
-  focused corpus run.
-
-## 8. Bottom Line
-
-The plan is close and should ship after: (1) replacing the three colliding
-losing values (`Operations Coordinator`, `2026-06-22`, `head of household`) with
-grep-verified-unique ones and adding the grep step to the gate; (2) downgrading
-the null-valued tax `forbid`s to documented manual-only checks; (3) committing
-to natural stale cues for `033`/`034`; (4) resolving the `partial-conflicting`
-category contradiction; and (5) pre-declaring the likely phone-present warnings.
-None of these require runner, scorer, schema, or backend changes, so the
-fixture-only boundary holds.
+- For Lucas: is the intended PR base the parent of `1af8039` (fixture-only), or
+  is the branch meant to ship the backend form-fill + `direct-open-schema`
+  changes together? (Finding #1)
+- Is a scorable decoy contract (document id / challenge tag / decoy value /
+  expected behavior) planned before the first live run, or will the first run
+  rely entirely on the manual leakage checklist? (Finding #2)
