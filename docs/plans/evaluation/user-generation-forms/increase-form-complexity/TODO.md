@@ -1,28 +1,39 @@
 # Increase Form Complexity TODO
 
-- Status: follow-up tracker
-- Last updated: 2026-06-22
-- Scope: deferred improvements for the form packet complexity work
+- Status: live follow-up list
+- Last updated: 2026-06-28
+- Scope: follow-ups from the completed packet-small and packet-medium work
 
-## Packet-Medium Deferred On Purpose
+## Current Next Work
 
-- Make stale documents more subtle and realistic. For v1, stale docs should be
-  intentionally obvious with language such as `old`, `superseded`, or `do not
-  use` so failures are easy to diagnose.
-- Make other-person documents more subtle. For v1, other-person/sample docs
-  should be intentionally obvious, for example by naming a sample employee and
-  stating that the record is not Maya Chen's onboarding record.
-- Add stale-value false-positive metrics only if medium results show stale
-  values are a real failure mode.
-- Add same-user current conflict documents only after stale and other-person
-  cases are working.
-- Consider online-inspired document structures later if hand-authored medium
-  documents feel repetitive or unrealistic.
+- Continue active hardening work in `make-forms-harder/`.
+- Add a new labeled corpus rather than mutating `packet-medium` when testing
+  harder ownership or conflict cases.
+- Keep each hardening pass focused on one difficulty family so failures stay
+  interpretable.
 
-## Implementation Note
+## Packet-Medium Follow-Ups
 
-If a medium-packet fixture-generation helper or authoring script is added, put a
-short code comment near the stale and other-person fixture definitions
-explaining that those cues are intentionally obvious for v1 and should become
-more realistic later.
+- Run a fresh live `packet-medium` MCP packet and direct packet comparison after
+  the cleanup changes to scoring, backend form-fill normalization, and direct
+  packet extraction.
+- Record fresh artifact roots, model labels, memory/extraction score, per-form
+  scores, and notable failure modes in `packet-history.md` if the result is
+  useful durable context.
+- Treat current packet-medium results as `N=1` and directional until repeat-run
+  variance is added.
 
+## Deferred Evaluation Work
+
+- Make stale and other-person documents subtler after the obvious cases are
+  stable.
+- Add stale-value and other-person false-positive metrics once those failure
+  modes show up in live artifacts.
+- Add same-user current conflict documents after ownership and stale cases are
+  separately understood.
+- Consider scoring SF 1199A split routing/account digit boxes only when the
+  field-map and renderer work are explicitly in scope.
+- Add repeat-run variance reporting after the single-run packet path is
+  reliable.
+- Revisit the direct baseline's corpus-size cap before adding tiers larger than
+  the current direct evidence budget.
