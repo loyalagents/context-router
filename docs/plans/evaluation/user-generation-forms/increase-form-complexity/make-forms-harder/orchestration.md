@@ -95,15 +95,16 @@ Fixture shape:
 Validation status:
 
 ```text
-focused corpus validation: 0 errors, 50 warnings
-whole-tree validation:     0 errors, 107 warnings
+focused corpus validation: 0 errors, 48 warnings
+whole-tree validation:     0 errors, 105 warnings
 eval script tests:         313 passed
 ```
 
 The new fixture introduced no `DOCUMENT_STALE_CUE_MISSING` warnings and no
 forbidden current Maya values in ownership challenge bodies. The warning delta
-is expected phone-distractor signal from current non-Maya phone values while
-Maya `contact.phone` remains intentionally missing.
+is expected `DOCUMENT_SOURCE_PHONE_PRESENT` signal from mixed ownership
+documents that contain current non-Maya phone values while Maya `contact.phone`
+remains intentionally missing.
 
 Checkpoint 5 remains the next step. The expected live-run signal is whether
 Noah, Elena, Victor, Ari, or Taylor values appear in active memory, filled form

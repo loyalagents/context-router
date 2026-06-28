@@ -8,7 +8,7 @@
     "scenarios": 0,
     "templates": 7,
     "errors": 0,
-    "warnings": 50
+    "warnings": 48
   },
   "corpusTruth": {
     "summary": {
@@ -18,12 +18,12 @@
       "unsupportedDeclaredFacts": 0,
       "factsProvenAbsent": 39,
       "forbiddenFactsPresent": 0,
-      "warningOnlyAbsenceChecks": 22,
-      "skippedAbsenceChecks": 19,
+      "warningOnlyAbsenceChecks": 20,
+      "skippedAbsenceChecks": 21,
       "invalidAbsenceChecks": 0,
-      "withheldValuesProvenAbsent": 22,
+      "withheldValuesProvenAbsent": 20,
       "withheldValuesPresent": 0,
-      "withheldValuesSkipped": 13,
+      "withheldValuesSkipped": 15,
       "hardFailures": 0,
       "unsupportedDeclaredFactKeys": []
     },
@@ -954,18 +954,18 @@
             "address.current.postalCode"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone"
           ],
-          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {
-          "provenAbsent": [
-            "contact.phone"
-          ],
+          "provenAbsent": [],
           "present": [],
-          "skipped": []
+          "skipped": [
+            "contact.phone"
+          ]
         }
       },
       {
@@ -984,18 +984,18 @@
             "employment.workEmail"
           ],
           "present": [],
-          "warningOnly": [
+          "warningOnly": [],
+          "skipped": [
             "contact.phone"
           ],
-          "skipped": [],
           "invalid": []
         },
         "withheldFacts": {
-          "provenAbsent": [
-            "contact.phone"
-          ],
+          "provenAbsent": [],
           "present": [],
-          "skipped": []
+          "skipped": [
+            "contact.phone"
+          ]
         }
       },
       {
@@ -1447,27 +1447,11 @@
     },
     {
       "level": "warning",
-      "code": "DOCUMENT_MISSING_FACT_PRESENT",
-      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-ownership-v1/manifest.json",
-      "pointer": "/documents/31",
-      "message": "Document maya-chen-newhire-packet-hard-ownership-v1-032 may contain value-like text even though contact.phone is intentionally missing.",
-      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
-    },
-    {
-      "level": "warning",
       "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
       "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-ownership-v1/manifest.json",
       "pointer": "/documents/31",
       "message": "Document maya-chen-newhire-packet-hard-ownership-v1-032 contains phone-like text while contact.phone is intentionally missing.",
       "fix": "Redact source phone values or add source-fact ownership metadata before using them."
-    },
-    {
-      "level": "warning",
-      "code": "DOCUMENT_MISSING_FACT_PRESENT",
-      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-ownership-v1/manifest.json",
-      "pointer": "/documents/32",
-      "message": "Document maya-chen-newhire-packet-hard-ownership-v1-033 may contain value-like text even though contact.phone is intentionally missing.",
-      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
     },
     {
       "level": "warning",

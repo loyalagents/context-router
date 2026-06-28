@@ -10,7 +10,7 @@ field_ids:
   - team.member.role
   - team.member.manager_name
   - manager.email
-  - manager.phone
+  - manager.desk_phone
 
 team:
   name: Client Operations - North Bay

@@ -87,7 +87,7 @@
         "name": "Elena Chen",
         "relationship": "Mother",
         "phone": "415-555-0182",
-        "email": "elena.chen.family.test",
+        "email": "elena.chen@family.test",
         "street": "418 NW Everett Street",
         "unit": "Apt 6B",
         "city": "Portland",
@@ -2142,7 +2142,7 @@
       "evaluationRole": {
         "detailTier": "medium",
         "authority": "medium",
-        "freshness": "current",
+        "freshness": "mixed",
         "expectedUse": "corroborate",
         "challengeTags": [
           "ownership-emergency-contact",
@@ -2207,7 +2207,7 @@
       "evaluationRole": {
         "detailTier": "medium",
         "authority": "medium",
-        "freshness": "current",
+        "freshness": "mixed",
         "expectedUse": "corroborate",
         "challengeTags": [
           "ownership-manager",

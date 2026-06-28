@@ -8,7 +8,7 @@ field_ids:
   - employee.display_name
   - emergency_contact.name
   - emergency_contact.relationship
-  - emergency_contact.phone
+  - emergency_contact.primary_phone
   - emergency_contact.email
   - emergency_contact.mailing_address
 
@@ -21,7 +21,7 @@ emergency_contact:
   name: Elena Chen
   relationship: Mother
   primary_phone: 415-555-0182
-  email: elena.chen.family.test
+  email: elena.chen@family.test
   mailing_address:
     street: 418 NW Everett Street
     unit: Apt 6B

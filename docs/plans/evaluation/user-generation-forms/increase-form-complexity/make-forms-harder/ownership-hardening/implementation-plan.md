@@ -23,7 +23,7 @@ The difficulty comes from realistic records where useful-looking values are eith
 
 3. Extend `artifactWorld` with explicit ownership decoy entities and timeline refs.
    - Noah Kim: non-Maya payment election, worker `PLC-20792`, Northstar Community Bank, routing `122105278`, account `663904228017`, savings.
-   - Elena Chen: Maya emergency contact, phone `415-555-0182`, email `elena.chen.family.test`, non-Maya address.
+   - Elena Chen: Maya emergency contact, phone `415-555-0182`, email `elena.chen@family.test`, non-Maya address.
    - Victor Alvarez: Maya-adjacent manager, work email `victor.alvarez@pacificledger.test`, phone `510-555-0276`.
    - Ari Patel: non-Maya employee in shared support case, worker `PLC-20631`, routing `071000013`, account `550019873244`, filing status `married filing jointly`.
    - Taylor Brooks: W-4 example person with head-of-household/dependent/withholding values distinct from Maya.
