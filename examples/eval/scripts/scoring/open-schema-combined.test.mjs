@@ -178,6 +178,7 @@ function openDatabaseReport({ knownPresent = [], intentionallyMissing = [] } = {
     summary: openDatabaseSummary({ knownPresent, intentionallyMissing }),
     knownPresent,
     intentionallyMissing,
+    ownershipDecoyAudit: [],
     schemaDiagnostics: {
       definitionCount: 0,
       activePreferenceCount: 0,
@@ -243,6 +244,11 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
     emptyDescriptionDefinitionCount: 0,
     missingDefinitionPreferenceCount: 0,
     missingDefinitionSuggestionCount: 0,
+    ownershipDecoyTotal: 0,
+    ownershipDecoyClean: 0,
+    ownershipDecoyAllowedScoped: 0,
+    ownershipDecoyForbiddenActiveLeak: 0,
+    ownershipDecoyForbiddenSuggestionLeak: 0,
   };
 }
 
