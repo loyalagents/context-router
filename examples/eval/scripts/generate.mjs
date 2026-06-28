@@ -482,9 +482,11 @@ export async function generateWithVertex(prompt, { env, model, temperature, resp
     throw new Error('Set GCP_PROJECT_ID before using --backend vertex.');
   }
   const { VertexAI } = await import('@google-cloud/vertexai');
+  const location = env.VERTEX_REGION ?? 'us-central1';
   const vertexAI = new VertexAI({
     project: env.GCP_PROJECT_ID ?? '',
-    location: env.VERTEX_REGION ?? 'us-central1',
+    location,
+    apiEndpoint: resolveVertexApiEndpoint(env, location),
   });
   const generativeModel = vertexAI.getGenerativeModel({
     model,
@@ -505,6 +507,14 @@ export async function generateWithVertex(prompt, { env, model, temperature, resp
     .flatMap((candidate) => candidate.content?.parts ?? [])
     .map((part) => part.text ?? '')
     .join('');
+}
+
+export function resolveVertexApiEndpoint(env, location) {
+  if (typeof env.VERTEX_API_ENDPOINT === 'string' && env.VERTEX_API_ENDPOINT.trim()) {
+    return env.VERTEX_API_ENDPOINT.trim();
+  }
+  if (location === 'global') return 'aiplatform.googleapis.com';
+  return undefined;
 }
 
 async function runPool(items, concurrency, worker) {
