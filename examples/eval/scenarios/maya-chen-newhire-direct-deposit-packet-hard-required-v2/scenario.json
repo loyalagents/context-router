@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "maya-chen-newhire-direct-deposit-packet-hard-required-v2",
+  "description": "Live open-schema direct-deposit form-fill scenario for Maya Chen using the packet-hard-required-v2 scored-field required-evidence shared dossier.",
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-hard-required-v2",
+  "formId": "direct-deposit-sf1199a-24",
+  "expectedSnapshots": []
+}
