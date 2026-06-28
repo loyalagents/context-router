@@ -1,6 +1,6 @@
 # Required-Hardening V2 Implementation Summary
 
-- Status: fixture implemented and validated
+- Status: fixture implemented, validated, and live-reviewed
 - Last updated: 2026-06-28
 - Scope: `packet-hard-required-v2` corpus, scenarios, and planning docs
 
@@ -58,8 +58,25 @@ Static evidence checks passed:
   `banking.accountType` points only to doc `037`.
 - No copied v1 corpus ids remain in the v2 corpus or v2 scenarios.
 
-## Not Run
+## Live Review
 
-Live direct/MCP model evals were not run during implementation. The next review
-step is to compare v1 and v2 artifacts for direct-deposit form score,
-`knownFieldCorrect`, memory recovery, stale/decoy values, and ownership leaks.
+Reviewed live runs on 2026-06-28:
+
+| Run | Result | Notes |
+| --- | --- | --- |
+| Direct baseline | `memory=21/25`, `fields=26/27`, direct deposit `8/9` | V2 moved score. Direct-deposit institution was wrong: expected `Bay Harbor Credit Union`, got employer name `Pacific Ledger Cooperative`. |
+| Direct `gemini-2.5-pro` | `memory=24/25`, `fields=27/27`, direct deposit `9/9` | Stronger direct extraction recovered the scored banking fields. The only memory miss was `banking.accountHolderName`; this did not affect form score because the account title was filled from Maya identity/name facts. |
+| MCP Claude | `memory=25/25`, `fields=27/27`, direct deposit `9/9` | MCP handled the evidence path and kept ownership clean. An earlier MCP attempt failed before scoring due to backend form-fill structured output returning `value: null`; that was a backend robustness issue, not a packet difficulty result. |
+
+Interpretation:
+
+- V2 is a real improvement over v1 because it can move scored direct-deposit
+  form quality when the direct extractor does not resolve the reconciliation
+  evidence.
+- V2 does not reliably move form score for stronger models. `gemini-2.5-pro`
+  and MCP Claude both resolved the hard direct-deposit institution/type evidence.
+- `banking.accountHolderName` is not a strong difficulty target because the
+  expected value is the user's legal name and can be recovered from identity
+  facts even when the direct-deposit-specific memory fact is absent.
+- No reviewed v2 run showed ownership leakage from Noah Kim or stale Redwood
+  values into active scored facts.

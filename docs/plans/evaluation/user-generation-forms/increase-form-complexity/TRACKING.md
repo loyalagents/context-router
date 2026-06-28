@@ -14,7 +14,9 @@
 | `packet-hard-conflict-v1` MCP | Same conflict packet through stored-memory agent path | Passed; memory `25/25`, fields `27/27`, wrong `0`, overfill `0` | MCP handled conflicts. Stale values appeared only in evidence notes, not active wrong values. |
 | `packet-hard-required-v1` direct | Removed clean banking proof; made employment title/start only available in correction-thread prose | Passed on retry; memory `23/25`, fields `27/27`, ownership clean `6/6` | Worked for direct memory difficulty. Direct missed `employment.title` and `employment.startDate`. Did not move form score. |
 | `packet-hard-required-v1` MCP | Same required-hard packet through stored-memory agent path | Passed; memory `25/25`, fields `27/27`, ownership clean `6/6` | MCP handled the required-hard evidence path better than direct. |
-| `packet-hard-required-v2` fixture | Moved scored direct-deposit institution/type evidence into ACH prenote reconciliation with stale and worker-mismatch rows | Fixture validation passed; live run pending | Intended to test whether harder evidence can move existing direct-deposit form score without changing form maps or scorers. Exact Bay Harbor/checking evidence is isolated to doc `037`. |
+| `packet-hard-required-v2` direct baseline | Moved scored direct-deposit institution/type evidence into ACH prenote reconciliation with stale and worker-mismatch rows | Passed; memory `21/25`, fields `26/27`, direct deposit `8/9`, wrong `1`, overfill `0` | Worked as a score-moving packet for the weaker/default direct path. The wrong field was direct-deposit institution: expected `Bay Harbor Credit Union`, got employer name `Pacific Ledger Cooperative`. |
+| `packet-hard-required-v2` direct `gemini-2.5-pro` | Same v2 packet with stronger direct extraction model | Passed; memory `24/25`, fields `27/27`, direct deposit `9/9`, ownership clean `6/6` | Did not move form score for the stronger direct model. The only memory miss was `banking.accountHolderName`; form still filled account title from identity name facts, so this is minor. |
+| `packet-hard-required-v2` MCP Claude | Same v2 packet through stored-memory agent path and backend form fill | Passed after backend null-value tolerance/logging fix; memory `25/25`, fields `27/27`, direct deposit `9/9`, ownership clean `6/6` | MCP handled the evidence path and form fill. Initial failure was a backend structured-output validation issue (`value: null`), not a memory/scoring failure. |
 
 ## Current Lessons
 
@@ -22,12 +24,20 @@
   baseline proof still carried scored fields.
 - Required-hard evidence changed the direct memory score only after clean proof
   was removed.
-- Form score did not move because the current scored fields do not require
-  `employment.title` or `employment.startDate`.
+- To move form score, required-hard facts need to overlap scored fields and not
+  be recoverable from obvious aliases.
+- `packet-hard-required-v2` can move score for a weaker/default direct baseline,
+  but `gemini-2.5-pro` and MCP Claude handled the scored direct-deposit fields.
+- `banking.accountHolderName` is a weak score-moving target because the value is
+  identical to Maya's legal name and can be filled from identity facts.
 - JSON formatting failures are separate from memory/form quality and should be
   tracked as extraction reliability failures.
+- Backend structured-output failures are also separate from packet difficulty;
+  the observed MCP `value: null` failure was fixed with prompt clarification,
+  tolerant parsing, and warning logging.
 
 ## Next Score-Moving Target
 
-To affect form score, make a required-hard fact also be a scored form fact. Do
-not make the documents easier just to improve baseline performance.
+To affect stronger models' form score, target a scored value that cannot be
+resolved from identity or other easy aliases. Do not make the documents easier
+just to improve baseline performance.
