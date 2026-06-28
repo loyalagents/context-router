@@ -333,6 +333,177 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
   });
 });
 
+test('mcp packet run classifies form-fill structured-output failures with partial score context', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'mcp-packet-fill-failure-'));
+  const fixture = await loadKnownSchemaFixture({
+    repoRoot,
+    evalUserId: 'maya-chen-newhire',
+    corpusId: 'packet-small',
+    documentsRoot: 'examples/eval/users/maya-chen-newhire/corpora/packet-small',
+  });
+  const directDepositScenario = 'maya-chen-newhire-direct-deposit-packet-small';
+  const formSummaries = {
+    'maya-chen-newhire-i9-packet-small': {
+      knownFieldTotal: 12,
+      knownFieldCorrect: 12,
+      knownFieldMissing: 0,
+      knownFieldWrong: 0,
+      knownFieldAccuracy: 1,
+      abstentionFieldTotal: 2,
+      abstentionFieldAbsentCorrect: 2,
+      abstentionFieldHallucinated: 0,
+      structuralOverfillCount: 0,
+      manualAttestationOverfillCount: 0,
+      outOfScopeOverfillCount: 0,
+      unmappedOverfillCount: 0,
+    },
+    'maya-chen-newhire-fw4-packet-small': {
+      knownFieldTotal: 6,
+      knownFieldCorrect: 6,
+      knownFieldMissing: 0,
+      knownFieldWrong: 0,
+      knownFieldAccuracy: 1,
+      abstentionFieldTotal: 0,
+      abstentionFieldAbsentCorrect: 0,
+      abstentionFieldHallucinated: 0,
+      structuralOverfillCount: 0,
+      manualAttestationOverfillCount: 0,
+      outOfScopeOverfillCount: 0,
+      unmappedOverfillCount: 0,
+    },
+  };
+
+  const result = await runMcpPacketE2E({
+    repoRoot,
+    args: replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+    env: { EVAL_AUTH_TOKEN: 'secret-token' },
+    now: fixedNow,
+    runners: {
+      validate: async ({ args }) => {
+        const reportOut = valueAfter(args, '--report-out');
+        if (reportOut) {
+          await writeFile(
+            reportOut,
+            jsonText({ schemaVersion: 1, summary: { errors: 0, warnings: 0 } }),
+          );
+        }
+        return { exitCode: 0, lines: ['validation ok'] };
+      },
+      setupOpenSchemaMemory: async () => ({
+        backendUserId: 'backend-maya',
+        fixture,
+        definitionSetup: { created: [], existing: [], skipped: [] },
+      }),
+      agent: async () => ({
+        exitCode: 0,
+        lines: ['agent ok'],
+        stdout: 'EVAL_MCP_AGENT_DONE',
+        stderr: '',
+        timedOut: false,
+        completionMarkerObserved: true,
+      }),
+      exportMemorySnapshot: async ({ args }) => {
+        const baselineOut = valueAfter(args, '--baseline-out');
+        if (baselineOut) {
+          await writeFile(
+            baselineOut,
+            jsonText({
+              schemaVersion: 1,
+              artifactType: 'definition-baseline',
+              userId: 'maya-chen-newhire',
+              corpusId: 'packet-small',
+              scenarioId: 'packet-small-packet',
+              capturedAt: fixedNow().toISOString(),
+              strategy: 'baseline-only',
+              backendUserId: 'backend-maya',
+              definitions: [],
+              definitionIds: [],
+              slugs: [],
+            }),
+          );
+        }
+        const out = valueAfter(args, '--out');
+        await writeFile(
+          out,
+          jsonText({
+            schemaVersion: 1,
+            artifactType: 'memory-snapshot',
+            preferences: [],
+            suggestions: [],
+            definitions: [],
+            diagnostics: { backendUserId: 'backend-maya' },
+          }),
+        );
+        return { exitCode: 0, lines: ['export ok'] };
+      },
+      fillForm: async ({ args }) => {
+        const scenarioId = valueAfter(args, '--scenario');
+        if (scenarioId === directDepositScenario) {
+          return {
+            exitCode: 1,
+            lines: [
+              'eval fill-form failed',
+              '',
+              'Error: Form-fill response status was failed. This eval runner only scores success or partial responses. Detail: Form fill failed during ai_generation: [formFill.fillActions] AI response failed validation: fillActions.24.value: Invalid input: expected string, received null',
+            ],
+          };
+        }
+        return { exitCode: 0, lines: ['fill ok'] };
+      },
+      score: async ({ args }) => {
+        const out = valueAfter(args, '--out');
+        const mode = valueAfter(args, '--mode');
+        const scenarioId = valueAfter(args, '--scenario');
+        const summary = mode === 'open-schema-database'
+          ? {
+              knownPresentTotal: 24,
+              knownPresentRecoveredActive: 24,
+              activeValueRecoveryRate: 1,
+              intentionallyMissingTotal: 2,
+              missingAbsentCorrect: 2,
+              ownershipDecoyTotal: 0,
+              ownershipDecoyClean: 0,
+              ownershipDecoyAllowedScoped: 0,
+              ownershipDecoyForbiddenActiveLeak: 0,
+              ownershipDecoyForbiddenSuggestionLeak: 0,
+            }
+          : mode === 'form'
+            ? formSummaries[scenarioId]
+            : { mode };
+        await writeFile(
+          out,
+          jsonText({
+            schemaVersion: 1,
+            scoreType: mode,
+            summary,
+          }),
+        );
+        return { exitCode: 0, lines: [`score ${mode} ok`] };
+      },
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  const output = result.lines.join('\n');
+  assert.match(output, /stage=fill-form/);
+  assert.match(output, new RegExp(`scenario=${directDepositScenario}`));
+  assert.match(output, /kind=form_fill_structured_output_validation/);
+  assert.match(output, /memory-known=24\/24/);
+  assert.match(output, /known-fields-so-far=18\/18/);
+  assert.match(output, /not-scored-scenarios=maya-chen-newhire-direct-deposit-packet-small/);
+  assert.doesNotMatch(output, /secret-token/);
+
+  const report = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.failureStage, 'fill-form');
+  assert.equal(report.failureKind, 'form_fill_structured_output_validation');
+  assert.equal(report.failure.scenarioId, directDepositScenario);
+  assert.equal(report.failure.scoredScenarioIds.length, 2);
+  assert.deepEqual(report.failure.notScoredScenarioIds, [directDepositScenario]);
+  assert.equal(report.qualitySummary.memoryKnownRecovered, '24/24');
+  assert.equal(report.qualitySummary.knownFieldCorrect, '18/18');
+});
+
 function valueAfter(args, flag) {
   const index = args.indexOf(flag);
   return index === -1 ? null : args[index + 1];

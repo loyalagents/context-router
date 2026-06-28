@@ -37,6 +37,7 @@ For fields named like mmddyyyy, render dates as MMDDYYYY.
 For address.current.streetLine fields, combine street plus unit/apartment when both active memories exist, and cite all component sourceSlugs.
 For address.current.cityStateZip fields, render as City, ST ZIP, and cite city, state, and postal code sourceSlugs.
 For grouped checkbox policies, choose only the applicable checkbox and leave the other checkboxes unchecked or skipped.
+Never return null for any property. Omit value for CHECK, UNCHECK, and SKIP actions. If a text or option field has no supported value, return SKIP with skipReason instead of returning null.
 
 Allowed response shape:
 {
