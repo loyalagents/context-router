@@ -40,7 +40,7 @@ const DEFAULT_TEMPERATURE = 0.2;
 const PROVIDERS = new Set(['vertex']);
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.75;
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
-const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v3';
+const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
 
 export async function runDirectOpenSchemaPacket({
   repoRoot = defaultRepoRoot,

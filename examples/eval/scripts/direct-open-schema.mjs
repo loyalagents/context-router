@@ -37,7 +37,7 @@ const PROVIDERS = new Set(['vertex']);
 const VALUE_TYPES = new Set(['STRING', 'BOOLEAN', 'ENUM', 'ARRAY']);
 const FILL_ACTIONS = new Set(['SET_TEXT', 'CHECK', 'UNCHECK', 'SELECT_OPTION', 'SKIP']);
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
-const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v3';
+const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
 const DIRECT_OPEN_SCHEMA_PRODUCER = 'direct-open-schema-vertex';
 const DIRECT_OPEN_SCHEMA_EVALUATION_MODE = 'direct-vertex-open-schema';
 const SYNTHETIC_SNAPSHOT_QUERY_NAME = 'SyntheticDirectOpenSchemaSnapshot';
@@ -499,6 +499,7 @@ export function buildFactOnlyFillPrompt({ fieldMetadata, extraction }) {
     'For conditional checkbox branches that do not match the extracted facts, return SKIP. Do not return UNCHECK for inactive conditional branches.',
     'Some PDF field names are compound or noisy. If a fillable text field name contains multiple concepts, fill the value supported by an extracted fact when it clearly matches part of the field name. Do not skip solely because another related concept is missing, unless the field policy requires a combined value.',
     'Use targetFactKey and semanticNote as the strongest field-meaning hints when present. They describe what value the field wants, not a required extracted slug.',
+    'For contact.phone fields, do not use emergency-contact phone facts. Skip unless the extracted fact is the user\'s own phone.',
     'For fields named like mmddyyyy, render dates as MMDDYYYY.',
     'For address.current.streetLine fields, combine street plus unit/apartment when both extracted facts exist, and cite all component sourceFactIds.',
     'For address.current.cityStateZip fields, render as City, ST ZIP, and cite city, state, and postal code sourceFactIds.',
@@ -1164,6 +1165,14 @@ function invalidFactFillActionReason({ action, field, factById, provenanceDiagno
       return `unknown source fact id "${String(factId)}"`;
     }
   }
+  if (field.targetFactKey === 'contact.phone') {
+    const sourceFacts = action.sourceFactIds
+      .map((factId) => factById.get(factId))
+      .filter(Boolean);
+    if (sourceFacts.some(isEmergencyContactFact)) {
+      return 'contact.phone cannot use emergency contact source fact';
+    }
+  }
   if (
     field.fieldType === 'checkbox' &&
     field.condition &&
@@ -1172,6 +1181,11 @@ function invalidFactFillActionReason({ action, field, factById, provenanceDiagno
     return 'conditional field inactive';
   }
   return null;
+}
+
+function isEmergencyContactFact(fact) {
+  const text = `${fact?.slug ?? ''} ${fact?.label ?? ''}`.toLowerCase();
+  return /emergency[-_.\s]?contact/.test(text);
 }
 
 function conditionSatisfiedByActionSources({ action, condition, factById }) {
