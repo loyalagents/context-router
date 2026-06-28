@@ -126,6 +126,443 @@
       }
     }
   },
+  "ownershipAudit": [
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.name",
+      "forbiddenFactKeys": [
+        "banking.accountHolderName",
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "institutionName",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.institutionName",
+      "forbiddenFactKeys": [
+        "banking.institutionName"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "routingNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.routingNumber",
+      "forbiddenFactKeys": [
+        "banking.routingNumber"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "accountNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.accountNumber",
+      "forbiddenFactKeys": [
+        "banking.accountNumber"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "accountType",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.accountType",
+      "forbiddenFactKeys": [
+        "banking.accountType"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "workerId",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.workerId",
+      "forbiddenFactKeys": [
+        "employment.workerId"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.name",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "phone",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.phone",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "contact.phone"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "email",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.email",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "contact.email"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "street",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.street",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.street",
+        "address.current.streetLine"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "unit",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.unit",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.unit",
+        "address.current.streetLine"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "streetLine",
+      "value": "418 NW Everett Street Apt 6B",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.streetLine"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "city",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.city",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.city",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "state",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.state",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.state",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "postalCode",
+      "valuePath": "artifactWorld.ownershipDecoys.elenaChen.postalCode",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.postalCode",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "elenaChen",
+      "valueLabel": "cityStateZip",
+      "value": "Portland, OR 97209",
+      "allowedSlugPrefixes": [
+        "identity.emergency_contact.",
+        "identity.emergencyContact.",
+        "emergency_contact.",
+        "emergencyContact."
+      ],
+      "forbiddenFactKeys": [
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "victorAlvarez",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.victorAlvarez.name",
+      "allowedSlugPrefixes": [
+        "manager.",
+        "employment.manager.",
+        "team.manager."
+      ],
+      "forbiddenFactKeys": [
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "victorAlvarez",
+      "valueLabel": "email",
+      "valuePath": "artifactWorld.ownershipDecoys.victorAlvarez.email",
+      "allowedSlugPrefixes": [
+        "manager.",
+        "employment.manager.",
+        "team.manager."
+      ],
+      "forbiddenFactKeys": [
+        "contact.email",
+        "employment.workEmail"
+      ]
+    },
+    {
+      "ownerKey": "victorAlvarez",
+      "valueLabel": "phone",
+      "valuePath": "artifactWorld.ownershipDecoys.victorAlvarez.phone",
+      "allowedSlugPrefixes": [
+        "manager.",
+        "employment.manager.",
+        "team.manager."
+      ],
+      "forbiddenFactKeys": [
+        "contact.phone"
+      ]
+    },
+    {
+      "ownerKey": "victorAlvarez",
+      "valueLabel": "role",
+      "valuePath": "artifactWorld.ownershipDecoys.victorAlvarez.role",
+      "allowedSlugPrefixes": [
+        "manager.",
+        "employment.manager.",
+        "team.manager."
+      ],
+      "forbiddenFactKeys": [
+        "employment.title"
+      ]
+    },
+    {
+      "ownerKey": "victorAlvarez",
+      "valueLabel": "workerId",
+      "valuePath": "artifactWorld.ownershipDecoys.victorAlvarez.workerId",
+      "allowedSlugPrefixes": [
+        "manager.",
+        "employment.manager.",
+        "team.manager."
+      ],
+      "forbiddenFactKeys": [
+        "employment.workerId"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.name",
+      "forbiddenFactKeys": [
+        "banking.accountHolderName",
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "institutionName",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.institutionName",
+      "forbiddenFactKeys": [
+        "banking.institutionName"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "routingNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.routingNumber",
+      "forbiddenFactKeys": [
+        "banking.routingNumber"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "accountNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.accountNumber",
+      "forbiddenFactKeys": [
+        "banking.accountNumber"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "accountType",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.accountType",
+      "forbiddenFactKeys": [
+        "banking.accountType"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "workerId",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.workerId",
+      "forbiddenFactKeys": [
+        "employment.workerId"
+      ]
+    },
+    {
+      "ownerKey": "ariPatel",
+      "valueLabel": "filingStatus",
+      "valuePath": "artifactWorld.ownershipDecoys.ariPatel.filingStatus",
+      "forbiddenFactKeys": [
+        "tax.filingStatus"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.name",
+      "forbiddenFactKeys": [
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "ssn",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.ssn",
+      "forbiddenFactKeys": [
+        "identity.ssn"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "streetLine",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.street",
+      "forbiddenFactKeys": [
+        "address.current.street",
+        "address.current.streetLine"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "cityStateZip",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.cityStateZip",
+      "forbiddenFactKeys": [
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "city",
+      "value": "Seattle",
+      "forbiddenFactKeys": [
+        "address.current.city",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "state",
+      "value": "WA",
+      "forbiddenFactKeys": [
+        "address.current.state",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "postalCode",
+      "value": "98101",
+      "forbiddenFactKeys": [
+        "address.current.postalCode",
+        "address.current.cityStateZip"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "filingStatus",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.filingStatus",
+      "forbiddenFactKeys": [
+        "tax.filingStatus"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "multipleJobs",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.multipleJobs",
+      "forbiddenFactKeys": [
+        "tax.multipleJobs"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "qualifyingChildrenAmount",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.qualifyingChildrenAmount",
+      "forbiddenFactKeys": [
+        "tax.dependentsUnder17",
+        "tax.qualifyingChildrenAmount"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "otherDependentsAmount",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.otherDependentsAmount",
+      "forbiddenFactKeys": [
+        "tax.otherDependents",
+        "tax.otherDependentsAmount"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "otherIncome",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.otherIncome",
+      "forbiddenFactKeys": [
+        "tax.otherIncome"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "deductions",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.deductions",
+      "forbiddenFactKeys": [
+        "tax.deductions"
+      ]
+    },
+    {
+      "ownerKey": "taylorBrooks",
+      "valueLabel": "extraWithholding",
+      "valuePath": "artifactWorld.ownershipDecoys.taylorBrooks.extraWithholding",
+      "forbiddenFactKeys": [
+        "tax.extraWithholding"
+      ]
+    }
+  ],
   "factContractDefaults": {
     "forbid": [
       "contact.phone"

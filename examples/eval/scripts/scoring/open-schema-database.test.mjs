@@ -5,6 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
+  scoreOwnershipDecoyAudit,
   scoreOpenKnownFact,
   scoreOpenMissingFact,
   scoreOpenSchemaDatabaseToFile,
@@ -264,6 +265,7 @@ test('open-schema database ownership audit allows scoped emergency contact value
     ['identity.emergency_contact.primary_phone'],
   );
   assert.deepEqual(elenaPhone.forbiddenActiveRows, []);
+  assert.equal(report.summary.ownershipDecoyTotal, 42);
   assert.equal(report.summary.ownershipDecoyAllowedScoped, 1);
   assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 0);
   assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 0);
@@ -310,6 +312,96 @@ test('open-schema database ownership audit flags active and suggestion decoy lea
   );
   assert.equal(report.summary.ownershipDecoyForbiddenActiveLeak, 4);
   assert.equal(report.summary.ownershipDecoyForbiddenSuggestionLeak, 1);
+});
+
+test('open-schema database ownership audit is configured by manifest rows', () => {
+  const manifest = {
+    artifactWorld: {
+      ownershipDecoys: {
+        caseOwner: {
+          name: 'Case Owner',
+          phone: '206-555-0100',
+        },
+      },
+    },
+    ownershipAudit: [
+      {
+        ownerKey: 'caseOwner',
+        valueLabel: 'phone',
+        valuePath: 'artifactWorld.ownershipDecoys.caseOwner.phone',
+        allowedSlugPrefixes: ['case.owner.'],
+        forbiddenFactKeys: ['contact.phone'],
+      },
+      {
+        ownerKey: 'literalOwner',
+        ownerName: 'Literal Owner',
+        valueLabel: 'externalId',
+        value: 'EXT-42',
+        forbiddenFactKeys: ['employment.workerId'],
+      },
+    ],
+  };
+  const storageMap = {
+    facts: {
+      'contact.phone': {
+        canonicalSlugs: ['contact.phone'],
+        acceptedAliasSlugs: [],
+      },
+      'employment.workerId': {
+        canonicalSlugs: ['employment.worker_id'],
+        acceptedAliasSlugs: [],
+      },
+    },
+  };
+
+  const rows = scoreOwnershipDecoyAudit({
+    manifest,
+    profile: { facts: {} },
+    storageMap,
+    activePreferences: [
+      preference('case.owner.phone', '206-555-0100'),
+      preference('employment.worker_id', 'EXT-42'),
+    ],
+    suggestions: [],
+  });
+
+  assert.equal(rows.length, 2);
+  assert.equal(
+    rows.find((candidate) => candidate.valueLabel === 'phone').classification,
+    'allowed_scoped',
+  );
+  assert.equal(
+    rows.find((candidate) => candidate.valueLabel === 'externalId').classification,
+    'forbidden_active_leak',
+  );
+  assert.deepEqual(
+    rows.find((candidate) => candidate.valueLabel === 'phone').forbiddenSlugs,
+    ['contact.phone', 'profile.contact.phone'],
+  );
+});
+
+test('open-schema database ownership audit rejects missing configured value paths', () => {
+  assert.throws(
+    () =>
+      scoreOwnershipDecoyAudit({
+        manifest: {
+          ownershipAudit: [
+            {
+              ownerKey: 'caseOwner',
+              ownerName: 'Case Owner',
+              valueLabel: 'phone',
+              valuePath: 'artifactWorld.ownershipDecoys.caseOwner.phone',
+              forbiddenFactKeys: ['contact.phone'],
+            },
+          ],
+        },
+        profile: { facts: {} },
+        storageMap: { facts: {} },
+        activePreferences: [],
+        suggestions: [],
+      }),
+    /ownershipAudit\[0\]\.valuePath artifactWorld\.ownershipDecoys\.caseOwner\.phone does not exist/,
+  );
 });
 
 test('open-schema missing fact scoring detects withheld active-memory value leaks', () => {

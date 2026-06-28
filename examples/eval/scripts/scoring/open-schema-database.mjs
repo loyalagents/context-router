@@ -15,18 +15,6 @@ const OWNERSHIP_ALLOWED_SCOPED = 'allowed_scoped';
 const OWNERSHIP_FORBIDDEN_ACTIVE_LEAK = 'forbidden_active_leak';
 const OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK = 'forbidden_suggestion_leak';
 
-const EMERGENCY_CONTACT_ALLOWED_PREFIXES = [
-  'identity.emergency_contact.',
-  'identity.emergencyContact.',
-  'emergency_contact.',
-  'emergencyContact.',
-];
-const MANAGER_ALLOWED_PREFIXES = [
-  'manager.',
-  'employment.manager.',
-  'team.manager.',
-];
-
 export async function scoreOpenSchemaDatabaseToFile({
   repoRoot,
   userId,
@@ -198,336 +186,66 @@ export function scoreOwnershipDecoyAudit({
 }
 
 function buildOwnershipDecoyCases({ manifest, profile, storageMap }) {
-  const decoys = manifest.artifactWorld?.ownershipDecoys;
-  if (!isRecord(decoys)) return [];
-  const cases = [];
-  const addCase = ({
-    ownerKey,
-    ownerName,
-    valueLabel,
-    value,
-    forbiddenFactKeys,
-    allowedSlugPrefixes = [],
-  }) => {
-    if (isAbsentValue(value)) return;
-    const normalizedForbiddenFactKeys = unique(forbiddenFactKeys);
-    cases.push({
-      ownerKey,
+  const auditRules = manifest.ownershipAudit;
+  if (!Array.isArray(auditRules)) return [];
+
+  return auditRules.map((rule, index) => {
+    const value = hasOwn(rule, 'value')
+      ? rule.value
+      : resolveManifestPath({
+          manifest,
+          path: rule.valuePath,
+          label: `ownershipAudit[${index}].valuePath`,
+        });
+    if (isAbsentValue(value)) {
+      throw new Error(
+        `ownershipAudit[${index}] ${rule.ownerKey}.${rule.valueLabel} resolved to an absent value`,
+      );
+    }
+
+    const ownerName = resolveOwnershipOwnerName({ manifest, rule, index });
+    const forbiddenFactKeys = unique(rule.forbiddenFactKeys ?? []);
+
+    return {
+      ownerKey: rule.ownerKey,
       ownerName,
-      valueLabel,
+      valueLabel: rule.valueLabel,
       value,
-      allowedSlugPrefixes: unique(allowedSlugPrefixes).sort(),
-      forbiddenFactKeys: normalizedForbiddenFactKeys.sort(),
+      allowedSlugPrefixes: unique(rule.allowedSlugPrefixes ?? []).sort(),
+      forbiddenFactKeys: forbiddenFactKeys.sort(),
       forbiddenSlugs: slugsForForbiddenFactKeys({
-        factKeys: normalizedForbiddenFactKeys,
+        factKeys: forbiddenFactKeys,
         profile,
         storageMap,
       }),
-    });
-  };
-
-  const noah = decoys.noahKim;
-  if (isRecord(noah)) {
-    addBankingDecoyCases({ addCase, ownerKey: 'noahKim', owner: noah });
-    addCase({
-      ownerKey: 'noahKim',
-      ownerName: noah.name,
-      valueLabel: 'workerId',
-      value: noah.workerId,
-      forbiddenFactKeys: ['employment.workerId'],
-    });
-  }
-
-  const elena = decoys.elenaChen;
-  if (isRecord(elena)) {
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'name',
-      value: elena.name,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['identity.legalName'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'phone',
-      value: elena.phone,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['contact.phone'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'email',
-      value: elena.email,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['contact.email'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'street',
-      value: elena.street,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.street', 'address.current.streetLine'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'unit',
-      value: elena.unit,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.unit', 'address.current.streetLine'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'streetLine',
-      value: joinParts([elena.street, elena.unit], ' '),
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.streetLine'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'city',
-      value: elena.city,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.city', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'state',
-      value: elena.state,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.state', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'postalCode',
-      value: elena.postalCode,
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.postalCode', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'elenaChen',
-      ownerName: elena.name,
-      valueLabel: 'cityStateZip',
-      value: cityStateZip(elena),
-      allowedSlugPrefixes: EMERGENCY_CONTACT_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['address.current.cityStateZip'],
-    });
-  }
-
-  const victor = decoys.victorAlvarez;
-  if (isRecord(victor)) {
-    addCase({
-      ownerKey: 'victorAlvarez',
-      ownerName: victor.name,
-      valueLabel: 'name',
-      value: victor.name,
-      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['identity.legalName'],
-    });
-    addCase({
-      ownerKey: 'victorAlvarez',
-      ownerName: victor.name,
-      valueLabel: 'email',
-      value: victor.email,
-      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['contact.email', 'employment.workEmail'],
-    });
-    addCase({
-      ownerKey: 'victorAlvarez',
-      ownerName: victor.name,
-      valueLabel: 'phone',
-      value: victor.phone,
-      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['contact.phone'],
-    });
-    addCase({
-      ownerKey: 'victorAlvarez',
-      ownerName: victor.name,
-      valueLabel: 'role',
-      value: victor.role,
-      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['employment.title'],
-    });
-    addCase({
-      ownerKey: 'victorAlvarez',
-      ownerName: victor.name,
-      valueLabel: 'workerId',
-      value: victor.workerId,
-      allowedSlugPrefixes: MANAGER_ALLOWED_PREFIXES,
-      forbiddenFactKeys: ['employment.workerId'],
-    });
-  }
-
-  const ari = decoys.ariPatel;
-  if (isRecord(ari)) {
-    addBankingDecoyCases({ addCase, ownerKey: 'ariPatel', owner: ari });
-    addCase({
-      ownerKey: 'ariPatel',
-      ownerName: ari.name,
-      valueLabel: 'workerId',
-      value: ari.workerId,
-      forbiddenFactKeys: ['employment.workerId'],
-    });
-    addCase({
-      ownerKey: 'ariPatel',
-      ownerName: ari.name,
-      valueLabel: 'filingStatus',
-      value: ari.filingStatus,
-      forbiddenFactKeys: ['tax.filingStatus'],
-    });
-  }
-
-  const taylor = decoys.taylorBrooks;
-  if (isRecord(taylor)) {
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'name',
-      value: taylor.name,
-      forbiddenFactKeys: ['identity.legalName'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'ssn',
-      value: taylor.ssn,
-      forbiddenFactKeys: ['identity.ssn'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'streetLine',
-      value: taylor.street,
-      forbiddenFactKeys: ['address.current.street', 'address.current.streetLine'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'cityStateZip',
-      value: taylor.cityStateZip,
-      forbiddenFactKeys: ['address.current.cityStateZip'],
-    });
-    const cityState = parseCityStateZip(taylor.cityStateZip);
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'city',
-      value: cityState.city,
-      forbiddenFactKeys: ['address.current.city', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'state',
-      value: cityState.state,
-      forbiddenFactKeys: ['address.current.state', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'postalCode',
-      value: cityState.postalCode,
-      forbiddenFactKeys: ['address.current.postalCode', 'address.current.cityStateZip'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'filingStatus',
-      value: taylor.filingStatus,
-      forbiddenFactKeys: ['tax.filingStatus'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'multipleJobs',
-      value: taylor.multipleJobs,
-      forbiddenFactKeys: ['tax.multipleJobs'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'qualifyingChildrenAmount',
-      value: taylor.qualifyingChildrenAmount,
-      forbiddenFactKeys: ['tax.dependentsUnder17', 'tax.qualifyingChildrenAmount'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'otherDependentsAmount',
-      value: taylor.otherDependentsAmount,
-      forbiddenFactKeys: ['tax.otherDependents', 'tax.otherDependentsAmount'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'otherIncome',
-      value: taylor.otherIncome,
-      forbiddenFactKeys: ['tax.otherIncome'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'deductions',
-      value: taylor.deductions,
-      forbiddenFactKeys: ['tax.deductions'],
-    });
-    addCase({
-      ownerKey: 'taylorBrooks',
-      ownerName: taylor.name,
-      valueLabel: 'extraWithholding',
-      value: taylor.extraWithholding,
-      forbiddenFactKeys: ['tax.extraWithholding'],
-    });
-  }
-
-  return cases;
+    };
+  });
 }
 
-function addBankingDecoyCases({ addCase, ownerKey, owner }) {
-  const ownerName = owner.name;
-  addCase({
-    ownerKey,
-    ownerName,
-    valueLabel: 'name',
-    value: owner.name,
-    forbiddenFactKeys: ['banking.accountHolderName', 'identity.legalName'],
+function resolveOwnershipOwnerName({ manifest, rule, index }) {
+  if (hasOwn(rule, 'ownerName')) return rule.ownerName;
+
+  if (rule.ownerNamePath) {
+    const ownerName = resolveManifestPath({
+      manifest,
+      path: rule.ownerNamePath,
+      label: `ownershipAudit[${index}].ownerNamePath`,
+    });
+    if (!isAbsentValue(ownerName)) return String(ownerName);
+  }
+
+  const fallbackPath = `artifactWorld.ownershipDecoys.${rule.ownerKey}.name`;
+  const ownerName = resolveManifestPath({
+    manifest,
+    path: fallbackPath,
+    label: `ownershipAudit[${index}] fallback owner name`,
+    required: false,
   });
-  addCase({
-    ownerKey,
-    ownerName,
-    valueLabel: 'institutionName',
-    value: owner.institutionName,
-    forbiddenFactKeys: ['banking.institutionName'],
-  });
-  addCase({
-    ownerKey,
-    ownerName,
-    valueLabel: 'routingNumber',
-    value: owner.routingNumber,
-    forbiddenFactKeys: ['banking.routingNumber'],
-  });
-  addCase({
-    ownerKey,
-    ownerName,
-    valueLabel: 'accountNumber',
-    value: owner.accountNumber,
-    forbiddenFactKeys: ['banking.accountNumber'],
-  });
-  addCase({
-    ownerKey,
-    ownerName,
-    valueLabel: 'accountType',
-    value: owner.accountType,
-    forbiddenFactKeys: ['banking.accountType'],
-  });
+  if (!isAbsentValue(ownerName)) return String(ownerName);
+
+  throw new Error(
+    `ownershipAudit[${index}] ${rule.ownerKey}.${rule.valueLabel} is missing ownerName or ownerNamePath`,
+  );
 }
 
 function scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }) {
@@ -640,19 +358,25 @@ function slugIsAllowed(slug, allowedSlugPrefixes) {
   });
 }
 
-function joinParts(parts, separator) {
-  const filtered = parts.filter((part) => !isAbsentValue(part));
-  return filtered.length ? filtered.join(separator) : null;
+function resolveManifestPath({ manifest, path: manifestPath, label, required = true }) {
+  if (!manifestPath) {
+    if (required) throw new Error(`${label} is required`);
+    return undefined;
+  }
+
+  let current = manifest;
+  for (const segment of manifestPath.split('.')) {
+    if (!isRecord(current) || !hasOwn(current, segment)) {
+      if (required) throw new Error(`${label} ${manifestPath} does not exist`);
+      return undefined;
+    }
+    current = current[segment];
+  }
+  return current;
 }
 
-function cityStateZip(value) {
-  return joinParts([value.city, joinParts([value.state, value.postalCode], ' ')], ', ');
-}
-
-function parseCityStateZip(value) {
-  const match = String(value ?? '').match(/^(.*),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
-  if (!match) return { city: null, state: null, postalCode: null };
-  return { city: match[1], state: match[2], postalCode: match[3] };
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
 }
 
 function snakeFactKey(factKey) {
