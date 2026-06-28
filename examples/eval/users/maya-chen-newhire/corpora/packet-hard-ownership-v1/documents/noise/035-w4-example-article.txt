@@ -1,0 +1,32 @@
+Source System: Payroll Knowledge Base
+Article ID: TAX-US-W4-EX-042
+Published: 2026-06-01T08:20:00-07:00
+Generated: 2026-06-01T08:20:00-07:00
+Status: Published
+Owner Group: Payroll Support
+Document Type: W-4 example article
+
+Title: Completed Form W-4 Example for Payroll Training
+
+This article shows one completed W-4 example used by payroll support when explaining where values appear in LedgerPay. The values below are part of the example article.
+
+Example worker:
+Name: Taylor Brooks
+Address: 772 Pine Street Unit 5
+City, state, ZIP: Seattle, WA 98101
+Social Security number: 000-00-2194
+
+Example W-4 selections:
+Filing status: Head of household
+Multiple jobs or spouse works: checked
+Qualifying children under age 17 amount: 2000
+Other dependents amount: 500
+Other income: 300
+Deductions: 1200
+Extra withholding per pay period: 75
+
+Example payroll note:
+Taylor Brooks works in a household with multiple jobs and entered additional withholding after using the IRS estimator. Payroll support uses this article to describe the placement of each W-4 value in the employee portal.
+
+Footer:
+Payroll Support knowledge-base articles are for employee education and support-team reference. Official W-4 elections are stored in each employee's LedgerPay tax profile.

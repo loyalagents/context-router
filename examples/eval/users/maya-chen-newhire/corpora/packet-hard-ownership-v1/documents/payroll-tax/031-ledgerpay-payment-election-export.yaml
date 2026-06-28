@@ -1,0 +1,37 @@
+source_system: LedgerPay
+export_id: LP-PAY-ELECT-20792-20260626
+exported_at: 2026-06-26T11:04:00-07:00
+status: confirmed
+record_type: payment_election_export
+field_ids:
+  - employee.worker_id
+  - employee.display_name
+  - payment.account_holder_name
+  - payment.institution_name
+  - payment.routing_number
+  - payment.account_number
+  - payment.account_type
+  - payment.deposit_allocation
+
+employee:
+  worker_id: PLC-20792
+  display_name: Noah Kim
+  department: Client Operations
+  work_location: Oakland Operations Hub
+  payroll_group: CA-Biweekly
+
+payment_election:
+  election_id: DD-NK-20792-20260626
+  account_holder_name: Noah Kim
+  institution_name: Northstar Community Bank
+  account_type: savings
+  routing_number: "122105278"
+  account_number: "663904228017"
+  deposit_allocation: remainder
+  prenote_required: true
+  confirmation_timestamp: 2026-06-26T11:02:41-07:00
+
+review:
+  reviewer_group: North Bay Payroll Team
+  reviewer_note: The payment election above is attached to worker PLC-20792 in LedgerPay. The account holder name and worker profile agree.
+  retention_bucket: payroll-payment-elections

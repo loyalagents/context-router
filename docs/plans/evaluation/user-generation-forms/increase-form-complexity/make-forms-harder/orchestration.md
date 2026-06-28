@@ -1,7 +1,7 @@
 # Make Forms Harder Orchestration
 
 - Status: planning
-- Last updated: 2026-06-27
+- Last updated: 2026-06-28
 - Scope: staged hardening of the Maya new-hire packet after `packet-medium`
 
 ## Goal
@@ -60,7 +60,7 @@ Recommended PRs:
 1. Planning documentation.
 2. Ownership packet fixture: skeleton, first ownership document batch,
    manifest metadata, validation report, three scenarios, and implementation
-   summary.
+   summary. Implemented and validated in `ownership-hardening/`.
 3. Ownership live-results summary and any tiny directly related cleanup.
 4. Conflict packet fixture: skeleton, first conflict/temporal document batch,
    manifest metadata, validation report, three scenarios, and implementation
@@ -73,6 +73,42 @@ separate from each other even when the fixture mechanics are similar.
 
 Do not combine ownership and conflict in the same first fixture PR. That
 boundary matters more than separating skeleton creation from document authoring.
+
+## Current Ownership Fixture Status
+
+`packet-hard-ownership-v1` is implemented and validated as a fixture-only hard
+ownership packet.
+
+Implementation docs:
+
+- `ownership-hardening/implementation-plan.md`
+- `ownership-hardening/implementation-summary.md`
+
+Fixture shape:
+
+- one new corpus: `packet-hard-ownership-v1`;
+- 35 total documents: copied `packet-medium` baseline plus five ownership
+  challenge documents;
+- three independent one-form scenarios for I-9, W-4, and direct deposit;
+- no runner, scorer, backend, MCP, form-map, schema, or Maya profile changes.
+
+Validation status:
+
+```text
+focused corpus validation: 0 errors, 48 warnings
+whole-tree validation:     0 errors, 105 warnings
+eval script tests:         313 passed
+```
+
+The new fixture introduced no `DOCUMENT_STALE_CUE_MISSING` warnings and no
+forbidden current Maya values in ownership challenge bodies. The warning delta
+is expected `DOCUMENT_SOURCE_PHONE_PRESENT` signal from mixed ownership
+documents that contain current non-Maya phone values while Maya `contact.phone`
+remains intentionally missing.
+
+Checkpoint 5 remains the next step. The expected live-run signal is whether
+Noah, Elena, Victor, Ari, or Taylor values appear in active memory, filled form
+fields, wrong-fact counts, or overfill counts compared with `packet-medium`.
 
 ## Difficulty Order
 
@@ -174,7 +210,9 @@ For each ownership challenge document:
 
 - set `category` to the closest current enum, often `noise`,
   `employer-context`, or `hr-onboarding`;
-- set `evaluationRole.expectedUse` to `ignore` or `guardrail`;
+- set `evaluationRole.expectedUse` to `ignore` for pure non-Maya documents,
+  `corroborate` for mixed documents with some Maya-owned facts, or `guardrail`
+  only for genuinely stale or unsafe current-use material;
 - set `evaluationRole.freshness` honestly, usually `current` or `unknown`;
 - set `evaluationRole.authority` based on source role, not usefulness;
 - set `evaluationRole.challengeTags` with ownership labels;
