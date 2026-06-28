@@ -1,0 +1,36 @@
+source_system: HarborHire
+export_id: HH-EMERG-PLC-20418-20260625
+exported_at: 2026-06-25T11:26:00-07:00
+status: active
+record_type: emergency_contact_profile
+field_ids:
+  - employee.worker_id
+  - employee.display_name
+  - emergency_contact.name
+  - emergency_contact.relationship
+  - emergency_contact.phone
+  - emergency_contact.email
+  - emergency_contact.mailing_address
+
+employee:
+  worker_id: PLC-20418
+  display_name: Maya Chen
+  onboarding_task: emergency contact setup
+
+emergency_contact:
+  name: Elena Chen
+  relationship: Mother
+  primary_phone: 415-555-0182
+  email: elena.chen.family.test
+  mailing_address:
+    street: 418 NW Everett Street
+    unit: Apt 6B
+    city: Portland
+    state: OR
+    postal_code: "97209"
+  consent_to_contact: true
+
+review:
+  reviewed_by: Priya Shah
+  reviewer_note: The contact section stores the person HarborHire should reach if the employee is unavailable. The employee record remains PLC-20418.
+  retention_bucket: emergency-contact-profiles

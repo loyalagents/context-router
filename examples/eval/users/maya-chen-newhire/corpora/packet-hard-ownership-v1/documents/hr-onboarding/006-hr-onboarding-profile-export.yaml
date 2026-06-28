@@ -1,0 +1,97 @@
+export_details:
+  source_system: HarborHire
+  export_id: "exp-b3f9a1c0-4d5e-4f6a-8b9c-2d1e0f3a7b8c"
+  export_timestamp: "2026-06-25T11:18:00-07:00"
+  schema_version: "v2.1.0"
+  notes: "Export of new hire profile data for integration and archival purposes."
+profile_data:
+  record_id: "prof-9a8b7c6d-5e4f-3a2b-1c0d-e9f8a7b6c5d4"
+  worker_id: "PLC-20418"
+  profile_status: "ONBOARDING_IN_PROGRESS"
+  created_at: "2026-06-22T09:45:12-07:00"
+  last_updated_at: "2026-06-25T10:55:00-07:00"
+  personal_information:
+    legal_name_components:
+      first_name: "Maya"
+      middle_initial: "L"
+      last_name: "Chen"
+    legal_name: "Maya Lin Chen"
+    preferred_name: null
+    pronouns: null
+  contact_information:
+    email:
+      address: "maya.chen@gmail.test"
+      is_primary: true
+    phone_numbers:
+      mobile: null
+      work: null
+  address_information:
+    current_address:
+      street_line_1: "2846 Ashbury Street"
+      street_line_2: "Apt 3D"
+      city: "Oakland"
+      state_province_code: "CA"
+      postal_code: "94609"
+      country_code: "USA"
+      full_address: "2846 Ashbury Street Apt 3D, Oakland, CA 94609"
+      is_mailing: true
+      is_physical: true
+      verification_status: "NOT_VERIFIED"
+  employment_information:
+    company_name: "Pacific Ledger Cooperative"
+    job_title: "Client Operations Associate"
+    start_date: "2026-07-06"
+    employment_type: "Full-Time"
+    cost_center: null
+    department: null
+    manager_id: null
+  onboarding_workflow:
+    workflow_id: "onb-flow-88a7b1"
+    status: "IN_PROGRESS"
+    assigned_hr_specialist: "hr-specialist-04"
+    tasks:
+      - task_id: "doc-001"
+        task_name: "Offer Letter Review & Signature"
+        status: "COMPLETED"
+        completed_at: "2026-06-22T10:01:45-07:00"
+      - task_id: "form-i9"
+        task_name: "I-9 Employment Eligibility Verification"
+        status: "NOT_STARTED"
+        due_date: "2026-07-09"
+      - task_id: "form-w4"
+        task_name: "W-4 Federal Tax Withholding"
+        status: "NOT_STARTED"
+        due_date: "2026-07-06"
+      - task_id: "direct-deposit"
+        task_name: "Direct Deposit Setup"
+        status: "NOT_STARTED"
+        due_date: "2026-07-06"
+      - task_id: "benefits-enroll"
+        task_name: "Benefits Enrollment"
+        status: "NOT_STARTED"
+        due_date: "2026-07-20"
+      - task_id: "policy-ack"
+        task_name: "Company Policy Acknowledgement"
+        status: "PENDING_EMPLOYEE"
+        due_date: "2026-07-06"
+  audit_trail:
+    - event: "PROFILE_CREATED"
+      timestamp: "2026-06-15T14:20:00-07:00"
+      actor: "system"
+      note: "Profile created via external application from candidate Maya Chen."
+    - event: "STATUS_UPDATE"
+      timestamp: "2026-06-20T11:00:00-07:00"
+      actor: "hr-manager-01"
+      note: "Status changed to OFFER_EXTENDED. Offer letter sent to maya.chen@gmail.test."
+    - event: "STATUS_UPDATE"
+      timestamp: "2026-06-22T09:45:10-07:00"
+      actor: "system"
+      note: "Candidate accepted the offer. Status changed to OFFER_ACCEPTED."
+    - event: "WORKFLOW_TRIGGER"
+      timestamp: "2026-06-22T09:45:12-07:00"
+      actor: "system"
+      note: "Onboarding workflow initiated. Worker ID PLC-20418 assigned."
+    - event: "DATA_UPDATE"
+      timestamp: "2026-06-25T10:55:00-07:00"
+      actor: "employee"
+      note: "Employee updated address information."

@@ -1,5 +1,8 @@
 # Ownership Hardening Packet PR Plan
 
+- Status: implementation-ready
+- Last updated: 2026-06-28
+
 ## Summary
 
 Add one fixture-only packet, `packet-hard-ownership-v1`, to make Maya’s shared-dossier evaluation harder through ownership/admissibility cases. Keep one shared corpus and three independent one-form scenarios. Do not change runner, scorer, backend, MCP, form maps, schema, or Maya `profile.yaml`.
