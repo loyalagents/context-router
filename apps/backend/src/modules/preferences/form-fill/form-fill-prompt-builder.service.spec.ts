@@ -49,6 +49,9 @@ describe('FormFillPromptBuilderService', () => {
     expect(prompt).toContain('"value": "medium"');
     expect(prompt).toContain('"slug": "food.spice_tolerance"');
     expect(prompt).toContain('"value": "Alex Rivera"');
+    expect(prompt).toContain('Never return null for any property');
+    expect(prompt).toContain('Omit value for CHECK, UNCHECK, and SKIP actions');
+    expect(prompt).toContain('return SKIP with skipReason');
   });
 
   it('includes optional field policies when provided', () => {
