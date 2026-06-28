@@ -714,6 +714,13 @@ function buildPacketQualitySummary(report) {
       ? `${database.missingAbsentCorrect}/${database.intentionallyMissingTotal}`
       : null,
     memoryActiveValueRecoveryRate: database?.activeValueRecoveryRate ?? null,
+    memoryOwnershipClean: database
+      ? `${database.ownershipDecoyClean ?? 0}/${database.ownershipDecoyTotal ?? 0}`
+      : null,
+    memoryOwnershipForbiddenLeaks: database
+      ? (database.ownershipDecoyForbiddenActiveLeak ?? 0)
+        + (database.ownershipDecoyForbiddenSuggestionLeak ?? 0)
+      : null,
     knownFieldCorrect: `${knownCorrect}/${knownTotal}`,
     knownFieldWrong: knownWrong,
     knownFieldMissing: knownMissing,

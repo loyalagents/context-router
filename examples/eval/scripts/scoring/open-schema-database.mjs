@@ -10,6 +10,10 @@ import {
 } from './database.mjs';
 
 const ACTIVE_STATUS = 'ACTIVE';
+const OWNERSHIP_CLEAN = 'clean';
+const OWNERSHIP_ALLOWED_SCOPED = 'allowed_scoped';
+const OWNERSHIP_FORBIDDEN_ACTIVE_LEAK = 'forbidden_active_leak';
+const OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK = 'forbidden_suggestion_leak';
 
 export async function scoreOpenSchemaDatabaseToFile({
   repoRoot,
@@ -119,6 +123,13 @@ export async function scoreOpenSchemaDatabase({
       usedSuggestionIndexes,
     }),
   );
+  const ownershipDecoyAudit = scoreOwnershipDecoyAudit({
+    manifest,
+    profile,
+    storageMap,
+    activePreferences,
+    suggestions,
+  });
 
   const unscoredActivePreferences = activePreferences
     .filter((_preference, index) => !usedPreferenceIndexes.has(index))
@@ -148,14 +159,249 @@ export async function scoreOpenSchemaDatabase({
       unscoredActivePreferences,
       unscoredSuggestions,
       schemaDiagnostics,
+      ownershipDecoyAudit,
     }),
     knownPresent,
     intentionallyMissing,
+    ownershipDecoyAudit,
     schemaDiagnostics,
     ignoredMemoryPreferences,
     unscoredActivePreferences,
     unscoredSuggestions,
   };
+}
+
+export function scoreOwnershipDecoyAudit({
+  manifest,
+  profile,
+  storageMap,
+  activePreferences,
+  suggestions,
+}) {
+  return buildOwnershipDecoyCases({ manifest, profile, storageMap })
+    .map((auditCase) =>
+      scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }),
+    )
+    .sort(compareOwnershipDecoyRows);
+}
+
+function buildOwnershipDecoyCases({ manifest, profile, storageMap }) {
+  const auditRules = manifest.ownershipAudit;
+  if (!Array.isArray(auditRules)) return [];
+
+  return auditRules.map((rule, index) => {
+    const value = hasOwn(rule, 'value')
+      ? rule.value
+      : resolveManifestPath({
+          manifest,
+          path: rule.valuePath,
+          label: `ownershipAudit[${index}].valuePath`,
+        });
+    if (isAbsentValue(value)) {
+      throw new Error(
+        `ownershipAudit[${index}] ${rule.ownerKey}.${rule.valueLabel} resolved to an absent value`,
+      );
+    }
+
+    const ownerName = resolveOwnershipOwnerName({ manifest, rule, index });
+    const forbiddenFactKeys = unique(rule.forbiddenFactKeys ?? []);
+
+    return {
+      ownerKey: rule.ownerKey,
+      ownerName,
+      valueLabel: rule.valueLabel,
+      value,
+      allowedSlugPrefixes: unique(rule.allowedSlugPrefixes ?? []).sort(),
+      forbiddenFactKeys: forbiddenFactKeys.sort(),
+      forbiddenSlugs: slugsForForbiddenFactKeys({
+        factKeys: forbiddenFactKeys,
+        profile,
+        storageMap,
+      }),
+    };
+  });
+}
+
+function resolveOwnershipOwnerName({ manifest, rule, index }) {
+  if (hasOwn(rule, 'ownerName')) return rule.ownerName;
+
+  if (rule.ownerNamePath) {
+    const ownerName = resolveManifestPath({
+      manifest,
+      path: rule.ownerNamePath,
+      label: `ownershipAudit[${index}].ownerNamePath`,
+    });
+    if (!isAbsentValue(ownerName)) return String(ownerName);
+  }
+
+  const fallbackPath = `artifactWorld.ownershipDecoys.${rule.ownerKey}.name`;
+  const ownerName = resolveManifestPath({
+    manifest,
+    path: fallbackPath,
+    label: `ownershipAudit[${index}] fallback owner name`,
+    required: false,
+  });
+  if (!isAbsentValue(ownerName)) return String(ownerName);
+
+  throw new Error(
+    `ownershipAudit[${index}] ${rule.ownerKey}.${rule.valueLabel} is missing ownerName or ownerNamePath`,
+  );
+}
+
+function scoreOwnershipDecoyCase({ auditCase, activePreferences, suggestions }) {
+  const matchingActiveRows = sortPreferenceSummaries(
+    activePreferences
+      .filter((preference) => ownershipValueMatchesPreference(auditCase, preference))
+      .map(preferenceSummary),
+  );
+  const matchingSuggestionRows = sortPreferenceSummaries(
+    suggestions
+      .filter((preference) => ownershipValueMatchesPreference(auditCase, preference))
+      .map(preferenceSummary),
+  );
+  const allowedActiveRows = matchingActiveRows.filter((row) =>
+    slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const allowedSuggestionRows = matchingSuggestionRows.filter((row) =>
+    slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const forbiddenActiveRows = matchingActiveRows.filter(
+    (row) => !slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+  const forbiddenSuggestionRows = matchingSuggestionRows.filter(
+    (row) => !slugIsAllowed(row.slug, auditCase.allowedSlugPrefixes),
+  );
+
+  return {
+    ...auditCase,
+    matchingActiveRows,
+    matchingSuggestionRows,
+    allowedActiveRows,
+    forbiddenActiveRows,
+    allowedSuggestionRows,
+    forbiddenSuggestionRows,
+    classification: classifyOwnershipDecoy({
+      matchingActiveRows,
+      matchingSuggestionRows,
+      forbiddenActiveRows,
+      forbiddenSuggestionRows,
+    }),
+  };
+}
+
+function classifyOwnershipDecoy({
+  matchingActiveRows,
+  matchingSuggestionRows,
+  forbiddenActiveRows,
+  forbiddenSuggestionRows,
+}) {
+  if (forbiddenActiveRows.length > 0) return OWNERSHIP_FORBIDDEN_ACTIVE_LEAK;
+  if (forbiddenSuggestionRows.length > 0) return OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK;
+  if (matchingActiveRows.length > 0 || matchingSuggestionRows.length > 0) {
+    return OWNERSHIP_ALLOWED_SCOPED;
+  }
+  return OWNERSHIP_CLEAN;
+}
+
+function slugsForForbiddenFactKeys({ factKeys, profile, storageMap }) {
+  return unique(
+    factKeys.flatMap((factKey) => {
+      const storage = storageSpecForFact(factKey, { profile, storageMap });
+      return [
+        ...storage.acceptedSlugs,
+        factKey,
+        snakeFactKey(factKey),
+        `profile.${snakeFactKey(factKey)}`,
+      ];
+    }),
+  ).sort();
+}
+
+function ownershipValueMatchesPreference(auditCase, preference) {
+  if (!valueContainsOwnershipValue(auditCase.value, preference.value)) return false;
+  if (typeof auditCase.value !== 'boolean') return true;
+  return (
+    slugIsAllowed(preference.slug, auditCase.allowedSlugPrefixes) ||
+    slugIsAllowed(preference.slug, auditCase.forbiddenSlugs)
+  );
+}
+
+function valueContainsOwnershipValue(expected, actual) {
+  const expectedVariants = ownershipScalarVariants(expected);
+  return flattenScalarValues(actual).some((value) => {
+    for (const variant of ownershipScalarVariants(value)) {
+      if (expectedVariants.has(variant)) return true;
+    }
+    return false;
+  });
+}
+
+function flattenScalarValues(value) {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.flatMap(flattenScalarValues);
+  if (isRecord(value)) return Object.values(value).flatMap(flattenScalarValues);
+  return [value];
+}
+
+function ownershipScalarVariants(value) {
+  const normalized = normalizeOwnershipScalar(value);
+  if (!normalized) return new Set();
+  const variants = new Set([normalized]);
+  const raw = String(value);
+  const digits = raw.replace(/\D/g, '');
+  if (digits && digits !== raw) variants.add(digits);
+  return variants;
+}
+
+function normalizeOwnershipScalar(value) {
+  if (value == null) return '';
+  return String(value).trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
+function slugIsAllowed(slug, allowedSlugPrefixes) {
+  return allowedSlugPrefixes.some((prefix) => {
+    if (prefix.endsWith('.')) {
+      return slug === prefix.slice(0, -1) || slug.startsWith(prefix);
+    }
+    return slug === prefix || slug.startsWith(`${prefix}.`);
+  });
+}
+
+function resolveManifestPath({ manifest, path: manifestPath, label, required = true }) {
+  if (!manifestPath) {
+    if (required) throw new Error(`${label} is required`);
+    return undefined;
+  }
+
+  let current = manifest;
+  for (const segment of manifestPath.split('.')) {
+    if (!isRecord(current) || !hasOwn(current, segment)) {
+      if (required) throw new Error(`${label} ${manifestPath} does not exist`);
+      return undefined;
+    }
+    current = current[segment];
+  }
+  return current;
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function snakeFactKey(factKey) {
+  return factKey
+    .split('.')
+    .map((segment) =>
+      segment
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+        .toLowerCase(),
+    )
+    .join('.');
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function scoreOpenKnownFact({
@@ -494,9 +740,11 @@ function buildOpenDatabaseSummary({
   unscoredActivePreferences,
   unscoredSuggestions,
   schemaDiagnostics,
+  ownershipDecoyAudit,
 }) {
   const knownCounts = countByClassification(knownPresent);
   const missingCounts = countByClassification(intentionallyMissing);
+  const ownershipCounts = countByClassification(ownershipDecoyAudit);
   const activeRecovered = knownPresent.filter(
     (row) => row.valueRecoveredInActiveMemory,
   ).length;
@@ -551,6 +799,14 @@ function buildOpenDatabaseSummary({
       schemaDiagnostics.preferencesMissingDefinitions.length,
     missingDefinitionSuggestionCount:
       schemaDiagnostics.suggestionsMissingDefinitions.length,
+    ownershipDecoyTotal: ownershipDecoyAudit.length,
+    ownershipDecoyClean: ownershipCounts[OWNERSHIP_CLEAN] ?? 0,
+    ownershipDecoyAllowedScoped:
+      ownershipCounts[OWNERSHIP_ALLOWED_SCOPED] ?? 0,
+    ownershipDecoyForbiddenActiveLeak:
+      ownershipCounts[OWNERSHIP_FORBIDDEN_ACTIVE_LEAK] ?? 0,
+    ownershipDecoyForbiddenSuggestionLeak:
+      ownershipCounts[OWNERSHIP_FORBIDDEN_SUGGESTION_LEAK] ?? 0,
   };
 }
 
@@ -655,6 +911,14 @@ function compareDefinitionSummaries(left, right) {
     left.slug.localeCompare(right.slug) ||
     left.namespace.localeCompare(right.namespace) ||
     left.id.localeCompare(right.id)
+  );
+}
+
+function compareOwnershipDecoyRows(left, right) {
+  return (
+    left.ownerKey.localeCompare(right.ownerKey) ||
+    left.valueLabel.localeCompare(right.valueLabel) ||
+    String(left.value).localeCompare(String(right.value))
   );
 }
 

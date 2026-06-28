@@ -328,6 +328,16 @@ test('manifest schema accepts default forbidden facts and rejects unexpected fie
   );
   await mkdir(corpusRoot, { recursive: true });
   await writeJson(path.join(corpusRoot, 'manifest.json'), unitManifest({
+    ownershipAudit: [
+      {
+        ownerKey: 'noahKim',
+        ownerName: 'Noah Kim',
+        valueLabel: 'routingNumber',
+        value: '122105278',
+        allowedSlugPrefixes: ['payroll.other_employee.'],
+        forbiddenFactKeys: ['banking.routingNumber'],
+      },
+    ],
     factContractDefaults: { forbid: ['contact.phone'] },
     intentionallyMissing: [],
     documents: [
@@ -349,6 +359,7 @@ test('manifest schema accepts default forbidden facts and rejects unexpected fie
 
   const plan = await readJson(path.join(corpusRoot, 'manifest.json'));
   plan.unexpectedTopLevelField = true;
+  plan.ownershipAudit[0].unsupportedAuditField = true;
   plan.documents[0].unsupportedPlanField = true;
   await writeJson(path.join(corpusRoot, 'manifest.json'), plan);
 
