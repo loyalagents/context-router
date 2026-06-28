@@ -46,6 +46,7 @@ export interface FormFillValidationEvent {
     | 'policy_condition_resolved'
     | 'policy_condition_active_value_matched'
     | 'policy_condition_conflict_blocked'
+    | 'policy_checkbox_checked_from_resolved_fact'
     | 'policy_fact_conflict_blocked'
     | 'policy_source_slug_resolved'
     | 'pdf_text_max_length_blocked'

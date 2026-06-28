@@ -64,7 +64,7 @@ Recommended PRs:
 3. Ownership live-results summary and any tiny directly related cleanup.
 4. Conflict packet fixture: skeleton, first conflict/temporal document batch,
    manifest metadata, validation report, three scenarios, and implementation
-   summary.
+   summary. Implemented and validated in `conflict-hardening/`.
 5. Conflict live-results summary and any tiny directly related cleanup.
 
 Split a PR when it changes shared eval tooling, scoring contracts, backend form
@@ -109,6 +109,47 @@ remains intentionally missing.
 Checkpoint 5 remains the next step. The expected live-run signal is whether
 Noah, Elena, Victor, Ari, or Taylor values appear in active memory, filled form
 fields, wrong-fact counts, or overfill counts compared with `packet-medium`.
+
+## Current Conflict Fixture Status
+
+`packet-hard-conflict-v1` is implemented and validated as a fixture-only hard
+conflict/temporal-validity packet.
+
+Implementation docs:
+
+- `conflict-hardening/implementation-plan.md`
+- `conflict-hardening/implementation-summary.md`
+
+Fixture shape:
+
+- one new corpus: `packet-hard-conflict-v1`;
+- 35 total documents: copied `packet-medium` baseline plus five
+  conflict/temporal challenge documents;
+- based on `packet-medium`, not `packet-hard-ownership-v1`, so conflict
+  failures can be attributed separately from ownership failures;
+- three independent one-form scenarios for I-9, W-4, and direct deposit;
+- no runner, scorer, backend, MCP, form-map, schema, or Maya profile changes.
+
+Validation status:
+
+```text
+focused corpus validation: 0 errors, 46 warnings
+whole-tree validation:     0 errors, 151 warnings
+eval script tests:         314 passed
+```
+
+All focused-corpus warnings are inherited from the copied `packet-medium`
+baseline. The new conflict documents introduced no `DOCUMENT_STALE_CUE_MISSING`
+warnings, no new `DOCUMENT_SOURCE_PHONE_PRESENT` warnings, no missing declared
+facts, and no forbidden current Maya values in pure stale/draft challenge
+bodies.
+
+The next conflict step is a live MCP/direct comparison. The expected live-run
+signal is whether Redwood Mutual Bank, `121042882`, `618270449305`,
+`1724 Parker Street Unit 8`, `maya.l.chen@personalmail.test`,
+`Operations Support Specialist`, `2026-06-30`, `head of household`, `913`,
+`2475`, or `127` appear in active memory, extracted facts, filled forms,
+wrong-fact counts, or overfill counts compared with `packet-medium`.
 
 ## Difficulty Order
 

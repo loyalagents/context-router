@@ -1,0 +1,1422 @@
+{
+  "schemaVersion": 1,
+  "status": "pass",
+  "summary": {
+    "profiles": 1,
+    "corpora": 1,
+    "forms": 3,
+    "scenarios": 0,
+    "templates": 7,
+    "errors": 0,
+    "warnings": 46
+  },
+  "corpusTruth": {
+    "summary": {
+      "documentsChecked": 35,
+      "factsProvenPresent": 103,
+      "factsMissing": 0,
+      "unsupportedDeclaredFacts": 0,
+      "factsProvenAbsent": 13,
+      "forbiddenFactsPresent": 0,
+      "warningOnlyAbsenceChecks": 20,
+      "skippedAbsenceChecks": 15,
+      "invalidAbsenceChecks": 0,
+      "withheldValuesProvenAbsent": 20,
+      "withheldValuesPresent": 0,
+      "withheldValuesSkipped": 15,
+      "hardFailures": 0,
+      "unsupportedDeclaredFactKeys": []
+    },
+    "documents": [
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-001",
+        "path": "documents/identity/001-driver-license-upload-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.dateOfBirth",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-002",
+        "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-003",
+        "path": "documents/identity/003-identity-verification-note.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.middleInitial",
+            "identity.lastName",
+            "identity.dateOfBirth",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-004",
+        "path": "documents/work-authorization/004-i9-section-one-draft-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.middleInitial",
+            "identity.dateOfBirth",
+            "identity.ssn",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "contact.email",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-005",
+        "path": "documents/work-authorization/005-work-authorization-intake-field-export.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "workAuthorization.citizenshipStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-006",
+        "path": "documents/hr-onboarding/006-hr-onboarding-profile-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.middleInitial",
+            "identity.legalName",
+            "contact.email",
+            "address.current.streetLine",
+            "address.current.cityStateZip",
+            "employment.company",
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-007",
+        "path": "documents/hr-onboarding/007-employee-self-service-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "contact.email",
+            "address.current.streetLine",
+            "address.current.cityStateZip"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-008",
+        "path": "documents/hr-onboarding/008-onboarding-assignment-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-009",
+        "path": "documents/employer-context/009-offer-email.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "employment.company",
+            "employment.title",
+            "employment.startDate",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-010",
+        "path": "documents/employer-context/010-company-directory-profile.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "employment.title",
+            "employment.company",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-011",
+        "path": "documents/payroll-tax/011-w4-withholding-setup-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.firstName",
+            "identity.lastName",
+            "identity.ssn",
+            "address.current.streetLine",
+            "address.current.cityStateZip",
+            "tax.filingStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-012",
+        "path": "documents/payroll-tax/012-payroll-tax-profile.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "tax.filingStatus"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-013",
+        "path": "documents/payroll-tax/013-w4-review-note.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "tax.filingStatus",
+            "identity.ssn"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-014",
+        "path": "documents/employer-context/014-w4-instructions.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-015",
+        "path": "documents/noise/015-blank-sample-w4-packet.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-016",
+        "path": "documents/payroll-tax/016-direct-deposit-confirmation.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.streetLine",
+            "address.current.city",
+            "address.current.state",
+            "address.current.postalCode",
+            "banking.accountHolderName",
+            "banking.institutionName",
+            "banking.accountType",
+            "banking.routingNumber",
+            "banking.accountNumber"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-017",
+        "path": "documents/payroll-tax/017-bank-verification-letter-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "banking.accountHolderName",
+            "banking.institutionName",
+            "banking.routingNumber",
+            "banking.accountNumber",
+            "banking.accountType"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-018",
+        "path": "documents/payroll-tax/018-voided-check-ocr.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "banking.accountHolderName",
+            "banking.routingNumber",
+            "banking.accountNumber"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-019",
+        "path": "documents/employer-context/019-payroll-direct-deposit-instructions.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-020",
+        "path": "documents/noise/020-sample-direct-deposit-packet-jordan.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-021",
+        "path": "documents/employer-context/021-benefits-enrollment-profile.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "identity.legalName",
+            "address.current.streetLine",
+            "address.current.cityStateZip",
+            "contact.email"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-022",
+        "path": "documents/employer-context/022-payroll-preview-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.company",
+            "employment.title"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-023",
+        "path": "documents/hr-onboarding/023-onboarding-support-ticket.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "address.current.streetLine",
+            "address.current.cityStateZip"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-024",
+        "path": "documents/hr-onboarding/024-employee-profile-audit-log.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "employment.workEmail"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [
+            "contact.phone"
+          ],
+          "skipped": [],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [
+            "contact.phone"
+          ],
+          "present": [],
+          "skipped": []
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-025",
+        "path": "documents/partial-conflicting/025-stale-recruiter-profile.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "contact.email",
+            "address.current.street",
+            "address.current.unit",
+            "address.current.city",
+            "address.current.postalCode"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-026",
+        "path": "documents/partial-conflicting/026-stale-payroll-bank-draft.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "banking.institutionName",
+            "banking.accountNumber",
+            "banking.routingNumber"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-027",
+        "path": "documents/partial-conflicting/027-stale-onboarding-export.yaml",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.title",
+            "employment.startDate"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-028",
+        "path": "documents/noise/028-other-employee-sample-packet.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-029",
+        "path": "documents/noise/029-other-employee-w4-tax-sample.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-030",
+        "path": "documents/noise/030-payroll-support-faq.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-031",
+        "path": "documents/payroll-tax/031-ledgerpay-deposit-change-audit.yaml",
+        "declaredFacts": {
+          "provenPresent": [
+            "banking.accountHolderName",
+            "banking.institutionName",
+            "banking.accountType",
+            "banking.routingNumber",
+            "banking.accountNumber"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-032",
+        "path": "documents/hr-onboarding/032-harborhire-profile-change-history.json",
+        "declaredFacts": {
+          "provenPresent": [
+            "contact.email",
+            "address.current.streetLine",
+            "address.current.cityStateZip"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-033",
+        "path": "documents/partial-conflicting/033-recruiting-offer-draft-export.txt",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "employment.title",
+            "employment.startDate"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-034",
+        "path": "documents/partial-conflicting/034-ledgerpay-w4-draft-autosave.yaml",
+        "declaredFacts": {
+          "provenPresent": [],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [
+            "tax.filingStatus"
+          ],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      },
+      {
+        "id": "maya-chen-newhire-packet-hard-conflict-v1-035",
+        "path": "documents/hr-onboarding/035-hr-support-correction-thread.txt",
+        "declaredFacts": {
+          "provenPresent": [
+            "employment.title",
+            "employment.startDate"
+          ],
+          "missing": [],
+          "unsupported": []
+        },
+        "forbiddenFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "warningOnly": [],
+          "skipped": [
+            "contact.phone"
+          ],
+          "invalid": []
+        },
+        "withheldFacts": {
+          "provenAbsent": [],
+          "present": [],
+          "skipped": [
+            "contact.phone"
+          ]
+        }
+      }
+    ]
+  },
+  "issues": [
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/0/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-001 length 3570 is outside sourceSpec target 1806-3206.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/1/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-002 length 3408 is outside sourceSpec target 1424-2824.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/2/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-003 length 3652 is outside sourceSpec target 1674-3074.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/3/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-004 length 3485 is outside sourceSpec target 1925-3325.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_TXT_MARKDOWN_STYLE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/4",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-005 is a .txt file but contains Markdown-like formatting.",
+      "fix": "Use plain text formatting or change the planned file extension."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/4/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-005 length 3061 is outside sourceSpec target 1587-2987.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/5/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-006 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/7/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-008 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/7/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-008 length 3666 is outside sourceSpec target 1756-3156.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/8",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-009 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/8/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-009 length 3429 is outside sourceSpec target 1978-3378.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/8",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-009 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/9/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-010 length 3243 is outside sourceSpec target 1630-3030.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/11",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-012 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/11/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-012 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/11",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-012 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/12/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-013 length 3996 is outside sourceSpec target 1624-3024.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/13/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-014 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/13/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-014 length 4779 is outside sourceSpec target 1636-3036.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/14/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-015 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/14/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-015 length 4427 is outside sourceSpec target 1434-2834.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/15/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-016 length 4479 is outside sourceSpec target 2364-3764.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/16",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-017 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/16/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-017 length 3931 is outside sourceSpec target 1935-3335.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/16",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-017 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/17/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-018 length 4753 is outside sourceSpec target 1797-3197.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/18/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-019 length 5547 is outside sourceSpec target 1883-3283.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/19/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-020 length 4423 is outside sourceSpec target 1863-3263.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/20/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-021 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/20/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-021 length 3425 is outside sourceSpec target 1844-3244.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/21/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-022 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_MISSING_FACT_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/22",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-023 may contain value-like text even though contact.phone is intentionally missing.",
+      "fix": "Remove the value-like text or mark the document stale, mixed, guardrail, or third-party if appropriate."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/22/sourceSpec/nativeSignals/0",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-023 is missing native source signal \"source system\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/22",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-023 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/23/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-024 length 2966 is outside sourceSpec target 1538-2938.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/24/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-025 is missing native source signal \"ticket id\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/25/sourceSpec/nativeSignals/4",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-026 is missing native source signal \"reviewer note\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/25/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-026 length 4051 is outside sourceSpec target 1942-3342.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/26/sourceSpec/nativeSignals/3",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-027 is missing native source signal \"field ids\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/26/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-027 length 4185 is outside sourceSpec target 1749-3149.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/27/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-028 length 4310 is outside sourceSpec target 1784-3184.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/28/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-029 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/28/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-029 length 4438 is outside sourceSpec target 1751-3151.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_NATIVE_SIGNAL_MISSING",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/29/sourceSpec/nativeSignals/1",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-030 is missing native source signal \"timestamp\".",
+      "fix": "Add the native signal in a way that matches the artifact source and format."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_LENGTH_OUT_OF_RANGE",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/29/sourceSpec/lengthTarget",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-030 length 4544 is outside sourceSpec target 1972-3372.",
+      "fix": "Adjust body density or sourceSpec.lengthTarget."
+    },
+    {
+      "level": "warning",
+      "code": "DOCUMENT_SOURCE_PHONE_PRESENT",
+      "file": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1/manifest.json",
+      "pointer": "/documents/29",
+      "message": "Document maya-chen-newhire-packet-hard-conflict-v1-030 contains phone-like text while contact.phone is intentionally missing.",
+      "fix": "Redact source phone values or add source-fact ownership metadata before using them."
+    }
+  ]
+}

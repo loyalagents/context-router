@@ -184,6 +184,7 @@ test('direct-open-schema builds hidden-truth-safe extraction and fact-only fill 
   assert.match(fillPrompt, /targetFactKey/);
   assert.match(fillPrompt, /semanticNote/);
   assert.match(fillPrompt, /strongest field-meaning hints/);
+  assert.match(fillPrompt, /do not use emergency-contact phone facts/);
   assert.match(fillPrompt, /render dates as MMDDYYYY/);
   assert.match(fillPrompt, /combine street plus unit\/apartment/);
   assert.match(fillPrompt, /render as City, ST ZIP/);
@@ -513,6 +514,92 @@ test('direct-open-schema validates fact-only fill actions and derives source slu
   assert.equal(result.provenanceDiagnostics.unknownSourceFactIdCount, 1);
 });
 
+test('direct-open-schema keeps contact phone fillable while rejecting emergency contact phone sources', () => {
+  const fields = [
+    {
+      fieldName: 'User Phone',
+      fieldType: 'text',
+      targetFactKey: 'contact.phone',
+      options: [],
+    },
+    {
+      fieldName: 'Emergency Phone Leak',
+      fieldType: 'text',
+      targetFactKey: 'contact.phone',
+      options: [],
+    },
+  ];
+  const facts = [
+    {
+      factId: 'fact-0001',
+      slug: 'contact.phone',
+      label: 'Phone number',
+      valueType: 'STRING',
+      value: '415-555-0109',
+      confidence: 0.9,
+      evidence: [{ documentId: 'doc-1', quote: '415-555-0109' }],
+    },
+    {
+      factId: 'fact-0002',
+      slug: 'identity.emergency_contact.primary_phone',
+      label: 'Emergency Contact Primary Phone',
+      valueType: 'STRING',
+      value: '415-555-0182',
+      confidence: 0.9,
+      evidence: [{ documentId: 'doc-2', quote: '415-555-0182' }],
+    },
+  ];
+
+  const result = validateFactFillActions({
+    fields,
+    facts,
+    actions: [
+      {
+        fieldName: 'User Phone',
+        action: 'SET_TEXT',
+        value: '415-555-0109',
+        sourceFactIds: ['fact-0001'],
+        confidence: 0.9,
+      },
+      {
+        fieldName: 'Emergency Phone Leak',
+        action: 'SET_TEXT',
+        value: '415-555-0182',
+        sourceFactIds: ['fact-0002'],
+        confidence: 0.9,
+      },
+    ],
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.validActions, [
+    {
+      fieldName: 'User Phone',
+      fieldType: 'text',
+      action: 'SET_TEXT',
+      value: '415-555-0109',
+      sourceSlugs: ['contact.phone'],
+      confidence: 0.9,
+    },
+  ]);
+  assert.equal(
+    result.diagnostics.invalidActionReasonCounts[
+      'contact.phone cannot use emergency contact source fact'
+    ],
+    1,
+  );
+  assert.deepEqual(
+    result.skippedFields.find((field) => field.pdfFieldName === 'Emergency Phone Leak'),
+    {
+      pdfFieldName: 'Emergency Phone Leak',
+      fieldType: 'text',
+      reason: 'contact.phone cannot use emergency contact source fact',
+      confidence: 0.9,
+      sourceSlugs: [],
+    },
+  );
+});
+
 test('direct-open-schema writes form artifacts and skips diagnostic extraction scoring when requested', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-form-only-'));
   const result = await runDirectOpenSchema({
@@ -555,7 +642,7 @@ test('direct-open-schema writes form artifacts and skips diagnostic extraction s
 
   const fillResponse = JSON.parse(await readFile(path.join(tmp, 'direct-open-schema-fill-response.json'), 'utf8'));
   assert.equal(fillResponse.artifactType, 'direct-open-schema-fill-response');
-  assert.equal(fillResponse.promptVersion, 'direct-open-schema-fill-v3');
+  assert.equal(fillResponse.promptVersion, 'direct-open-schema-fill-v4');
   assert.equal(fillResponse.validActionCount, 4);
   const firstNameAction = fillResponse.parsed.fillActions.find(
     (action) => action.fieldName === 'First Name Given Name',
