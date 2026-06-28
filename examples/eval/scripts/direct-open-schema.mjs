@@ -9,6 +9,7 @@ import { loadScenarioFixture } from './eval-runner/fixtures.mjs';
 import { loadBackendPdfLib, readFilledPdfFields } from './eval-runner/pdf.mjs';
 import { buildFilledFormSnapshot } from './eval-runner/snapshots.mjs';
 import {
+  DEFAULT_MAX_EVIDENCE_CHARS,
   buildPromptFieldMetadata,
   fillPdfFromActions,
   loadEvidenceDocuments,
@@ -87,6 +88,7 @@ export async function runDirectOpenSchema({
     const evidenceDocuments = await loadEvidenceDocuments({
       manifest: fixture.manifest,
       documentsRoot,
+      maxEvidenceChars: options.maxEvidenceChars,
     });
     const fieldMetadata = buildDirectOpenSchemaFieldMetadata(
       buildPromptFieldMetadata(fixture),
@@ -339,6 +341,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     provider: 'vertex',
     model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL,
     temperature: DEFAULT_TEMPERATURE,
+    maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
     skipExtractionScoring: false,
   };
   const valueArgs = new Set([
@@ -348,6 +351,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--provider',
     '--model',
     '--temperature',
+    '--max-evidence-chars',
     '--run-id',
   ]);
 
@@ -372,6 +376,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--provider') options.provider = value;
     if (arg === '--model') options.model = value;
     if (arg === '--temperature') options.temperature = Number(value);
+    if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
     if (arg === '--run-id') options.runId = value;
   }
 
@@ -396,6 +401,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     options.temperature > 2
   ) {
     return { kind: 'usage-error', message: '--temperature must be a number from 0 to 2.' };
+  }
+  if (!isPositiveInteger(options.maxEvidenceChars)) {
+    return { kind: 'usage-error', message: '--max-evidence-chars must be a positive integer.' };
   }
   if (!options.model) {
     return {
@@ -424,6 +432,7 @@ export function usage() {
     '  --provider vertex                Only vertex is supported',
     '  --model <model>                  Defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL',
     '  --temperature <number>           Defaults to 0.2',
+    `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
     '  --run-id <id>                    Defaults to direct-open-schema-<scenario>-<timestamp>',
     '  --skip-extraction-scoring        Skip synthetic memory snapshot and PR2 diagnostic reports',
   ].join('\n');
@@ -1361,6 +1370,10 @@ function valueMatchesType(value, valueType) {
   if (valueType === 'BOOLEAN') return typeof value === 'boolean';
   if (valueType === 'ARRAY') return Array.isArray(value);
   return false;
+}
+
+function isPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
 }
 
 function failedResult({ label, lines }) {

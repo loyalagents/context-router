@@ -32,6 +32,14 @@ import {
   writeJson,
 } from './scoring/io.mjs';
 import { isFixtureId } from './shared.mjs';
+import {
+  DEFAULT_DOCUMENT_ORDER,
+  DEFAULT_DOCUMENT_ORDER_SEED,
+  buildPacketDocumentMetadata,
+  loadPacketDocumentStats,
+  orderPacketDocuments,
+  validateDocumentOrder,
+} from './packet-documents.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -136,17 +144,38 @@ export async function runMcpPacketE2E({
       throw new Error(formatExportMemorySnapshotResult(definitionBaseline));
     }
 
+    const orderedDocuments = orderPacketDocuments(
+      setupResult.fixture?.manifest?.documents ?? [],
+      options,
+    );
+    const documentStats = await loadPacketDocumentStats({
+      documentsRoot: path.resolve(
+        repoRoot,
+        setupResult.fixture?.documentsRoot ?? options.documentsRoot,
+      ),
+      documents: orderedDocuments,
+    });
+    report.documents = buildPacketDocumentMetadata({
+      documents: orderedDocuments,
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+      sourceCharCount: documentStats.sourceCharCount,
+    });
+    await writeReport();
+
     const workspace = await prepareAgentWorkspace({
       repoRoot,
       artifacts,
       options,
       fixture: setupResult.fixture,
+      documents: orderedDocuments,
     });
     const prompt = await buildPacketMcpAgentPrompt({
       repoRoot,
       options,
       fixture: setupResult.fixture,
       agentWorkspace: workspace,
+      documents: orderedDocuments,
     });
     await writeText(artifacts.prompt, prompt);
     await writeClaudeSettings({ artifacts, options });
@@ -343,6 +372,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     allowTestCommandAgent: false,
     agentTimeoutMs: DEFAULT_AGENT_TIMEOUT_MS,
     promptTemplate: DEFAULT_PROMPT_TEMPLATE,
+    documentOrder: DEFAULT_DOCUMENT_ORDER,
+    documentOrderSeed: DEFAULT_DOCUMENT_ORDER_SEED,
   };
   const valueArgs = new Set([
     '--agent',
@@ -362,6 +393,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--prompt-template',
     '--mcp-config',
     '--model-label',
+    '--document-order',
+    '--document-order-seed',
     '--location-id',
     '--run-id',
   ]);
@@ -427,6 +460,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--prompt-template') options.promptTemplate = value;
     if (arg === '--mcp-config') options.mcpConfig = value;
     if (arg === '--model-label') options.modelLabel = value;
+    if (arg === '--document-order') options.documentOrder = value;
+    if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--location-id') options.locationId = value;
     if (arg === '--run-id') options.runId = value;
   }
@@ -481,6 +516,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       return { kind: 'usage-error', message: `${label} must contain fixture ids.` };
     }
   }
+  const documentOrderError = validateDocumentOrder(options);
+  if (documentOrderError) {
+    return { kind: 'usage-error', message: documentOrderError };
+  }
+  if (!options.documentOrderSeed) {
+    return { kind: 'usage-error', message: '--document-order-seed must be a non-empty string.' };
+  }
 
   options.documentsRoot =
     options.documentsRoot ??
@@ -510,6 +552,8 @@ export function usage() {
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-open-schema-packet.md',
     '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
+    '  --document-order <mode>           canonical|reverse|seeded-random|relevant-first|relevant-last',
+    `  --document-order-seed <seed>      Defaults to ${DEFAULT_DOCUMENT_ORDER_SEED}`,
     '  --reset-memory                    Clear current backend user memory values before the agent run',
     '  --reset-demo-data                 Clear current backend user demo data, including user-owned definitions',
     '  --location-id <locationId>         Export merged global + location view',
@@ -522,6 +566,7 @@ export async function buildPacketMcpAgentPrompt({
   options,
   fixture,
   agentWorkspace,
+  documents = null,
 }) {
   const loadedFixture =
     fixture ??
@@ -540,6 +585,10 @@ export async function buildPacketMcpAgentPrompt({
   }
   const templatePath = path.resolve(repoRoot, options.promptTemplate);
   const template = await readFile(templatePath, 'utf8');
+  const promptDocuments = documents ?? orderPacketDocuments(
+    loadedFixture.manifest.documents ?? [],
+    options,
+  );
   return renderTemplate(template, {
     MCP_SERVER: options.mcpServer,
     USER_ID: options.userId,
@@ -548,7 +597,7 @@ export async function buildPacketMcpAgentPrompt({
     DOCUMENTS_ROOT: agentWorkspace
       ? displayPath(repoRoot, agentWorkspace.root)
       : displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
-    DOCUMENT_LIST: documentList(loadedFixture.manifest.documents ?? []),
+    DOCUMENT_LIST: documentList(promptDocuments),
     COMPLETION_MARKER,
   });
 }
@@ -614,7 +663,14 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
       mcpServer: options.mcpServer,
       agentTimeoutMs: options.agentTimeoutMs,
       promptTemplate: displayPath(repoRoot, path.resolve(repoRoot, options.promptTemplate)),
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
     },
+    documents: buildPacketDocumentMetadata({
+      documents: [],
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+    }),
     artifacts: {
       prompt: relativePath(repoRoot, artifacts.prompt),
       transcript: relativePath(repoRoot, artifacts.transcript),

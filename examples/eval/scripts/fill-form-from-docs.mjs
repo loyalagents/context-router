@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const DEFAULT_TEMPERATURE = 0.2;
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.75;
-const MAX_EVIDENCE_CHARS = 200_000;
+export const DEFAULT_MAX_EVIDENCE_CHARS = 200_000;
 const TEXT_EXTENSIONS = new Set(['.txt', '.md', '.yaml', '.yml', '.json']);
 const FILL_ACTIONS = new Set(['SET_TEXT', 'CHECK', 'UNCHECK', 'SELECT_OPTION', 'SKIP']);
 
@@ -67,6 +67,7 @@ export async function runFillFormFromDocs({
     const evidenceDocuments = await loadEvidenceDocuments({
       manifest: fixture.manifest,
       documentsRoot,
+      maxEvidenceChars: options.maxEvidenceChars,
     });
     const fieldMetadata = buildPromptFieldMetadata(fixture);
     const prompt = buildDirectFormFillPrompt({ fieldMetadata, evidenceDocuments });
@@ -159,6 +160,7 @@ export async function runFillFormFromDocs({
           fieldMetadata,
           model,
           temperature: options.temperature,
+          maxEvidenceChars: options.maxEvidenceChars,
           rawText,
           aiResult,
           validationResult,
@@ -210,6 +212,7 @@ export function parseArgs(args, env = process.env) {
     backend: 'vertex',
     model: env.EVAL_DIRECT_FORM_FILL_MODEL,
     temperature: DEFAULT_TEMPERATURE,
+    maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
   };
   const valueArgs = new Set([
     '--scenario',
@@ -218,6 +221,7 @@ export function parseArgs(args, env = process.env) {
     '--backend',
     '--model',
     '--temperature',
+    '--max-evidence-chars',
     '--filled-pdf-out',
     '--response-out',
     '--form-score-report',
@@ -240,6 +244,7 @@ export function parseArgs(args, env = process.env) {
     if (arg === '--backend') options.backend = value;
     if (arg === '--model') options.model = value;
     if (arg === '--temperature') options.temperature = Number(value);
+    if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
     if (arg === '--filled-pdf-out') options.filledPdfOut = value;
     if (arg === '--response-out') options.responseOut = value;
     if (arg === '--form-score-report') options.formScoreReport = value;
@@ -267,6 +272,9 @@ export function parseArgs(args, env = process.env) {
   ) {
     return { kind: 'usage-error', message: '--temperature must be a number from 0 to 2.' };
   }
+  if (!isPositiveInteger(options.maxEvidenceChars)) {
+    return { kind: 'usage-error', message: '--max-evidence-chars must be a positive integer.' };
+  }
 
   return { kind: 'ok', options };
 }
@@ -286,13 +294,18 @@ export function usage() {
     '  --backend vertex                 Only vertex is supported',
     '  --model <model>                  Defaults to EVAL_DIRECT_FORM_FILL_MODEL',
     '  --temperature <number>           Defaults to 0.2',
+    `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
     '  --filled-pdf-out <file>          Write the filled PDF for visual review',
     '  --response-out <file>            Write model/validation diagnostics',
     '  --form-score-report <file>       Also run eval:score --mode form output',
   ].join('\n');
 }
 
-export async function loadEvidenceDocuments({ manifest, documentsRoot }) {
+export async function loadEvidenceDocuments({
+  manifest,
+  documentsRoot,
+  maxEvidenceChars = DEFAULT_MAX_EVIDENCE_CHARS,
+}) {
   const root = path.resolve(documentsRoot);
   const documents = [];
   let totalChars = 0;
@@ -309,9 +322,9 @@ export async function loadEvidenceDocuments({ manifest, documentsRoot }) {
     }
     const content = await readFile(absolutePath, 'utf8');
     totalChars += content.length;
-    if (totalChars > MAX_EVIDENCE_CHARS) {
+    if (totalChars > maxEvidenceChars) {
       throw new Error(
-        `Evidence packet exceeds ${MAX_EVIDENCE_CHARS} characters. Reduce corpus size or add document selection before using this runner.`,
+        `Evidence packet exceeds ${maxEvidenceChars} characters. Reduce corpus size or pass --max-evidence-chars with a higher explicit cap.`,
       );
     }
     documents.push({
@@ -320,11 +333,16 @@ export async function loadEvidenceDocuments({ manifest, documentsRoot }) {
       path: toPosixPath(relativeDocPath),
       title: doc.title ?? doc.id,
       category: doc.category ?? null,
+      charCount: content.length,
       content,
     });
   }
 
   return documents;
+}
+
+function isPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
 }
 
 export function buildPromptFieldMetadata(fixture) {
@@ -641,6 +659,7 @@ function buildResponseArtifact({
   fieldMetadata,
   model,
   temperature,
+  maxEvidenceChars,
   rawText,
   aiResult,
   validationResult,
@@ -657,6 +676,7 @@ function buildResponseArtifact({
     formId: fixture.scenario.formId,
     model,
     temperature,
+    maxEvidenceChars,
     documentsRoot: toPosixPath(documentsRoot),
     evidenceDocuments: evidenceDocuments.map((doc) => ({
       id: doc.id,

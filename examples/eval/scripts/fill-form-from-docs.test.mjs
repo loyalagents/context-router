@@ -65,6 +65,8 @@ test('fill-form-from-docs parseArgs handles env model fallback and CLI override'
       'cli-model',
       '--temperature',
       '0.6',
+      '--max-evidence-chars',
+      '1000000',
       '--backend',
       'vertex',
     ],
@@ -73,6 +75,18 @@ test('fill-form-from-docs parseArgs handles env model fallback and CLI override'
   assert.equal(cliOverride.kind, 'ok');
   assert.equal(cliOverride.options.model, 'cli-model');
   assert.equal(cliOverride.options.temperature, 0.6);
+  assert.equal(cliOverride.options.maxEvidenceChars, 1000000);
+
+  const invalidCap = parseArgs([
+    '--scenario',
+    'alex-i9-realistic',
+    '--out',
+    '/tmp/filled-form.json',
+    '--max-evidence-chars',
+    '0',
+  ]);
+  assert.equal(invalidCap.kind, 'usage-error');
+  assert.match(invalidCap.message, /--max-evidence-chars/);
 });
 
 test('fill-form-from-docs normalizes mmddyyyy dates and SSNs for PDF fields', () => {
@@ -148,6 +162,15 @@ test('fill-form-from-docs builds an evidence prompt without fixture truth', asyn
     fieldMetadata.find((field) => field.fieldName === 'Employee Middle Initial (if any)')
       ?.maxLength,
     1,
+  );
+
+  await assert.rejects(
+    () => loadEvidenceDocuments({
+      manifest: fixture.manifest,
+      documentsRoot,
+      maxEvidenceChars: 1,
+    }),
+    /Evidence packet exceeds 1 characters/,
   );
 });
 
