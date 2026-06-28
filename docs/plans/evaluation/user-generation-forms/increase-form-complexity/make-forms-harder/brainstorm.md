@@ -19,6 +19,7 @@ Recommended ladder:
 ```text
 ownership/admissibility first
   -> conflict/temporal validity second
+  -> required-hard evidence paths third
   -> evidence confidence/abstention later
 ```
 
@@ -80,6 +81,24 @@ Examples:
 Conflict is more valuable long term, but it is harder to debug if ownership
 boundaries are also failing. That is why it should be the second hard packet.
 
+## Why Add Required-Hard Evidence Third
+
+The first ownership and conflict packets are useful, but their first versions
+mostly add adversarial and redundant evidence. A careful or lucky agent can
+ignore the hard documents and still recover many scored form fields from the
+clean `packet-medium` sources.
+
+Required-hard evidence asks:
+
+```text
+Can the agent recover the needed fact only by resolving the hard document?
+```
+
+The first good slice is direct deposit plus employment. Remove clean banking
+proof documents, keep the before/after deposit audit as the current source, add
+a current-looking non-Maya payment election, and withhold exact title/start
+from clean employment docs so the HR correction thread becomes necessary.
+
 ## Why Defer Evidence Confidence
 
 Evidence confidence and abstention ask:
@@ -100,6 +119,7 @@ Use packet names that say what difficulty was added:
 ```text
 packet-hard-ownership-v1
 packet-hard-conflict-v1
+packet-hard-required-v1
 packet-hard-abstention-v1
 ```
 
@@ -122,6 +142,8 @@ Good PR boundaries:
 - ownership packet skeleton plus first ownership trap batch;
 - live ownership results or tiny cleanup separately;
 - conflict packet skeleton plus first conflict/temporal trap batch;
+- required-hard packet that combines ownership/conflict only after the focused
+  packets are understood;
 - scoring or backend behavior changes separately when they become necessary.
 
 The most important split is by difficulty family. Ownership and conflict should
@@ -325,6 +347,35 @@ Review questions after the run:
 - Did drafts stay out of active durable memory?
 - Did old values appear as active memory, suggestions, or form values?
 - Were conflict failures memory failures or form-fill failures?
+
+## Proposed Third Slice
+
+Create:
+
+```text
+user: maya-chen-newhire
+corpus: packet-hard-required-v1
+forms: i-9, fw4, direct-deposit-sf1199a-24
+documents: packet-hard-conflict-v1 minus clean banking proof docs, plus one
+           ownership payment-election decoy, plus redacted clean employment
+           sources
+```
+
+Required evidence paths:
+
+- banking facts should come only from the LedgerPay deposit change audit;
+- employment title/start should come only from the HR correction thread;
+- Noah Kim's payment election should remain current-looking but inadmissible
+  for Maya.
+
+Review questions after the run:
+
+- Did the direct-deposit form still fill from the audit's after/current values?
+- Did employment title/start still fill from the correction thread?
+- Did stale bank or draft employment values appear as active memory?
+- Did Noah's payment-election values leak into Maya memory or forms?
+- Did making the hard docs required expose a difference between direct
+  no-memory and stored-memory paths?
 
 ## Success Criteria
 

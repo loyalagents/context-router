@@ -1,0 +1,49 @@
+source_system: "LedgerPay"
+export_id: "LP-AUD-DD-20418-20260626-1742"
+exported_timestamp: "2026-06-26T17:42:18-07:00"
+export_format_version: "payment-election-audit-v2"
+worker_id: "PLC-20418"
+worker_name: "Maya Lin Chen"
+deposit_profile_id: "DD-MC-418-MED"
+record_status: "active_after_change"
+field_ids:
+  - paymentElection.status
+  - paymentElection.accountHolderName
+  - paymentElection.institutionName
+  - paymentElection.routingNumber
+  - paymentElection.accountNumber
+  - paymentElection.accountType
+  - paymentElection.allocationPercent
+
+payment_election_audit:
+  change_id: "chg-dd-20418-20260626-1742"
+  event_type: "PAYMENT_ELECTION_REPLACED"
+  requested_by: "employee_self_service"
+  reviewed_by: "North Bay Payroll Team"
+  effective_for_payrolls_after: "2026-06-26"
+  before:
+    status: "former"
+    reason_closed: "employee replaced this payment election before first regular payroll"
+    account_holder_name: "Maya Lin Chen"
+    institution_name: "Redwood Mutual Bank"
+    routing_number: "121042882"
+    account_number: "618270449305"
+    account_type: "savings"
+    allocation_percent: 100
+  after:
+    status: "active"
+    source_record: "employee confirmed payment election"
+    account_holder_name: "Maya Lin Chen"
+    institution_name: "Bay Harbor Credit Union"
+    routing_number: "091000019"
+    account_number: "740182936451"
+    account_type: "checking"
+    allocation_percent: 100
+
+review_notes:
+  - timestamp: "2026-06-26T17:38:04-07:00"
+    actor: "payroll_ops_reviewer"
+    note: "Former payment election retained in audit history only; active payment election is the after record above."
+  - timestamp: "2026-06-26T17:41:55-07:00"
+    actor: "ledgerpay_sync"
+    note: "Active deposit profile DD-MC-418-MED points to Bay Harbor Credit Union checking account ending 6451."
