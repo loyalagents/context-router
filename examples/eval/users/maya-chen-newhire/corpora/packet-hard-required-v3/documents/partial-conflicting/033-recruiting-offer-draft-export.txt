@@ -1,0 +1,25 @@
+Source System: HarborHire Recruiting Draft Workspace
+Export ID: HH-DRAFT-OFFER-PLC-20418-20260618
+Export Timestamp: 2026-06-18T14:12:09-07:00
+Workspace: recruiting_offer_drafts
+Candidate: Maya Chen
+Worker ID: PLC-20418
+Draft Status: SUPERSEDED_DRAFT
+
+Draft Offer Fields
+Field ID: draft.job_title
+Draft Value: Operations Support Specialist
+
+Field ID: draft.start_date
+Draft Value: 2026-06-30
+
+Field ID: draft.offer_owner
+Draft Value: recruiting_coordinator
+
+Review History
+2026-06-18T14:12:09-07:00 recruiting_coordinator saved the draft offer payload while the hiring team was still resolving final title language.
+2026-06-19T09:07:44-07:00 hiring_manager_review marked this draft outdated after compensation and team assignment review.
+2026-06-21T16:35:00-07:00 system note recorded that the finalized offer package superseded this draft.
+
+Handling Note
+This former recruiting draft is retained for audit history only. It is inactive and should not be used to update the active employee profile, onboarding assignment, payroll preview, I-9, W-4, or direct-deposit records. Current employment processing must use the finalized onboarding records in HarborHire, not this old draft workspace export.

@@ -1,0 +1,2418 @@
+{
+  "schemaVersion": 2,
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-hard-required-v3",
+  "seed": "maya-chen-newhire__packet-hard-required-v3",
+  "corpusKind": "realistic-generated",
+  "forms": [
+    "i-9",
+    "fw4",
+    "direct-deposit-sf1199a-24"
+  ],
+  "purpose": "Hard required-evidence v3 packet corpus for Maya Chen across I-9, W-4, and direct deposit. This fixture keeps v2 direct-deposit and employment difficulty, then makes scored W-4 filing-status evidence require resolving a separate LedgerPay W-4 resolution audit instead of reading clean tax profile exports.",
+  "artifactWorld": {
+    "schemaVersion": 1,
+    "seed": "maya-chen-newhire__packet-hard-required-v3",
+    "timeline": {
+      "identityUploadAt": "2026-06-24T09:42:00-07:00",
+      "ssnUploadAt": "2026-06-24T09:46:00-07:00",
+      "onboardingProfileExportAt": "2026-06-25T11:18:00-07:00",
+      "offerEmailSentAt": "2026-06-21T16:35:00-07:00",
+      "i9DraftSavedAt": "2026-06-25T13:04:00-07:00",
+      "w4SavedAt": "2026-06-25T13:28:00-07:00",
+      "directDepositSavedAt": "2026-06-26T10:12:00-07:00",
+      "bankLetterUploadedAt": "2026-06-26T09:52:00-07:00",
+      "voidedCheckUploadedAt": "2026-06-26T09:58:00-07:00",
+      "supportTicketAt": "2026-06-25T15:18:00-07:00",
+      "policyPublishedAt": "2026-06-01T08:00:00-07:00",
+      "staleRecruiterExportedAt": "2026-05-19T09:20:00-07:00",
+      "stalePayrollDraftAt": "2026-06-10T10:44:00-07:00",
+      "staleOnboardingExportAt": "2026-06-12T08:10:00-07:00",
+      "depositChangeAuditExportAt": "2026-06-26T17:42:18-07:00",
+      "profileChangeHistoryExportAt": "2026-06-25T16:48:22-07:00",
+      "recruitingDraftExportedAt": "2026-06-18T14:12:09-07:00",
+      "w4DraftAutosaveAt": "2026-06-24T11:26:33-07:00",
+      "hrCorrectionThreadExportAt": "2026-06-26T15:34:48-07:00",
+      "noahPaymentElectionExportAt": "2026-06-26T11:04:00-07:00",
+      "achPrenoteReconciliationExportAt": "2026-06-26T18:06:44-07:00",
+      "w4ResolutionAuditExportAt": "2026-06-25T13:31:42-07:00"
+    },
+    "employer": {
+      "name": "Pacific Ledger Cooperative",
+      "onboardingSystem": "HarborHire",
+      "payrollSystem": "LedgerPay",
+      "hrCoordinator": "Priya Shah",
+      "payrollCoordinator": "North Bay Payroll Team",
+      "workerId": "PLC-20418",
+      "workEmail": "maya.chen@pacificledger.test"
+    },
+    "identityCapture": {
+      "uploadBatchId": "HH-UPL-MC-20418-MED",
+      "licenseImageName": "maya-chen-dl-front-packet-hard-required-v3.png",
+      "ssnImageName": "maya-chen-ssn-card-packet-hard-required-v3.png"
+    },
+    "banking": {
+      "institutionName": "Bay Harbor Credit Union",
+      "depositProfileId": "DD-MC-418-MED",
+      "portalExportId": "LP-DD-20418-MED"
+    },
+    "stale": {
+      "recruitingSystem": "HarborHire Recruiting Archive",
+      "oldAddress": "910 Juniper Avenue Apt 12, Berkeley, CA 94704",
+      "oldEmail": "maya.chen@oldmail.test",
+      "oldBank": "Harbor Neighborhood Bank",
+      "oldBankAccountEnding": "8821",
+      "oldTitle": "Operations Coordinator",
+      "oldStartDate": "2026-06-15"
+    },
+    "sample": {
+      "employeeName": "Jordan Avery",
+      "workerId": "PLC-SAMPLE-771",
+      "secondEmployeeName": "Riley Park",
+      "secondWorkerId": "PLC-SAMPLE-884"
+    },
+    "support": {
+      "hrDeskPhone": "510-555-0144",
+      "payrollDeskPhone": "510-555-0188",
+      "bankDeskPhone": "415-555-0133"
+    },
+    "conflictDecoys": {
+      "oldBanking": {
+        "institutionName": "Redwood Mutual Bank",
+        "routingNumber": "121042882",
+        "accountNumber": "618270449305",
+        "accountType": "savings"
+      },
+      "oldContact": {
+        "streetLine": "1724 Parker Street Unit 8",
+        "cityStateZip": "Berkeley, CA 94703",
+        "personalEmail": "maya.l.chen@personalmail.test"
+      },
+      "draftEmployment": {
+        "title": "Operations Support Specialist",
+        "startDate": "2026-06-30"
+      },
+      "draftTax": {
+        "filingStatus": "head of household",
+        "otherIncome": 913,
+        "deductions": 2475,
+        "extraWithholding": 127
+      }
+    },
+    "ownershipDecoys": {
+      "noahKim": {
+        "name": "Noah Kim",
+        "workerId": "PLC-20792",
+        "department": "Client Operations",
+        "institutionName": "Northstar Community Bank",
+        "routingNumber": "122105278",
+        "accountNumber": "663904228017",
+        "accountType": "savings",
+        "taxFilingStatus": "married filing jointly or qualifying surviving spouse"
+      }
+    }
+  },
+  "factContractDefaults": {
+    "forbid": [
+      "contact.phone"
+    ]
+  },
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9",
+        "direct-deposit-sf1199a-24"
+      ],
+      "reason": "Maya packet-hard-required-v3 keeps contact.phone null while retaining baseline support and sample phone distractors.",
+      "expectedBehavior": "Leave phone fields blank; do not borrow support, bank, employer, stale, or other-person phone numbers.",
+      "withheldValue": "415-555-0109"
+    }
+  ],
+  "documents": [
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-001",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
+      "category": "identity",
+      "title": "Driver License Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-identity-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp",
+          "upload batch id"
+        ],
+        "safeDetailMenu": [
+          "document type",
+          "issuing state",
+          "redaction status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1806,
+          "maxChars": 3206
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.dateOfBirth",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "address-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-002",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+      "category": "identity",
+      "title": "SSN Card Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-identity-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp",
+          "upload batch id"
+        ],
+        "safeDetailMenu": [
+          "document type",
+          "issuing state",
+          "redaction status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1424,
+          "maxChars": 2824
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-003",
+      "path": "documents/identity/003-identity-verification-note.txt",
+      "category": "identity",
+      "title": "Identity Verification Intake Note",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "identity",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "identity verification evidence only: split name fields, date of birth, SSN, verification status, reviewer metadata, field ids, and source audit metadata",
+          "include only the identity verification task or record; omit sibling onboarding tasks entirely, even as null, pending, not_started, blocked, or prerequisite rows"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9, W-4, tax withholding, direct deposit, background check, employment eligibility, completed onboarding, approved workflow, or cleared status sections",
+          "sibling onboarding task inventory rows for I-9, W-4, tax withholding, direct deposit, background check, or employment eligibility",
+          "completed or approved statuses for target form workflows that are outside the identity verification fact contract"
+        ],
+        "lengthTarget": {
+          "minChars": 1674,
+          "maxChars": 3074
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.middleInitial",
+          "identity.lastName",
+          "identity.dateOfBirth",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "identity-evidence",
+          "split-name",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-004",
+      "path": "documents/work-authorization/004-i9-section-one-draft-export.yaml",
+      "category": "work-authorization",
+      "title": "I-9 Section One Draft Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "Section 1 employee-entered fields only; Section 2, employer certification, document inspection, employer business name, employer business address, employer representative, employer contact fields, and first-day fields should be pending, null, not_started, or omitted unless exact source context provides them",
+          "employee telephone number should use a native blank/null value because no current user phone is provided",
+          "audit metadata may describe Section 1 drafting or export events but must not imply completed employer review or certification"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "invented employee_first_day_of_employment, employer certification date, employer business name, employer business address, employer representative, employer contact fields, Section 2 document inspection values, or completed reviewer attestation",
+          "current job title, department, hire date, or employment start date values unless present in required person details or allowed source context"
+        ],
+        "lengthTarget": {
+          "minChars": 1925,
+          "maxChars": 3325
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.dateOfBirth",
+          "identity.ssn",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email",
+          "workAuthorization.citizenshipStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "i9-draft",
+          "work-authorization",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-005",
+      "path": "documents/work-authorization/005-work-authorization-intake-field-export.txt",
+      "category": "work-authorization",
+      "title": "Work Authorization Intake Field Export",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "work authorization intake field export may include the included legal name and citizenship status plus neutral profile/export metadata",
+          "if signature, signed-date, Section 2 certification, or completion fields are native to the source shape, leave them blank, null, omitted, or pending rather than filled",
+          "this source is not an I-9 task, checklist, or completion record; it may include only legal name, citizenship status, worker id, field ids, neutral export metadata, and non-lifecycle review routing metadata",
+          "YAML-like export text should use fields and note values, not # comments"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "Section 1 completion, employee signature, signature method, signed date, completion timestamp, section1_complete audit events, employer certification, Section 2 completion, I-9 completed, onboarding complete, completed W-4, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts"
+        ],
+        "lengthTarget": {
+          "minChars": 1587,
+          "maxChars": 2987
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "workAuthorization.citizenshipStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "work-authorization",
+          "citizenship-status"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-006",
+      "path": "documents/hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "category": "hr-onboarding",
+      "title": "HR Onboarding Profile Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "HR profile may include included identity, contact, address, employment company, and neutral profile/export metadata; exact employment title and start date are withheld to the HR correction case",
+          "workflow or task summaries may appear only as pending or in-progress shell metadata; do not assert completed I-9, W-4, direct-deposit, benefits, or onboarding-complete lifecycle facts unless those facts are included"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "onboarding complete, profile approved, completed W-4, completed I-9, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts",
+          "exact current employment title or start date outside the HR correction thread"
+        ],
+        "lengthTarget": {
+          "minChars": 2020,
+          "maxChars": 3420
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.legalName",
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "employment.company"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "hr-profile",
+          "shared-facts",
+          "address-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-007",
+      "path": "documents/hr-onboarding/007-employee-self-service-profile.json",
+      "category": "hr-onboarding",
+      "title": "Employee Self-Service Profile Export",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "json-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "employee self-service profile may include included legal name, email, address, and neutral profile/export metadata",
+          "omit onboarding task inventories and compliance workflow history; if a native self-service profile includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion"
+        ],
+        "lengthTarget": {
+          "minChars": 1721,
+          "maxChars": 3121
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employee-profile",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-008",
+      "path": "documents/hr-onboarding/008-onboarding-assignment-export.yaml",
+      "category": "hr-onboarding",
+      "title": "Onboarding Assignment Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "assignment export may reference the final assignment case but must omit exact current title and start date"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "exact current employment title or start date outside the HR correction thread"
+        ],
+        "lengthTarget": {
+          "minChars": 1756,
+          "maxChars": 3156
+        }
+      },
+      "factContract": {
+        "include": [
+          "employment.company"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employment-context",
+          "worker-id"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-009",
+      "path": "documents/employer-context/009-offer-email.txt",
+      "category": "employer-context",
+      "title": "Offer Email Export",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "email-message",
+        "sourceFamily": "employer-context",
+        "captureMode": "plain-text-email-export",
+        "timelineRefs": [
+          "offerEmailSentAt"
+        ],
+        "worldRefs": [
+          "employer.hrCoordinator",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "from header",
+          "to header",
+          "date header",
+          "subject header",
+          "signature block"
+        ],
+        "safeDetailMenu": [
+          "message id",
+          "sender",
+          "recipient",
+          "thread status",
+          "recipient may use Maya's legal name with a redacted, omitted, or name-only email address because current personal email is not included for this source",
+          "offer email may confirm company, worker id, and work email without exposing exact current title or start date"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated tax data",
+          "signature attestation",
+          "invented user recipient email address such as maya.l.chen@email.com; do not invent Maya's personal email for the To field",
+          "exact current employment title or start date outside the HR correction thread"
+        ],
+        "lengthTarget": {
+          "minChars": 1978,
+          "maxChars": 3378
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "employment.company",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "offer-email",
+          "employment-context"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-010",
+      "path": "documents/employer-context/010-company-directory-profile.yaml",
+      "category": "employer-context",
+      "title": "Company Directory Profile",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "company directory profile may include included name, company, work email, directory provisioning metadata, and neutral audit metadata; exact title is withheld to the HR correction case",
+          "omit onboarding task inventories and compliance workflow history; if a native directory export includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion",
+          "exact current employment title or start date outside the HR correction thread"
+        ],
+        "lengthTarget": {
+          "minChars": 1630,
+          "maxChars": 3030
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "employment.company",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "company-directory",
+          "work-email-vs-personal-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-011",
+      "path": "documents/payroll-tax/011-w4-withholding-setup-export.yaml",
+      "category": "payroll-tax",
+      "title": "W-4 Withholding Setup Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4SavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "employer.payrollCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "payroll export id",
+          "employee self-service saved timestamp",
+          "review queue",
+          "field ids mapped to W-4 Step 1",
+          "field-level validation statuses, with filing-status value represented only by a resolution reference",
+          "temporal bounds: submitted_at and the primary artifact timestamp should use w4SavedAt when present; incidental operational timestamps may be plausible same-day pending-review metadata but must not imply approval, activation, or completed review",
+          "state bounds: artifact state is saved/submitted and pending payroll review; future work may appear only as pending_action or next_step, not as completed approved, activated, or reviewed log rows",
+          "status history may include saved/submitted and routing-to-review rows, but not completed review or approval rows unless exact source context provides them",
+          "reviewer note explaining optional W-4 sections were not imported in this export without implying false, zero, no, unchecked, or no-additional-withholding values",
+          "optional field bounds: if W-4 Step 2, Step 3, or Step 4 fields appear, each optional field must be null, blank, not_imported, or omitted rather than a factual default"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "values for W-4 Step 2, Step 3, or Step 4 unless present in required person details",
+          "false, 0, $0, no, none, unchecked, standard election, or no additional withholding values for optional W-4 fields not present in required person details",
+          "approved, activated, reviewed, next payroll cycle, next_business_day completed rows, or future completed payroll events",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
+        ],
+        "lengthTarget": {
+          "minChars": 450,
+          "maxChars": 3446
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.ssn",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "w4-setup-shell",
+          "tax-election-pointer"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-012",
+      "path": "documents/payroll-tax/012-payroll-tax-profile.json",
+      "category": "payroll-tax",
+      "title": "Payroll Tax Profile Export",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "json-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "prefer omitting optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, and state withholding sections entirely; if native shape requires them, use only silent null, blank, or not_imported fields without explanatory notes",
+          "omit state withholding profile sections unless they can remain empty metadata with no not_configured, default, fallback, calculation, or first-payroll-cycle prose",
+          "federal filing-status value may appear only as a resolution-audit pointer, not as the selected text"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "state DE 4 allowance counts, additional allowance counts, or additional withholding amounts unless present in required person details",
+          "default withholding calculations such as Single, 0 allowances, even in validation notes, reviewer notes, warnings, or explanatory prose",
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard calculation, standard system assumptions, default withholding, state withholding not_configured, pending employee confirmation, or first payroll cycle fallback prose",
+          "selected federal filing-status text for Maya"
+        ],
+        "lengthTarget": {
+          "minChars": 1798,
+          "maxChars": 3198
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "tax-profile-shell",
+          "tax-election-pointer"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-013",
+      "path": "documents/payroll-tax/013-w4-review-note.txt",
+      "category": "payroll-tax",
+      "title": "W-4 Review Note",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4SavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "review note for worker PLC-20418 only; use worker id and included SSN, and omit legal-name fields because no current name fact is included for this source",
+          "primary artifact timestamp fields such as export_timestamp, created_at, submitted_at, generated_at, or source_timestamp should use w4SavedAt exactly or be omitted",
+          "review lifecycle should stay pending or needs_review at w4SavedAt; omit completed review, approved, active-in-payroll, system-update-success, or post-submission status events",
+          "optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, and local withholding fields may appear only as null, blank, not_imported, or omitted",
+          "review notes may describe payroll review of the included filing status and may say optional election fields were not_imported in this export, but must not imply no, none, false, zero, unchecked, standard, not present, not included, not detected, no changes, or default elections",
+          "YAML-like review text should use fields and note values, not # comments; do not explain omitted optional fields as absent in prose",
+          "do not include next-step instructions that ask a reviewer to verify withholding calculations, apply standard assumptions, activate withholding, or mark review_completed",
+          "filing-status review may use only a resolution reference such as W4-RES-PLC-20418-20260625"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "any person name other than Maya Chen; invented names such as Marina Serrano, John Smith, Jane Doe, or sample-person names",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "prose that says optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, or local elections were not detected, not present, not included, no changes, absent, none, zero, or not selected",
+          "review_completed, approved, cleared, active_in_payroll, system_update_success, review completion timestamps, or any lifecycle event after w4SavedAt",
+          "state DE 4 allowance counts, additional allowance counts, extra withholding amounts, local withholding assertions, or default withholding calculations such as Single with 0 allowances",
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard system assumptions, standard calculation, default withholding, active after review, verify withholding calculation, mark review_completed, or manual review should confirm setup prose",
+          "selected federal filing-status text for Maya"
+        ],
+        "lengthTarget": {
+          "minChars": 1624,
+          "maxChars": 3024
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "w4-review-pointer",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-014",
+      "path": "documents/employer-context/014-w4-instructions.txt",
+      "category": "employer-context",
+      "title": "W-4 Instructions",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "employer-context",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group",
+          "W-4 and tax-withholding guidance topic: federal Form W-4, filing status, optional W-4 steps, employee self-service W-4 update workflow, and withholding review guidance"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation",
+          "direct-deposit, banking, routing number, account number, payment elections, ACH, prenote, or payroll bank setup guidance"
+        ],
+        "lengthTarget": {
+          "minChars": 1636,
+          "maxChars": 3036
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "instruction-noise",
+          "blank-form-guidance"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-015",
+      "path": "documents/noise/015-blank-sample-w4-packet.txt",
+      "category": "noise",
+      "title": "Blank Sample W-4 Packet",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "noise",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group",
+          "blank or sample federal W-4 packet topic with placeholder W-4 fields only; clearly mark the packet as blank, sample, or for reference and do not include current user data"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation",
+          "direct-deposit authorization, banking, routing number, account number, payment elections, ACH, prenote, or payroll bank setup fields"
+        ],
+        "lengthTarget": {
+          "minChars": 1434,
+          "maxChars": 2834
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "sample-form",
+          "instruction-noise"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-019",
+      "path": "documents/employer-context/019-payroll-direct-deposit-instructions.txt",
+      "category": "employer-context",
+      "title": "Payroll Direct Deposit Instructions",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "employer-context",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1883,
+          "maxChars": 3283
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "instruction-noise",
+          "direct-deposit-guide"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-020",
+      "path": "documents/noise/020-sample-direct-deposit-packet-jordan.txt",
+      "category": "noise",
+      "title": "Sample Direct Deposit Packet Jordan",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "completed-sample-direct-deposit-packet",
+        "sourceFamily": "noise",
+        "captureMode": "plain-text-sample-packet-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "sample.employeeName",
+          "sample.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group",
+          "completed example packet for sample employee Jordan Avery using sample worker id PLC-SAMPLE-771",
+          "sample labels, training watermark, example-only status, and placeholder bank fields that are clearly not Maya's information",
+          "plain-text packet sections that demonstrate direct-deposit setup without current user identifiers"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation",
+          "generic policy article with no sample employee",
+          "Maya Chen name, worker id, email, address, or bank values",
+          "sample details that could be mistaken for current user direct-deposit information"
+        ],
+        "lengthTarget": {
+          "minChars": 1863,
+          "maxChars": 3263
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "other-person",
+          "sample-packet",
+          "direct-deposit-sample"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-021",
+      "path": "documents/employer-context/021-benefits-enrollment-profile.yaml",
+      "category": "employer-context",
+      "title": "Benefits Enrollment Profile",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "benefits enrollment profile may include included identity, address, contact email, enrollment window, benefits-plan metadata, and neutral export metadata",
+          "omit tax withholding, direct-deposit, payment-election, broad onboarding checklist, and default benefits-election statuses unless those facts are included"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "tax withholding sections, direct-deposit sections, payment election status, not_configured banking status, not_submitted tax status, waived_default benefits elections, not_enrolled benefits defaults, or broad worker profile snapshots"
+        ],
+        "lengthTarget": {
+          "minChars": 1844,
+          "maxChars": 3244
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "contact.email"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "benefits-profile",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-022",
+      "path": "documents/employer-context/022-payroll-preview-export.yaml",
+      "category": "employer-context",
+      "title": "Payroll Preview Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "payroll preview may include employment company and payroll preview metadata, but omits exact current employment title and start date",
+          "use worker id for person identity; omit employee name, work email, hire date, service date, start date, tax elections, and direct-deposit status unless those facts are included",
+          "keep this as a narrow payroll preview shell: worker id, company, job title, preview run metadata, empty earnings/deductions/taxes arrays if native to the export, and audit rows about preview generation",
+          "omit validation-summary, readiness-check, onboarding-checklist, personal-information, contact, tax-withholding, direct-deposit, compensation, and broad worker-profile sections entirely",
+          "omitted workflow facts must be omitted, not represented as missing, blocked, not on file, unconfigured, pending employee action, or calculation blockers"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "invented employee name, alternate person identity, work email, personal email, hire date, service date, start date, tax elections, direct deposit status, or payroll account details",
+          "wrong-person values such as John Smith, j.smith, Marina Serrano, Jane Doe, or sample-person names",
+          "validation_summary sections, readiness checks, onboarding checklist ids, pending employee action statuses, default payroll/tax/banking fallback prose, employment status values, taxWithholding sections, directDeposit sections, personalInformation sections, contactInformation sections, compensation sections, or broad worker profile snapshots",
+          "employment dates that differ from required person details or allowed source context",
+          "exact current employment title outside the HR correction thread"
+        ],
+        "lengthTarget": {
+          "minChars": 1510,
+          "maxChars": 2910
+        }
+      },
+      "factContract": {
+        "include": [
+          "employment.company"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "payroll-preview",
+          "employment-context"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-023",
+      "path": "documents/hr-onboarding/023-onboarding-support-ticket.txt",
+      "category": "hr-onboarding",
+      "title": "Onboarding Support Ticket",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "support-ticket-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "supportTicketAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "support.hrDeskPhone"
+        ],
+        "nativeSignals": [
+          "source system",
+          "ticket id",
+          "status",
+          "timestamp",
+          "reviewer note"
+        ],
+        "safeDetailMenu": [
+          "ticket status",
+          "queue",
+          "assignee",
+          "requester",
+          "activity log with two or three updates; use supportTicketAt for ticket creation when present, and allow plausible same-day or next-business-day operational timing only if it does not create competing target form facts",
+          "field correction summary",
+          "resolution note",
+          "internal note that support desk phone numbers are contact-channel metadata, not Maya's phone; if an exact support number is included, use support.hrDeskPhone",
+          "generic prior-value labels without inventing explicit old address or email values"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "legal attestation",
+          "specific old incorrect address or email values not present in allowed source context",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
+        ],
+        "lengthTarget": {
+          "minChars": 500,
+          "maxChars": 3406
+        }
+      },
+      "factContract": {
+        "include": [
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "support-ticket",
+          "address-evidence",
+          "phone-distractor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-024",
+      "path": "documents/hr-onboarding/024-employee-profile-audit-log.txt",
+      "category": "hr-onboarding",
+      "title": "Employee Profile Audit Log",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "audit log should focus on included personal email and work email profile events plus neutral export/audit metadata",
+          "omit unrelated document checklist history, I-9/W-4/direct-deposit lifecycle events, onboarding-complete status, and profile approval events"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "onboarding completed, profile approved, I-9 completed, W-4 completed, direct deposit not submitted, direct deposit completed, document checklist status, or broad onboarding lifecycle history"
+        ],
+        "lengthTarget": {
+          "minChars": 1538,
+          "maxChars": 2938
+        }
+      },
+      "factContract": {
+        "include": [
+          "contact.email",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "audit-log",
+          "work-email-vs-personal-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-025",
+      "path": "documents/partial-conflicting/025-stale-recruiter-profile.txt",
+      "category": "partial-conflicting",
+      "title": "Stale Recruiter Profile",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "support-ticket-export",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "staleRecruiterExportedAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "stale.recruitingSystem",
+          "stale.oldEmail",
+          "stale.oldAddress"
+        ],
+        "nativeSignals": [
+          "source system",
+          "ticket id",
+          "status",
+          "timestamp",
+          "reviewer note"
+        ],
+        "safeDetailMenu": [
+          "recruiting archive export header using stale.recruitingSystem exactly as the source system",
+          "superseded or do-not-use status",
+          "old candidate profile id distinct from current worker id",
+          "archived contact fields using allowed stale.oldEmail and stale.oldAddress exactly",
+          "stale-value review note",
+          "temporal bounds: exported timestamp must use staleRecruiterExportedAt exactly; any other recruiting history must be clearly pre-export or archive-time and must preserve the stale/superseded role",
+          "short timeline may include generic pre-export recruiting/archive steps and an archive-time closeout, but should not add current employment facts",
+          "state bounds: archive export contains only stale information; operational detail must not make this record look current or authoritative",
+          "resolution note pointing to active onboarding profile as authority"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "legal attestation",
+          "alternate stale email or stale address values not present in allowed source context",
+          "current-looking employment title, current department, current role, or recruiting-stage facts that could compete with current employment form fields",
+          "after-export events that modify the archive or make stale values look current",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
+        ],
+        "lengthTarget": {
+          "minChars": 450,
+          "maxChars": 3206
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "contact.email",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.postalCode"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "stale-address",
+          "stale-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-026",
+      "path": "documents/partial-conflicting/026-stale-payroll-bank-draft.txt",
+      "category": "partial-conflicting",
+      "title": "Stale Payroll Bank Draft",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "support-ticket-export",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "supportTicketAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "stale.oldBank"
+        ],
+        "nativeSignals": [
+          "source system",
+          "ticket id",
+          "status",
+          "timestamp",
+          "reviewer note"
+        ],
+        "safeDetailMenu": [
+          "ticket status",
+          "queue",
+          "assignee",
+          "resolution note"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "legal attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1942,
+          "maxChars": 3342
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "banking.institutionName",
+          "banking.accountNumber",
+          "banking.routingNumber"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "stale-banking"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-027",
+      "path": "documents/partial-conflicting/027-stale-onboarding-export.yaml",
+      "category": "partial-conflicting",
+      "title": "Stale Onboarding Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "stale Maya worker-id onboarding export only: use the allowed worker id, avoid person-name fields unless blank/redacted/not_imported, and clearly mark stale, superseded, archived, do-not-use, or low-authority status",
+          "stale employment fields should be absent, null, not_imported, superseded, or explicitly do-not-use; do not make this record look current or authoritative",
+          "omit onboarding task due dates, target first-day dates, and start-date-like task fields; stale task rows may use generic status metadata without exact date values"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "alternate person identity or names such as Eleanor Vance, Marcus Vance, Jane Doe, John Smith, or any other non-Maya person attached to PLC-20418",
+          "current-looking employment title, current start date, active profile status, authoritative status, or stale record without a clear stale/superseded/do-not-use marker",
+          "task due dates, first-day dates, start-date-like checklist dates, or blocked task prose that can be mistaken for current employment facts"
+        ],
+        "lengthTarget": {
+          "minChars": 1749,
+          "maxChars": 3149
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "employment.title",
+          "employment.startDate"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "stale-employment"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-028",
+      "path": "documents/noise/028-other-employee-sample-packet.txt",
+      "category": "noise",
+      "title": "Other Employee Sample Packet",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "noise",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1784,
+          "maxChars": 3184
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "other-person",
+          "sample-packet"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-029",
+      "path": "documents/noise/029-other-employee-w4-tax-sample.txt",
+      "category": "noise",
+      "title": "Other Employee W-4 Tax Sample",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "noise",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1751,
+          "maxChars": 3151
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "other-person",
+          "sample-form",
+          "w4-sample"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-030",
+      "path": "documents/noise/030-payroll-support-faq.txt",
+      "category": "noise",
+      "title": "Payroll Support FAQ",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "instruction-or-policy-page",
+        "sourceFamily": "noise",
+        "captureMode": "plain-text-knowledge-base-export",
+        "timelineRefs": [
+          "policyPublishedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem"
+        ],
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "policy id",
+          "version",
+          "owner group"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "private bank data",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1972,
+          "maxChars": 3372
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "unknown",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "instruction-noise",
+          "phone-distractor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-031",
+      "path": "documents/payroll-tax/031-ledgerpay-deposit-change-audit.yaml",
+      "category": "payroll-tax",
+      "title": "LedgerPay Deposit Change Audit",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "payroll-payment-election-change-audit",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "depositChangeAuditExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "banking.depositProfileId",
+          "conflictDecoys.oldBanking.institutionName",
+          "conflictDecoys.oldBanking.routingNumber",
+          "conflictDecoys.oldBanking.accountNumber"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "payment election change id",
+          "worker id and deposit profile id",
+          "former Redwood payment election retained for audit only",
+          "active successor profile token and account ending",
+          "reconciliation batch id that must be matched to the prenote reconciliation export"
+        ],
+        "riskyDetailMenu": [
+          "new phone number",
+          "tax withholding fields",
+          "I-9 or work authorization fields",
+          "unrelated employee payment elections",
+          "clean current institution name or account type; those are resolved in the prenote reconciliation export",
+          "current values that differ from profile.yaml truth"
+        ],
+        "lengthTarget": {
+          "minChars": 1400,
+          "maxChars": 2200
+        }
+      },
+      "factContract": {
+        "include": [
+          "banking.accountHolderName"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "mixed",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "conflict-current-vs-stale",
+          "temporal-before-after",
+          "temporal-old-bank",
+          "direct-deposit-required-hard-v2"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-032",
+      "path": "documents/hr-onboarding/032-harborhire-profile-change-history.json",
+      "category": "hr-onboarding",
+      "title": "HarborHire Profile Change History",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "employee-profile-change-history",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "json-system-export",
+        "timelineRefs": [
+          "profileChangeHistoryExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "conflictDecoys.oldContact.personalEmail",
+          "conflictDecoys.oldContact.streetLine",
+          "conflictDecoys.oldContact.cityStateZip"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "change id",
+          "previous_values and current_values sections",
+          "personal email",
+          "home address street line and city/state/zip",
+          "audit notes describing old values replaced by current approved values"
+        ],
+        "riskyDetailMenu": [
+          "phone number",
+          "banking or tax fields",
+          "work authorization identifiers",
+          "unrelated worker profile data",
+          "current values that differ from profile.yaml truth"
+        ],
+        "lengthTarget": {
+          "minChars": 1250,
+          "maxChars": 2050
+        }
+      },
+      "factContract": {
+        "include": [
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "mixed",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "conflict-current-vs-stale",
+          "temporal-before-after",
+          "temporal-old-address",
+          "temporal-old-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-033",
+      "path": "documents/partial-conflicting/033-recruiting-offer-draft-export.txt",
+      "category": "partial-conflicting",
+      "title": "Recruiting Offer Draft Export",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "recruiting-offer-draft-export",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "plain-text-export",
+        "timelineRefs": [
+          "recruitingDraftExportedAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "conflictDecoys.draftEmployment.title",
+          "conflictDecoys.draftEmployment.startDate"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "draft workspace header",
+          "superseded draft status",
+          "worker id",
+          "draft title and start date fields",
+          "review history showing finalized offer superseded the draft",
+          "handling note that current processing must use finalized onboarding records"
+        ],
+        "riskyDetailMenu": [
+          "current employment title or start date values",
+          "phone number",
+          "banking or tax values",
+          "language that makes the draft appear active or authoritative"
+        ],
+        "lengthTarget": {
+          "minChars": 850,
+          "maxChars": 1500
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "employment.title",
+          "employment.startDate"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "conflict-authority",
+          "temporal-draft-vs-approved",
+          "employment-draft-conflict"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-034",
+      "path": "documents/partial-conflicting/034-ledgerpay-w4-draft-autosave.yaml",
+      "category": "partial-conflicting",
+      "title": "LedgerPay W-4 Draft Autosave",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "w4-draft-autosave-export",
+        "sourceFamily": "partial-conflicting",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4DraftAutosaveAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "conflictDecoys.draftTax.filingStatus",
+          "conflictDecoys.draftTax.otherIncome",
+          "conflictDecoys.draftTax.deductions",
+          "conflictDecoys.draftTax.extraWithholding"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "autosave workspace header",
+          "superseded unsubmitted draft status",
+          "worker id",
+          "draft W-4 filing status and numeric draft fields",
+          "autosave history showing the old draft was superseded by submitted setup"
+        ],
+        "riskyDetailMenu": [
+          "current W-4 filing status value",
+          "SSN or full legal identity fields",
+          "phone number",
+          "banking fields",
+          "language that makes the draft appear submitted or active"
+        ],
+        "lengthTarget": {
+          "minChars": 750,
+          "maxChars": 1400
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "tax.filingStatus"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "conflict-authority",
+          "temporal-draft-vs-approved",
+          "tax-draft-conflict"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-035",
+      "path": "documents/hr-onboarding/035-hr-support-correction-thread.txt",
+      "category": "hr-onboarding",
+      "title": "HR Support Correction Thread",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "hr-support-correction-thread",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "hrCorrectionThreadExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "conflictDecoys.draftEmployment.title",
+          "conflictDecoys.draftEmployment.startDate"
+        ],
+        "nativeSignals": [
+          "source system",
+          "case id",
+          "timestamp",
+          "worker id",
+          "subject header",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "support case id",
+          "queue and status",
+          "subject line",
+          "lower-authority staging checklist value",
+          "resolution confirming current HR profile title and start date"
+        ],
+        "riskyDetailMenu": [
+          "phone number",
+          "banking or tax values",
+          "work authorization identifiers",
+          "language that makes the staging checklist authoritative"
+        ],
+        "lengthTarget": {
+          "minChars": 950,
+          "maxChars": 1600
+        }
+      },
+      "factContract": {
+        "include": [
+          "employment.title",
+          "employment.startDate"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "mixed",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "conflict-authority",
+          "temporal-before-after",
+          "employment-draft-conflict"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-036",
+      "path": "documents/payroll-tax/036-ledgerpay-other-employee-payment-election-export.yaml",
+      "category": "payroll-tax",
+      "title": "LedgerPay Other Employee Payment Election Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "payroll-payment-election-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "noahPaymentElectionExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "ownershipDecoys.noahKim.workerId",
+          "ownershipDecoys.noahKim.routingNumber",
+          "ownershipDecoys.noahKim.accountNumber"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "payment election export id",
+          "worker id",
+          "account holder name",
+          "deposit allocation",
+          "payroll reviewer group"
+        ],
+        "riskyDetailMenu": [
+          "current user identifier",
+          "Maya Chen name, worker id, email, address, or bank values",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 900,
+          "maxChars": 1500
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": [
+          "banking.accountHolderName",
+          "banking.institutionName",
+          "banking.accountType",
+          "banking.routingNumber",
+          "banking.accountNumber"
+        ]
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "ownership-other-employee",
+          "direct-deposit-decoy"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-037",
+      "path": "documents/payroll-tax/037-ledgerpay-ach-prenote-reconciliation.yaml",
+      "category": "payroll-tax",
+      "title": "LedgerPay ACH Prenote Reconciliation",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "payroll-ach-prenote-reconciliation-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "achPrenoteReconciliationExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "banking.depositProfileId",
+          "banking.institutionName",
+          "conflictDecoys.oldBanking.institutionName",
+          "conflictDecoys.oldBanking.routingNumber",
+          "conflictDecoys.oldBanking.accountNumber",
+          "ownershipDecoys.noahKim.workerId",
+          "ownershipDecoys.noahKim.routingNumber",
+          "ownershipDecoys.noahKim.accountNumber"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "timestamp",
+          "worker id",
+          "deposit profile id",
+          "profile token",
+          "row disposition",
+          "selected row id"
+        ],
+        "safeDetailMenu": [
+          "ACH prenote reconciliation export id",
+          "worker id and deposit profile id",
+          "active profile token and account ending",
+          "candidate rows with dispositions",
+          "selected current row and selected reason",
+          "institution, routing, account number, account type, and account holder for the selected row"
+        ],
+        "riskyDetailMenu": [
+          "new phone number",
+          "tax withholding fields",
+          "I-9 or work authorization fields",
+          "language that makes former Redwood or Noah Kim rows usable for Maya",
+          "current values that differ from profile.yaml truth"
+        ],
+        "lengthTarget": {
+          "minChars": 1700,
+          "maxChars": 2800
+        }
+      },
+      "factContract": {
+        "include": [
+          "banking.accountHolderName",
+          "banking.institutionName",
+          "banking.accountType",
+          "banking.routingNumber",
+          "banking.accountNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "mixed",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "conflict-current-vs-stale",
+          "temporal-reconciliation",
+          "ownership-worker-mismatch",
+          "direct-deposit-required-hard-v2"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-required-v3-038",
+      "path": "documents/payroll-tax/038-ledgerpay-w4-resolution-audit.yaml",
+      "category": "payroll-tax",
+      "title": "LedgerPay W-4 Resolution Audit",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "payroll-w4-resolution-audit-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4ResolutionAuditExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "conflictDecoys.draftTax.filingStatus",
+          "ownershipDecoys.noahKim.workerId",
+          "ownershipDecoys.noahKim.taxFilingStatus"
+        ],
+        "nativeSignals": [
+          "source system",
+          "export id",
+          "case ref",
+          "worker id",
+          "active form id",
+          "fragment id",
+          "lifecycle code",
+          "selected token"
+        ],
+        "safeDetailMenu": [
+          "W-4 resolution export id and case ref",
+          "worker id and active form id for Maya",
+          "terse field fragments with lifecycle codes",
+          "current selected filing-status fragment for Maya",
+          "older Maya draft fragment using conflictDecoys.draftTax.filingStatus",
+          "other-worker fragment using ownershipDecoys.noahKim.taxFilingStatus",
+          "resolution trace that selects by token, worker id, and active form id"
+        ],
+        "riskyDetailMenu": [
+          "new phone number",
+          "banking fields",
+          "I-9 or work authorization fields",
+          "language that makes stale draft or Noah rows usable for Maya",
+          "current values that differ from profile.yaml truth",
+          "same explanatory row-table skeleton as direct-deposit reconciliation doc 037"
+        ],
+        "lengthTarget": {
+          "minChars": 1200,
+          "maxChars": 2600
+        }
+      },
+      "factContract": {
+        "include": [
+          "tax.filingStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "mixed",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "conflict-current-vs-stale",
+          "temporal-resolution",
+          "ownership-worker-mismatch",
+          "w4-required-hard-v3"
+        ]
+      }
+    }
+  ],
+  "ownershipAudit": [
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "name",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.name",
+      "forbiddenFactKeys": [
+        "banking.accountHolderName",
+        "identity.legalName"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "institutionName",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.institutionName",
+      "forbiddenFactKeys": [
+        "banking.institutionName"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "routingNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.routingNumber",
+      "forbiddenFactKeys": [
+        "banking.routingNumber"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "accountNumber",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.accountNumber",
+      "forbiddenFactKeys": [
+        "banking.accountNumber"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "accountType",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.accountType",
+      "forbiddenFactKeys": [
+        "banking.accountType"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "workerId",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.workerId",
+      "forbiddenFactKeys": [
+        "employment.workerId"
+      ]
+    },
+    {
+      "ownerKey": "noahKim",
+      "valueLabel": "taxFilingStatus",
+      "valuePath": "artifactWorld.ownershipDecoys.noahKim.taxFilingStatus",
+      "forbiddenFactKeys": [
+        "tax.filingStatus"
+      ]
+    }
+  ]
+}
