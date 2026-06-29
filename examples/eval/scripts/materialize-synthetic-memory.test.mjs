@@ -27,6 +27,7 @@ test('definitionTargetsFromSnapshot maps synthetic definitions to backend defini
       displayName: 'Account type',
       description: 'Direct open-schema eval definition for payroll.account_type.',
       valueType: 'ENUM',
+      scope: 'GLOBAL',
       isSensitive: false,
       options: ['checking'],
     },
@@ -42,6 +43,7 @@ test('materializeSyntheticMemorySnapshot resets memory, creates definitions, sug
         id: 'def-existing-full-name',
         slug: 'profile.full_name',
         valueType: 'STRING',
+        scope: 'GLOBAL',
         ownerUserId: 'backend-user-123',
       },
     ],
@@ -130,6 +132,156 @@ test('materializeSyntheticMemorySnapshot surfaces GraphQL failures', async () =>
   );
 });
 
+test('materializeSyntheticMemorySnapshot fails early on stale existing enum options', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'materialize-synthetic-memory-enum-'));
+  const reportOutPath = path.join(tmp, 'memory-materialization-report.json');
+  const fetchMock = createMaterializerFetchMock({
+    existingDefinitions: [
+      {
+        id: 'def-stale-account-type',
+        slug: 'payroll.account_type',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        options: ['savings'],
+        ownerUserId: 'backend-user-123',
+      },
+    ],
+  });
+
+  await assert.rejects(
+    materializeSyntheticMemorySnapshot({
+      repoRoot,
+      memorySnapshot: memorySnapshot(),
+      reportOutPath,
+      graphqlUrl: 'http://localhost:3000/graphql',
+      authToken: 'secret-token',
+      resetMemoryEnabled: true,
+      resetMemoryMode: 'MEMORY_ONLY',
+      fetchImpl: fetchMock.fetch,
+      now: fixedNow,
+    }),
+    /payroll\.account_type is incompatible/,
+  );
+
+  assert.deepEqual(fetchMock.operations, [
+    'EvalIngestorMe',
+    'EvalIngestorResetMemory',
+    'EvalIngestorPreferenceSchema',
+  ]);
+
+  const report = JSON.parse(await readFile(reportOutPath, 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.failure.stage, 'setup-definition');
+  assert.deepEqual(report.failure.currentDefinition, {
+    slug: 'payroll.account_type',
+  });
+  assert.equal(report.failure.details.suggestedResetMode, 'DEMO_DATA');
+  assert.deepEqual(report.failure.details.mismatches, [
+    {
+      field: 'options',
+      existing: ['savings'],
+      required: ['checking'],
+      missing: ['checking'],
+    },
+  ]);
+});
+
+test('materializeSyntheticMemorySnapshot fails early on existing definition scope mismatch', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'materialize-synthetic-memory-scope-'));
+  const reportOutPath = path.join(tmp, 'memory-materialization-report.json');
+  const fetchMock = createMaterializerFetchMock({
+    existingDefinitions: [
+      {
+        id: 'def-location-full-name',
+        slug: 'profile.full_name',
+        valueType: 'STRING',
+        scope: 'LOCATION',
+        ownerUserId: 'backend-user-123',
+      },
+    ],
+  });
+
+  await assert.rejects(
+    materializeSyntheticMemorySnapshot({
+      repoRoot,
+      memorySnapshot: fullNameOnlySnapshot(),
+      reportOutPath,
+      graphqlUrl: 'http://localhost:3000/graphql',
+      authToken: 'secret-token',
+      fetchImpl: fetchMock.fetch,
+      now: fixedNow,
+    }),
+    /profile\.full_name is incompatible/,
+  );
+
+  assert.deepEqual(fetchMock.operations, [
+    'EvalIngestorMe',
+    'EvalIngestorPreferenceSchema',
+  ]);
+
+  const report = JSON.parse(await readFile(reportOutPath, 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.failure.stage, 'setup-definition');
+  assert.deepEqual(report.failure.details.mismatches, [
+    {
+      field: 'scope',
+      existing: 'LOCATION',
+      required: 'GLOBAL',
+    },
+  ]);
+});
+
+test('materializeSyntheticMemorySnapshot writes a failure report when suggest fails', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'materialize-synthetic-memory-suggest-'));
+  const reportOutPath = path.join(tmp, 'memory-materialization-report.json');
+  const fetchMock = createMaterializerFetchMock({
+    existingDefinitions: [
+      {
+        id: 'def-existing-full-name',
+        slug: 'profile.full_name',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+        ownerUserId: 'backend-user-123',
+      },
+      {
+        id: 'def-existing-account-type',
+        slug: 'payroll.account_type',
+        valueType: 'ENUM',
+        scope: 'GLOBAL',
+        options: ['checking'],
+        ownerUserId: 'backend-user-123',
+      },
+    ],
+    failOperation: 'EvalIngestorSuggestPreference',
+    failMessage: 'suggest denied',
+  });
+
+  await assert.rejects(
+    materializeSyntheticMemorySnapshot({
+      repoRoot,
+      memorySnapshot: memorySnapshot(),
+      reportOutPath,
+      graphqlUrl: 'http://localhost:3000/graphql',
+      authToken: 'secret-token',
+      fetchImpl: fetchMock.fetch,
+      now: fixedNow,
+    }),
+    /suggest denied/,
+  );
+
+  const report = JSON.parse(await readFile(reportOutPath, 'utf8'));
+  assert.equal(report.status, 'fail');
+  assert.equal(report.failure.stage, 'suggest-preference');
+  assert.deepEqual(report.failure.currentPreference, {
+    index: 0,
+    slug: 'profile.full_name',
+    syntheticPreferenceId: 'pref-1',
+  });
+  assert.equal(report.failure.error.name, 'Error');
+  assert.match(report.failure.error.message, /suggest denied/);
+  assert.equal(report.summary.acceptedPreferenceCount, 0);
+});
+
 function memorySnapshot() {
   return {
     schemaVersion: 1,
@@ -185,7 +337,24 @@ function memorySnapshot() {
   };
 }
 
-function createMaterializerFetchMock({ existingDefinitions = [] } = {}) {
+function fullNameOnlySnapshot() {
+  const snapshot = memorySnapshot();
+  return {
+    ...snapshot,
+    definitions: snapshot.definitions.filter(
+      (definition) => definition.slug === 'profile.full_name',
+    ),
+    preferences: snapshot.preferences.filter(
+      (preference) => preference.slug === 'profile.full_name',
+    ),
+  };
+}
+
+function createMaterializerFetchMock({
+  existingDefinitions = [],
+  failOperation = null,
+  failMessage = 'forced GraphQL failure',
+} = {}) {
   const operations = [];
   const createdDefinitions = [];
   const suggestedPreferences = [];
@@ -200,6 +369,11 @@ function createMaterializerFetchMock({ existingDefinitions = [] } = {}) {
       const body = JSON.parse(request.body);
       const operation = operationName(body.query);
       operations.push(operation);
+      if (operation === failOperation) {
+        return jsonResponse({
+          errors: [{ message: failMessage }],
+        });
+      }
       if (operation === 'EvalIngestorMe') {
         return jsonResponse({ data: { me: { userId: 'backend-user-123' } } });
       }

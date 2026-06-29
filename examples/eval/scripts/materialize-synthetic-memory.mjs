@@ -27,154 +27,196 @@ export async function materializeSyntheticMemorySnapshot({
   fetchImpl = globalThis.fetch,
   now = () => new Date(),
 }) {
-  if (!memorySnapshot || typeof memorySnapshot !== 'object') {
-    throw new Error('memorySnapshot is required for materialization.');
-  }
-  if (!graphqlUrl) {
-    throw new Error('graphqlUrl is required for materialization.');
-  }
-  if (!authToken) {
-    throw new Error('authToken is required for materialization.');
-  }
-
   const startedAt = isoTimestamp(now);
-  const backendUser = await fetchBackendUser({
-    graphqlUrl,
-    authToken,
-    fetchImpl,
-  });
-  const reset = resetMemoryEnabled
-    ? await resetMemory({
-        graphqlUrl,
-        authToken,
-        mode: resetMemoryMode,
-        fetchImpl,
-      })
-    : null;
-
-  const existingSchema = await fetchPreferenceSchema({
-    graphqlUrl,
-    authToken,
-    fetchImpl,
-  });
-  const existing = existingDefinitionMap(existingSchema);
-  const definitionTargets = definitionTargetsFromSnapshot(memorySnapshot);
+  let stage = 'validate-input';
+  let backendUser = null;
+  let reset = null;
+  let definitionTargets = [];
   const definitionSetup = {
     created: [],
     existing: [],
   };
-
-  for (const target of definitionTargets) {
-    const existingDefinition = existing.get(target.slug);
-    if (existingDefinition) {
-      assertCompatibleDefinition({ target, existingDefinition });
-      definitionSetup.existing.push(definitionSummary(target, existingDefinition));
-      continue;
-    }
-    const created = await createPreferenceDefinition({
-      graphqlUrl,
-      authToken,
-      input: definitionInput(target),
-      fetchImpl,
-    });
-    existing.set(target.slug, created);
-    definitionSetup.created.push(definitionSummary(target, created));
-  }
-
-  const preferences = Array.isArray(memorySnapshot.preferences)
-    ? memorySnapshot.preferences
-    : [];
-  const seenSlugs = new Set();
-  const duplicateSlugs = new Set();
   const accepted = [];
   const skipped = [];
+  const duplicateSlugs = new Set();
+  let currentDefinition = null;
+  let currentPreference = null;
 
-  for (const [index, preference] of preferences.entries()) {
-    const slug = requiredString(preference.slug, `preferences[${index}].slug`);
-    if (seenSlugs.has(slug)) duplicateSlugs.add(slug);
-    seenSlugs.add(slug);
-
-    const suggestion = await suggestPreference({
-      graphqlUrl,
-      authToken,
-      input: suggestionInput({
-        preference,
-        runId: memorySnapshot.runId,
-        memorySnapshotPath: memorySnapshotPath
-          ? relativePath(repoRoot, memorySnapshotPath)
-          : null,
-      }),
-      fetchImpl,
-    });
-    if (!suggestion) {
-      skipped.push({
-        slug,
-        reason: 'suggestPreference returned null',
-        syntheticPreferenceId: preference.id ?? null,
-      });
-      continue;
+  try {
+    if (!memorySnapshot || typeof memorySnapshot !== 'object') {
+      throw new Error('memorySnapshot is required for materialization.');
+    }
+    if (!graphqlUrl) {
+      throw new Error('graphqlUrl is required for materialization.');
+    }
+    if (!authToken) {
+      throw new Error('authToken is required for materialization.');
     }
 
-    const active = await acceptSuggestedPreference({
+    stage = 'fetch-backend-user';
+    backendUser = await fetchBackendUser({
       graphqlUrl,
       authToken,
-      id: suggestion.id,
       fetchImpl,
     });
-    accepted.push({
-      slug,
-      suggestionId: suggestion.id,
-      activePreferenceId: active?.id ?? null,
-      syntheticPreferenceId: preference.id ?? null,
-      duplicateSlug: duplicateSlugs.has(slug),
-    });
-  }
 
-  const endedAt = isoTimestamp(now);
-  const report = {
-    schemaVersion: 1,
-    artifactType: 'synthetic-memory-materialization-report',
-    status: 'pass',
-    runId: memorySnapshot.runId ?? null,
-    userId: memorySnapshot.userId ?? null,
-    corpusId: memorySnapshot.corpusId ?? null,
-    backendUserId: backendUser.userId,
-    startedAt,
-    endedAt,
-    settings: {
-      graphqlUrl: sanitizeGraphqlUrl(graphqlUrl),
-      resetMemory: Boolean(resetMemoryEnabled),
-      resetMode: resetMemoryEnabled ? resetMemoryMode : null,
-      inputMemorySnapshot: memorySnapshotPath
-        ? relativePath(repoRoot, memorySnapshotPath)
-        : null,
-    },
-    reset,
-    definitionSetup,
-    preferenceMaterialization: {
+    stage = 'reset-memory';
+    reset = resetMemoryEnabled
+      ? await resetMemory({
+          graphqlUrl,
+          authToken,
+          mode: resetMemoryMode,
+          fetchImpl,
+        })
+      : null;
+
+    stage = 'fetch-preference-schema';
+    const existingSchema = await fetchPreferenceSchema({
+      graphqlUrl,
+      authToken,
+      fetchImpl,
+    });
+    const existing = existingDefinitionMap(existingSchema);
+
+    stage = 'build-definition-targets';
+    definitionTargets = definitionTargetsFromSnapshot(memorySnapshot);
+
+    for (const target of definitionTargets) {
+      stage = 'setup-definition';
+      currentDefinition = { slug: target.slug };
+      const existingDefinition = existing.get(target.slug);
+      if (existingDefinition) {
+        assertCompatibleDefinition({
+          target,
+          existingDefinition,
+          resetMemoryMode,
+        });
+        definitionSetup.existing.push(definitionSummary(target, existingDefinition));
+        continue;
+      }
+      const created = await createPreferenceDefinition({
+        graphqlUrl,
+        authToken,
+        input: definitionInput(target),
+        fetchImpl,
+      });
+      existing.set(target.slug, created);
+      definitionSetup.created.push(definitionSummary(target, created));
+    }
+
+    currentDefinition = null;
+    const preferences = Array.isArray(memorySnapshot.preferences)
+      ? memorySnapshot.preferences
+      : [];
+    const seenSlugs = new Set();
+
+    for (const [index, preference] of preferences.entries()) {
+      const slug = requiredString(preference.slug, `preferences[${index}].slug`);
+      currentPreference = {
+        index,
+        slug,
+        syntheticPreferenceId: preference.id ?? null,
+      };
+      if (seenSlugs.has(slug)) duplicateSlugs.add(slug);
+      seenSlugs.add(slug);
+
+      stage = 'suggest-preference';
+      const suggestion = await suggestPreference({
+        graphqlUrl,
+        authToken,
+        input: suggestionInput({
+          preference,
+          runId: memorySnapshot.runId,
+          memorySnapshotPath: memorySnapshotPath
+            ? relativePath(repoRoot, memorySnapshotPath)
+            : null,
+        }),
+        fetchImpl,
+      });
+      if (!suggestion) {
+        skipped.push({
+          slug,
+          reason: 'suggestPreference returned null',
+          syntheticPreferenceId: preference.id ?? null,
+        });
+        continue;
+      }
+
+      stage = 'accept-suggested-preference';
+      const active = await acceptSuggestedPreference({
+        graphqlUrl,
+        authToken,
+        id: suggestion.id,
+        fetchImpl,
+      });
+      accepted.push({
+        slug,
+        suggestionId: suggestion.id,
+        activePreferenceId: active?.id ?? null,
+        syntheticPreferenceId: preference.id ?? null,
+        duplicateSlug: duplicateSlugs.has(slug),
+      });
+    }
+    currentPreference = null;
+
+    const report = buildMaterializationReport({
+      status: 'pass',
+      repoRoot,
+      memorySnapshot,
+      memorySnapshotPath,
+      graphqlUrl,
+      resetMemoryEnabled,
+      resetMemoryMode,
+      backendUser,
+      startedAt,
+      endedAt: isoTimestamp(now),
+      reset,
+      definitionTargets,
+      definitionSetup,
       accepted,
       skipped,
-      duplicateSlugs: [...duplicateSlugs].sort(),
-    },
-    summary: {
-      definitionTargetCount: definitionTargets.length,
-      createdDefinitionCount: definitionSetup.created.length,
-      existingDefinitionCount: definitionSetup.existing.length,
-      preferenceInputCount: preferences.length,
-      acceptedPreferenceCount: accepted.length,
-      skippedSuggestionCount: skipped.length,
-      duplicateSlugCount: duplicateSlugs.size,
-    },
-  };
+      duplicateSlugs,
+    });
 
-  if (reportOutPath) {
-    await writeJson(reportOutPath, report);
+    if (reportOutPath) {
+      await writeJson(reportOutPath, report);
+    }
+    return {
+      backendUserId: backendUser.userId,
+      report,
+      summary: report.summary,
+    };
+  } catch (error) {
+    const report = buildMaterializationReport({
+      status: 'fail',
+      repoRoot,
+      memorySnapshot,
+      memorySnapshotPath,
+      graphqlUrl,
+      resetMemoryEnabled,
+      resetMemoryMode,
+      backendUser,
+      startedAt,
+      endedAt: isoTimestamp(now),
+      reset,
+      definitionTargets,
+      definitionSetup,
+      accepted,
+      skipped,
+      duplicateSlugs,
+      failure: {
+        stage,
+        currentDefinition,
+        currentPreference,
+        error: sanitizeError(error),
+        details: error?.details ?? null,
+      },
+    });
+    if (reportOutPath) {
+      await writeJson(reportOutPath, report).catch(() => {});
+    }
+    throw error;
   }
-  return {
-    backendUserId: backendUser.userId,
-    report,
-    summary: report.summary,
-  };
 }
 
 export function definitionTargetsFromSnapshot(memorySnapshot) {
@@ -203,6 +245,7 @@ export function definitionTargetsFromSnapshot(memorySnapshot) {
       displayName: definition.displayName ?? null,
       description: definition.description || `Direct open-schema eval definition for ${slug}.`,
       valueType,
+      scope: 'GLOBAL',
       isSensitive: Boolean(definition.isSensitive),
       options: [],
     };
@@ -223,6 +266,7 @@ export function definitionTargetsFromSnapshot(memorySnapshot) {
       displayName: null,
       description: `Direct open-schema eval definition for ${slug}.`,
       valueType,
+      scope: 'GLOBAL',
       isSensitive: false,
       options: valueType === 'ENUM' ? enumOptions(null, values) : [],
     });
@@ -260,19 +304,74 @@ function definitionInput(target) {
     displayName: target.displayName || displayNameForSlug(target.slug),
     description: target.description || `Direct open-schema eval definition for ${target.slug}.`,
     valueType: target.valueType,
-    scope: 'GLOBAL',
+    scope: target.scope,
     ...(target.valueType === 'ENUM' ? { options: target.options } : {}),
     isSensitive: target.isSensitive,
     isCore: false,
   };
 }
 
-function assertCompatibleDefinition({ target, existingDefinition }) {
+function assertCompatibleDefinition({ target, existingDefinition, resetMemoryMode }) {
   const actualValueType = String(existingDefinition.valueType ?? '').toUpperCase();
+  const actualScope = String(existingDefinition.scope ?? '').toUpperCase();
+  const existingOptions = target.valueType === 'ENUM'
+    ? normalizedStringArray(existingDefinition.options)
+    : null;
+  const requiredOptions = target.valueType === 'ENUM'
+    ? normalizedStringArray(target.options)
+    : null;
+  const missingOptions = target.valueType === 'ENUM'
+    ? requiredOptions.filter((option) => !existingOptions.includes(option))
+    : [];
+  const mismatches = [];
+
   if (actualValueType !== target.valueType) {
-    throw new Error(
-      `Existing definition ${target.slug} has valueType ${actualValueType || '<missing>'}, expected ${target.valueType}.`,
+    mismatches.push({
+      field: 'valueType',
+      existing: actualValueType || null,
+      required: target.valueType,
+    });
+  }
+  if (actualScope !== target.scope) {
+    mismatches.push({
+      field: 'scope',
+      existing: actualScope || null,
+      required: target.scope,
+    });
+  }
+  if (missingOptions.length > 0) {
+    mismatches.push({
+      field: 'options',
+      existing: existingOptions,
+      required: requiredOptions,
+      missing: missingOptions,
+    });
+  }
+
+  if (mismatches.length > 0) {
+    const error = new Error(
+      `Existing definition ${target.slug} is incompatible with synthetic snapshot requirements.`,
     );
+    error.name = 'MaterializationCompatibilityError';
+    error.details = {
+      slug: target.slug,
+      definitionId: existingDefinition?.id ?? null,
+      ownerUserId: existingDefinition?.ownerUserId ?? null,
+      resetMode: resetMemoryMode ?? null,
+      suggestedResetMode: 'DEMO_DATA',
+      existing: {
+        valueType: actualValueType || null,
+        scope: actualScope || null,
+        options: existingOptions,
+      },
+      required: {
+        valueType: target.valueType,
+        scope: target.scope,
+        options: requiredOptions,
+      },
+      mismatches,
+    };
+    throw error;
   }
 }
 
@@ -280,9 +379,87 @@ function definitionSummary(target, definition) {
   return {
     slug: target.slug,
     valueType: target.valueType,
+    scope: target.scope,
     definitionId: definition?.id ?? null,
     ownerUserId: definition?.ownerUserId ?? null,
+    requiredOptions: target.valueType === 'ENUM' ? normalizedStringArray(target.options) : null,
+    existingOptions: target.valueType === 'ENUM'
+      ? normalizedStringArray(definition?.options)
+      : null,
   };
+}
+
+function buildMaterializationReport({
+  status,
+  repoRoot,
+  memorySnapshot,
+  memorySnapshotPath,
+  graphqlUrl,
+  resetMemoryEnabled,
+  resetMemoryMode,
+  backendUser,
+  startedAt,
+  endedAt,
+  reset,
+  definitionTargets,
+  definitionSetup,
+  accepted,
+  skipped,
+  duplicateSlugs,
+  failure = null,
+}) {
+  const preferences = Array.isArray(memorySnapshot?.preferences)
+    ? memorySnapshot.preferences
+    : [];
+  return {
+    schemaVersion: 1,
+    artifactType: 'synthetic-memory-materialization-report',
+    status,
+    runId: memorySnapshot?.runId ?? null,
+    userId: memorySnapshot?.userId ?? null,
+    corpusId: memorySnapshot?.corpusId ?? null,
+    backendUserId: backendUser?.userId ?? null,
+    startedAt,
+    endedAt,
+    settings: {
+      graphqlUrl: graphqlUrl ? sanitizeGraphqlUrl(graphqlUrl) : null,
+      resetMemory: Boolean(resetMemoryEnabled),
+      resetMode: resetMemoryEnabled ? resetMemoryMode : null,
+      inputMemorySnapshot: memorySnapshotPath
+        ? relativePath(repoRoot, memorySnapshotPath)
+        : null,
+    },
+    reset,
+    definitionSetup,
+    preferenceMaterialization: {
+      accepted,
+      skipped,
+      duplicateSlugs: [...duplicateSlugs].sort(),
+    },
+    summary: {
+      definitionTargetCount: definitionTargets.length,
+      createdDefinitionCount: definitionSetup.created.length,
+      existingDefinitionCount: definitionSetup.existing.length,
+      preferenceInputCount: preferences.length,
+      acceptedPreferenceCount: accepted.length,
+      skippedSuggestionCount: skipped.length,
+      duplicateSlugCount: duplicateSlugs.size,
+    },
+    ...(failure ? { failure } : {}),
+  };
+}
+
+function sanitizeError(error) {
+  return {
+    name: error?.name ?? 'Error',
+    message: String(error?.message ?? error),
+  };
+}
+
+function normalizedStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((option) => typeof option === 'string' && option.length > 0))]
+    .sort();
 }
 
 function enumOptions(definitionOptions, values) {

@@ -368,6 +368,78 @@ test('direct-open-schema-packet backend fill materializes memory and skips model
   await assertReportedArtifactsExist(packet);
 });
 
+test('direct-open-schema-packet materialization failures point at a written report', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-materialize-fail-'));
+  const fetchMock = createMaterializationFailureFetchMock();
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--fill-mode',
+      'backend',
+      '--auth-token',
+      'secret-token',
+      '--reset-memory',
+    ],
+    env: {},
+    now: fixedNow,
+    fetchImpl: fetchMock.fetch,
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) =>
+      JSON.stringify({
+        facts: [
+          {
+            slug: 'payroll.account_type',
+            label: 'Account type',
+            valueType: 'ENUM',
+            value: 'checking',
+            confidence: 0.9,
+            evidence: [{ documentId: evidenceDocuments[0].id, quote: 'checking' }],
+          },
+        ],
+        unresolved: [],
+      }),
+    generateFillResponse: async () => {
+      throw new Error('model fill should not run in backend fill mode');
+    },
+    runners: {
+      exportMemorySnapshot: async () => {
+        throw new Error('export should not run after materialization failure');
+      },
+      fillForm: async () => {
+        throw new Error('backend fill should not run after materialization failure');
+      },
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(fetchMock.operations, [
+    'EvalIngestorMe',
+    'EvalIngestorResetMemory',
+    'EvalIngestorPreferenceSchema',
+  ]);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.failureStage, 'materialize-synthetic-memory');
+  assert.match(
+    packet.failure.artifacts.memoryMaterializationReport,
+    /memory-materialization-report\.json$/,
+  );
+
+  const materializationReport = JSON.parse(
+    await readFile(
+      path.resolve(repoRoot, packet.failure.artifacts.memoryMaterializationReport),
+      'utf8',
+    ),
+  );
+  assert.equal(materializationReport.status, 'fail');
+  assert.equal(materializationReport.failure.stage, 'setup-definition');
+  assert.deepEqual(materializationReport.failure.currentDefinition, {
+    slug: 'payroll.account_type',
+  });
+});
+
 test('direct-open-schema-packet finalizes packet report on invalid extraction JSON', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-invalid-extract-'));
 
@@ -493,4 +565,63 @@ function removeFlagValue(args, flag) {
 function valueAfter(args, flag) {
   const index = args.indexOf(flag);
   return index === -1 ? null : args[index + 1];
+}
+
+function createMaterializationFailureFetchMock() {
+  const operations = [];
+  return {
+    operations,
+    fetch: async (_url, request) => {
+      const body = JSON.parse(request.body);
+      const operation = operationName(body.query);
+      operations.push(operation);
+      if (operation === 'EvalIngestorMe') {
+        return jsonResponse({ data: { me: { userId: 'backend-user-123' } } });
+      }
+      if (operation === 'EvalIngestorResetMemory') {
+        return jsonResponse({
+          data: {
+            resetMyMemory: {
+              mode: body.variables.mode,
+              preferencesDeleted: 0,
+              preferenceDefinitionsDeleted: 0,
+              locationsDeleted: 0,
+              preferenceAuditEventsDeleted: 0,
+              mcpAccessEventsDeleted: 0,
+              permissionGrantsDeleted: 0,
+            },
+          },
+        });
+      }
+      if (operation === 'EvalIngestorPreferenceSchema') {
+        return jsonResponse({
+          data: {
+            exportPreferenceSchema: [
+              {
+                id: 'def-stale-account-type',
+                slug: 'payroll.account_type',
+                valueType: 'ENUM',
+                scope: 'GLOBAL',
+                options: ['savings'],
+                ownerUserId: 'backend-user-123',
+              },
+            ],
+          },
+        });
+      }
+      throw new Error(`Unexpected operation ${operation}`);
+    },
+  };
+}
+
+function operationName(query) {
+  const match = String(query).match(/\b(?:query|mutation)\s+(\w+)/);
+  return match?.[1] ?? '<unknown>';
+}
+
+function jsonResponse(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
 }

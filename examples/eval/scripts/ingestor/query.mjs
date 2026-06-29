@@ -26,6 +26,7 @@ query EvalIngestorPreferenceSchema($scope: ExportSchemaScope!) {
     slug
     valueType
     scope
+    options
     ownerUserId
     archivedAt
   }
@@ -38,6 +39,7 @@ mutation EvalIngestorCreateDefinition($input: CreatePreferenceDefinitionInput!) 
     slug
     valueType
     scope
+    options
     ownerUserId
   }
 }
