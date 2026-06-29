@@ -340,8 +340,28 @@ test('buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slug
     'profile.address.line1',
     'eval.address.current.street_line',
   ]);
-  assertNoFactPolicy(directDeposit, 'banking.routingNumber');
-  assertNoFactPolicy(directDeposit, 'banking.accountNumber');
+  assertFieldSourceSlugs(
+    directDeposit,
+    'banking.routingNumber',
+    [
+      'eval.banking.routing_number',
+      'banking.routing_number',
+      'banking.routingNumber',
+      'profile.banking.routing_number',
+    ],
+    { count: 9 },
+  );
+  assertFieldSourceSlugs(
+    directDeposit,
+    'banking.accountNumber',
+    [
+      'eval.banking.account_number',
+      'banking.account_number',
+      'banking.accountNumber',
+      'profile.banking.account_number',
+    ],
+    { count: 12 },
+  );
 });
 
 test('fill-form writes filled-form, filled PDF, redacted response, and form score report', async () => {
@@ -723,24 +743,21 @@ async function fieldPoliciesForScenario({ scenarioId, storageMap }) {
   return buildFormFillFieldPolicies({ fixture, storageMap });
 }
 
-function assertFieldSourceSlugs(policies, factKey, sourceSlugs) {
+function assertFieldSourceSlugs(policies, factKey, sourceSlugs, options = {}) {
   const fields = policies.fields.filter(
     (field) => field.mode === 'fact' && field.factKey === factKey,
   );
   assert.ok(fields.length > 0, `expected at least one field policy for ${factKey}`);
+  if (options.count != null) {
+    assert.equal(
+      fields.length,
+      options.count,
+      `expected ${options.count} field policies for ${factKey}`,
+    );
+  }
   for (const field of fields) {
     assert.deepEqual(field.sourceSlugs, sourceSlugs, field.fieldName);
   }
-}
-
-function assertNoFactPolicy(policies, factKey) {
-  assert.equal(
-    policies.fields.some(
-      (field) => field.mode === 'fact' && field.factKey === factKey,
-    ),
-    false,
-    `expected no field policy for ${factKey}`,
-  );
 }
 
 function baseArgs(outPath) {
