@@ -493,8 +493,6 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
       'http://user:pass@localhost:3000',
       '--graphql-url',
       'http://user:pass@localhost:3000/graphql',
-      '--model-label',
-      'gpt-5.4',
       '--reset-memory',
       '--skip-ensure-definitions',
       '--location-id',
@@ -502,7 +500,7 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
       '--run-id',
       'run-123',
     ],
-    env: {},
+    env: { EVAL_MODEL_LABEL: 'env-test-model' },
     runners,
     now: fixedNow,
   });
@@ -528,6 +526,10 @@ test('mcp agent e2e runs stages in order and writes schema-valid artifacts', asy
   assert.equal(evaluationRun.evaluationMode, 'mcp-known-schema');
   assert.equal(evaluationRun.status, 'pass');
   assert.equal(evaluationRun.backendUserId, 'backend-user-123');
+  assert.deepEqual(evaluationRun.model, {
+    label: 'env-test-model',
+    source: 'env',
+  });
   assert.equal(evaluationRun.backendUrl, 'http://localhost:3000/');
   assert.equal(evaluationRun.graphqlUrl, 'http://localhost:3000/graphql');
   assert.equal(evaluationRun.settings.resetMemory, true);

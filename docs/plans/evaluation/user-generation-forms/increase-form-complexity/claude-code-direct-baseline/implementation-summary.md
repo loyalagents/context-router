@@ -92,6 +92,10 @@ Code changes were made:
 - Made the Claude-named direct entrypoint reject non-Claude providers.
 - Added model/thinking metadata to direct and MCP packet artifacts, including
   env/manual/default source tracking where applicable.
+- Updated the single-scenario `evaluation-run` schema to accept env-sourced
+  model metadata.
+- Set Claude Code direct model precedence to CLI `--model`, then
+  `EVAL_CLAUDE_CODE_MODEL`, then `EVAL_MODEL`.
 - Added `--model` and `--thinking-mode` controls for MCP packet Claude runs.
 - Made MCP thinking metadata apply only to Claude runs and record source more
   precisely.

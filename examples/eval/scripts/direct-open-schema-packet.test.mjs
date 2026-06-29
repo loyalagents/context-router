@@ -64,13 +64,29 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
 
+  const vertexEnvModel = parseArgs(
+    removeFlagValue(baseArgs, '--model'),
+    {
+      EVAL_DIRECT_OPEN_SCHEMA_MODEL: 'env-direct-model',
+      EVAL_CLAUDE_CODE_MODEL: 'env-claude-model',
+    },
+    fixedNow,
+  );
+  assert.equal(vertexEnvModel.kind, 'ok');
+  assert.equal(vertexEnvModel.options.provider, 'vertex');
+  assert.equal(vertexEnvModel.options.model, 'env-direct-model');
+  assert.equal(vertexEnvModel.options.modelSource, 'env');
+
   const claudeEnvModel = parseArgs(
     [
       '--provider',
       'claude-code',
       ...removeFlagValue(baseArgs, '--model'),
     ],
-    { EVAL_CLAUDE_CODE_MODEL: 'env-claude-model' },
+    {
+      EVAL_DIRECT_OPEN_SCHEMA_MODEL: 'env-direct-model',
+      EVAL_CLAUDE_CODE_MODEL: 'env-claude-model',
+    },
     fixedNow,
   );
   assert.equal(claudeEnvModel.kind, 'ok');

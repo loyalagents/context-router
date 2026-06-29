@@ -103,6 +103,9 @@ Controls:
 
 - `--model` is passed through to Claude Code for the direct runner and MCP
   Claude packet runner.
+- For Claude Code direct, model precedence is CLI `--model`, then
+  `EVAL_CLAUDE_CODE_MODEL`, then `EVAL_MODEL`. `EVAL_DIRECT_OPEN_SCHEMA_MODEL`
+  is reserved for Vertex direct runs.
 - `--model-label` remains a metadata-only fallback for older MCP runs.
 - `--thinking-mode default|low|medium|high|xhigh|max` is supported.
 - `default` omits `--effort`; other values map directly to `--effort`.

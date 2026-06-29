@@ -445,8 +445,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
 
   const options = {
     provider: 'vertex',
-    model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL,
-    modelSource: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL ? 'env' : 'unspecified',
+    model: null,
+    modelSource: 'unspecified',
     temperature: DEFAULT_TEMPERATURE,
     maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
     documentOrder: DEFAULT_DOCUMENT_ORDER,
@@ -531,14 +531,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!PROVIDERS.has(options.provider)) {
     return { kind: 'usage-error', message: '--provider currently supports vertex or claude-code.' };
   }
-  if (!options.model && options.provider === 'claude-code') {
-    if (env.EVAL_CLAUDE_CODE_MODEL) {
-      options.model = env.EVAL_CLAUDE_CODE_MODEL;
-      options.modelSource = 'env';
-    } else if (env.EVAL_MODEL) {
-      options.model = env.EVAL_MODEL;
-      options.modelSource = 'env';
-    }
+  if (options.modelSource !== 'manual') {
+    const envModel = modelFromEnvForProvider({ provider: options.provider, env });
+    options.model = envModel.model;
+    options.modelSource = envModel.source;
   }
   if (
     typeof options.temperature !== 'number' ||
@@ -568,7 +564,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!options.model) {
     return {
       kind: 'usage-error',
-      message: 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL, EVAL_CLAUDE_CODE_MODEL, or pass --model.',
+      message: options.provider === 'claude-code'
+        ? 'Set EVAL_CLAUDE_CODE_MODEL, EVAL_MODEL, or pass --model.'
+        : 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.',
     };
   }
 
@@ -577,6 +575,19 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     path.join('examples/eval/users', options.userId, 'corpora', options.corpusId);
   options.runId = options.runId ?? generatedRunId(options, now);
   return { kind: 'ok', options };
+}
+
+function modelFromEnvForProvider({ provider, env }) {
+  if (provider === 'claude-code') {
+    return {
+      model: env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL || null,
+      source: env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL ? 'env' : 'unspecified',
+    };
+  }
+  return {
+    model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL || null,
+    source: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL ? 'env' : 'unspecified',
+  };
 }
 
 export function usage() {
@@ -592,7 +603,7 @@ export function usage() {
     'Options:',
     '  --documents-root <dir>           Defaults to examples/eval/users/<user>/corpora/<corpus>',
     '  --provider vertex|claude-code    Defaults to vertex',
-    '  --model <model>                  Defaults to EVAL_CLAUDE_CODE_MODEL or EVAL_DIRECT_OPEN_SCHEMA_MODEL',
+    '  --model <model>                  Vertex defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL; Claude Code defaults to EVAL_CLAUDE_CODE_MODEL or EVAL_MODEL',
     '  --temperature <number>           Defaults to 0.2',
     `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
     '  --thinking-mode <mode>           Claude Code only: default|low|medium|high|xhigh|max',
