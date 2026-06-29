@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "maya-chen-newhire-i9-packet-hard-required-v4",
+  "description": "Live open-schema I-9 form-fill scenario for Maya Chen using the packet-hard-required-v4 scored-field required-evidence shared dossier.",
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-hard-required-v4",
+  "formId": "i-9",
+  "expectedSnapshots": []
+}
