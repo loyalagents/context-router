@@ -8,13 +8,12 @@ Step 2 multiple jobs: false
 Field IDs: tax.filing_status, tax.multiple_jobs, worker.id, autosave.status
 Reviewer note: the tax setup screen later committed a different saved election. The autosave row is kept only in the edit history stream.
 
-Control checks
-Owner queue: WorkRight Coordination
-Source packet marker: PLC-ARCHIVE-028
-Review window: 2026-06-20 08:38 PDT through 2026-06-21 17:48 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-ARCHIVE-028 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Archive provenance
+Archive ledger: PLC-ARCHIVE-028 stayed in the historical stream with its original close reason and source timestamp.
+Retrieval note: archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
+Retention tag: prior-state audit row, preserved under the new-hire correction retention schedule.
+
+Operational detail rows
+Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-028 was indexed from Maya tax History during the 2026-06-20 operations window.
+Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

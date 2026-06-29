@@ -8,7 +8,7 @@
 
 - Added `packet-hard-volume-v2` for Maya Chen under
   `examples/eval/users/maya-chen-newhire/corpora/`.
-- Added 100 total documents and about 227k source characters.
+- Added 100 total documents and about 220k source characters.
 - Preserved the canonical Maya truth by copying the 20 truth-bearing
   `packet-medium` documents into the v2 packet.
 - Added 80 new realistic volume documents:
@@ -29,9 +29,14 @@
   schema currently allows only `realistic-generated` and `template-smoke`.
 - The distractor folders are more realistic than v1, but manifest categories
   remain mapped onto the existing category enum for schema compatibility.
-- The v2 body text has zero matches for the explicit self-disqualifying cue
-  set checked during implementation: `do not use`, `context only`, `sample`,
-  `template`, `fake`, `not relevant`, and `not authoritative`.
+- The v2 body text has zero matches for the explicit and soft
+  self-disqualifying cue set checked during implementation: `do not use`,
+  `context only`, `sample`, `template`, `fake`, `not relevant`,
+  `not authoritative`, `without serving as the final employee evidence`,
+  `no profile fields were edited`, `no live employee values`, and
+  `does not include live employee answers`.
+- Added regression coverage for the v2 cue scan and for keeping the 20
+  truth-bearing document bodies byte-identical to `packet-medium`.
 - The copied truth-bearing documents retain the same validation warnings already
   seen in the medium/v1 family, mostly length-target, native-signal, and
   phone-like support-number warnings.
@@ -48,7 +53,7 @@
   - `node --test examples/eval/scripts/e2e-mcp-packet.test.mjs`
   - `node --test examples/eval/scripts/fill-form-from-docs.test.mjs`
   - `node --test examples/eval/scripts/validate.test.mjs`
-- Focused test result: 91/91 passing.
+- Focused test result: 93/93 passing.
 
 ## Live Run Defaults
 

@@ -18,13 +18,12 @@ Agent worklog
 
 Field IDs observed: requester.name, requester.worker_id, contact.email, postal.address, payroll.election_state.
 
-Processing trail
-Owner queue: People Operations
-Source packet marker: PLC-SUPPORTC-048
-Review window: 2026-06-22 08:13 PDT through 2026-06-23 17:33 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-SUPPORTC-048 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Support case provenance
+Support case trace: PLC-SUPPORTC-048 retained requester, queue assignment, worklog events, and field labels mentioned during triage.
+Case checkpoint: HarborDesk agents compare requester worker id, owner queue, and source-system screenshots before changing any case state.
+Retention tag: support transcript, stored with routing history and agent worklog.
+
+Operational detail rows
+Support cases keep requester, worklog, owner queue, escalation state, linked source screenshots, and field labels mentioned during triage. Row marker PLC-SUPPORTC-048 was indexed from Tax Status Case Maia Chinn during the 2026-06-22 operations window.
+HarborDesk agents compare requester worker id, queue ownership, screenshot timestamp, and source-system task before updating a case. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+Case transcripts retain initial question, agent notes, routing transitions, and the source task family that triggered the ticket. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

@@ -7,17 +7,15 @@ Field IDs: process.owner, queue.name, control.code, export.window
 
 Remote inspection workflows require coordinator review, image upload status, and employer representative attestation before Section 2.
 The advisory describes queue routing, retention tags, and audit timestamps for the vendor dashboard.
-It discusses the workflow at system level and does not include live employee answers.
 
 Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
 
-Reviewer scratchpad
-Owner queue: Payroll Operations
-Source packet marker: PLC-COMPLIAN-081
-Review window: 2026-06-19 08:46 PDT through 2026-06-20 17:31 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-COMPLIAN-081 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Compliance provenance
+Compliance library trace: PLC-COMPLIAN-081 tracked owner team, release window, and affected workflow queues for coordinator lookup.
+Review checkpoint: WorkRight coordination compared version date, topic area, and queue coverage before linking the guidance to training search.
+Retention tag: compliance guidance, versioned with policy owner and release notes.
+
+Operational detail rows
+Compliance notes are versioned by release owner, workflow area, affected queue, coordinator role, and review date. Row marker PLC-COMPLIAN-081 was indexed from Remote Inspection Advisory during the 2026-06-19 operations window.
+WorkRight guidance rows carry status-code references, document-family labels, retention rule names, and reviewer routing examples. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The compliance library stores policy text with advisory id, publication timestamp, owner team, and maintenance window references. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

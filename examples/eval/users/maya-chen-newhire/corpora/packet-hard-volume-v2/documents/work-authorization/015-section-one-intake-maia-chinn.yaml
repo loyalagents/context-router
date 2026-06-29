@@ -27,17 +27,21 @@ queue_notes:
   - matched during nightly PeopleBridge export
   - awaiting normal payroll cutover review
 
+  -
+  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+
 review_history:
   - timestamp: 2026-06-25T09:12:00-07:00
-    owner_queue: HarborDesk Routing
-    status: visible_in_archive
+    owner_queue: Work authorization trace
+    status: source_row_indexed
   - timestamp: 2026-06-26T16:40:00-07:00
-    owner_queue: Payroll Operations
-    status: included_in_control_total
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
 control_observations:
-  - The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-  - Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-  - The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-  - A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-  - Reviewer note - no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+  - Work authorization trace - PLC-WORKAUTH-015 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+  - Coordinator checkpoint - WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+  - Retention tag - employment eligibility workflow artifact, stored with branch and queue metadata.
+operational_detail_rows:
+  - Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-015 was indexed from Section One Intake Maia Chinn during the 2026-06-25 operations window.
+  - Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+  - The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

@@ -11,13 +11,12 @@ Exception rows include enough context for triage but are not a substitute for so
 
 Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
 
-Import observations
-Owner queue: PeopleBridge Data
-Source packet marker: PLC-IDENTITY-070
-Review window: 2026-06-26 08:35 PDT through 2026-06-27 17:20 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-IDENTITY-070 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Identity vendor provenance
+Identity vendor trace: PLC-IDENTITY-070 retained source filename, OCR model version, review queue, and crop metadata.
+Review checkpoint: IdentityLens reviewers compare upload batch, document family, confidence score, and queue disposition before clearing a transcript.
+Retention tag: OCR processing artifact, stored with image-processing metadata and reviewer assignment.
+
+Operational detail rows
+Identity vendor logs keep OCR model, crop id, upload batch, source filename, reviewer queue, and confidence score. Row marker PLC-IDENTITY-070 was indexed from Payroll Preview Exception Digest during the 2026-06-26 operations window.
+Document review compares image family, transcript state, redaction state, and accepted queue status before clearing the row. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The vendor export stores raw transcript snippets beside review metadata so support can reproduce OCR routing decisions. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

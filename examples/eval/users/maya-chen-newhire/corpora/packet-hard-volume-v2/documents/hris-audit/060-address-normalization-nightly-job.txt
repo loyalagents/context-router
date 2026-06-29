@@ -11,13 +11,12 @@ Records with apartment markers are sent to a secondary parser before payroll pre
 
 Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
 
-Control checks
-Owner queue: WorkRight Coordination
-Source packet marker: PLC-HRISAUDI-060
-Review window: 2026-06-16 08:25 PDT through 2026-06-17 17:45 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-HRISAUDI-060 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+HRIS audit provenance
+HRIS audit trace: PLC-HRISAUDI-060 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+Change-ledger checkpoint: reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+Retention tag: audit stream export, grouped by worker id and source transaction family.
+
+Operational detail rows
+HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-060 was indexed from Address Normalization Nightly Job during the 2026-06-16 operations window.
+Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

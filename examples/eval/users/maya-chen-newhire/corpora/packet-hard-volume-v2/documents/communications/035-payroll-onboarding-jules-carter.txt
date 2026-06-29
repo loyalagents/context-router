@@ -17,13 +17,12 @@ People Operations
 
 Footer: Pacific Ledger Cooperative internal correspondence. Privacy routing tag PLC-PEOPLE-MAIL.
 
-System annotations
-Owner queue: LedgerPay Controls
-Source packet marker: PLC-COMMUNIC-035
-Review window: 2026-06-27 08:45 PDT through 2026-06-28 17:20 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-COMMUNIC-035 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Message archive provenance
+Mail archive: PLC-COMMUNIC-035 retained message headers, routing tag, delivery state, and the cohort communication queue that generated the notice.
+Delivery checkpoint: People Operations reviewed recipient address, worker id in the envelope metadata, and message family before closing the mail event.
+Retention tag: communication archive, stored with message id and queue owner for later support lookup.
+
+Operational detail rows
+Message archive records envelope recipient, generated subject, delivery status, reminder family, and queue-owned message id. Row marker PLC-COMMUNIC-035 was indexed from Payroll Onboarding Jules Carter during the 2026-06-27 operations window.
+People Operations uses message metadata to trace whether a reminder was sent before or after payroll, tax, or work authorization lock. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The mail export keeps privacy footer text, sender alias, cohort tag, and source queue for retention lookup. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

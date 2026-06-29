@@ -9,13 +9,12 @@ PLC-19418,Maya Patel,maya.patel@pacificledger.test,Operations Coordinator,2026-0
 control_total,1
 batch_window,2026-06-26 18:00 PDT to 2026-06-27 06:00 PDT
 
-System annotations
-Owner queue: LedgerPay Controls
-Source packet marker: PLC-PAYROLLT-051
-Review window: 2026-06-25 08:16 PDT through 2026-06-26 17:36 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-PAYROLLT-051 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Tax workbench provenance
+Tax workbench trace: PLC-PAYROLLT-051 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+Review checkpoint: tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
+Retention tag: withholding setup artifact, grouped with tax import diagnostics and field-map notes.
+
+Operational detail rows
+Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-051 was indexed from W4 Review Maya Patel during the 2026-06-25 operations window.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

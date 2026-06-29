@@ -2216,6 +2216,61 @@ test('committed Alex realistic corpus uses V2 source artifact fixture shape', as
   assert.deepEqual(documentFiles, [...manifestPaths].sort());
 });
 
+test('packet-hard-volume-v2 documents avoid obvious and soft disqualifying cues', async () => {
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const documentFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.(json|md|txt|yaml)$/.test(filePath))
+    .sort();
+
+  const disqualifyingCuePattern =
+    /\b(?:do not use|do-not-use|context only|sample|template|fake|not relevant|not authoritative|without serving as the final employee evidence|no profile fields were edited|no live employee values|does not include live employee answers)\b/i;
+  const matches = [];
+  for (const documentFile of documentFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    if (disqualifyingCuePattern.test(body)) matches.push(documentFile);
+  }
+
+  assert.deepEqual(matches, []);
+});
+
+test('packet-hard-volume-v2 preserves packet-medium truth-bearing document bodies', async () => {
+  const mediumRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-medium',
+  );
+  const volumeRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const mediumManifest = await readJson(path.join(mediumRoot, 'manifest.json'));
+  const volumeManifest = await readJson(path.join(volumeRoot, 'manifest.json'));
+  const truthBearingSequences = new Set([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 21, 22, 23, 24,
+  ]);
+
+  for (const sequence of truthBearingSequences) {
+    const suffix = String(sequence).padStart(3, '0');
+    const mediumDoc = mediumManifest.documents.find((doc) =>
+      doc.id.endsWith(suffix),
+    );
+    const volumeDoc = volumeManifest.documents.find((doc) =>
+      doc.id.endsWith(suffix),
+    );
+    assert.ok(mediumDoc, `packet-medium document ${suffix} should exist`);
+    assert.ok(volumeDoc, `packet-hard-volume-v2 document ${suffix} should exist`);
+
+    const mediumBody = await readFile(path.join(mediumRoot, mediumDoc.path), 'utf8');
+    const volumeBody = await readFile(path.join(volumeRoot, volumeDoc.path), 'utf8');
+    assert.equal(volumeBody, mediumBody, `${volumeDoc.path} should match packet-medium`);
+  }
+});
+
 test('reports every document that declares an intentionally missing fact', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

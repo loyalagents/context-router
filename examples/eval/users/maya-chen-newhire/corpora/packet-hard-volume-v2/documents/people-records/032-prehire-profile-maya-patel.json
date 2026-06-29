@@ -29,21 +29,32 @@
     {
       "timestamp": "2026-06-24T09:12:00-07:00",
       "owner_queue": "People Operations",
-      "status": "visible_in_archive"
+      "status": "source_row_indexed"
     },
     {
       "timestamp": "2026-06-25T16:40:00-07:00",
       "owner_queue": "HarborHire Data",
-      "status": "included_in_control_total"
+      "status": "queue_checkpoint_recorded"
     }
   ],
   "control_observations": [
-    "The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.",
-    "Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.",
-    "The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.",
-    "A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.",
-    "Control total note: batch PLC-PEOPLERE-032 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.",
-    "Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage."
+    "PeopleBridge profile trace: PLC-PEOPLERE-032 kept export id, source worker id, directory sync status, and profile-review queue.",
+    "Profile checkpoint: PeopleBridge reviewers compare source system, row status, and worker id before linking records across HRIS and payroll.",
+    "Retention tag: profile export row, retained with cross-system matching diagnostics."
   ],
-  "source_packet_marker": "PLC-PEOPLERE-032"
+  "source_packet_marker": "PLC-PEOPLERE-032",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "PeopleBridge profile rows store export id, worker id, directory status, HRIS sync marker, and cross-system matching diagnostics. Row marker PLC-PEOPLERE-032 was indexed from Prehire Profile Maya Patel during the 2026-06-24 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "Profile matching compares name token, work email, source system, start-date row, and bridge status before linking records. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention."
+    },
+    {
+      "sequence": 3,
+      "note": "The profile export keeps the source row exactly as emitted so support can compare HRIS, payroll, and directory views. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text."
+    }
+  ]
 }

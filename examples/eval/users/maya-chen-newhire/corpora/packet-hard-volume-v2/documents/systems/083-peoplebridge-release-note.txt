@@ -11,13 +11,12 @@ The release note lists affected APIs and dashboard panels.
 
 Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
 
-System annotations
-Owner queue: LedgerPay Controls
-Source packet marker: PLC-SYSTEMS-083
-Review window: 2026-06-21 08:48 PDT through 2026-06-22 17:33 PDT
-The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
-Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
-The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
-A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
-Control total note: batch PLC-SYSTEMS-083 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
+Systems provenance
+Systems note trace: PLC-SYSTEMS-083 recorded release owner, affected interfaces, deployment window, and file-layout family.
+Data checkpoint: platform reviewers compare version, endpoint owner, and source-system contract before updating integration docs.
+Retention tag: systems documentation artifact, versioned with release and interface metadata.
+
+Operational detail rows
+Systems documentation tracks release owner, interface contract, file-layout version, deployment window, and affected downstream job. Row marker PLC-SYSTEMS-083 was indexed from PeopleBridge Release Note during the 2026-06-21 operations window.
+Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
+The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.

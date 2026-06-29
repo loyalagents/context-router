@@ -29,21 +29,32 @@
     {
       "timestamp": "2026-06-13T09:12:00-07:00",
       "owner_queue": "HarborDesk Routing",
-      "status": "visible_in_archive"
+      "status": "source_row_indexed"
     },
     {
       "timestamp": "2026-06-14T16:40:00-07:00",
       "owner_queue": "Payroll Operations",
-      "status": "included_in_control_total"
+      "status": "queue_checkpoint_recorded"
     }
   ],
   "control_observations": [
-    "The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.",
-    "Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.",
-    "The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.",
-    "A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.",
-    "Control total note: batch PLC-BANKINGO-039 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.",
-    "Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage."
+    "Prenote trail: PLC-BANKINGO-039 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.",
+    "Reconciliation checkpoint: banking operations reviewed row ownership, return-code state, and account-label normalization at 15:45 PDT on 2026-06-13.",
+    "Control note: the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export."
   ],
-  "source_packet_marker": "PLC-BANKINGO-039"
+  "source_packet_marker": "PLC-BANKINGO-039",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-039 was indexed from Account Election Naya Lin during the 2026-06-13 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention."
+    },
+    {
+      "sequence": 3,
+      "note": "The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text."
+    }
+  ]
 }
