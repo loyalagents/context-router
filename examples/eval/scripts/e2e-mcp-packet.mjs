@@ -6,10 +6,15 @@ import { fileURLToPath } from 'node:url';
 import {
   COMPLETION_MARKER,
   buildAgentInvocation,
+  mcpThinkingMetadata,
   prepareAgentWorkspace,
   prepareOpenSchemaMemory,
   runAgentProcess,
 } from './e2e-mcp-agent.mjs';
+import {
+  modelMetadata,
+  validateThinkingMode,
+} from './claude-code-cli.mjs';
 import {
   MCP_OPEN_SCHEMA_EVALUATION_MODE,
   MCP_OPEN_SCHEMA_PRODUCER,
@@ -486,7 +491,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
     graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
     authToken: env.EVAL_AUTH_TOKEN,
+    model: env.EVAL_MODEL,
     modelLabel: env.EVAL_MODEL_LABEL,
+    thinkingMode: env.EVAL_THINKING_MODE || 'default',
     resetMemory: false,
     resetMemoryMode: null,
     allowTestCommandAgent: false,
@@ -512,7 +519,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--agent-timeout-ms',
     '--prompt-template',
     '--mcp-config',
+    '--model',
     '--model-label',
+    '--thinking-mode',
     '--document-order',
     '--document-order-seed',
     '--location-id',
@@ -579,7 +588,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
     if (arg === '--prompt-template') options.promptTemplate = value;
     if (arg === '--mcp-config') options.mcpConfig = value;
+    if (arg === '--model') options.model = value;
     if (arg === '--model-label') options.modelLabel = value;
+    if (arg === '--thinking-mode') options.thinkingMode = value;
     if (arg === '--document-order') options.documentOrder = value;
     if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--location-id') options.locationId = value;
@@ -627,6 +638,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!options.authToken) {
     return { kind: 'usage-error', message: 'Missing required --auth-token or EVAL_AUTH_TOKEN' };
   }
+  const thinkingError = validateThinkingMode(options.thinkingMode);
+  if (thinkingError) {
+    return { kind: 'usage-error', message: thinkingError };
+  }
   for (const [label, value] of [
     ['--user', options.userId],
     ['--corpus', options.corpusId],
@@ -671,7 +686,9 @@ export function usage() {
     '  --mcp-config <path>               Required with --agent claude; loaded with --strict-mcp-config',
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults to examples/eval/prompts/mcp-open-schema-packet.md',
-    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
+    '  --model <model>                   Defaults to EVAL_MODEL; passed to Claude Code when --agent claude',
+    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; metadata-only fallback',
+    '  --thinking-mode <mode>            Claude Code only: default|low|medium|high|xhigh|max',
     '  --document-order <mode>           canonical|reverse|seeded-random|relevant-first|relevant-last',
     `  --document-order-seed <seed>      Defaults to ${DEFAULT_DOCUMENT_ORDER_SEED}`,
     '  --reset-memory                    Clear current backend user memory values before the agent run',
@@ -772,7 +789,9 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     scenarioIds: options.scenarioIds,
     documentsRoot: displayPath(repoRoot, path.resolve(repoRoot, options.documentsRoot)),
     artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
-    model: options.modelLabel ? { label: options.modelLabel, source: 'manual' } : null,
+    agent: options.agent,
+    model: modelMetadata({ model: options.model, modelLabel: options.modelLabel }),
+    thinking: mcpThinkingMetadata(options),
     backendUserId: null,
     settings: {
       resetMemory: options.resetMemory,

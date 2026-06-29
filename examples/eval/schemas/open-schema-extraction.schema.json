@@ -29,7 +29,7 @@
     "userId": { "type": "string", "minLength": 1 },
     "corpusId": { "type": "string", "minLength": 1 },
     "formId": { "type": "string", "minLength": 1 },
-    "provider": { "const": "vertex" },
+    "provider": { "enum": ["vertex", "claude-code"] },
     "model": { "type": "string", "minLength": 1 },
     "promptVersion": { "const": "direct-open-schema-extraction-v4" },
     "facts": {

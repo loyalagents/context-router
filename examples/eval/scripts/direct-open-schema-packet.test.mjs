@@ -37,9 +37,11 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   const parsed = parseArgs(baseArgs, {}, fixedNow);
   assert.equal(parsed.kind, 'ok');
   assert.deepEqual(parsed.options.scenarioIds, scenarioIds);
+  assert.equal(parsed.options.provider, 'vertex');
   assert.equal(parsed.options.maxEvidenceChars, 200000);
   assert.equal(parsed.options.documentOrder, 'canonical');
   assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
+  assert.equal(parsed.options.thinkingMode, 'default');
   assert.equal(
     parsed.options.documentsRoot,
     'examples/eval/users/maya-chen-newhire/corpora/packet-small',
@@ -132,6 +134,9 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
 
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.status, 'pass');
+  assert.equal(packet.agent, 'vertex');
+  assert.deepEqual(packet.model, { label: 'test-model', source: 'manual' });
+  assert.equal(packet.thinking, null);
   assert.equal(packet.settings.documentOrder, 'relevant-last');
   assert.equal(packet.settings.maxEvidenceChars, 1000000);
   assert.equal(packet.documents.documentCount, 8);

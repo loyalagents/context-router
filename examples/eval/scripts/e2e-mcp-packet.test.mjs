@@ -50,6 +50,7 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   assert.equal(parsed.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema-packet.md');
   assert.equal(parsed.options.documentOrder, 'canonical');
   assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
+  assert.equal(parsed.options.thinkingMode, 'default');
   assert.match(
     parsed.options.runId,
     /^mcp-open-schema-packet-maya-chen-newhire-packet-small-2026-06-01T12-00-00-000Z$/,
@@ -74,6 +75,21 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   );
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
+
+  const controls = parseArgs(
+    [
+      ...baseArgs,
+      '--model',
+      'claude-sonnet-4-20250514',
+      '--thinking-mode',
+      'xhigh',
+    ],
+    { EVAL_AUTH_TOKEN: 'token' },
+    fixedNow,
+  );
+  assert.equal(controls.kind, 'ok');
+  assert.equal(controls.options.model, 'claude-sonnet-4-20250514');
+  assert.equal(controls.options.thinkingMode, 'xhigh');
 });
 
 test('mcp packet prompt describes one shared dossier for multiple forms', async () => {
@@ -309,6 +325,9 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
   const safeIndex = JSON.parse(
     await readFile(path.join(tmp, 'agent-workspace', 'documents.json'), 'utf8'),
   );
+  assert.equal(report.agent, 'command');
+  assert.deepEqual(report.model, { label: 'test-model', source: 'manual' });
+  assert.deepEqual(report.thinking, { mode: 'default', budget: null, source: 'manual' });
   assert.equal(report.settings.documentOrder, 'relevant-last');
   assert.equal(report.documents.documentCount, 8);
   assert.equal(report.documents.sourceCharCount > 0, true);

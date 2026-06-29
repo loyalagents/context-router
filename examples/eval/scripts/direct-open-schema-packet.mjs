@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRunPlan } from './eval-runner/actions.mjs';
@@ -32,6 +32,17 @@ import {
   validateDocumentOrder,
 } from './packet-documents.mjs';
 import { generateWithVertex } from './generate.mjs';
+import { buildAgentEnvironment } from './e2e-mcp-agent.mjs';
+import {
+  DEFAULT_CLAUDE_CODE_TIMEOUT_MS,
+  CLAUDE_CODE_DIRECT_TOOLS,
+  buildClaudeCodeArgs,
+  buildClaudeTranscript,
+  modelMetadata,
+  runClaudeCodePrompt,
+  thinkingMetadata,
+  validateThinkingMode,
+} from './claude-code-cli.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import { scoreOpenSchemaCombinedToFile } from './scoring/open-schema-combined.mjs';
 import { scoreOpenSchemaDatabaseToFile } from './scoring/open-schema-database.mjs';
@@ -47,7 +58,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const DEFAULT_TEMPERATURE = 0.2;
-const PROVIDERS = new Set(['vertex']);
+const PROVIDERS = new Set(['vertex', 'claude-code']);
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.75;
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
 const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
@@ -117,6 +128,14 @@ export async function runDirectOpenSchemaPacket({
       documentsRoot: path.resolve(repoRoot, options.documentsRoot),
       documents: orderedDocuments,
     });
+    const claudeWorkspace = options.provider === 'claude-code'
+      ? await prepareClaudeDirectWorkspace({
+          repoRoot,
+          artifacts,
+          options,
+          documents: orderedDocuments,
+        })
+      : null;
     report.documents = buildPacketDocumentMetadata({
       documents: orderedDocuments,
       documentOrder: options.documentOrder,
@@ -150,13 +169,14 @@ export async function runDirectOpenSchemaPacket({
     await writeFile(artifacts.extractionPrompt, extractionPrompt);
     const extractionProvider =
       generateExtractionResponse ??
-      ((prompt) =>
-        generateWithVertex(prompt, {
-          env,
-          model,
-          temperature: options.temperature,
-          responseMimeType: 'application/json',
-        }));
+      ((prompt) => generateDirectResponse({
+        repoRoot,
+        env,
+        options,
+        prompt,
+        transcriptPath: artifacts.extractionTranscript,
+        cwd: claudeWorkspace?.root ?? repoRoot,
+      }));
     const rawExtractionText = await extractionProvider(extractionPrompt, {
       fixture: extractionFixture,
       evidenceDocuments,
@@ -185,6 +205,8 @@ export async function runDirectOpenSchemaPacket({
         rawText: rawExtractionText,
         parse: extractionParse,
         validation: extractionValidation,
+        transcriptPath: artifacts.extractionTranscript,
+        repoRoot,
         now,
       }),
     );
@@ -246,13 +268,14 @@ export async function runDirectOpenSchemaPacket({
       await writeFile(scenarioArtifacts.fillPrompt, fillPrompt);
       const fillProvider =
         generateFillResponse ??
-        ((prompt) =>
-          generateWithVertex(prompt, {
-            env,
-            model,
-            temperature: options.temperature,
-            responseMimeType: 'application/json',
-          }));
+        ((prompt) => generateDirectResponse({
+          repoRoot,
+          env,
+          options,
+          prompt,
+          transcriptPath: scenarioArtifacts.fillTranscript,
+          cwd: claudeWorkspace?.root ?? repoRoot,
+        }));
       const rawFillText = await fillProvider(fillPrompt, {
         fixture,
         fieldMetadata,
@@ -281,6 +304,8 @@ export async function runDirectOpenSchemaPacket({
             parse: fillParse,
             validation: fillValidation,
             response: null,
+            transcriptPath: scenarioArtifacts.fillTranscript,
+            repoRoot,
             now,
           }),
         );
@@ -337,6 +362,8 @@ export async function runDirectOpenSchemaPacket({
           parse: fillParse,
           validation: fillValidation,
           response,
+          transcriptPath: scenarioArtifacts.fillTranscript,
+          repoRoot,
           now,
         }),
       );
@@ -405,6 +432,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
     documentOrder: DEFAULT_DOCUMENT_ORDER,
     documentOrderSeed: DEFAULT_DOCUMENT_ORDER_SEED,
+    thinkingMode: env.EVAL_THINKING_MODE || 'default',
+    agentTimeoutMs: DEFAULT_CLAUDE_CODE_TIMEOUT_MS,
   };
   const valueArgs = new Set([
     '--user',
@@ -416,6 +445,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--model',
     '--temperature',
     '--max-evidence-chars',
+    '--thinking-mode',
+    '--agent-timeout-ms',
     '--document-order',
     '--document-order-seed',
     '--run-id',
@@ -443,6 +474,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--model') options.model = value;
     if (arg === '--temperature') options.temperature = Number(value);
     if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
+    if (arg === '--thinking-mode') options.thinkingMode = value;
+    if (arg === '--agent-timeout-ms') options.agentTimeoutMs = Number(value);
     if (arg === '--document-order') options.documentOrder = value;
     if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--run-id') options.runId = value;
@@ -470,7 +503,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
   }
   if (!PROVIDERS.has(options.provider)) {
-    return { kind: 'usage-error', message: '--provider currently supports only vertex.' };
+    return { kind: 'usage-error', message: '--provider currently supports vertex or claude-code.' };
+  }
+  if (!options.model && options.provider === 'claude-code') {
+    options.model = env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL;
   }
   if (
     typeof options.temperature !== 'number' ||
@@ -483,6 +519,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!isPositiveInteger(options.maxEvidenceChars)) {
     return { kind: 'usage-error', message: '--max-evidence-chars must be a positive integer.' };
   }
+  const thinkingError = validateThinkingMode(options.thinkingMode);
+  if (thinkingError) {
+    return { kind: 'usage-error', message: thinkingError };
+  }
+  if (!isPositiveInteger(options.agentTimeoutMs)) {
+    return { kind: 'usage-error', message: '--agent-timeout-ms must be a positive integer.' };
+  }
   const documentOrderError = validateDocumentOrder(options);
   if (documentOrderError) {
     return { kind: 'usage-error', message: documentOrderError };
@@ -493,7 +536,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!options.model) {
     return {
       kind: 'usage-error',
-      message: 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.',
+      message: 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL, EVAL_CLAUDE_CODE_MODEL, or pass --model.',
     };
   }
 
@@ -510,16 +553,18 @@ export function usage() {
     '  pnpm eval:direct-open-schema-packet --user <userId> --corpus <corpusId> --scenarios <scenarioIds> --artifacts-root <dir> [options]',
     '',
     'Notes:',
-    '  This is a no-storage direct Vertex packet baseline.',
+    '  This is a no-storage direct packet baseline.',
     '  It extracts open-schema facts once from the corpus, then fills every listed form from that same extraction.',
     '  It does not call backend memory, MCP, GraphQL, or the DB.',
     '',
     'Options:',
     '  --documents-root <dir>           Defaults to examples/eval/users/<user>/corpora/<corpus>',
-    '  --provider vertex                Only vertex is supported',
-    '  --model <model>                  Defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL',
+    '  --provider vertex|claude-code    Defaults to vertex',
+    '  --model <model>                  Defaults to EVAL_CLAUDE_CODE_MODEL or EVAL_DIRECT_OPEN_SCHEMA_MODEL',
     '  --temperature <number>           Defaults to 0.2',
     `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
+    '  --thinking-mode <mode>           Claude Code only: default|low|medium|high|xhigh|max',
+    `  --agent-timeout-ms <ms>          Claude Code only; defaults to ${DEFAULT_CLAUDE_CODE_TIMEOUT_MS}`,
     '  --document-order <mode>          canonical|reverse|seeded-random|relevant-first|relevant-last',
     `  --document-order-seed <seed>     Defaults to ${DEFAULT_DOCUMENT_ORDER_SEED}`,
     '  --run-id <id>                    Defaults to direct-open-schema-packet-<user>-<corpus>-<timestamp>',
@@ -535,6 +580,7 @@ function buildPacketArtifacts({ repoRoot, options }) {
       root: scenarioRoot,
       fillPrompt: path.join(scenarioRoot, 'direct-open-schema-fill-prompt.md'),
       fillResponse: path.join(scenarioRoot, 'direct-open-schema-fill-response.json'),
+      fillTranscript: path.join(scenarioRoot, 'claude-fill-transcript.txt'),
       filledForm: path.join(scenarioRoot, 'filled-form.json'),
       filledPdf: path.join(scenarioRoot, 'filled-form.pdf'),
       formScoreReport: path.join(scenarioRoot, 'form-score-report.json'),
@@ -546,10 +592,14 @@ function buildPacketArtifacts({ repoRoot, options }) {
   }
   return {
     artifactsRoot: root,
+    claudeWorkspaceRoot: path.join(root, 'claude-direct-workspace'),
+    claudeWorkspaceIndex: path.join(root, 'claude-direct-workspace', 'documents.json'),
+    claudeWorkspaceInstructions: path.join(root, 'claude-direct-workspace', 'CLAUDE.md'),
     packetRun: path.join(root, 'packet-evaluation-run.json'),
     validationReport: path.join(root, 'validation-report.json'),
     extractionPrompt: path.join(root, 'open-schema-extraction-prompt.md'),
     extractionResponse: path.join(root, 'open-schema-extraction-response.json'),
+    extractionTranscript: path.join(root, 'claude-extraction-transcript.txt'),
     extraction: path.join(root, 'open-schema-extraction.json'),
     syntheticMemorySnapshot: path.join(root, 'synthetic-memory-snapshot.json'),
     openSchemaDatabaseScoreReport: path.join(root, 'open-schema-database-score-report.json'),
@@ -569,15 +619,17 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     scenarioIds: options.scenarioIds,
     documentsRoot: options.documentsRoot,
     artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
-    model: {
-      label: options.model,
-      source: 'manual',
-    },
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
+    model: modelMetadata({ model: options.model }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      : null,
     settings: {
       provider: options.provider,
       temperature: options.temperature,
       promptVersion: EXTRACTION_PROMPT_VERSION,
       maxEvidenceChars: options.maxEvidenceChars,
+      agentTimeoutMs: options.provider === 'claude-code' ? options.agentTimeoutMs : null,
       documentOrder: options.documentOrder,
       documentOrderSeed: options.documentOrderSeed,
     },
@@ -589,8 +641,14 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     }),
     artifacts: {
       validationReport: relativePath(repoRoot, artifacts.validationReport),
+      claudeWorkspace: options.provider === 'claude-code'
+        ? relativePath(repoRoot, artifacts.claudeWorkspaceRoot)
+        : null,
       extractionPrompt: relativePath(repoRoot, artifacts.extractionPrompt),
       extractionResponse: relativePath(repoRoot, artifacts.extractionResponse),
+      extractionTranscript: options.provider === 'claude-code'
+        ? relativePath(repoRoot, artifacts.extractionTranscript)
+        : null,
       extraction: relativePath(repoRoot, artifacts.extraction),
       syntheticMemorySnapshot: relativePath(repoRoot, artifacts.syntheticMemorySnapshot),
       openSchemaDatabaseScoreReport: relativePath(
@@ -620,6 +678,119 @@ function assertPacketFixtureMatchesOptions({ fixture, options }) {
   }
 }
 
+async function generateDirectResponse({
+  repoRoot,
+  env,
+  options,
+  prompt,
+  transcriptPath,
+  cwd,
+}) {
+  if (options.provider === 'vertex') {
+    return generateWithVertex(prompt, {
+      env,
+      model: options.model,
+      temperature: options.temperature,
+      responseMimeType: 'application/json',
+    });
+  }
+
+  const args = buildClaudeCodeArgs({
+    model: options.model,
+    thinkingMode: options.thinkingMode,
+    tools: CLAUDE_CODE_DIRECT_TOOLS,
+    allowedTools: CLAUDE_CODE_DIRECT_TOOLS,
+  });
+  const result = await runClaudeCodePrompt({
+    prompt,
+    cwd,
+    env: buildAgentEnvironment(env),
+    timeoutMs: options.agentTimeoutMs,
+    args,
+  });
+  await writeFile(
+    transcriptPath,
+    buildClaudeTranscript({
+      command: result.command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      timedOut: result.timedOut,
+      exitCode: result.exitCode,
+    }),
+  );
+  if (result.exitCode !== 0 || result.timedOut) {
+    throw new Error(
+      [
+        'Claude Code direct generation failed.',
+        `exitCode=${result.exitCode}`,
+        `timedOut=${result.timedOut}`,
+        `transcript=${relativePath(repoRoot, transcriptPath)}`,
+        result.error?.message ?? null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    );
+  }
+  return result.text;
+}
+
+async function prepareClaudeDirectWorkspace({
+  repoRoot,
+  artifacts,
+  options,
+  documents,
+}) {
+  const root = artifacts.claudeWorkspaceRoot;
+  await rm(root, { recursive: true, force: true });
+  await mkdir(root, { recursive: true });
+
+  const sourceRoot = path.resolve(repoRoot, options.documentsRoot);
+  const safeDocuments = [];
+  for (const doc of documents ?? []) {
+    const relativeDocPath = safeRelativePath(doc.path, 'document path');
+    const sourcePath = path.resolve(sourceRoot, relativeDocPath);
+    if (!isInside(sourceRoot, sourcePath)) {
+      throw new Error(`Document path escapes documents root: ${doc.path}`);
+    }
+    const destinationPath = path.resolve(root, relativeDocPath);
+    if (!isInside(root, destinationPath)) {
+      throw new Error(`Document path escapes Claude direct workspace: ${doc.path}`);
+    }
+    await mkdir(path.dirname(destinationPath), { recursive: true });
+    await copyFile(sourcePath, destinationPath);
+    safeDocuments.push({
+      id: doc.id ?? null,
+      path: relativeDocPath,
+      title: doc.title ?? null,
+      category: doc.category ?? null,
+      outputExtension: doc.outputExtension ?? null,
+    });
+  }
+
+  await writeJson(artifacts.claudeWorkspaceIndex, {
+    schemaVersion: 1,
+    artifactType: 'claude-code-direct-document-index',
+    documentsRoot: '.',
+    documentCount: safeDocuments.length,
+    documents: safeDocuments,
+  });
+  await writeFile(
+    artifacts.claudeWorkspaceInstructions,
+    [
+      '# Claude Code Direct Eval Workspace',
+      '',
+      'Read only files in this workspace. Do not use MCP, backend memory, GraphQL, database APIs, source repository files, generated artifacts, validation reports, score reports, profile files, manifests, expected snapshots, or other answer-key artifacts.',
+      'The safe document index is `documents.json`; listed document paths are relative to this workspace.',
+      '',
+    ].join('\n'),
+  );
+
+  return {
+    root,
+    documents: safeDocuments,
+  };
+}
+
 function buildExtractionResponseArtifact({
   fixture,
   options,
@@ -627,6 +798,8 @@ function buildExtractionResponseArtifact({
   rawText,
   parse,
   validation,
+  transcriptPath,
+  repoRoot,
   now,
 }) {
   return {
@@ -638,10 +811,18 @@ function buildExtractionResponseArtifact({
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     formId: fixture.scenario.formId,
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
+    modelMetadata: modelMetadata({ model }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      : null,
     temperature: options.temperature,
     promptVersion: EXTRACTION_PROMPT_VERSION,
+    transcript: options.provider === 'claude-code' && transcriptPath
+      ? relativePath(repoRoot, transcriptPath)
+      : null,
     rawText: String(rawText ?? ''),
     parsed: parse.parsed,
     parseDiagnostics: parse.parseDiagnostics,
@@ -660,6 +841,8 @@ function buildFillResponseArtifact({
   parse,
   validation,
   response,
+  transcriptPath,
+  repoRoot,
   now,
 }) {
   return {
@@ -671,10 +854,18 @@ function buildFillResponseArtifact({
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     formId: fixture.scenario.formId,
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
+    modelMetadata: modelMetadata({ model }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      : null,
     temperature: options.temperature,
     promptVersion: FILL_PROMPT_VERSION,
+    transcript: options.provider === 'claude-code' && transcriptPath
+      ? relativePath(repoRoot, transcriptPath)
+      : null,
     rawText: String(rawText ?? ''),
     parsed: parse.parsed,
     parseDiagnostics: parse.parseDiagnostics,
@@ -743,10 +934,30 @@ function isPositiveInteger(value) {
   return Number.isInteger(value) && value > 0;
 }
 
+function safeRelativePath(value, label) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`${label} must be a non-empty relative path.`);
+  }
+  if (path.isAbsolute(value)) {
+    throw new Error(`${label} must be relative: ${value}`);
+  }
+  const normalized = path.normalize(value);
+  if (normalized === '..' || normalized.startsWith(`..${path.sep}`)) {
+    throw new Error(`${label} escapes its root: ${value}`);
+  }
+  return normalized.split(path.sep).join('/');
+}
+
+function isInside(root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
 function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {
   return {
     fillPrompt: relativePath(repoRoot, scenarioArtifacts.fillPrompt),
     fillResponse: relativePath(repoRoot, scenarioArtifacts.fillResponse),
+    fillTranscript: relativePath(repoRoot, scenarioArtifacts.fillTranscript),
     filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
     filledPdf: relativePath(repoRoot, scenarioArtifacts.filledPdf),
     formScoreReport: relativePath(repoRoot, scenarioArtifacts.formScoreReport),

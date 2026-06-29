@@ -24,6 +24,7 @@
 | `packet-hard-required-v4` direct `gemini-2.5-flash-lite` | Same v4 packet with canonical order | Passed; memory `21/25`, fields `26/27`, W-4 `6/6`, direct deposit `8/9`, ownership clean `7/7` | Score moved through the intended target. Flash-lite stored `payroll.direct_deposit.account_type = DDA` instead of resolving `DDA -> checking`, so direct-deposit `xcheck[0]` was missing. |
 | `packet-hard-required-v4` direct `gemini-2.5-pro` | Same v4 packet with stronger direct extraction model | Passed; memory `24/25`, fields `26/27`, I-9 `11/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | Score moved, but not through the intended v4 banking/W-4 lookup. Pro resolved `checking`, bank, and filing status, but stored citizenship as `person.citizenship.is_citizen = true` without the accepted `workAuthorization.citizenshipStatus = U.S. citizen`; the fill action tried to check `CB_1`, then condition validation treated it as inactive. |
 | `packet-hard-required-v4` MCP Claude | Same v4 packet through stored-memory agent path and backend form fill | Passed; memory `25/25`, fields `27/27`, I-9 `12/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | MCP solved the v4 evidence paths, including `DDA -> checking`, RDFI key to bank name, W-4 choice code to filing status, and I-9 citizenship. |
+| `packet-hard-required-v4` Claude Code direct baseline | New direct Claude Code packet runner with no MCP/backend memory source and comparable model/thinking metadata | Runner implemented; live score pending | Intended to separate Claude/agentic reasoning from MCP/backend-memory effects. Treat direct-vs-MCP Claude conclusions as provisional until canonical direct and MCP runs record matching `--model` and `--thinking-mode` settings. |
 
 ## Current Lessons
 
@@ -44,6 +45,10 @@
   exposed a separate boolean-vs-enum citizenship normalization issue.
 - MCP Claude handled v4 cleanly, so this packet currently differentiates direct
   open-schema extraction more than the MCP path.
+- A Claude Code direct baseline is now available to test whether v4 success is
+  due to Claude/agentic reasoning or MCP/backend memory. Historical Claude MCP
+  comparisons remain provisional unless the run artifacts record comparable
+  model/thinking settings.
 - JSON formatting failures are separate from memory/form quality and should be
   tracked as extraction reliability failures.
 - Backend structured-output failures are also separate from packet difficulty;

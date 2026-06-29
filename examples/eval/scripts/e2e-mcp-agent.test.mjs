@@ -77,7 +77,9 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
     EVAL_BACKEND_URL: 'http://env-backend',
     EVAL_GRAPHQL_URL: 'http://env-graphql',
     EVAL_AUTH_TOKEN: 'env-token',
+    EVAL_MODEL: 'env-claude-model',
     EVAL_MODEL_LABEL: 'env-model',
+    EVAL_THINKING_MODE: 'medium',
   };
 
   const envFallback = parseArgs(baseArgs, env, fixedNow);
@@ -85,7 +87,9 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(envFallback.options.backendUrl, 'http://env-backend');
   assert.equal(envFallback.options.graphqlUrl, 'http://env-graphql');
   assert.equal(envFallback.options.authToken, 'env-token');
+  assert.equal(envFallback.options.model, 'env-claude-model');
   assert.equal(envFallback.options.modelLabel, 'env-model');
+  assert.equal(envFallback.options.thinkingMode, 'medium');
   assert.equal(envFallback.options.documentsRoot, 'examples/eval/users/alex-i9-test/corpora/realistic');
   assert.equal(envFallback.options.agentTimeoutMs, 900000);
   assert.equal(envFallback.options.promptTemplate, 'examples/eval/prompts/mcp-known-schema.md');
@@ -110,8 +114,12 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
       '123',
       '--prompt-template',
       '/private/tmp/template.md',
+      '--model',
+      'cli-claude-model',
       '--model-label',
       'cli-model',
+      '--thinking-mode',
+      'high',
       '--run-id',
       'run-123',
     ],
@@ -125,7 +133,9 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(cliOverride.options.authToken, 'cli-token');
   assert.equal(cliOverride.options.agentTimeoutMs, 123);
   assert.equal(cliOverride.options.promptTemplate, '/private/tmp/template.md');
+  assert.equal(cliOverride.options.model, 'cli-claude-model');
   assert.equal(cliOverride.options.modelLabel, 'cli-model');
+  assert.equal(cliOverride.options.thinkingMode, 'high');
   assert.equal(cliOverride.options.runId, 'run-123');
 
   const openSchema = parseArgs(replaceFlagValue(baseArgs, '--schema-mode', 'open'), env, fixedNow);
@@ -227,6 +237,8 @@ test('mcp agent builds isolated Claude invocation and sanitized child environmen
       agent: 'claude',
       mcpConfig: '/private/tmp/context-router-mcp.json',
       mcpServer: 'context-router-local',
+      model: 'claude-sonnet-4-20250514',
+      thinkingMode: 'high',
     },
     artifacts: {
       agentWorkspaceRoot: '/private/tmp/agent-workspace',
@@ -238,6 +250,8 @@ test('mcp agent builds isolated Claude invocation and sanitized child environmen
   assert.equal(invocation.cwd, '/private/tmp/agent-workspace');
   assert.equal(invocation.args.includes('--strict-mcp-config'), true);
   assert.equal(argValue(invocation.args, '--mcp-config'), '/private/tmp/context-router-mcp.json');
+  assert.equal(argValue(invocation.args, '--model'), 'claude-sonnet-4-20250514');
+  assert.equal(argValue(invocation.args, '--effort'), 'high');
   assert.equal(argValue(invocation.args, '--settings'), '/private/tmp/claude-settings.json');
   assert.equal(argValue(invocation.args, '--tools'), 'Read,Glob,Grep,ToolSearch');
   assert.equal(
