@@ -1,0 +1,103 @@
+Source System: LedgerPay Knowledge Base
+Article ID: W4-SAMPLE-PACKET-2026
+Version: 1.1
+Status: Published
+Published: 2026-06-01T08:00:00-07:00
+Owner: Payroll Department
+
+REFERENCE ONLY: Sample 2026 Form W-4, Employee's Withholding Certificate
+
+**IMPORTANT: This document is a sample for informational purposes ONLY. Do NOT fill out or submit this document. All tax withholding forms must be completed electronically in the LedgerPay system.**
+
+--------------------------------------------------------------------------------
+
+Form W-4 (2026)
+Department of the Treasury
+Internal Revenue Service
+Employee's Withholding Certificate
+
+Complete Form W-4 so that your employer can withhold the correct federal income tax from your pay.
+
+Your withholding is subject to review by the IRS.
+
+--------------------------------------------------------------------------------
+
+Step 1: Enter Personal Information
+
+(a) First name and middle initial
+    ____________________________________
+
+(b) Last name
+    ____________________________________
+
+(c) Social Security number
+    ______-____-________
+
+    Address
+    ____________________________________
+
+    City or town, state, and ZIP code
+    ____________________________________
+
+(d) Filing status (check only one box)
+    [ ] Option A
+    [ ] Option B
+    [ ] Option C
+
+--------------------------------------------------------------------------------
+
+Step 2: Multiple Jobs or Spouse Works
+
+Complete this step if you (1) hold more than one job at a time, or (2) have a
+spouse who also works and use the relevant joint-return option. The correct
+amount of withholding depends on the income from all jobs.
+
+Do only one of the following.
+(a) Use the estimator at www.irs.gov/W4App for most accurate withholding for this step (and Steps 3–4); or
+(b) Use the Multiple Jobs Worksheet on page 3 and enter the result in Step 4(c) below for roughly accurate withholding; or
+(c) If there are only two jobs total, you may check this box. Do the same on Form W-4 for the other job. This option is accurate for jobs with similar pay; otherwise, more tax than necessary may be withheld.
+    [ ]
+
+--------------------------------------------------------------------------------
+
+Step 3: Claim Dependent and Other Credits
+
+If your total income is within the threshold for your selected status:
+
+Multiply the number of qualifying children under age 17 by $2,000  $__________
+Multiply the number of other dependents by $500                 $__________
+Add the amounts above and enter the total here.                 3. $__________
+
+--------------------------------------------------------------------------------
+
+Step 4: Other Adjustments (optional)
+
+(a) Other income (not from jobs). If you want tax withheld for other income you expect this year that won't have withholding, enter the amount of other income here. This may include interest, dividends, and retirement income.
+                                                                 4a. $__________
+
+(b) Deductions. If you expect to claim deductions other than the standard deduction and want to reduce your withholding, use the Deductions Worksheet on page 3 and enter the result here.
+                                                                 4b. $__________
+
+(c) Extra withholding. Enter any additional tax you want withheld from each pay period.
+                                                                 4c. $__________
+
+--------------------------------------------------------------------------------
+
+Step 5: Sign Here (FOR REFERENCE ONLY - DO NOT SIGN)
+
+Under penalties of perjury, I declare that I have examined this certificate and, to the best of my knowledge and belief, it is true, correct, and complete.
+
+Employee's signature (This is a sample. Do not sign.)
+____________________________________
+
+Date
+____________________
+
+Employer's name and address (To be completed by employer)
+
+Employer identification number (EIN)
+____________________
+
+--------------------------------------------------------------------------------
+
+**REMINDER:** This is a non-fillable sample document. You must complete your official Form W-4 in the LedgerPay portal. Submitting this sample will have no effect on your tax withholding.

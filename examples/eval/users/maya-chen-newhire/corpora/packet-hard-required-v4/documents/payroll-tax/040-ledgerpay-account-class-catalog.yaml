@@ -1,0 +1,24 @@
+source_system: "LedgerPay Account Class Catalog"
+export_id: "LP-ACCT-CLASS-20260626-fragment"
+exported_timestamp: "2026-06-26T18:07:19-07:00"
+catalog_version: "account-class-catalog-2026-06"
+join_key: "account_class_code"
+
+class_rows:
+  - account_class_code: "DDA"
+    form_label: "checking"
+    ach_family: "demand_deposit"
+    eligible_for_direct_deposit: true
+  - account_class_code: "SAV"
+    form_label: "savings"
+    ach_family: "savings_deposit"
+    eligible_for_direct_deposit: true
+  - account_class_code: "GL"
+    form_label: "general ledger holding"
+    ach_family: "internal"
+    eligible_for_direct_deposit: false
+
+selection_context:
+  selected_row_id: "pn-4819-a"
+  selected_account_class_code: "DDA"
+  source_batch_id: "PN-4819-20260626"

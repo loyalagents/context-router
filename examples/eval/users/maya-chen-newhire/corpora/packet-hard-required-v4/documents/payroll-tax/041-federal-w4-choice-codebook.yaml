@@ -1,0 +1,24 @@
+source_system: "LedgerPay Federal W-4 Codebook"
+export_id: "LP-W4-CODEBOOK-2026-step1c"
+exported_timestamp: "2026-06-25T13:32:04-07:00"
+codebook_id: "FED-W4-STEP1C-2026"
+join_key: "choice_code"
+
+choice_rows:
+  - choice_code: "FS-01"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "single or married filing separately"
+    checkbox_order: 1
+  - choice_code: "FS-02"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "married filing jointly or qualifying surviving spouse"
+    checkbox_order: 2
+  - choice_code: "FS-03"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "head of household"
+    checkbox_order: 3
+
+selection_context:
+  selected_fragment_id: f-w4-step1c-20418-a1
+  selected_choice_code: "FS-01"
+  source_case_ref: W4-RES-PLC-20418-20260625
