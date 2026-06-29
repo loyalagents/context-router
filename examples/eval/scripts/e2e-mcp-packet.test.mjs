@@ -297,7 +297,11 @@ test('mcp packet supports packet-hard-volume-v2 prompt and run wiring', async ()
           ? {
               knownPresentTotal: 24,
               knownPresentRecoveredActive: 24,
+              knownPresentValuePresentActive: 24,
+              knownPresentPresentAsCompositeOrAlias: 0,
+              knownPresentGenuinelyMissing: 0,
               activeValueRecoveryRate: 1,
+              activeValuePresenceRate: 1,
               intentionallyMissingTotal: 2,
               missingAbsentCorrect: 2,
               ownershipDecoyTotal: 0,
@@ -486,7 +490,11 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
           ? {
               knownPresentTotal: 24,
               knownPresentRecoveredActive: 24,
+              knownPresentValuePresentActive: 24,
+              knownPresentPresentAsCompositeOrAlias: 0,
+              knownPresentGenuinelyMissing: 0,
               activeValueRecoveryRate: 1,
+              activeValuePresenceRate: 1,
               intentionallyMissingTotal: 2,
               missingAbsentCorrect: 2,
               ownershipDecoyTotal: 0,
@@ -551,6 +559,9 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
   ]);
   assert.deepEqual(report.qualitySummary, {
     memoryKnownRecovered: '24/24',
+    memoryKnownValuePresent: '24/24',
+    memoryKnownPresentAsCompositeOrAlias: 0,
+    memoryKnownGenuinelyMissing: 0,
     memoryMissingAbsent: '2/2',
     memoryActiveValueRecoveryRate: 1,
     memoryOwnershipClean: '0/0',
@@ -720,7 +731,11 @@ test('mcp packet run classifies form-fill structured-output failures with partia
           ? {
               knownPresentTotal: 24,
               knownPresentRecoveredActive: 24,
+              knownPresentValuePresentActive: 24,
+              knownPresentPresentAsCompositeOrAlias: 0,
+              knownPresentGenuinelyMissing: 0,
               activeValueRecoveryRate: 1,
+              activeValuePresenceRate: 1,
               intentionallyMissingTotal: 2,
               missingAbsentCorrect: 2,
               ownershipDecoyTotal: 0,
@@ -763,6 +778,7 @@ test('mcp packet run classifies form-fill structured-output failures with partia
   assert.equal(report.failure.scoredScenarioIds.length, 2);
   assert.deepEqual(report.failure.notScoredScenarioIds, [directDepositScenario]);
   assert.equal(report.qualitySummary.memoryKnownRecovered, '24/24');
+  assert.equal(report.qualitySummary.memoryKnownValuePresent, '24/24');
   assert.equal(report.qualitySummary.knownFieldCorrect, '18/18');
 });
 

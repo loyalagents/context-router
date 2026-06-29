@@ -39,6 +39,13 @@ test('open-schema combined scorer joins memory recovery with form outcomes', asy
             acceptedSlugHasWrongValue: true,
             acceptedWrongRows: [preferenceSummary('profile.email')],
           }),
+          knownRow('address.current.city', 'open_known_present_missing', {
+            expectedValue: 'Oakland',
+            valuePresentInActiveMemory: true,
+            presentAsCompositeOrAlias: true,
+            valuePresenceClassification: 'present_as_composite_or_alias',
+            compositeOrAliasActiveRows: [preferenceSummary('contact.address.home')],
+          }),
         ],
         intentionallyMissing: [
           missingRow('contact.phone', 'open_missing_absent_correct'),
@@ -58,6 +65,7 @@ test('open-schema combined scorer joins memory recovery with form outcomes', asy
         formField('identity.firstName', 'form_known_missing', null),
         formField('identity.lastName', 'form_known_correct', 'Rivera'),
         formField('contact.email', 'form_known_wrong', 'wrong@example.test'),
+        formField('address.current.city', 'form_known_correct', 'Oakland'),
         formField('contact.phone', 'form_missing_absent_correct', null, {
           fieldClass: 'abstention-test',
           expectedAction: 'SKIP',
@@ -82,7 +90,7 @@ test('open-schema combined scorer joins memory recovery with form outcomes', asy
   const written = JSON.parse(await readFile(combinedReportPath, 'utf8'));
 
   assert.equal(written.scoreType, 'open-schema-combined');
-  assert.equal(report.summary.factTotal, 7);
+  assert.equal(report.summary.factTotal, 8);
   assert.equal(
     fact(report, 'identity.legalName').stageAttribution,
     'open_memory_recovered_form_correct',
@@ -100,6 +108,15 @@ test('open-schema combined scorer joins memory recovery with form outcomes', asy
     'open_memory_wrong_value_form_wrong',
   );
   assert.equal(
+    fact(report, 'address.current.city').stageAttribution,
+    'open_memory_present_as_composite_or_alias_form_correct',
+  );
+  assert.equal(
+    fact(report, 'address.current.city').memory.valuePresenceClassification,
+    'present_as_composite_or_alias',
+  );
+  assert.equal(fact(report, 'address.current.city').memory.matchingSlug, 'contact.address.home');
+  assert.equal(
     fact(report, 'contact.phone').stageAttribution,
     'open_missing_absent_form_absent',
   );
@@ -113,10 +130,11 @@ test('open-schema combined scorer joins memory recovery with form outcomes', asy
   );
   assert.equal(fact(report, 'employment.company').memory, null);
   assert.equal(report.summary.formCorrectWithRecoveredMemory, 1);
-  assert.equal(report.summary.formCorrectWithoutRecoveredMemory, 2);
+  assert.equal(report.summary.formCorrectWithoutRecoveredMemory, 3);
   assert.equal(report.summary.memoryStatusCounts.recovered, 1);
+  assert.equal(report.summary.memoryStatusCounts.present_as_composite_or_alias, 1);
   assert.equal(report.summary.memoryStatusCounts.suggestion_only, 1);
-  assert.equal(report.summary.formStatusCounts.correct, 3);
+  assert.equal(report.summary.formStatusCounts.correct, 4);
 });
 
 test('open-schema combined scorer rejects mismatched user and corpus reports', async () => {
@@ -207,6 +225,15 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
     knownPresentRecoveredNovelSlug: knownPresent.filter(
       (row) => row.classification === 'open_known_present_recovered_novel_slug',
     ).length,
+    knownPresentValuePresentActive: knownPresent.filter(
+      (row) => row.valuePresentInActiveMemory,
+    ).length,
+    knownPresentPresentAsCompositeOrAlias: knownPresent.filter(
+      (row) => row.presentAsCompositeOrAlias,
+    ).length,
+    knownPresentGenuinelyMissing: knownPresent.filter(
+      (row) => row.valuePresenceClassification === 'genuinely_missing',
+    ).length,
     knownPresentSuggestionOnly: knownPresent.filter(
       (row) => row.classification === 'open_known_present_suggestion_only',
     ).length,
@@ -218,6 +245,7 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
     ).length,
     knownPresentConflict: knownPresent.filter((row) => row.conflict).length,
     activeValueRecoveryRate: null,
+    activeValuePresenceRate: null,
     valueRecoveryOrSuggestionRate: null,
     acceptedSlugRecoveryRate: null,
     intentionallyMissingTotal: intentionallyMissing.length,
@@ -253,26 +281,57 @@ function openDatabaseSummary({ knownPresent, intentionallyMissing }) {
 }
 
 function knownRow(factKey, classification, overrides = {}) {
+  const valueRecoveredInActiveMemory =
+    overrides.valueRecoveredInActiveMemory ?? false;
+  const presentAsCompositeOrAlias = overrides.presentAsCompositeOrAlias ?? false;
+  const suggestionOnly = overrides.suggestionOnly ?? false;
+  const acceptedSlugHasWrongValue = overrides.acceptedSlugHasWrongValue ?? false;
   return {
     factKey,
     expectedValue: overrides.expectedValue ?? `expected ${factKey}`,
     canonicalSlugs: [`${factKey}.canonical`],
     acceptedAliasSlugs: [`${factKey}.alias`],
-    valueRecoveredInActiveMemory: overrides.valueRecoveredInActiveMemory ?? false,
+    valueRecoveredInActiveMemory,
+    valuePresentInActiveMemory:
+      overrides.valuePresentInActiveMemory ??
+      (valueRecoveredInActiveMemory || presentAsCompositeOrAlias),
     recoveredUnderAcceptedSlug: overrides.recoveredUnderAcceptedSlug ?? false,
     recoveredUnderNovelSlug: overrides.recoveredUnderNovelSlug ?? false,
-    suggestionOnly: overrides.suggestionOnly ?? false,
+    presentAsCompositeOrAlias,
+    suggestionOnly,
     acceptedSlugPopulated: overrides.acceptedSlugPopulated ?? false,
-    acceptedSlugHasWrongValue: overrides.acceptedSlugHasWrongValue ?? false,
+    acceptedSlugHasWrongValue,
     conflict: overrides.conflict ?? false,
     matchingActiveRows: overrides.matchingActiveRows ?? [],
     matchingAcceptedRows: overrides.matchingAcceptedRows ?? [],
     matchingNovelRows: overrides.matchingNovelRows ?? [],
+    compositeOrAliasActiveRows: overrides.compositeOrAliasActiveRows ?? [],
     acceptedSlugRows: overrides.acceptedSlugRows ?? [],
     acceptedWrongRows: overrides.acceptedWrongRows ?? [],
     matchingSuggestionRows: overrides.matchingSuggestionRows ?? [],
     classification,
+    valuePresenceClassification:
+      overrides.valuePresenceClassification ??
+      defaultValuePresenceClassification({
+        valueRecoveredInActiveMemory,
+        presentAsCompositeOrAlias,
+        suggestionOnly,
+        acceptedSlugHasWrongValue,
+      }),
   };
+}
+
+function defaultValuePresenceClassification({
+  valueRecoveredInActiveMemory,
+  presentAsCompositeOrAlias,
+  suggestionOnly,
+  acceptedSlugHasWrongValue,
+}) {
+  if (valueRecoveredInActiveMemory) return 'strict_recovered';
+  if (acceptedSlugHasWrongValue) return 'wrong_value';
+  if (presentAsCompositeOrAlias) return 'present_as_composite_or_alias';
+  if (suggestionOnly) return 'suggestion_only';
+  return 'genuinely_missing';
 }
 
 function missingRow(factKey, classification, overrides = {}) {

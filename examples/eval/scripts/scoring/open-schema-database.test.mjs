@@ -89,8 +89,16 @@ test('open-schema database scorer validates memory snapshots and classifies acti
     row(report, 'identity.legalName').classification,
     'open_known_present_recovered_accepted_slug',
   );
+  assert.equal(
+    row(report, 'identity.legalName').valuePresenceClassification,
+    'strict_recovered',
+  );
   assert.equal(row(report, 'identity.legalName').conflict, true);
   assert.equal(report.summary.knownPresentConflict, 1);
+  assert.equal(typeof report.summary.knownPresentValuePresentActive, 'number');
+  assert.equal(typeof report.summary.knownPresentPresentAsCompositeOrAlias, 'number');
+  assert.equal(typeof report.summary.knownPresentGenuinelyMissing, 'number');
+  assert.equal(typeof report.summary.activeValuePresenceRate, 'number');
   assert.deepEqual(
     row(report, 'identity.legalName').matchingActiveRows.map((candidate) => candidate.slug),
     ['agent.aaa.full_name', 'agent.zzz.full_name', 'profile.full_name'],
@@ -108,11 +116,18 @@ test('open-schema database scorer validates memory snapshots and classifies acti
     row(report, 'identity.lastName').classification,
     'open_known_present_suggestion_only',
   );
+  assert.equal(
+    row(report, 'identity.lastName').valuePresenceClassification,
+    'present_as_composite_or_alias',
+  );
+  assert.equal(row(report, 'identity.lastName').valuePresentInActiveMemory, true);
+  assert.equal(row(report, 'identity.lastName').presentAsCompositeOrAlias, true);
   assert.equal(row(report, 'identity.lastName').matchingSuggestionRows[0].slug, 'agent.identity.family_name');
   assert.equal(
     row(report, 'contact.email').classification,
     'open_known_present_wrong_value',
   );
+  assert.equal(row(report, 'contact.email').valuePresenceClassification, 'wrong_value');
   assert.equal(row(report, 'contact.email').acceptedSlugHasWrongValue, true);
   assert.ok(
     report.knownPresent.some(
@@ -605,6 +620,174 @@ test('open-schema address composite derivation stays missing when a required com
   });
 
   assert.equal(result.classification, 'open_known_present_missing');
+  assert.equal(result.valuePresenceClassification, 'genuinely_missing');
+  assert.equal(result.valuePresentInActiveMemory, false);
+});
+
+test('open-schema known fact scoring marks current-address composite rows as value-present diagnostics', () => {
+  const profile = {
+    facts: {
+      address: {
+        current: {
+          street: '2846 Ashbury Street',
+          unit: 'Apt 3D',
+          streetLine: '2846 Ashbury Street Apt 3D',
+          city: 'Oakland',
+          state: 'CA',
+          postalCode: '94609',
+          cityStateZip: 'Oakland, CA 94609',
+        },
+      },
+    },
+  };
+  const activePreferences = [
+    preference(
+      'person.contact.address.home',
+      '2846 Ashbury Street Apt 3D, Oakland, CA 94609',
+    ),
+  ];
+
+  for (const factKey of [
+    'address.current.street',
+    'address.current.unit',
+    'address.current.streetLine',
+    'address.current.city',
+    'address.current.state',
+    'address.current.postalCode',
+    'address.current.cityStateZip',
+  ]) {
+    const result = scoreOpenKnownFact({
+      factKey,
+      profile,
+      storageMap: { facts: {} },
+      activePreferences,
+      suggestions: [],
+      usedPreferenceIndexes: new Set(),
+      usedSuggestionIndexes: new Set(),
+    });
+
+    assert.equal(result.classification, 'open_known_present_missing', factKey);
+    assert.equal(result.valueRecoveredInActiveMemory, false, factKey);
+    assert.equal(result.valuePresentInActiveMemory, true, factKey);
+    assert.equal(result.presentAsCompositeOrAlias, true, factKey);
+    assert.equal(
+      result.valuePresenceClassification,
+      'present_as_composite_or_alias',
+      factKey,
+    );
+    assert.deepEqual(
+      result.compositeOrAliasActiveRows.map((candidate) => candidate.slug),
+      ['person.contact.address.home'],
+      factKey,
+    );
+  }
+});
+
+test('open-schema known fact scoring marks legal-name composites as value-present diagnostics for name components', () => {
+  const profile = {
+    facts: {
+      identity: {
+        firstName: 'Maya',
+        middleName: 'Lin',
+        middleInitial: 'L',
+        lastName: 'Chen',
+        legalName: 'Maya Lin Chen',
+      },
+    },
+  };
+  const activePreferences = [preference('person.legal_name', 'Maya Lin Chen')];
+
+  for (const factKey of [
+    'identity.firstName',
+    'identity.middleInitial',
+    'identity.lastName',
+  ]) {
+    const result = scoreOpenKnownFact({
+      factKey,
+      profile,
+      storageMap: { facts: {} },
+      activePreferences,
+      suggestions: [],
+      usedPreferenceIndexes: new Set(),
+      usedSuggestionIndexes: new Set(),
+    });
+
+    assert.equal(result.classification, 'open_known_present_missing', factKey);
+    assert.equal(result.valueRecoveredInActiveMemory, false, factKey);
+    assert.equal(result.valuePresentInActiveMemory, true, factKey);
+    assert.equal(result.presentAsCompositeOrAlias, true, factKey);
+    assert.equal(
+      result.valuePresenceClassification,
+      'present_as_composite_or_alias',
+      factKey,
+    );
+  }
+});
+
+test('open-schema known fact value-presence diagnostics avoid short substring false positives', () => {
+  const result = scoreOpenKnownFact({
+    factKey: 'address.current.state',
+    profile: {
+      facts: {
+        address: {
+          current: {
+            city: 'Oakland',
+            state: 'CA',
+            postalCode: '94609',
+            cityStateZip: 'Oakland, CA 94609',
+          },
+        },
+      },
+    },
+    storageMap: { facts: {} },
+    activePreferences: [preference('payroll.ticket.note', 'CA payroll queue')],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_missing');
+  assert.equal(result.valuePresentInActiveMemory, false);
+  assert.equal(result.presentAsCompositeOrAlias, false);
+  assert.equal(result.valuePresenceClassification, 'genuinely_missing');
+});
+
+test('open-schema known fact value-presence diagnostics preserve wrong accepted slug precedence', () => {
+  const result = scoreOpenKnownFact({
+    factKey: 'identity.firstName',
+    profile: {
+      facts: {
+        identity: {
+          firstName: 'Maya',
+          middleName: 'Lin',
+          lastName: 'Chen',
+          legalName: 'Maya Lin Chen',
+        },
+      },
+    },
+    storageMap: {
+      facts: {
+        'identity.firstName': {
+          canonicalSlugs: ['profile.first_name'],
+          acceptedAliasSlugs: [],
+        },
+      },
+    },
+    activePreferences: [
+      preference('profile.first_name', 'Not Maya'),
+      preference('person.legal_name', 'Maya Lin Chen'),
+    ],
+    suggestions: [],
+    usedPreferenceIndexes: new Set(),
+    usedSuggestionIndexes: new Set(),
+  });
+
+  assert.equal(result.classification, 'open_known_present_wrong_value');
+  assert.equal(result.acceptedSlugHasWrongValue, true);
+  assert.equal(result.presentAsCompositeOrAlias, false);
+  assert.deepEqual(result.compositeOrAliasActiveRows, []);
+  assert.equal(result.valuePresentInActiveMemory, false);
+  assert.equal(result.valuePresenceClassification, 'wrong_value');
 });
 
 test('open-schema database scorer accepts packet-medium alias and semantic equivalents', () => {

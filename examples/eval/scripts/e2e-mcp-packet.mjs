@@ -887,6 +887,16 @@ function buildPacketQualitySummary(report) {
       databaseScore.knownPresentRecoveredActive,
       databaseScore.knownPresentTotal,
     ),
+    memoryKnownValuePresent: ratioString(
+      databaseScore.knownPresentValuePresentActive,
+      databaseScore.knownPresentTotal,
+    ),
+    memoryKnownPresentAsCompositeOrAlias: numberOrNull(
+      databaseScore.knownPresentPresentAsCompositeOrAlias,
+    ),
+    memoryKnownGenuinelyMissing: numberOrNull(
+      databaseScore.knownPresentGenuinelyMissing,
+    ),
     memoryMissingAbsent: ratioString(
       databaseScore.missingAbsentCorrect,
       databaseScore.intentionallyMissingTotal,

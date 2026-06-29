@@ -131,6 +131,14 @@ Packet-level reporting writes one memory/extraction score plus per-form score
 reports. `status: pass` means the pipeline completed; use `qualitySummary` and
 the score reports to judge quality.
 
+For packet comparisons, read `knownFieldCorrect`, `abstentionAbsentCorrect`,
+and `overfillCount` as the primary form outcome. Use
+`memoryKnownValuePresent` to see whether expected values were retained anywhere
+usable in active memory, and use `memoryKnownRecovered` as the stricter
+exact-row storage-shape diagnostic. If those diverge, the database score report
+breaks strict misses into `present_as_composite_or_alias`, `wrong_value`, and
+`genuinely_missing` value-presence classifications.
+
 Packet runners support order experiments:
 
 ```bash

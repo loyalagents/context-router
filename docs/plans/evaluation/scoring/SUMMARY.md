@@ -16,8 +16,8 @@ The scoring stack is implemented under `examples/eval/` and is artifact-first:
   DB scoring, backend form fill, form scoring, and combined scoring.
 - `eval:e2e-mcp-agent` can run known-schema or open-schema MCP agent flows and
   reuse the same scoring boundaries.
-- Open-schema scoring reads `memory-snapshot.json` and reports active-memory
-  value recovery before schema diagnostics.
+- Open-schema scoring reads `memory-snapshot.json` and reports strict active-row
+  recovery, value-presence diagnostics, and schema diagnostics.
 - `eval:direct-open-schema` provides a no-storage Vertex baseline for extracting
   facts from declared corpus documents and filling the form directly.
 
@@ -41,3 +41,19 @@ pnpm eval:compare-runs --help
 
 Live runs can include corpus PII and transcripts. Keep generated artifact roots
 out of commits unless a plan explicitly calls for a curated example bundle.
+
+## Packet Metric Framing
+
+For packet form evals, read the headline metrics in this order:
+
+1. Forms: `knownFieldCorrect`, `abstentionAbsentCorrect`, and `overfillCount`.
+2. Value presence: `memoryKnownValuePresent` shows whether expected values were
+   retained anywhere usable in active memory, including narrow composite cases.
+3. Strict memory recovery: `memoryKnownRecovered` keeps the older exact-row
+   recovery meaning and is a storage-shape diagnostic.
+
+When strict recovery misses but value presence succeeds, inspect
+`knownPresentPresentAsCompositeOrAlias` and per-fact
+`valuePresenceClassification`. These diagnostics explain cases such as a full
+home address row containing the expected address components without counting it
+as exact normalized storage.

@@ -472,6 +472,11 @@ export function scoreOpenKnownFact({
     }
   }
 
+  const compositeOrAliasMatches = compositeOrAliasActiveMatches({
+    factKey,
+    profile,
+    activePreferences,
+  });
   const recoveredUnderAcceptedSlug = matchingAcceptedRows.length > 0;
   const recoveredUnderNovelSlug =
     !recoveredUnderAcceptedSlug && matchingNovelRows.length > 0;
@@ -479,6 +484,20 @@ export function scoreOpenKnownFact({
   const suggestionOnly = !valueRecoveredInActiveMemory && matchingSuggestionRows.length > 0;
   const acceptedSlugHasWrongValue = acceptedWrongRows.length > 0;
   const conflict = valueRecoveredInActiveMemory && acceptedSlugHasWrongValue;
+  const presentAsCompositeOrAlias =
+    !valueRecoveredInActiveMemory &&
+    !acceptedSlugHasWrongValue &&
+    compositeOrAliasMatches.length > 0;
+  if (presentAsCompositeOrAlias) {
+    for (const { index } of compositeOrAliasMatches) {
+      usedPreferenceIndexes.add(index);
+    }
+  }
+  const compositeOrAliasActiveRows = presentAsCompositeOrAlias
+    ? compositeOrAliasMatches.map(({ preference }) => preferenceSummary(preference))
+    : [];
+  const valuePresentInActiveMemory =
+    valueRecoveredInActiveMemory || presentAsCompositeOrAlias;
 
   return {
     factKey,
@@ -486,8 +505,10 @@ export function scoreOpenKnownFact({
     canonicalSlugs: storage.canonicalSlugs,
     acceptedAliasSlugs: storage.acceptedAliasSlugs,
     valueRecoveredInActiveMemory,
+    valuePresentInActiveMemory,
     recoveredUnderAcceptedSlug,
     recoveredUnderNovelSlug,
+    presentAsCompositeOrAlias,
     suggestionOnly,
     acceptedSlugPopulated: acceptedSlugRows.some((row) => !isAbsentValue(row.value)),
     acceptedSlugHasWrongValue,
@@ -495,6 +516,7 @@ export function scoreOpenKnownFact({
     matchingActiveRows: sortPreferenceSummaries(matchingActiveRows),
     matchingAcceptedRows: sortPreferenceSummaries(matchingAcceptedRows),
     matchingNovelRows: sortPreferenceSummaries(matchingNovelRows),
+    compositeOrAliasActiveRows: sortPreferenceSummaries(compositeOrAliasActiveRows),
     acceptedSlugRows: sortPreferenceSummaries(acceptedSlugRows),
     acceptedWrongRows: sortPreferenceSummaries(acceptedWrongRows),
     matchingSuggestionRows: sortPreferenceSummaries(matchingSuggestionRows),
@@ -504,7 +526,148 @@ export function scoreOpenKnownFact({
       suggestionOnly,
       acceptedSlugHasWrongValue,
     }),
+    valuePresenceClassification: classifyValuePresence({
+      valueRecoveredInActiveMemory,
+      presentAsCompositeOrAlias,
+      suggestionOnly,
+      acceptedSlugHasWrongValue,
+    }),
   };
+}
+
+function compositeOrAliasActiveMatches({ factKey, profile, activePreferences }) {
+  const composites = compositeExpectedValuesForFactKey({ factKey, profile });
+  if (composites.length === 0) return [];
+
+  const matches = [];
+  activePreferences.forEach((preference, index) => {
+    if (
+      flattenScalarValues(preference.value).some((actualValue) =>
+        composites.some((composite) =>
+          compositeValueMatches({ composite, actualValue }),
+        ),
+      )
+    ) {
+      matches.push({ index, preference });
+    }
+  });
+  return matches;
+}
+
+function compositeExpectedValuesForFactKey({ factKey, profile }) {
+  if (isAddressFactKey(factKey)) {
+    return addressCompositeExpectedValues({ factKey, profile });
+  }
+  if (isNameComponentFactKey(factKey)) {
+    const legalName = currentLegalName(profile);
+    return isAbsentValue(legalName)
+      ? []
+      : [{ factKey: 'identity.legalName', value: legalName }];
+  }
+  return [];
+}
+
+function addressCompositeExpectedValues({ factKey, profile }) {
+  const streetLine = currentAddressStreetLine(profile);
+  const cityStateZip = currentAddressCityStateZip(profile);
+  const fullAddress =
+    !isAbsentValue(streetLine) && !isAbsentValue(cityStateZip)
+      ? `${streetLine}, ${cityStateZip}`
+      : null;
+  const composites = [];
+
+  if (
+    factKey === 'address.current.street' ||
+    factKey === 'address.current.unit'
+  ) {
+    if (!isAbsentValue(streetLine)) {
+      composites.push({ factKey: 'address.current.streetLine', value: streetLine });
+    }
+  }
+
+  if (
+    factKey === 'address.current.city' ||
+    factKey === 'address.current.state' ||
+    factKey === 'address.current.postalCode'
+  ) {
+    if (!isAbsentValue(cityStateZip)) {
+      composites.push({
+        factKey: 'address.current.cityStateZip',
+        value: cityStateZip,
+      });
+    }
+  }
+
+  if (!isAbsentValue(fullAddress)) {
+    composites.push({ factKey: 'address.current.fullAddress', value: fullAddress });
+  }
+
+  return composites;
+}
+
+function compositeValueMatches({ composite, actualValue }) {
+  if (composite.factKey === 'address.current.fullAddress') {
+    return normalizeCompositeScalar(actualValue) === normalizeCompositeScalar(composite.value);
+  }
+  return valueMatchesFact(composite.factKey, composite.value, actualValue);
+}
+
+function normalizeCompositeScalar(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
+}
+
+function currentAddressStreetLine(profile) {
+  const explicit = getFactValue(profile.facts ?? {}, 'address.current.streetLine');
+  if (!isAbsentValue(explicit)) return explicit;
+
+  const street = getFactValue(profile.facts ?? {}, 'address.current.street');
+  if (isAbsentValue(street)) return null;
+  const unit = getFactValue(profile.facts ?? {}, 'address.current.unit');
+  return isAbsentValue(unit) ? street : `${street} ${unit}`;
+}
+
+function currentAddressCityStateZip(profile) {
+  const explicit = getFactValue(profile.facts ?? {}, 'address.current.cityStateZip');
+  if (!isAbsentValue(explicit)) return explicit;
+
+  const city = getFactValue(profile.facts ?? {}, 'address.current.city');
+  const state = getFactValue(profile.facts ?? {}, 'address.current.state');
+  const postalCode = getFactValue(profile.facts ?? {}, 'address.current.postalCode');
+  if (isAbsentValue(city) || isAbsentValue(state) || isAbsentValue(postalCode)) {
+    return null;
+  }
+  return `${city}, ${state} ${postalCode}`;
+}
+
+function currentLegalName(profile) {
+  const explicit = getFactValue(profile.facts ?? {}, 'identity.legalName');
+  if (!isAbsentValue(explicit)) return explicit;
+
+  const firstName = getFactValue(profile.facts ?? {}, 'identity.firstName');
+  const middleName = getFactValue(profile.facts ?? {}, 'identity.middleName');
+  const lastName = getFactValue(profile.facts ?? {}, 'identity.lastName');
+  if (isAbsentValue(firstName) || isAbsentValue(lastName)) return null;
+  return [firstName, middleName, lastName].filter((value) => !isAbsentValue(value)).join(' ');
+}
+
+function isAddressFactKey(factKey) {
+  return (
+    factKey === 'address.current.street' ||
+    factKey === 'address.current.unit' ||
+    factKey === 'address.current.streetLine' ||
+    factKey === 'address.current.city' ||
+    factKey === 'address.current.state' ||
+    factKey === 'address.current.postalCode' ||
+    factKey === 'address.current.cityStateZip'
+  );
+}
+
+function isNameComponentFactKey(factKey) {
+  return (
+    factKey === 'identity.firstName' ||
+    factKey === 'identity.lastName' ||
+    factKey === 'identity.middleInitial'
+  );
 }
 
 function derivedCompositeActiveMatch({
@@ -721,6 +884,19 @@ function classifyOpenKnown({
   return 'open_known_present_missing';
 }
 
+function classifyValuePresence({
+  valueRecoveredInActiveMemory,
+  presentAsCompositeOrAlias,
+  suggestionOnly,
+  acceptedSlugHasWrongValue,
+}) {
+  if (valueRecoveredInActiveMemory) return 'strict_recovered';
+  if (acceptedSlugHasWrongValue) return 'wrong_value';
+  if (presentAsCompositeOrAlias) return 'present_as_composite_or_alias';
+  if (suggestionOnly) return 'suggestion_only';
+  return 'genuinely_missing';
+}
+
 function classifyOpenMissing({
   activeValueFoundAnywhere,
   activeAcceptedSlugHasValue,
@@ -748,6 +924,9 @@ function buildOpenDatabaseSummary({
   const activeRecovered = knownPresent.filter(
     (row) => row.valueRecoveredInActiveMemory,
   ).length;
+  const activeValuePresent = knownPresent.filter(
+    (row) => row.valuePresentInActiveMemory,
+  ).length;
   const recoveredOrSuggested = knownPresent.filter(
     (row) => row.valueRecoveredInActiveMemory || row.suggestionOnly,
   ).length;
@@ -763,6 +942,13 @@ function buildOpenDatabaseSummary({
       knownCounts.open_known_present_recovered_accepted_slug ?? 0,
     knownPresentRecoveredNovelSlug:
       knownCounts.open_known_present_recovered_novel_slug ?? 0,
+    knownPresentValuePresentActive: activeValuePresent,
+    knownPresentPresentAsCompositeOrAlias: knownPresent.filter(
+      (row) => row.presentAsCompositeOrAlias,
+    ).length,
+    knownPresentGenuinelyMissing: knownPresent.filter(
+      (row) => row.valuePresenceClassification === 'genuinely_missing',
+    ).length,
     knownPresentSuggestionOnly:
       knownCounts.open_known_present_suggestion_only ?? 0,
     knownPresentWrongValue:
@@ -771,6 +957,7 @@ function buildOpenDatabaseSummary({
       knownCounts.open_known_present_missing ?? 0,
     knownPresentConflict: knownPresent.filter((row) => row.conflict).length,
     activeValueRecoveryRate: rate(activeRecovered, knownPresent.length),
+    activeValuePresenceRate: rate(activeValuePresent, knownPresent.length),
     valueRecoveryOrSuggestionRate: rate(recoveredOrSuggested, knownPresent.length),
     acceptedSlugRecoveryRate: rate(
       knownPresent.filter((row) => row.recoveredUnderAcceptedSlug).length,

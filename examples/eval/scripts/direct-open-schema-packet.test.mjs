@@ -216,6 +216,9 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   assert.ok(packet.documents.evidenceCharCount > 0);
   assert.equal(packet.summaries.extraction.factCount, 1);
   assert.equal(packet.qualitySummary.extractionFacts, 1);
+  assert.match(packet.qualitySummary.memoryKnownValuePresent, /^\d+\/\d+$/);
+  assert.equal(typeof packet.qualitySummary.memoryKnownPresentAsCompositeOrAlias, 'number');
+  assert.equal(typeof packet.qualitySummary.memoryKnownGenuinelyMissing, 'number');
   assert.equal(packet.qualitySummary.memoryOwnershipClean, '0/0');
   assert.equal(packet.qualitySummary.memoryOwnershipForbiddenLeaks, 0);
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);
