@@ -27,6 +27,7 @@ import {
   DEFAULT_DOCUMENT_ORDER_SEED,
   buildPacketDocumentMetadata,
   evidenceCharCount,
+  loadPacketDocumentStats,
   orderPacketDocuments,
   validateDocumentOrder,
 } from './packet-documents.mjs';
@@ -112,6 +113,20 @@ export async function runDirectOpenSchemaPacket({
       extractionFixture.manifest.documents ?? [],
       options,
     );
+    const documentStats = await loadPacketDocumentStats({
+      documentsRoot: path.resolve(repoRoot, options.documentsRoot),
+      documents: orderedDocuments,
+    });
+    report.documents = buildPacketDocumentMetadata({
+      documents: orderedDocuments,
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+      sourceCharCount: documentStats.sourceCharCount,
+      evidenceCharCount: null,
+      maxEvidenceChars: options.maxEvidenceChars,
+    });
+    await writeReport();
+
     const evidenceDocuments = await loadEvidenceDocuments({
       manifest: {
         ...extractionFixture.manifest,
@@ -125,7 +140,7 @@ export async function runDirectOpenSchemaPacket({
       documents: orderedDocuments,
       documentOrder: options.documentOrder,
       documentOrderSeed: options.documentOrderSeed,
-      sourceCharCount: totalEvidenceChars,
+      sourceCharCount: documentStats.sourceCharCount,
       evidenceCharCount: totalEvidenceChars,
       maxEvidenceChars: options.maxEvidenceChars,
     });

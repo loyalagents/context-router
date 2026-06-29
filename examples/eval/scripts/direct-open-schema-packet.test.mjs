@@ -149,6 +149,43 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);
 });
 
+test('direct-open-schema-packet cap failures preserve packet document metadata', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-cap-'));
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--document-order',
+      'relevant-last',
+      '--max-evidence-chars',
+      '1',
+    ],
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async () => {
+      throw new Error('extraction should not run after cap failure');
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /Evidence packet exceeds 1 characters/);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.settings.documentOrder, 'relevant-last');
+  assert.equal(packet.settings.maxEvidenceChars, 1);
+  assert.equal(packet.documents.documentCount, 8);
+  assert.equal(packet.documents.sourceCharCount > 1, true);
+  assert.equal(packet.documents.evidenceCharCount, null);
+  assert.equal(packet.documents.maxEvidenceChars, 1);
+  assert.equal(packet.documents.order.mode, 'relevant-last');
+  assert.deepEqual(packet.documents.order.orderedDocumentIds.slice(0, 2), [
+    'maya-chen-newhire-packet-small-007',
+    'maya-chen-newhire-packet-small-008',
+  ]);
+});
+
 async function assertFile(filePath) {
   await access(filePath);
 }
