@@ -90,6 +90,7 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(envFallback.options.model, 'env-claude-model');
   assert.equal(envFallback.options.modelLabel, 'env-model');
   assert.equal(envFallback.options.thinkingMode, 'medium');
+  assert.equal(envFallback.options.thinkingSource, 'env');
   assert.equal(envFallback.options.documentsRoot, 'examples/eval/users/alex-i9-test/corpora/realistic');
   assert.equal(envFallback.options.agentTimeoutMs, 900000);
   assert.equal(envFallback.options.promptTemplate, 'examples/eval/prompts/mcp-known-schema.md');
@@ -136,6 +137,7 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(cliOverride.options.model, 'cli-claude-model');
   assert.equal(cliOverride.options.modelLabel, 'cli-model');
   assert.equal(cliOverride.options.thinkingMode, 'high');
+  assert.equal(cliOverride.options.thinkingSource, 'manual');
   assert.equal(cliOverride.options.runId, 'run-123');
 
   const openSchema = parseArgs(replaceFlagValue(baseArgs, '--schema-mode', 'open'), env, fixedNow);

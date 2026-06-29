@@ -381,7 +381,11 @@ export async function runDirectOpenSchemaPacket({
         outPath: scenarioArtifacts.openSchemaCombinedScoreReport,
       });
       report.scenarios[scenarioId] = {
-        artifacts: relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }),
+        artifacts: relativeScenarioArtifacts({
+          repoRoot,
+          scenarioArtifacts,
+          includeClaudeTranscripts: options.provider === 'claude-code',
+        }),
         summaries: {
           fill: response.summary,
           formScore: formScore.summary,
@@ -433,6 +437,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     documentOrder: DEFAULT_DOCUMENT_ORDER,
     documentOrderSeed: DEFAULT_DOCUMENT_ORDER_SEED,
     thinkingMode: env.EVAL_THINKING_MODE || 'default',
+    thinkingSource: env.EVAL_THINKING_MODE ? 'env' : 'default',
     agentTimeoutMs: DEFAULT_CLAUDE_CODE_TIMEOUT_MS,
   };
   const valueArgs = new Set([
@@ -474,7 +479,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--model') options.model = value;
     if (arg === '--temperature') options.temperature = Number(value);
     if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
-    if (arg === '--thinking-mode') options.thinkingMode = value;
+    if (arg === '--thinking-mode') {
+      options.thinkingMode = value;
+      options.thinkingSource = 'manual';
+    }
     if (arg === '--agent-timeout-ms') options.agentTimeoutMs = Number(value);
     if (arg === '--document-order') options.documentOrder = value;
     if (arg === '--document-order-seed') options.documentOrderSeed = value;
@@ -611,7 +619,9 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
   return {
     schemaVersion: 1,
     artifactType: 'direct-open-schema-packet-evaluation-run',
-    evaluationMode: 'direct-vertex-open-schema-packet',
+    evaluationMode: options.provider === 'claude-code'
+      ? 'direct-claude-code-open-schema-packet'
+      : 'direct-vertex-open-schema-packet',
     status: 'running',
     runId: options.runId,
     userId: options.userId,
@@ -622,7 +632,10 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     model: modelMetadata({ model: options.model }),
     thinking: options.provider === 'claude-code'
-      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
       : null,
     settings: {
       provider: options.provider,
@@ -698,8 +711,13 @@ async function generateDirectResponse({
   const args = buildClaudeCodeArgs({
     model: options.model,
     thinkingMode: options.thinkingMode,
+    mcpConfig: '{"mcpServers":{}}',
+    strictMcpConfig: true,
+    settingSources: 'project',
     tools: CLAUDE_CODE_DIRECT_TOOLS,
     allowedTools: CLAUDE_CODE_DIRECT_TOOLS,
+    disableSlashCommands: true,
+    safeMode: true,
   });
   const result = await runClaudeCodePrompt({
     prompt,
@@ -816,7 +834,10 @@ function buildExtractionResponseArtifact({
     model,
     modelMetadata: modelMetadata({ model }),
     thinking: options.provider === 'claude-code'
-      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
       : null,
     temperature: options.temperature,
     promptVersion: EXTRACTION_PROMPT_VERSION,
@@ -859,7 +880,10 @@ function buildFillResponseArtifact({
     model,
     modelMetadata: modelMetadata({ model }),
     thinking: options.provider === 'claude-code'
-      ? thinkingMetadata({ thinkingMode: options.thinkingMode })
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
       : null,
     temperature: options.temperature,
     promptVersion: FILL_PROMPT_VERSION,
@@ -953,11 +977,14 @@ function isInside(root, candidate) {
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
-function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {
-  return {
+function relativeScenarioArtifacts({
+  repoRoot,
+  scenarioArtifacts,
+  includeClaudeTranscripts = false,
+}) {
+  const artifacts = {
     fillPrompt: relativePath(repoRoot, scenarioArtifacts.fillPrompt),
     fillResponse: relativePath(repoRoot, scenarioArtifacts.fillResponse),
-    fillTranscript: relativePath(repoRoot, scenarioArtifacts.fillTranscript),
     filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
     filledPdf: relativePath(repoRoot, scenarioArtifacts.filledPdf),
     formScoreReport: relativePath(repoRoot, scenarioArtifacts.formScoreReport),
@@ -966,6 +993,10 @@ function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {
       scenarioArtifacts.openSchemaCombinedScoreReport,
     ),
   };
+  if (includeClaudeTranscripts) {
+    artifacts.fillTranscript = relativePath(repoRoot, scenarioArtifacts.fillTranscript);
+  }
+  return artifacts;
 }
 
 function buildPacketQualitySummary(report) {

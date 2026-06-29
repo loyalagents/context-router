@@ -135,8 +135,10 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.status, 'pass');
   assert.equal(packet.agent, 'vertex');
+  assert.equal(packet.evaluationMode, 'direct-vertex-open-schema-packet');
   assert.deepEqual(packet.model, { label: 'test-model', source: 'manual' });
   assert.equal(packet.thinking, null);
+  assert.equal(packet.artifacts.extractionTranscript, null);
   assert.equal(packet.settings.documentOrder, 'relevant-last');
   assert.equal(packet.settings.maxEvidenceChars, 1000000);
   assert.equal(packet.documents.documentCount, 8);
@@ -152,6 +154,10 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   assert.equal(packet.qualitySummary.memoryOwnershipClean, '0/0');
   assert.equal(packet.qualitySummary.memoryOwnershipForbiddenLeaks, 0);
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);
+  for (const scenario of Object.values(packet.scenarios)) {
+    assert.equal(Object.hasOwn(scenario.artifacts, 'fillTranscript'), false);
+  }
+  await assertReportedArtifactsExist(packet);
 });
 
 test('direct-open-schema-packet cap failures preserve packet document metadata', async () => {
@@ -193,6 +199,19 @@ test('direct-open-schema-packet cap failures preserve packet document metadata',
 
 async function assertFile(filePath) {
   await access(filePath);
+}
+
+async function assertReportedArtifactsExist(packet) {
+  for (const artifactPath of Object.values(packet.artifacts)) {
+    if (artifactPath === null) continue;
+    await assertFile(path.resolve(repoRoot, artifactPath));
+  }
+  for (const scenario of Object.values(packet.scenarios)) {
+    for (const artifactPath of Object.values(scenario.artifacts)) {
+      if (artifactPath === null) continue;
+      await assertFile(path.resolve(repoRoot, artifactPath));
+    }
+  }
 }
 
 function replaceFlagValue(args, flag, value) {

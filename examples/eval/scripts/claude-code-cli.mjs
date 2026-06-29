@@ -41,12 +41,15 @@ export function buildClaudeCodeArgs({
   mcpConfig,
   strictMcpConfig = false,
   settings,
+  settingSources,
   tools = CLAUDE_CODE_DIRECT_TOOLS,
   allowedTools = tools,
   permissionMode = 'dontAsk',
   outputFormat = 'stream-json',
   verbose = true,
   noSessionPersistence = true,
+  disableSlashCommands = false,
+  safeMode = false,
 } = {}) {
   const thinkingError = validateThinkingMode(thinkingMode);
   if (thinkingError) throw new Error(thinkingError);
@@ -60,11 +63,14 @@ export function buildClaudeCodeArgs({
   ];
   if (verbose) args.push('--verbose');
   if (noSessionPersistence) args.push('--no-session-persistence');
+  if (safeMode) args.push('--safe-mode');
+  if (disableSlashCommands) args.push('--disable-slash-commands');
   if (model) args.push('--model', model);
   if (thinkingMode && thinkingMode !== 'default') args.push('--effort', thinkingMode);
   if (mcpConfig) args.push('--mcp-config', mcpConfig);
   if (strictMcpConfig) args.push('--strict-mcp-config');
   if (settings) args.push('--settings', settings);
+  if (settingSources) args.push('--setting-sources', settingSources);
   if (tools !== undefined) args.push('--tools', tools);
   if (allowedTools !== undefined) args.push('--allowedTools', allowedTools);
   return args;

@@ -20,6 +20,23 @@ test('buildClaudeCodeArgs adds model and effort only when requested', () => {
   assert.equal(argValue(defaultArgs, '--allowedTools'), 'Read,Glob,Grep');
   assert.equal(defaultArgs.includes('--mcp-config'), false);
 
+  const isolatedDirectArgs = buildClaudeCodeArgs({
+    model: 'claude-sonnet-4-20250514',
+    thinkingMode: 'default',
+    mcpConfig: '{"mcpServers":{}}',
+    strictMcpConfig: true,
+    settingSources: 'project',
+    tools: 'Read,Glob,Grep',
+    allowedTools: 'Read,Glob,Grep',
+    disableSlashCommands: true,
+    safeMode: true,
+  });
+  assert.equal(argValue(isolatedDirectArgs, '--mcp-config'), '{"mcpServers":{}}');
+  assert.equal(isolatedDirectArgs.includes('--strict-mcp-config'), true);
+  assert.equal(argValue(isolatedDirectArgs, '--setting-sources'), 'project');
+  assert.equal(isolatedDirectArgs.includes('--disable-slash-commands'), true);
+  assert.equal(isolatedDirectArgs.includes('--safe-mode'), true);
+
   const highArgs = buildClaudeCodeArgs({
     model: 'claude-opus-4-20250514',
     thinkingMode: 'high',

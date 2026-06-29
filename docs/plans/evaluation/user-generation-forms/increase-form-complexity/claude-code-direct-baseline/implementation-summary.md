@@ -14,6 +14,11 @@ The direct baseline is explicitly no-MCP and no-backend-memory as a model
 information source. Scoring still uses the existing synthetic memory snapshot,
 local PDF fill, and packet form reports.
 
+The implementation uses a restricted Claude Code invocation with an isolated
+document workspace, `Read,Glob,Grep` only, strict empty MCP config, safe mode,
+disabled slash commands, and project-only setting sources. It is not an
+OS-level filesystem sandbox.
+
 ## Recommended Design
 
 Use one packet-level open-schema extraction pass, then one fact-only fill pass
@@ -34,7 +39,9 @@ Claude Code CLI support observed locally:
 
 The implemented control is `--thinking-mode
 default|low|medium|high|xhigh|max`. `default` omits `--effort`; other values
-map to `--effort`. Artifacts record `budget: null`.
+map to `--effort`. Artifacts record `budget: null`, and distinguish
+CLI-provided, env-provided, and defaulted sources. Non-Claude MCP packet runs
+record `thinking: null`.
 
 ## MCP Runner Decision
 
@@ -50,6 +57,8 @@ follow-up if the single-scenario MCP runner needs full thinking metadata.
 - Whether Claude Code direct should later rely on filesystem reads as the main
   evidence channel instead of the current direct packet prompt style, which also
   provides evidence inline.
+- Whether a future baseline should add an external filesystem sandbox around
+  Claude Code rather than relying on Claude Code tool/config restrictions.
 - Whether repeat runs are needed before interpreting v4 direct-vs-MCP deltas.
 - Whether a future Claude CLI exposes a real thinking-budget flag that should
   replace `budget: null`.
@@ -70,8 +79,17 @@ Code changes were made:
 - Added `pnpm eval:claude-code-direct-packet`.
 - Added a Claude Code CLI adapter with stream-json transcript capture.
 - Added `claude-code` provider support to the direct open-schema packet runner.
+- Added strict empty MCP config, safe mode, disabled slash commands, and
+  project-only setting sources for Claude Code direct calls.
+- Added provider-specific direct open-schema evaluation mode and synthetic
+  memory producer metadata.
+- Kept Vertex direct packet artifact maps from advertising missing Claude
+  transcript files.
+- Made the Claude-named direct entrypoint reject non-Claude providers.
 - Added model/thinking metadata to direct and MCP packet artifacts.
 - Added `--model` and `--thinking-mode` controls for MCP packet Claude runs.
+- Made MCP thinking metadata apply only to Claude runs and record source more
+  precisely.
 - Added targeted unit coverage with fake model output; no live Claude eval was
   run.
 

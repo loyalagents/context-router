@@ -7,7 +7,15 @@ import {
 } from './direct-open-schema-packet.mjs';
 
 export async function runClaudeCodeDirectPacket(options = {}) {
-  const args = withClaudeCodeProvider(options.args ?? []);
+  let args;
+  try {
+    args = withClaudeCodeProvider(options.args ?? []);
+  } catch (error) {
+    return {
+      exitCode: 2,
+      lines: [error?.message ?? String(error), '', usage()],
+    };
+  }
   return runDirectOpenSchemaPacket({
     ...options,
     args,
@@ -15,7 +23,14 @@ export async function runClaudeCodeDirectPacket(options = {}) {
 }
 
 export function withClaudeCodeProvider(args) {
-  if (args.includes('--provider')) return args;
+  const providerIndex = args.indexOf('--provider');
+  if (providerIndex !== -1) {
+    const provider = args[providerIndex + 1];
+    if (provider !== 'claude-code') {
+      throw new Error('eval:claude-code-direct-packet only supports --provider claude-code.');
+    }
+    return args;
+  }
   return ['--provider', 'claude-code', ...args];
 }
 

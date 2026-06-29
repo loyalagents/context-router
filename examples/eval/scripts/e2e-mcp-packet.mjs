@@ -494,6 +494,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     model: env.EVAL_MODEL,
     modelLabel: env.EVAL_MODEL_LABEL,
     thinkingMode: env.EVAL_THINKING_MODE || 'default',
+    thinkingSource: env.EVAL_THINKING_MODE ? 'env' : 'default',
     resetMemory: false,
     resetMemoryMode: null,
     allowTestCommandAgent: false,
@@ -590,7 +591,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--mcp-config') options.mcpConfig = value;
     if (arg === '--model') options.model = value;
     if (arg === '--model-label') options.modelLabel = value;
-    if (arg === '--thinking-mode') options.thinkingMode = value;
+    if (arg === '--thinking-mode') {
+      options.thinkingMode = value;
+      options.thinkingSource = 'manual';
+    }
     if (arg === '--document-order') options.documentOrder = value;
     if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--location-id') options.locationId = value;

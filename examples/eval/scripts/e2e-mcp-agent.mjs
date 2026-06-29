@@ -788,6 +788,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     model: env.EVAL_MODEL,
     modelLabel: env.EVAL_MODEL_LABEL,
     thinkingMode: env.EVAL_THINKING_MODE || 'default',
+    thinkingSource: env.EVAL_THINKING_MODE ? 'env' : 'default',
     resetMemory: false,
     resetMemoryMode: null,
     ensureDefinitions: true,
@@ -884,7 +885,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--mcp-config') options.mcpConfig = value;
     if (arg === '--model') options.model = value;
     if (arg === '--model-label') options.modelLabel = value;
-    if (arg === '--thinking-mode') options.thinkingMode = value;
+    if (arg === '--thinking-mode') {
+      options.thinkingMode = value;
+      options.thinkingSource = 'manual';
+    }
     if (arg === '--location-id') options.locationId = value;
     if (arg === '--run-id') options.runId = value;
   }
@@ -1695,9 +1699,10 @@ function modelMetadata(options) {
 }
 
 export function mcpThinkingMetadata(options) {
+  if (options.agent !== 'claude') return null;
   return thinkingMetadata({
     thinkingMode: options.thinkingMode ?? 'default',
-    source: options.thinkingMode ? 'manual' : 'unspecified',
+    source: options.thinkingSource ?? 'unspecified',
   });
 }
 

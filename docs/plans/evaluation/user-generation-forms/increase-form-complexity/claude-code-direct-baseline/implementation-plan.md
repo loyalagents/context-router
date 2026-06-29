@@ -51,7 +51,12 @@ Implementation shape:
   stream-json --verbose --no-session-persistence`.
 - For the direct runner, prepare an isolated Claude workspace containing only
   ordered packet documents plus `documents.json`; allow only `Read,Glob,Grep`;
-  do not pass `--mcp-config`; do not allow `mcp__*` tools.
+  pass `--mcp-config '{"mcpServers":{}}' --strict-mcp-config`;
+  use `--safe-mode --disable-slash-commands --setting-sources project`; do not
+  allow `mcp__*` tools.
+- The direct runner is not an OS-level filesystem sandbox. The isolation claim
+  is that the runner does not intentionally provide MCP/backend memory and
+  starts Claude Code in a restricted workspace with restricted tools/config.
 - Keep one-scenario direct passes as a later diagnostic, not the headline
   baseline.
 
@@ -119,6 +124,10 @@ Metadata shape:
 }
 ```
 
+The `source` field distinguishes CLI-provided (`manual`), env-provided (`env`),
+and defaulted (`default`) controls. Non-Claude MCP packet runs record
+`thinking: null`.
+
 MCP packet control changes are included with the direct runner because they are
 limited to CLI parsing, Claude invocation flags, and packet-run artifact
 metadata. Broader single-scenario `mcp-agent-run` schema changes remain a
@@ -147,6 +156,9 @@ Required direct artifacts:
 - Per-scenario `filled-form.json`, `filled-form.pdf`,
   `form-score-report.json`, and `open-schema-combined-score-report.json`.
 
+Vertex direct packet runs keep transcript artifact fields null or absent rather
+than advertising Claude transcript files that were not written.
+
 The MCP packet runner must also persist comparable model/thinking metadata in
 `packet-evaluation-run.json`.
 
@@ -158,11 +170,13 @@ The MCP packet runner must also persist comparable model/thinking metadata in
    - Test: docs-only review.
 2. Claude CLI adapter:
    - Build invocation, stream transcript capture, JSON text extraction, timeout
-     handling, and no-MCP direct tool flags.
+     handling, strict empty MCP config, project-only setting sources, and
+     no-MCP direct tool flags.
    - Test with fake stream-json output; no live Claude required.
 3. Direct packet runner:
    - Add `claude-code` provider and wrapper script.
-   - Record model/thinking metadata and transcript paths.
+   - Record provider-specific evaluation mode, model/thinking metadata, and
+     transcript paths.
    - Test one extraction plus three fill passes with fake model output.
 4. MCP packet controls:
    - Add `--model` and `--thinking-mode`.
@@ -194,6 +208,8 @@ Risks:
   fact-to-fill.
 - Packet-level versus scenario-level Claude pass may affect results.
 - Local Claude CLI does not expose a real thinking-budget control.
+- Claude Code direct is not protected by a separate OS filesystem sandbox; live
+  acceptance should inspect transcripts when global Claude configuration exists.
 
 Assumptions:
 

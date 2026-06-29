@@ -25,7 +25,14 @@ test('claude-code direct wrapper injects provider by default', () => {
     '--user',
     'maya-chen-newhire',
   ]);
-  assert.deepEqual(withClaudeCodeProvider(['--provider', 'vertex']), ['--provider', 'vertex']);
+  assert.deepEqual(withClaudeCodeProvider(['--provider', 'claude-code']), [
+    '--provider',
+    'claude-code',
+  ]);
+  assert.throws(
+    () => withClaudeCodeProvider(['--provider', 'vertex']),
+    /only supports --provider claude-code/,
+  );
 });
 
 test('claude-code direct packet records model and thinking metadata', async () => {
@@ -82,6 +89,7 @@ test('claude-code direct packet records model and thinking metadata', async () =
   assert.equal(result.exitCode, 0, result.lines.join('\n'));
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.agent, 'claude');
+  assert.equal(packet.evaluationMode, 'direct-claude-code-open-schema-packet');
   assert.deepEqual(packet.model, {
     label: 'claude-sonnet-4-20250514',
     source: 'manual',
@@ -98,6 +106,14 @@ test('claude-code direct packet records model and thinking metadata', async () =
   );
   assert.equal(safeIndex.documentCount, 8);
   assert.equal(safeIndex.documents[0].path.startsWith('documents/'), true);
+  const extraction = JSON.parse(await readFile(path.join(tmp, 'open-schema-extraction.json'), 'utf8'));
+  assert.equal(extraction.provider, 'claude-code');
+  assert.equal(extraction.evaluationMode, 'direct-claude-code-open-schema');
+  const memorySnapshot = JSON.parse(
+    await readFile(path.join(tmp, 'synthetic-memory-snapshot.json'), 'utf8'),
+  );
+  assert.equal(memorySnapshot.evaluationMode, 'direct-claude-code-open-schema');
+  assert.equal(memorySnapshot.storageInput.producer, 'direct-open-schema-claude-code');
   for (const scenario of Object.values(packet.scenarios)) {
     assert.match(scenario.artifacts.fillTranscript, /claude-fill-transcript\.txt$/);
   }
