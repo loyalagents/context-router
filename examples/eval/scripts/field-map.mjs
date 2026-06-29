@@ -1,6 +1,7 @@
 import { getFactValue } from './shared.mjs';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DIGIT_AT_RENDER_PATTERN = /^digit-at:(0|[1-9]\d*)$/;
 
 export const CONDITIONAL_INACTIVE_SKIP_KIND = 'conditional-inactive';
 
@@ -36,17 +37,30 @@ export function renderFieldValue(value, fieldMap) {
   if (fieldMap.render === 'mmddyyyy') {
     return renderMmddyyyy(value);
   }
+  const digitAt = parseDigitAtRender(fieldMap.render);
+  if (digitAt != null) {
+    return rendered.replace(/\D/g, '').charAt(digitAt);
+  }
   return rendered;
 }
 
 export function fieldValuesEquivalent(expected, actual, fieldMap) {
   if (expected == null || actual == null) return expected === actual;
+  if (parseDigitAtRender(fieldMap?.render) != null) {
+    return String(expected) === String(actual);
+  }
   if (fieldMap?.render === 'digits-only' || fieldMap?.render === 'mmddyyyy') {
     const expectedDigits = String(expected).replace(/\D/g, '');
     const actualDigits = String(actual).replace(/\D/g, '');
     return expectedDigits.length > 0 && expectedDigits === actualDigits;
   }
   return actual === expected;
+}
+
+function parseDigitAtRender(render) {
+  if (typeof render !== 'string') return null;
+  const match = render.match(DIGIT_AT_RENDER_PATTERN);
+  return match ? Number(match[1]) : null;
 }
 
 function renderMmddyyyy(value) {

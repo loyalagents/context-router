@@ -41,86 +41,98 @@
     {
       "fieldIndex": 4,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct1[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:0",
+      "note": "Depositor account-number digit 1."
     },
     {
       "fieldIndex": 5,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct2[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:1",
+      "note": "Depositor account-number digit 2."
     },
     {
       "fieldIndex": 6,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct3[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:2",
+      "note": "Depositor account-number digit 3."
     },
     {
       "fieldIndex": 7,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct4[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:3",
+      "note": "Depositor account-number digit 4."
     },
     {
       "fieldIndex": 8,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct5[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:4",
+      "note": "Depositor account-number digit 5."
     },
     {
       "fieldIndex": 9,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct6[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:5",
+      "note": "Depositor account-number digit 6."
     },
     {
       "fieldIndex": 10,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct7[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:6",
+      "note": "Depositor account-number digit 7."
     },
     {
       "fieldIndex": 11,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct8[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:7",
+      "note": "Depositor account-number digit 8."
     },
     {
       "fieldIndex": 12,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct9[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:8",
+      "note": "Depositor account-number digit 9."
     },
     {
       "fieldIndex": 13,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct10[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:9",
+      "note": "Depositor account-number digit 10."
     },
     {
       "fieldIndex": 14,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct11[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:10",
+      "note": "Depositor account-number digit 11."
     },
     {
       "fieldIndex": 15,
       "pdfFieldName": "topmostSubform[0].Page1[0].acct12[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split depositor account-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.accountNumber",
+      "render": "digit-at:11",
+      "note": "Depositor account-number digit 12."
     },
     {
       "fieldIndex": 16,
@@ -405,65 +417,74 @@
     {
       "fieldIndex": 56,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout1[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:0",
+      "note": "Routing number digit 1."
     },
     {
       "fieldIndex": 57,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout2[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:1",
+      "note": "Routing number digit 2."
     },
     {
       "fieldIndex": 58,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout3[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:2",
+      "note": "Routing number digit 3."
     },
     {
       "fieldIndex": 59,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout4[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:3",
+      "note": "Routing number digit 4."
     },
     {
       "fieldIndex": 60,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout5[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:4",
+      "note": "Routing number digit 5."
     },
     {
       "fieldIndex": 61,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout6[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:5",
+      "note": "Routing number digit 6."
     },
     {
       "fieldIndex": 62,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout7[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:6",
+      "note": "Routing number digit 7."
     },
     {
       "fieldIndex": 63,
       "pdfFieldName": "topmostSubform[0].Page1[0].rout8[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:7",
+      "note": "Routing number digit 8."
     },
     {
       "fieldIndex": 64,
       "pdfFieldName": "topmostSubform[0].Page1[0].ckdigit[0]",
-      "mode": "skip",
-      "reason": "out_of_scope",
-      "note": "Split routing-number digit box deferred for v1; mapping it cleanly needs a digit-position renderer or form-ready digit facts."
+      "mode": "fact",
+      "factKey": "banking.routingNumber",
+      "render": "digit-at:8",
+      "note": "Routing number check digit."
     },
     {
       "fieldIndex": 65,
