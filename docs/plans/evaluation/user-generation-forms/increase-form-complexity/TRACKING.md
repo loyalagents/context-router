@@ -6,6 +6,9 @@
 
 ## Score Movement Ledger
 
+For the cross-family planning index, see `difficulty-matrix.md`. This file is
+only for score movement and live-run interpretation.
+
 | Packet / run | What changed | Score effect | Interpretation |
 | --- | --- | --- | --- |
 | `packet-medium` direct baseline | Baseline shared dossier | Passed; `known-fields=26/27` in reviewed run | Baseline is already strong enough for most scored form fields. |

@@ -15,6 +15,8 @@
 Keep volume/noise separate from ownership, conflict, and required-evidence
 hardening. These packets test long-context retrieval, distractor resistance,
 and document-order sensitivity without changing Maya truth or the form surfaces.
+For the cross-family index and combination policy, see
+`../difficulty-matrix.md`.
 
 ## Score Reading
 
@@ -52,6 +54,8 @@ runs only when full-path order pressure is the question.
 
 ## Related Docs
 
+- `../difficulty-matrix.md`: cross-family index for volume/noise, ownership,
+  conflict/staleness, and required-evidence packets.
 - `implementation-plan.md`: v1 volume/order plan.
 - `implementation-summary.md`: v1 implementation and learning summary.
 - `volume-v2-realistic-noise/implementation-plan.md`: v2 corpus plan.

@@ -6,17 +6,23 @@
 
 ## Current Next Work
 
+- Use `difficulty-matrix.md` as the index for choosing the next packet family.
 - Continue active hardening work in `make-forms-harder/`.
 - Add a new labeled corpus rather than mutating `packet-medium` when testing
   harder ownership or conflict cases.
 - Keep each hardening pass focused on one difficulty family so failures stay
   interpretable.
+- Avoid one mega corpus for now. If a combined family becomes useful, create a
+  new labeled corpus such as `packet-hard-volume-required-v1` instead of
+  mutating the current focused baselines.
 - Track the volume/noise hardening stream in `volume-noise-hardening/`.
 - Use `packet-hard-volume-v1` for 100-document length/noise experiments.
 - Treat `packet-hard-volume-v1` as a long-context/order smoke test, not as the
   final hard distractor corpus.
 - Use `packet-hard-volume-v2` for the next realistic volume/noise baseline with
   subtler near-miss and operational distractors.
+- Use `packet-hard-required-v4` when the goal is score-moving required-evidence
+  pressure without adding volume/order effects.
 
 ## Packet-Medium Follow-Ups
 
@@ -49,6 +55,8 @@
   `packet-hard-volume-v2` and compare against `packet-hard-volume-v1`.
 - Continue improving volume/noise realism after v2 by reducing repeated
   augmentation blocks and adding more document-family-specific source formats.
+- Consider a separate volume-plus-required plan only after the v2 and v4
+  baselines are stable enough that failures can be attributed cleanly.
 - Keep the same forms for pure evidence-packet experiments, but do not interpret
   same-form success as form-surface hardening. If the goal is harder forms, plan
   a separate field-map/form-surface pass.
