@@ -27,6 +27,9 @@ I-9, W-4, and direct deposit form filling.
   v2 and adds W-4 filing-status difficulty so the scored
   `tax.filingStatus` value requires resolving a separate LedgerPay W-4
   resolution audit instead of reading clean tax profile exports.
+- `packet-hard-required-v4`: focused multi-hop packet. It starts from v3 and
+  makes scored direct-deposit institution/type plus W-4 filing status require
+  resolving keys/codes through separate lookup documents.
 
 ## Required-Hard Evidence Paths
 
@@ -44,6 +47,10 @@ In `packet-hard-required-v3`, current W-4 filing status is intended to come only
 from `documents/payroll-tax/038-ledgerpay-w4-resolution-audit.yaml`. Docs `011`,
 `012`, and `013` keep W-4 shell/identity evidence but no longer expose the
 selected filing-status text.
+
+In `packet-hard-required-v4`, current direct-deposit institution/type are
+intended to require doc `037` plus lookup docs `039` and `040`. Current W-4
+filing status is intended to require doc `038` plus codebook doc `041`.
 
 The packet is still a fixture-only eval change. Maya's `profile.yaml`, the form
 maps, runners, backend, MCP behavior, and scorers are unchanged.
