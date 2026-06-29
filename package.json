@@ -33,6 +33,7 @@
     "eval:direct-open-schema-packet": "node examples/eval/scripts/direct-open-schema-packet.mjs",
     "eval:score": "node examples/eval/scripts/score.mjs",
     "eval:compare-runs": "node examples/eval/scripts/compare-runs.mjs",
+    "eval:compare-packet-runs": "node examples/eval/scripts/compare-packet-runs.mjs",
     "eval:export-stored-preferences": "node examples/eval/scripts/export-stored-preferences.mjs",
     "eval:export-memory-snapshot": "node examples/eval/scripts/export-memory-snapshot.mjs",
     "eval:ingest-documents": "node examples/eval/scripts/ingest-documents.mjs",
