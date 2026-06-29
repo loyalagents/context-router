@@ -21,10 +21,12 @@ Current hardening docs:
   labels, validation commands, and recommended PR boundaries.
 - `make-forms-harder/brainstorm.md`: rationale and examples for ownership,
   conflict/temporal validity, evidence confidence, tagging, and scoring.
+- `volume-noise-hardening/README.md`: current orientation for v1/v2
+  volume/noise corpora, score reading, and recommended live runs.
 - `volume-noise-hardening/implementation-plan.md`: packet volume/noise plan,
   runner order controls, direct evidence cap behavior, and validation defaults.
 - `volume-noise-hardening/implementation-summary.md`: implementation status and
-  validation/live-run notes for the 100-document volume packet.
+  validation/live-run notes for the v1 100-document volume packet.
 - `volume-noise-hardening/volume-v2-realistic-noise/`: v2 volume/noise corpus
   notes for the more realistic 100-document distractor benchmark.
 
