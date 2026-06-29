@@ -1,7 +1,7 @@
 # Form Complexity Score Tracking
 
 - Status: active tracking
-- Last updated: 2026-06-28
+- Last updated: 2026-06-29
 - Scope: Maya new-hire packet hardening score effects
 
 ## Score Movement Ledger
@@ -17,6 +17,7 @@
 | `packet-hard-required-v2` direct baseline | Moved scored direct-deposit institution/type evidence into ACH prenote reconciliation with stale and worker-mismatch rows | Passed; memory `21/25`, fields `26/27`, direct deposit `8/9`, wrong `1`, overfill `0` | Worked as a score-moving packet for the weaker/default direct path. The wrong field was direct-deposit institution: expected `Bay Harbor Credit Union`, got employer name `Pacific Ledger Cooperative`. |
 | `packet-hard-required-v2` direct `gemini-2.5-pro` | Same v2 packet with stronger direct extraction model | Passed; memory `24/25`, fields `27/27`, direct deposit `9/9`, ownership clean `6/6` | Did not move form score for the stronger direct model. The only memory miss was `banking.accountHolderName`; form still filled account title from identity name facts, so this is minor. |
 | `packet-hard-required-v2` MCP Claude | Same v2 packet through stored-memory agent path and backend form fill | Passed after backend null-value tolerance/logging fix; memory `25/25`, fields `27/27`, direct deposit `9/9`, ownership clean `6/6` | MCP handled the evidence path and form fill. Initial failure was a backend structured-output validation issue (`value: null`), not a memory/scoring failure. |
+| `packet-hard-required-v3` fixture | Kept v2 banking difficulty and made scored W-4 `tax.filingStatus` require doc `038` resolution evidence | Fixture/scenarios validated; live runs not yet reviewed | Intended to test a second scored form surface without stacking hard-volume noise. Use document-order variants to check brittleness. |
 
 ## Current Lessons
 
@@ -30,6 +31,8 @@
   but `gemini-2.5-pro` and MCP Claude handled the scored direct-deposit fields.
 - `banking.accountHolderName` is a weak score-moving target because the value is
   identical to Maya's legal name and can be filled from identity facts.
+- W-4 `tax.filingStatus` is the next useful score-moving target because it is
+  scored today and cannot be recovered from identity aliases.
 - JSON formatting failures are separate from memory/form quality and should be
   tracked as extraction reliability failures.
 - Backend structured-output failures are also separate from packet difficulty;
@@ -41,3 +44,7 @@
 To affect stronger models' form score, target a scored value that cannot be
 resolved from identity or other easy aliases. Do not make the documents easier
 just to improve baseline performance.
+
+For v3, compare canonical, relevant-last, and seeded-random document order.
+The hard-volume work showed that order and representation can matter even when
+simple volume does not move headline score.

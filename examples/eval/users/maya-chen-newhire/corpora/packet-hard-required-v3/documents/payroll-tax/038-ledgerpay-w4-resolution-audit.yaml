@@ -1,0 +1,60 @@
+source_system: LedgerPay
+source: LedgerPay.w4Resolution
+export_id: LP-W4-RES-3f91a4-20260625
+generated_at: "2026-06-25T13:31:42-07:00"
+case_ref: W4-RES-PLC-20418-20260625
+worker_ref: PLC-20418
+profile_ref: ptp-c35f2a1b-9876-4abc-8def-1234567890ab
+
+resolution_packet:
+  person:
+    worker_id: PLC-20418
+    name_hint: "Maya Chen"
+    ssn_last4: "0417"
+  ledger_keys:
+    active_form_id: fed-w4-2026-06-25-a1b2
+    review_task_id: rev-w4-98765-20260625-01
+    inactive_workspace_id: LP-W4-DRAFT-PLC-20418-20260624-1126
+  selected_token: "fed-w4-2026-06-25-a1b2|PLC-20418|Step1c"
+
+field_fragments:
+  - fragment_id: f-w4-step1c-20418-a1
+    token: "fed-w4-2026-06-25-a1b2|PLC-20418|Step1c"
+    worker_id: PLC-20418
+    source_channel: EmployeeSelfServicePortal
+    captured_at: "2026-06-25T13:28:00-07:00"
+    lifecycle_code: posted_to_review_queue
+    field_path: federalW4.step1c.filingStatus
+    field_text: "single or married filing separately"
+    comparator: keep
+  - fragment_id: f-w4-step1c-20418-d0
+    token: "LP-W4-DRAFT-PLC-20418-20260624-1126|PLC-20418|Step1c"
+    worker_id: PLC-20418
+    source_channel: portal_autosave
+    captured_at: "2026-06-24T11:26:33-07:00"
+    lifecycle_code: draft_shadowed_by_form_id_fed-w4-2026-06-25-a1b2
+    field_path: federalW4.step1c.filingStatus
+    field_text: "head of household"
+    comparator: older_workspace
+  - fragment_id: f-w4-step1c-20792-x4
+    token: "fed-w4-2026-06-25-noah|PLC-20792|Step1c"
+    worker_id: PLC-20792
+    source_channel: EmployeeSelfServicePortal
+    captured_at: "2026-06-25T10:44:18-07:00"
+    lifecycle_code: worker_ref_mismatch
+    field_path: federalW4.step1c.filingStatus
+    field_text: "married filing jointly or qualifying surviving spouse"
+    comparator: other_worker
+
+resolution_trace:
+  selected_fragment_id: f-w4-step1c-20418-a1
+  selected_token_match: true
+  matched_worker_ref: PLC-20418
+  matched_active_form_id: fed-w4-2026-06-25-a1b2
+  rejected_fragment_ids:
+    - f-w4-step1c-20418-d0
+    - f-w4-step1c-20792-x4
+  emitted_field:
+    target: tax.filingStatus
+    value: "single or married filing separately"
+    basis: "token+worker+active_form"
