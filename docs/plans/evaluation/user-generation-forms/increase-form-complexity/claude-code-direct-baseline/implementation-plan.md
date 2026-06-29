@@ -11,42 +11,57 @@ v4 result can answer whether MCP Claude solved the packet because of
 Claude/agentic reasoning or because MCP/backend memory helped.
 
 A Claude Code direct baseline means Claude Code CLI reads the same packet
-evidence and produces direct extraction/fill outputs without using context
-router memory as an information source.
+evidence and produces open-schema fact extraction without using context-router
+memory as a model information source.
 
 It must not use:
 
 - MCP tools or `mcp__*` tools.
-- Backend memory reads or writes.
-- GraphQL/DB memory export, import, or lookup as model context.
+- Backend memory reads or writes during model extraction.
+- GraphQL/DB memory export, import, or lookup as model context during
+  extraction.
 - Context-router memory APIs as an information source.
 
-Validation, scoring, local PDF filling, and synthetic-memory artifact scoring
-may still run after model output.
+Post-extraction eval-harness materialization is allowed and required for the
+canonical comparison: the script writes the extracted facts into backend memory,
+exports/scores that backend snapshot, and calls the same backend form-fill
+endpoint used by the MCP packet runner. This backend use is recorded as an eval
+stage, not provided to Claude as context.
 
 ## Recommended Design
 
-Use one packet-level open-schema extraction pass, then one fact-only fill pass
-per scenario.
+Use one packet-level open-schema extraction pass, then materialize the extracted
+facts into backend memory and call backend form fill per scenario.
 
 Options considered:
 
 - Claude directly returns form fill actions from packet docs. This is the
   closest no-memory path, but loses memory-score comparability and conflates
   evidence extraction with rendering.
-- Claude extracts open-schema facts, then the existing direct form-fill runner
-  fills forms. This is recommended because it reuses the direct packet artifact
-  and scoring path, preserves `memoryKnownRecovered`, and isolates Claude Code
-  generation from MCP/backend memory.
+- Claude extracts open-schema facts, then the eval harness materializes those
+  facts into backend memory and calls the existing backend form-fill endpoint.
+  This is recommended for the canonical comparison because it isolates memory
+  extraction while matching the MCP packet fill path.
 - Claude produces a memory-like artifact without storing it in the backend. This
-  may be useful later, but adds more contract surface than needed because the
-  direct runner already creates `synthetic-memory-snapshot.json`.
+  remains useful as an intermediate artifact, but on its own it leaves direct
+  and MCP runs using different form-fill paths.
 
 Implementation shape:
 
 - Add `pnpm eval:claude-code-direct-packet`.
 - Reuse `direct-open-schema-packet` validation, document ordering, synthetic
-  memory scoring, local PDF fill, form scoring, and packet artifacts.
+  memory creation, form scoring, and packet artifacts.
+- Add `--fill-mode local-fact-fill|backend`. `local-fact-fill` preserves the
+  historical Vertex/direct diagnostic path; `backend` is the canonical Claude
+  direct comparison mode.
+- In backend fill mode, materialize `synthetic-memory-snapshot.json` with the
+  existing eval ingestor GraphQL client: reset memory when requested, create
+  missing user-owned definitions, suggest each extracted preference with
+  evidence/confidence, accept the suggestions, export
+  `memory-snapshot-after-materialization.json`, and score that backend snapshot.
+- Backend materialization maps synthetic definition scope to backend `GLOBAL`.
+  For `ENUM` definitions, enum options are derived from extracted enum values
+  before suggestions are written.
 - Add a Claude Code CLI adapter using `claude --print --output-format
   stream-json --verbose --no-session-persistence`.
 - For the direct runner, prepare an isolated Claude workspace containing only
@@ -58,8 +73,8 @@ Implementation shape:
 - The direct runner is not an OS-level filesystem sandbox. The isolation claim
   is that the runner does not intentionally provide MCP/backend memory and
   starts Claude Code in a restricted workspace with restricted tools/config.
-- Keep one-scenario direct passes as a later diagnostic, not the headline
-  baseline.
+- Keep local fact-only fill and one-scenario direct passes as diagnostics, not
+  the headline Claude direct baseline.
 
 Expected direct command:
 
@@ -71,7 +86,10 @@ pnpm eval:claude-code-direct-packet \
   --artifacts-root /private/tmp/maya-required-v4-claude-direct \
   --model claude-sonnet-4-20250514 \
   --thinking-mode default \
-  --document-order canonical
+  --document-order canonical \
+  --fill-mode backend \
+  --auth-token "$EVAL_AUTH_TOKEN" \
+  --reset-memory
 ```
 
 Expected MCP comparison command:
@@ -156,10 +174,15 @@ Required direct artifacts:
 - Root `claude-extraction-transcript.txt` for Claude Code direct runs.
 - Root `open-schema-extraction.json`.
 - Root `synthetic-memory-snapshot.json`.
+- Root `memory-materialization-report.json` in backend fill mode.
+- Root `memory-snapshot-after-materialization.json` in backend fill mode.
 - Root `open-schema-database-score-report.json`.
-- Per-scenario `direct-open-schema-fill-prompt.md`.
-- Per-scenario `direct-open-schema-fill-response.json`.
-- Per-scenario `claude-fill-transcript.txt` for Claude Code direct runs.
+- Per-scenario `form-fill-response.json` in backend fill mode.
+- Per-scenario `direct-open-schema-fill-prompt.md` and
+  `direct-open-schema-fill-response.json` only in local fact-fill diagnostic
+  mode.
+- Per-scenario `claude-fill-transcript.txt` only for Claude Code local
+  fact-fill diagnostic runs.
 - Per-scenario `filled-form.json`, `filled-form.pdf`,
   `form-score-report.json`, and `open-schema-combined-score-report.json`.
 
@@ -184,13 +207,22 @@ The MCP packet runner must also persist comparable model/thinking metadata in
    - Test with fake stream-json output; no live Claude required.
 3. Direct packet runner:
    - Add `claude-code` provider and wrapper script.
+   - Add `--fill-mode backend` and keep `local-fact-fill` as the historical
+     diagnostic mode.
+   - Add synthetic-memory materialization through GraphQL
+     `suggestPreference`/`acceptSuggestedPreference`, then backend form fill.
    - Record provider-specific evaluation mode, model/thinking metadata, and
      transcript paths.
-   - Test one extraction plus three fill passes with fake model output.
+   - Test one extraction, zero Claude fill calls, one materialization, and
+     three backend fill calls with fake stage runners.
+   - Test invalid extraction/fill contract failures finalize
+     `packet-evaluation-run.json` as failed.
 4. MCP packet controls:
    - Add `--model` and `--thinking-mode`.
    - Pass `--model` and `--effort` to Claude Code when `--agent claude`.
    - Persist packet-run model/thinking metadata.
+   - Ignore `EVAL_THINKING_MODE` for non-Claude paths and reject explicit
+     `--thinking-mode` unless the selected agent/provider is Claude.
    - Update MCP packet and shared invocation tests.
 
 Future live acceptance:
@@ -213,8 +245,12 @@ Risks:
 - Large stream-json transcripts and corpus PII.
 - Structured-output validation failures.
 - Artifact compatibility with existing packet reporting.
-- Fair comparison gap because MCP uses backend form fill while direct uses local
-  fact-to-fill.
+- Materialization can expose backend schema/value validation failures that the
+  synthetic local snapshot did not.
+- Duplicate extracted slugs collapse to normal backend active-preference
+  semantics; the materialization report must make these overwrites visible.
+- Backend form fill adds Vertex-backed form-fill nondeterminism to the canonical
+  direct path, but this is the same fill path used by MCP packet comparisons.
 - Packet-level versus scenario-level Claude pass may affect results.
 - Local Claude CLI does not expose a real thinking-budget control.
 - Claude Code direct is not protected by a separate OS filesystem sandbox; live
@@ -224,5 +260,6 @@ Assumptions:
 
 - Initial baseline uses one packet-level extraction pass.
 - `--thinking-mode default` means no `--effort` flag.
-- Existing direct packet scoring remains the right comparison surface.
+- Canonical direct-vs-MCP evidence uses backend fill mode; local fact-fill is a
+  diagnostic/historical direct baseline only.
 - Historical comparisons without model/thinking metadata are directional only.

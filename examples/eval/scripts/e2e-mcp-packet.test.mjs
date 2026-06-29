@@ -79,9 +79,23 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
 
-  const controls = parseArgs(
+  const commandThinking = parseArgs(
     [
       ...baseArgs,
+      '--thinking-mode',
+      'xhigh',
+    ],
+    { EVAL_AUTH_TOKEN: 'token' },
+    fixedNow,
+  );
+  assert.equal(commandThinking.kind, 'usage-error');
+  assert.match(commandThinking.message, /--agent claude/);
+
+  const controls = parseArgs(
+    [
+      ...replaceFlagValue(baseArgs, '--agent', 'claude'),
+      '--mcp-config',
+      '/private/tmp/mcp.json',
       '--model',
       'claude-sonnet-4-20250514',
       '--thinking-mode',
@@ -95,6 +109,14 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   assert.equal(controls.options.modelSource, 'manual');
   assert.equal(controls.options.thinkingMode, 'xhigh');
   assert.equal(controls.options.thinkingSource, 'manual');
+
+  const commandInvalidEnvThinking = parseArgs(baseArgs, {
+    EVAL_AUTH_TOKEN: 'token',
+    EVAL_THINKING_MODE: 'not-a-real-mode',
+  }, fixedNow);
+  assert.equal(commandInvalidEnvThinking.kind, 'ok');
+  assert.equal(commandInvalidEnvThinking.options.thinkingMode, 'default');
+  assert.equal(commandInvalidEnvThinking.options.thinkingSource, 'default');
 
   const envModel = parseArgs(baseArgs, {
     EVAL_AUTH_TOKEN: 'token',

@@ -53,6 +53,30 @@ mutation EvalIngestorSetPreference($input: SetPreferenceInput!) {
 }
 `,
   `
+mutation EvalIngestorSuggestPreference($input: SuggestPreferenceInput!) {
+  suggestPreference(input: $input) {
+    id
+    slug
+    value
+    status
+    confidence
+    evidence
+  }
+}
+`,
+  `
+mutation EvalIngestorAcceptSuggestedPreference($id: ID!) {
+  acceptSuggestedPreference(id: $id) {
+    id
+    slug
+    value
+    status
+    confidence
+    evidence
+  }
+}
+`,
+  `
 mutation EvalIngestorApplySuggestions(
   $analysisId: ID!
   $input: [ApplyPreferenceSuggestionInput!]!
@@ -73,5 +97,7 @@ export const [
   EXPORT_SCHEMA_QUERY,
   CREATE_DEFINITION_MUTATION,
   SET_PREFERENCE_MUTATION,
+  SUGGEST_PREFERENCE_MUTATION,
+  ACCEPT_SUGGESTED_PREFERENCE_MUTATION,
   APPLY_SUGGESTIONS_MUTATION,
 ] = INGESTOR_GRAPHQL_DOCUMENTS;

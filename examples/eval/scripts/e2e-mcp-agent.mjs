@@ -789,8 +789,8 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     modelSource: env.EVAL_MODEL ? 'env' : 'unspecified',
     modelLabel: env.EVAL_MODEL_LABEL,
     modelLabelSource: env.EVAL_MODEL_LABEL ? 'env' : 'unspecified',
-    thinkingMode: env.EVAL_THINKING_MODE || 'default',
-    thinkingSource: env.EVAL_THINKING_MODE ? 'env' : 'default',
+    thinkingMode: null,
+    thinkingSource: 'unspecified',
     resetMemory: false,
     resetMemoryMode: null,
     ensureDefinitions: true,
@@ -963,9 +963,21 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: 'Missing required --mcp-config when --agent claude is used',
     };
   }
-  const thinkingError = validateThinkingMode(options.thinkingMode);
-  if (thinkingError) {
-    return { kind: 'usage-error', message: thinkingError };
+  if (options.agent === 'claude') {
+    if (options.thinkingSource !== 'manual') {
+      options.thinkingMode = env.EVAL_THINKING_MODE || 'default';
+      options.thinkingSource = env.EVAL_THINKING_MODE ? 'env' : 'default';
+    }
+    const thinkingError = validateThinkingMode(options.thinkingMode);
+    if (thinkingError) {
+      return { kind: 'usage-error', message: thinkingError };
+    }
+  } else {
+    if (options.thinkingSource === 'manual') {
+      return { kind: 'usage-error', message: '--thinking-mode is only supported with --agent claude.' };
+    }
+    options.thinkingMode = 'default';
+    options.thinkingSource = 'default';
   }
   for (const [label, value] of [
     ['--user', options.userId],

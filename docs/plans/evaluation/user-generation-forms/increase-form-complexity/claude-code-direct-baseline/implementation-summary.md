@@ -11,8 +11,9 @@ The plan defines a Claude Code direct packet baseline for
 MCP/backend-memory assistance.
 
 The direct baseline is explicitly no-MCP and no-backend-memory as a model
-information source. Scoring still uses the existing synthetic memory snapshot,
-local PDF fill, and packet form reports.
+information source during extraction. The canonical comparison now materializes
+the extracted synthetic memory into backend memory after extraction, then uses
+the same backend form-fill endpoint as MCP packet runs.
 
 The implementation uses a restricted Claude Code invocation with an isolated
 document workspace, `Read,Glob,Grep` only, strict empty MCP config, safe mode,
@@ -22,12 +23,13 @@ workspace-only/no-backend guard is included in the actual Claude prompt.
 
 ## Recommended Design
 
-Use one packet-level open-schema extraction pass, then one fact-only fill pass
-per scenario.
+Use one packet-level open-schema extraction pass, then backend materialized form
+fill per scenario.
 
-This reuses the existing direct packet scoring surface, keeps
-`memoryKnownRecovered`, and avoids introducing a separate memory-artifact
-contract before it is needed.
+This keeps `memoryKnownRecovered`, preserves the synthetic extraction artifact,
+and isolates extraction quality by sharing the MCP packet backend form-fill
+path. The old local fact-only fill path remains a diagnostic/historical direct
+mode.
 
 ## Model And Thinking Decision
 
@@ -43,7 +45,9 @@ default|low|medium|high|xhigh|max`. `default` omits `--effort`; other values
 map to `--effort`. Artifacts record `budget: null`. Model metadata now
 distinguishes CLI-provided, env-provided, and missing sources; thinking
 metadata distinguishes CLI-provided, env-provided, and defaulted sources.
-Non-Claude MCP packet runs record `thinking: null`.
+Non-Claude MCP packet/direct runs record `thinking: null`; invalid
+`EVAL_THINKING_MODE` values are ignored for non-Claude paths, while explicit
+`--thinking-mode` is rejected unless the selected agent/provider is Claude.
 
 ## MCP Runner Decision
 
@@ -66,6 +70,8 @@ follow-up if the single-scenario MCP runner needs full thinking metadata.
   replace `budget: null`.
 - Whether the direct path should eventually support a scenario-level diagnostic
   pass in addition to the packet-level baseline.
+- Whether duplicate extracted slugs need a stricter policy than deterministic
+  backend overwrite semantics.
 
 ## Docs Updated
 
@@ -81,6 +87,18 @@ Code changes were made:
 - Added `pnpm eval:claude-code-direct-packet`.
 - Added a Claude Code CLI adapter with stream-json transcript capture.
 - Added `claude-code` provider support to the direct open-schema packet runner.
+- Added `--fill-mode local-fact-fill|backend`; backend is the canonical Claude
+  direct comparison mode, local fact-fill remains diagnostic.
+- Added synthetic-memory materialization through existing GraphQL client
+  primitives: reset memory, create definitions, suggest extracted preferences,
+  accept suggestions, export materialized backend memory, and call backend form
+  fill.
+- Added `memory-materialization-report.json`,
+  `memory-snapshot-after-materialization.json`, and per-scenario
+  `form-fill-response.json` artifacts for backend fill mode.
+- Direct packet failures from invalid extraction/fill contracts now finalize
+  `packet-evaluation-run.json` with `status: fail`, `endedAt`, and
+  `failureStage`.
 - Added strict empty MCP config, safe mode, disabled slash commands, and
   project-only setting sources for Claude Code direct calls.
 - Added the workspace-only/no-backend runtime guard to the actual Claude direct
@@ -97,8 +115,8 @@ Code changes were made:
 - Set Claude Code direct model precedence to CLI `--model`, then
   `EVAL_CLAUDE_CODE_MODEL`, then `EVAL_MODEL`.
 - Added `--model` and `--thinking-mode` controls for MCP packet Claude runs.
-- Made MCP thinking metadata apply only to Claude runs and record source more
-  precisely.
+- Made MCP/direct thinking controls apply only to Claude runs and record source
+  more precisely.
 - Added targeted unit coverage with fake model output; no live Claude eval was
   run.
 
