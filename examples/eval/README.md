@@ -138,6 +138,20 @@ Command distinction:
 - `pnpm eval:validate` validates committed fixture integrity.
 - `pnpm eval:verify` runs both and is the local non-DB gate.
 
+## Packet Score Reading
+
+Packet open-schema runners write a `qualitySummary` for quick comparison.
+Treat form metrics as the primary packet result:
+`knownFieldCorrect`, `abstentionAbsentCorrect`, and `overfillCount`.
+
+Memory metrics answer narrower questions. `memoryKnownValuePresent` reports
+whether expected values were retained somewhere usable in active memory,
+including conservative full-name and current-address composite cases.
+`memoryKnownRecovered` keeps the stricter exact active-row recovery meaning.
+If those differ, inspect `memoryKnownPresentAsCompositeOrAlias`,
+`memoryKnownGenuinelyMissing`, and the database score report's per-fact
+`valuePresenceClassification`.
+
 Regenerate form field manifests after adding or replacing PDFs:
 
 ```bash

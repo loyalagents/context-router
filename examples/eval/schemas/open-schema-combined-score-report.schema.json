@@ -89,6 +89,7 @@
     "memoryStatus": {
       "enum": [
         "recovered",
+        "present_as_composite_or_alias",
         "suggestion_only",
         "wrong_value",
         "missing",
@@ -105,14 +106,29 @@
       "additionalProperties": false,
       "required": [
         "classification",
+        "valuePresenceClassification",
         "matchingSlug",
         "valueRecoveredInActiveMemory",
+        "valuePresentInActiveMemory",
+        "presentAsCompositeOrAlias",
         "suggestionOnly"
       ],
       "properties": {
         "classification": { "$ref": "#/$defs/databaseClassification" },
+        "valuePresenceClassification": {
+          "enum": [
+            "strict_recovered",
+            "present_as_composite_or_alias",
+            "suggestion_only",
+            "wrong_value",
+            "genuinely_missing",
+            null
+          ]
+        },
         "matchingSlug": { "type": ["string", "null"] },
         "valueRecoveredInActiveMemory": { "type": "boolean" },
+        "valuePresentInActiveMemory": { "type": "boolean" },
+        "presentAsCompositeOrAlias": { "type": "boolean" },
         "suggestionOnly": { "type": "boolean" }
       }
     },

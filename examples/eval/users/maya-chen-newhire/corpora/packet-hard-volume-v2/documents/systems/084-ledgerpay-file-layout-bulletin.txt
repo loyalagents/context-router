@@ -1,0 +1,22 @@
+Source system: LedgerPay Data
+Generated timestamp: 2026-06-26T08:14:00-07:00
+Status: active
+Document code: PLC-OPS-084
+Subject: LedgerPay file layout bulletin
+Field IDs: endpoint.owner, contract.version, sync.window, release.marker
+
+The payroll file layout contains worker id, tax election code, routing number, account number, and account type columns.
+The bulletin explains column order, delimiter handling, and nightly import control totals.
+It is used by payroll operations when validating a batch file.
+
+Operational note: systems integration filed ledgerpay file layout bulletin with endpoint ownership, payload family, and deployment-window metadata.
+
+Systems provenance
+Systems note trace: PLC-SYSTEMS-084 recorded release owner, affected interfaces, deployment window, and file-layout family.
+Data checkpoint: platform reviewers compare version, endpoint owner, and source-system contract before updating integration docs.
+Retention tag: systems documentation artifact, versioned with release and interface metadata.
+
+Operational detail rows
+Systems documentation tracks release owner, interface contract, file-layout version, deployment window, and affected downstream job. Row marker PLC-SYSTEMS-084 was indexed from LedgerPay File Layout Bulletin during the 2026-06-22 operations window.
+Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. Review notes for ledgerpay file layout bulletin kept systems integration queue history, timestamp lineage, and handoff context with the retained record.
+The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. The retained systems integration artifact keeps source metadata for ledgerpay file layout bulletin audit reconstruction while preserving original row wording.

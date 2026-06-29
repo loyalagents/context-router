@@ -1,0 +1,81 @@
+HarborHire Support Center - Ticket Export
+Generated: 2026-06-26 11:00:00 (UTC-07:00)
+
+Ticket ID:          HD-20260625-0142
+Status:             Closed
+Queue:              HR Onboarding Support
+Created Date:       2026-06-25T15:18:00-07:00
+Resolved Date:      2026-06-26 10:05:11 (UTC-07:00)
+Assigned To:        Sarah Jenkins
+
+Requester Information
+---------------------
+Name:               Maya Chen
+Employee ID:        PLC-20418
+Reported Email:     maya.chen@gmail.test
+
+
+Ticket Details
+--------------
+Subject: Correction needed for my personal information
+
+Description:
+Hello,
+
+I was completing my onboarding documents and noticed that my home address and personal email address are incorrect in the system. I think I may have made a typo during the initial data entry.
+
+Could you please update them to the correct information?
+
+Correct Home Address:
+2846 Ashbury Street Apt 3D
+Oakland, CA 94609
+
+Correct Email Address:
+maya.chen@gmail.test
+
+Thank you for your help.
+- Maya Chen
+
+
+Activity Log
+------------
+
+[Comment added by Maya Chen | Requester | 2026-06-25 15:18:00 (UTC-07:00)]
+(Initial ticket description submitted by user)
+
+
+[Internal Note added by Sarah Jenkins | Assignee | 2026-06-25 15:45:21 (UTC-07:00)]
+Assigning to myself. Reviewing new hire record for PLC-20418.
+The system shows a different address and a slightly different email on the initial application record.
+Proceeding with update based on user's direct request to correct the record.
+NOTE: Employee did not provide a phone number in this request. For any required outbound contact, use the main HR support line (510-555-0144), do not update the employee's phone field in the profile.
+
+
+[Comment added by Sarah Jenkins | Assignee | 2026-06-26 10:05:11 (UTC-07:00)]
+Hello Maya,
+
+I have updated your personal information in the system as requested. Your home address and email should now be correct.
+
+Please log back into HarborHire to confirm the changes. Let us know if you need any further assistance.
+
+This ticket will now be closed.
+
+Regards,
+Sarah Jenkins
+HR Onboarding Support
+
+
+Resolution Summary
+------------------
+Resolution Code:    Data Correction / User Request
+Summary:            Updated employee's personal contact information per their request.
+
+Fields Updated:
+
+1. Home Address
+   Previous Value:  [Value on file at time of submission]
+   New Value:       2846 Ashbury Street Apt 3D, Oakland, CA 94609
+
+2. Personal Email
+   Previous Value:  [Value on file at time of submission]
+   New Value:       maya.chen@gmail.test

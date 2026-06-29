@@ -1,0 +1,31 @@
+source_system: HarborHire change-ledger
+exported_at: 2026-06-12T08:10:00-07:00
+status: inactive prior address row
+worker_id: PLC-20418
+person_name: Maya Lin Chen
+former_address_line: 910 Juniper Avenue Apt 12
+former_city_state_zip: Berkeley, CA 94704
+field_ids:
+  - postal.address_line
+  - postal.city
+  - postal.state
+  - postal.postal_code
+change_reason: moved before new-hire packet completion
+reviewer_note: row remained visible in the change-ledger export after the employee self-service profile saved a later address row.
+
+review_history:
+  - timestamp: 2026-06-19T09:12:00-07:00
+    owner_queue: Archive ledger
+    status: source_row_indexed
+  - timestamp: 2026-06-20T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - Archive ledger - PLC-ARCHIVE-027 stayed in the historical stream with its original close reason and source timestamp.
+  - Control total note - batch PLC-ARCHIVE-027 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Retrieval note - archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
+  - Retention tag - prior-state audit row, preserved under the new-hire correction retention schedule.
+operational_detail_rows:
+  - Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-027 was indexed from Maya address History during the 2026-06-19 operations window.
+  - Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. Review notes for maya address history kept archive ledger queue history, timestamp lineage, and handoff context with the retained record.
+  - Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. The retained archive ledger artifact keeps source metadata for maya address history audit reconstruction while preserving original row wording.

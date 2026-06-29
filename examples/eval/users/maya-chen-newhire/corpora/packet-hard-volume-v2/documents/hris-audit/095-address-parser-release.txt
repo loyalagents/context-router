@@ -1,0 +1,22 @@
+Source system: HarborHire Data
+Generated timestamp: 2026-06-20T08:25:00-07:00
+Status: active
+Document code: PLC-OPS-095
+Subject: Address parser release
+Field IDs: change_event.id, actor.id, field.name, bridge.status
+
+The parser release changed how suite and apartment tokens are split from street lines.
+The audit export still includes the original address text and the normalized component fields.
+The release note applies to all new-hire profile exports after deployment.
+
+Operational note: HRIS audit indexed address parser release with source transaction, actor, and downstream bridge status.
+
+HRIS audit provenance
+HRIS audit trace: PLC-HRISAUDI-095 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+Change-ledger checkpoint: reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+Retention tag: audit stream export, grouped by worker id and source transaction family.
+
+Operational detail rows
+HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-095 was indexed from Address Parser Release during the 2026-06-15 operations window.
+Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. Review notes for address parser release kept HRIS audit queue history, timestamp lineage, and handoff context with the retained record.
+The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. The retained HRIS audit artifact keeps source metadata for address parser release audit reconstruction while preserving original row wording.

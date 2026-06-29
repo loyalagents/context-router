@@ -1,0 +1,22 @@
+Source system: LedgerPay Tax
+Generated timestamp: 2026-06-10T08:38:00-07:00
+Status: active
+Document code: PLC-OPS-068
+Subject: tax review workbench release
+Field IDs: audit.stream_id, source.transaction, previous.token, current.token
+
+The tax review workbench added a filing-status filter and a missing-SSN queue for new-hire packets.
+The release changed queue labels but did not change field semantics.
+Reviewers can export a compact row or a full audit row depending on the case.
+
+Operational note: HRIS audit indexed tax review workbench release with source transaction, actor, and downstream bridge status.
+
+HRIS audit provenance
+HRIS audit trace: PLC-HRISAUDI-068 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+Change-ledger checkpoint: reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+Retention tag: audit stream export, grouped by worker id and source transaction family.
+
+Operational detail rows
+HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-068 was indexed from Tax Review Workbench Release during the 2026-06-24 operations window.
+Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. Review notes for tax review workbench release kept HRIS audit queue history, timestamp lineage, and handoff context with the retained record.
+The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. The retained HRIS audit artifact keeps source metadata for tax review workbench release audit reconstruction while preserving original row wording.

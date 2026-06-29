@@ -1,0 +1,22 @@
+Source system: PeopleBridge Directory
+Generated timestamp: 2026-06-11T08:39:00-07:00
+Status: active
+Document code: PLC-OPS-069
+Subject: work email provisioning events
+Field IDs: tax_profile.row_id, filing_status.code, w4.field_map, reviewer.queue
+
+Work email provisioning creates a directory account before the employee completes every packet form.
+The event includes generated email, source worker id, department, and activation timestamp.
+Profile changes after provisioning are handled by a separate correction event.
+
+Operational note: payroll tax operations filed work email provisioning events with withholding field-map version, reviewer queue, and import timestamp.
+
+Tax workbench provenance
+Tax workbench trace: PLC-PAYROLLT-069 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+Review checkpoint: tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
+Retention tag: withholding setup artifact, grouped with tax import diagnostics and field-map notes.
+
+Operational detail rows
+Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-069 was indexed from Work Email Provisioning Events during the 2026-06-25 operations window.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for work email provisioning events kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for work email provisioning events audit reconstruction while preserving original row wording.

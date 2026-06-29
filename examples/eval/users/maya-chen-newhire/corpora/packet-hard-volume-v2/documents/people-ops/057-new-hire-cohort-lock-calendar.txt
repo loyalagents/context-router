@@ -1,0 +1,22 @@
+Source system: PeopleOps Calendar
+Generated timestamp: 2026-06-16T08:27:00-07:00
+Status: active
+Document code: PLC-OPS-057
+Subject: new hire cohort lock calendar
+Field IDs: cohort.id, owner.team, handoff.topic, review.cadence
+
+The July cohort lock calendar tracks when employee self-service edits stop flowing into payroll, benefits, and WorkRight.
+The calendar uses Pacific time and distinguishes profile lock, tax lock, and payment election lock.
+Managers receive a digest when a worker remains in an unlocked state near payroll preview.
+
+Operational note: People Operations filed new hire cohort lock calendar with cohort ownership, release cadence, and coordinator lookup metadata.
+
+People Operations provenance
+People Operations trace: PLC-PEOPLEOP-057 tracked owner queue, process area, cohort window, and release note family.
+Coordinator checkpoint: reviewers compare process scope, system owner, and source timestamp before using the row for packet triage.
+Retention tag: people-ops knowledge artifact, versioned with cohort and owner metadata.
+
+Operational detail rows
+People Operations records track cohort, task family, owner queue, release window, and process owner for cross-team review. Row marker PLC-PEOPLEOP-057 was indexed from New Hire Cohort Lock Calendar during the 2026-06-13 operations window.
+Coordinator review uses source-system family, packet task state, queue owner, and version date to interpret operational rows. Review notes for new hire cohort lock calendar kept people operations queue history, timestamp lineage, and handoff context with the retained record.
+Knowledge-base artifacts keep process scope, review cadence, owner team, and affected workflow names in the header block. The retained people operations artifact keeps source metadata for new hire cohort lock calendar audit reconstruction while preserving original row wording.

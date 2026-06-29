@@ -1,0 +1,60 @@
+{
+  "source_system": "PeopleBridge",
+  "export_id": "PEOPLEBRIDGE-PLC-20318-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-20318",
+  "person": {
+    "legal_name": "Naya Lin",
+    "personal_email": "naya.lin@mail.test",
+    "work_email": "naya.lin@pacificledger.test",
+    "title": "People Operations Associate",
+    "start_date": "2026-07-06"
+  },
+  "topic": "direct deposit election",
+  "fields": {
+    "address_line": "2846 Ashwood Street Unit 3D, Berkeley, CA 94704",
+    "city_state_zip": "Berkeley, CA 94704",
+    "ssn_last_four": "0417",
+    "tax_filing_status": "married filing jointly"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-13T09:12:00-07:00",
+      "owner_queue": "HarborDesk Routing",
+      "status": "source_row_indexed"
+    },
+    {
+      "timestamp": "2026-06-14T16:40:00-07:00",
+      "owner_queue": "Payroll Operations",
+      "status": "queue_checkpoint_recorded"
+    }
+  ],
+  "control_observations": [
+    "Prenote trail: PLC-BANKINGO-039 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.",
+    "Reconciliation checkpoint: banking operations reviewed row ownership, return-code state, and account-label normalization at 15:45 PDT on 2026-06-13.",
+    "Control note: the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export."
+  ],
+  "source_packet_marker": "PLC-BANKINGO-039",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-039 was indexed from Account Election Naya Lin during the 2026-06-13 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. Review notes for account election naya lin kept banking operations queue history, timestamp lineage, and handoff context with the retained record."
+    },
+    {
+      "sequence": 3,
+      "note": "The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. The retained banking operations artifact keeps source metadata for account election naya lin audit reconstruction while preserving original row wording."
+    }
+  ]
+}

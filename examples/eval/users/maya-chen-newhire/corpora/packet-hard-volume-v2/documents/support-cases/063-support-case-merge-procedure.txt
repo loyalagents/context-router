@@ -1,0 +1,22 @@
+Source system: HarborDesk
+Generated timestamp: 2026-06-22T08:33:00-07:00
+Status: active
+Document code: PLC-OPS-063
+Subject: support case merge procedure
+Field IDs: ticket.thread_id, macro.family, source_task.id, agent.worklog
+
+Case merge procedure depends on worker id, requester email, and onboarding task id.
+The support system can merge duplicate questions but does not merge source profile fields.
+A case closed as duplicate still appears in weekly queue metrics.
+
+Operational note: HarborDesk filed support case merge procedure with requester context, agent worklog, and source-task routing metadata.
+
+Support case provenance
+Support case trace: PLC-SUPPORTC-063 retained requester, queue assignment, worklog events, and field labels mentioned during triage.
+Case checkpoint: HarborDesk agents compare requester worker id, owner queue, and source-system screenshots before changing any case state.
+Retention tag: support transcript, stored with routing history and agent worklog.
+
+Operational detail rows
+Support cases keep requester, worklog, owner queue, escalation state, linked source screenshots, and field labels mentioned during triage. Row marker PLC-SUPPORTC-063 was indexed from Support Case Merge Procedure during the 2026-06-19 operations window.
+HarborDesk agents compare requester worker id, queue ownership, screenshot timestamp, and source-system task before updating a case. Review notes for support case merge procedure kept support case queue history, timestamp lineage, and handoff context with the retained record.
+Case transcripts retain initial question, agent notes, routing transitions, and the source task family that triggered the ticket. The retained support case artifact keeps source metadata for support case merge procedure audit reconstruction while preserving original row wording.

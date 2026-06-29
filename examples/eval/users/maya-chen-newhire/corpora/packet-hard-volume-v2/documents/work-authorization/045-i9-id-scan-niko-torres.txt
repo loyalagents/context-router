@@ -1,0 +1,25 @@
+OCR JOB PLC-20741-I9DOCUMENTUPLOAD
+Source file: plc-20741-i-9-document-upload.png
+OCR confidence: 0.91
+Upload batch id: HH-UPL-PLC-20741-0626
+Timestamp: 2026-06-26T16:05:22-07:00
+Status: routed_to_review
+Document type: I-9 Document Upload
+Worker id: PLC-20741
+
+Visible name: Niko Torres
+Address line: 77 Clay Street Unit 9, Oakland, CA 94607
+Document queue worker id: PLC-20741
+Review crop label: I-9 Document Upload front image
+
+Extraction footer: image processed by IdentityLens model IL-2026.06; reviewer queue retained the raw crop and redaction overlay metadata.
+
+Work authorization provenance
+Work authorization trace: PLC-WORKAUTH-045 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+Coordinator checkpoint: WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+Retention tag: employment eligibility workflow artifact, stored with branch and queue metadata.
+
+Operational detail rows
+Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-045 was indexed from I9 ID Scan Niko Torres during the 2026-06-19 operations window.
+Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for i9 id scan niko torres kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for i9 id scan niko torres audit reconstruction while preserving original row wording.

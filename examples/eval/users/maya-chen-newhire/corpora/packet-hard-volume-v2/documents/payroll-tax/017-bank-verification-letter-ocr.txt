@@ -1,0 +1,63 @@
+--- OCR EXPORT DATA ---
+Source Filename: BHCU_Verification_Chen_M_06252026.pdf
+Export Timestamp: 2026-06-26T09:52:00-07:00
+OCR Engine: Tesseract 5.3.1
+OCR Confidence: 97.8%
+Status: Completed
+
+------------------------------------------------------------------
+
+[LOGO] Bay Harbor Credit Union
+
+100 Embarcadero Center, San Francisco, CA 94111
+(800) 555-2229 | www.bayharborcu.org
+
+June 25, 2026
+
+To Whom It May Concern:
+
+RE: Account Verification Letter
+Customer Name: Maya Lin Chen
+Reference ID: PLC-20418
+
+This letter is provided at the direct request of our member, Maya Lin Chen, to confirm their account details with Bay Harbor Credit Union. All information contained herein is accurate as of the date this letter was generated.
+
+We are pleased to confirm the following account information:
+
+Account Holder Name:             Maya Lin Chen
+Account Number:                  740182936451
+Account Type:                    Total Access Checking
+Routing Transit Number (ABA):    091000019
+Account Opened On:               March 12, 2022
+Account Status:                  Active and in Good Standing
+
+The account listed above is a personal checking account and has been maintained responsibly since its inception. Bay Harbor Credit Union is a member-owned financial cooperative, and we value the relationship we have with our members.
+
+This verification letter is intended solely for the purpose of confirming the existence and status of the specified account. It is not a statement of account balance, nor does it represent a guarantee of funds, a line of credit, or a commitment to lend. The information provided is confidential and should be handled with care. Bay Harbor Credit Union assumes no liability for any decisions made based on the information provided in this letter.
+
+For security purposes, this letter does not include the account balance. If balance information is required, separate authorization from the account holder will be necessary. This document is not negotiable and is valid only in its original or verified digital format. Any unauthorized alteration of this letter is strictly prohibited and may be subject to legal action.
+
+About Bay Harbor Credit Union:
+Founded in 1955, Bay Harbor Credit Union is a leading financial institution serving the communities of the San Francisco Bay Area. Our mission is to provide our members with affordable financial services, including savings and checking accounts, loans, mortgages, and investment services. We are committed to financial education and community involvement. As a not-for-profit cooperative, our earnings are returned to our members in the form of lower loan rates, higher savings yields, and fewer fees.
+
+Security and Privacy:
+We are committed to protecting our members' financial information. This communication is subject to the terms and conditions outlined in our Privacy Policy, a copy of which is available on our website at www.bayharborcu.org/privacy. We use industry-standard security measures to ensure that your information is safe.
+
+Verification of this Document:
+Should you need to verify the authenticity of this letter, please do not hesitate to contact our Member Services department at the phone number listed above. Please be prepared to provide the Reference ID (PLC-20418) and the date of this letter. Please note that our representatives will not be able to disclose any additional account information without explicit consent from the member.
+
+Thank you for your understanding.
+
+Sincerely,
+
+David R. Sterling
+Branch Manager
+Bay Harbor Credit Union - Embarcadero Branch
+100 Embarcadero Center
+San Francisco, CA 94111
+
+------------------------------------------------------------------
+Federally Insured by NCUA.     Equal Housing Lender.
+This is an electronically generated document. A physical signature is not required for verification when received directly from Bay Harbor Credit Union's official systems.
+
+--- END OF EXPORT ---

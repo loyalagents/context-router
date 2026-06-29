@@ -1,0 +1,45 @@
+source_system: WorkRight
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-20419
+topic: i9 section one intake
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Maia Chinn
+  first_name: Maia
+  last_name: Chinn
+  title: Client Operations Associate
+  start_date: 2026-07-13
+  work_email: maia.chinn@pacificledger.test
+  address_line: 2848 Ashbury Street Apt 3D, Oakland, CA 94609
+payroll_snapshot:
+  tax_filing_status: head of household
+  bank_product_label: Everyday Savings
+  institution_name: Bay Harbor Credit Union
+  routing_number: "121000248"
+  account_last_four: "6452"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-25T09:12:00-07:00
+    owner_queue: Work authorization trace
+    status: source_row_indexed
+  - timestamp: 2026-06-26T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - Work authorization trace - PLC-WORKAUTH-015 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Coordinator checkpoint - WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+  - Retention tag - employment eligibility workflow artifact, stored with branch and queue metadata.
+operational_detail_rows:
+  - Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-015 was indexed from Section One Intake Maia Chinn during the 2026-06-25 operations window.
+  - Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for section one intake maia chinn kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+  - The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for section one intake maia chinn audit reconstruction while preserving original row wording.

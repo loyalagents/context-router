@@ -1,0 +1,22 @@
+Source system: LedgerPay Banking
+Generated timestamp: 2026-06-24T08:35:00-07:00
+Status: active
+Document code: PLC-OPS-065
+Subject: bank product label normalization
+Field IDs: manager.queue, packet.task_family, calendar.window, coordinator.role
+
+Payroll stores account type as a short normalized code, while bank letters often use product names.
+The product label normalizer maps common checking and savings product names to payroll codes.
+Unrecognized labels are retained in a note field for manual review.
+
+Operational note: People Operations filed bank product label normalization with cohort ownership, release cadence, and coordinator lookup metadata.
+
+People Operations provenance
+People Operations trace: PLC-PEOPLEOP-065 tracked owner queue, process area, cohort window, and release note family.
+Coordinator checkpoint: reviewers compare process scope, system owner, and source timestamp before using the row for packet triage.
+Retention tag: people-ops knowledge artifact, versioned with cohort and owner metadata.
+
+Operational detail rows
+People Operations records track cohort, task family, owner queue, release window, and process owner for cross-team review. Row marker PLC-PEOPLEOP-065 was indexed from Bank Product Label Normalization during the 2026-06-21 operations window.
+Coordinator review uses source-system family, packet task state, queue owner, and version date to interpret operational rows. Review notes for bank product label normalization kept people operations queue history, timestamp lineage, and handoff context with the retained record.
+Knowledge-base artifacts keep process scope, review cadence, owner team, and affected workflow names in the header block. The retained people operations artifact keeps source metadata for bank product label normalization audit reconstruction while preserving original row wording.

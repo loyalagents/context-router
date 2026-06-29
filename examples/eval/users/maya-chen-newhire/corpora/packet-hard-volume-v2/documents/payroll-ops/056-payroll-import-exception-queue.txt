@@ -1,0 +1,22 @@
+Source system: LedgerPay Ops
+Generated timestamp: 2026-06-15T08:26:00-07:00
+Status: active
+Document code: PLC-OPS-056
+Subject: payroll import exception queue
+Field IDs: payroll.queue_owner, register.total, exception.status, preview_run.marker
+
+The import queue groups address, tax, and banking exceptions by worker id before a human reviewer releases the batch.
+Rows arrive from HarborHire every two hours. The reviewer sees worker id, source field, proposed value, and a mapping result produced by the previous file layout.
+The queue keeps review-state rows visible until the nightly control total agrees with the payroll register.
+
+Operational note: LedgerPay indexed payroll import exception queue with exception routing, pay-group ownership, and preview-cycle timing.
+
+Payroll operations provenance
+Payroll operations trace: PLC-PAYROLLO-056 captured batch window, import owner, exception code, and row-count reconciliation from LedgerPay.
+Queue checkpoint: payroll staff reviewed worker id, pay group, source field, and exception status before the next preview run.
+Retention tag: payroll operations row, retained with control totals and preview calendar metadata.
+
+Operational detail rows
+Payroll operations exports carry pay group, preview calendar, exception code, import owner, and row-count reconciliation fields. Row marker PLC-PAYROLLO-056 was indexed from Payroll Import Exception Queue during the 2026-06-12 operations window.
+Payroll staff compare source field, worker id, exception state, and lock window before moving a row to the next preview. Review notes for payroll import exception queue kept payroll operations queue history, timestamp lineage, and handoff context with the retained record.
+LedgerPay retains exception rows with batch id, source file window, operator initials, and preview-run marker. The retained payroll operations artifact keeps source metadata for payroll import exception queue audit reconstruction while preserving original row wording.

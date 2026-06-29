@@ -1,0 +1,29 @@
+Ticket ID: NEWHIRESUPPORT-PLC-19418-0627
+Source system: HarborDesk
+Created timestamp: 2026-06-27 10:22:04 PDT
+Status: Open
+Queue: new hire support
+Requester worker id: PLC-19418
+Requester: Maya Patel
+Subject: Start date mismatch between recruiting and HRIS
+
+Initial note
+Maya Patel asked whether the onboarding profile display should show the payroll name or the directory name. The case was routed through new hire support because the worker id had already been created in HarborHire but the payroll election had not completed its nightly import.
+
+Agent worklog
+- Confirmed source system record for PLC-19418.
+- Compared work email maya.patel@pacificledger.test against the directory entry generated for the July cohort.
+- Checked address text as stored by the support console: 910 Juniper Avenue Apt 12, Berkeley, CA 94704.
+- Left the case in queue because the final payroll sync had not produced a closing event at the time of export.
+
+Field IDs observed: requester.name, requester.worker_id, contact.email, postal.address, payroll.election_state.
+
+Support case provenance
+Support case trace: PLC-SUPPORTC-041 retained requester, queue assignment, worklog events, and field labels mentioned during triage.
+Case checkpoint: HarborDesk agents compare requester worker id, owner queue, and source-system screenshots before changing any case state.
+Retention tag: support transcript, stored with routing history and agent worklog.
+
+Operational detail rows
+Support cases keep requester, worklog, owner queue, escalation state, linked source screenshots, and field labels mentioned during triage. Row marker PLC-SUPPORTC-041 was indexed from Start Date Case Maya Patel during the 2026-06-15 operations window.
+HarborDesk agents compare requester worker id, queue ownership, screenshot timestamp, and source-system task before updating a case. Review notes for start date case maya patel kept support case queue history, timestamp lineage, and handoff context with the retained record.
+Case transcripts retain initial question, agent notes, routing transitions, and the source task family that triggered the ticket. The retained support case artifact keeps source metadata for start date case maya patel audit reconstruction while preserving original row wording.

@@ -787,6 +787,12 @@ function buildPacketQualitySummary(report) {
     memoryKnownRecovered: database
       ? `${database.knownPresentRecoveredActive}/${database.knownPresentTotal}`
       : null,
+    memoryKnownValuePresent: database
+      ? `${database.knownPresentValuePresentActive}/${database.knownPresentTotal}`
+      : null,
+    memoryKnownPresentAsCompositeOrAlias:
+      database?.knownPresentPresentAsCompositeOrAlias ?? null,
+    memoryKnownGenuinelyMissing: database?.knownPresentGenuinelyMissing ?? null,
     memoryMissingAbsent: database
       ? `${database.missingAbsentCorrect}/${database.intentionallyMissingTotal}`
       : null,
