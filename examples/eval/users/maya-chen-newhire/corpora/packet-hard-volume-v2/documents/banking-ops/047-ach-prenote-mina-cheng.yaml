@@ -27,9 +27,6 @@ queue_notes:
   - matched during nightly PeopleBridge export
   - awaiting normal payroll cutover review
 
-  -
-  - Control total note - batch PLC-BANKINGO-047 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-
 review_history:
   - timestamp: 2026-06-21T09:12:00-07:00
     owner_queue: Prenote trail
@@ -39,6 +36,7 @@ review_history:
     status: queue_checkpoint_recorded
 control_observations:
   - Prenote trail - PLC-BANKINGO-047 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.
+  - Control total note - batch PLC-BANKINGO-047 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
   - Reconciliation checkpoint - banking operations reviewed row ownership, return-code state, and account-label normalization at 15 -45 PDT on 2026-06-21.
   - Control note - the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export.
 operational_detail_rows:

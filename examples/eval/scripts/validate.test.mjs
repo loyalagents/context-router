@@ -2239,6 +2239,55 @@ test('packet-hard-volume-v2 documents avoid obvious and soft disqualifying cues'
   assert.deepEqual(matches, []);
 });
 
+test('packet-hard-volume-v2 YAML documents avoid empty list cleanup artifacts', async () => {
+  const { parse: parseYaml } = await import('yaml');
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const yamlFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.ya?ml$/.test(filePath))
+    .sort();
+
+  const standaloneEmptyListItems = [];
+  const parsedNullArrayItems = [];
+
+  const visitParsedYaml = (documentFile, value, valuePath) => {
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        const itemPath = `${valuePath}[${index}]`;
+        if (item === null) {
+          parsedNullArrayItems.push(`${documentFile}:${itemPath}`);
+          return;
+        }
+        visitParsedYaml(documentFile, item, itemPath);
+      });
+      return;
+    }
+    if (value && typeof value === 'object') {
+      for (const [key, nestedValue] of Object.entries(value)) {
+        visitParsedYaml(documentFile, nestedValue, `${valuePath}.${key}`);
+      }
+    }
+  };
+
+  for (const documentFile of yamlFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    body.split('\n').forEach((line, index) => {
+      if (/^\s*-\s*$/.test(line)) {
+        standaloneEmptyListItems.push(`${documentFile}:${index + 1}`);
+      }
+    });
+    visitParsedYaml(documentFile, parseYaml(body), '$');
+  }
+
+  assert.deepEqual(standaloneEmptyListItems, []);
+  assert.deepEqual(parsedNullArrayItems, []);
+});
+
 test('packet-hard-volume-v2 preserves packet-medium truth-bearing document bodies', async () => {
   const mediumRoot = path.join(
     repoRoot,

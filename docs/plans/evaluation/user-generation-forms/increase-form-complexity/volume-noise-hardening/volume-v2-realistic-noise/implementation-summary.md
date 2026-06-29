@@ -37,6 +37,8 @@
   `does not include live employee answers`.
 - Added regression coverage for the v2 cue scan and for keeping the 20
   truth-bearing document bodies byte-identical to `packet-medium`.
+- Added regression coverage for malformed YAML cleanup artifacts by rejecting
+  standalone empty list items and parsed null entries inside YAML arrays.
 - The copied truth-bearing documents retain the same validation warnings already
   seen in the medium/v1 family, mostly length-target, native-signal, and
   phone-like support-number warnings.
@@ -53,7 +55,7 @@
   - `node --test examples/eval/scripts/e2e-mcp-packet.test.mjs`
   - `node --test examples/eval/scripts/fill-form-from-docs.test.mjs`
   - `node --test examples/eval/scripts/validate.test.mjs`
-- Focused test result: 93/93 passing.
+- Focused test result: 94/94 passing.
 
 ## Live Run Defaults
 

@@ -13,9 +13,6 @@ field_ids:
 change_reason: moved before new-hire packet completion
 reviewer_note: row remained visible in the change-ledger export after the employee self-service profile saved a later address row.
 
-  -
-  - Control total note - batch PLC-ARCHIVE-027 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-
 review_history:
   - timestamp: 2026-06-19T09:12:00-07:00
     owner_queue: Archive ledger
@@ -25,6 +22,7 @@ review_history:
     status: queue_checkpoint_recorded
 control_observations:
   - Archive ledger - PLC-ARCHIVE-027 stayed in the historical stream with its original close reason and source timestamp.
+  - Control total note - batch PLC-ARCHIVE-027 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
   - Retrieval note - archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
   - Retention tag - prior-state audit row, preserved under the new-hire correction retention schedule.
 operational_detail_rows:

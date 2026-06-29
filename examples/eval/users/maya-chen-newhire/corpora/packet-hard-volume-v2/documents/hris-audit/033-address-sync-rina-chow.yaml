@@ -27,9 +27,6 @@ queue_notes:
   - matched during nightly PeopleBridge export
   - awaiting normal payroll cutover review
 
-  -
-  - Control total note - batch PLC-HRISAUDI-033 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-
 review_history:
   - timestamp: 2026-06-25T09:12:00-07:00
     owner_queue: HRIS audit trace
@@ -39,6 +36,7 @@ review_history:
     status: queue_checkpoint_recorded
 control_observations:
   - HRIS audit trace - PLC-HRISAUDI-033 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+  - Control total note - batch PLC-HRISAUDI-033 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
   - Change-ledger checkpoint - reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
   - Retention tag - audit stream export, grouped by worker id and source transaction family.
 operational_detail_rows:

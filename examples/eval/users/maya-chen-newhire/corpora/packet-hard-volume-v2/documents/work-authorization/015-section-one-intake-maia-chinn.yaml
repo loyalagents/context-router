@@ -27,9 +27,6 @@ queue_notes:
   - matched during nightly PeopleBridge export
   - awaiting normal payroll cutover review
 
-  -
-  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-
 review_history:
   - timestamp: 2026-06-25T09:12:00-07:00
     owner_queue: Work authorization trace
@@ -39,6 +36,7 @@ review_history:
     status: queue_checkpoint_recorded
 control_observations:
   - Work authorization trace - PLC-WORKAUTH-015 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
   - Coordinator checkpoint - WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
   - Retention tag - employment eligibility workflow artifact, stored with branch and queue metadata.
 operational_detail_rows:

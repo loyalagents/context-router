@@ -27,9 +27,6 @@ queue_notes:
   - matched during nightly PeopleBridge export
   - awaiting normal payroll cutover review
 
-  -
-  - Control total note - batch PLC-PAYROLLT-040 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
-
 review_history:
   - timestamp: 2026-06-14T09:12:00-07:00
     owner_queue: Tax workbench trace
@@ -39,6 +36,7 @@ review_history:
     status: queue_checkpoint_recorded
 control_observations:
   - Tax workbench trace - PLC-PAYROLLT-040 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+  - Control total note - batch PLC-PAYROLLT-040 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
   - Review checkpoint - tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
   - Retention tag - withholding setup artifact, grouped with tax import diagnostics and field-map notes.
 operational_detail_rows:
