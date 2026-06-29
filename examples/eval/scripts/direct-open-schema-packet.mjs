@@ -17,10 +17,20 @@ import {
   validateFactFillActions,
 } from './direct-open-schema.mjs';
 import {
+  DEFAULT_MAX_EVIDENCE_CHARS,
   buildPromptFieldMetadata,
   fillPdfFromActions,
   loadEvidenceDocuments,
 } from './fill-form-from-docs.mjs';
+import {
+  DEFAULT_DOCUMENT_ORDER,
+  DEFAULT_DOCUMENT_ORDER_SEED,
+  buildPacketDocumentMetadata,
+  evidenceCharCount,
+  loadPacketDocumentStats,
+  orderPacketDocuments,
+  validateDocumentOrder,
+} from './packet-documents.mjs';
 import { generateWithVertex } from './generate.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import { scoreOpenSchemaCombinedToFile } from './scoring/open-schema-combined.mjs';
@@ -99,10 +109,42 @@ export async function runDirectOpenSchemaPacket({
     }
 
     const extractionFixture = fixtures[0];
-    const evidenceDocuments = await loadEvidenceDocuments({
-      manifest: extractionFixture.manifest,
+    const orderedDocuments = orderPacketDocuments(
+      extractionFixture.manifest.documents ?? [],
+      options,
+    );
+    const documentStats = await loadPacketDocumentStats({
       documentsRoot: path.resolve(repoRoot, options.documentsRoot),
+      documents: orderedDocuments,
     });
+    report.documents = buildPacketDocumentMetadata({
+      documents: orderedDocuments,
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+      sourceCharCount: documentStats.sourceCharCount,
+      evidenceCharCount: null,
+      maxEvidenceChars: options.maxEvidenceChars,
+    });
+    await writeReport();
+
+    const evidenceDocuments = await loadEvidenceDocuments({
+      manifest: {
+        ...extractionFixture.manifest,
+        documents: orderedDocuments,
+      },
+      documentsRoot: path.resolve(repoRoot, options.documentsRoot),
+      maxEvidenceChars: options.maxEvidenceChars,
+    });
+    const totalEvidenceChars = evidenceCharCount(evidenceDocuments);
+    report.documents = buildPacketDocumentMetadata({
+      documents: orderedDocuments,
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+      sourceCharCount: documentStats.sourceCharCount,
+      evidenceCharCount: totalEvidenceChars,
+      maxEvidenceChars: options.maxEvidenceChars,
+    });
+    await writeReport();
     const model = options.model;
     const extractionPrompt = buildExtractionPrompt({ evidenceDocuments });
     await writeFile(artifacts.extractionPrompt, extractionPrompt);
@@ -360,6 +402,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     provider: 'vertex',
     model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL,
     temperature: DEFAULT_TEMPERATURE,
+    maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
+    documentOrder: DEFAULT_DOCUMENT_ORDER,
+    documentOrderSeed: DEFAULT_DOCUMENT_ORDER_SEED,
   };
   const valueArgs = new Set([
     '--user',
@@ -370,6 +415,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--provider',
     '--model',
     '--temperature',
+    '--max-evidence-chars',
+    '--document-order',
+    '--document-order-seed',
     '--run-id',
   ]);
 
@@ -394,6 +442,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--provider') options.provider = value;
     if (arg === '--model') options.model = value;
     if (arg === '--temperature') options.temperature = Number(value);
+    if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
+    if (arg === '--document-order') options.documentOrder = value;
+    if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--run-id') options.runId = value;
   }
 
@@ -429,6 +480,16 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   ) {
     return { kind: 'usage-error', message: '--temperature must be a number from 0 to 2.' };
   }
+  if (!isPositiveInteger(options.maxEvidenceChars)) {
+    return { kind: 'usage-error', message: '--max-evidence-chars must be a positive integer.' };
+  }
+  const documentOrderError = validateDocumentOrder(options);
+  if (documentOrderError) {
+    return { kind: 'usage-error', message: documentOrderError };
+  }
+  if (!options.documentOrderSeed) {
+    return { kind: 'usage-error', message: '--document-order-seed must be a non-empty string.' };
+  }
   if (!options.model) {
     return {
       kind: 'usage-error',
@@ -458,6 +519,9 @@ export function usage() {
     '  --provider vertex                Only vertex is supported',
     '  --model <model>                  Defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL',
     '  --temperature <number>           Defaults to 0.2',
+    `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
+    '  --document-order <mode>          canonical|reverse|seeded-random|relevant-first|relevant-last',
+    `  --document-order-seed <seed>     Defaults to ${DEFAULT_DOCUMENT_ORDER_SEED}`,
     '  --run-id <id>                    Defaults to direct-open-schema-packet-<user>-<corpus>-<timestamp>',
   ].join('\n');
 }
@@ -513,7 +577,16 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
       provider: options.provider,
       temperature: options.temperature,
       promptVersion: EXTRACTION_PROMPT_VERSION,
+      maxEvidenceChars: options.maxEvidenceChars,
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
     },
+    documents: buildPacketDocumentMetadata({
+      documents: [],
+      documentOrder: options.documentOrder,
+      documentOrderSeed: options.documentOrderSeed,
+      maxEvidenceChars: options.maxEvidenceChars,
+    }),
     artifacts: {
       validationReport: relativePath(repoRoot, artifacts.validationReport),
       extractionPrompt: relativePath(repoRoot, artifacts.extractionPrompt),
@@ -664,6 +737,10 @@ function invalidFillValidation(validationDiagnostics = []) {
     },
     validationDiagnostics,
   };
+}
+
+function isPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
 }
 
 function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {

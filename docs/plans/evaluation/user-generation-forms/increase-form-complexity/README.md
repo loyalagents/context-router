@@ -1,13 +1,14 @@
 # Increase Form Complexity
 
 - Status: distilled historical context
-- Last updated: 2026-06-28
+- Last updated: 2026-06-29
 - Scope: shared-dossier form evaluation work before the next hardening pass
 
 ## Current Purpose
 
 This folder keeps the compact context for the completed shared-dossier packet
-work. Active planning for making the packet harder lives in `make-forms-harder/`.
+work. Active planning for making the packet harder lives in `make-forms-harder/`
+and `volume-noise-hardening/`.
 
 Canonical eval runbooks remain:
 
@@ -20,6 +21,10 @@ Current hardening docs:
   labels, validation commands, and recommended PR boundaries.
 - `make-forms-harder/brainstorm.md`: rationale and examples for ownership,
   conflict/temporal validity, evidence confidence, tagging, and scoring.
+- `volume-noise-hardening/implementation-plan.md`: packet volume/noise plan,
+  runner order controls, direct evidence cap behavior, and validation defaults.
+- `volume-noise-hardening/implementation-summary.md`: implementation status and
+  validation/live-run notes for the 100-document volume packet.
 
 ## Current PR Plan
 
@@ -42,6 +47,10 @@ Split separately if a change touches shared eval tooling, scoring contracts,
 backend form-fill behavior, MCP behavior, or runner semantics. Keep ownership
 and conflict packets in separate implementation PRs so failures stay
 interpretable.
+
+Treat volume/noise as its own difficulty family. Use `packet-hard-volume-v1`
+for 100-document long-context experiments instead of mutating `packet-medium`
+or stacking volume on ownership/conflict/required packets.
 
 ## Durable Decisions
 
@@ -86,6 +95,7 @@ Implemented corpora:
 | --- | --- | --- |
 | `packet-small` | 8 docs, about 6.5 KB | Plumbing and correctness slice. |
 | `packet-medium` | 30 docs, about 68 KB | Larger shared dossier with obvious stale and other-person distractors. |
+| `packet-hard-volume-v1` | 100 docs, validation report in corpus folder | Long-context volume/noise smoke test based on `packet-medium`; it reuses the same forms and is not yet a strong hard distractor benchmark. |
 
 Implemented packet scenarios:
 
@@ -95,6 +105,9 @@ Implemented packet scenarios:
 - `maya-chen-newhire-i9-packet-medium`
 - `maya-chen-newhire-fw4-packet-medium`
 - `maya-chen-newhire-direct-deposit-packet-medium`
+- `maya-chen-newhire-i9-packet-hard-volume-v1`
+- `maya-chen-newhire-fw4-packet-hard-volume-v1`
+- `maya-chen-newhire-direct-deposit-packet-hard-volume-v1`
 
 ## Runner State
 
@@ -109,6 +122,19 @@ pnpm eval:compare-runs
 Packet-level reporting writes one memory/extraction score plus per-form score
 reports. `status: pass` means the pipeline completed; use `qualitySummary` and
 the score reports to judge quality.
+
+Packet runners support order experiments:
+
+```bash
+--document-order canonical|reverse|seeded-random|relevant-first|relevant-last
+--document-order-seed <seed>
+```
+
+Direct-document runners support explicit evidence caps for larger packets:
+
+```bash
+--max-evidence-chars 1000000
+```
 
 ## Historical Summary
 

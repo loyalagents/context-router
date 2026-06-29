@@ -1,0 +1,34 @@
+Pacific Ledger volume context export 045
+
+source system: Pacific Ledger Cooperative operations archive
+exported timestamp: 2026-06-06T09:15:00-07:00
+document status: reference guardrail
+case id: VOL-045-EMPLOYERCONTEXT
+review queue: people operations reference
+
+Summary
+This artifact is part of the Pacific Ledger Cooperative operating archive. It is useful for understanding how teams describe onboarding, payroll, tax, identity review, or support workflows, but it is not an authoritative source for the current employee packet being evaluated. The record discusses templates, examples, queue behavior, or another worker such as Quinn Patel.
+
+Operational Context
+The employer context archive stores policy and team-operation notes for repeated onboarding questions. This artifact can explain Pacific Ledger terminology, queue names, and internal system labels. North Bay Payroll Team marked it as reference material rather than an employee source record.
+
+Field Handling Notes
+Do not treat sample names, example employee numbers, placeholder bank labels, training addresses, or template choices in this artifact as a current employee fact. Several rows intentionally show how a support analyst would document a case without copying sensitive identifiers into the public note. Where a template needs an example value, it uses invented labels such as Example Worker, Sample Credit Union, or PAY-GROUP-TRAINING rather than a live employee value.
+
+Review Log
+- created by: North Bay Payroll Team
+- quality lane: employer-context
+- retention label: volume-context-045
+- privacy note: personal identifiers are omitted or replaced with placeholders in this reference export.
+- downstream use: read as context only unless another document specifically identifies the target employee and current form field.
+
+Repeated Internal Guidance
+Analysts should prefer direct source records over reference articles. A payroll template can explain the meaning of a field, but it cannot prove a routing number, account number, account type, tax filing status, or current mailing address for a person. An onboarding case can explain a queue handoff, but it cannot prove citizenship status, date of birth, social security number, or legal name unless the target worker and source field are explicitly present in the same authoritative record.
+
+Checklist Excerpt
+- Confirm whether the artifact is a template, reference, support case, or source export.
+- Confirm whether the artifact names the target worker before extracting any durable user fact.
+- Ignore unrelated workers and examples when filling the active packet forms.
+- Leave fields blank when the available facts do not support a value.
+
+superseded reference cue: This guardrail note is context only, not current use evidence, and must not be treated as an active employee source record.

@@ -48,6 +48,8 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   assert.deepEqual(parsed.options.scenarioIds, scenarioIds);
   assert.equal(parsed.options.documentsRoot, 'examples/eval/users/maya-chen-newhire/corpora/packet-small');
   assert.equal(parsed.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema-packet.md');
+  assert.equal(parsed.options.documentOrder, 'canonical');
+  assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
   assert.match(
     parsed.options.runId,
     /^mcp-open-schema-packet-maya-chen-newhire-packet-small-2026-06-01T12-00-00-000Z$/,
@@ -64,6 +66,14 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   const noToken = parseArgs(baseArgs, {}, fixedNow);
   assert.equal(noToken.kind, 'usage-error');
   assert.match(noToken.message, /EVAL_AUTH_TOKEN/);
+
+  const invalidOrder = parseArgs(
+    [...baseArgs, '--document-order', 'front-loaded'],
+    { EVAL_AUTH_TOKEN: 'token' },
+    fixedNow,
+  );
+  assert.equal(invalidOrder.kind, 'usage-error');
+  assert.match(invalidOrder.message, /--document-order/);
 });
 
 test('mcp packet prompt describes one shared dossier for multiple forms', async () => {
@@ -83,6 +93,7 @@ test('mcp packet prompt describes one shared dossier for multiple forms', async 
       documentsRoot: 'examples/eval/users/maya-chen-newhire/corpora/packet-small',
       promptTemplate: 'examples/eval/prompts/mcp-open-schema-packet.md',
       mcpServer: 'context-router-local',
+      documentOrder: 'reverse',
     },
   });
 
@@ -91,6 +102,10 @@ test('mcp packet prompt describes one shared dossier for multiple forms', async 
   assert.match(prompt, /maya-chen-newhire-i9-packet-small/);
   assert.match(prompt, /maya-chen-newhire-fw4-packet-small/);
   assert.match(prompt, /maya-chen-newhire-direct-deposit-packet-small/);
+  assert.ok(
+    prompt.indexOf('maya-chen-newhire-packet-small-008') <
+      prompt.indexOf('maya-chen-newhire-packet-small-001'),
+  );
   assert.doesNotMatch(prompt, /expectedValue/);
 });
 
@@ -157,7 +172,11 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
 
   const result = await runMcpPacketE2E({
     repoRoot,
-    args: replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--document-order',
+      'relevant-last',
+    ],
     env: { EVAL_AUTH_TOKEN: 'token', EVAL_MODEL_LABEL: 'test-model' },
     now: fixedNow,
     runners: {
@@ -287,6 +306,21 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
     scenarioIds.length,
   );
   const report = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  const safeIndex = JSON.parse(
+    await readFile(path.join(tmp, 'agent-workspace', 'documents.json'), 'utf8'),
+  );
+  assert.equal(report.settings.documentOrder, 'relevant-last');
+  assert.equal(report.documents.documentCount, 8);
+  assert.equal(report.documents.sourceCharCount > 0, true);
+  assert.equal(report.documents.order.mode, 'relevant-last');
+  assert.deepEqual(report.documents.order.orderedDocumentIds.slice(0, 2), [
+    'maya-chen-newhire-packet-small-007',
+    'maya-chen-newhire-packet-small-008',
+  ]);
+  assert.deepEqual(safeIndex.documents.slice(0, 2).map((doc) => doc.id), [
+    'maya-chen-newhire-packet-small-007',
+    'maya-chen-newhire-packet-small-008',
+  ]);
   assert.deepEqual(report.qualitySummary, {
     memoryKnownRecovered: '24/24',
     memoryMissingAbsent: '2/2',

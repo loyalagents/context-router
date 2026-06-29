@@ -1,7 +1,7 @@
 # Increase Form Complexity TODO
 
 - Status: live follow-up list
-- Last updated: 2026-06-28
+- Last updated: 2026-06-29
 - Scope: follow-ups from the completed packet-small and packet-medium work
 
 ## Current Next Work
@@ -11,6 +11,10 @@
   harder ownership or conflict cases.
 - Keep each hardening pass focused on one difficulty family so failures stay
   interpretable.
+- Track the volume/noise hardening stream in `volume-noise-hardening/`.
+- Use `packet-hard-volume-v1` for 100-document length/noise experiments.
+- Treat `packet-hard-volume-v1` as a long-context/order smoke test, not as the
+  final hard distractor corpus.
 
 ## Packet-Medium Follow-Ups
 
@@ -31,9 +35,28 @@
   modes show up in live artifacts.
 - Add same-user current conflict documents after ownership and stale cases are
   separately understood.
+- Run canonical, relevant-last, and seeded-random order variants for
+  `packet-hard-volume-v1` once live direct/MCP packet runs are available.
+- Compare `packet-hard-volume-v1` against `packet-medium` using the artifact
+  document-count, char-count, and order metadata now recorded by packet runs.
+- Add packet-aware comparison tooling for direct/MCP packet artifact roots.
+  Existing `eval:compare-runs` expects single-scenario known-schema artifacts
+  such as `evaluation-run.json`; packet runs write `packet-evaluation-run.json`
+  plus per-scenario reports.
+- Build a next volume/noise corpus revision with fewer self-disqualifying
+  distractors. Reduce repeated "sample/template/reference/context-only" cues and
+  repeated handling-guidance skeletons.
+- Add realistic near-miss distractors that require actual reasoning:
+  same-employer records for other people, stale-but-plausible Maya values,
+  non-authoritative exports with overlapping field names, duplicate payroll/tax
+  fields from different systems, and current-looking documents that are only
+  partially applicable.
+- Keep the same forms for pure evidence-packet experiments, but do not interpret
+  same-form success as form-surface hardening. If the goal is harder forms, plan
+  a separate field-map/form-surface pass.
 - Consider scoring SF 1199A split routing/account digit boxes only when the
   field-map and renderer work are explicitly in scope.
 - Add repeat-run variance reporting after the single-run packet path is
   reliable.
-- Revisit the direct baseline's corpus-size cap before adding tiers larger than
-  the current direct evidence budget.
+- Revisit the direct baseline's default corpus-size cap only if explicit
+  `--max-evidence-chars` overrides become the common case.

@@ -45,6 +45,8 @@ test('direct-open-schema CLI parses defaults and reports invalid args', async ()
       'vertex',
       '--temperature',
       '0.4',
+      '--max-evidence-chars',
+      '1000000',
     ],
     { EVAL_DIRECT_OPEN_SCHEMA_MODEL: 'env-model' },
     fixedNow,
@@ -52,6 +54,7 @@ test('direct-open-schema CLI parses defaults and reports invalid args', async ()
   assert.equal(parsed.kind, 'ok');
   assert.equal(parsed.options.model, 'env-model');
   assert.equal(parsed.options.temperature, 0.4);
+  assert.equal(parsed.options.maxEvidenceChars, 1000000);
   assert.equal(parsed.options.runId, 'direct-open-schema-alex-i9-realistic-20260617120000');
 
   const badProvider = parseArgs(

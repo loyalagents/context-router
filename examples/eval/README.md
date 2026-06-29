@@ -237,6 +237,40 @@ pnpm eval:e2e-known-schema \
 precedence over the environment. The label is recorded in `evaluation-run.json`
 as manual metadata; the backend's actual loaded model is not introspected yet.
 
+Run the live open-schema packet path over one shared dossier and multiple
+forms:
+
+```bash
+pnpm eval:e2e-mcp-packet \
+  --agent claude \
+  --schema-mode open \
+  --form-mode backend \
+  --user maya-chen-newhire \
+  --corpus packet-hard-volume-v1 \
+  --scenarios maya-chen-newhire-i9-packet-hard-volume-v1,maya-chen-newhire-fw4-packet-hard-volume-v1,maya-chen-newhire-direct-deposit-packet-hard-volume-v1 \
+  --artifacts-root /private/tmp/maya-volume-mcp \
+  --mcp-server context-router-local \
+  --mcp-config /path/to/mcp-config.json \
+  --document-order relevant-last
+```
+
+Run the no-storage direct packet baseline over the same dossier:
+
+```bash
+pnpm eval:direct-open-schema-packet \
+  --user maya-chen-newhire \
+  --corpus packet-hard-volume-v1 \
+  --scenarios maya-chen-newhire-i9-packet-hard-volume-v1,maya-chen-newhire-fw4-packet-hard-volume-v1,maya-chen-newhire-direct-deposit-packet-hard-volume-v1 \
+  --artifacts-root /private/tmp/maya-volume-direct \
+  --document-order relevant-last \
+  --max-evidence-chars 1000000
+```
+
+Packet document order modes are `canonical`, `reverse`, `seeded-random`,
+`relevant-first`, and `relevant-last`. Use `--document-order-seed <seed>` for
+stable seeded-random comparisons. Direct-document runners keep the historical
+200000-character evidence cap unless `--max-evidence-chars` is passed.
+
 Compare one or more E2E artifact directories against a baseline:
 
 ```bash

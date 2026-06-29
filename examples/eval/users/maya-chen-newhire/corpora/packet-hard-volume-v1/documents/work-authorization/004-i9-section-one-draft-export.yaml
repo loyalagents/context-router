@@ -1,0 +1,98 @@
+export_details:
+  source_system_id: "HarborHire"
+  export_id: "exp-i9-draft-77e8a9f0-c1b2-4d3e-8f9a-0b1c2d3e4f5a"
+  export_timestamp: "2026-06-25T11:18:00-07:00"
+  export_reason: "Pre-Onboarding Compliance Data Snapshot"
+  target_entity:
+    type: "WORKER"
+    id: "PLC-20418"
+document_payload:
+  form_metadata:
+    form_id: "uscis_form_i9"
+    form_revision: "08/01/23"
+    form_title: "Employment Eligibility Verification"
+    system_form_version: "4.1"
+  form_state:
+    form_instance_id: "i9-inst-d0c3d9a1-f3b1-4b3f-a3e9-0a0e5b9f7c1d"
+    current_status: "AWAITING_EMPLOYER_REVIEW"
+    created_at: "2026-06-25T11:15:30-07:00"
+    last_updated_by: "PLC-20418"
+    last_updated_at: "2026-06-25T11:17:55-07:00"
+    assigned_reviewer_queue: "I9_Specialists"
+  form_content:
+    section_1_employee_information_and_attestation:
+      status: "COMPLETED_BY_EMPLOYEE"
+      fields:
+        last_name: "Chen"
+        first_name: "Maya"
+        middle_initial: "L"
+        other_last_names_used: null
+        address_street_number_and_name: "2846 Ashbury Street"
+        address_apartment_number: "Apt 3D"
+        address_city_or_town: "Oakland"
+        address_state: "CA"
+        address_zip_code: "94609"
+        date_of_birth: "1991-02-22"
+        us_social_security_number: "000-00-0417"
+        employee_email_address: "maya.chen@gmail.test"
+        employee_telephone_number: null
+      attestation:
+        status_selection: "A citizen of the United States"
+        is_citizen: true
+        is_noncitizen_national: false
+        is_lawful_permanent_resident: false
+        is_alien_authorized_to_work: false
+        lpr_or_alien_details:
+          uscis_a_number: null
+          form_i94_admission_number: null
+          foreign_passport_number: null
+          country_of_issuance: null
+          work_auth_until_date: null
+      employee_signature:
+        signed: false
+        signature_data: null
+        signature_date: null
+      preparer_and_or_translator_certification:
+        used_preparer: false
+        preparer_count: 0
+        preparers: []
+    section_2_employer_review_and_verification:
+      status: "PENDING"
+      fields: null
+      documents: null
+      certification:
+        certified: false
+        certifier_details: null
+        first_day_of_employment: null
+        certification_date: null
+    section_3_reverification_and_rehires:
+      status: "NOT_APPLICABLE"
+      fields: null
+operational_metadata:
+  data_quality_score: 0.98
+  validation_rules_applied:
+    - "sec1_all_required_fields_present"
+    - "dob_format_valid"
+    - "ssn_format_valid"
+    - "zip_code_valid_for_state"
+  history:
+    - event_id: 1
+      timestamp: "2026-06-25T11:15:28-07:00"
+      actor: "PLC-20418"
+      action: "INITIATE_FORM_I9"
+      details: "Employee accessed Section 1 of Form I-9."
+    - event_id: 2
+      timestamp: "2026-06-25T11:16:45-07:00"
+      actor: "PLC-20418"
+      action: "SAVE_DRAFT"
+      details: "Employee saved a draft of Section 1 with partial information."
+    - event_id: 3
+      timestamp: "2026-06-25T11:17:55-07:00"
+      actor: "PLC-20418"
+      action: "SUBMIT_SECTION_1"
+      details: "Employee completed and submitted Section 1 for employer review. Electronic signature is pending completion of Section 2."
+    - event_id: 4
+      timestamp: "2026-06-25T11:18:00-07:00"
+      actor: "SYSTEM"
+      action: "EXPORT_DATA"
+      details: "System exported form data for pre-processing and record archival. Status: AWAITING_EMPLOYER_REVIEW."

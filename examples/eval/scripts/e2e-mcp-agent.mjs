@@ -1165,13 +1165,19 @@ export function buildAgentInvocation({ repoRoot, options, artifacts }) {
   };
 }
 
-export async function prepareAgentWorkspace({ repoRoot, artifacts, options, fixture }) {
+export async function prepareAgentWorkspace({
+  repoRoot,
+  artifacts,
+  options,
+  fixture,
+  documents: orderedDocuments = null,
+}) {
   const root = artifacts.agentWorkspaceRoot;
   await rm(root, { recursive: true, force: true });
   await mkdir(root, { recursive: true });
 
   const sourceRoot = path.resolve(repoRoot, fixture.documentsRoot ?? options.documentsRoot);
-  const documents = fixture.manifest?.documents ?? [];
+  const documents = orderedDocuments ?? fixture.manifest?.documents ?? [];
   const safeDocuments = [];
   for (const doc of documents) {
     const relativeDocPath = safeRelativePath(doc.path, 'document path');

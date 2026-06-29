@@ -37,6 +37,9 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   const parsed = parseArgs(baseArgs, {}, fixedNow);
   assert.equal(parsed.kind, 'ok');
   assert.deepEqual(parsed.options.scenarioIds, scenarioIds);
+  assert.equal(parsed.options.maxEvidenceChars, 200000);
+  assert.equal(parsed.options.documentOrder, 'canonical');
+  assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
   assert.equal(
     parsed.options.documentsRoot,
     'examples/eval/users/maya-chen-newhire/corpora/packet-small',
@@ -49,6 +52,14 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   const missing = parseArgs([], {}, fixedNow);
   assert.equal(missing.kind, 'usage-error');
   assert.match(missing.message, /Missing required --user/);
+
+  const invalidOrder = parseArgs(
+    [...baseArgs, '--document-order', 'front-loaded'],
+    {},
+    fixedNow,
+  );
+  assert.equal(invalidOrder.kind, 'usage-error');
+  assert.match(invalidOrder.message, /--document-order/);
 });
 
 test('direct-open-schema-packet extracts once and fills every scenario', async () => {
@@ -60,7 +71,13 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
 
   const result = await runDirectOpenSchemaPacket({
     repoRoot,
-    args: replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--document-order',
+      'relevant-last',
+      '--max-evidence-chars',
+      '1000000',
+    ],
     env: {},
     now: fixedNow,
     generateExtractionResponse: async (_prompt, { evidenceDocuments }) => {
@@ -115,11 +132,58 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
 
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.status, 'pass');
+  assert.equal(packet.settings.documentOrder, 'relevant-last');
+  assert.equal(packet.settings.maxEvidenceChars, 1000000);
+  assert.equal(packet.documents.documentCount, 8);
+  assert.equal(packet.documents.maxEvidenceChars, 1000000);
+  assert.equal(packet.documents.order.mode, 'relevant-last');
+  assert.deepEqual(packet.documents.order.orderedDocumentIds.slice(0, 2), [
+    'maya-chen-newhire-packet-small-007',
+    'maya-chen-newhire-packet-small-008',
+  ]);
+  assert.ok(packet.documents.evidenceCharCount > 0);
   assert.equal(packet.summaries.extraction.factCount, 1);
   assert.equal(packet.qualitySummary.extractionFacts, 1);
   assert.equal(packet.qualitySummary.memoryOwnershipClean, '0/0');
   assert.equal(packet.qualitySummary.memoryOwnershipForbiddenLeaks, 0);
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);
+});
+
+test('direct-open-schema-packet cap failures preserve packet document metadata', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-cap-'));
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--document-order',
+      'relevant-last',
+      '--max-evidence-chars',
+      '1',
+    ],
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async () => {
+      throw new Error('extraction should not run after cap failure');
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(result.lines.join('\n'), /Evidence packet exceeds 1 characters/);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.settings.documentOrder, 'relevant-last');
+  assert.equal(packet.settings.maxEvidenceChars, 1);
+  assert.equal(packet.documents.documentCount, 8);
+  assert.equal(packet.documents.sourceCharCount > 1, true);
+  assert.equal(packet.documents.evidenceCharCount, null);
+  assert.equal(packet.documents.maxEvidenceChars, 1);
+  assert.equal(packet.documents.order.mode, 'relevant-last');
+  assert.deepEqual(packet.documents.order.orderedDocumentIds.slice(0, 2), [
+    'maya-chen-newhire-packet-small-007',
+    'maya-chen-newhire-packet-small-008',
+  ]);
 });
 
 async function assertFile(filePath) {
