@@ -17,5 +17,5 @@ Retention tag: prior-state audit row, preserved under the new-hire correction re
 
 Operational detail rows
 Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-026 was indexed from Maya bank History during the 2026-06-18 operations window.
-Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. Review notes for maya bank history kept archive ledger queue history, timestamp lineage, and handoff context with the retained record.
+Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. The retained archive ledger artifact keeps source metadata for maya bank history audit reconstruction while preserving original row wording.

@@ -50,11 +50,11 @@
     },
     {
       "sequence": 2,
-      "note": "Profile matching compares name token, work email, source system, start-date row, and bridge status before linking records. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention."
+      "note": "Profile matching compares name token, work email, source system, start-date row, and bridge status before linking records. Review notes for onboarding profile mila crane kept people records queue history, timestamp lineage, and handoff context with the retained record."
     },
     {
       "sequence": 3,
-      "note": "The profile export keeps the source row exactly as emitted so support can compare HRIS, payroll, and directory views. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text."
+      "note": "The profile export keeps the source row exactly as emitted so support can compare HRIS, payroll, and directory views. The retained people records artifact keeps source metadata for onboarding profile mila crane audit reconstruction while preserving original row wording."
     }
   ]
 }

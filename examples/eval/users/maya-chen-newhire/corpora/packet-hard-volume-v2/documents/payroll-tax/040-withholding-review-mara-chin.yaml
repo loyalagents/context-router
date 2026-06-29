@@ -41,5 +41,5 @@ control_observations:
   - Retention tag - withholding setup artifact, grouped with tax import diagnostics and field-map notes.
 operational_detail_rows:
   - Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-040 was indexed from Withholding Review Mara Chin during the 2026-06-14 operations window.
-  - Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-  - The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+  - Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for withholding review mara chin kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+  - The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for withholding review mara chin audit reconstruction while preserving original row wording.

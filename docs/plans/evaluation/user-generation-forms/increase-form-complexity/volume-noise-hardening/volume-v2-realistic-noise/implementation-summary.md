@@ -8,7 +8,7 @@
 
 - Added `packet-hard-volume-v2` for Maya Chen under
   `examples/eval/users/maya-chen-newhire/corpora/`.
-- Added 100 total documents and about 220k source characters.
+- Added 100 total documents and about 226k source characters.
 - Preserved the canonical Maya truth by copying the 20 truth-bearing
   `packet-medium` documents into the v2 packet.
 - Added 80 new realistic volume documents:
@@ -34,11 +34,18 @@
   `context only`, `sample`, `template`, `fake`, `not relevant`,
   `not authoritative`, `without serving as the final employee evidence`,
   `no profile fields were edited`, `no live employee values`, and
-  `does not include live employee answers`.
+  `does not include live employee answers`; later expanded this guard to cover
+  residual shortcut phrases such as `contains no employee-specific packet row`,
+  `does not prove the form values`, and `non-final rows visible`.
+- Reworked repeated operational scaffolding in the 80 new distractors so common
+  field-id, operational-note, reviewer-console, and packet-adjacent export
+  lines vary by source family and artifact.
 - Added regression coverage for the v2 cue scan and for keeping the 20
   truth-bearing document bodies byte-identical to `packet-medium`.
 - Added regression coverage for malformed YAML cleanup artifacts by rejecting
   standalone empty list items and parsed null entries inside YAML arrays.
+- Added regression coverage for high-volume repeated generated lines and v2
+  scenario wiring in both direct packet and MCP packet runners.
 - The copied truth-bearing documents retain the same validation warnings already
   seen in the medium/v1 family, mostly length-target, native-signal, and
   phone-like support-number warnings.
@@ -55,7 +62,7 @@
   - `node --test examples/eval/scripts/e2e-mcp-packet.test.mjs`
   - `node --test examples/eval/scripts/fill-form-from-docs.test.mjs`
   - `node --test examples/eval/scripts/validate.test.mjs`
-- Focused test result: 94/94 passing.
+- Focused test result: 97/97 passing.
 
 ## Live Run Defaults
 

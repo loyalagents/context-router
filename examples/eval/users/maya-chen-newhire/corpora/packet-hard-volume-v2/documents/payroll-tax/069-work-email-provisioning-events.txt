@@ -3,13 +3,13 @@ Generated timestamp: 2026-06-11T08:39:00-07:00
 Status: active
 Document code: PLC-OPS-069
 Subject: work email provisioning events
-Field IDs: process.owner, queue.name, control.code, export.window
+Field IDs: tax_profile.row_id, filing_status.code, w4.field_map, reviewer.queue
 
 Work email provisioning creates a directory account before the employee completes every packet form.
 The event includes generated email, source worker id, department, and activation timestamp.
 Profile changes after provisioning are handled by a separate correction event.
 
-Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+Operational note: payroll tax operations filed work email provisioning events with withholding field-map version, reviewer queue, and import timestamp.
 
 Tax workbench provenance
 Tax workbench trace: PLC-PAYROLLT-069 stored filing-status label, normalized tax code, source field id, and reviewer queue.
@@ -18,5 +18,5 @@ Retention tag: withholding setup artifact, grouped with tax import diagnostics a
 
 Operational detail rows
 Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-069 was indexed from Work Email Provisioning Events during the 2026-06-25 operations window.
-Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for work email provisioning events kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for work email provisioning events audit reconstruction while preserving original row wording.

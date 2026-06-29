@@ -100,7 +100,7 @@ Implemented corpora:
 | `packet-small` | 8 docs, about 6.5 KB | Plumbing and correctness slice. |
 | `packet-medium` | 30 docs, about 68 KB | Larger shared dossier with obvious stale and other-person distractors. |
 | `packet-hard-volume-v1` | 100 docs, validation report in corpus folder | Long-context volume/noise smoke test based on `packet-medium`; it reuses the same forms and is not yet a strong hard distractor benchmark. |
-| `packet-hard-volume-v2` | 100 docs, about 220 KB, validation report in corpus folder | Realistic volume/noise benchmark with 20 truth-bearing Maya docs plus 80 near-miss, operational, and broad process artifacts. |
+| `packet-hard-volume-v2` | 100 docs, about 226 KB, validation report in corpus folder | Realistic volume/noise benchmark with 20 truth-bearing Maya docs plus 80 near-miss, operational, and broad process artifacts. |
 
 Implemented packet scenarios:
 

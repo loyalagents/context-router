@@ -3,13 +3,13 @@ Generated timestamp: 2026-06-17T08:22:00-07:00
 Status: active
 Document code: PLC-OPS-092
 Subject: Federal tax label guide
-Field IDs: process.owner, queue.name, control.code, export.window
+Field IDs: ledgerpay.tax_batch, election.timestamp, multiple_jobs.flag, field_map.version
 
 The tax label guide maps vendor labels to payroll filing status codes.
 It includes labels for single, married filing jointly, head of household, and married filing separately.
 Reviewers use it when a display phrase does not match the normalized payroll code.
 
-Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+Operational note: payroll tax operations filed federal tax label guide with withholding field-map version, reviewer queue, and import timestamp.
 
 Tax workbench provenance
 Tax workbench trace: PLC-PAYROLLT-092 stored filing-status label, normalized tax code, source field id, and reviewer queue.
@@ -18,5 +18,5 @@ Retention tag: withholding setup artifact, grouped with tax import diagnostics a
 
 Operational detail rows
 Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-092 was indexed from Federal Tax Label Guide during the 2026-06-12 operations window.
-Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for federal tax label guide kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for federal tax label guide audit reconstruction while preserving original row wording.

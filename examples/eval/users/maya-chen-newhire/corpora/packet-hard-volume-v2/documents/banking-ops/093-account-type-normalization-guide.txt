@@ -3,13 +3,13 @@ Generated timestamp: 2026-06-18T08:23:00-07:00
 Status: active
 Document code: PLC-OPS-093
 Subject: Account type normalization guide
-Field IDs: process.owner, queue.name, control.code, export.window
+Field IDs: ach.file_id, payment.account_label, prenote.queue_state, review.window
 
 Bank letters often describe products with marketing names while payroll stores checking or savings codes.
 The guide lists common product words and the normalized election code used by the ACH file.
 Uncertain labels stay in review until payroll confirms the account type.
 
-Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+Operational note: banking operations indexed account type normalization guide with ACH queue ownership, payment-election status, and the active payroll preview window.
 
 Banking provenance
 Prenote trail: PLC-BANKINGO-093 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.
@@ -18,5 +18,5 @@ Control note: the payment-election queue stores product labels exactly as receiv
 
 Operational detail rows
 Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-093 was indexed from Account Type Normalization Guide during the 2026-06-13 operations window.
-ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. Review notes for account type normalization guide kept banking operations queue history, timestamp lineage, and handoff context with the retained record.
+The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. The retained banking operations artifact keeps source metadata for account type normalization guide audit reconstruction while preserving original row wording.

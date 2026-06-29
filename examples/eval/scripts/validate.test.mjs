@@ -2226,7 +2226,7 @@ test('packet-hard-volume-v2 documents avoid obvious and soft disqualifying cues'
     .sort();
 
   const disqualifyingCuePattern =
-    /\b(?:do not use|do-not-use|context only|sample|template|fake|not relevant|not authoritative|without serving as the final employee evidence|no profile fields were edited|no live employee values|does not include live employee answers)\b/i;
+    /\b(?:do not use|do-not-use|context only|sample|template|fake|not relevant|not authoritative|without serving as the final employee evidence|no profile fields were edited|no live employee values|does not include live employee answers|contains no employee-specific packet row|does not prove the form values|non-final rows visible)\b/i;
   const matches = [];
   for (const documentFile of documentFiles) {
     const body = await readFile(
@@ -2237,6 +2237,58 @@ test('packet-hard-volume-v2 documents avoid obvious and soft disqualifying cues'
   }
 
   assert.deepEqual(matches, []);
+});
+
+test('packet-hard-volume-v2 documents avoid high-volume repeated generated lines', async () => {
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const documentFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.(json|md|txt|yaml)$/.test(filePath))
+    .sort();
+  const maxRepeatedLineCount = 12;
+  const lineCounts = new Map();
+  const examples = new Map();
+
+  const metadataLinePattern =
+    /^["\s-]*(?:generated timestamp|created timestamp|exported_at|export_timestamp|timestamp|captured_at|updated_at|created_at)\b/i;
+  const normalizeLine = (rawLine) =>
+    rawLine
+      .trim()
+      .replace(/^[-*]\s+/, '')
+      .replace(/^"([^"]+)":\s*/, '$1: ')
+      .replace(/",?$/, '')
+      .replace(/\bPLC-[A-Z0-9-]+\b/g, 'PLC-ID')
+      .replace(/\b\d{4}-\d{2}-\d{2}(?:T[^\s"]+)?/g, 'DATE')
+      .replace(/\b\d{2}:\d{2}\b/g, 'TIME')
+      .replace(/\b\d+\b/g, 'N');
+
+  for (const documentFile of documentFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    for (const rawLine of body.split('\n')) {
+      if (metadataLinePattern.test(rawLine)) continue;
+      const normalizedLine = normalizeLine(rawLine);
+      if (normalizedLine.length < 40) continue;
+      if (/^[-\]}{,\s]*$/.test(normalizedLine)) continue;
+      lineCounts.set(normalizedLine, (lineCounts.get(normalizedLine) ?? 0) + 1);
+      if (!examples.has(normalizedLine)) examples.set(normalizedLine, documentFile);
+    }
+  }
+
+  const repeatedLines = [...lineCounts.entries()]
+    .filter(([, count]) => count > maxRepeatedLineCount)
+    .map(([line, count]) => ({
+      count,
+      example: examples.get(line),
+      line,
+    }))
+    .sort((left, right) => right.count - left.count || left.line.localeCompare(right.line));
+
+  assert.deepEqual(repeatedLines, []);
 });
 
 test('packet-hard-volume-v2 YAML documents avoid empty list cleanup artifacts', async () => {

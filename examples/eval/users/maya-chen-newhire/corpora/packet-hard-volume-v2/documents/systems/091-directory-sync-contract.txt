@@ -3,13 +3,13 @@ Generated timestamp: 2026-06-16T08:21:00-07:00
 Status: active
 Document code: PLC-OPS-091
 Subject: Directory sync contract
-Field IDs: process.owner, queue.name, control.code, export.window
+Field IDs: integration.name, payload.family, field_contract.id, migration.note
 
 The directory sync contract maps worker id, work email, display name, title, department, and manager.
 The contract describes conflict handling when HRIS and directory values arrive out of order.
 It is owned by PeopleBridge data engineering.
 
-Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+Operational note: systems integration filed directory sync contract with endpoint ownership, payload family, and deployment-window metadata.
 
 Systems provenance
 Systems note trace: PLC-SYSTEMS-091 recorded release owner, affected interfaces, deployment window, and file-layout family.
@@ -18,5 +18,5 @@ Retention tag: systems documentation artifact, versioned with release and interf
 
 Operational detail rows
 Systems documentation tracks release owner, interface contract, file-layout version, deployment window, and affected downstream job. Row marker PLC-SYSTEMS-091 was indexed from Directory Sync Contract during the 2026-06-11 operations window.
-Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. The reviewer console surfaced field-family hints, queue history, and source timestamp before the row moved to retention.
-The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. Packet-adjacent exports keep enough metadata for audit reconstruction without changing the source row text.
+Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. Review notes for directory sync contract kept systems integration queue history, timestamp lineage, and handoff context with the retained record.
+The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. The retained systems integration artifact keeps source metadata for directory sync contract audit reconstruction while preserving original row wording.
