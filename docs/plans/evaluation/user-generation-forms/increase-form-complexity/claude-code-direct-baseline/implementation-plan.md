@@ -53,7 +53,8 @@ Implementation shape:
   ordered packet documents plus `documents.json`; allow only `Read,Glob,Grep`;
   pass `--mcp-config '{"mcpServers":{}}' --strict-mcp-config`;
   use `--safe-mode --disable-slash-commands --setting-sources project`; do not
-  allow `mcp__*` tools.
+  allow `mcp__*` tools. Because safe mode disables `CLAUDE.md`, the
+  workspace-only/no-backend guard is prepended to the actual Claude prompt.
 - The direct runner is not an OS-level filesystem sandbox. The isolation claim
   is that the runner does not intentionally provide MCP/backend memory and
   starts Claude Code in a restricted workspace with restricted tools/config.
@@ -124,9 +125,10 @@ Metadata shape:
 }
 ```
 
-The `source` field distinguishes CLI-provided (`manual`), env-provided (`env`),
-and defaulted (`default`) controls. Non-Claude MCP packet runs record
-`thinking: null`.
+For `model`, `source` distinguishes CLI-provided (`manual`), env-provided
+(`env`), and missing (`unspecified`) values. For `thinking`, `source`
+distinguishes CLI-provided (`manual`), env-provided (`env`), and defaulted
+(`default`) controls. Non-Claude MCP packet runs record `thinking: null`.
 
 MCP packet control changes are included with the direct runner because they are
 limited to CLI parsing, Claude invocation flags, and packet-run artifact
@@ -143,7 +145,9 @@ Required direct artifacts:
 
 - Root `packet-evaluation-run.json`.
 - Root `claude-direct-workspace/` containing only ordered packet documents,
-  `documents.json`, and workspace instructions.
+  `documents.json`, and audit workspace instructions. The effective runtime
+  guard is included in the Claude prompt because `--safe-mode` disables
+  `CLAUDE.md` loading.
 - Root `open-schema-extraction-prompt.md`.
 - Root `open-schema-extraction-response.json`.
 - Root `claude-extraction-transcript.txt` for Claude Code direct runs.
@@ -172,6 +176,8 @@ The MCP packet runner must also persist comparable model/thinking metadata in
    - Build invocation, stream transcript capture, JSON text extraction, timeout
      handling, strict empty MCP config, project-only setting sources, and
      no-MCP direct tool flags.
+   - Ensure the workspace-only/no-backend guard is in the actual Claude prompt
+     under `--safe-mode`.
    - Test with fake stream-json output; no live Claude required.
 3. Direct packet runner:
    - Add `claude-code` provider and wrapper script.

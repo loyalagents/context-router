@@ -37,6 +37,10 @@ test('claude-code direct wrapper injects provider by default', () => {
 
 test('claude-code direct packet records model and thinking metadata', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'claude-code-direct-packet-'));
+  const seenPrompts = {
+    extraction: null,
+    fills: [],
+  };
   const result = await runClaudeCodeDirectPacket({
     repoRoot,
     args: [
@@ -55,8 +59,9 @@ test('claude-code direct packet records model and thinking metadata', async () =
     ],
     env: {},
     now: fixedNow,
-    generateExtractionResponse: async (_prompt, { evidenceDocuments }) =>
-      JSON.stringify({
+    generateExtractionResponse: async (prompt, { evidenceDocuments }) => {
+      seenPrompts.extraction = prompt;
+      return JSON.stringify({
         facts: [
           {
             slug: 'profile.full_name',
@@ -73,9 +78,11 @@ test('claude-code direct packet records model and thinking metadata', async () =
           },
         ],
         unresolved: [],
-      }),
-    generateFillResponse: async (_prompt, { fieldMetadata }) =>
-      JSON.stringify({
+      });
+    },
+    generateFillResponse: async (prompt, { fieldMetadata }) => {
+      seenPrompts.fills.push(prompt);
+      return JSON.stringify({
         fillActions: fieldMetadata.map((field) => ({
           fieldName: field.fieldName,
           action: 'SKIP',
@@ -83,10 +90,22 @@ test('claude-code direct packet records model and thinking metadata', async () =
           confidence: 0,
           skipReason: 'test skip',
         })),
-      }),
+      });
+    },
   });
 
   assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.match(seenPrompts.extraction, /Claude Code direct baseline runtime guard/);
+  assert.match(seenPrompts.extraction, /Do not use MCP, mcp__\* tools, backend memory/);
+  assert.equal(seenPrompts.fills.length, scenarioIds.length);
+  for (const prompt of seenPrompts.fills) {
+    assert.match(prompt, /Claude Code direct baseline runtime guard/);
+  }
+  const writtenExtractionPrompt = await readFile(
+    path.join(tmp, 'open-schema-extraction-prompt.md'),
+    'utf8',
+  );
+  assert.match(writtenExtractionPrompt, /Claude Code direct baseline runtime guard/);
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.agent, 'claude');
   assert.equal(packet.evaluationMode, 'direct-claude-code-open-schema-packet');

@@ -88,7 +88,9 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(envFallback.options.graphqlUrl, 'http://env-graphql');
   assert.equal(envFallback.options.authToken, 'env-token');
   assert.equal(envFallback.options.model, 'env-claude-model');
+  assert.equal(envFallback.options.modelSource, 'env');
   assert.equal(envFallback.options.modelLabel, 'env-model');
+  assert.equal(envFallback.options.modelLabelSource, 'env');
   assert.equal(envFallback.options.thinkingMode, 'medium');
   assert.equal(envFallback.options.thinkingSource, 'env');
   assert.equal(envFallback.options.documentsRoot, 'examples/eval/users/alex-i9-test/corpora/realistic');
@@ -135,7 +137,9 @@ test('mcp agent parseArgs handles defaults, env fallback, overrides, and reserve
   assert.equal(cliOverride.options.agentTimeoutMs, 123);
   assert.equal(cliOverride.options.promptTemplate, '/private/tmp/template.md');
   assert.equal(cliOverride.options.model, 'cli-claude-model');
+  assert.equal(cliOverride.options.modelSource, 'manual');
   assert.equal(cliOverride.options.modelLabel, 'cli-model');
+  assert.equal(cliOverride.options.modelLabelSource, 'manual');
   assert.equal(cliOverride.options.thinkingMode, 'high');
   assert.equal(cliOverride.options.thinkingSource, 'manual');
   assert.equal(cliOverride.options.runId, 'run-123');

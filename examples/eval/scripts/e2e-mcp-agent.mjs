@@ -786,7 +786,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
     authToken: env.EVAL_AUTH_TOKEN,
     model: env.EVAL_MODEL,
+    modelSource: env.EVAL_MODEL ? 'env' : 'unspecified',
     modelLabel: env.EVAL_MODEL_LABEL,
+    modelLabelSource: env.EVAL_MODEL_LABEL ? 'env' : 'unspecified',
     thinkingMode: env.EVAL_THINKING_MODE || 'default',
     thinkingSource: env.EVAL_THINKING_MODE ? 'env' : 'default',
     resetMemory: false,
@@ -883,8 +885,14 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
     if (arg === '--prompt-template') options.promptTemplate = value;
     if (arg === '--mcp-config') options.mcpConfig = value;
-    if (arg === '--model') options.model = value;
-    if (arg === '--model-label') options.modelLabel = value;
+    if (arg === '--model') {
+      options.model = value;
+      options.modelSource = 'manual';
+    }
+    if (arg === '--model-label') {
+      options.modelLabel = value;
+      options.modelLabelSource = 'manual';
+    }
     if (arg === '--thinking-mode') {
       options.thinkingMode = value;
       options.thinkingSource = 'manual';
@@ -1689,7 +1697,11 @@ function modelMetadata(options) {
   if (label) {
     return {
       label,
-      source: 'manual',
+      source: (
+        options.model
+          ? options.modelSource
+          : options.modelLabelSource
+      ) ?? 'manual',
     };
   }
   return {

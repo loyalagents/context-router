@@ -40,7 +40,7 @@ export function usage() {
     '  pnpm eval:claude-code-direct-packet --user <userId> --corpus <corpusId> --scenarios <scenarioIds> --artifacts-root <dir> --model <model> [options]',
     '',
     'Notes:',
-    '  Claude Code direct packet baseline: no MCP config, no backend memory, no GraphQL/DB memory source.',
+    '  Claude Code direct packet baseline: strict empty MCP config, no backend memory, no GraphQL/DB memory source.',
     '  It extracts open-schema facts once from packet documents, then fills every listed form from those facts.',
     '',
     'Options:',

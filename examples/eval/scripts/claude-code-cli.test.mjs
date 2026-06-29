@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   buildClaudeCodeArgs,
   extractClaudeCodeText,
+  modelMetadata,
   thinkingMetadata,
   validateThinkingMode,
 } from './claude-code-cli.mjs';
@@ -60,6 +61,24 @@ test('thinking metadata records no fake budget', () => {
     mode: 'xhigh',
     budget: null,
     source: 'manual',
+  });
+});
+
+test('model metadata preserves explicit source when provided', () => {
+  assert.deepEqual(modelMetadata({ model: 'env-model', modelSource: 'env' }), {
+    label: 'env-model',
+    source: 'env',
+  });
+  assert.deepEqual(
+    modelMetadata({ modelLabel: 'cli-label', modelLabelSource: 'manual' }),
+    {
+      label: 'cli-label',
+      source: 'manual',
+    },
+  );
+  assert.deepEqual(modelMetadata({}), {
+    label: null,
+    source: 'unspecified',
   });
 });
 

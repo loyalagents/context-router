@@ -27,11 +27,19 @@ export function thinkingMetadata({ thinkingMode = 'default', source = 'manual' }
   };
 }
 
-export function modelMetadata({ model, modelLabel } = {}) {
+export function modelMetadata({
+  model,
+  modelLabel,
+  modelSource,
+  modelLabelSource,
+  source,
+} = {}) {
   const label = model ?? modelLabel ?? null;
   return {
     label,
-    source: label ? 'manual' : 'unspecified',
+    source: label
+      ? (model ? modelSource : modelLabelSource) ?? source ?? 'manual'
+      : 'unspecified',
   };
 }
 

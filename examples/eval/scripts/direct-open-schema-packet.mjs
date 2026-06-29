@@ -62,6 +62,14 @@ const PROVIDERS = new Set(['vertex', 'claude-code']);
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.75;
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
 const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
+const CLAUDE_CODE_DIRECT_RUNTIME_GUARD = [
+  'Claude Code direct baseline runtime guard:',
+  '- Use only the prompt content and files in the current Claude direct workspace.',
+  '- Read only files in this workspace.',
+  '- Do not read parent directories, source repository files, generated artifacts, validation reports, score reports, profile files, manifests, expected snapshots, or other answer-key artifacts.',
+  '- Do not use MCP, mcp__* tools, backend memory, GraphQL, database APIs, or context-router memory APIs as information sources.',
+  '- The safe document index is documents.json; listed document paths are relative to this workspace.',
+].join('\n');
 
 export async function runDirectOpenSchemaPacket({
   repoRoot = defaultRepoRoot,
@@ -165,7 +173,10 @@ export async function runDirectOpenSchemaPacket({
     });
     await writeReport();
     const model = options.model;
-    const extractionPrompt = buildExtractionPrompt({ evidenceDocuments });
+    const extractionPrompt = buildProviderPrompt({
+      options,
+      prompt: buildExtractionPrompt({ evidenceDocuments }),
+    });
     await writeFile(artifacts.extractionPrompt, extractionPrompt);
     const extractionProvider =
       generateExtractionResponse ??
@@ -264,7 +275,10 @@ export async function runDirectOpenSchemaPacket({
       const fieldMetadata = buildDirectOpenSchemaFieldMetadata(
         buildPromptFieldMetadata(fixture),
       );
-      const fillPrompt = buildFactOnlyFillPrompt({ fieldMetadata, extraction });
+      const fillPrompt = buildProviderPrompt({
+        options,
+        prompt: buildFactOnlyFillPrompt({ fieldMetadata, extraction }),
+      });
       await writeFile(scenarioArtifacts.fillPrompt, fillPrompt);
       const fillProvider =
         generateFillResponse ??
@@ -432,6 +446,7 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   const options = {
     provider: 'vertex',
     model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL,
+    modelSource: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL ? 'env' : 'unspecified',
     temperature: DEFAULT_TEMPERATURE,
     maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
     documentOrder: DEFAULT_DOCUMENT_ORDER,
@@ -476,7 +491,10 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--artifacts-root') options.artifactsRoot = value;
     if (arg === '--documents-root') options.documentsRoot = value;
     if (arg === '--provider') options.provider = value;
-    if (arg === '--model') options.model = value;
+    if (arg === '--model') {
+      options.model = value;
+      options.modelSource = 'manual';
+    }
     if (arg === '--temperature') options.temperature = Number(value);
     if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
     if (arg === '--thinking-mode') {
@@ -514,7 +532,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     return { kind: 'usage-error', message: '--provider currently supports vertex or claude-code.' };
   }
   if (!options.model && options.provider === 'claude-code') {
-    options.model = env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL;
+    if (env.EVAL_CLAUDE_CODE_MODEL) {
+      options.model = env.EVAL_CLAUDE_CODE_MODEL;
+      options.modelSource = 'env';
+    } else if (env.EVAL_MODEL) {
+      options.model = env.EVAL_MODEL;
+      options.modelSource = 'env';
+    }
   }
   if (
     typeof options.temperature !== 'number' ||
@@ -630,7 +654,10 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     documentsRoot: options.documentsRoot,
     artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
     agent: options.provider === 'claude-code' ? 'claude' : options.provider,
-    model: modelMetadata({ model: options.model }),
+    model: modelMetadata({
+      model: options.model,
+      modelSource: options.modelSource,
+    }),
     thinking: options.provider === 'claude-code'
       ? thinkingMetadata({
           thinkingMode: options.thinkingMode,
@@ -752,6 +779,11 @@ async function generateDirectResponse({
   return result.text;
 }
 
+function buildProviderPrompt({ options, prompt }) {
+  if (options.provider !== 'claude-code') return prompt;
+  return `${CLAUDE_CODE_DIRECT_RUNTIME_GUARD}\n\n${prompt}`;
+}
+
 async function prepareClaudeDirectWorkspace({
   repoRoot,
   artifacts,
@@ -832,7 +864,10 @@ function buildExtractionResponseArtifact({
     agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
-    modelMetadata: modelMetadata({ model }),
+    modelMetadata: modelMetadata({
+      model,
+      modelSource: options.modelSource,
+    }),
     thinking: options.provider === 'claude-code'
       ? thinkingMetadata({
           thinkingMode: options.thinkingMode,
@@ -878,7 +913,10 @@ function buildFillResponseArtifact({
     agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
-    modelMetadata: modelMetadata({ model }),
+    modelMetadata: modelMetadata({
+      model,
+      modelSource: options.modelSource,
+    }),
     thinking: options.provider === 'claude-code'
       ? thinkingMetadata({
           thinkingMode: options.thinkingMode,

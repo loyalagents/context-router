@@ -17,7 +17,8 @@ local PDF fill, and packet form reports.
 The implementation uses a restricted Claude Code invocation with an isolated
 document workspace, `Read,Glob,Grep` only, strict empty MCP config, safe mode,
 disabled slash commands, and project-only setting sources. It is not an
-OS-level filesystem sandbox.
+OS-level filesystem sandbox. Because safe mode disables `CLAUDE.md`, the
+workspace-only/no-backend guard is included in the actual Claude prompt.
 
 ## Recommended Design
 
@@ -39,9 +40,10 @@ Claude Code CLI support observed locally:
 
 The implemented control is `--thinking-mode
 default|low|medium|high|xhigh|max`. `default` omits `--effort`; other values
-map to `--effort`. Artifacts record `budget: null`, and distinguish
-CLI-provided, env-provided, and defaulted sources. Non-Claude MCP packet runs
-record `thinking: null`.
+map to `--effort`. Artifacts record `budget: null`. Model metadata now
+distinguishes CLI-provided, env-provided, and missing sources; thinking
+metadata distinguishes CLI-provided, env-provided, and defaulted sources.
+Non-Claude MCP packet runs record `thinking: null`.
 
 ## MCP Runner Decision
 
@@ -81,12 +83,15 @@ Code changes were made:
 - Added `claude-code` provider support to the direct open-schema packet runner.
 - Added strict empty MCP config, safe mode, disabled slash commands, and
   project-only setting sources for Claude Code direct calls.
+- Added the workspace-only/no-backend runtime guard to the actual Claude direct
+  prompt.
 - Added provider-specific direct open-schema evaluation mode and synthetic
   memory producer metadata.
 - Kept Vertex direct packet artifact maps from advertising missing Claude
   transcript files.
 - Made the Claude-named direct entrypoint reject non-Claude providers.
-- Added model/thinking metadata to direct and MCP packet artifacts.
+- Added model/thinking metadata to direct and MCP packet artifacts, including
+  env/manual/default source tracking where applicable.
 - Added `--model` and `--thinking-mode` controls for MCP packet Claude runs.
 - Made MCP thinking metadata apply only to Claude runs and record source more
   precisely.

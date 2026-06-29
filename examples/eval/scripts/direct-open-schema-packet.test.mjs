@@ -38,6 +38,7 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   assert.equal(parsed.kind, 'ok');
   assert.deepEqual(parsed.options.scenarioIds, scenarioIds);
   assert.equal(parsed.options.provider, 'vertex');
+  assert.equal(parsed.options.modelSource, 'manual');
   assert.equal(parsed.options.maxEvidenceChars, 200000);
   assert.equal(parsed.options.documentOrder, 'canonical');
   assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
@@ -62,6 +63,19 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   );
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
+
+  const claudeEnvModel = parseArgs(
+    [
+      '--provider',
+      'claude-code',
+      ...removeFlagValue(baseArgs, '--model'),
+    ],
+    { EVAL_CLAUDE_CODE_MODEL: 'env-claude-model' },
+    fixedNow,
+  );
+  assert.equal(claudeEnvModel.kind, 'ok');
+  assert.equal(claudeEnvModel.options.model, 'env-claude-model');
+  assert.equal(claudeEnvModel.options.modelSource, 'env');
 });
 
 test('direct-open-schema-packet extracts once and fills every scenario', async () => {
@@ -219,5 +233,13 @@ function replaceFlagValue(args, flag, value) {
   assert.notEqual(index, -1);
   const next = [...args];
   next[index + 1] = value;
+  return next;
+}
+
+function removeFlagValue(args, flag) {
+  const index = args.indexOf(flag);
+  assert.notEqual(index, -1);
+  const next = [...args];
+  next.splice(index, 2);
   return next;
 }
