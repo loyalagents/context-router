@@ -1,0 +1,45 @@
+source_system: HarborHire
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-19877
+topic: employment eligibility intake
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Jules Carter
+  first_name: Jules
+  last_name: Carter
+  title: Payroll Support Specialist
+  start_date: 2026-06-24
+  work_email: jules.carter@pacificledger.test
+  address_line: 1200 14th Street Apt 5, Oakland, CA 94607
+payroll_snapshot:
+  tax_filing_status: married filing separately
+  bank_product_label: Payroll Card
+  institution_name: Civic Trust Bank
+  routing_number: "026009593"
+  account_last_four: "1224"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-10T09:12:00-07:00
+    owner_queue: Work authorization trace
+    status: source_row_indexed
+  - timestamp: 2026-06-11T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - Work authorization trace - PLC-WORKAUTH-054 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+  - Control total note - batch PLC-WORKAUTH-054 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Coordinator checkpoint - WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+  - Retention tag - employment eligibility workflow artifact, stored with branch and queue metadata.
+operational_detail_rows:
+  - Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-054 was indexed from Eligibility Intake Jules Carter during the 2026-06-10 operations window.
+  - Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for eligibility intake jules carter kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+  - The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for eligibility intake jules carter audit reconstruction while preserving original row wording.

@@ -1,0 +1,20 @@
+source_system,LedgerPay cohort file
+generated_timestamp,2026-06-27T06:15:00-07:00
+status,ready
+field_ids,worker_id;legal_name;work_email;title;start_date;bank_product;tax_status
+
+worker_id,legal_name,work_email,title,start_date,address_line,bank_product,tax_status
+PLC-20481,Mina Cheng,mina.cheng@pacificledger.test,Client Operations Analyst,2026-07-06,2846 Asbury Street Apt 3B, Oakland, CA 94609,Total Access Checking,single or married filing separately
+
+control_total,1
+batch_window,2026-06-26 18:00 PDT to 2026-06-27 06:00 PDT
+
+Payroll operations provenance
+Payroll operations trace: PLC-PAYROLLO-037 captured batch window, import owner, exception code, and row-count reconciliation from LedgerPay.
+Queue checkpoint: payroll staff reviewed worker id, pay group, source field, and exception status before the next preview run.
+Retention tag: payroll operations row, retained with control totals and preview calendar metadata.
+
+Operational detail rows
+Payroll operations exports carry pay group, preview calendar, exception code, import owner, and row-count reconciliation fields. Row marker PLC-PAYROLLO-037 was indexed from Tax Batch Mina Cheng during the 2026-06-11 operations window.
+Payroll staff compare source field, worker id, exception state, and lock window before moving a row to the next preview. Review notes for tax batch mina cheng kept payroll operations queue history, timestamp lineage, and handoff context with the retained record.
+LedgerPay retains exception rows with batch id, source file window, operator initials, and preview-run marker. The retained payroll operations artifact keeps source metadata for tax batch mina cheng audit reconstruction while preserving original row wording.

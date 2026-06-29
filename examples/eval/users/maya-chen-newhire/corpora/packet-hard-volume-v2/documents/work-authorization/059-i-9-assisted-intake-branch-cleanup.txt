@@ -1,0 +1,22 @@
+Source system: WorkRight Admin
+Generated timestamp: 2026-06-18T08:29:00-07:00
+Status: active
+Document code: PLC-OPS-059
+Subject: I-9 assisted intake branch cleanup
+Field IDs: i9.workflow_state, upload.batch, coordinator.queue, branch.history
+
+WorkRight can open more than one Section 1 branch when an employee changes an eligibility answer during guided intake.
+Closed branches remain in the audit export with status, close reason, and field ids.
+Only the branch attached to the submitted Section 1 packet is displayed in the coordinator dashboard.
+
+Operational note: WorkRight coordination indexed i 9 assisted intake branch cleanup with branch state, task family, and vendor routing metadata.
+
+Work authorization provenance
+Work authorization trace: PLC-WORKAUTH-059 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+Coordinator checkpoint: WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+Retention tag: employment eligibility workflow artifact, stored with branch and queue metadata.
+
+Operational detail rows
+Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-059 was indexed from I-9 Assisted Intake Branch Cleanup during the 2026-06-15 operations window.
+Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for i 9 assisted intake branch cleanup kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for i 9 assisted intake branch cleanup audit reconstruction while preserving original row wording.

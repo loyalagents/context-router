@@ -2216,6 +2216,162 @@ test('committed Alex realistic corpus uses V2 source artifact fixture shape', as
   assert.deepEqual(documentFiles, [...manifestPaths].sort());
 });
 
+test('packet-hard-volume-v2 documents avoid obvious and soft disqualifying cues', async () => {
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const documentFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.(json|md|txt|yaml)$/.test(filePath))
+    .sort();
+
+  const disqualifyingCuePattern =
+    /\b(?:do not use|do-not-use|context only|sample|template|fake|not relevant|not authoritative|without serving as the final employee evidence|no profile fields were edited|no live employee values|does not include live employee answers|contains no employee-specific packet row|does not prove the form values|non-final rows visible)\b/i;
+  const matches = [];
+  for (const documentFile of documentFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    if (disqualifyingCuePattern.test(body)) matches.push(documentFile);
+  }
+
+  assert.deepEqual(matches, []);
+});
+
+test('packet-hard-volume-v2 documents avoid high-volume repeated generated lines', async () => {
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const documentFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.(json|md|txt|yaml)$/.test(filePath))
+    .sort();
+  const maxRepeatedLineCount = 12;
+  const lineCounts = new Map();
+  const examples = new Map();
+
+  const metadataLinePattern =
+    /^["\s-]*(?:generated timestamp|created timestamp|exported_at|export_timestamp|timestamp|captured_at|updated_at|created_at)\b/i;
+  const normalizeLine = (rawLine) =>
+    rawLine
+      .trim()
+      .replace(/^[-*]\s+/, '')
+      .replace(/^"([^"]+)":\s*/, '$1: ')
+      .replace(/",?$/, '')
+      .replace(/\bPLC-[A-Z0-9-]+\b/g, 'PLC-ID')
+      .replace(/\b\d{4}-\d{2}-\d{2}(?:T[^\s"]+)?/g, 'DATE')
+      .replace(/\b\d{2}:\d{2}\b/g, 'TIME')
+      .replace(/\b\d+\b/g, 'N');
+
+  for (const documentFile of documentFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    for (const rawLine of body.split('\n')) {
+      if (metadataLinePattern.test(rawLine)) continue;
+      const normalizedLine = normalizeLine(rawLine);
+      if (normalizedLine.length < 40) continue;
+      if (/^[-\]}{,\s]*$/.test(normalizedLine)) continue;
+      lineCounts.set(normalizedLine, (lineCounts.get(normalizedLine) ?? 0) + 1);
+      if (!examples.has(normalizedLine)) examples.set(normalizedLine, documentFile);
+    }
+  }
+
+  const repeatedLines = [...lineCounts.entries()]
+    .filter(([, count]) => count > maxRepeatedLineCount)
+    .map(([line, count]) => ({
+      count,
+      example: examples.get(line),
+      line,
+    }))
+    .sort((left, right) => right.count - left.count || left.line.localeCompare(right.line));
+
+  assert.deepEqual(repeatedLines, []);
+});
+
+test('packet-hard-volume-v2 YAML documents avoid empty list cleanup artifacts', async () => {
+  const { parse: parseYaml } = await import('yaml');
+  const corpusRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const yamlFiles = (await listFiles(path.join(corpusRoot, 'documents')))
+    .filter((filePath) => /\.ya?ml$/.test(filePath))
+    .sort();
+
+  const standaloneEmptyListItems = [];
+  const parsedNullArrayItems = [];
+
+  const visitParsedYaml = (documentFile, value, valuePath) => {
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        const itemPath = `${valuePath}[${index}]`;
+        if (item === null) {
+          parsedNullArrayItems.push(`${documentFile}:${itemPath}`);
+          return;
+        }
+        visitParsedYaml(documentFile, item, itemPath);
+      });
+      return;
+    }
+    if (value && typeof value === 'object') {
+      for (const [key, nestedValue] of Object.entries(value)) {
+        visitParsedYaml(documentFile, nestedValue, `${valuePath}.${key}`);
+      }
+    }
+  };
+
+  for (const documentFile of yamlFiles) {
+    const body = await readFile(
+      path.join(corpusRoot, 'documents', documentFile),
+      'utf8',
+    );
+    body.split('\n').forEach((line, index) => {
+      if (/^\s*-\s*$/.test(line)) {
+        standaloneEmptyListItems.push(`${documentFile}:${index + 1}`);
+      }
+    });
+    visitParsedYaml(documentFile, parseYaml(body), '$');
+  }
+
+  assert.deepEqual(standaloneEmptyListItems, []);
+  assert.deepEqual(parsedNullArrayItems, []);
+});
+
+test('packet-hard-volume-v2 preserves packet-medium truth-bearing document bodies', async () => {
+  const mediumRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-medium',
+  );
+  const volumeRoot = path.join(
+    repoRoot,
+    'examples/eval/users/maya-chen-newhire/corpora/packet-hard-volume-v2',
+  );
+  const mediumManifest = await readJson(path.join(mediumRoot, 'manifest.json'));
+  const volumeManifest = await readJson(path.join(volumeRoot, 'manifest.json'));
+  const truthBearingSequences = new Set([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 21, 22, 23, 24,
+  ]);
+
+  for (const sequence of truthBearingSequences) {
+    const suffix = String(sequence).padStart(3, '0');
+    const mediumDoc = mediumManifest.documents.find((doc) =>
+      doc.id.endsWith(suffix),
+    );
+    const volumeDoc = volumeManifest.documents.find((doc) =>
+      doc.id.endsWith(suffix),
+    );
+    assert.ok(mediumDoc, `packet-medium document ${suffix} should exist`);
+    assert.ok(volumeDoc, `packet-hard-volume-v2 document ${suffix} should exist`);
+
+    const mediumBody = await readFile(path.join(mediumRoot, mediumDoc.path), 'utf8');
+    const volumeBody = await readFile(path.join(volumeRoot, volumeDoc.path), 'utf8');
+    assert.equal(volumeBody, mediumBody, `${volumeDoc.path} should match packet-medium`);
+  }
+});
+
 test('reports every document that declares an intentionally missing fact', async (t) => {
   const root = await copyRepo(t);
   const manifestPath = elenaManifestPath(root);

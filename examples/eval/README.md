@@ -138,6 +138,20 @@ Command distinction:
 - `pnpm eval:validate` validates committed fixture integrity.
 - `pnpm eval:verify` runs both and is the local non-DB gate.
 
+## Packet Score Reading
+
+Packet open-schema runners write a `qualitySummary` for quick comparison.
+Treat form metrics as the primary packet result:
+`knownFieldCorrect`, `abstentionAbsentCorrect`, and `overfillCount`.
+
+Memory metrics answer narrower questions. `memoryKnownValuePresent` reports
+whether expected values were retained somewhere usable in active memory,
+including conservative full-name and current-address composite cases.
+`memoryKnownRecovered` keeps the stricter exact active-row recovery meaning.
+If those differ, inspect `memoryKnownPresentAsCompositeOrAlias`,
+`memoryKnownGenuinelyMissing`, and the database score report's per-fact
+`valuePresenceClassification`.
+
 Regenerate form field manifests after adding or replacing PDFs:
 
 ```bash
@@ -270,6 +284,54 @@ Packet document order modes are `canonical`, `reverse`, `seeded-random`,
 `relevant-first`, and `relevant-last`. Use `--document-order-seed <seed>` for
 stable seeded-random comparisons. Direct-document runners keep the historical
 200000-character evidence cap unless `--max-evidence-chars` is passed.
+
+Compare open-schema packet artifact roots:
+
+```bash
+pnpm eval:compare-packet-runs /private/tmp/maya-required-v4-direct-flash-lite-canonical
+```
+
+Compare v3 and v4 packet runs, using the first root as the baseline:
+
+```bash
+pnpm eval:compare-packet-runs \
+  /private/tmp/maya-required-v3-direct-flash-lite-canonical \
+  /private/tmp/maya-required-v4-direct-flash-lite-canonical
+```
+
+Build a direct/MCP matrix:
+
+```bash
+pnpm eval:compare-packet-runs \
+  /private/tmp/maya-required-v3-direct-flash-lite-canonical \
+  /private/tmp/maya-required-v4-direct-flash-lite-canonical \
+  /private/tmp/maya-required-v3-direct-pro-canonical \
+  /private/tmp/maya-required-v4-direct-pro-canonical \
+  /private/tmp/maya-required-v4-mcp-canonical
+```
+
+Emit machine-readable output:
+
+```bash
+pnpm eval:compare-packet-runs \
+  /private/tmp/maya-required-v4-direct-flash-lite-canonical \
+  --format json \
+  --output /private/tmp/maya-required-v4-compare.json
+```
+
+`eval:compare-packet-runs` reads packet roots produced by
+`eval:direct-open-schema-packet` and `eval:e2e-mcp-packet`. It reports run
+metadata, document count/order/evidence windows, memory issues, ownership
+leaks, form issues, and score deltas against the first root. Classifications
+such as `normalization_code_label`, `normalization_boolean_enum`, and
+`form_condition_or_application` are heuristic triage labels. Treat them as
+pointers to the relevant artifacts, not as replacement scoring.
+
+Document coverage warnings mean the compared runs may not have seen the same
+packet. `evidenceCharCount < sourceCharCount` usually means direct evidence was
+truncated or filtered. Changed document count, order mode, seed, or
+`maxEvidenceChars` can make score deltas order/window effects rather than model
+or packet-quality effects.
 
 Compare one or more E2E artifact directories against a baseline:
 

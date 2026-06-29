@@ -1,0 +1,27 @@
+OCR JOB PLC-20428-BANKVERIFICATIONLETTER
+Source file: plc-20428-bank-verification-letter.png
+OCR confidence: 0.91
+Upload batch id: HH-UPL-PLC-20428-0626
+Timestamp: 2026-06-26T16:05:22-07:00
+Status: routed_to_review
+Document type: Bank Verification Letter
+Worker id: PLC-20428
+
+Account holder: Mara Chin
+Financial institution: Golden Gate Municipal Credit Union
+Routing number: 321171184
+Account number: 740182936154
+Product description: Classic Checking
+Address on letter: 2846 Ashbury Court Apt 3D, Oakland, CA 94609
+
+Extraction footer: image processed by IdentityLens model IL-2026.06; reviewer queue retained the raw crop and redaction overlay metadata.
+
+Banking provenance
+Prenote trail: PLC-BANKINGO-020 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.
+Reconciliation checkpoint: banking operations reviewed row ownership, return-code state, and account-label normalization at 12:45 PDT on 2026-06-12.
+Control note: the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export.
+
+Operational detail rows
+Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-020 was indexed from Bank Letter OCR Mara Chin during the 2026-06-12 operations window.
+ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. Review notes for bank letter ocr mara chin kept banking operations queue history, timestamp lineage, and handoff context with the retained record.
+The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. The retained banking operations artifact keeps source metadata for bank letter ocr mara chin audit reconstruction while preserving original row wording.

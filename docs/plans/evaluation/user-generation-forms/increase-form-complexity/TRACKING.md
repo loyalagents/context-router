@@ -6,6 +6,9 @@
 
 ## Score Movement Ledger
 
+For the cross-family planning index, see `difficulty-matrix.md`. This file is
+only for score movement and live-run interpretation.
+
 | Packet / run | What changed | Score effect | Interpretation |
 | --- | --- | --- | --- |
 | `packet-medium` direct baseline | Baseline shared dossier | Passed; `known-fields=26/27` in reviewed run | Baseline is already strong enough for most scored form fields. |
@@ -25,6 +28,27 @@
 | `packet-hard-required-v4` direct `gemini-2.5-pro` | Same v4 packet with stronger direct extraction model | Passed; memory `24/25`, fields `26/27`, I-9 `11/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | Score moved, but not through the intended v4 banking/W-4 lookup. Pro resolved `checking`, bank, and filing status, but stored citizenship as `person.citizenship.is_citizen = true` without the accepted `workAuthorization.citizenshipStatus = U.S. citizen`; the fill action tried to check `CB_1`, then condition validation treated it as inactive. |
 | `packet-hard-required-v4` MCP Claude | Same v4 packet through stored-memory agent path and backend form fill | Passed; memory `25/25`, fields `27/27`, I-9 `12/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | MCP solved the v4 evidence paths, including `DDA -> checking`, RDFI key to bank name, W-4 choice code to filing status, and I-9 citizenship. |
 | `packet-hard-required-v4` Claude Code direct baseline | New direct Claude Code packet runner with strict empty MCP config, restricted tools/config, no backend memory source during extraction, backend materialized fill mode, and comparable model/thinking metadata | Runner implemented; live score pending | Intended to isolate memory extraction: Claude direct extracts facts, the harness materializes them into backend memory, then the same backend form-fill endpoint used by MCP fills forms. The direct runner is not an OS-level filesystem sandbox. Treat direct-vs-MCP Claude conclusions as provisional until canonical direct and MCP runs record matching `--model`, `--thinking-mode`, and backend-fill settings. |
+
+## Reporter-Confirmed Results
+
+These v4 findings were cross-checked with `eval:compare-packet-runs`:
+
+```bash
+pnpm eval:compare-packet-runs \
+  /private/tmp/maya-required-v3-direct-flash-lite-canonical \
+  /private/tmp/maya-required-v4-direct-flash-lite-canonical \
+  /private/tmp/maya-required-v3-direct-pro-canonical \
+  /private/tmp/maya-required-v4-direct-pro-canonical \
+  /private/tmp/maya-required-v4-mcp-canonical
+```
+
+- V4 flash-lite: `banking.accountType` failed as a
+  `normalization_code_label` issue (`DDA` stored/extracted where `checking` was
+  expected), and direct deposit dropped to `8/9`.
+- V4 pro: `workAuthorization.citizenshipStatus` failed as a
+  `normalization_boolean_enum` issue (`person.citizenship.is_citizen = true`
+  where `U.S. citizen` was expected), and I-9 dropped to `11/12`.
+- V4 MCP Claude: reporter showed clean memory `25/25` and form score `27/27`.
 
 ## Current Lessons
 

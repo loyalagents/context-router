@@ -1,0 +1,22 @@
+Source system: PeopleBridge Data
+Generated timestamp: 2026-06-18T08:46:00-07:00
+Status: active
+Document code: PLC-OPS-076
+Subject: employee id collision monitor
+Field IDs: audit.stream_id, source.transaction, previous.token, current.token
+
+The collision monitor flags worker ids that are visually similar or differ by one digit.
+It compares directory id, payroll id, and onboarding id each night.
+A collision alert opens a support case but does not alter the source records automatically.
+
+Operational note: HRIS audit indexed employee id collision monitor with source transaction, actor, and downstream bridge status.
+
+HRIS audit provenance
+HRIS audit trace: PLC-HRISAUDI-076 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+Change-ledger checkpoint: reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+Retention tag: audit stream export, grouped by worker id and source transaction family.
+
+Operational detail rows
+HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-076 was indexed from Employee Id Collision Monitor during the 2026-06-14 operations window.
+Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. Review notes for employee id collision monitor kept HRIS audit queue history, timestamp lineage, and handoff context with the retained record.
+The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. The retained HRIS audit artifact keeps source metadata for employee id collision monitor audit reconstruction while preserving original row wording.

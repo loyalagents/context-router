@@ -1,0 +1,60 @@
+{
+  "source_system": "LedgerPay",
+  "export_id": "LEDGERPAY-PLC-20481-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-20481",
+  "person": {
+    "legal_name": "Mina Cheng",
+    "personal_email": "mina.cheng@gmail.test",
+    "work_email": "mina.cheng@pacificledger.test",
+    "title": "Client Operations Analyst",
+    "start_date": "2026-07-06"
+  },
+  "topic": "federal withholding import",
+  "fields": {
+    "address_line": "2846 Asbury Street Apt 3B, Oakland, CA 94609",
+    "city_state_zip": "Oakland, CA 94609",
+    "ssn_last_four": "1407",
+    "tax_filing_status": "single or married filing separately"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-24T09:12:00-07:00",
+      "owner_queue": "PeopleBridge Data",
+      "status": "source_row_indexed"
+    },
+    {
+      "timestamp": "2026-06-25T16:40:00-07:00",
+      "owner_queue": "People Operations",
+      "status": "queue_checkpoint_recorded"
+    }
+  ],
+  "control_observations": [
+    "Tax workbench trace: PLC-PAYROLLT-014 stored filing-status label, normalized tax code, source field id, and reviewer queue.",
+    "Review checkpoint: tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.",
+    "Retention tag: withholding setup artifact, grouped with tax import diagnostics and field-map notes."
+  ],
+  "source_packet_marker": "PLC-PAYROLLT-014",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-014 was indexed from Tax Election Import Mina Cheng during the 2026-06-24 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for tax election import mina cheng kept payroll tax queue history, timestamp lineage, and handoff context with the retained record."
+    },
+    {
+      "sequence": 3,
+      "note": "The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for tax election import mina cheng audit reconstruction while preserving original row wording."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+From: people.ops@pacificledger.test
+To: naya.lin@pacificledger.test
+Date: Fri, 26 Jun 2026 14:36:20 -0700
+Subject: Section 1 intake received
+Message-ID: <plc-20318-section-1-intake-received-0626@pacificledger.test>
+
+Hi Naya,
+
+The work authorization intake was received by WorkRight and will stay in review until the document upload queue finishes image processing.
+
+The People Operations export currently lists your worker id as PLC-20318, your role as People Operations Associate, and your start date as 2026-07-06. The address block visible to the onboarding coordinator reads 2846 Ashwood Street Unit 3D, Berkeley, CA 94704.
+
+This message was produced from the HarborHire communication queue after the payroll handoff batch was prepared. The footer below is added by the mail system for privacy and retention routing.
+
+Regards,
+People Operations
+
+Footer: Pacific Ledger Cooperative internal correspondence. Privacy routing tag PLC-PEOPLE-MAIL.
+
+Message archive provenance
+Mail archive: PLC-COMMUNIC-049 retained message headers, routing tag, delivery state, and the cohort communication queue that generated the notice.
+Delivery checkpoint: People Operations reviewed recipient address, worker id in the envelope metadata, and message family before closing the mail event.
+Retention tag: communication archive, stored with message id and queue owner for later support lookup.
+
+Operational detail rows
+Message archive records envelope recipient, generated subject, delivery status, reminder family, and queue-owned message id. Row marker PLC-COMMUNIC-049 was indexed from I9 Reminder Naya Lin during the 2026-06-23 operations window.
+People Operations uses message metadata to trace whether a reminder was sent before or after payroll, tax, or work authorization lock. Review notes for i9 reminder naya lin kept communications queue history, timestamp lineage, and handoff context with the retained record.
+The mail export keeps privacy footer text, sender alias, cohort tag, and source queue for retention lookup. The retained communications artifact keeps source metadata for i9 reminder naya lin audit reconstruction while preserving original row wording.

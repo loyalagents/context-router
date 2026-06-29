@@ -1,0 +1,22 @@
+Source system: WorkRight Admin
+Generated timestamp: 2026-06-16T08:44:00-07:00
+Status: active
+Document code: PLC-OPS-074
+Subject: vendor maintenance window advisory
+Field IDs: ach.file_id, payment.account_label, prenote.queue_state, review.window
+
+The work authorization vendor publishes maintenance windows with affected queues and retry instructions.
+A maintenance advisory may mention Section 1 intake and document upload screens without containing employee answers.
+Coordinators check the advisory when an upload timestamp falls inside the window.
+
+Operational note: banking operations indexed vendor maintenance window advisory with ACH queue ownership, payment-election status, and the active payroll preview window.
+
+Banking provenance
+Prenote trail: PLC-BANKINGO-074 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.
+Reconciliation checkpoint: banking operations reviewed row ownership, return-code state, and account-label normalization at 10:45 PDT on 2026-06-12.
+Control note: the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export.
+
+Operational detail rows
+Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-074 was indexed from Vendor Maintenance Window Advisory during the 2026-06-12 operations window.
+ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. Review notes for vendor maintenance window advisory kept banking operations queue history, timestamp lineage, and handoff context with the retained record.
+The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. The retained banking operations artifact keeps source metadata for vendor maintenance window advisory audit reconstruction while preserving original row wording.

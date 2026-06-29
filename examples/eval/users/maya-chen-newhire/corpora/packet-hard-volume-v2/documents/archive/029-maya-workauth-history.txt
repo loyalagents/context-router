@@ -1,0 +1,19 @@
+Source system: WorkRight intake queue
+Timestamp: 2026-06-12T15:30:12-07:00
+Status: inactive intake branch
+Worker id: PLC-20418
+Employee: Maya Lin Chen
+Eligibility answer: lawful permanent resident
+Alien registration number: A 712 004 188
+Field IDs: i9.citizenship_status, i9.alien_number, intake.status
+Review note: this branch was opened during assisted intake and then closed when the employee selected a different Section 1 citizenship response in HarborHire.
+
+Archive provenance
+Archive ledger: PLC-ARCHIVE-029 stayed in the historical stream with its original close reason and source timestamp.
+Retrieval note: archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
+Retention tag: prior-state audit row, preserved under the new-hire correction retention schedule.
+
+Operational detail rows
+Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-029 was indexed from Maya workauth History during the 2026-06-21 operations window.
+Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. Review notes for maya workauth history kept archive ledger queue history, timestamp lineage, and handoff context with the retained record.
+Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. The retained archive ledger artifact keeps source metadata for maya workauth history audit reconstruction while preserving original row wording.

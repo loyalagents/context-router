@@ -1,0 +1,22 @@
+Source system: WorkRight Compliance
+Generated timestamp: 2026-06-24T08:12:00-07:00
+Status: active
+Document code: PLC-OPS-082
+Subject: Receipt rule field guide
+Field IDs: compliance.topic, document.family, reviewer.role, retention.rule
+
+Receipt rule screens show document category, expiration date, replacement due date, and reviewer initials.
+The guide explains how receipt rows move between open and resolved states in the vendor system.
+The field guide is attached to coordinator training for receipt-row state handling and replacement-document follow-up in WorkRight.
+
+Operational note: compliance filed receipt rule field guide with policy owner, vendor workflow area, and release-calendar metadata.
+
+Compliance provenance
+Compliance library trace: PLC-COMPLIAN-082 tracked owner team, release window, and affected workflow queues for coordinator lookup.
+Review checkpoint: WorkRight coordination compared version date, topic area, and queue coverage before linking the guidance to training search.
+Retention tag: compliance guidance, versioned with policy owner and release notes.
+
+Operational detail rows
+Compliance notes are versioned by release owner, workflow area, affected queue, coordinator role, and review date. Row marker PLC-COMPLIAN-082 was indexed from Receipt Rule Field Guide during the 2026-06-20 operations window.
+WorkRight guidance rows carry status-code references, document-family labels, retention rule names, and reviewer routing examples. Review notes for receipt rule field guide kept compliance library queue history, timestamp lineage, and handoff context with the retained record.
+The compliance library stores policy text with advisory id, publication timestamp, owner team, and maintenance window references. The retained compliance library artifact keeps source metadata for receipt rule field guide audit reconstruction while preserving original row wording.

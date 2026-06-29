@@ -1,0 +1,22 @@
+Source system: PeopleBridge Data
+Generated timestamp: 2026-06-25T08:13:00-07:00
+Status: active
+Document code: PLC-OPS-083
+Subject: PeopleBridge release note
+Field IDs: batch.monitor_id, source.adapter, queue.impact, deploy.window
+
+The June release changed how split address fields are displayed in audit exports.
+Street line and unit now appear beside the composite mailing address to reduce reviewer copy errors.
+The release note lists affected APIs and dashboard panels.
+
+Operational note: systems integration filed peoplebridge release note with endpoint ownership, payload family, and deployment-window metadata.
+
+Systems provenance
+Systems note trace: PLC-SYSTEMS-083 recorded release owner, affected interfaces, deployment window, and file-layout family.
+Data checkpoint: platform reviewers compare version, endpoint owner, and source-system contract before updating integration docs.
+Retention tag: systems documentation artifact, versioned with release and interface metadata.
+
+Operational detail rows
+Systems documentation tracks release owner, interface contract, file-layout version, deployment window, and affected downstream job. Row marker PLC-SYSTEMS-083 was indexed from PeopleBridge Release Note during the 2026-06-21 operations window.
+Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. Review notes for peoplebridge release note kept systems integration queue history, timestamp lineage, and handoff context with the retained record.
+The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. The retained systems integration artifact keeps source metadata for peoplebridge release note audit reconstruction while preserving original row wording.

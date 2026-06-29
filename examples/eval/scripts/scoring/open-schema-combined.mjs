@@ -70,7 +70,7 @@ export async function scoreOpenSchemaCombined({
     const memory = databaseByFactKey.get(factKey) ?? null;
     const formFields = formByFactKey.get(factKey) ?? [];
     const memoryClass = memory?.classification ?? 'open_storage_not_scored';
-    const memoryStatus = summarizeMemoryStatus(memoryClass);
+    const memoryStatus = summarizeMemoryStatus(memory);
     const formStatus = summarizeFormStatus(formFields);
     return {
       factKey,
@@ -78,8 +78,12 @@ export async function scoreOpenSchemaCombined({
       memory: memory
         ? {
             classification: memory.classification,
+            valuePresenceClassification:
+              memory.valuePresenceClassification ?? null,
             matchingSlug: firstMatchingSlug(memory),
             valueRecoveredInActiveMemory: Boolean(memory.valueRecoveredInActiveMemory),
+            valuePresentInActiveMemory: Boolean(memory.valuePresentInActiveMemory),
+            presentAsCompositeOrAlias: Boolean(memory.presentAsCompositeOrAlias),
             suggestionOnly: Boolean(memory.suggestionOnly),
           }
         : null,
@@ -110,12 +114,16 @@ export async function scoreOpenSchemaCombined({
   };
 }
 
-function summarizeMemoryStatus(memoryClass) {
+function summarizeMemoryStatus(memory) {
+  const memoryClass = memory?.classification ?? 'open_storage_not_scored';
   if (
     memoryClass === 'open_known_present_recovered_accepted_slug' ||
     memoryClass === 'open_known_present_recovered_novel_slug'
   ) {
     return 'recovered';
+  }
+  if (memory?.valuePresenceClassification === 'present_as_composite_or_alias') {
+    return 'present_as_composite_or_alias';
   }
   if (memoryClass === 'open_known_present_suggestion_only') return 'suggestion_only';
   if (memoryClass === 'open_known_present_wrong_value') return 'wrong_value';
@@ -160,6 +168,7 @@ function firstMatchingSlug(memory) {
     memory.matchingAcceptedRows?.[0]?.slug ??
     memory.matchingNovelRows?.[0]?.slug ??
     memory.matchingActiveRows?.[0]?.slug ??
+    memory.compositeOrAliasActiveRows?.[0]?.slug ??
     memory.activeValueRows?.[0]?.slug ??
     memory.activeAcceptedSlugRows?.[0]?.slug ??
     memory.matchingSuggestionRows?.[0]?.slug ??

@@ -21,6 +21,11 @@ const scenarioIds = [
   'maya-chen-newhire-fw4-packet-small',
   'maya-chen-newhire-direct-deposit-packet-small',
 ];
+const volumeV2ScenarioIds = [
+  'maya-chen-newhire-i9-packet-hard-volume-v2',
+  'maya-chen-newhire-fw4-packet-hard-volume-v2',
+  'maya-chen-newhire-direct-deposit-packet-hard-volume-v2',
+];
 const baseArgs = [
   '--user',
   'maya-chen-newhire',
@@ -30,6 +35,18 @@ const baseArgs = [
   scenarioIds.join(','),
   '--artifacts-root',
   '/tmp/direct-open-packet',
+  '--model',
+  'test-model',
+];
+const volumeV2BaseArgs = [
+  '--user',
+  'maya-chen-newhire',
+  '--corpus',
+  'packet-hard-volume-v2',
+  '--scenarios',
+  volumeV2ScenarioIds.join(','),
+  '--artifacts-root',
+  '/tmp/direct-open-packet-v2',
   '--model',
   'test-model',
 ];
@@ -114,6 +131,61 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   const backendWithoutToken = parseArgs([...baseArgs, '--fill-mode', 'backend'], {}, fixedNow);
   assert.equal(backendWithoutToken.kind, 'usage-error');
   assert.match(backendWithoutToken.message, /EVAL_AUTH_TOKEN/);
+});
+
+test('direct-open-schema-packet supports packet-hard-volume-v2 scenario wiring', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-v2-'));
+  const calls = {
+    extractDocumentCount: 0,
+    fill: [],
+  };
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(volumeV2BaseArgs, '--artifacts-root', tmp),
+      '--document-order',
+      'seeded-random',
+      '--document-order-seed',
+      'v2-smoke-seed',
+      '--max-evidence-chars',
+      '1000000',
+    ],
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) => {
+      calls.extractDocumentCount = evidenceDocuments.length;
+      return JSON.stringify({
+        facts: [],
+        unresolved: [],
+      });
+    },
+    generateFillResponse: async (_prompt, { fixture, fieldMetadata }) => {
+      calls.fill.push(fixture.scenario.scenarioId);
+      return JSON.stringify({
+        fillActions: fieldMetadata.map((field) => ({
+          fieldName: field.fieldName,
+          action: 'SKIP',
+          sourceFactIds: [],
+          confidence: 0,
+          skipReason: 'test skip',
+        })),
+      });
+    },
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.equal(calls.extractDocumentCount, 100);
+  assert.deepEqual(calls.fill, volumeV2ScenarioIds);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.corpusId, 'packet-hard-volume-v2');
+  assert.equal(packet.settings.maxEvidenceChars, 1000000);
+  assert.equal(packet.documents.documentCount, 100);
+  assert.equal(packet.documents.sourceCharCount > 200000, true);
+  assert.equal(packet.documents.order.mode, 'seeded-random');
+  assert.equal(packet.documents.order.seed, 'v2-smoke-seed');
+  assert.deepEqual(Object.keys(packet.scenarios), volumeV2ScenarioIds);
 });
 
 test('direct-open-schema-packet extracts once and fills every scenario', async () => {
@@ -203,6 +275,9 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   assert.ok(packet.documents.evidenceCharCount > 0);
   assert.equal(packet.summaries.extraction.factCount, 1);
   assert.equal(packet.qualitySummary.extractionFacts, 1);
+  assert.match(packet.qualitySummary.memoryKnownValuePresent, /^\d+\/\d+$/);
+  assert.equal(typeof packet.qualitySummary.memoryKnownPresentAsCompositeOrAlias, 'number');
+  assert.equal(typeof packet.qualitySummary.memoryKnownGenuinelyMissing, 'number');
   assert.equal(packet.qualitySummary.memoryOwnershipClean, '0/0');
   assert.equal(packet.qualitySummary.memoryOwnershipForbiddenLeaks, 0);
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);

@@ -1,0 +1,19 @@
+Source system: LedgerPay tax autosave
+Generated timestamp: 2026-06-11T17:08:00-07:00
+Status: old autosave retained for comparison
+Worker id: PLC-20418
+Employee: Maya Lin Chen
+Autosave filing status: head of household
+Step 2 multiple jobs: false
+Field IDs: tax.filing_status, tax.multiple_jobs, worker.id, autosave.status
+Reviewer note: the tax setup screen later committed a different saved election. The autosave row is kept only in the edit history stream.
+
+Archive provenance
+Archive ledger: PLC-ARCHIVE-028 stayed in the historical stream with its original close reason and source timestamp.
+Retrieval note: archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
+Retention tag: prior-state audit row, preserved under the new-hire correction retention schedule.
+
+Operational detail rows
+Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-028 was indexed from Maya tax History during the 2026-06-20 operations window.
+Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. Review notes for maya tax history kept archive ledger queue history, timestamp lineage, and handoff context with the retained record.
+Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. The retained archive ledger artifact keeps source metadata for maya tax history audit reconstruction while preserving original row wording.

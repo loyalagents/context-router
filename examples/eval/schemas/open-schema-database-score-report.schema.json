@@ -72,11 +72,15 @@
         "knownPresentRecoveredActive",
         "knownPresentRecoveredAcceptedSlug",
         "knownPresentRecoveredNovelSlug",
+        "knownPresentValuePresentActive",
+        "knownPresentPresentAsCompositeOrAlias",
+        "knownPresentGenuinelyMissing",
         "knownPresentSuggestionOnly",
         "knownPresentWrongValue",
         "knownPresentMissing",
         "knownPresentConflict",
         "activeValueRecoveryRate",
+        "activeValuePresenceRate",
         "valueRecoveryOrSuggestionRate",
         "acceptedSlugRecoveryRate",
         "intentionallyMissingTotal",
@@ -104,11 +108,15 @@
         "knownPresentRecoveredActive": { "$ref": "#/$defs/count" },
         "knownPresentRecoveredAcceptedSlug": { "$ref": "#/$defs/count" },
         "knownPresentRecoveredNovelSlug": { "$ref": "#/$defs/count" },
+        "knownPresentValuePresentActive": { "$ref": "#/$defs/count" },
+        "knownPresentPresentAsCompositeOrAlias": { "$ref": "#/$defs/count" },
+        "knownPresentGenuinelyMissing": { "$ref": "#/$defs/count" },
         "knownPresentSuggestionOnly": { "$ref": "#/$defs/count" },
         "knownPresentWrongValue": { "$ref": "#/$defs/count" },
         "knownPresentMissing": { "$ref": "#/$defs/count" },
         "knownPresentConflict": { "$ref": "#/$defs/count" },
         "activeValueRecoveryRate": { "$ref": "#/$defs/rate" },
+        "activeValuePresenceRate": { "$ref": "#/$defs/rate" },
         "valueRecoveryOrSuggestionRate": { "$ref": "#/$defs/rate" },
         "acceptedSlugRecoveryRate": { "$ref": "#/$defs/rate" },
         "intentionallyMissingTotal": { "$ref": "#/$defs/count" },
@@ -178,6 +186,15 @@
         "open_known_present_missing"
       ]
     },
+    "valuePresenceClassification": {
+      "enum": [
+        "strict_recovered",
+        "present_as_composite_or_alias",
+        "suggestion_only",
+        "wrong_value",
+        "genuinely_missing"
+      ]
+    },
     "missingClassification": {
       "enum": [
         "open_missing_absent_correct",
@@ -225,8 +242,10 @@
         "canonicalSlugs",
         "acceptedAliasSlugs",
         "valueRecoveredInActiveMemory",
+        "valuePresentInActiveMemory",
         "recoveredUnderAcceptedSlug",
         "recoveredUnderNovelSlug",
+        "presentAsCompositeOrAlias",
         "suggestionOnly",
         "acceptedSlugPopulated",
         "acceptedSlugHasWrongValue",
@@ -234,10 +253,12 @@
         "matchingActiveRows",
         "matchingAcceptedRows",
         "matchingNovelRows",
+        "compositeOrAliasActiveRows",
         "acceptedSlugRows",
         "acceptedWrongRows",
         "matchingSuggestionRows",
-        "classification"
+        "classification",
+        "valuePresenceClassification"
       ],
       "properties": {
         "factKey": { "type": "string" },
@@ -245,8 +266,10 @@
         "canonicalSlugs": { "$ref": "#/$defs/stringArray" },
         "acceptedAliasSlugs": { "$ref": "#/$defs/stringArray" },
         "valueRecoveredInActiveMemory": { "type": "boolean" },
+        "valuePresentInActiveMemory": { "type": "boolean" },
         "recoveredUnderAcceptedSlug": { "type": "boolean" },
         "recoveredUnderNovelSlug": { "type": "boolean" },
+        "presentAsCompositeOrAlias": { "type": "boolean" },
         "suggestionOnly": { "type": "boolean" },
         "acceptedSlugPopulated": { "type": "boolean" },
         "acceptedSlugHasWrongValue": { "type": "boolean" },
@@ -263,6 +286,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/preferenceSummary" }
         },
+        "compositeOrAliasActiveRows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/preferenceSummary" }
+        },
         "acceptedSlugRows": {
           "type": "array",
           "items": { "$ref": "#/$defs/preferenceSummary" }
@@ -275,7 +302,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/preferenceSummary" }
         },
-        "classification": { "$ref": "#/$defs/knownClassification" }
+        "classification": { "$ref": "#/$defs/knownClassification" },
+        "valuePresenceClassification": {
+          "$ref": "#/$defs/valuePresenceClassification"
+        }
       }
     },
     "missingRow": {

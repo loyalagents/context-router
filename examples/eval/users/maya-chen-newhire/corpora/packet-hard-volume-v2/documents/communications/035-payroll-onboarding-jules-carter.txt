@@ -1,0 +1,28 @@
+From: people.ops@pacificledger.test
+To: jules.carter@pacificledger.test
+Date: Fri, 26 Jun 2026 14:36:20 -0700
+Subject: Payroll onboarding row ready for review
+Message-ID: <plc-19877-payroll-onboarding-row-ready-for-review-0626@pacificledger.test>
+
+Hi Jules,
+
+Your payroll profile appeared in the July cohort queue this afternoon and People Operations is comparing address and tax fields before final activation.
+
+The People Operations export currently lists your worker id as PLC-19877, your role as Payroll Support Specialist, and your start date as 2026-06-24. The address block visible to the onboarding coordinator reads 1200 14th Street Apt 5, Oakland, CA 94607.
+
+This message was produced from the HarborHire communication queue after the payroll handoff batch was prepared. The footer below is added by the mail system for privacy and retention routing.
+
+Regards,
+People Operations
+
+Footer: Pacific Ledger Cooperative internal correspondence. Privacy routing tag PLC-PEOPLE-MAIL.
+
+Message archive provenance
+Mail archive: PLC-COMMUNIC-035 retained message headers, routing tag, delivery state, and the cohort communication queue that generated the notice.
+Delivery checkpoint: People Operations reviewed recipient address, worker id in the envelope metadata, and message family before closing the mail event.
+Retention tag: communication archive, stored with message id and queue owner for later support lookup.
+
+Operational detail rows
+Message archive records envelope recipient, generated subject, delivery status, reminder family, and queue-owned message id. Row marker PLC-COMMUNIC-035 was indexed from Payroll Onboarding Jules Carter during the 2026-06-27 operations window.
+People Operations uses message metadata to trace whether a reminder was sent before or after payroll, tax, or work authorization lock. Review notes for payroll onboarding jules carter kept communications queue history, timestamp lineage, and handoff context with the retained record.
+The mail export keeps privacy footer text, sender alias, cohort tag, and source queue for retention lookup. The retained communications artifact keeps source metadata for payroll onboarding jules carter audit reconstruction while preserving original row wording.

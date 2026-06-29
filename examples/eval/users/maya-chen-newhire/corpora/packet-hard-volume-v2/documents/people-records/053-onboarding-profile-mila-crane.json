@@ -1,0 +1,60 @@
+{
+  "source_system": "PeopleBridge",
+  "export_id": "PEOPLEBRIDGE-PLC-20408-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-20408",
+  "person": {
+    "legal_name": "Mila Crane",
+    "personal_email": "mila.crane@gmail.test",
+    "work_email": "mila.crane@pacificledger.test",
+    "title": "Client Operations Associate",
+    "start_date": "2026-07-06"
+  },
+  "topic": "onboarding profile export",
+  "fields": {
+    "address_line": "2486 Ashbury Street Apt 3D, Oakland, CA 94609",
+    "city_state_zip": "Oakland, CA 94609",
+    "ssn_last_four": "9017",
+    "tax_filing_status": "single or married filing separately"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-27T09:12:00-07:00",
+      "owner_queue": "IdentityLens Review",
+      "status": "source_row_indexed"
+    },
+    {
+      "timestamp": "2026-06-28T16:40:00-07:00",
+      "owner_queue": "HarborDesk Routing",
+      "status": "queue_checkpoint_recorded"
+    }
+  ],
+  "control_observations": [
+    "PeopleBridge profile trace: PLC-PEOPLERE-053 kept export id, source worker id, directory sync status, and profile-review queue.",
+    "Profile checkpoint: PeopleBridge reviewers compare source system, row status, and worker id before linking records across HRIS and payroll.",
+    "Retention tag: profile export row, retained with cross-system matching diagnostics."
+  ],
+  "source_packet_marker": "PLC-PEOPLERE-053",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "PeopleBridge profile rows store export id, worker id, directory status, HRIS sync marker, and cross-system matching diagnostics. Row marker PLC-PEOPLERE-053 was indexed from Onboarding Profile Mila Crane during the 2026-06-27 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "Profile matching compares name token, work email, source system, start-date row, and bridge status before linking records. Review notes for onboarding profile mila crane kept people records queue history, timestamp lineage, and handoff context with the retained record."
+    },
+    {
+      "sequence": 3,
+      "note": "The profile export keeps the source row exactly as emitted so support can compare HRIS, payroll, and directory views. The retained people records artifact keeps source metadata for onboarding profile mila crane audit reconstruction while preserving original row wording."
+    }
+  ]
+}
