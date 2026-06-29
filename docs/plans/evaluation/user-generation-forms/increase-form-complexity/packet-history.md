@@ -1,8 +1,8 @@
 # Packet History
 
 - Status: compact historical summary
-- Last updated: 2026-06-28
-- Scope: first shared-dossier packet work for Maya Chen
+- Last updated: 2026-06-29
+- Scope: shared-dossier packet work for Maya Chen
 
 ## First Fixture Slice
 
@@ -169,3 +169,49 @@ pnpm eval:direct-open-schema-packet
 
 Use fresh artifact roots and compare the stored-memory path against the direct
 packet baseline, not against deterministic `eval:run`.
+
+## Packet Hard Volume v2
+
+`packet-hard-volume-v2` is the preferred Maya volume/noise benchmark after the
+v1 long-context smoke test. It keeps the same canonical Maya truth and the same
+three form scenarios while replacing obvious/repeated distractors with more
+realistic near-miss, operational, and broad process artifacts.
+
+```text
+user: maya-chen-newhire
+corpus: packet-hard-volume-v2
+forms: i-9, fw4, direct-deposit-sf1199a-24
+documents: 100
+source characters: 226,294
+direct baseline cap used for live runs: 1,000,000 characters
+```
+
+Live result with score-framing diagnostics:
+
+| Path | Order | Artifact root | Forms | Value presence | Strict memory | Composite/alias | Genuinely missing |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Direct Vertex | canonical | `/private/tmp/maya-noise-direct-volume-v2-canonical-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 25/25 | 0 | 0 |
+| Direct Vertex | relevant-last | `/private/tmp/maya-noise-direct-volume-v2-relevant-last-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 25/25 | 0 | 0 |
+| Direct Vertex | seeded-random `seed-c` | `/private/tmp/maya-noise-direct-volume-v2-seed-c-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 25/25 | 0 | 0 |
+| Direct Vertex | reverse | `/private/tmp/maya-noise-direct-volume-v2-reverse-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 18/25 | 7 | 0 |
+| MCP/Claude/backend | canonical | `/private/tmp/maya-noise-mcp-volume-v2-canonical-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 25/25 | 0 | 0 |
+| MCP/Claude/backend | relevant-last | `/private/tmp/maya-noise-mcp-volume-v2-relevant-last-new-score` | 27/27 known, 3/3 abstentions, 0 overfills | 25/25 | 25/25 | 0 | 0 |
+
+Interpretation:
+
+- All tested direct and MCP runs completed with perfect scored form quality.
+- All tested runs retained every expected value somewhere usable in active
+  memory: `memoryKnownValuePresent=25/25`.
+- No tested run had wrong known values, genuine missing known values, ownership
+  leaks, missing-field hallucinations, or form overfills.
+- The direct `reverse` run is the only strict-memory drop. It stored the current
+  address as one full-address value rather than separate street, unit, city,
+  state, postal-code, street-line, and city-state-ZIP facts. The score-framing
+  diagnostics classify all seven strict misses as `present_as_composite_or_alias`
+  rather than genuinely missing.
+- Direct `relevant-last` surfaced an unresolved Delaware state-tax item from a
+  noisy tax artifact, but it did not affect scored memory or form output.
+
+Current read: `packet-hard-volume-v2` is a useful realistic volume/noise
+benchmark. In these runs it did not break form correctness or value recovery,
+but it can still expose storage-shape variance under order pressure.
