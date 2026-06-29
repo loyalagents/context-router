@@ -1,0 +1,30 @@
+Ticket ID: NEWHIRESUPPORT-PLC-19418-0627
+Source system: HarborDesk
+Created timestamp: 2026-06-27 10:22:04 PDT
+Status: Open
+Queue: new hire support
+Requester worker id: PLC-19418
+Requester: Maya Patel
+Subject: Start date mismatch between recruiting and HRIS
+
+Initial note
+Maya Patel asked whether the onboarding profile display should show the payroll name or the directory name. The case was routed through new hire support because the worker id had already been created in HarborHire but the payroll election had not completed its nightly import.
+
+Agent worklog
+- Confirmed source system record for PLC-19418.
+- Compared work email maya.patel@pacificledger.test against the directory entry generated for the July cohort.
+- Checked address text as stored by the support console: 910 Juniper Avenue Apt 12, Berkeley, CA 94704.
+- Left the case in queue because the final payroll sync had not produced a closing event at the time of export.
+
+Field IDs observed: requester.name, requester.worker_id, contact.email, postal.address, payroll.election_state.
+
+Reviewer scratchpad
+Owner queue: Payroll Operations
+Source packet marker: PLC-SUPPORTC-041
+Review window: 2026-06-15 08:51 PDT through 2026-06-16 17:26 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-SUPPORTC-041 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

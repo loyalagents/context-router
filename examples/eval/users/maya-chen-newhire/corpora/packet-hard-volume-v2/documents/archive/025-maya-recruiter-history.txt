@@ -1,0 +1,22 @@
+Source system: HarborHire Recruiting Archive
+Exported timestamp: 2026-05-19T09:20:00-07:00
+Status: former recruiting workspace
+Worker id: PLC-CAND-7719
+Candidate: Maya Lin Chen
+Candidate email: maya.chen@oldmail.test
+Candidate address: 910 Juniper Avenue Apt 12, Berkeley, CA 94704
+Candidate title in req: Operations Coordinator
+Planned start date: 2026-06-15
+Field IDs: candidate.name, candidate.email, candidate.address, req.title, req.start_date
+Recruiting note: the requisition was closed after the applicant moved into the new-hire workspace. The archive export keeps the original candidate fields for audit review.
+
+Reviewer scratchpad
+Owner queue: Payroll Operations
+Source packet marker: PLC-ARCHIVE-025
+Review window: 2026-06-17 08:35 PDT through 2026-06-18 17:45 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-ARCHIVE-025 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

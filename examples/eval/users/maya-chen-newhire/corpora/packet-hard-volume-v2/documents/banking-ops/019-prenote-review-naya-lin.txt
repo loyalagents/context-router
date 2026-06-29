@@ -1,0 +1,30 @@
+Ticket ID: PAYROLLBANKING-PLC-20318-0627
+Source system: HarborDesk
+Created timestamp: 2026-06-27 10:22:04 PDT
+Status: Pending payroll review
+Queue: payroll banking
+Requester worker id: PLC-20318
+Requester: Naya Lin
+Subject: Prenote row matched a different onboarding profile
+
+Initial note
+Naya Lin asked whether the onboarding profile display should show the payroll name or the directory name. The case was routed through payroll banking because the worker id had already been created in HarborHire but the payroll election had not completed its nightly import.
+
+Agent worklog
+- Confirmed source system record for PLC-20318.
+- Compared work email naya.lin@pacificledger.test against the directory entry generated for the July cohort.
+- Checked address text as stored by the support console: 2846 Ashwood Street Unit 3D, Berkeley, CA 94704.
+- Left the case in queue because the final payroll sync had not produced a closing event at the time of export.
+
+Field IDs observed: requester.name, requester.worker_id, contact.email, postal.address, payroll.election_state.
+
+System annotations
+Owner queue: LedgerPay Controls
+Source packet marker: PLC-BANKINGO-019
+Review window: 2026-06-11 08:29 PDT through 2026-06-12 17:39 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-BANKINGO-019 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

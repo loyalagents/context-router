@@ -1,0 +1,28 @@
+OCR JOB PLC-20428-BANKVERIFICATIONLETTER
+Source file: plc-20428-bank-verification-letter.png
+OCR confidence: 0.91
+Upload batch id: HH-UPL-PLC-20428-0626
+Timestamp: 2026-06-26T16:05:22-07:00
+Status: routed_to_review
+Document type: Bank Verification Letter
+Worker id: PLC-20428
+
+Account holder: Mara Chin
+Financial institution: Golden Gate Municipal Credit Union
+Routing number: 321171184
+Account number: 740182936154
+Product description: Classic Checking
+Address on letter: 2846 Ashbury Court Apt 3D, Oakland, CA 94609
+
+Extraction footer: image processed by IdentityLens model IL-2026.06; reviewer queue retained the raw crop and redaction overlay metadata.
+
+Control checks
+Owner queue: WorkRight Coordination
+Source packet marker: PLC-BANKINGO-020
+Review window: 2026-06-12 08:30 PDT through 2026-06-13 17:40 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-BANKINGO-020 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

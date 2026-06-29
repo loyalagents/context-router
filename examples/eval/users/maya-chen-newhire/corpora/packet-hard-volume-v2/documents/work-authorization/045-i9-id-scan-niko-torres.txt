@@ -1,0 +1,26 @@
+OCR JOB PLC-20741-I9DOCUMENTUPLOAD
+Source file: plc-20741-i-9-document-upload.png
+OCR confidence: 0.91
+Upload batch id: HH-UPL-PLC-20741-0626
+Timestamp: 2026-06-26T16:05:22-07:00
+Status: routed_to_review
+Document type: I-9 Document Upload
+Worker id: PLC-20741
+
+Visible name: Niko Torres
+Address line: 77 Clay Street Unit 9, Oakland, CA 94607
+Document queue worker id: PLC-20741
+Review crop label: I-9 Document Upload front image
+
+Extraction footer: image processed by IdentityLens model IL-2026.06; reviewer queue retained the raw crop and redaction overlay metadata.
+
+Queue movement
+Owner queue: IdentityLens Review
+Source packet marker: PLC-WORKAUTH-045
+Review window: 2026-06-19 08:10 PDT through 2026-06-20 17:30 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-WORKAUTH-045 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

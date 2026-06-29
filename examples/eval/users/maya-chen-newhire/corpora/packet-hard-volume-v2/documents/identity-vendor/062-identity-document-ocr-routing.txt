@@ -1,0 +1,23 @@
+Source system: IdentityLens
+Generated timestamp: 2026-06-21T08:32:00-07:00
+Status: active
+Document code: PLC-OPS-062
+Subject: identity document OCR routing
+Field IDs: process.owner, queue.name, control.code, export.window
+
+The OCR pipeline stores filename, confidence score, crop id, and review queue for each identity document upload.
+The source image is redacted before a transcript is exported to HarborHire.
+Reviewer assignment is recorded on the transcript even when the document has already been accepted.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Import observations
+Owner queue: PeopleBridge Data
+Source packet marker: PLC-IDENTITY-062
+Review window: 2026-06-18 08:27 PDT through 2026-06-19 17:47 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-IDENTITY-062 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

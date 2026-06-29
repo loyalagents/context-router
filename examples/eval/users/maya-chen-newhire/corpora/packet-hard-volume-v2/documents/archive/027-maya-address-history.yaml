@@ -1,0 +1,29 @@
+source_system: HarborHire change-ledger
+exported_at: 2026-06-12T08:10:00-07:00
+status: inactive prior address row
+worker_id: PLC-20418
+person_name: Maya Lin Chen
+former_address_line: 910 Juniper Avenue Apt 12
+former_city_state_zip: Berkeley, CA 94704
+field_ids:
+  - postal.address_line
+  - postal.city
+  - postal.state
+  - postal.postal_code
+change_reason: moved before new-hire packet completion
+reviewer_note: row remained visible in the change-ledger export after the employee self-service profile saved a later address row.
+
+review_history:
+  - timestamp: 2026-06-19T09:12:00-07:00
+    owner_queue: LedgerPay Controls
+    status: visible_in_archive
+  - timestamp: 2026-06-20T16:40:00-07:00
+    owner_queue: IdentityLens Review
+    status: included_in_control_total
+control_observations:
+  - The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+  - Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+  - The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+  - A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+  - Control total note - batch PLC-ARCHIVE-027 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Reviewer note - no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

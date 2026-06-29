@@ -1,0 +1,23 @@
+Source system: LedgerPay Tax
+Generated timestamp: 2026-06-20T08:31:00-07:00
+Status: active
+Document code: PLC-OPS-061
+Subject: withholding import field map
+Field IDs: process.owner, queue.name, control.code, export.window
+
+The tax import file contains federal filing status, multiple jobs, dependent amount, other income, deductions, and extra withholding fields.
+The field map has separate columns for display label and normalized filing status code.
+Rows that use a vendor-specific display phrase remain in review until the code column is populated.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Queue movement
+Owner queue: IdentityLens Review
+Source packet marker: PLC-PAYROLLT-061
+Review window: 2026-06-17 08:26 PDT through 2026-06-18 17:46 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-PAYROLLT-061 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

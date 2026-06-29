@@ -1,0 +1,23 @@
+Source system: LedgerPay Preview
+Generated timestamp: 2026-06-12T08:40:00-07:00
+Status: active
+Document code: PLC-OPS-070
+Subject: payroll preview exception digest
+Field IDs: process.owner, queue.name, control.code, export.window
+
+The payroll preview digest lists workers whose profile, tax, or payment election data changed after the first preview.
+The digest is organized by exception code and owner queue.
+Exception rows include enough context for triage but are not a substitute for source exports.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Import observations
+Owner queue: PeopleBridge Data
+Source packet marker: PLC-IDENTITY-070
+Review window: 2026-06-26 08:35 PDT through 2026-06-27 17:20 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-IDENTITY-070 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

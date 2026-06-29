@@ -25,6 +25,8 @@ Current hardening docs:
   runner order controls, direct evidence cap behavior, and validation defaults.
 - `volume-noise-hardening/implementation-summary.md`: implementation status and
   validation/live-run notes for the 100-document volume packet.
+- `volume-noise-hardening/volume-v2-realistic-noise/`: v2 volume/noise corpus
+  notes for the more realistic 100-document distractor benchmark.
 
 ## Current PR Plan
 
@@ -51,6 +53,8 @@ interpretable.
 Treat volume/noise as its own difficulty family. Use `packet-hard-volume-v1`
 for 100-document long-context experiments instead of mutating `packet-medium`
 or stacking volume on ownership/conflict/required packets.
+Use `packet-hard-volume-v2` when the goal is stronger realistic distractor
+pressure rather than only long-context size/order smoke testing.
 
 ## Durable Decisions
 
@@ -96,6 +100,7 @@ Implemented corpora:
 | `packet-small` | 8 docs, about 6.5 KB | Plumbing and correctness slice. |
 | `packet-medium` | 30 docs, about 68 KB | Larger shared dossier with obvious stale and other-person distractors. |
 | `packet-hard-volume-v1` | 100 docs, validation report in corpus folder | Long-context volume/noise smoke test based on `packet-medium`; it reuses the same forms and is not yet a strong hard distractor benchmark. |
+| `packet-hard-volume-v2` | 100 docs, about 227 KB, validation report in corpus folder | Realistic volume/noise benchmark with 20 truth-bearing Maya docs plus 80 near-miss, operational, and broad process artifacts. |
 
 Implemented packet scenarios:
 
@@ -108,6 +113,9 @@ Implemented packet scenarios:
 - `maya-chen-newhire-i9-packet-hard-volume-v1`
 - `maya-chen-newhire-fw4-packet-hard-volume-v1`
 - `maya-chen-newhire-direct-deposit-packet-hard-volume-v1`
+- `maya-chen-newhire-i9-packet-hard-volume-v2`
+- `maya-chen-newhire-fw4-packet-hard-volume-v2`
+- `maya-chen-newhire-direct-deposit-packet-hard-volume-v2`
 
 ## Runner State
 

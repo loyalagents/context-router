@@ -1,0 +1,23 @@
+Source system: HarborHire Uploads
+Generated timestamp: 2026-06-13T08:41:00-07:00
+Status: active
+Document code: PLC-OPS-071
+Subject: document upload retry lane
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Upload retries preserve the original filename and assign a new ingestion id.
+The retry lane shows OCR status, human review status, and destination task id.
+Successful retries close the upload case but retain the failed attempt for audit.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Audit footer
+Owner queue: HarborDesk Routing
+Source packet marker: PLC-SUPPORTC-071
+Review window: 2026-06-27 08:36 PDT through 2026-06-28 17:21 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-SUPPORTC-071 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

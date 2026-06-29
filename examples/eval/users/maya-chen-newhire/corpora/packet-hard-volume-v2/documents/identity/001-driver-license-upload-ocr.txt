@@ -1,0 +1,100 @@
+// OCR SYSTEM EXPORT //
+// JOB: HH-UPL-MC-20418-MED
+// WORKER_ID: PLC-20418
+// SOURCE_TIMESTAMP: 2026-06-24T09:42:00-07:00
+// SOURCE_FILENAME: IMG_DL_F_20260624_094158.jpeg
+// OCR_ENGINE: VisionSys AI v4.8.2
+// OVERALL_CONFIDENCE: 92.8%
+// STATUS: EXTRACTION_COMPLETE_AWAITING_REVIEW
+// REVIEW_QUEUE: Identity Verification Queue
+
+--- PARSED KEY-VALUE PAIRS ---
+DOCUMENT_TYPE: DRIVER LICENSE (99.7%)
+ISSUING_STATE_CODE: CA (99.9%)
+ISSUING_STATE_NAME: CALIFORNIA (99.6%)
+LICENSE_NUMBER: D8440219 (93.8%)
+EXPIRATION_DATE: 02-22-2031 (98.5%)
+ISSUE_DATE: 05-15-2023 (97.9%)
+LAST_NAME: Chen (99.9%)
+FIRST_NAME: Maya (99.8%)
+MIDDLE_NAME: Lin (99.7%)
+FULL_NAME_DISPLAY: Maya Lin Chen (99.8%)
+ADDRESS_LINE_1: 2846 Ashbury Street (95.8%)
+ADDRESS_LINE_2: Apt 3D (94.2%)
+ADDRESS_CITY: Oakland (99.3%)
+ADDRESS_STATE: CA (99.9%)
+ADDRESS_ZIP: 94609 (99.6%)
+DATE_OF_BIRTH: 02-22-1991 (99.9%)
+SEX: F (99.4%)
+HAIR_COLOR: BLK (98.7%)
+EYE_COLOR: BRN (98.8%)
+HEIGHT: 5-05 (96.2%)
+WEIGHT: 125 (87.1%)
+CLASS: C (99.9%)
+ENDORSEMENTS: NONE (99.1%)
+RESTRICTIONS: NONE (99.2%)
+DD: 0/00/00000000/00 (68.2%) - [Low confidence, likely document security feature]
+REAL_ID_INDICATOR: YES (99.6%) - [Star symbol detected in upper right corner]
+REDCTION_STATUS: UNREDACTED (100.0%)
+
+--- RAW OCR TEXT BLOCKS (WITH COORDINATES) ---
+// Format: [x1, y1, x2, y2] "TEXT"
+[50, 55, 300, 75] "CALIFORNIA"
+[51, 80, 450, 110] "DRIVER LICENSE"
+
+[850, 50, 950, 70] "REAL ID"
+
+[55, 150, 250, 165] "DL D8440219"
+[56, 170, 280, 185] "EXP 02-22-2031"
+
+[54, 200, 200, 215] "LN Chen"
+[55, 220, 250, 235] "FN Maya Lin"
+[55, 250, 450, 265] "ADD 2846 Ashbury Street"
+[90, 270, 452, 285] "    Apt 3D"
+[90, 290, 451, 305] "    Oakland, CA 94609"
+
+[55, 320, 280, 335] "DOB 02-22-1991"
+
+[550, 200, 750, 215] "ISS 05-15-2023"
+[551, 230, 650, 245] "SEX F"
+[550, 250, 680, 265] "HGT 5-05"
+[552, 270, 690, 285] "WGT 125"
+[551, 290, 695, 305] "EYES BRN"
+[550, 310, 690, 325] "HAIR BLK"
+[55, 350, 200, 365] "RSTR NONE"
+[55, 370, 200, 385] "CLASS C"
+[55, 390, 200, 405] "END NONE"
+
+[55, 450, 300, 465] "FEDERAL LIMITS APPLY"
+
+[55, 500, 400, 515] "DD0/00/00000000/00"
+[55, 550, 250, 565] "M L CHEN"
+
+[55, 580, 800, 590] "SACRAMENTO CALIFORNIA DEPARTMENT OF MOTOR VEHICLES S A C R A M E N T O C A L I F O R N I"
+
+--- JSON EXPORT (SUMMARY) ---
+{
+  "documentType": "DRIVER_LICENSE",
+  "issuingState": "CA",
+  "status": "NEEDS_REVIEW",
+  "reviewNotes": "Confidence on weight (WGT) is below threshold (87.1% < 90%). Manual verification recommended. Confidence on license number is borderline (93.8%).",
+  "uploadBatchId": "HH-UPL-MC-20418-MED",
+  "workerId": "PLC-20418",
+  "sourceTimestamp": "2026-06-24T09:42:00-07:00",
+  "fields": [
+    {"key": "LAST_NAME", "value": "Chen", "confidence": 99.9},
+    {"key": "FIRST_NAME", "value": "Maya", "confidence": 99.8},
+    {"key": "MIDDLE_NAME", "value": "Lin", "confidence": 99.7},
+    {"key": "FULL_NAME", "value": "Maya Lin Chen", "confidence": 99.8},
+    {"key": "ADDRESS", "value": "2846 Ashbury Street, Apt 3D, Oakland, CA 94609", "confidence": 97.1},
+    {"key": "ADDRESS_LINE_1", "value": "2846 Ashbury Street", "confidence": 95.8},
+    {"key": "ADDRESS_LINE_2", "value": "Apt 3D", "confidence": 94.2},
+    {"key": "ADDRESS_CITY", "value": "Oakland", "confidence": 99.3},
+    {"key": "ADDRESS_STATE", "value": "CA", "confidence": 99.9},
+    {"key": "ADDRESS_ZIP", "value": "94609", "confidence": 99.6},
+    {"key": "DOB", "value": "1991-02-22", "confidence": 99.9, "parsed_format": "YYYY-MM-DD"},
+    {"key": "LICENSE_NUMBER", "value": "D8440219", "confidence": 93.8}
+  ]
+}
+
+// END OF EXPORT

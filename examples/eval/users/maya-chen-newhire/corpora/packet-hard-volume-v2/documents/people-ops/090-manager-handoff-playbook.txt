@@ -1,0 +1,23 @@
+Source system: People Operations
+Generated timestamp: 2026-06-15T08:20:00-07:00
+Status: active
+Document code: PLC-OPS-090
+Subject: Manager handoff playbook
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Managers receive a handoff when a new hire reaches profile-ready status.
+The playbook lists workspace setup, first-week meetings, and role-specific onboarding tasks.
+It keeps form completion details in the source systems rather than duplicating them.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Batch envelope
+Owner queue: HarborHire Data
+Source packet marker: PLC-PEOPLEOP-090
+Review window: 2026-06-10 08:10 PDT through 2026-06-11 17:40 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-PEOPLEOP-090 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

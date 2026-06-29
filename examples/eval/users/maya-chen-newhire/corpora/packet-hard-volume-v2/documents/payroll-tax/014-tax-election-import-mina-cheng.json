@@ -1,0 +1,49 @@
+{
+  "source_system": "LedgerPay",
+  "export_id": "LEDGERPAY-PLC-20481-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-20481",
+  "person": {
+    "legal_name": "Mina Cheng",
+    "personal_email": "mina.cheng@gmail.test",
+    "work_email": "mina.cheng@pacificledger.test",
+    "title": "Client Operations Analyst",
+    "start_date": "2026-07-06"
+  },
+  "topic": "federal withholding import",
+  "fields": {
+    "address_line": "2846 Asbury Street Apt 3B, Oakland, CA 94609",
+    "city_state_zip": "Oakland, CA 94609",
+    "ssn_last_four": "1407",
+    "tax_filing_status": "single or married filing separately"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-24T09:12:00-07:00",
+      "owner_queue": "PeopleBridge Data",
+      "status": "visible_in_archive"
+    },
+    {
+      "timestamp": "2026-06-25T16:40:00-07:00",
+      "owner_queue": "People Operations",
+      "status": "included_in_control_total"
+    }
+  ],
+  "control_observations": [
+    "The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.",
+    "Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.",
+    "The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.",
+    "A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.",
+    "Control total note: batch PLC-PAYROLLT-014 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.",
+    "Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage."
+  ],
+  "source_packet_marker": "PLC-PAYROLLT-014"
+}

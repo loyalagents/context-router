@@ -1,0 +1,5483 @@
+{
+  "schemaVersion": 2,
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-hard-volume-v2",
+  "seed": "maya-chen-newhire__packet-hard-volume-v2",
+  "corpusKind": "realistic-generated",
+  "forms": [
+    "i-9",
+    "fw4",
+    "direct-deposit-sf1199a-24"
+  ],
+  "purpose": "Hard volume/noise realistic new-hire packet corpus for exercising long-context retrieval and distractor resistance with less self-disqualifying, more operationally plausible near-miss evidence than packet-hard-volume-v1.",
+  "artifactWorld": {
+    "schemaVersion": 1,
+    "seed": "maya-chen-newhire__packet-hard-volume-v2",
+    "timeline": {
+      "identityUploadAt": "2026-06-24T09:42:00-07:00",
+      "ssnUploadAt": "2026-06-24T09:46:00-07:00",
+      "onboardingProfileExportAt": "2026-06-25T11:18:00-07:00",
+      "offerEmailSentAt": "2026-06-21T16:35:00-07:00",
+      "i9DraftSavedAt": "2026-06-25T13:04:00-07:00",
+      "w4SavedAt": "2026-06-25T13:28:00-07:00",
+      "directDepositSavedAt": "2026-06-26T10:12:00-07:00",
+      "bankLetterUploadedAt": "2026-06-26T09:52:00-07:00",
+      "voidedCheckUploadedAt": "2026-06-26T09:58:00-07:00",
+      "supportTicketAt": "2026-06-25T15:18:00-07:00",
+      "policyPublishedAt": "2026-06-01T08:00:00-07:00",
+      "staleRecruiterExportedAt": "2026-05-19T09:20:00-07:00",
+      "stalePayrollDraftAt": "2026-06-10T10:44:00-07:00",
+      "staleOnboardingExportAt": "2026-06-12T08:10:00-07:00"
+    },
+    "employer": {
+      "name": "Pacific Ledger Cooperative",
+      "onboardingSystem": "HarborHire",
+      "payrollSystem": "LedgerPay",
+      "hrCoordinator": "Priya Shah",
+      "payrollCoordinator": "North Bay Payroll Team",
+      "workerId": "PLC-20418",
+      "workEmail": "maya.chen@pacificledger.test"
+    },
+    "identityCapture": {
+      "uploadBatchId": "HH-UPL-MC-20418-MED",
+      "licenseImageName": "maya-chen-dl-front-packet-medium.png",
+      "ssnImageName": "maya-chen-ssn-card-packet-medium.png"
+    },
+    "banking": {
+      "institutionName": "Bay Harbor Credit Union",
+      "depositProfileId": "DD-MC-418-MED",
+      "portalExportId": "LP-DD-20418-MED"
+    },
+    "stale": {
+      "recruitingSystem": "HarborHire Recruiting Archive",
+      "oldAddress": "910 Juniper Avenue Apt 12, Berkeley, CA 94704",
+      "oldEmail": "maya.chen@oldmail.test",
+      "oldBank": "Harbor Neighborhood Bank",
+      "oldBankAccountEnding": "8821",
+      "oldTitle": "Operations Coordinator",
+      "oldStartDate": "2026-06-15"
+    },
+    "support": {
+      "hrDeskPhone": "510-555-0144",
+      "payrollDeskPhone": "510-555-0188",
+      "bankDeskPhone": "415-555-0133"
+    },
+    "volumeNoiseV2": {
+      "documentTarget": 100,
+      "baseCorpus": "packet-medium",
+      "truthBearingDocumentCount": 20,
+      "nearMissDocumentCount": 35,
+      "operationalDistractorCount": 25,
+      "broadArtifactCount": 20,
+      "design": "Preserve canonical Maya truth while replacing obvious filler with same-employer records, stale Maya archive rows, support cases, system exports, policy artifacts, and vendor process notes.",
+      "nonMayaPersonas": [
+        {
+          "name": "Mina Cheng",
+          "worker": "PLC-20481",
+          "title": "Client Operations Analyst"
+        },
+        {
+          "name": "Maia Chinn",
+          "worker": "PLC-20419",
+          "title": "Client Operations Associate"
+        },
+        {
+          "name": "Naya Lin",
+          "worker": "PLC-20318",
+          "title": "People Operations Associate"
+        },
+        {
+          "name": "Mara Chin",
+          "worker": "PLC-20428",
+          "title": "Client Success Associate"
+        },
+        {
+          "name": "Maya Patel",
+          "worker": "PLC-19418",
+          "title": "Operations Coordinator"
+        },
+        {
+          "name": "Rina Chow",
+          "worker": "PLC-20518",
+          "title": "Client Operations Associate"
+        },
+        {
+          "name": "Mila Crane",
+          "worker": "PLC-20408",
+          "title": "Client Operations Associate"
+        },
+        {
+          "name": "Jules Carter",
+          "worker": "PLC-19877",
+          "title": "Payroll Support Specialist"
+        },
+        {
+          "name": "Niko Torres",
+          "worker": "PLC-20741",
+          "title": "Compliance Assistant"
+        },
+        {
+          "name": "Priya Shah",
+          "worker": "PLC-18804",
+          "title": "HR Coordinator"
+        }
+      ]
+    },
+    "nearbyPeople": {
+      "employeeName": "Jordan Avery",
+      "workerId": "PLC-SAMPLE-771",
+      "secondEmployeeName": "Riley Park",
+      "secondWorkerId": "PLC-SAMPLE-884"
+    }
+  },
+  "factContractDefaults": {
+    "forbid": [
+      "contact.phone"
+    ]
+  },
+  "intentionallyMissing": [
+    {
+      "factKey": "contact.phone",
+      "forms": [
+        "i-9",
+        "direct-deposit-sf1199a-24"
+      ],
+      "reason": "Maya packet-hard-volume-v2 keeps contact.phone null while introducing clearly attributable support, employer, stale, and nearby-person phone distractors.",
+      "expectedBehavior": "Leave phone fields blank; do not borrow support, bank, employer, stale, or other-person phone numbers.",
+      "withheldValue": "415-555-0109"
+    }
+  ],
+  "documents": [
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-001",
+      "path": "documents/identity/001-driver-license-upload-ocr.txt",
+      "category": "identity",
+      "title": "Driver License Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-identity-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp",
+          "upload batch id"
+        ],
+        "safeDetailMenu": [
+          "document type",
+          "issuing state",
+          "redaction status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1806,
+          "maxChars": 3206
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.dateOfBirth",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "address-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-002",
+      "path": "documents/identity/002-ssn-card-upload-ocr.txt",
+      "category": "identity",
+      "title": "SSN Card Upload OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "uploaded-identity-ocr-transcript",
+        "sourceFamily": "identity",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "identityUploadAt"
+        ],
+        "worldRefs": [
+          "identityCapture.uploadBatchId",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp",
+          "upload batch id"
+        ],
+        "safeDetailMenu": [
+          "document type",
+          "issuing state",
+          "redaction status",
+          "review queue"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1424,
+          "maxChars": 2824
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "identity-evidence",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-003",
+      "path": "documents/identity/003-identity-verification-note.txt",
+      "category": "identity",
+      "title": "Identity Verification Intake Note",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "identity",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "identity verification evidence only: split name fields, date of birth, SSN, verification status, reviewer metadata, field ids, and source audit metadata",
+          "include only the identity verification task or record; omit sibling onboarding tasks entirely, even as null, pending, not_started, blocked, or prerequisite rows"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9, W-4, tax withholding, direct deposit, background check, employment eligibility, completed onboarding, approved workflow, or cleared status sections",
+          "sibling onboarding task inventory rows for I-9, W-4, tax withholding, direct deposit, background check, or employment eligibility",
+          "completed or approved statuses for target form workflows that are outside the identity verification fact contract"
+        ],
+        "lengthTarget": {
+          "minChars": 1674,
+          "maxChars": 3074
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.middleInitial",
+          "identity.lastName",
+          "identity.dateOfBirth",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "identity-evidence",
+          "split-name",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-004",
+      "path": "documents/work-authorization/004-i9-section-one-draft-export.yaml",
+      "category": "work-authorization",
+      "title": "I-9 Section One Draft Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "Section 1 employee-entered fields only; Section 2, employer certification, document inspection, employer business name, employer business address, employer representative, employer contact fields, and first-day fields should be pending, null, not_started, or omitted unless exact source context provides them",
+          "employee telephone number should use a native blank/null value because no current user phone is provided",
+          "audit metadata may describe Section 1 drafting or export events but must not imply completed employer review or certification"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "invented employee_first_day_of_employment, employer certification date, employer business name, employer business address, employer representative, employer contact fields, Section 2 document inspection values, or completed reviewer attestation",
+          "current job title, department, hire date, or employment start date values unless present in required person details or allowed source context"
+        ],
+        "lengthTarget": {
+          "minChars": 1925,
+          "maxChars": 3325
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.dateOfBirth",
+          "identity.ssn",
+          "address.current.street",
+          "address.current.unit",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "contact.email",
+          "workAuthorization.citizenshipStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "i9-draft",
+          "work-authorization",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-005",
+      "path": "documents/work-authorization/005-work-authorization-intake-field-export.txt",
+      "category": "work-authorization",
+      "title": "Work Authorization Intake Field Export",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "work-authorization",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "work authorization intake field export may include the included legal name and citizenship status plus neutral profile/export metadata",
+          "if signature, signed-date, Section 2 certification, or completion fields are native to the source shape, leave them blank, null, omitted, or pending rather than filled",
+          "this source is not an I-9 task, checklist, or completion record; it may include only legal name, citizenship status, worker id, field ids, neutral export metadata, and non-lifecycle review routing metadata",
+          "YAML-like export text should use fields and note values, not # comments"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "Section 1 completion, employee signature, signature method, signed date, completion timestamp, section1_complete audit events, employer certification, Section 2 completion, I-9 completed, onboarding complete, completed W-4, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts"
+        ],
+        "lengthTarget": {
+          "minChars": 1587,
+          "maxChars": 2987
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "workAuthorization.citizenshipStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "work-authorization",
+          "citizenship-status"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-006",
+      "path": "documents/hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "category": "hr-onboarding",
+      "title": "HR Onboarding Profile Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "HR profile may include included identity, contact, address, and employment facts plus neutral profile/export metadata",
+          "workflow or task summaries may appear only as pending or in-progress shell metadata; do not assert completed I-9, W-4, direct-deposit, benefits, or onboarding-complete lifecycle facts unless those facts are included"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "onboarding complete, profile approved, completed W-4, completed I-9, completed direct deposit, validated bank account, benefits completed, or checklist completion claims outside the included facts"
+        ],
+        "lengthTarget": {
+          "minChars": 2020,
+          "maxChars": 3420
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.middleInitial",
+          "identity.legalName",
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "employment.company",
+          "employment.title",
+          "employment.startDate"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "hr-profile",
+          "shared-facts",
+          "address-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-007",
+      "path": "documents/hr-onboarding/007-employee-self-service-profile.json",
+      "category": "hr-onboarding",
+      "title": "Employee Self-Service Profile Export",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "json-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "employee self-service profile may include included legal name, email, address, and neutral profile/export metadata",
+          "omit onboarding task inventories and compliance workflow history; if a native self-service profile includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion"
+        ],
+        "lengthTarget": {
+          "minChars": 1721,
+          "maxChars": 3121
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employee-profile",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-008",
+      "path": "documents/hr-onboarding/008-onboarding-assignment-export.yaml",
+      "category": "hr-onboarding",
+      "title": "Onboarding Assignment Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1756,
+          "maxChars": 3156
+        }
+      },
+      "factContract": {
+        "include": [
+          "employment.company",
+          "employment.title",
+          "employment.startDate"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "employment-context",
+          "worker-id"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-009",
+      "path": "documents/employer-context/009-offer-email.txt",
+      "category": "employer-context",
+      "title": "Offer Email Export",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "email-message",
+        "sourceFamily": "employer-context",
+        "captureMode": "plain-text-email-export",
+        "timelineRefs": [
+          "offerEmailSentAt"
+        ],
+        "worldRefs": [
+          "employer.hrCoordinator",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "from header",
+          "to header",
+          "date header",
+          "subject header",
+          "signature block"
+        ],
+        "safeDetailMenu": [
+          "message id",
+          "sender",
+          "recipient",
+          "thread status",
+          "recipient may use Maya's legal name with a redacted, omitted, or name-only email address because current personal email is not included for this source"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated tax data",
+          "signature attestation",
+          "invented user recipient email address such as maya.l.chen@email.com; do not invent Maya's personal email for the To field"
+        ],
+        "lengthTarget": {
+          "minChars": 1978,
+          "maxChars": 3378
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "employment.company",
+          "employment.title",
+          "employment.startDate",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "offer-email",
+          "employment-context"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-010",
+      "path": "documents/employer-context/010-company-directory-profile.yaml",
+      "category": "employer-context",
+      "title": "Company Directory Profile",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "company directory profile may include included name, company, title, work email, directory provisioning metadata, and neutral audit metadata",
+          "omit onboarding task inventories and compliance workflow history; if a native directory export includes workflow shell metadata, keep I-9, W-4, direct-deposit, benefits, and onboarding-completion statuses absent, pending, or not_started only"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "I-9 completed, W-4 completed, direct deposit completed, onboarding completed, completed_at timestamps for target workflows, or audit changes claiming target workflow completion"
+        ],
+        "lengthTarget": {
+          "minChars": 1630,
+          "maxChars": 3030
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "employment.title",
+          "employment.company",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "company-directory",
+          "work-email-vs-personal-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-011",
+      "path": "documents/payroll-tax/011-w4-withholding-setup-export.yaml",
+      "category": "payroll-tax",
+      "title": "W-4 Withholding Setup Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4SavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "employer.payrollCoordinator"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "payroll export id",
+          "employee self-service saved timestamp",
+          "review queue",
+          "field ids mapped to W-4 Step 1",
+          "field-level validation statuses",
+          "temporal bounds: submitted_at and the primary artifact timestamp should use w4SavedAt when present; incidental operational timestamps may be plausible same-day pending-review metadata but must not imply approval, activation, or completed review",
+          "state bounds: artifact state is saved/submitted and pending payroll review; future work may appear only as pending_action or next_step, not as completed approved, activated, or reviewed log rows",
+          "status history may include saved/submitted and routing-to-review rows, but not completed review or approval rows unless exact source context provides them",
+          "reviewer note explaining optional W-4 sections were not imported in this export without implying false, zero, no, unchecked, or no-additional-withholding values",
+          "optional field bounds: if W-4 Step 2, Step 3, or Step 4 fields appear, each optional field must be null, blank, not_imported, or omitted rather than a factual default"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "values for W-4 Step 2, Step 3, or Step 4 unless present in required person details",
+          "false, 0, $0, no, none, unchecked, standard election, or no additional withholding values for optional W-4 fields not present in required person details",
+          "approved, activated, reviewed, next payroll cycle, next_business_day completed rows, or future completed payroll events",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
+        ],
+        "lengthTarget": {
+          "minChars": 450,
+          "maxChars": 3446
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.firstName",
+          "identity.lastName",
+          "identity.ssn",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "tax.filingStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "w4-setup",
+          "tax-election"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-012",
+      "path": "documents/payroll-tax/012-payroll-tax-profile.json",
+      "category": "payroll-tax",
+      "title": "Payroll Tax Profile Export",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "json-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "tax.filingStatus is the only W-4 election value included for this source; include the exact filing-status text from Required person details in a native field",
+          "prefer omitting optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, and state withholding sections entirely; if native shape requires them, use only silent null, blank, or not_imported fields without explanatory notes",
+          "omit state withholding profile sections unless they can remain empty metadata with no not_configured, default, fallback, calculation, or first-payroll-cycle prose"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "state DE 4 allowance counts, additional allowance counts, or additional withholding amounts unless present in required person details",
+          "default withholding calculations such as Single, 0 allowances, even in validation notes, reviewer notes, warnings, or explanatory prose",
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard calculation, standard system assumptions, default withholding, state withholding not_configured, pending employee confirmation, or first payroll cycle fallback prose"
+        ],
+        "lengthTarget": {
+          "minChars": 1798,
+          "maxChars": 3198
+        }
+      },
+      "factContract": {
+        "include": [
+          "tax.filingStatus"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "tax-profile",
+          "w4-flags"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-013",
+      "path": "documents/payroll-tax/013-w4-review-note.txt",
+      "category": "payroll-tax",
+      "title": "W-4 Review Note",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "w4SavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "review note for worker PLC-20418 only; use worker id and included SSN, and omit legal-name fields because no current name fact is included for this source",
+          "tax.filingStatus is the only W-4 election value included for this source",
+          "primary artifact timestamp fields such as export_timestamp, created_at, submitted_at, generated_at, or source_timestamp should use w4SavedAt exactly or be omitted",
+          "review lifecycle should stay pending or needs_review at w4SavedAt; omit completed review, approved, active-in-payroll, system-update-success, or post-submission status events",
+          "optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, and local withholding fields may appear only as null, blank, not_imported, or omitted",
+          "review notes may describe payroll review of the included filing status and may say optional election fields were not_imported in this export, but must not imply no, none, false, zero, unchecked, standard, not present, not included, not detected, no changes, or default elections",
+          "YAML-like review text should use fields and note values, not # comments; do not explain omitted optional fields as absent in prose",
+          "do not include next-step instructions that ask a reviewer to verify withholding calculations, apply standard assumptions, activate withholding, or mark review_completed"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "any person name other than Maya Chen; invented names such as Marina Serrano, John Smith, Jane Doe, or nearby-person names",
+          "false, 0, 0.00, $0, no, none, unchecked, standard election, no additional withholding, exempt false, or nonresident false values for optional W-4 fields",
+          "prose that says optional W-4 Step 2, Step 3, Step 4, exempt, nonresident, state, or local elections were not detected, not present, not included, no changes, absent, none, zero, or not selected",
+          "review_completed, approved, cleared, active_in_payroll, system_update_success, review completion timestamps, or any lifecycle event after w4SavedAt",
+          "state DE 4 allowance counts, additional allowance counts, extra withholding amounts, local withholding assertions, or default withholding calculations such as Single with 0 allowances",
+          "completed validation notes that convert absent optional fields into factual defaults",
+          "standard system assumptions, standard calculation, default withholding, active after review, verify withholding calculation, mark review_completed, or manual review should confirm setup prose"
+        ],
+        "lengthTarget": {
+          "minChars": 1624,
+          "maxChars": 3024
+        }
+      },
+      "factContract": {
+        "include": [
+          "tax.filingStatus",
+          "identity.ssn"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "w4-review",
+          "sensitive-identifier"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-014",
+      "path": "documents/payroll-tax/014-tax-election-import-mina-cheng.json",
+      "category": "payroll-tax",
+      "title": "Tax Election Import Mina Cheng",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "json-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1771,
+          "maxChars": 2971
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "tax-overlap",
+          "same-employer"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-015",
+      "path": "documents/work-authorization/015-section-one-intake-maia-chinn.yaml",
+      "category": "work-authorization",
+      "title": "Section One Intake Maia Chinn",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "yaml-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1596,
+          "maxChars": 2796
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "i9-overlap",
+          "name-similarity"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-016",
+      "path": "documents/payroll-tax/016-direct-deposit-confirmation.yaml",
+      "category": "payroll-tax",
+      "title": "Direct Deposit Confirmation",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "directDepositSavedAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId",
+          "banking.depositProfileId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "direct-deposit profile details only: deposit profile id, account holder, institution, account type, routing/account numbers, verification status, allocation, and payroll-system audit metadata",
+          "artifact should be a direct-deposit confirmation export, not a broad worker profile snapshot",
+          "worker identity may be limited to worker id and included name/address facts; omit employment, tax, work-authorization, W-4, and I-9 sections entirely",
+          "review notes may discuss direct-deposit verification only; do not mention W-4, I-9, tax withholding, work authorization, job, department, hire-date, or employment-status facts"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "invented current job title, department, hire date, employment status, or employment start date",
+          "worker profile snapshot, employmentProfile, taxWithholding, workAuthorization, W-4 status, I-9 verification status, onboarding completion date, compliance reviewer, or other profile sections outside the direct-deposit setup",
+          "default tax withholding prose, pending tax setup prose, pending I-9 prose, or any statement about how the employee will be taxed",
+          "banking values that differ from required person details"
+        ],
+        "lengthTarget": {
+          "minChars": 2364,
+          "maxChars": 3764
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.streetLine",
+          "address.current.city",
+          "address.current.state",
+          "address.current.postalCode",
+          "banking.accountHolderName",
+          "banking.institutionName",
+          "banking.accountType",
+          "banking.routingNumber",
+          "banking.accountNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "hero",
+        "authority": "high",
+        "freshness": "current",
+        "expectedUse": "extract",
+        "challengeTags": [
+          "direct-deposit",
+          "banking-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-017",
+      "path": "documents/payroll-tax/017-bank-verification-letter-ocr.txt",
+      "category": "payroll-tax",
+      "title": "Bank Verification Letter OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "bank-verification-letter-ocr",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "bankLetterUploadedAt"
+        ],
+        "worldRefs": [
+          "banking.institutionName",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp"
+        ],
+        "safeDetailMenu": [
+          "institution name",
+          "account holder",
+          "account type"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated account",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1935,
+          "maxChars": 3335
+        }
+      },
+      "factContract": {
+        "include": [
+          "banking.accountHolderName",
+          "banking.institutionName",
+          "banking.routingNumber",
+          "banking.accountNumber",
+          "banking.accountType"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "bank-letter",
+          "banking-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-018",
+      "path": "documents/payroll-tax/018-voided-check-ocr.txt",
+      "category": "payroll-tax",
+      "title": "Voided Check OCR",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "voided-check-ocr",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "plain-text-ocr-export",
+        "timelineRefs": [
+          "voidedCheckUploadedAt"
+        ],
+        "worldRefs": [
+          "banking.institutionName",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "status",
+          "timestamp"
+        ],
+        "safeDetailMenu": [
+          "void stamp",
+          "routing line",
+          "account holder"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated account",
+          "signature attestation"
+        ],
+        "lengthTarget": {
+          "minChars": 1797,
+          "maxChars": 3197
+        }
+      },
+      "factContract": {
+        "include": [
+          "banking.accountHolderName",
+          "banking.routingNumber",
+          "banking.accountNumber"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "voided-check",
+          "banking-evidence"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-019",
+      "path": "documents/banking-ops/019-prenote-review-naya-lin.txt",
+      "category": "payroll-tax",
+      "title": "Prenote Review Naya Lin",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "ticket-transcript",
+        "nativeSignals": [
+          "ticket id",
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1739,
+          "maxChars": 2939
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "banking-overlap",
+          "same-employer"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-020",
+      "path": "documents/banking-ops/020-bank-letter-ocr-mara-chin.txt",
+      "category": "payroll-tax",
+      "title": "Bank Letter OCR Mara Chin",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "plain-text-ocr-export",
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "upload batch id",
+          "timestamp",
+          "status",
+          "worker id"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1330,
+          "maxChars": 2530
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "banking-overlap",
+          "ocr"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-021",
+      "path": "documents/employer-context/021-benefits-enrollment-profile.yaml",
+      "category": "employer-context",
+      "title": "Benefits Enrollment Profile",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "benefits enrollment profile may include included identity, address, contact email, enrollment window, benefits-plan metadata, and neutral export metadata",
+          "omit tax withholding, direct-deposit, payment-election, broad onboarding checklist, and default benefits-election statuses unless those facts are included"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "tax withholding sections, direct-deposit sections, payment election status, not_configured banking status, not_submitted tax status, waived_default benefits elections, not_enrolled benefits defaults, or broad worker profile snapshots"
+        ],
+        "lengthTarget": {
+          "minChars": 1844,
+          "maxChars": 3244
+        }
+      },
+      "factContract": {
+        "include": [
+          "identity.legalName",
+          "address.current.streetLine",
+          "address.current.cityStateZip",
+          "contact.email"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "benefits-profile",
+          "shared-facts"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-022",
+      "path": "documents/employer-context/022-payroll-preview-export.yaml",
+      "category": "employer-context",
+      "title": "Payroll Preview Export",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "employer-context",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.payrollSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "payroll preview may include the included employment.company and employment.title values exactly",
+          "use worker id for person identity; omit employee name, work email, hire date, service date, start date, tax elections, and direct-deposit status unless those facts are included",
+          "keep this as a narrow payroll preview shell: worker id, company, job title, preview run metadata, empty earnings/deductions/taxes arrays if native to the export, and audit rows about preview generation",
+          "omit validation-summary, readiness-check, onboarding-checklist, personal-information, contact, tax-withholding, direct-deposit, compensation, and broad worker-profile sections entirely",
+          "omitted workflow facts must be omitted, not represented as missing, blocked, not on file, unconfigured, pending employee action, or calculation blockers"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "invented employee name, alternate person identity, work email, personal email, hire date, service date, start date, tax elections, direct deposit status, or payroll account details",
+          "wrong-person values such as John Smith, j.smith, Marina Serrano, Jane Doe, or nearby-person names",
+          "validation_summary sections, readiness checks, onboarding checklist ids, pending employee action statuses, default payroll/tax/banking fallback prose, employment status values, taxWithholding sections, directDeposit sections, personalInformation sections, contactInformation sections, compensation sections, or broad worker profile snapshots",
+          "employment dates that differ from required person details or allowed source context"
+        ],
+        "lengthTarget": {
+          "minChars": 1510,
+          "maxChars": 2910
+        }
+      },
+      "factContract": {
+        "include": [
+          "employment.company",
+          "employment.title"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "payroll-preview",
+          "employment-context"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-023",
+      "path": "documents/hr-onboarding/023-onboarding-support-ticket.txt",
+      "category": "hr-onboarding",
+      "title": "Onboarding Support Ticket",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "support-ticket-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "plain-text-ticket-export",
+        "timelineRefs": [
+          "supportTicketAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId",
+          "support.hrDeskPhone"
+        ],
+        "nativeSignals": [
+          "source system",
+          "ticket id",
+          "status",
+          "timestamp",
+          "reviewer note"
+        ],
+        "safeDetailMenu": [
+          "ticket status",
+          "queue",
+          "assignee",
+          "requester",
+          "activity log with two or three updates; use supportTicketAt for ticket creation when present, and allow plausible same-day or next-business-day operational timing only if it does not create competing target form facts",
+          "field correction summary",
+          "resolution note",
+          "internal note that support desk phone numbers are contact-channel metadata, not Maya's phone; if an exact support number is included, use support.hrDeskPhone",
+          "generic prior-value labels without inventing explicit old address or email values"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated identifier",
+          "legal attestation",
+          "specific old incorrect address or email values not present in allowed source context",
+          "generic source note, audit note, or handling note filler",
+          "repeated prose added only to satisfy length"
+        ],
+        "lengthTarget": {
+          "minChars": 500,
+          "maxChars": 3406
+        }
+      },
+      "factContract": {
+        "include": [
+          "contact.email",
+          "address.current.streetLine",
+          "address.current.cityStateZip"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "support-ticket",
+          "address-evidence",
+          "phone-distractor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-024",
+      "path": "documents/hr-onboarding/024-employee-profile-audit-log.txt",
+      "category": "hr-onboarding",
+      "title": "Employee Profile Audit Log",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "system-export",
+        "sourceFamily": "hr-onboarding",
+        "captureMode": "yaml-system-export",
+        "timelineRefs": [
+          "onboardingProfileExportAt"
+        ],
+        "worldRefs": [
+          "employer.onboardingSystem",
+          "employer.workerId"
+        ],
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "worker id",
+          "field ids",
+          "status"
+        ],
+        "safeDetailMenu": [
+          "profile status",
+          "reviewer assigned",
+          "field ids",
+          "audit metadata",
+          "audit log should focus on included personal email and work email profile events plus neutral export/audit metadata",
+          "omit unrelated document checklist history, I-9/W-4/direct-deposit lifecycle events, onboarding-complete status, and profile approval events"
+        ],
+        "riskyDetailMenu": [
+          "new user phone number",
+          "unrelated bank data",
+          "signature attestation",
+          "onboarding completed, profile approved, I-9 completed, W-4 completed, direct deposit not submitted, direct deposit completed, document checklist status, or broad onboarding lifecycle history"
+        ],
+        "lengthTarget": {
+          "minChars": 1538,
+          "maxChars": 2938
+        }
+      },
+      "factContract": {
+        "include": [
+          "contact.email",
+          "employment.workEmail"
+        ],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "medium",
+        "freshness": "current",
+        "expectedUse": "corroborate",
+        "challengeTags": [
+          "audit-log",
+          "work-email-vs-personal-email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-025",
+      "path": "documents/archive/025-maya-recruiter-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya recruiter History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1293,
+          "maxChars": 2493
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "recruiter-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-026",
+      "path": "documents/archive/026-maya-bank-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya bank History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1265,
+          "maxChars": 2465
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "bank-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-027",
+      "path": "documents/archive/027-maya-address-history.yaml",
+      "category": "partial-conflicting",
+      "title": "Maya address History",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1333,
+          "maxChars": 2533
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "address-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-028",
+      "path": "documents/archive/028-maya-tax-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya tax History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1130,
+          "maxChars": 2330
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "tax-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-029",
+      "path": "documents/archive/029-maya-workauth-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya workauth History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1131,
+          "maxChars": 2331
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "workauth-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-030",
+      "path": "documents/archive/030-maya-recruiter-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya recruiter History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1292,
+          "maxChars": 2492
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "recruiter-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-031",
+      "path": "documents/archive/031-maya-bank-history.txt",
+      "category": "partial-conflicting",
+      "title": "Maya bank History",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "archived-current-user-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "archive-or-return-record",
+        "nativeSignals": [
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "former value",
+          "archive status",
+          "reviewer note",
+          "source transaction id"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1266,
+          "maxChars": 2466
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "stale",
+        "expectedUse": "guardrail",
+        "challengeTags": [
+          "near-miss",
+          "stale-current-user",
+          "bank-overlap"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-032",
+      "path": "documents/people-records/032-prehire-profile-maya-patel.json",
+      "category": "hr-onboarding",
+      "title": "Prehire Profile Maya Patel",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "json-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1773,
+          "maxChars": 2973
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "json"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-033",
+      "path": "documents/hris-audit/033-address-sync-rina-chow.yaml",
+      "category": "hr-onboarding",
+      "title": "Address Sync Rina Chow",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "yaml-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1611,
+          "maxChars": 2811
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "yaml"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-034",
+      "path": "documents/support-cases/034-directory-name-case-mila-crane.txt",
+      "category": "hr-onboarding",
+      "title": "Directory Name Case Mila Crane",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "ticket-transcript",
+        "nativeSignals": [
+          "ticket id",
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1716,
+          "maxChars": 2916
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ticket"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-035",
+      "path": "documents/communications/035-payroll-onboarding-jules-carter.txt",
+      "category": "employer-context",
+      "title": "Payroll Onboarding Jules Carter",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "email-export",
+        "nativeSignals": [
+          "from header",
+          "to header",
+          "date header",
+          "subject header",
+          "footer"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1660,
+          "maxChars": 2860
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-036",
+      "path": "documents/hris-audit/036-profile-change-niko-torres.txt",
+      "category": "hr-onboarding",
+      "title": "Profile Change Niko Torres",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "audit-log-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1592,
+          "maxChars": 2792
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-037",
+      "path": "documents/payroll-ops/037-tax-batch-mina-cheng.txt",
+      "category": "payroll-tax",
+      "title": "Tax Batch Mina Cheng",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "csv-like-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1201,
+          "maxChars": 2401
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "csv"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-038",
+      "path": "documents/identity-vendor/038-id-card-maia-chinn.txt",
+      "category": "identity",
+      "title": "ID Card Maia Chinn",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "plain-text-ocr-export",
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "upload batch id",
+          "timestamp",
+          "status",
+          "worker id"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1254,
+          "maxChars": 2454
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ocr"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-039",
+      "path": "documents/banking-ops/039-account-election-naya-lin.json",
+      "category": "payroll-tax",
+      "title": "Account Election Naya Lin",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "json-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1762,
+          "maxChars": 2962
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "json"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-040",
+      "path": "documents/payroll-tax/040-withholding-review-mara-chin.yaml",
+      "category": "payroll-tax",
+      "title": "Withholding Review Mara Chin",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "yaml-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1612,
+          "maxChars": 2812
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "yaml"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-041",
+      "path": "documents/support-cases/041-start-date-case-maya-patel.txt",
+      "category": "hr-onboarding",
+      "title": "Start Date Case Maya Patel",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "ticket-transcript",
+        "nativeSignals": [
+          "ticket id",
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1725,
+          "maxChars": 2925
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ticket"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-042",
+      "path": "documents/communications/042-address-review-rina-chow.txt",
+      "category": "employer-context",
+      "title": "Address Review Rina Chow",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "email-export",
+        "nativeSignals": [
+          "from header",
+          "to header",
+          "date header",
+          "subject header",
+          "footer"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1649,
+          "maxChars": 2849
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-043",
+      "path": "documents/hris-audit/043-bank-label-mila-crane.txt",
+      "category": "hr-onboarding",
+      "title": "Bank Label Mila Crane",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "audit-log-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1591,
+          "maxChars": 2791
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-044",
+      "path": "documents/payroll-ops/044-worker-crosswalk-jules-carter.txt",
+      "category": "payroll-tax",
+      "title": "Worker Crosswalk Jules Carter",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "csv-like-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1187,
+          "maxChars": 2387
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "csv"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-045",
+      "path": "documents/work-authorization/045-i9-id-scan-niko-torres.txt",
+      "category": "work-authorization",
+      "title": "I9 ID Scan Niko Torres",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "plain-text-ocr-export",
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "upload batch id",
+          "timestamp",
+          "status",
+          "worker id"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1238,
+          "maxChars": 2438
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ocr"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-046",
+      "path": "documents/people-records/046-coordinator-profile-priya-shah.json",
+      "category": "hr-onboarding",
+      "title": "Coordinator Profile Priya Shah",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "json-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1768,
+          "maxChars": 2968
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "json"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-047",
+      "path": "documents/banking-ops/047-ach-prenote-mina-cheng.yaml",
+      "category": "payroll-tax",
+      "title": "ACH Prenote Mina Cheng",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "yaml-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1611,
+          "maxChars": 2811
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "yaml"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-048",
+      "path": "documents/support-cases/048-tax-status-case-maia-chinn.txt",
+      "category": "hr-onboarding",
+      "title": "Tax Status Case Maia Chinn",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "ticket-transcript",
+        "nativeSignals": [
+          "ticket id",
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1720,
+          "maxChars": 2920
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ticket"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-049",
+      "path": "documents/communications/049-i9-reminder-naya-lin.txt",
+      "category": "employer-context",
+      "title": "I9 Reminder Naya Lin",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "email-export",
+        "nativeSignals": [
+          "from header",
+          "to header",
+          "date header",
+          "subject header",
+          "footer"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1621,
+          "maxChars": 2821
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "email"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-050",
+      "path": "documents/hris-audit/050-address-token-mara-chin.txt",
+      "category": "hr-onboarding",
+      "title": "Address Token Mara Chin",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "audit-log-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1584,
+          "maxChars": 2784
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-051",
+      "path": "documents/payroll-tax/051-w4-review-maya-patel.txt",
+      "category": "payroll-tax",
+      "title": "W4 Review Maya Patel",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "csv-like-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1196,
+          "maxChars": 2396
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "csv"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-052",
+      "path": "documents/banking-ops/052-voided-check-rina-chow.txt",
+      "category": "payroll-tax",
+      "title": "Voided Check Rina Chow",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "plain-text-ocr-export",
+        "nativeSignals": [
+          "source filename",
+          "OCR confidence",
+          "upload batch id",
+          "timestamp",
+          "status",
+          "worker id"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1241,
+          "maxChars": 2441
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ocr"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-053",
+      "path": "documents/people-records/053-onboarding-profile-mila-crane.json",
+      "category": "hr-onboarding",
+      "title": "Onboarding Profile Mila Crane",
+      "outputExtension": "json",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "json-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1782,
+          "maxChars": 2982
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "json"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-054",
+      "path": "documents/work-authorization/054-eligibility-intake-jules-carter.yaml",
+      "category": "work-authorization",
+      "title": "Eligibility Intake Jules Carter",
+      "outputExtension": "yaml",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "yaml-system-export",
+        "nativeSignals": [
+          "source system",
+          "exported timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1601,
+          "maxChars": 2801
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "yaml"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-055",
+      "path": "documents/support-cases/055-account-type-case-niko-torres.txt",
+      "category": "hr-onboarding",
+      "title": "Account Type Case Niko Torres",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "nearby-employee-source-artifact",
+        "sourceFamily": "people-operations",
+        "captureMode": "ticket-transcript",
+        "nativeSignals": [
+          "ticket id",
+          "source system",
+          "timestamp",
+          "status",
+          "worker id",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system metadata",
+          "worker id",
+          "status",
+          "field ids",
+          "export timestamp"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1734,
+          "maxChars": 2934
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "low",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "near-miss",
+          "same-employer",
+          "ticket"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-056",
+      "path": "documents/payroll-ops/056-payroll-import-exception-queue.txt",
+      "category": "payroll-tax",
+      "title": "Payroll Import Exception Queue",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1429,
+          "maxChars": 2629
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-057",
+      "path": "documents/people-ops/057-new-hire-cohort-lock-calendar.txt",
+      "category": "employer-context",
+      "title": "New Hire Cohort Lock Calendar",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1350,
+          "maxChars": 2550
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-058",
+      "path": "documents/banking-ops/058-ach-prenote-result-handling.txt",
+      "category": "payroll-tax",
+      "title": "ACH Prenote Result Handling",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "banking-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1334,
+          "maxChars": 2534
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "banking-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-059",
+      "path": "documents/work-authorization/059-i-9-assisted-intake-branch-cleanup.txt",
+      "category": "work-authorization",
+      "title": "I-9 Assisted Intake Branch Cleanup",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "work-authorization",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1344,
+          "maxChars": 2544
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "work-authorization"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-060",
+      "path": "documents/hris-audit/060-address-normalization-nightly-job.txt",
+      "category": "hr-onboarding",
+      "title": "Address Normalization Nightly Job",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "hris-audit",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1347,
+          "maxChars": 2547
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "hris-audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-061",
+      "path": "documents/payroll-tax/061-withholding-import-field-map.txt",
+      "category": "payroll-tax",
+      "title": "Withholding Import Field Map",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1356,
+          "maxChars": 2556
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-tax"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-062",
+      "path": "documents/identity-vendor/062-identity-document-ocr-routing.txt",
+      "category": "identity",
+      "title": "Identity Document OCR Routing",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "identity-vendor",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1319,
+          "maxChars": 2519
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "identity-vendor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-063",
+      "path": "documents/support-cases/063-support-case-merge-procedure.txt",
+      "category": "hr-onboarding",
+      "title": "Support Case Merge Procedure",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "support-cases",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1262,
+          "maxChars": 2462
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "support-cases"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-064",
+      "path": "documents/payroll-ops/064-directory-profile-display-names.txt",
+      "category": "payroll-tax",
+      "title": "Directory Profile Display Names",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1319,
+          "maxChars": 2519
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-065",
+      "path": "documents/people-ops/065-bank-product-label-normalization.txt",
+      "category": "employer-context",
+      "title": "Bank Product Label Normalization",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1301,
+          "maxChars": 2501
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-066",
+      "path": "documents/banking-ops/066-onboarding-assignment-export-timing.txt",
+      "category": "payroll-tax",
+      "title": "Onboarding Assignment Export Timing",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "banking-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1295,
+          "maxChars": 2495
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "banking-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-067",
+      "path": "documents/work-authorization/067-benefits-address-handoff.txt",
+      "category": "work-authorization",
+      "title": "Benefits Address Handoff",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "work-authorization",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1309,
+          "maxChars": 2509
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "work-authorization"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-068",
+      "path": "documents/hris-audit/068-tax-review-workbench-release.txt",
+      "category": "hr-onboarding",
+      "title": "Tax Review Workbench Release",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "hris-audit",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1277,
+          "maxChars": 2477
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "hris-audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-069",
+      "path": "documents/payroll-tax/069-work-email-provisioning-events.txt",
+      "category": "payroll-tax",
+      "title": "Work Email Provisioning Events",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1310,
+          "maxChars": 2510
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-tax"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-070",
+      "path": "documents/identity-vendor/070-payroll-preview-exception-digest.txt",
+      "category": "identity",
+      "title": "Payroll Preview Exception Digest",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "identity-vendor",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1310,
+          "maxChars": 2510
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "identity-vendor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-071",
+      "path": "documents/support-cases/071-document-upload-retry-lane.txt",
+      "category": "hr-onboarding",
+      "title": "Document Upload Retry Lane",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "support-cases",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1265,
+          "maxChars": 2465
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "support-cases"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-072",
+      "path": "documents/payroll-ops/072-employment-title-crosswalk.txt",
+      "category": "payroll-tax",
+      "title": "Employment Title Crosswalk",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1272,
+          "maxChars": 2472
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-073",
+      "path": "documents/people-ops/073-field-ownership-registry.txt",
+      "category": "employer-context",
+      "title": "Field Ownership Registry",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1303,
+          "maxChars": 2503
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-074",
+      "path": "documents/banking-ops/074-vendor-maintenance-window-advisory.txt",
+      "category": "payroll-tax",
+      "title": "Vendor Maintenance Window Advisory",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "banking-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1335,
+          "maxChars": 2535
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "banking-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-075",
+      "path": "documents/work-authorization/075-pay-group-assignment-batch.txt",
+      "category": "work-authorization",
+      "title": "Pay Group Assignment Batch",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "work-authorization",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1295,
+          "maxChars": 2495
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "work-authorization"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-076",
+      "path": "documents/hris-audit/076-employee-id-collision-monitor.txt",
+      "category": "hr-onboarding",
+      "title": "Employee Id Collision Monitor",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "hris-audit",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1284,
+          "maxChars": 2484
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "hris-audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-077",
+      "path": "documents/payroll-tax/077-new-hire-packet-completion-dashboard.txt",
+      "category": "payroll-tax",
+      "title": "New-Hire Packet Completion Dashboard",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1290,
+          "maxChars": 2490
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-tax"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-078",
+      "path": "documents/identity-vendor/078-bank-verification-review-checklist.txt",
+      "category": "identity",
+      "title": "Bank Verification Review Checklist",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "identity-vendor",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1324,
+          "maxChars": 2524
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "identity-vendor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-079",
+      "path": "documents/support-cases/079-employee-self-service-correction-lane.txt",
+      "category": "hr-onboarding",
+      "title": "Employee Self-Service Correction Lane",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "support-cases",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1319,
+          "maxChars": 2519
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "support-cases"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-080",
+      "path": "documents/payroll-ops/080-cohort-communications-digest.txt",
+      "category": "payroll-tax",
+      "title": "Cohort Communications Digest",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "operational-process-artifact",
+        "sourceFamily": "payroll-ops",
+        "captureMode": "operations-memo-or-export",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "process owner",
+          "queue name",
+          "export window",
+          "control code"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1275,
+          "maxChars": 2475
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "operational-distractor",
+          "payroll-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-081",
+      "path": "documents/compliance/081-remote-inspection-advisory.txt",
+      "category": "work-authorization",
+      "title": "Remote Inspection Advisory",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "compliance",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1358,
+          "maxChars": 2558
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "compliance"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-082",
+      "path": "documents/compliance/082-receipt-rule-field-guide.txt",
+      "category": "work-authorization",
+      "title": "Receipt Rule Field Guide",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "compliance",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1327,
+          "maxChars": 2527
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "compliance"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-083",
+      "path": "documents/systems/083-peoplebridge-release-note.txt",
+      "category": "employer-context",
+      "title": "PeopleBridge Release Note",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "systems",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1271,
+          "maxChars": 2471
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "systems"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-084",
+      "path": "documents/systems/084-ledgerpay-file-layout-bulletin.txt",
+      "category": "employer-context",
+      "title": "LedgerPay File Layout Bulletin",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "systems",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1306,
+          "maxChars": 2506
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "systems"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-085",
+      "path": "documents/people-ops/085-newhire-cohort-agenda.txt",
+      "category": "employer-context",
+      "title": "Newhire Cohort Agenda",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1316,
+          "maxChars": 2516
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-086",
+      "path": "documents/benefits/086-benefits-window-policy.txt",
+      "category": "employer-context",
+      "title": "Benefits Window Policy",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "benefits",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1270,
+          "maxChars": 2470
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "benefits"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-087",
+      "path": "documents/payroll-ops/087-offcycle-request-procedure.txt",
+      "category": "payroll-tax",
+      "title": "Offcycle Request Procedure",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "payroll-ops",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1277,
+          "maxChars": 2477
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "payroll-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-088",
+      "path": "documents/identity-vendor/088-ocr-model-change-log.txt",
+      "category": "identity",
+      "title": "OCR Model Change Log",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "identity-vendor",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1317,
+          "maxChars": 2517
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "identity-vendor"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-089",
+      "path": "documents/support-cases/089-case-routing-matrix.txt",
+      "category": "hr-onboarding",
+      "title": "Case Routing Matrix",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "support-cases",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1266,
+          "maxChars": 2466
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "support-cases"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-090",
+      "path": "documents/people-ops/090-manager-handoff-playbook.txt",
+      "category": "employer-context",
+      "title": "Manager Handoff Playbook",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1274,
+          "maxChars": 2474
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-091",
+      "path": "documents/systems/091-directory-sync-contract.txt",
+      "category": "employer-context",
+      "title": "Directory Sync Contract",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "systems",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1273,
+          "maxChars": 2473
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "systems"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-092",
+      "path": "documents/payroll-tax/092-federal-tax-label-guide.txt",
+      "category": "payroll-tax",
+      "title": "Federal Tax Label Guide",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "payroll-tax",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1284,
+          "maxChars": 2484
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "payroll-tax"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-093",
+      "path": "documents/banking-ops/093-account-type-normalization-guide.txt",
+      "category": "payroll-tax",
+      "title": "Account Type Normalization Guide",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "banking-ops",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1306,
+          "maxChars": 2506
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "banking-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-094",
+      "path": "documents/work-authorization/094-section-one-status-codes.txt",
+      "category": "work-authorization",
+      "title": "Section One Status Codes",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "work-authorization",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1256,
+          "maxChars": 2456
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "work-authorization"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-095",
+      "path": "documents/hris-audit/095-address-parser-release.txt",
+      "category": "hr-onboarding",
+      "title": "Address Parser Release",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "hris-audit",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1277,
+          "maxChars": 2477
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "hris-audit"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-096",
+      "path": "documents/compliance/096-record-retention-schedule.txt",
+      "category": "work-authorization",
+      "title": "Record Retention Schedule",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "compliance",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1324,
+          "maxChars": 2524
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "compliance"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-097",
+      "path": "documents/systems/097-nightly-batch-monitor.txt",
+      "category": "employer-context",
+      "title": "Nightly Batch Monitor",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "systems",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1297,
+          "maxChars": 2497
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "systems"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-098",
+      "path": "documents/support-cases/098-payroll-case-macro-pack.txt",
+      "category": "hr-onboarding",
+      "title": "Payroll Case Macro Pack",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "support-cases",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1298,
+          "maxChars": 2498
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "support-cases"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-099",
+      "path": "documents/people-ops/099-first-week-checklist.txt",
+      "category": "employer-context",
+      "title": "First Week Checklist",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "people-ops",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1318,
+          "maxChars": 2518
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "people-ops"
+        ]
+      }
+    },
+    {
+      "id": "maya-chen-newhire-packet-hard-volume-v2-100",
+      "path": "documents/systems/100-acronym-glossary.txt",
+      "category": "employer-context",
+      "title": "Acronym Glossary",
+      "outputExtension": "txt",
+      "sourceSpec": {
+        "artifactType": "policy-or-system-artifact",
+        "sourceFamily": "systems",
+        "captureMode": "policy-memo-or-system-note",
+        "nativeSignals": [
+          "source system",
+          "generated timestamp",
+          "status",
+          "field ids"
+        ],
+        "safeDetailMenu": [
+          "source system",
+          "owner team",
+          "process scope",
+          "version metadata"
+        ],
+        "riskyDetailMenu": [
+          "current Maya phone number",
+          "unrelated signature attestation",
+          "live form completion instruction"
+        ],
+        "timelineRefs": [],
+        "worldRefs": [],
+        "lengthTarget": {
+          "minChars": 1250,
+          "maxChars": 2450
+        }
+      },
+      "factContract": {
+        "include": [],
+        "forbid": []
+      },
+      "evaluationRole": {
+        "detailTier": "medium",
+        "authority": "none",
+        "freshness": "current",
+        "expectedUse": "ignore",
+        "challengeTags": [
+          "broad-operational-artifact",
+          "systems"
+        ]
+      }
+    }
+  ]
+}

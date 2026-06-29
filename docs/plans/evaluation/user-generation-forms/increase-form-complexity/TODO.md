@@ -15,6 +15,8 @@
 - Use `packet-hard-volume-v1` for 100-document length/noise experiments.
 - Treat `packet-hard-volume-v1` as a long-context/order smoke test, not as the
   final hard distractor corpus.
+- Use `packet-hard-volume-v2` for the next realistic volume/noise baseline with
+  subtler near-miss and operational distractors.
 
 ## Packet-Medium Follow-Ups
 
@@ -43,14 +45,10 @@
   Existing `eval:compare-runs` expects single-scenario known-schema artifacts
   such as `evaluation-run.json`; packet runs write `packet-evaluation-run.json`
   plus per-scenario reports.
-- Build a next volume/noise corpus revision with fewer self-disqualifying
-  distractors. Reduce repeated "sample/template/reference/context-only" cues and
-  repeated handling-guidance skeletons.
-- Add realistic near-miss distractors that require actual reasoning:
-  same-employer records for other people, stale-but-plausible Maya values,
-  non-authoritative exports with overlapping field names, duplicate payroll/tax
-  fields from different systems, and current-looking documents that are only
-  partially applicable.
+- Run canonical, relevant-last, and seeded-random direct/MCP variants for
+  `packet-hard-volume-v2` and compare against `packet-hard-volume-v1`.
+- Continue improving volume/noise realism after v2 by reducing repeated
+  augmentation blocks and adding more document-family-specific source formats.
 - Keep the same forms for pure evidence-packet experiments, but do not interpret
   same-form success as form-surface hardening. If the goal is harder forms, plan
   a separate field-map/form-surface pass.

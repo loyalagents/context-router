@@ -1,0 +1,49 @@
+{
+  "source_system": "PeopleBridge",
+  "export_id": "PEOPLEBRIDGE-PLC-19418-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-19418",
+  "person": {
+    "legal_name": "Maya Patel",
+    "personal_email": "maya.patel@personal.test",
+    "work_email": "maya.patel@pacificledger.test",
+    "title": "Operations Coordinator",
+    "start_date": "2026-06-15"
+  },
+  "topic": "prehire profile export",
+  "fields": {
+    "address_line": "910 Juniper Avenue Apt 12, Berkeley, CA 94704",
+    "city_state_zip": "Berkeley, CA 94704",
+    "ssn_last_four": "4417",
+    "tax_filing_status": "single or married filing separately"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-24T09:12:00-07:00",
+      "owner_queue": "People Operations",
+      "status": "visible_in_archive"
+    },
+    {
+      "timestamp": "2026-06-25T16:40:00-07:00",
+      "owner_queue": "HarborHire Data",
+      "status": "included_in_control_total"
+    }
+  ],
+  "control_observations": [
+    "The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.",
+    "Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.",
+    "The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.",
+    "A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.",
+    "Control total note: batch PLC-PEOPLERE-032 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.",
+    "Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage."
+  ],
+  "source_packet_marker": "PLC-PEOPLERE-032"
+}

@@ -1,0 +1,23 @@
+Source system: WorkRight Compliance
+Generated timestamp: 2026-06-24T08:12:00-07:00
+Status: active
+Document code: PLC-OPS-082
+Subject: Receipt rule field guide
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Receipt rule screens show document category, expiration date, replacement due date, and reviewer initials.
+The guide explains how receipt rows move between open and resolved states in the vendor system.
+The field guide is attached to coordinator training and contains no employee-specific packet row.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Batch envelope
+Owner queue: HarborHire Data
+Source packet marker: PLC-COMPLIAN-082
+Review window: 2026-06-20 08:47 PDT through 2026-06-21 17:32 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-COMPLIAN-082 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

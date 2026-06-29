@@ -1,0 +1,23 @@
+Source system: HarborDesk
+Generated timestamp: 2026-06-23T08:28:00-07:00
+Status: active
+Document code: PLC-OPS-098
+Subject: Payroll case macro pack
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Payroll support macros standardize responses for bank verification, tax election review, and pay group assignment questions.
+Macros include placeholders for worker id, case id, and owner queue.
+Agents must pull employee-specific values from source systems before sending a response.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Batch envelope
+Owner queue: HarborHire Data
+Source packet marker: PLC-SUPPORTC-098
+Review window: 2026-06-18 08:18 PDT through 2026-06-19 17:48 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-SUPPORTC-098 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

@@ -1,0 +1,23 @@
+Source system: HarborHire Analytics
+Generated timestamp: 2026-06-19T08:47:00-07:00
+Status: active
+Document code: PLC-OPS-077
+Subject: new-hire packet completion dashboard
+Field IDs: process.owner, queue.name, control.code, export.window
+
+The dashboard groups packet tasks by completion state and owner queue.
+It shows counts for identity upload, I-9 Section 1, W-4, direct deposit, and benefits tasks.
+Dashboard rows are aggregate status signals and do not include source field values.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Queue movement
+Owner queue: IdentityLens Review
+Source packet marker: PLC-PAYROLLT-077
+Review window: 2026-06-15 08:42 PDT through 2026-06-16 17:27 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-PAYROLLT-077 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

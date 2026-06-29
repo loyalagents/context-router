@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "maya-chen-newhire-fw4-packet-hard-volume-v2",
+  "description": "Live open-schema W-4 form-fill scenario for Maya Chen using the packet-hard-volume-v2 shared dossier.",
+  "userId": "maya-chen-newhire",
+  "corpusId": "packet-hard-volume-v2",
+  "formId": "fw4",
+  "expectedSnapshots": []
+}

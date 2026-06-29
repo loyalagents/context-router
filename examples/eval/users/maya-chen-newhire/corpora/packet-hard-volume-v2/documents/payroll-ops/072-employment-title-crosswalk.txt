@@ -1,0 +1,23 @@
+Source system: PeopleOps Data
+Generated timestamp: 2026-06-14T08:42:00-07:00
+Status: active
+Document code: PLC-OPS-072
+Subject: employment title crosswalk
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Recruiting requisition titles sometimes differ from HRIS job profile titles.
+The crosswalk maps recruiting title, payroll job code, department, and display title.
+Only the HRIS job profile title flows to form-fill memory for the new-hire packet.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Processing trail
+Owner queue: People Operations
+Source packet marker: PLC-PAYROLLO-072
+Review window: 2026-06-10 08:37 PDT through 2026-06-11 17:22 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-PAYROLLO-072 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

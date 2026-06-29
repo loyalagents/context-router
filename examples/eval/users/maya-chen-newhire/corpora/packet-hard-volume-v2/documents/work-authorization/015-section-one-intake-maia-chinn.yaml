@@ -1,0 +1,43 @@
+source_system: WorkRight
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-20419
+topic: i9 section one intake
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Maia Chinn
+  first_name: Maia
+  last_name: Chinn
+  title: Client Operations Associate
+  start_date: 2026-07-13
+  work_email: maia.chinn@pacificledger.test
+  address_line: 2848 Ashbury Street Apt 3D, Oakland, CA 94609
+payroll_snapshot:
+  tax_filing_status: head of household
+  bank_product_label: Everyday Savings
+  institution_name: Bay Harbor Credit Union
+  routing_number: "121000248"
+  account_last_four: "6452"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-25T09:12:00-07:00
+    owner_queue: HarborDesk Routing
+    status: visible_in_archive
+  - timestamp: 2026-06-26T16:40:00-07:00
+    owner_queue: Payroll Operations
+    status: included_in_control_total
+control_observations:
+  - The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+  - Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+  - The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+  - A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+  - Control total note - batch PLC-WORKAUTH-015 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Reviewer note - no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

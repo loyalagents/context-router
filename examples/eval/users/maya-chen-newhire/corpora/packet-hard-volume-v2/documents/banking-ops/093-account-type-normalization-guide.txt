@@ -1,0 +1,23 @@
+Source system: LedgerPay Banking
+Generated timestamp: 2026-06-18T08:23:00-07:00
+Status: active
+Document code: PLC-OPS-093
+Subject: Account type normalization guide
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Bank letters often describe products with marketing names while payroll stores checking or savings codes.
+The guide lists common product words and the normalized election code used by the ACH file.
+Uncertain labels stay in review until payroll confirms the account type.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Queue movement
+Owner queue: IdentityLens Review
+Source packet marker: PLC-BANKINGO-093
+Review window: 2026-06-13 08:13 PDT through 2026-06-14 17:43 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-BANKINGO-093 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

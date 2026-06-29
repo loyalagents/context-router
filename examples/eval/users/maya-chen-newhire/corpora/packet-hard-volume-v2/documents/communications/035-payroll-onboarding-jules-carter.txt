@@ -1,0 +1,29 @@
+From: people.ops@pacificledger.test
+To: jules.carter@pacificledger.test
+Date: Fri, 26 Jun 2026 14:36:20 -0700
+Subject: Payroll onboarding row ready for review
+Message-ID: <plc-19877-payroll-onboarding-row-ready-for-review-0626@pacificledger.test>
+
+Hi Jules,
+
+Your payroll profile appeared in the July cohort queue this afternoon and People Operations is comparing address and tax fields before final activation.
+
+The People Operations export currently lists your worker id as PLC-19877, your role as Payroll Support Specialist, and your start date as 2026-06-24. The address block visible to the onboarding coordinator reads 1200 14th Street Apt 5, Oakland, CA 94607.
+
+This message was produced from the HarborHire communication queue after the payroll handoff batch was prepared. The footer below is added by the mail system for privacy and retention routing.
+
+Regards,
+People Operations
+
+Footer: Pacific Ledger Cooperative internal correspondence. Privacy routing tag PLC-PEOPLE-MAIL.
+
+System annotations
+Owner queue: LedgerPay Controls
+Source packet marker: PLC-COMMUNIC-035
+Review window: 2026-06-27 08:45 PDT through 2026-06-28 17:20 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-COMMUNIC-035 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

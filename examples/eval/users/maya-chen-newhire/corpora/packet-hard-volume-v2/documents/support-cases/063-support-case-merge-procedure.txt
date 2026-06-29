@@ -1,0 +1,23 @@
+Source system: HarborDesk
+Generated timestamp: 2026-06-22T08:33:00-07:00
+Status: active
+Document code: PLC-OPS-063
+Subject: support case merge procedure
+Field IDs: process.owner, queue.name, control.code, export.window
+
+Case merge procedure depends on worker id, requester email, and onboarding task id.
+The support system can merge duplicate questions but does not merge source profile fields.
+A case closed as duplicate still appears in weekly queue metrics.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+Audit footer
+Owner queue: HarborDesk Routing
+Source packet marker: PLC-SUPPORTC-063
+Review window: 2026-06-19 08:28 PDT through 2026-06-20 17:48 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-SUPPORTC-063 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

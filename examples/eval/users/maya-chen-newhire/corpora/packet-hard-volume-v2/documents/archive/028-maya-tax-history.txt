@@ -1,0 +1,20 @@
+Source system: LedgerPay tax autosave
+Generated timestamp: 2026-06-11T17:08:00-07:00
+Status: old autosave retained for comparison
+Worker id: PLC-20418
+Employee: Maya Lin Chen
+Autosave filing status: head of household
+Step 2 multiple jobs: false
+Field IDs: tax.filing_status, tax.multiple_jobs, worker.id, autosave.status
+Reviewer note: the tax setup screen later committed a different saved election. The autosave row is kept only in the edit history stream.
+
+Control checks
+Owner queue: WorkRight Coordination
+Source packet marker: PLC-ARCHIVE-028
+Review window: 2026-06-20 08:38 PDT through 2026-06-21 17:48 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-ARCHIVE-028 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

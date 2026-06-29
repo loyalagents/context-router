@@ -1,0 +1,22 @@
+Ticket ID: LPRET-PLC-20418-0610
+Source system: LedgerPay Return Queue
+Created timestamp: 2026-06-10T10:44:00-07:00
+Status: returned by prenote reconciliation
+Worker id: PLC-20418
+Employee: Maya Lin Chen
+Institution listed: Harbor Neighborhood Bank
+Account ending: 8821
+Election label: direct deposit draft from prehire import
+Field IDs: worker.id, account.institution, account.last_four, prenote.status
+Return memo: the account election came from the prehire data bridge and was replaced before payroll activation. The return queue retained the row because the nightly ledger needs a closeout reason.
+
+Batch envelope
+Owner queue: HarborHire Data
+Source packet marker: PLC-ARCHIVE-026
+Review window: 2026-06-18 08:36 PDT through 2026-06-19 17:46 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-ARCHIVE-026 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

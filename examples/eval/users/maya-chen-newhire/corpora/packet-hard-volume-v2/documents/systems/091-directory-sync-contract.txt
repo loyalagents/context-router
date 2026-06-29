@@ -1,0 +1,23 @@
+Source system: PeopleBridge Directory
+Generated timestamp: 2026-06-16T08:21:00-07:00
+Status: active
+Document code: PLC-OPS-091
+Subject: Directory sync contract
+Field IDs: process.owner, queue.name, control.code, export.window
+
+The directory sync contract maps worker id, work email, display name, title, department, and manager.
+The contract describes conflict handling when HRIS and directory values arrive out of order.
+It is owned by PeopleBridge data engineering.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+System annotations
+Owner queue: LedgerPay Controls
+Source packet marker: PLC-SYSTEMS-091
+Review window: 2026-06-11 08:11 PDT through 2026-06-12 17:41 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-SYSTEMS-091 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

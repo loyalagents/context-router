@@ -1,0 +1,21 @@
+Source system: HarborHire
+Generated timestamp: 2026-06-27T11:40:00-07:00
+Status: exported
+Worker id: PLC-20408
+Audit stream: onboarding-change-history
+Field IDs: person.name, postal.address, payroll.tax_status, bank.election
+2026-06-27T11:12:03-07:00 HarborHire worker_id=PLC-20408 actor=people-ops-batch status=committed field=postal.address previous=null current="2486 Ashbury Street Apt 3D, Oakland, CA 94609" event_id=HARBORHIRE-PLC-20408-1
+2026-06-27T11:13:03-07:00 HarborHire worker_id=PLC-20408 actor=payroll-bridge status=queued field=bank.product previous=unmapped current="Choice Checking" event_id=HARBORHIRE-PLC-20408-2
+2026-06-27T11:14:03-07:00 HarborHire worker_id=PLC-20408 actor=reviewer status=noted field=tax.status previous=pending current="single or married filing separately" event_id=HARBORHIRE-PLC-20408-3
+Control note: entries are ordered by commit time from the source system transaction log.
+
+System annotations
+Owner queue: LedgerPay Controls
+Source packet marker: PLC-HRISAUDI-043
+Review window: 2026-06-17 08:53 PDT through 2026-06-18 17:28 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-HRISAUDI-043 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.

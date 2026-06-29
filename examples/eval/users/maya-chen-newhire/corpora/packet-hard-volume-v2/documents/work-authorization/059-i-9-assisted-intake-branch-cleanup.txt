@@ -1,0 +1,23 @@
+Source system: WorkRight Admin
+Generated timestamp: 2026-06-18T08:29:00-07:00
+Status: active
+Document code: PLC-OPS-059
+Subject: I-9 assisted intake branch cleanup
+Field IDs: process.owner, queue.name, control.code, export.window
+
+WorkRight can open more than one Section 1 branch when an employee changes an eligibility answer during guided intake.
+Closed branches remain in the audit export with status, close reason, and field ids.
+Only the branch attached to the submitted Section 1 packet is displayed in the coordinator dashboard.
+
+Operational note: the record belongs to the People Operations knowledge base and is versioned through the internal release calendar.
+
+System annotations
+Owner queue: LedgerPay Controls
+Source packet marker: PLC-WORKAUTH-059
+Review window: 2026-06-15 08:24 PDT through 2026-06-16 17:44 PDT
+The record was retained with the July onboarding control set because it shares at least one source-system field family with identity, tax, banking, address, work authorization, or employment setup.
+Operators reviewing the queue normally compare worker id, source timestamp, status, field ids, and owner queue before deciding whether the row belongs with a person-specific packet.
+The export preserves original source wording in addition to normalized queue metadata, which means bank products, address strings, filing-status labels, and eligibility labels can appear beside system-specific codes.
+A nightly reconciliation job stores this row even when the corresponding person-specific workflow is handled elsewhere, so the artifact can be near a packet without serving as the final employee evidence.
+Control total note: batch PLC-WORKAUTH-059 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+Reviewer note: no profile fields were edited from this artifact during the export window; the line remains available for audit review and support triage.
