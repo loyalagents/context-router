@@ -1,0 +1,42 @@
+job_name: eval-harbor-dynamicmem-user001-cp01-native-v1-cr-mcp
+n_concurrent_trials: 1
+
+environment:
+  force_build: true
+  env:
+    EVAL_MEMORY_MODE: cr-mcp
+  extra_docker_compose:
+    - examples/eval-harbor/jobs/dynamicmem-user001-cp01-native-v1-cr-mcp.compose.yml
+
+agents:
+  - name: codex
+    model_name: gpt-5.4-mini
+    kwargs:
+      reasoning_effort: high
+    mcp_servers:
+      - name: context-router-memory
+        transport: streamable-http
+        url: http://cr-memory:8000/mcp
+
+tasks:
+  - path: examples/eval-harbor/tasks/dynamicmem-user001-cp01-native-v1
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/cr-mcp.md
+
+artifacts:
+  - source: /data/mcp-config.json
+    destination: mcp/config.json
+    service: cr-memory
+  - source: /data/preferences.json
+    destination: memory/cr-snapshot.json
+    service: cr-memory
+  - source: /data/tool-calls.jsonl
+    destination: mcp/tool-calls.jsonl
+    service: cr-memory
+  - source: /data/server.log
+    destination: mcp/server.log
+    service: cr-memory
+  - source: /data/catalog.json
+    destination: mcp/catalog.json
+    service: cr-memory

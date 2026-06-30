@@ -14,12 +14,33 @@ answer contract, or challenge type.
 Do not add a new task just to change the memory substrate. Use the same task with
 different job configs or mode instructions for:
 
-- `none`: agent context only
+- `context-only`: current agent conversation context only, with no external memory
 - `markdown`: naive local memory file
 - `cr-mcp`: ContextRouter memory MCP sidecar
 
 The task, documents, schemas, hidden expected answers, and verifier should stay
 identical across these arms.
+
+Agent model and reasoning effort are controlled variables, not local machine
+defaults. DynamicMem job generation writes `agents[].model_name` and
+`agents[].kwargs.reasoning_effort` into every Harbor job. Use the same values
+across arms unless the experiment is explicitly a model/effort ablation, and
+make sure reports show both fields.
+
+For DynamicMem-backed suites, define arms in
+`examples/eval-harbor/arms/dynamicmem-default.json` or pass another JSON file
+with `--arms-config`. Do not duplicate runner logic to add an arm. A new arm
+should be expressible as:
+
+- `mode`: stable arm label used in job names and reports.
+- `memoryMode`: value exposed as `EVAL_MEMORY_MODE`.
+- `instructionPath`: mode-specific instruction file.
+- `compose`: currently `staged` or `cr-mcp`.
+- optional `mcpServers` and `artifacts` when the arm exposes an MCP sidecar.
+
+Legacy task-aware form-fill smoke tasks may still use the older `none` label.
+For background-memory tasks, prefer `context-only` so the baseline is not
+mistaken for a fresh-session or no-context ablation.
 
 ## Task Types
 
@@ -65,6 +86,13 @@ The task should make it possible to attribute failures to at least one of:
 missing memory, wrong memory, stale memory, wrong-owner memory, unsupported
 memory, downstream retrieval/use error, or output-format error.
 
+Prefer a single Harbor agent step with staged reveal for continuous-session
+background-memory tasks. The agent should reveal each stage through a task-local
+tool such as `/app/next_stage`, while future stage payloads remain outside the
+main `/app` workspace, usually in the `stage-server` sidecar. Use Harbor
+multi-step only for a deliberate fresh-phase ablation or when the agent adapter
+is known to resume the same model conversation across steps.
+
 ## Required Shape
 
 Each task should have this shape:
@@ -76,14 +104,19 @@ examples/eval-harbor/tasks/<task-id>/
   environment/
     Dockerfile
     workspace/
-      documents.json
-      docs/
-      forms/
+      documents.json          # task-aware formfill tasks
+      docs/                   # task-aware formfill tasks
+      forms/                  # task-aware formfill tasks
+      next_stage              # continuous background-memory tasks
+  stages/
+    payload.json              # continuous background-memory tasks
   tests/
     test.sh
     score_<task>.py
     expected/
       forms.json
+      difficulty.json         # required for staged background-memory tasks
+      soundness-report.md     # required for staged background-memory tasks
       source-trace.json      # required for migrated packet/form tasks
   solution/
     solve.sh                 # oracle solution
@@ -94,7 +127,16 @@ examples/eval-harbor/tasks/<task-id>/
 The agent-visible workspace is only `environment/workspace/`. Hidden truth must
 stay under `tests/expected/`.
 
-Multi-step tasks may also include:
+Continuous background-memory tasks should include a staged payload:
+
+```text
+stages/payload.json
+```
+
+The staged payload should contain ordered stage instructions and files. Only the
+currently revealed stage should be materialized in `/app/current_stage`.
+
+Harbor multi-step tasks may also include:
 
 ```text
 steps/
@@ -111,10 +153,13 @@ steps/
       _step_forms/
 ```
 
-For over-time tasks, use step setup scripts to reveal only the current batch.
-If documents should disappear before the final task, the final step must expose
-forms but not previous document files. Use `multi_step_reward_strategy = "final"`
-when only the final step should determine the score.
+For over-time tasks that intentionally use Harbor multi-step, use step setup
+scripts to reveal only the current batch. If documents should disappear before
+the final task, the final step must expose forms but not previous document
+files. Use `multi_step_reward_strategy = "final"` when only the final step
+should determine the score. Do not use Harbor multi-step as the default
+continuous-session baseline unless the selected agent adapter preserves the same
+conversation.
 
 ## Authoring Workflow
 
@@ -126,12 +171,38 @@ when only the final step should determine the score.
 
 2. Build the visible workspace.
 
-   Put documents under `environment/workspace/docs/`, schemas under
-   `environment/workspace/forms/`, and index every document in
-   `environment/workspace/documents.json`.
+   For task-aware form-fill tasks, put documents under
+   `environment/workspace/docs/`, schemas under `environment/workspace/forms/`,
+   and index every document in `environment/workspace/documents.json`.
+
+   For continuous background-memory tasks, put only the reveal client, for
+   example `/app/next_stage`, in the initial workspace. Put stage documents,
+   schemas, and stage instructions in `stages/payload.json`, and mount that
+   payload into a reveal sidecar. This avoids leaking future forms or later docs
+   into `/app` before the task flow reaches them.
    Agent-visible schemas may call abstention-scored fields `optionalFields`
    even when hidden expected answers call them `unsupportedFields`; avoid
    exposing hidden labels that tell the agent the answer.
+
+For external dataset-backed tasks, vendor only the task subset needed for the
+benchmark. Record the source dataset, license, source user/split, and
+regeneration command in the task README. Do not copy hidden answer files into
+the agent-visible workspace.
+For DynamicMem-backed suites, migrate native task semantics instead of inventing
+random mixtures: preserve raw app logs, checkpoint identity,
+`state_completion_pack`, `rq3_apply_service_qa`, and the upstream prediction
+contract. The agent-visible downstream task may expose only sanitized queries,
+templates, and output shape; it must not expose reference answers, reference
+outputs, scoring points, gold evidence ids, validated snapshot state, or
+expected snapshot state. The suite manifest must include coverage over source
+users, checkpoints, observed-log counts, state-completion keys, Personalized
+Service items, and service families. Do not call a generated suite
+comprehensive until the coverage block supports that claim.
+Each generated task must also include a human-reviewable difficulty/soundness
+report. A reviewer should be able to answer, without reading generator code:
+what the agent sees in each stage, what memory-management action is expected,
+what the final downstream task asks for, which fields are scored, what evidence
+supports each expected state, and how the verifier awards or subtracts credit.
 
 3. Write the instruction.
 
@@ -216,7 +287,14 @@ deducts field errors, overfills, unsupported fills, and metadata errors.
 
 Before opening or updating a PR, check:
 
-- `documents.json` has the same files as `environment/workspace/docs/`.
+- For task-aware tasks, `documents.json` has the same files as
+  `environment/workspace/docs/`.
+- For staged background-memory tasks, initial `environment/workspace/` does not
+  contain future docs, future forms, hidden expected answers, or source task
+  packs.
+- For staged background-memory tasks, `stages/payload.json` has ordered stages,
+  each stage has one instruction, and every listed file has a safe relative
+  path.
 - Hidden expected answers are not present in `environment/workspace/`.
 - Background-memory `T1` stages do not expose downstream forms, field lists, or
   future questions.
@@ -226,11 +304,20 @@ Before opening or updating a PR, check:
 - `forms/*.schema.json` required fields match `tests/expected/forms.json`.
 - `source-trace.json` fields match expected fields and values.
 - The CR MCP catalog covers every fact slug needed by the task.
-- The `none`, `markdown`, and `cr-mcp` jobs point at the same task directory.
+- The `context-only`, `markdown`, and `cr-mcp` jobs point at the same task
+  directory for background-memory tasks.
 - Multi-step tasks validate both top-level `documents.json` and every
   `steps/*/workdir/_step_documents.json` against the visible step docs.
 - For over-time tasks, the final step does not expose prior document batches
   unless the task intentionally tests direct re-reading.
+- External dataset tasks include source, license, subset, and regeneration
+  notes, and their visible workspace contains only task inputs.
+- DynamicMem native tasks preserve one upstream user/checkpoint per Harbor task;
+  they do not chunk selected state keys or generate synthetic form schemas.
+- DynamicMem native tasks expose sanitized final-stage queries only; hidden
+  reference answers, reference outputs, scoring points, gold evidence ids,
+  validated snapshot state, and expected snapshot state stay under
+  `tests/expected/`.
 - The oracle run scores `1.0` reward, field accuracy, metadata success, and
   parse success.
 - At least one negative verifier probe proves metadata and overfill failures are
@@ -266,6 +353,50 @@ harbor run \
   --jobs-dir /tmp/cr-harbor-<task-id>-oracle \
   --yes
 ```
+
+Required real-agent check for every new task:
+
+```bash
+for mode in context-only markdown cr-mcp; do
+  harbor run \
+    -c examples/eval-harbor/jobs/<task-id>-${mode}.yaml \
+    --jobs-dir /tmp/cr-harbor-<task-id>-${mode} \
+    --agent-env CODEX_FORCE_AUTH_JSON=true \
+    --yes
+done
+```
+
+For dataset-backed suites, prefer the resampling runner instead of hand-running
+single samples:
+
+```bash
+python3 examples/eval-harbor/scripts/run_harbor_resamples.py \
+  --manifest examples/eval-harbor/suites/<suite>.json \
+  --samples 3 \
+  --harbor-bin /path/to/harbor \
+  --output-root /tmp/cr-harbor-<suite>
+
+python3 examples/eval-harbor/scripts/aggregate_resamples.py \
+  --root /tmp/cr-harbor-<suite> \
+  --manifest examples/eval-harbor/suites/<suite>.json \
+  --output /tmp/cr-harbor-<suite>-report.md \
+  --json-output /tmp/cr-harbor-<suite>-report.json
+```
+
+After the three arms run, generate a report and decide whether the task is
+actually difficult. A useful hard task should have:
+
+- oracle reward `1.0`;
+- all three arms using the same task data and verifier;
+- no parse or metadata failures unless the task intentionally tests output
+  formatting;
+- lower baseline performance for a meaningful reason, not hidden-answer drift or
+  brittle representation scoring;
+- field-level errors that are traceable to memory gathering, memory management,
+  or downstream use.
+
+If a task is too easy or the errors are mostly scorer-format artifacts, revise
+the task or verifier before calling it ready.
 
 ## Common Mistakes
 

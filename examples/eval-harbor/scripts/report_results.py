@@ -11,6 +11,7 @@ from typing import Any
 
 SCORE_PATH = Path("artifacts/logs/artifacts/score-summary.json")
 FORM_OUTPUT_ROOT = Path("artifacts/app/outputs/forms")
+GENERIC_OUTPUT_ROOT = Path("artifacts/app/outputs")
 DEFAULT_OUTPUT_FILES = ["new-hire.json"]
 CR_SNAPSHOT_PATH = Path("artifacts/memory/cr-snapshot.json")
 MCP_TRACE_PATH = Path("artifacts/mcp/tool-calls.jsonl")
@@ -112,6 +113,12 @@ def output_files_from_score(score: dict[str, Any]) -> list[str]:
     return DEFAULT_OUTPUT_FILES
 
 
+def output_root_from_score(score: dict[str, Any]) -> Path:
+    if str(score.get("outputRoot") or "").strip() == "outputs":
+        return GENERIC_OUTPUT_ROOT
+    return FORM_OUTPUT_ROOT
+
+
 def find_score_path(trial_dir: Path) -> Path:
     root_score = trial_dir / SCORE_PATH
     if root_score.exists():
@@ -147,13 +154,14 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         score = {}
         validation_errors.append(str(error))
 
+    output_root = output_root_from_score(score)
     for output_file in output_files_from_score(score):
-        form_output = artifact_root / FORM_OUTPUT_ROOT.relative_to("artifacts") / output_file
-        if not form_output.exists():
-            validation_errors.append(f"missing final form output: {form_output}")
+        final_output = artifact_root / output_root.relative_to("artifacts") / output_file
+        if not final_output.exists():
+            validation_errors.append(f"missing final output: {final_output}")
         else:
             try:
-                load_json(form_output)
+                load_json(final_output)
             except ValueError as error:
                 validation_errors.append(str(error))
 
@@ -175,6 +183,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     agent_info = result.get("agent_info") or {}
     model_info = agent_info.get("model_info") or {}
     agent_config = config.get("agent") or {}
+    agent_kwargs = agent_config.get("kwargs") or {}
     rewards = (result.get("verifier_result") or {}).get("rewards") or {}
 
     reward = score.get("reward", rewards.get("reward"))
@@ -197,6 +206,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "agent": agent_info.get("name") or agent_config.get("name"),
         "agentVersion": agent_info.get("version"),
         "model": model_info.get("name") or agent_config.get("model_name"),
+        "reasoningEffort": (
+            agent_kwargs.get("reasoning_effort")
+            or agent_config.get("reasoning_effort")
+            or "n/a"
+        ),
         "runtimeSeconds": duration_seconds(result),
         "reward": reward,
         "fieldAccuracy": field_accuracy,
@@ -210,6 +224,8 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "missingFields": missing_fields,
         "wrongFields": wrong_fields,
         "overfillFields": overfill_fields,
+        "stateCompletionAccuracy": (score.get("stateCompletion") or {}).get("accuracy"),
+        "rq3ApplyMeanScore": (score.get("personalizedService") or {}).get("meanScore"),
         "metadataErrors": metadata_errors if isinstance(metadata_errors, list) else [],
         "mcpTools": mcp_tools,
         "crPreferenceCount": cr_preference_count,
@@ -235,17 +251,20 @@ def fmt_bool(value: Any) -> str:
 
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reward | Field Accuracy | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reward} | {field} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
+                reasoning_effort=row["reasoningEffort"],
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
+                state=fmt_value(row["stateCompletionAccuracy"]),
+                service=fmt_value(row["rq3ApplyMeanScore"]),
                 parse_failures=row["parseFailures"],
                 metadata=fmt_value(row["metadataCount"]),
                 missing=row["missingCount"],

@@ -58,32 +58,42 @@ for the first meaningful CR-vs-baseline comparison.
 
 ## Codex Modes
 
-Set Codex auth in the shell before running real-agent jobs. Harbor's Codex
-integration can read `OPENAI_API_KEY`, or it can use the local Codex
-`auth.json` by setting `CODEX_FORCE_AUTH_JSON=1`. The default Codex job configs
-use `gpt-5.3-codex-spark`.
+Set Codex auth before running real-agent jobs. Harbor's Codex integration can
+read `OPENAI_API_KEY`, or it can use the local Codex `auth.json`. Prefer passing
+the auth-json switch explicitly with `--agent-env CODEX_FORCE_AUTH_JSON=true`
+when running `harbor run`. The default Codex job configs use
+`gpt-5.3-codex-spark`.
+
+Codex reasoning effort is an explicit eval parameter. DynamicMem-generated jobs
+write it into Harbor's Codex agent kwargs as `reasoning_effort`, which Harbor
+passes to Codex as `model_reasoning_effort`. The default is `high`; pass
+`--reasoning-effort low|medium|high|xhigh` when generating DynamicMem tasks or
+suites to change it intentionally.
 
 Run the no-memory baseline:
 
 ```bash
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-none.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 ```
 
 Run the markdown-memory baseline:
 
 ```bash
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 ```
 
 Run the CR MCP memory arm:
 
 ```bash
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-cr-mcp.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 ```
 
@@ -125,8 +135,9 @@ python3 examples/eval-harbor/scripts/report_results.py \
   --json-output /tmp/cr-harbor-report.json
 ```
 
-The report table includes agent, model, reward, field accuracy, parse failures,
-metadata failures, missing/wrong/overfill counts, runtime, and artifact roots.
+The report table includes agent, model, reasoning effort, reward, field
+accuracy, parse failures, metadata failures, missing/wrong/overfill counts,
+runtime, and artifact roots.
 The command exits nonzero if required score or output artifacts are missing or
 malformed. Use `--allow-invalid` only when intentionally reviewing a broken run.
 
@@ -323,6 +334,10 @@ The `none` arm has no durable state between steps. The `markdown` arm may only
 use `/app/memory.md`. The `cr-mcp` arm uses the eval-only ContextRouter memory
 MCP sidecar.
 
+This is a legacy memory-pressure/debug task, not the official continuous-session
+baseline contract. For new background-memory tasks, use staged reveal with
+`context-only`, `markdown`, and `cr-mcp`.
+
 Run all three arms:
 
 ```bash
@@ -363,6 +378,194 @@ This task has a `T1 -> T1 -> T1 -> T2` shape. It is a bridge toward
 background-memory evaluation, but the next research-focused task should be an
 interleaved background-memory task with multiple memory update and downstream
 use cycles.
+
+## DynamicMem Native Checkpoint Task
+
+`dynamicmem-user001-cp01-native-v1` is the first dataset-backed
+personal-memory task that preserves the native DynamicMem task contract. It is
+generated from the public
+[`xiewenya/dynamicmem`](https://huggingface.co/datasets/xiewenya/dynamicmem)
+dataset, which is published under the MIT license.
+
+Harbor only replaces the runner. The task preserves one DynamicMem user
+checkpoint end to end:
+
+- raw `app_log_large.json` entries up to the checkpoint;
+- the checkpoint `state_completion_pack`;
+- the checkpoint `rq3_apply_service_qa` Personalized Service tasks;
+- the upstream prediction contract at `outputs/prediction.json`.
+
+It is a `background-memory` task:
+
+```text
+T1 initial raw app logs -> T1 later raw app logs -> T2 native DynamicMem tasks
+```
+
+The task runs as one continuous Codex session. The agent reveals each stage by
+running `/app/next_stage`; future stage files are held by the `stage-server`
+sidecar and are not present in `/app` until revealed. The final stage removes
+the app logs as files and asks the agent to answer both native task families:
+State Completion (`snapshot_state`) and Personalized Service
+(`rq3_apply_answers`).
+
+The `context-only` arm has no external durable memory but can use the live
+conversation context from earlier stages. The `markdown` arm may only use
+`/app/memory.md`, and the `cr-mcp` arm uses the eval-only ContextRouter memory
+MCP sidecar.
+
+Regenerate the task from a local DynamicMem user directory:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
+  --source-dir /path/to/DynamicMem/001_user_001 \
+  --model gpt-5.4-mini \
+  --reasoning-effort high
+```
+
+Run all three arms:
+
+```bash
+for mode in context-only markdown cr-mcp; do
+  harbor run \
+    -c examples/eval-harbor/jobs/dynamicmem-user001-cp01-native-v1-${mode}.yaml \
+    --jobs-dir /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-${mode} \
+    --agent-env CODEX_FORCE_AUTH_JSON=true \
+    --yes
+done
+```
+
+Create the comparison report:
+
+```bash
+python3 examples/eval-harbor/scripts/report_results.py \
+  --run context-only=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-context-only/eval-harbor-dynamicmem-user001-cp01-native-v1-context-only \
+  --run markdown=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-markdown/eval-harbor-dynamicmem-user001-cp01-native-v1-markdown \
+  --run cr-mcp=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-cr-mcp/eval-harbor-dynamicmem-user001-cp01-native-v1-cr-mcp \
+  --output /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-report.md \
+  --json-output /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-report.json
+```
+
+The Harbor verifier includes a deterministic local proxy score for quick
+shakeout. It is not the official DynamicMem LLM-as-judge score. The important
+contract is that `outputs/prediction.json` is upstream-compatible for official
+DynamicMem evaluation.
+
+### DynamicMem Suite Generation
+
+Use the suite generator when scaling beyond the single `user001` task. It scans
+DynamicMem user directories, maps each selected checkpoint to one Harbor task,
+and writes matching
+`context-only`, `markdown`, and `cr-mcp` jobs.
+
+This is a native-semantics migration, not random task synthesis. The adapter
+preserves DynamicMem's user timeline, raw app logs up to the checkpoint,
+checkpoint identity, `state_completion_pack`, `rq3_apply_service_qa`, and
+prediction contract. Harbor only replaces the runner so every arm uses the same
+continuous-session sandbox, stage reveal, output path, and verifier.
+
+Task selection is deterministic. One generated task equals one
+DynamicMem user/checkpoint; there is no state-key chunking or synthetic form
+schema generation. The generated suite manifest includes a `coverage` block with
+users, checkpoints, observed-log counts, state-completion key counts,
+Personalized Service item counts, and service families. Review this coverage
+before spending live agent runs.
+
+The arms are not hardcoded in the runner. The default arm config lives at
+`examples/eval-harbor/arms/dynamicmem-default.json`. To add another arm, add a
+new arm entry there, or pass another file with `--arms-config`. The suite
+manifest records the arms it was generated with, and the resampling/aggregate
+scripts read those arms by default.
+
+Start with a dry run:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
+  --source-root /path/to/DynamicMem \
+  --checkpoint-indices 0-4 \
+  --max-users 5 \
+  --max-tasks 5 \
+  --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
+  --model gpt-5.4-mini \
+  --reasoning-effort high \
+  --dry-run
+```
+
+Generate the smoke suite:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
+  --source-root /path/to/DynamicMem \
+  --checkpoint-indices 0-4 \
+  --max-users 5 \
+  --max-tasks 5 \
+  --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
+  --model gpt-5.4-mini \
+  --reasoning-effort high \
+  --manifest examples/eval-harbor/suites/dynamicmem-smoke.json
+```
+
+Inspect the native-source coverage:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+manifest = json.loads(Path("examples/eval-harbor/suites/dynamicmem-smoke.json").read_text())
+print(json.dumps(manifest["coverage"], indent=2, sort_keys=True))
+PY
+```
+
+Inspect task difficulty before running live agents:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+manifest = json.loads(Path("examples/eval-harbor/suites/dynamicmem-smoke.json").read_text())
+for task in manifest["tasks"]:
+    totals = task["difficulty"]["totals"]
+    print(task["taskId"], totals)
+    print("  soundness:", f"examples/eval-harbor/tasks/{task['taskId']}/tests/expected/soundness-report.md")
+PY
+```
+
+Validate every generated task before any live agent run:
+
+```bash
+python3 examples/eval-harbor/scripts/validate_task_soundness.py \
+  $(python3 - <<'PY'
+import json
+from pathlib import Path
+manifest = json.loads(Path("examples/eval-harbor/suites/dynamicmem-smoke.json").read_text())
+for task in manifest["tasks"]:
+    print(f"examples/eval-harbor/tasks/{task['taskId']}")
+PY
+  )
+```
+
+Run three robustness samples per task and arm only after validation passes:
+
+```bash
+python3 examples/eval-harbor/scripts/run_harbor_resamples.py \
+  --manifest examples/eval-harbor/suites/dynamicmem-smoke.json \
+  --samples 3 \
+  --harbor-bin /path/to/harbor \
+  --output-root /tmp/cr-harbor-dynamicmem-smoke
+```
+
+Aggregate the repeated samples:
+
+```bash
+python3 examples/eval-harbor/scripts/aggregate_resamples.py \
+  --root /tmp/cr-harbor-dynamicmem-smoke \
+  --manifest examples/eval-harbor/suites/dynamicmem-smoke.json \
+  --output /tmp/cr-harbor-dynamicmem-smoke-report.md \
+  --json-output /tmp/cr-harbor-dynamicmem-smoke-report.json
+```
+
+Scale gradually. A 5-task smoke suite already means `5 tasks x 3 arms x 3
+samples = 45` live agent runs. A 30-task suite is 270 runs, so use
+`gpt-5.4-mini` for shakeout and reserve larger models for selected reruns.
 
 ## Version Control
 
