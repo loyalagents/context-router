@@ -24,14 +24,48 @@ def load_json(path: Path) -> Any:
         return json.load(handle)
 
 
-def visible_workspace_text(task_dir: Path) -> str:
-    workspace = task_dir / "environment" / "workspace"
+def visible_agent_text(task_dir: Path) -> str:
+    visible_roots = [task_dir / "environment" / "workspace"]
+    visible_roots.extend(sorted((task_dir / "steps").glob("*/workdir")))
     parts: list[str] = []
-    for path in workspace.rglob("*"):
-        if path.is_file():
-            parts.append(path.relative_to(task_dir).as_posix())
-            parts.append(path.read_text(errors="ignore"))
+    for root in visible_roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file():
+                parts.append(path.relative_to(task_dir).as_posix())
+                parts.append(path.read_text(errors="ignore"))
     return "\n".join(parts)
+
+
+def validate_documents_index(
+    task_id: str,
+    documents_path: Path,
+    docs_root: Path,
+    *,
+    label: str,
+) -> tuple[str | None, list[str]]:
+    errors: list[str] = []
+    documents_index = load_json(documents_path)
+    corpus_id = documents_index.get("corpusId")
+    indexed_paths = sorted(doc.get("path") for doc in documents_index.get("documents", []))
+    actual_paths = sorted(
+        path.relative_to(docs_root).as_posix()
+        for path in docs_root.rglob("*")
+        if path.is_file()
+    )
+    if indexed_paths != actual_paths:
+        missing = sorted(set(actual_paths) - set(indexed_paths))[:10]
+        extra = sorted(set(indexed_paths) - set(actual_paths))[:10]
+        errors.append(
+            f"{task_id}: {label} documents index mismatch "
+            f"missing={missing} extra={extra}"
+        )
+    if len(indexed_paths) != len(set(indexed_paths)):
+        errors.append(f"{task_id}: {label} duplicate documents.json paths")
+    if documents_index.get("documentsRoot") != "docs":
+        errors.append(f"{task_id}: {label} documentsRoot must be docs")
+    return corpus_id, errors
 
 
 def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
@@ -40,25 +74,32 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     workspace = task_dir / "environment" / "workspace"
 
     documents_path = workspace / "documents.json"
-    if not documents_path.exists():
-        return [f"{task_id}: missing environment/workspace/documents.json"]
+    corpus_id = None
+    if documents_path.exists():
+        corpus_id, index_errors = validate_documents_index(
+            task_id,
+            documents_path,
+            workspace / "docs",
+            label="workspace",
+        )
+        errors.extend(index_errors)
 
-    documents_index = load_json(documents_path)
-    corpus_id = documents_index.get("corpusId")
-    indexed_paths = sorted(doc.get("path") for doc in documents_index.get("documents", []))
-    actual_paths = sorted(
-        path.relative_to(workspace / "docs").as_posix()
-        for path in (workspace / "docs").rglob("*")
-        if path.is_file()
-    )
-    if indexed_paths != actual_paths:
-        missing = sorted(set(actual_paths) - set(indexed_paths))[:10]
-        extra = sorted(set(indexed_paths) - set(actual_paths))[:10]
-        errors.append(f"{task_id}: documents index mismatch missing={missing} extra={extra}")
-    if len(indexed_paths) != len(set(indexed_paths)):
-        errors.append(f"{task_id}: duplicate documents.json paths")
-    if documents_index.get("documentsRoot") != "docs":
-        errors.append(f"{task_id}: documentsRoot must be docs")
+    for step_documents_path in sorted(
+        (task_dir / "steps").glob("*/workdir/_step_documents.json")
+    ):
+        step_docs_root = step_documents_path.parent / "_step_docs"
+        step_corpus_id, step_errors = validate_documents_index(
+            task_id,
+            step_documents_path,
+            step_docs_root,
+            label=step_documents_path.relative_to(task_dir).as_posix(),
+        )
+        errors.extend(step_errors)
+        if step_corpus_id != corpus_id:
+            errors.append(
+                f"{task_id}: step corpus mismatch in "
+                f"{step_documents_path.relative_to(task_dir).as_posix()}"
+            )
 
     expected_path = task_dir / "tests" / "expected" / "forms.json"
     if not expected_path.exists():
@@ -83,7 +124,8 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         if catalog.get("taskId") != task_id:
             errors.append(f"{task_id}: catalog taskId mismatch")
         scopes = {pref.get("scope") for pref in catalog.get("preferences", [])}
-        if corpus_id and scopes and scopes != {corpus_id}:
+        allowed_scopes = {corpus_id, task_id, f"maya-{corpus_id}"} if corpus_id else set()
+        if corpus_id and scopes and not scopes <= allowed_scopes:
             errors.append(f"{task_id}: catalog scope mismatch: {sorted(scopes)}")
 
     source_validation_path = repo_root / "examples" / "eval" / "users" / "maya-chen-newhire" / "corpora" / str(corpus_id) / "validation-report.json"
@@ -104,7 +146,10 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         if schema.get("outputShape", {}).get("taskId") != task_id:
             errors.append(f"{task_id}: schema outputShape taskId mismatch for {form_id}")
 
-        schema_required = {row["key"] for row in schema.get("requiredFields", [])}
+        schema_required = {
+            row["key"] if isinstance(row, dict) else row
+            for row in schema.get("requiredFields", [])
+        }
         expected_required = set(expected_form.get("fields", {}))
         if schema_required != expected_required:
             errors.append(
@@ -116,7 +161,10 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         schema_unsupported_rows = schema.get("unsupportedFields")
         if schema_unsupported_rows is None:
             schema_unsupported_rows = schema.get("optionalFields", [])
-        schema_unsupported = {row["key"] for row in schema_unsupported_rows}
+        schema_unsupported = {
+            row["key"] if isinstance(row, dict) else row
+            for row in schema_unsupported_rows
+        }
         expected_unsupported = set(expected_form.get("unsupportedFields", {}))
         if schema_unsupported != expected_unsupported:
             errors.append(
@@ -153,7 +201,7 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         if missing_slugs:
             errors.append(f"{task_id}: catalog missing source-trace slugs {missing_slugs}")
 
-    leaked = [marker for marker in HIDDEN_MARKERS if marker in visible_workspace_text(task_dir)]
+    leaked = [marker for marker in HIDDEN_MARKERS if marker in visible_agent_text(task_dir)]
     if leaked:
         errors.append(f"{task_id}: visible workspace contains hidden markers {leaked}")
 
@@ -172,13 +220,26 @@ def main() -> int:
         if errors:
             all_errors.extend(errors)
         else:
-            docs = load_json(task / "environment" / "workspace" / "documents.json")
+            documents_path = task / "environment" / "workspace" / "documents.json"
+            if documents_path.exists():
+                docs = load_json(documents_path)
+                corpus_label = docs.get("corpusId")
+                docs_count = len(docs.get("documents", []))
+            else:
+                corpus_label = "none"
+                docs_count = len(
+                    [
+                        path
+                        for path in (task / "environment" / "workspace" / "docs").rglob("*")
+                        if path.is_file()
+                    ]
+                )
             expected = load_json(task / "tests" / "expected" / "forms.json")
             required_count = sum(len(form.get("fields", {})) for form in expected.get("forms", {}).values())
             unsupported_count = sum(len(form.get("unsupportedFields", {})) for form in expected.get("forms", {}).values())
             print(
-                f"OK {task.name}: corpus={docs.get('corpusId')} "
-                f"docs={len(docs.get('documents', []))} "
+                f"OK {task.name}: corpus={corpus_label} "
+                f"docs={docs_count} "
                 f"required={required_count} unsupported={unsupported_count}"
             )
 

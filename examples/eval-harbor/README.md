@@ -236,6 +236,7 @@ drift.
 | `maya-packet-hard-required-v4-formfill` | `packet-hard-required-v4` plus 3 Harbor adversarial docs | evidence sufficiency through multi-hop code, directory lookups, and deprecated lookup traps | 41 |
 | `maya-packet-hard-volume-v2-formfill` | `packet-hard-volume-v2` | long-context mixed stress with 100 operational near-miss documents | 100 |
 | `maya-packet-hard-sufficiency-v1-formfill` | `packet-hard-required-v4` plus 5 Harbor sufficiency/abstention docs | optional-field evidence sufficiency with missing, ambiguous, rejected, and wrong-owner values | 46 |
+| `maya-packet-hard-over-time-v1-formfill` | `packet-hard-over-time-v1` split into 3 sequential batches | over-time memory pressure with documents hidden before final fill, bounded markdown scratchpad, and CR MCP durable memory | 46 |
 
 Run any hard task through the three comparable arms by replacing
 `<corpus>` with one of `packet-hard-ownership-v1`, `packet-hard-conflict-v1`,
@@ -275,6 +276,56 @@ python3 examples/eval-harbor/scripts/report_results.py \
   --output /tmp/cr-harbor-maya-<corpus>-report.md \
   --json-output /tmp/cr-harbor-maya-<corpus>-report.json
 ```
+
+### Over-Time Memory-Pressure Task
+
+`maya-packet-hard-over-time-v1-formfill` is a multi-step Harbor task. The agent
+receives three document batches over time, then the final step removes the
+documents and asks for four JSON forms:
+
+- I-9
+- W-4
+- direct deposit
+- onboarding audit
+
+The `none` arm has no durable state between steps. The `markdown` arm may only
+use `/app/memory.md`; its job config sets `MARKDOWN_MEMORY_BUDGET_BYTES=1600`
+so it behaves like a small scratchpad rather than an unlimited synthetic
+database. The `cr-mcp` arm uses the eval-only ContextRouter memory MCP sidecar.
+
+Run all three arms:
+
+```bash
+for mode in none markdown cr-mcp; do
+  CODEX_FORCE_AUTH_JSON=1 harbor run \
+    -c examples/eval-harbor/jobs/maya-packet-hard-over-time-v1-${mode}.yaml \
+    --jobs-dir /tmp/cr-harbor-maya-packet-hard-over-time-v1-${mode} \
+    --yes
+done
+```
+
+Create the comparison report:
+
+```bash
+python3 examples/eval-harbor/scripts/report_results.py \
+  --run none=/tmp/cr-harbor-maya-packet-hard-over-time-v1-none/eval-harbor-maya-packet-hard-over-time-v1-none \
+  --run markdown=/tmp/cr-harbor-maya-packet-hard-over-time-v1-markdown/eval-harbor-maya-packet-hard-over-time-v1-markdown \
+  --run cr-mcp=/tmp/cr-harbor-maya-packet-hard-over-time-v1-cr-mcp/eval-harbor-maya-packet-hard-over-time-v1-cr-mcp \
+  --output /tmp/cr-harbor-maya-packet-hard-over-time-v1-report.md \
+  --json-output /tmp/cr-harbor-maya-packet-hard-over-time-v1-report.json
+```
+
+Latest local sanity run:
+
+| Mode | Model | Reward | Missing | Wrong |
+| --- | --- | ---: | ---: | ---: |
+| `none` | `gpt-5.3-codex-spark` | 0.000 | 37 | 0 |
+| `markdown` | `gpt-5.3-codex-spark` | 0.324 | 25 | 0 |
+| `cr-mcp` | `gpt-5.3-codex-spark` | 0.946 | 0 | 2 |
+
+The oracle scores 1.000, so the hidden expected forms and verifier are
+self-consistent. The `cr-mcp` miss in this run was two direct-deposit name
+fields where the agent used `Maya L Chen` instead of `Maya Lin Chen`.
 
 ## Version Control
 

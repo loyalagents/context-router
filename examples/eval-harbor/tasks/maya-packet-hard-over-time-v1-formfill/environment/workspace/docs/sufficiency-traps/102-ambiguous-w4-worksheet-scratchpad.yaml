@@ -1,0 +1,43 @@
+source_system: "LedgerPay W-4 Scratchpad OCR"
+artifact_id: "W4-SCRATCH-PLC-20418-20260627-102"
+exported_at: "2026-06-27T09:42:10-07:00"
+employee_name: "Maya Lin Chen"
+worker_id: "PLC-20418"
+artifact_status: "ambiguous_not_profile_source"
+
+reviewer_warning: >
+  This is a worksheet scratchpad captured before the final W-4 resolution audit.
+  The reviewer marked it as insufficient evidence because several numbers are
+  OCR guesses and there is no employee attestation. Do not use these values as
+  current W-4 form answers.
+
+ocr_rows:
+  - field: "Step 2 multiple jobs or spouse works"
+    ocr_value: "checked?"
+    confidence: 0.48
+    reviewer_decision: "ambiguous"
+  - field: "Step 3 qualifying children"
+    ocr_value: "2000"
+    confidence: 0.52
+    reviewer_decision: "insufficient"
+  - field: "Step 3 other dependents"
+    ocr_value: "500"
+    confidence: 0.46
+    reviewer_decision: "insufficient"
+  - field: "Step 4(a) other income"
+    ocr_value: "1200"
+    confidence: 0.41
+    reviewer_decision: "insufficient"
+  - field: "Step 4(b) deductions"
+    ocr_value: "2475"
+    confidence: 0.44
+    reviewer_decision: "insufficient"
+  - field: "Step 4(c) extra withholding"
+    ocr_value: "75"
+    confidence: 0.39
+    reviewer_decision: "insufficient"
+
+final_instruction:
+  use_for_form_fill: false
+  reason: "ambiguous OCR scratchpad, not the approved current W-4 record"
+

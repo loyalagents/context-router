@@ -1,0 +1,133 @@
+{
+  "batchId": "03-payroll-tax",
+  "corpusId": "packet-hard-over-time-v1",
+  "documents": [
+    {
+      "category": "adversarial",
+      "id": "packet-hard-over-time-v1-adversarial-101",
+      "path": "adversarial/101-deprecated-w4-codebook.yaml",
+      "title": "Deprecated W-4 Codebook"
+    },
+    {
+      "category": "adversarial",
+      "id": "packet-hard-over-time-v1-adversarial-102",
+      "path": "adversarial/102-account-class-sandbox-crosswalk.txt",
+      "title": "Account Class Sandbox Crosswalk"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-014",
+      "path": "employer-context/014-w4-instructions.txt",
+      "title": "W-4 Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-019",
+      "path": "employer-context/019-payroll-direct-deposit-instructions.txt",
+      "title": "Payroll Direct Deposit Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-022",
+      "path": "employer-context/022-payroll-preview-export.yaml",
+      "title": "Payroll Preview Export"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-026",
+      "path": "partial-conflicting/026-stale-payroll-bank-draft.txt",
+      "title": "Stale Payroll Bank Draft"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-011",
+      "path": "payroll-tax/011-w4-withholding-setup-export.yaml",
+      "title": "W-4 Withholding Setup Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-012",
+      "path": "payroll-tax/012-payroll-tax-profile.json",
+      "title": "Payroll Tax Profile Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-013",
+      "path": "payroll-tax/013-w4-review-note.txt",
+      "title": "W-4 Review Note"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-031",
+      "path": "payroll-tax/031-ledgerpay-deposit-change-audit.yaml",
+      "title": "LedgerPay Deposit Change Audit"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-036",
+      "path": "payroll-tax/036-ledgerpay-other-employee-payment-election-export.yaml",
+      "title": "LedgerPay Other Employee Payment Election Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-037",
+      "path": "payroll-tax/037-ledgerpay-ach-prenote-reconciliation.yaml",
+      "title": "LedgerPay ACH Prenote Reconciliation Link Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-038",
+      "path": "payroll-tax/038-ledgerpay-w4-resolution-audit.yaml",
+      "title": "LedgerPay W-4 Resolution Code Link"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-039",
+      "path": "payroll-tax/039-ledgerpay-rdfi-directory-fragment.yaml",
+      "title": "LedgerPay RDFI Directory Fragment"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-040",
+      "path": "payroll-tax/040-ledgerpay-account-class-catalog.yaml",
+      "title": "LedgerPay Account Class Catalog"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-041",
+      "path": "payroll-tax/041-federal-w4-choice-codebook.yaml",
+      "title": "Federal W-4 Choice Codebook"
+    },
+    {
+      "category": "sufficiency-traps",
+      "id": "packet-hard-over-time-v1-101",
+      "path": "sufficiency-traps/101-unverified-phone-collection-thread.txt",
+      "title": "Unverified Phone Collection Thread"
+    },
+    {
+      "category": "sufficiency-traps",
+      "id": "packet-hard-over-time-v1-102",
+      "path": "sufficiency-traps/102-ambiguous-w4-worksheet-scratchpad.yaml",
+      "title": "Ambiguous W-4 Worksheet Scratchpad"
+    },
+    {
+      "category": "sufficiency-traps",
+      "id": "packet-hard-over-time-v1-103",
+      "path": "sufficiency-traps/103-other-worker-i9-alien-number-example.txt",
+      "title": "Other Worker I-9 Alien Number Example"
+    },
+    {
+      "category": "sufficiency-traps",
+      "id": "packet-hard-over-time-v1-104",
+      "path": "sufficiency-traps/104-rejected-optional-withholding-import.csv",
+      "title": "Rejected Optional Withholding Import"
+    },
+    {
+      "category": "sufficiency-traps",
+      "id": "packet-hard-over-time-v1-105",
+      "path": "sufficiency-traps/105-phone-number-merge-candidates.json",
+      "title": "Phone Number Merge Candidates"
+    }
+  ],
+  "documentsRoot": "docs"
+}

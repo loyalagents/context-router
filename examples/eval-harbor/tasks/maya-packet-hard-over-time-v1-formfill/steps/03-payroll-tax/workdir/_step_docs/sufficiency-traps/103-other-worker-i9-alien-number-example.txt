@@ -1,0 +1,22 @@
+Source System: Compliance Training Snippet
+Snippet ID: I9-EXAMPLE-ALIEN-NUMBER-20260627-103
+Status: Published training example
+Export Timestamp: 2026-06-27T10:11:08-07:00
+
+This snippet was attached to the same compliance queue as Maya Lin Chen's I-9
+task because the queue groups all Section 1 help material together. It is not a
+Maya record.
+
+Training example:
+Worker name: Maia Chinn
+Worker ID: PLC-20941
+Citizenship selection: Alien authorized to work
+Alien Registration Number / USCIS Number: A087654321
+Foreign Passport Number: XJ4421907
+Country of Issuance: Canada
+
+Reviewer note:
+Maya Lin Chen's active Section 1 intake says she attested that she is a U.S.
+citizen. Do not copy alien-registration or foreign-passport values from this
+training example into Maya's I-9.
+

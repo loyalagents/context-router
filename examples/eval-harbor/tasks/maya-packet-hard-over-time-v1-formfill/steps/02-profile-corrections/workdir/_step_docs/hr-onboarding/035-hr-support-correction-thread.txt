@@ -1,0 +1,19 @@
+Source System: HarborHire SupportLink
+Case ID: HR-48126
+Export Timestamp: 2026-06-26T15:34:48-07:00
+Queue: New Hire Profile Corrections
+Status: Closed
+Worker ID: PLC-20418
+Subject: Confirm final onboarding title and start date for Maya Chen
+
+Message: Recruiting Operations, 2026-06-26T09:18:21-07:00
+The staging checklist still displays Operations Support Specialist with start date 2026-06-30 for Maya Chen. That checklist copied an old recruiting handoff value before the final team assignment was approved.
+
+Message: HR Profile Reviewer, 2026-06-26T10:04:57-07:00
+Confirmed. The staging checklist is lower authority and should not drive active worker profile fields. The active HarborHire employee profile and onboarding assignment are the official source for worker PLC-20418.
+
+Resolution: HR Profile Reviewer, 2026-06-26T15:31:10-07:00
+Closed after comparing the support note with the current HR profile. Current title remains Client Operations Associate. Current start date remains 2026-07-06. The former staging checklist values were not applied to the active profile.
+
+Audit Disposition
+Case HR-48126 may be kept with onboarding support history. Use the current HR profile fields above for active employment processing and ignore the outdated staging checklist values when filling new-hire forms.

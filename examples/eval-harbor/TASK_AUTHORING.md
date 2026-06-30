@@ -50,6 +50,28 @@ examples/eval-harbor/tasks/<task-id>/
 The agent-visible workspace is only `environment/workspace/`. Hidden truth must
 stay under `tests/expected/`.
 
+Multi-step tasks may also include:
+
+```text
+steps/
+  01-name/
+    instruction.md
+    workdir/
+      setup.sh
+      _step_documents.json
+      _step_docs/
+  02-final/
+    instruction.md
+    workdir/
+      setup.sh
+      _step_forms/
+```
+
+For over-time tasks, use step setup scripts to reveal only the current batch.
+If documents should disappear before the final task, the final step must expose
+forms but not previous document files. Use `multi_step_reward_strategy = "final"`
+when only the final step should determine the score.
+
 ## Authoring Workflow
 
 1. Define the task contract.
@@ -124,6 +146,10 @@ stay under `tests/expected/`.
    change mode instructions and MCP sidecars, but should not change the task
    data or verifier.
 
+   If the markdown baseline is meant to be a naive scratchpad rather than an
+   unlimited synthetic memory, set `MARKDOWN_MEMORY_BUDGET_BYTES` in only the
+   markdown job and document the value in the task runbook.
+
 ## Verifier Requirements
 
 A verifier is sound only if it catches all of these:
@@ -156,6 +182,10 @@ Before opening or updating a PR, check:
 - `source-trace.json` fields match expected fields and values.
 - The CR MCP catalog covers every fact slug needed by the task.
 - The `none`, `markdown`, and `cr-mcp` jobs point at the same task directory.
+- Multi-step tasks validate both top-level `documents.json` and every
+  `steps/*/workdir/_step_documents.json` against the visible step docs.
+- For over-time tasks, the final step does not expose prior document batches
+  unless the task intentionally tests direct re-reading.
 - The oracle run scores `1.0` reward, field accuracy, metadata success, and
   parse success.
 - At least one negative verifier probe proves metadata and overfill failures are
@@ -202,6 +232,9 @@ harbor run \
 - Treating unsupported fields as optional required fields instead of overfill
   traps.
 - Letting the oracle pass while metadata is invalid.
+- Letting the markdown arm become an unlimited external database when the
+  intended baseline is a small local scratchpad.
+- Leaving prior-step documents visible in the final step of an over-time task.
 - Adding product backend form-fill, document-analysis, workflows, or Vertex to
   the Harbor v1 task path.
 - Creating a hard task before the easy version has an oracle and verifier

@@ -112,6 +112,25 @@ def output_files_from_score(score: dict[str, Any]) -> list[str]:
     return DEFAULT_OUTPUT_FILES
 
 
+def find_score_path(trial_dir: Path) -> Path:
+    root_score = trial_dir / SCORE_PATH
+    if root_score.exists():
+        return root_score
+    step_scores = sorted(trial_dir.glob(f"steps/*/{SCORE_PATH.as_posix()}"))
+    if len(step_scores) == 1:
+        return step_scores[0]
+    if len(step_scores) > 1:
+        raise ValueError(
+            f"expected exactly one step score-summary.json under {trial_dir}, "
+            f"found {len(step_scores)}"
+        )
+    raise ValueError(f"missing file: {root_score}")
+
+
+def artifact_root_for_score(score_path: Path) -> Path:
+    return score_path.parents[2]
+
+
 def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     trial_dir = find_trial_dir(path)
     result = load_json(trial_dir / "result.json")
@@ -120,13 +139,16 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     validation_errors: list[str] = []
 
     try:
-        score = load_json(trial_dir / SCORE_PATH)
+        score_path = find_score_path(trial_dir)
+        artifact_root = artifact_root_for_score(score_path)
+        score = load_json(score_path)
     except ValueError as error:
+        artifact_root = trial_dir / "artifacts"
         score = {}
         validation_errors.append(str(error))
 
     for output_file in output_files_from_score(score):
-        form_output = trial_dir / FORM_OUTPUT_ROOT / output_file
+        form_output = artifact_root / FORM_OUTPUT_ROOT.relative_to("artifacts") / output_file
         if not form_output.exists():
             validation_errors.append(f"missing final form output: {form_output}")
         else:
@@ -135,7 +157,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             except ValueError as error:
                 validation_errors.append(str(error))
 
-    mcp_trace = trial_dir / MCP_TRACE_PATH
+    mcp_trace = artifact_root / MCP_TRACE_PATH.relative_to("artifacts")
     try:
         mcp_tools = read_mcp_tools(mcp_trace)
     except (ValueError, json.JSONDecodeError) as error:
@@ -143,7 +165,9 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         validation_errors.append(f"malformed MCP trace: {mcp_trace}: {error}")
 
     try:
-        cr_preference_count = read_cr_preference_count(trial_dir / CR_SNAPSHOT_PATH)
+        cr_preference_count = read_cr_preference_count(
+            artifact_root / CR_SNAPSHOT_PATH.relative_to("artifacts")
+        )
     except ValueError as error:
         cr_preference_count = None
         validation_errors.append(str(error))
@@ -168,7 +192,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     return {
         "mode": mode,
         "trialDir": str(trial_dir),
-        "artifactRoot": str(trial_dir / "artifacts"),
+        "artifactRoot": str(artifact_root),
         "taskName": result.get("task_name"),
         "agent": agent_info.get("name") or agent_config.get("name"),
         "agentVersion": agent_info.get("version"),
