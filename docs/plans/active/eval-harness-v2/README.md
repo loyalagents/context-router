@@ -279,6 +279,9 @@ expanding scope into the next phase.
   keep unused files, speculative abstractions, stale comments, debug artifacts,
   or redundant wrappers. Prefer the smallest Harbor-native implementation that
   satisfies the current issue.
+- Prefer simple, effective solutions over heavy machinery. Use Harbor-native
+  task, verifier, artifact, and job primitives directly before adding wrappers,
+  generators, services, or repo dependencies.
 
 ## Verification Strategy
 

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "formId": "new-hire",
+  "requiredFields": [
+    "employee.fullName",
+    "employee.email",
+    "employee.phone",
+    "employee.address.street",
+    "employee.address.city",
+    "employee.address.state",
+    "employee.address.postalCode",
+    "employment.startDate"
+  ]
+}
