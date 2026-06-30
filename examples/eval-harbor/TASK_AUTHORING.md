@@ -62,6 +62,9 @@ stay under `tests/expected/`.
    Put documents under `environment/workspace/docs/`, schemas under
    `environment/workspace/forms/`, and index every document in
    `environment/workspace/documents.json`.
+   Agent-visible schemas may call abstention-scored fields `optionalFields`
+   even when hidden expected answers call them `unsupportedFields`; avoid
+   exposing hidden labels that tell the agent the answer.
 
 3. Write the instruction.
 
@@ -88,6 +91,8 @@ stay under `tests/expected/`.
 
    Every required field must have clear admissible evidence in the visible
    documents. Every unsupported field should describe the expected behavior.
+   If a visible schema uses `optionalFields`, its keys must match the hidden
+   `unsupportedFields` keys.
 
 5. Add source trace.
 

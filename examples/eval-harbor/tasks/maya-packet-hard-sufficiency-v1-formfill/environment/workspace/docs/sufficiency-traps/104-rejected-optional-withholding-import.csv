@@ -1,0 +1,8 @@
+source_system,export_id,employee_worker_id,employee_name,row_status,field,value,review_decision
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step2_multiple_jobs_or_spouse_works,true,not employee-attested
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step3_qualifying_children_amount,2000,not employee-attested
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step3_other_dependents_amount,500,not employee-attested
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step4a_other_income,1200,not employee-attested
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step4b_deductions,2475,not employee-attested
+LedgerPay optional withholding import,LP-W4-OPT-20260627-104,PLC-20418,Maya Lin Chen,rejected,step4c_extra_withholding,75,not employee-attested
+

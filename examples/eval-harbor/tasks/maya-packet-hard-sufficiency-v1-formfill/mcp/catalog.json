@@ -1,0 +1,209 @@
+{
+  "preferences": [
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee home address city",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.city",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee city, state, and ZIP line",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.cityStateZip",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee home address ZIP code",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.postalCode",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee home address state",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.state",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee home street address without unit",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.street",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee address line including unit",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.streetLine",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee apartment or unit",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "address.current.unit",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Account holder or depositor account title",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "banking.accountHolderName",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-sufficiency-v1 fact for True when depositor account type is checking",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "banking.accountType",
+      "valueType": "boolean"
+    },
+    {
+      "category": "banking",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for fixed direct-deposit allotment amount",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "banking.allotmentAmount",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Financial institution name",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "banking.institutionName",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee personal email address",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "contact.email",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for employee telephone number",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "contact.phone",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee date of birth as MMDDYYYY digits",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.dateOfBirth",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee first name",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.firstName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee last name",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.lastName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Payee name",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.legalName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee middle initial",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.middleInitial",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-sufficiency-v1 fact for Employee SSN as nine digits",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "identity.ssn",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 4(b) deductions",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.deductions",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 4(c) extra withholding",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.extraWithholding",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Maya packet-hard-sufficiency-v1 fact for True when filing status is single or married filing separately",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.filingStatus",
+      "valueType": "boolean"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 2 checkbox",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.multipleJobsOrSpouseWorks",
+      "valueType": "boolean"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 3 other dependents amount",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.otherDependentsAmount",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 4(a) other income",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.otherIncome",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for W-4 Step 3 qualifying children amount",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "tax.qualifyingChildrenAmount",
+      "valueType": "string"
+    },
+    {
+      "category": "workAuthorization",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for I-9 alien registration number",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "workAuthorization.alienRegistrationNumber",
+      "valueType": "string"
+    },
+    {
+      "category": "workAuthorization",
+      "description": "Maya packet-hard-sufficiency-v1 fact for True when the employee attests they are a U.S. citizen",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "workAuthorization.citizenshipStatus",
+      "valueType": "boolean"
+    },
+    {
+      "category": "workAuthorization",
+      "description": "Optional Maya packet-hard-sufficiency-v1 fact for I-9 foreign passport number",
+      "scope": "packet-hard-sufficiency-v1",
+      "slug": "workAuthorization.foreignPassportNumber",
+      "valueType": "string"
+    }
+  ],
+  "schemaVersion": 1,
+  "taskId": "maya-packet-hard-sufficiency-v1-formfill"
+}

@@ -235,10 +235,12 @@ drift.
 | `maya-packet-hard-conflict-v1-formfill` | `packet-hard-conflict-v1` plus 3 Harbor adversarial docs | conflict plus temporal validity, including stale/draft/lower-authority records | 38 |
 | `maya-packet-hard-required-v4-formfill` | `packet-hard-required-v4` plus 3 Harbor adversarial docs | evidence sufficiency through multi-hop code, directory lookups, and deprecated lookup traps | 41 |
 | `maya-packet-hard-volume-v2-formfill` | `packet-hard-volume-v2` | long-context mixed stress with 100 operational near-miss documents | 100 |
+| `maya-packet-hard-sufficiency-v1-formfill` | `packet-hard-required-v4` plus 5 Harbor sufficiency/abstention docs | optional-field evidence sufficiency with missing, ambiguous, rejected, and wrong-owner values | 46 |
 
 Run any hard task through the three comparable arms by replacing
 `<corpus>` with one of `packet-hard-ownership-v1`, `packet-hard-conflict-v1`,
-`packet-hard-required-v4`, or `packet-hard-volume-v2`:
+`packet-hard-required-v4`, `packet-hard-volume-v2`, or
+`packet-hard-sufficiency-v1`:
 
 ```bash
 harbor run \

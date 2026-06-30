@@ -1,0 +1,26 @@
+source_system: "LedgerPay Federal W-4 Codebook"
+export_id: "LP-W4-CODEBOOK-2025-deprecated-copy"
+exported_timestamp: "2026-06-26T08:55:12-07:00"
+codebook_id: "FED-W4-STEP1C-2025-DEPRECATED"
+status: "deprecated_do_not_join"
+superseded_by: "FED-W4-STEP1C-2026"
+
+warning: >
+  This export is retained for audit replay only. It uses a deprecated test
+  mapping from the 2025 sandbox and must not be joined to current 2026 W-4
+  selection fragments.
+
+choice_rows:
+  - choice_code: "FS-01"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "married filing jointly or qualifying surviving spouse"
+    checkbox_order: 2
+  - choice_code: "FS-02"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "single or married filing separately"
+    checkbox_order: 1
+  - choice_code: "FS-03"
+    field_path: federalW4.step1c.filingStatus
+    form_label: "head of household"
+    checkbox_order: 3
+

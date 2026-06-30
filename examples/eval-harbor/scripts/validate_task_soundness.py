@@ -113,7 +113,10 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
                 f"expected_only={sorted(expected_required - schema_required)}"
             )
 
-        schema_unsupported = {row["key"] for row in schema.get("unsupportedFields", [])}
+        schema_unsupported_rows = schema.get("unsupportedFields")
+        if schema_unsupported_rows is None:
+            schema_unsupported_rows = schema.get("optionalFields", [])
+        schema_unsupported = {row["key"] for row in schema_unsupported_rows}
         expected_unsupported = set(expected_form.get("unsupportedFields", {}))
         if schema_unsupported != expected_unsupported:
             errors.append(
