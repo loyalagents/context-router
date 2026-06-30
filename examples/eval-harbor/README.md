@@ -18,6 +18,9 @@ Expected output:
 - the verifier writes `/logs/verifier/reward.json`
 - the verifier writes `/logs/artifacts/score-summary.json`
 
+The smoke task is mainly a harness sanity check. Use the Maya packet task below
+for the first meaningful CR-vs-baseline comparison.
+
 ## Codex Modes
 
 Set Codex auth in the shell before running real-agent jobs. Harbor's Codex
@@ -57,7 +60,7 @@ snapshot, final form output, and score summary.
 
 ## Compare Modes
 
-Run the three modes into stable job roots:
+Run the smoke-task three modes into stable job roots:
 
 ```bash
 CODEX_FORCE_AUTH_JSON=1 harbor run \
@@ -88,9 +91,36 @@ python3 examples/eval-harbor/scripts/report_results.py \
 ```
 
 The report table includes agent, model, reward, field accuracy, parse failures,
-missing/wrong/overfill counts, runtime, and artifact roots. The command exits
-nonzero if required score or output artifacts are missing or malformed. Use
-`--allow-invalid` only when intentionally reviewing a broken run.
+metadata failures, missing/wrong/overfill counts, runtime, and artifact roots.
+The command exits nonzero if required score or output artifacts are missing or
+malformed. Use `--allow-invalid` only when intentionally reviewing a broken run.
+
+## Scoring Contract
+
+The verifier treats the output JSON as a form-fill artifact with a strict
+top-level contract:
+
+```json
+{
+  "schemaVersion": 1,
+  "taskId": "...",
+  "formId": "...",
+  "fields": {},
+  "abstentions": {},
+  "notes": []
+}
+```
+
+Scoring separates field quality from output-contract quality:
+
+- `fieldAccuracy`: required-field value accuracy only.
+- `metadataSuccess`: whether `schemaVersion`, `taskId`, and `formId` match the
+  hidden expected contract for each form.
+- `reward`: contract-aware score. It deducts wrong or missing required fields,
+  nonblank unsupported fields, unknown overfilled fields, and metadata errors.
+
+This means a run can have `fieldAccuracy = 1.0` but `reward < 1.0` if it fills
+the right fields in an invalid JSON contract.
 
 ## Maya Packet-Medium Task
 
@@ -138,6 +168,54 @@ CODEX_FORCE_AUTH_JSON=1 harbor run \
 The CR MCP arm mounts a task-specific catalog into the eval-only memory sidecar.
 It still avoids product backend form-fill, document-analysis, workflows, and
 Vertex.
+
+For a deterministic verifier sanity check, run the oracle:
+
+```bash
+harbor run \
+  -p examples/eval-harbor/tasks/maya-packet-medium-formfill \
+  -a oracle \
+  --jobs-dir /tmp/cr-harbor-maya-oracle \
+  --yes
+```
+
+For reviewable real-agent runs, use stable job roots:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-none.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-none \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-markdown.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-markdown \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-cr-mcp.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-cr-mcp \
+  --yes
+```
+
+Create a Maya packet comparison report:
+
+```bash
+python3 examples/eval-harbor/scripts/report_results.py \
+  --run none=/tmp/cr-harbor-maya-none/eval-harbor-maya-packet-medium-none \
+  --run markdown=/tmp/cr-harbor-maya-markdown/eval-harbor-maya-packet-medium-markdown \
+  --run cr-mcp=/tmp/cr-harbor-maya-cr-mcp/eval-harbor-maya-packet-medium-cr-mcp \
+  --output /tmp/cr-harbor-maya-report.md \
+  --json-output /tmp/cr-harbor-maya-report.json
+```
+
+Each trial artifact root should contain:
+
+- `artifacts/logs/artifacts/score-summary.json`
+- `artifacts/logs/artifacts/outputs/forms/*.json`
+- `artifacts/app/outputs/forms/*.json`
+- `artifacts/memory/cr-snapshot.json` for the `cr-mcp` arm
+- `artifacts/mcp/tool-calls.jsonl` for the `cr-mcp` arm
 
 ## Version Control
 
