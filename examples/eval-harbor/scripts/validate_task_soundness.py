@@ -16,6 +16,12 @@ HIDDEN_MARKERS = [
     "oldFactKey",
     "field-map.json",
     "validation-report",
+    "validated_snapshot_state",
+    "expected_snapshot_state",
+    "reference_answer",
+    "reference_output",
+    "answer_scoring_points",
+    "gold_memory_evidence_app_log_ids",
 ]
 
 
@@ -68,10 +74,334 @@ def validate_documents_index(
     return corpus_id, errors
 
 
+def validate_stage_documents_index(
+    task_id: str,
+    stage_id: str,
+    stage_files: list[dict[str, Any]],
+) -> tuple[str | None, list[str]]:
+    errors: list[str] = []
+    by_path = {item.get("path"): item for item in stage_files if isinstance(item, dict)}
+    documents_item = by_path.get("documents.json")
+    if documents_item is None:
+        return None, errors
+    documents_index = documents_item.get("json")
+    if not isinstance(documents_index, dict):
+        errors.append(f"{task_id}: {stage_id} documents.json must be a JSON object")
+        return None, errors
+    corpus_id = documents_index.get("corpusId")
+    indexed_paths = sorted(doc.get("path") for doc in documents_index.get("documents", []))
+    actual_paths = sorted(
+        path.removeprefix("docs/")
+        for path in by_path
+        if isinstance(path, str) and path.startswith("docs/")
+    )
+    if indexed_paths != actual_paths:
+        missing = sorted(set(actual_paths) - set(indexed_paths))[:10]
+        extra = sorted(set(indexed_paths) - set(actual_paths))[:10]
+        errors.append(
+            f"{task_id}: {stage_id} staged documents index mismatch "
+            f"missing={missing} extra={extra}"
+        )
+    if len(indexed_paths) != len(set(indexed_paths)):
+        errors.append(f"{task_id}: {stage_id} duplicate staged documents paths")
+    if documents_index.get("documentsRoot") != "docs":
+        errors.append(f"{task_id}: {stage_id} documentsRoot must be docs")
+    return corpus_id, errors
+
+
+def staged_payload(task_dir: Path) -> dict[str, Any] | None:
+    payload_path = task_dir / "stages" / "payload.json"
+    if not payload_path.exists():
+        return None
+    return load_json(payload_path)
+
+
+def staged_agent_text(staged: dict[str, Any] | None) -> str:
+    if staged is None:
+        return ""
+    parts: list[str] = []
+    for stage in staged.get("stages", []):
+        if not isinstance(stage, dict):
+            continue
+        parts.append(str(stage.get("instruction") or ""))
+        for item in stage.get("files", []):
+            if not isinstance(item, dict):
+                continue
+            parts.append(str(item.get("path") or ""))
+            if "json" in item:
+                parts.append(json.dumps(item["json"], sort_keys=True))
+            else:
+                parts.append(str(item.get("text") or ""))
+    return "\n".join(parts)
+
+
+def contains_forbidden_key(value: Any, forbidden: set[str], path: str = "") -> list[str]:
+    hits: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            key_text = str(key)
+            child_path = f"{path}.{key_text}" if path else key_text
+            if key_text in forbidden:
+                hits.append(child_path)
+            hits.extend(contains_forbidden_key(child, forbidden, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            hits.extend(contains_forbidden_key(child, forbidden, f"{path}[{index}]"))
+    return hits
+
+
+def native_stage_files(staged: dict[str, Any] | None) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    if staged is None:
+        return []
+    out: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for stage in staged.get("stages", []):
+        if not isinstance(stage, dict):
+            continue
+        for item in stage.get("files", []):
+            if isinstance(item, dict):
+                out.append((stage, item))
+    return out
+
+
+def native_raw_log_items(staged: dict[str, Any] | None) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for _, item in native_stage_files(staged):
+        path = item.get("path")
+        payload = item.get("json")
+        if isinstance(path, str) and path.startswith("docs/") and isinstance(payload, dict):
+            out.append(payload)
+    return out
+
+
+def native_service_item_ids(keys: dict[str, Any]) -> dict[str, set[str]]:
+    out: dict[str, set[str]] = {}
+    for state_key, node in keys.items():
+        ids: set[str] = set()
+        if isinstance(node, dict):
+            for item in node.get("items") or []:
+                if isinstance(item, dict) and item.get("qa_id") is not None:
+                    ids.add(str(item["qa_id"]))
+        out[state_key] = ids
+    return out
+
+
+def validate_native_visible_contract(
+    task_id: str,
+    benchmark: dict[str, Any],
+    checkpoint: dict[str, Any],
+    visible_task: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    if visible_task.get("taskId") != task_id:
+        errors.append(f"{task_id}: visible DynamicMem taskId mismatch")
+    if visible_task.get("userId") != benchmark.get("user_id"):
+        errors.append(f"{task_id}: visible DynamicMem userId mismatch")
+    for key in ("task_contract_version", "research_frame_version"):
+        if visible_task.get(key) != benchmark.get(key):
+            errors.append(f"{task_id}: visible DynamicMem {key} mismatch")
+        output_contract = (visible_task.get("output") or {}).get("contract") or {}
+        if output_contract.get(key) != benchmark.get(key):
+            errors.append(f"{task_id}: visible DynamicMem output contract {key} mismatch")
+    visible_checkpoint = visible_task.get("checkpoint") or {}
+    if visible_checkpoint.get("checkpoint_id") != checkpoint.get("checkpoint_id"):
+        errors.append(f"{task_id}: visible DynamicMem checkpoint_id mismatch")
+    if visible_checkpoint.get("as_of") != checkpoint.get("as_of"):
+        errors.append(f"{task_id}: visible DynamicMem checkpoint as_of mismatch")
+    if (visible_task.get("output") or {}).get("path") != "outputs/prediction.json":
+        errors.append(f"{task_id}: visible DynamicMem output path must be outputs/prediction.json")
+    return errors
+
+
+def validate_native_stage_contract(
+    task_id: str,
+    checkpoint: dict[str, Any],
+    difficulty: dict[str, Any],
+    visible_task: dict[str, Any],
+    staged: dict[str, Any] | None,
+) -> list[str]:
+    errors: list[str] = []
+    if staged is None:
+        errors.append(f"{task_id}: native DynamicMem task must use staged reveal")
+        return errors
+
+    stages = staged.get("stages")
+    if not isinstance(stages, list):
+        errors.append(f"{task_id}: native DynamicMem staged payload has no stages list")
+        return errors
+
+    expected_kinds = ["memory-update", "memory-update", "downstream-task"]
+    actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
+    if actual_kinds != expected_kinds:
+        errors.append(f"{task_id}: native DynamicMem stage kind pattern mismatch: {actual_kinds}")
+
+    raw_logs = native_raw_log_items(staged)
+    raw_log_ids = [str(log.get("app_log_id") or "") for log in raw_logs]
+    if len(raw_log_ids) != len(set(raw_log_ids)):
+        errors.append(f"{task_id}: native DynamicMem staged raw logs contain duplicate app_log_id")
+    timestamps = [str(log.get("timestamp") or "") for log in raw_logs]
+    if timestamps != sorted(timestamps):
+        errors.append(f"{task_id}: native DynamicMem staged raw logs are not chronological")
+    as_of = checkpoint.get("as_of") or {}
+    log_index = as_of.get("log_index")
+    if isinstance(log_index, int) and len(raw_logs) != log_index + 1:
+        errors.append(
+            f"{task_id}: native DynamicMem raw log count must equal checkpoint log_index + 1 "
+            f"expected={log_index + 1} actual={len(raw_logs)}"
+        )
+
+    dynamicmem_task_count = 0
+    for stage, item in native_stage_files(staged):
+        if item.get("path") == "dynamicmem-task.json":
+            dynamicmem_task_count += 1
+            if stage.get("kind") != "downstream-task":
+                errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream stage")
+            if item.get("json") != visible_task:
+                errors.append(f"{task_id}: staged dynamicmem-task.json does not match visible-task.json")
+    if dynamicmem_task_count != 1:
+        errors.append(f"{task_id}: native DynamicMem task must expose exactly one dynamicmem-task.json")
+
+    totals = difficulty.get("totals", {})
+    actual_doc_count = len(raw_logs)
+    actual_file_count = sum(len(stage.get("files", [])) for stage in stages if isinstance(stage, dict))
+    if totals.get("visibleDocCount") != actual_doc_count:
+        errors.append(f"{task_id}: difficulty visibleDocCount mismatch")
+    if totals.get("visibleFileCount") != actual_file_count:
+        errors.append(f"{task_id}: difficulty visibleFileCount mismatch")
+    if totals.get("observedRawLogCount") != actual_doc_count:
+        errors.append(f"{task_id}: difficulty observedRawLogCount mismatch")
+    return errors
+
+
+def validate_native_catalog(
+    task_id: str,
+    task_dir: Path,
+    scp_keys: dict[str, Any],
+) -> list[str]:
+    catalog_path = task_dir / "mcp" / "catalog.json"
+    if not catalog_path.exists():
+        return [f"{task_id}: native DynamicMem task missing mcp/catalog.json"]
+    catalog = load_json(catalog_path)
+    errors: list[str] = []
+    if catalog.get("taskId") != task_id:
+        errors.append(f"{task_id}: native DynamicMem catalog taskId mismatch")
+    catalog_slugs = {pref.get("slug") for pref in catalog.get("preferences", [])}
+    if catalog_slugs != set(scp_keys):
+        errors.append(
+            f"{task_id}: native DynamicMem catalog slug mismatch "
+            f"catalog_only={sorted(catalog_slugs - set(scp_keys))[:10]} "
+            f"hidden_only={sorted(set(scp_keys) - catalog_slugs)[:10]}"
+        )
+    scopes = {pref.get("scope") for pref in catalog.get("preferences", [])}
+    if scopes != {task_id}:
+        errors.append(f"{task_id}: native DynamicMem catalog scopes must be only {task_id}")
+    return errors
+
+
+def validate_native_dynamicmem_task(
+    task_id: str,
+    task_dir: Path,
+    staged: dict[str, Any] | None,
+) -> tuple[bool, list[str]]:
+    benchmark_path = task_dir / "tests" / "expected" / "benchmark.json"
+    if not benchmark_path.exists():
+        return False, []
+
+    errors: list[str] = []
+    visible_task_path = task_dir / "tests" / "expected" / "visible-task.json"
+    difficulty_path = task_dir / "tests" / "expected" / "difficulty.json"
+    soundness_path = task_dir / "tests" / "expected" / "soundness-report.md"
+    if not visible_task_path.exists():
+        errors.append(f"{task_id}: missing tests/expected/visible-task.json")
+        return True, errors
+    if not difficulty_path.exists():
+        errors.append(f"{task_id}: missing tests/expected/difficulty.json")
+        return True, errors
+    if not soundness_path.exists():
+        errors.append(f"{task_id}: missing tests/expected/soundness-report.md")
+
+    benchmark = load_json(benchmark_path)
+    visible_task = load_json(visible_task_path)
+    difficulty = load_json(difficulty_path)
+    checkpoints = benchmark.get("checkpoints")
+    if not isinstance(checkpoints, list) or len(checkpoints) != 1:
+        errors.append(f"{task_id}: native benchmark must contain exactly one checkpoint")
+        return True, errors
+    checkpoint = checkpoints[0]
+    scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+    rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
+    if not scp_keys:
+        errors.append(f"{task_id}: native benchmark has no state_completion_pack keys")
+    if not rq_keys:
+        errors.append(f"{task_id}: native benchmark has no rq3_apply_service_qa keys")
+    errors.extend(validate_native_visible_contract(task_id, benchmark, checkpoint, visible_task))
+
+    visible_scp_keys = ((visible_task.get("state_completion") or {}).get("keys") or {})
+    visible_rq_keys = ((visible_task.get("personalized_service") or {}).get("keys") or {})
+    if set(visible_scp_keys) != set(scp_keys):
+        errors.append(
+            f"{task_id}: visible state_completion keys mismatch "
+            f"hidden_only={sorted(set(scp_keys) - set(visible_scp_keys))[:10]} "
+            f"visible_only={sorted(set(visible_scp_keys) - set(scp_keys))[:10]}"
+        )
+    if set(visible_rq_keys) != set(rq_keys):
+        errors.append(
+            f"{task_id}: visible personalized_service keys mismatch "
+            f"hidden_only={sorted(set(rq_keys) - set(visible_rq_keys))[:10]} "
+            f"visible_only={sorted(set(visible_rq_keys) - set(rq_keys))[:10]}"
+        )
+    hidden_qa_ids = native_service_item_ids(rq_keys)
+    visible_qa_ids = native_service_item_ids(visible_rq_keys)
+    if visible_qa_ids != hidden_qa_ids:
+        errors.append(f"{task_id}: visible personalized_service qa_id coverage mismatch")
+
+    forbidden_visible_keys = {
+        "validated_snapshot_state",
+        "expected_snapshot_state",
+        "state_observability",
+        "state_questionability",
+        "reference_answer",
+        "reference_output",
+        "reference_anchors",
+        "answer_scoring_points",
+        "gold_memory_evidence_app_log_ids",
+        "item_validation",
+        "pack_identity",
+    }
+    leaks = contains_forbidden_key(visible_task, forbidden_visible_keys)
+    if leaks:
+        errors.append(f"{task_id}: visible DynamicMem task leaks hidden keys {leaks[:10]}")
+
+    rq_item_count = 0
+    for node in rq_keys.values():
+        if isinstance(node, dict):
+            rq_item_count += len([item for item in node.get("items", []) if isinstance(item, dict)])
+    totals = difficulty.get("totals", {})
+    if totals.get("stateCompletionKeyCount") != len(scp_keys):
+        errors.append(f"{task_id}: difficulty stateCompletionKeyCount mismatch")
+    if totals.get("personalizedServiceKeyCount") != len(rq_keys):
+        errors.append(f"{task_id}: difficulty personalizedServiceKeyCount mismatch")
+    if totals.get("personalizedServiceItemCount") != rq_item_count:
+        errors.append(f"{task_id}: difficulty personalizedServiceItemCount mismatch")
+    errors.extend(
+        validate_native_stage_contract(
+            task_id,
+            checkpoint,
+            difficulty,
+            visible_task,
+            staged,
+        )
+    )
+    errors.extend(validate_native_catalog(task_id, task_dir, scp_keys))
+
+    return True, errors
+
+
 def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     errors: list[str] = []
     task_id = task_dir.name
     workspace = task_dir / "environment" / "workspace"
+    staged = staged_payload(task_dir)
+    staged_schemas: dict[str, dict[str, Any]] = {}
 
     documents_path = workspace / "documents.json"
     corpus_id = None
@@ -83,6 +413,76 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
             label="workspace",
         )
         errors.extend(index_errors)
+
+    if staged is not None:
+        if staged.get("taskId") != task_id:
+            errors.append(f"{task_id}: staged payload taskId mismatch")
+        stages = staged.get("stages")
+        if not isinstance(stages, list) or not stages:
+            errors.append(f"{task_id}: staged payload must contain nonempty stages list")
+            stages = []
+        seen_stage_ids: set[str] = set()
+        for expected_index, stage in enumerate(stages, start=1):
+            stage_id = stage.get("stageId")
+            if not stage_id:
+                errors.append(f"{task_id}: staged payload missing stageId")
+                stage_id = f"stage-{expected_index}"
+            if stage_id in seen_stage_ids:
+                errors.append(f"{task_id}: duplicate stageId {stage_id}")
+            seen_stage_ids.add(stage_id)
+            if stage.get("stageIndex") != expected_index:
+                errors.append(f"{task_id}: {stage_id} stageIndex must be {expected_index}")
+            if not stage.get("instruction"):
+                errors.append(f"{task_id}: {stage_id} missing instruction")
+            stage_files = stage.get("files")
+            if not isinstance(stage_files, list):
+                errors.append(f"{task_id}: {stage_id} files must be a list")
+                stage_files = []
+            paths: list[str] = []
+            for item in stage_files:
+                path = item.get("path") if isinstance(item, dict) else None
+                if not isinstance(path, str) or not path:
+                    errors.append(f"{task_id}: {stage_id} has file without path")
+                    continue
+                if path.startswith("/") or ".." in Path(path).parts:
+                    errors.append(f"{task_id}: {stage_id} unsafe staged path {path}")
+                paths.append(path)
+                if path.startswith("forms/") and path.endswith(".schema.json"):
+                    form_id = Path(path).name.removesuffix(".schema.json")
+                    schema = item.get("json")
+                    if isinstance(schema, dict):
+                        staged_schemas[form_id] = schema
+                    else:
+                        errors.append(f"{task_id}: {stage_id} schema {path} must be JSON")
+            if len(paths) != len(set(paths)):
+                errors.append(f"{task_id}: {stage_id} duplicate staged file paths")
+            stage_corpus_id, stage_errors = validate_stage_documents_index(
+                task_id,
+                stage_id,
+                stage_files,
+            )
+            errors.extend(stage_errors)
+            if stage_corpus_id:
+                if corpus_id is None:
+                    corpus_id = stage_corpus_id
+                elif stage_corpus_id != corpus_id:
+                    errors.append(f"{task_id}: staged corpus mismatch in {stage_id}")
+
+    is_native_dynamicmem, native_errors = validate_native_dynamicmem_task(
+        task_id,
+        task_dir,
+        staged,
+    )
+    if is_native_dynamicmem:
+        errors.extend(native_errors)
+        leaked = [
+            marker
+            for marker in HIDDEN_MARKERS
+            if marker in visible_agent_text(task_dir) or marker in staged_agent_text(staged)
+        ]
+        if leaked:
+            errors.append(f"{task_id}: visible workspace/stages contain hidden markers {leaked}")
+        return errors
 
     for step_documents_path in sorted(
         (task_dir / "steps").glob("*/workdir/_step_documents.json")
@@ -108,6 +508,33 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     expected = load_json(expected_path)
     if expected.get("taskId") != task_id:
         errors.append(f"{task_id}: expected forms taskId mismatch")
+
+    if staged is not None:
+        difficulty_path = task_dir / "tests" / "expected" / "difficulty.json"
+        if not difficulty_path.exists():
+            errors.append(f"{task_id}: missing tests/expected/difficulty.json")
+        else:
+            difficulty = load_json(difficulty_path)
+            if difficulty.get("taskId") != task_id:
+                errors.append(f"{task_id}: difficulty taskId mismatch")
+            stage_count = difficulty.get("totals", {}).get("stageCount")
+            if stage_count != len(staged.get("stages", [])):
+                errors.append(
+                    f"{task_id}: difficulty stageCount mismatch "
+                    f"expected={len(staged.get('stages', []))} actual={stage_count}"
+                )
+            expected_required_count = sum(
+                len(form.get("fields", {}))
+                for form in expected.get("forms", {}).values()
+            )
+            difficulty_field_count = difficulty.get("totals", {}).get("requiredFieldCount")
+            if difficulty_field_count != expected_required_count:
+                errors.append(
+                    f"{task_id}: difficulty requiredFieldCount mismatch "
+                    f"expected={expected_required_count} actual={difficulty_field_count}"
+                )
+        if not (task_dir / "tests" / "expected" / "soundness-report.md").exists():
+            errors.append(f"{task_id}: missing tests/expected/soundness-report.md")
 
     trace_path = task_dir / "tests" / "expected" / "source-trace.json"
     trace = load_json(trace_path) if trace_path.exists() else None
@@ -139,10 +566,13 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     forms = expected.get("forms", {})
     for form_id, expected_form in forms.items():
         schema_path = workspace / "forms" / f"{form_id}.schema.json"
-        if not schema_path.exists():
+        if schema_path.exists():
+            schema = load_json(schema_path)
+        elif form_id in staged_schemas:
+            schema = staged_schemas[form_id]
+        else:
             errors.append(f"{task_id}: missing schema for form {form_id}")
             continue
-        schema = load_json(schema_path)
         if schema.get("outputShape", {}).get("taskId") != task_id:
             errors.append(f"{task_id}: schema outputShape taskId mismatch for {form_id}")
 
@@ -201,9 +631,13 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         if missing_slugs:
             errors.append(f"{task_id}: catalog missing source-trace slugs {missing_slugs}")
 
-    leaked = [marker for marker in HIDDEN_MARKERS if marker in visible_agent_text(task_dir)]
+    leaked = [
+        marker
+        for marker in HIDDEN_MARKERS
+        if marker in visible_agent_text(task_dir) or marker in staged_agent_text(staged)
+    ]
     if leaked:
-        errors.append(f"{task_id}: visible workspace contains hidden markers {leaked}")
+        errors.append(f"{task_id}: visible workspace/stages contain hidden markers {leaked}")
 
     return errors
 
@@ -225,6 +659,15 @@ def main() -> int:
                 docs = load_json(documents_path)
                 corpus_label = docs.get("corpusId")
                 docs_count = len(docs.get("documents", []))
+            elif (task / "stages" / "payload.json").exists():
+                payload = load_json(task / "stages" / "payload.json")
+                corpus_label = payload.get("corpusId")
+                docs_count = 0
+                for stage in payload.get("stages", []):
+                    for item in stage.get("files", []):
+                        path = item.get("path") if isinstance(item, dict) else None
+                        if isinstance(path, str) and path.startswith("docs/"):
+                            docs_count += 1
             else:
                 corpus_label = "none"
                 docs_count = len(
@@ -234,14 +677,31 @@ def main() -> int:
                         if path.is_file()
                     ]
                 )
-            expected = load_json(task / "tests" / "expected" / "forms.json")
-            required_count = sum(len(form.get("fields", {})) for form in expected.get("forms", {}).values())
-            unsupported_count = sum(len(form.get("unsupportedFields", {})) for form in expected.get("forms", {}).values())
-            print(
-                f"OK {task.name}: corpus={corpus_label} "
-                f"docs={docs_count} "
-                f"required={required_count} unsupported={unsupported_count}"
-            )
+            native_benchmark = task / "tests" / "expected" / "benchmark.json"
+            if native_benchmark.exists():
+                benchmark = load_json(native_benchmark)
+                checkpoint = benchmark["checkpoints"][0]
+                scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+                rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
+                rq_items = sum(
+                    len(node.get("items") or [])
+                    for node in rq_keys.values()
+                    if isinstance(node, dict)
+                )
+                print(
+                    f"OK {task.name}: corpus={corpus_label} "
+                    f"docs={docs_count} "
+                    f"state_keys={len(scp_keys)} service_items={rq_items}"
+                )
+            else:
+                expected = load_json(task / "tests" / "expected" / "forms.json")
+                required_count = sum(len(form.get("fields", {})) for form in expected.get("forms", {}).values())
+                unsupported_count = sum(len(form.get("unsupportedFields", {})) for form in expected.get("forms", {}).values())
+                print(
+                    f"OK {task.name}: corpus={corpus_label} "
+                    f"docs={docs_count} "
+                    f"required={required_count} unsupported={unsupported_count}"
+                )
 
     if all_errors:
         for error in all_errors:

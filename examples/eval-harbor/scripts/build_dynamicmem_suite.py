@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+"""Generate Harbor tasks from native DynamicMem user checkpoints."""
+
+from __future__ import annotations
+
+import argparse
+import importlib
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_MODEL = "gpt-5.4-mini"
+DEFAULT_REASONING_EFFORT = "high"
+REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
+DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
+
+
+@dataclass(frozen=True)
+class TaskPlan:
+    task_id: str
+    corpus_id: str
+    source_user_dir: str
+    source_user_id: str
+    previous_checkpoint_index: int
+    final_checkpoint_index: int
+    checkpoint_id: str
+    checkpoint_timestamp: str
+    observed_log_count: int
+    state_completion_key_count: int
+    personalized_service_key_count: int
+    personalized_service_item_count: int
+    service_families: list[str]
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_arm_configs(path: Path) -> list[dict[str, Any]]:
+    builder = importlib.import_module("build_dynamicmem_task")
+    return builder.load_arm_configs(path)
+
+
+def user_dirs(source_root: Path) -> list[Path]:
+    if (source_root / "app_log_large.json").exists() and (source_root / "task_packs.json").exists():
+        return [source_root]
+    return sorted(
+        child
+        for child in source_root.iterdir()
+        if child.is_dir()
+        and (child / "app_log_large.json").exists()
+        and (child / "task_packs.json").exists()
+    )
+
+
+def compact_user_label(user_id: str) -> str:
+    return user_id.replace("_", "")
+
+
+def checkpoint_timestamp(checkpoint: dict[str, Any]) -> str:
+    as_of = checkpoint.get("as_of")
+    if isinstance(as_of, dict):
+        return str(as_of.get("timestamp") or "")
+    return ""
+
+
+def observed_log_count(checkpoint: dict[str, Any], app_logs: list[dict[str, Any]]) -> int:
+    builder = importlib.import_module("build_dynamicmem_task")
+    return len(builder.observed_logs_for_checkpoint(checkpoint, builder.normalize_app_logs(app_logs)))
+
+
+def apply_counts(checkpoint: dict[str, Any]) -> tuple[int, int, list[str]]:
+    keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
+    item_count = 0
+    families: set[str] = set()
+    for node in keys.values():
+        if not isinstance(node, dict):
+            continue
+        for item in node.get("items") or []:
+            if isinstance(item, dict):
+                item_count += 1
+                family = str(item.get("service_family") or "")
+                if family:
+                    families.add(family)
+    return len(keys), item_count, sorted(families)
+
+
+def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[TaskPlan]:
+    app_logs = load_json(source_dir / "app_log_large.json")
+    task_packs = load_json(source_dir / "task_packs.json")
+    checkpoints = task_packs["checkpoints"]
+    source_user_id = task_packs["user_id"]
+    source_user_dir = source_dir.name
+    user_label = compact_user_label(source_user_id)
+    plans: list[TaskPlan] = []
+
+    for final_index in checkpoint_indices:
+        if final_index < 0 or final_index >= len(checkpoints):
+            continue
+        checkpoint = checkpoints[final_index]
+        scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+        rq_key_count, rq_item_count, service_families = apply_counts(checkpoint)
+        if not scp_keys or not rq_item_count:
+            continue
+        task_id = f"dynamicmem-{user_label}-cp{final_index:02d}-native-v1"
+        plans.append(
+            TaskPlan(
+                task_id=task_id,
+                corpus_id=f"{task_id}-corpus",
+                source_user_dir=source_user_dir,
+                source_user_id=source_user_id,
+                previous_checkpoint_index=final_index - 1,
+                final_checkpoint_index=final_index,
+                checkpoint_id=str(checkpoint.get("checkpoint_id") or ""),
+                checkpoint_timestamp=checkpoint_timestamp(checkpoint),
+                observed_log_count=observed_log_count(checkpoint, app_logs),
+                state_completion_key_count=len(scp_keys),
+                personalized_service_key_count=rq_key_count,
+                personalized_service_item_count=rq_item_count,
+                service_families=service_families,
+            )
+        )
+    return plans
+
+
+def number_stats(values: list[int]) -> dict[str, Any]:
+    if not values:
+        return {"min": 0, "max": 0, "mean": 0.0}
+    return {"min": min(values), "max": max(values), "mean": sum(values) / len(values)}
+
+
+def suite_coverage(plans: list[TaskPlan]) -> dict[str, Any]:
+    return {
+        "taskCount": len(plans),
+        "userCount": len({plan.source_user_id for plan in plans}),
+        "sourceUserIds": sorted({plan.source_user_id for plan in plans}),
+        "checkpointIndices": sorted({plan.final_checkpoint_index for plan in plans}),
+        "checkpointIds": sorted({plan.checkpoint_id for plan in plans if plan.checkpoint_id}),
+        "serviceFamilies": sorted({family for plan in plans for family in plan.service_families}),
+        "observedLogsPerTask": number_stats([plan.observed_log_count for plan in plans]),
+        "stateCompletionKeysPerTask": number_stats([plan.state_completion_key_count for plan in plans]),
+        "personalizedServiceItemsPerTask": number_stats([plan.personalized_service_item_count for plan in plans]),
+    }
+
+
+def read_task_difficulty(tasks_root: Path, task_id: str) -> dict[str, Any] | None:
+    path = tasks_root / task_id / "tests" / "expected" / "difficulty.json"
+    if not path.exists():
+        return None
+    return load_json(path)
+
+
+def generate_task(
+    plan: TaskPlan,
+    source_dir: Path,
+    *,
+    tasks_root: Path,
+    jobs_root: Path,
+    model_name: str,
+    reasoning_effort: str,
+    arm_configs: list[dict[str, Any]],
+) -> None:
+    builder = importlib.import_module("build_dynamicmem_task")
+    builder.build_task(
+        source_dir,
+        tasks_root / plan.task_id,
+        jobs_root,
+        arm_configs=arm_configs,
+        config=builder.BuildConfig(
+            task_id=plan.task_id,
+            corpus_id=plan.corpus_id,
+            source_user_dir=plan.source_user_dir,
+            source_user_id=plan.source_user_id,
+            previous_checkpoint_index=plan.previous_checkpoint_index,
+            final_checkpoint_index=plan.final_checkpoint_index,
+            model_name=model_name,
+            reasoning_effort=reasoning_effort,
+        ),
+    )
+
+
+def write_suite_manifest(
+    plans: list[TaskPlan],
+    *,
+    output: Path,
+    tasks_root: Path,
+    jobs_root: Path,
+    model_name: str,
+    reasoning_effort: str,
+    samples: int,
+    arm_configs: list[dict[str, Any]],
+) -> None:
+    payload = {
+        "schemaVersion": 1,
+        "issue": 137,
+        "sourceDataset": {
+            "name": "xiewenya/dynamicmem",
+            "license": "MIT",
+            "nativeInputs": ["app_log_large.json", "task_packs.json"],
+            "migrationPolicy": (
+                "Harbor replaces only the runner. Each generated task preserves "
+                "one native DynamicMem user checkpoint, including raw app-log "
+                "history, state_completion_pack, rq3_apply_service_qa, and the "
+                "upstream prediction contract."
+            ),
+            "selectionPolicy": (
+                "Deterministic checkpoint migration. One Harbor task maps to one "
+                "DynamicMem user/checkpoint; no state-key chunking or synthetic "
+                "form schema generation is used."
+            ),
+        },
+        "modelName": model_name,
+        "reasoningEffort": reasoning_effort,
+        "agentConfig": {
+            "agent": "codex",
+            "modelName": model_name,
+            "reasoningEffort": reasoning_effort,
+            "reasoningEffortConfigKey": "model_reasoning_effort",
+        },
+        "samplesPerTaskArm": samples,
+        "paths": {"tasksRoot": str(tasks_root), "jobsRoot": str(jobs_root)},
+        "arms": [
+            {
+                "mode": arm["mode"],
+                "memoryMode": arm.get("memoryMode", arm["mode"]),
+                "instructionPath": arm["instructionPath"],
+                "compose": arm.get("compose", "staged"),
+                "reasoningEffort": reasoning_effort,
+            }
+            for arm in arm_configs
+        ],
+        "tasks": [
+            {
+                "taskId": plan.task_id,
+                "corpusId": plan.corpus_id,
+                "sourceUserDir": plan.source_user_dir,
+                "sourceUserId": plan.source_user_id,
+                "previousCheckpointIndex": plan.previous_checkpoint_index,
+                "finalCheckpointIndex": plan.final_checkpoint_index,
+                "checkpointId": plan.checkpoint_id,
+                "checkpointTimestamp": plan.checkpoint_timestamp,
+                "observedLogCount": plan.observed_log_count,
+                "stateCompletionKeyCount": plan.state_completion_key_count,
+                "personalizedServiceKeyCount": plan.personalized_service_key_count,
+                "personalizedServiceItemCount": plan.personalized_service_item_count,
+                "serviceFamilies": plan.service_families,
+                "difficulty": read_task_difficulty(tasks_root, plan.task_id),
+            }
+            for plan in plans
+        ],
+        "coverage": suite_coverage(plans),
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def parse_checkpoint_indices(value: str) -> list[int]:
+    indices: list[int] = []
+    for raw_part in value.split(","):
+        part = raw_part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            start, end = part.split("-", 1)
+            indices.extend(range(int(start), int(end) + 1))
+        else:
+            indices.append(int(part))
+    return sorted(set(indices))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate native DynamicMem Harbor tasks.")
+    parser.add_argument("--source-root", type=Path, required=True)
+    parser.add_argument("--tasks-root", type=Path, default=Path("examples/eval-harbor/tasks"))
+    parser.add_argument("--jobs-root", type=Path, default=Path("examples/eval-harbor/jobs"))
+    parser.add_argument("--manifest", type=Path, default=Path("examples/eval-harbor/suites/dynamicmem-suite.json"))
+    parser.add_argument("--arms-config", type=Path, default=DEFAULT_ARM_CONFIG_PATH)
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--reasoning-effort",
+        default=DEFAULT_REASONING_EFFORT,
+        choices=sorted(REASONING_EFFORT_CHOICES),
+        help="Codex reasoning effort written into every generated Harbor job.",
+    )
+    parser.add_argument("--samples", type=int, default=3)
+    parser.add_argument("--max-users", type=int, default=5)
+    parser.add_argument("--max-tasks", type=int, default=10)
+    parser.add_argument("--checkpoint-indices", default="0-4")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
+    checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
+    arm_configs = load_arm_configs(args.arms_config)
+    all_plans: list[tuple[Path, TaskPlan]] = []
+    for source_dir in user_dirs(args.source_root)[: args.max_users]:
+        for plan in plan_user_tasks(source_dir, checkpoint_indices=checkpoint_indices):
+            all_plans.append((source_dir, plan))
+            if len(all_plans) >= args.max_tasks:
+                break
+        if len(all_plans) >= args.max_tasks:
+            break
+
+    if not all_plans:
+        raise SystemExit("no DynamicMem task plans generated")
+
+    for source_dir, plan in all_plans:
+        print(
+            f"{plan.task_id}: user={plan.source_user_id} "
+            f"checkpoint={plan.final_checkpoint_index} "
+            f"logs={plan.observed_log_count} "
+            f"state_keys={plan.state_completion_key_count} "
+            f"service_items={plan.personalized_service_item_count}"
+        )
+        if not args.dry_run:
+            generate_task(
+                plan,
+                source_dir,
+                tasks_root=args.tasks_root,
+                jobs_root=args.jobs_root,
+                model_name=args.model,
+                reasoning_effort=args.reasoning_effort,
+                arm_configs=arm_configs,
+            )
+
+    if args.dry_run:
+        print(f"Dry run only; did not write suite manifest: {args.manifest}")
+        return 0
+
+    write_suite_manifest(
+        [plan for _, plan in all_plans],
+        output=args.manifest,
+        tasks_root=args.tasks_root,
+        jobs_root=args.jobs_root,
+        model_name=args.model,
+        reasoning_effort=args.reasoning_effort,
+        samples=args.samples,
+        arm_configs=arm_configs,
+    )
+    print(f"Wrote suite manifest: {args.manifest}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

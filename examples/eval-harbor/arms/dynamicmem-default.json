@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "arms": [
+    {
+      "mode": "context-only",
+      "memoryMode": "context-only",
+      "instructionPath": "examples/eval-harbor/modes/context-only.md",
+      "compose": "staged"
+    },
+    {
+      "mode": "markdown",
+      "memoryMode": "markdown",
+      "instructionPath": "examples/eval-harbor/modes/markdown.md",
+      "compose": "staged"
+    },
+    {
+      "mode": "cr-mcp",
+      "memoryMode": "cr-mcp",
+      "instructionPath": "examples/eval-harbor/modes/cr-mcp.md",
+      "compose": "cr-mcp",
+      "mcpServers": [
+        {
+          "name": "context-router-memory",
+          "transport": "streamable-http",
+          "url": "http://cr-memory:8000/mcp"
+        }
+      ],
+      "artifacts": [
+        {
+          "source": "/data/mcp-config.json",
+          "destination": "mcp/config.json",
+          "service": "cr-memory"
+        },
+        {
+          "source": "/data/preferences.json",
+          "destination": "memory/cr-snapshot.json",
+          "service": "cr-memory"
+        },
+        {
+          "source": "/data/tool-calls.jsonl",
+          "destination": "mcp/tool-calls.jsonl",
+          "service": "cr-memory"
+        },
+        {
+          "source": "/data/server.log",
+          "destination": "mcp/server.log",
+          "service": "cr-memory"
+        },
+        {
+          "source": "/data/catalog.json",
+          "destination": "mcp/catalog.json",
+          "service": "cr-memory"
+        }
+      ]
+    }
+  ]
+}

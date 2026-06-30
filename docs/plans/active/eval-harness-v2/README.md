@@ -89,6 +89,28 @@ examples/eval-harbor/      # New Harbor-native CR-vs-baseline evals
 The two suites can reuse fixture concepts, but v2 should not call the old
 backend form-fill or document-analysis pipelines in its first version.
 
+## DynamicMem Migration Decision
+
+DynamicMem-backed tasks should migrate the upstream task semantics, not the
+upstream runner. The adapter should preserve:
+
+- source user trajectory and timeline;
+- checkpoint index and checkpoint identity;
+- raw `app_log_large.json` entries up to the checkpoint;
+- `state_completion_pack` as the State Completion contract;
+- `rq3_apply_service_qa` as the Personalized Service contract;
+- the upstream prediction schema with `snapshot_state`, `evidence`, and
+  `rq3_apply_answers`;
+- hidden validated state, expected state, reference answers, reference outputs,
+  scoring points, and gold evidence ids for verifier/evaluator use only.
+
+Harbor remains the execution harness so the three arms keep the same sandbox,
+stage reveal, output path, local smoke scorer, and resampling logic. Generated
+suite manifests must report coverage over users, checkpoints, observed-log
+counts, state-completion key counts, Personalized Service item counts, and
+service families. This is the guardrail against accidental random task
+synthesis or narrow task slices.
+
 ## V1 Non-Goals
 
 - Do not reimplement Harbor's runner, sandbox lifecycle, artifact collection, or
@@ -104,12 +126,13 @@ repro before adding a custom wrapper.
 
 ## Experimental Arms
 
-The core comparison keeps task, documents, agent, model, output contract, and
-verifier fixed. The only intended variable is memory substrate.
+The core comparison keeps task, documents, agent, model, reasoning effort,
+output contract, and verifier fixed. The only intended variable is memory
+substrate.
 
 | Arm | Harbor shape | Memory substrate | CR involved? | Purpose |
 | --- | --- | --- | --- | --- |
-| `none` | Harbor task with no MCP sidecar and no memory file instructions | Agent context only | No | Pure agent baseline. |
+| `context-only` | Same continuous task with no MCP sidecar and no memory file instructions | Current agent conversation context only | No | Pure continuous-session agent baseline. |
 | `markdown` | Same Harbor task plus mode instruction to maintain `memory.md` | Free-form local file | No | Naive external-memory baseline. |
 | `cr-mcp` | Same Harbor task plus CR memory-only MCP sidecar | CR preference memory through MCP tools | Yes, memory only | Tests CR as durable structured memory. |
 
@@ -225,16 +248,19 @@ write its own `result.json`.
 Proposed direct Harbor commands:
 
 ```bash
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-none.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 
-CODEX_FORCE_AUTH_JSON=1 harbor run \
+harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-cr-mcp.yaml \
+  --agent-env CODEX_FORCE_AUTH_JSON=true \
   --yes
 ```
 
@@ -329,6 +355,8 @@ expected outputs are derived from the old profile and field maps, and
 
 - Port the harder packet/document-trap datasets into Harbor tasks after the Maya
   packet-medium parity task is reviewed.
-- Add over-time/multi-step tasks using Harbor's multi-step pattern.
+- Add over-time tasks using staged reveal by default; use Harbor multi-step only
+  for explicit fresh-phase ablations or adapters proven to resume the same
+  conversation across steps.
 - Add optional memory-state scoring when final-task scoring is too indirect for
   debugging extraction failures.
