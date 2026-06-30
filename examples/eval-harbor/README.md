@@ -4,6 +4,10 @@ This directory contains Harbor-native eval tasks for clean CR-vs-baseline
 experiments. It is separate from `examples/eval`, which remains the product E2E
 evaluation suite.
 
+For creating new tasks, use [`TASK_AUTHORING.md`](TASK_AUTHORING.md). The README
+is the runbook for executing tasks; the authoring guide is the soundness
+checklist for adding task data, hidden truth, verifiers, and job configs.
+
 ## Smoke Task
 
 Run the first deterministic task with Harbor's oracle agent:
