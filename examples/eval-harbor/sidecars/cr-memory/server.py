@@ -12,8 +12,9 @@ PREFERENCES_PATH = DATA_DIR / "preferences.json"
 TOOL_CALLS_PATH = DATA_DIR / "tool-calls.jsonl"
 CONFIG_PATH = DATA_DIR / "mcp-config.json"
 SERVER_LOG_PATH = DATA_DIR / "server.log"
+CATALOG_PATH = DATA_DIR / "catalog.json"
 
-CATALOG = [
+DEFAULT_CATALOG = [
     {
         "slug": "employee.fullName",
         "category": "employee",
@@ -94,6 +95,21 @@ def log(message: str) -> None:
     SERVER_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with SERVER_LOG_PATH.open("a", encoding="utf-8") as handle:
         handle.write(f"{utc_now()} {message}\n")
+
+
+def load_catalog() -> list[dict[str, Any]]:
+    if not CATALOG_PATH.exists():
+        return DEFAULT_CATALOG
+    payload = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    if isinstance(payload, list):
+        return payload
+    preferences = payload.get("preferences")
+    if isinstance(preferences, list):
+        return preferences
+    raise ValueError("catalog.json must be a list or contain a preferences list")
+
+
+CATALOG = load_catalog()
 
 
 def initial_state() -> dict[str, Any]:

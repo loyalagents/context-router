@@ -10,7 +10,8 @@ from typing import Any
 
 
 SCORE_PATH = Path("artifacts/logs/artifacts/score-summary.json")
-FORM_OUTPUT_PATH = Path("artifacts/app/outputs/forms/new-hire.json")
+FORM_OUTPUT_ROOT = Path("artifacts/app/outputs/forms")
+DEFAULT_OUTPUT_FILES = ["new-hire.json"]
 CR_SNAPSHOT_PATH = Path("artifacts/memory/cr-snapshot.json")
 MCP_TRACE_PATH = Path("artifacts/mcp/tool-calls.jsonl")
 
@@ -102,6 +103,15 @@ def read_cr_preference_count(snapshot_path: Path) -> int | None:
     raise ValueError(f"malformed CR snapshot preferences: {snapshot_path}")
 
 
+def output_files_from_score(score: dict[str, Any]) -> list[str]:
+    output_files = score.get("outputFiles")
+    if isinstance(output_files, list) and all(
+        isinstance(item, str) for item in output_files
+    ):
+        return output_files
+    return DEFAULT_OUTPUT_FILES
+
+
 def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     trial_dir = find_trial_dir(path)
     result = load_json(trial_dir / "result.json")
@@ -115,14 +125,15 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         score = {}
         validation_errors.append(str(error))
 
-    form_output = trial_dir / FORM_OUTPUT_PATH
-    if not form_output.exists():
-        validation_errors.append(f"missing final form output: {form_output}")
-    else:
-        try:
-            load_json(form_output)
-        except ValueError as error:
-            validation_errors.append(str(error))
+    for output_file in output_files_from_score(score):
+        form_output = trial_dir / FORM_OUTPUT_ROOT / output_file
+        if not form_output.exists():
+            validation_errors.append(f"missing final form output: {form_output}")
+        else:
+            try:
+                load_json(form_output)
+            except ValueError as error:
+                validation_errors.append(str(error))
 
     mcp_trace = trial_dir / MCP_TRACE_PATH
     try:
@@ -164,7 +175,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "reward": reward,
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_success,
-        "parseFailures": 0 if parse_success is True else 1,
+        "parseFailures": score.get("parseFailures", 0 if parse_success is True else 1),
         "missingCount": count_list(missing_fields),
         "wrongCount": count_wrong_fields(wrong_fields),
         "overfillCount": count_list(overfill_fields),
