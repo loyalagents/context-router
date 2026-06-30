@@ -4,7 +4,6 @@ n_concurrent_trials: 1
 environment:
   env:
     EVAL_MEMORY_MODE: markdown
-    MARKDOWN_MEMORY_BUDGET_BYTES: "1600"
 
 agents:
   - name: codex

@@ -19,22 +19,6 @@ mkdir -p /app/outputs/forms
 
 if [ "$mode" = "markdown" ] && [ -f "$tmp_memory" ]; then
   cp "$tmp_memory" /app/memory.md
-  if [ -n "${MARKDOWN_MEMORY_BUDGET_BYTES:-}" ]; then
-    python3 - <<'PY'
-import os
-from pathlib import Path
-
-path = Path("/app/memory.md")
-budget = int(os.environ["MARKDOWN_MEMORY_BUDGET_BYTES"])
-data = path.read_bytes()
-if len(data) > budget:
-    data = data[-budget:]
-    newline = data.find(b"\n")
-    if newline != -1:
-        data = data[newline + 1 :]
-    path.write_bytes(data)
-PY
-  fi
 else
   rm -f /app/memory.md
 fi

@@ -236,7 +236,7 @@ drift.
 | `maya-packet-hard-required-v4-formfill` | `packet-hard-required-v4` plus 3 Harbor adversarial docs | evidence sufficiency through multi-hop code, directory lookups, and deprecated lookup traps | 41 |
 | `maya-packet-hard-volume-v2-formfill` | `packet-hard-volume-v2` | long-context mixed stress with 100 operational near-miss documents | 100 |
 | `maya-packet-hard-sufficiency-v1-formfill` | `packet-hard-required-v4` plus 5 Harbor sufficiency/abstention docs | optional-field evidence sufficiency with missing, ambiguous, rejected, and wrong-owner values | 46 |
-| `maya-packet-hard-over-time-v1-formfill` | `packet-hard-over-time-v1` split into 3 sequential batches | over-time memory pressure with documents hidden before final fill, bounded markdown scratchpad, and CR MCP durable memory | 46 |
+| `maya-packet-hard-over-time-v1-formfill` | `packet-hard-over-time-v1` split into 3 sequential batches | over-time memory pressure with documents hidden before final fill and durable state required for downstream fill | 46 |
 
 Run any hard task through the three comparable arms by replacing
 `<corpus>` with one of `packet-hard-ownership-v1`, `packet-hard-conflict-v1`,
@@ -289,9 +289,8 @@ documents and asks for four JSON forms:
 - onboarding audit
 
 The `none` arm has no durable state between steps. The `markdown` arm may only
-use `/app/memory.md`; its job config sets `MARKDOWN_MEMORY_BUDGET_BYTES=1600`
-so it behaves like a small scratchpad rather than an unlimited synthetic
-database. The `cr-mcp` arm uses the eval-only ContextRouter memory MCP sidecar.
+use `/app/memory.md`. The `cr-mcp` arm uses the eval-only ContextRouter memory
+MCP sidecar.
 
 Run all three arms:
 
@@ -320,12 +319,14 @@ Latest local sanity run:
 | Mode | Model | Reward | Missing | Wrong |
 | --- | --- | ---: | ---: | ---: |
 | `none` | `gpt-5.3-codex-spark` | 0.000 | 37 | 0 |
-| `markdown` | `gpt-5.3-codex-spark` | 0.324 | 25 | 0 |
+| `markdown` | `gpt-5.3-codex-spark` | 0.946 | 0 | 2 |
 | `cr-mcp` | `gpt-5.3-codex-spark` | 0.946 | 0 | 2 |
 
 The oracle scores 1.000, so the hidden expected forms and verifier are
-self-consistent. The `cr-mcp` miss in this run was two direct-deposit name
-fields where the agent used `Maya L Chen` instead of `Maya Lin Chen`.
+self-consistent. The markdown number is from a no-budget rerun of the markdown
+arm. This task separates no-memory from durable-memory behavior, but it does not
+currently separate markdown memory from CR MCP memory. In this run, markdown and
+`cr-mcp` both missed two fields, with different error patterns.
 
 ## Version Control
 

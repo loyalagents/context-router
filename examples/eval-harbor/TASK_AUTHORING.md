@@ -146,10 +146,6 @@ when only the final step should determine the score.
    change mode instructions and MCP sidecars, but should not change the task
    data or verifier.
 
-   If the markdown baseline is meant to be a naive scratchpad rather than an
-   unlimited synthetic memory, set `MARKDOWN_MEMORY_BUDGET_BYTES` in only the
-   markdown job and document the value in the task runbook.
-
 ## Verifier Requirements
 
 A verifier is sound only if it catches all of these:
@@ -232,8 +228,6 @@ harbor run \
 - Treating unsupported fields as optional required fields instead of overfill
   traps.
 - Letting the oracle pass while metadata is invalid.
-- Letting the markdown arm become an unlimited external database when the
-  intended baseline is a small local scratchpad.
 - Leaving prior-step documents visible in the final step of an over-time task.
 - Adding product backend form-fill, document-analysis, workflows, or Vertex to
   the Harbor v1 task path.
