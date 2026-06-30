@@ -1,9 +1,9 @@
 # Harbor-Based Eval Harness V2
 
-- Status: fork integration complete
+- Status: active extension
 - Target branch: `codex/eval-harbor-harness-v2`
 - Epic: <https://github.com/ShenzheZhu/context-router/issues/1>
-- Phase issues: <https://github.com/ShenzheZhu/context-router/issues/2>, <https://github.com/ShenzheZhu/context-router/issues/3>, <https://github.com/ShenzheZhu/context-router/issues/4>, <https://github.com/ShenzheZhu/context-router/issues/5>, <https://github.com/ShenzheZhu/context-router/issues/6>, <https://github.com/ShenzheZhu/context-router/issues/12>
+- Phase issues: <https://github.com/ShenzheZhu/context-router/issues/2>, <https://github.com/ShenzheZhu/context-router/issues/3>, <https://github.com/ShenzheZhu/context-router/issues/4>, <https://github.com/ShenzheZhu/context-router/issues/5>, <https://github.com/ShenzheZhu/context-router/issues/6>, <https://github.com/ShenzheZhu/context-router/issues/12>, <https://github.com/ShenzheZhu/context-router/issues/14>
 - Harbor reference checked: local clone of `harbor-framework/harbor` at `89359f5`
 - Harbor cookbook reference checked: local clone of `harbor-framework/harbor-cookbook` at `e093c9a`
 - Last updated: 2026-06-30
@@ -260,6 +260,7 @@ as artifacts.
 | 3 | #5 | `cr-mcp` memory mode with memory-only MCP sidecar/boundary. |
 | 4 | #6 | Comparison reports, docs, and fork PR workflow. |
 | 5 | #12 | Final audit cleanup for stale plan decisions. |
+| 6 | #14 | Migrate Maya packet-medium I-9, W-4, and direct-deposit into one Harbor task. |
 
 ## Branch And PR Discipline
 
@@ -304,6 +305,13 @@ that score and final output artifacts exist and parse, and emits Markdown plus
 optional JSON. It exits nonzero when required artifacts are missing or malformed
 unless `--allow-invalid` is explicitly passed.
 
+Phase 6 adds the first migrated packet task:
+`examples/eval-harbor/tasks/maya-packet-medium-formfill`. This is a parity task,
+not a new hard-trap benchmark. It uses the old Maya `packet-medium` documents and
+fills I-9, W-4, and direct-deposit JSON outputs in one Harbor run. Hidden
+expected outputs are derived from the old profile and field maps, and
+`source-trace.json` records the old field-map lineage for auditability.
+
 ## Resolved Decisions
 
 - The first task uses a small synthetic fixture to validate Harbor wiring before
@@ -313,11 +321,14 @@ unless `--allow-invalid` is explicitly passed.
   its job config.
 - V1 scoring is deterministic JSON form-field scoring. Memory-state scoring and
   LLM-as-judge remain follow-up work for representation-sensitive memory evals.
+- Packet-medium migration uses one Harbor task for the three old Maya scenarios
+  rather than three separate tasks, so each memory substrate reads the dossier
+  once and produces all downstream forms.
 
 ## Follow-Ups
 
-- Port the harder packet/document-trap datasets into Harbor tasks after the
-  harness boundary is reviewed.
+- Port the harder packet/document-trap datasets into Harbor tasks after the Maya
+  packet-medium parity task is reviewed.
 - Add over-time/multi-step tasks using Harbor's multi-step pattern.
 - Add optional memory-state scoring when final-task scoring is too indirect for
   debugging extraction failures.

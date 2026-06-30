@@ -92,6 +92,53 @@ missing/wrong/overfill counts, runtime, and artifact roots. The command exits
 nonzero if required score or output artifacts are missing or malformed. Use
 `--allow-invalid` only when intentionally reviewing a broken run.
 
+## Maya Packet-Medium Task
+
+The first migrated packet task is:
+
+```text
+examples/eval-harbor/tasks/maya-packet-medium-formfill
+```
+
+It reuses the existing Maya `packet-medium` documents and asks the agent to fill
+three local JSON forms in one Harbor run:
+
+- `outputs/forms/i-9.json`
+- `outputs/forms/fw4.json`
+- `outputs/forms/direct-deposit-sf1199a-24.json`
+
+The hidden expected forms are derived from the old Maya profile and field maps.
+`tests/expected/source-trace.json` records the old scenario, field map,
+`fieldIndex`, PDF field name, and fact key for each scored JSON field.
+
+Run the no-memory baseline:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-none.yaml \
+  --yes
+```
+
+Run the markdown-memory baseline:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-markdown.yaml \
+  --yes
+```
+
+Run the CR MCP memory arm:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-packet-medium-cr-mcp.yaml \
+  --yes
+```
+
+The CR MCP arm mounts a task-specific catalog into the eval-only memory sidecar.
+It still avoids product backend form-fill, document-analysis, workflows, and
+Vertex.
+
 ## Version Control
 
 This harness is developed on the fork integration branch
