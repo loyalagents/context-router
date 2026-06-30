@@ -225,22 +225,18 @@ write its own `result.json`.
 Proposed direct Harbor commands:
 
 ```bash
-harbor run \
-  -p examples/eval-harbor/tasks/maya-newhire-formfill \
-  -a claude-code \
-  -m anthropic/claude-sonnet-4-5 \
-  --extra-instruction-path examples/eval-harbor/modes/none.md
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-none.yaml \
+  --yes
 
-harbor run \
-  -p examples/eval-harbor/tasks/maya-newhire-formfill \
-  -a claude-code \
-  -m anthropic/claude-sonnet-4-5 \
-  --extra-instruction-path examples/eval-harbor/modes/markdown.md
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
+  --yes
 
 harbor run \
   -p examples/eval-harbor/tasks/maya-newhire-formfill-cr-mcp \
-  -a claude-code \
-  -m anthropic/claude-sonnet-4-5 \
+  -a codex \
+  -m gpt-5.3-codex-spark \
   --extra-instruction-path examples/eval-harbor/modes/cr-mcp.md
 ```
 
@@ -255,7 +251,7 @@ task variants from shared source files to prevent benchmark drift.
 | --- | --- | --- |
 | 0 | #2 | Harbor feasibility decision, task/output/memory/artifact contract, and non-goals. |
 | 1 | #3 | Minimal Harbor task with deterministic verifier and `none` arm. |
-| 2 | #4 | Claude Code run configs plus `markdown` memory baseline. |
+| 2 | #4 | Codex run configs plus `markdown` memory baseline. |
 | 3 | #5 | `cr-mcp` memory mode with memory-only MCP sidecar/boundary. |
 | 4 | #6 | Comparison reports, docs, and fork PR workflow. |
 
@@ -289,7 +285,7 @@ expanding scope into the next phase.
   links.
 - Phase 1: `harbor run` with oracle or a simple command agent over one minimal
   task; deterministic verifier writes `reward.json`.
-- Phase 2: `harbor run` with Claude Code in `none` and `markdown` modes over the
+- Phase 2: `harbor run` with Codex in `none` and `markdown` modes over the
   same task content.
 - Phase 3: `harbor run` with `cr-mcp` mode and evidence that no Vertex, backend
   form-fill, or product document-analysis path is invoked.

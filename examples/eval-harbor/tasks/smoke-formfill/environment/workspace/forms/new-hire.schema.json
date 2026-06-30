@@ -1,6 +1,14 @@
 {
   "schemaVersion": 1,
   "formId": "new-hire",
+  "outputShape": {
+    "schemaVersion": "number",
+    "taskId": "smoke-formfill",
+    "formId": "new-hire",
+    "fields": "object keyed by required field path",
+    "abstentions": "object keyed by field path when evidence is missing",
+    "notes": "array"
+  },
   "requiredFields": [
     "employee.fullName",
     "employee.email",
