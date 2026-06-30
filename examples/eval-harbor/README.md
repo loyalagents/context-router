@@ -54,3 +54,54 @@ The CR MCP arm uses an eval-only FastMCP sidecar with only
 not invoke product backend form-fill, document-analysis, workflows, or Vertex.
 Reviewable artifacts include MCP config, tool-call trace, server log, CR memory
 snapshot, final form output, and score summary.
+
+## Compare Modes
+
+Run the three modes into stable job roots:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-none.yaml \
+  --jobs-dir /tmp/cr-harbor-none \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
+  --jobs-dir /tmp/cr-harbor-markdown \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-cr-mcp.yaml \
+  --jobs-dir /tmp/cr-harbor-cr-mcp \
+  --yes
+```
+
+Create a comparison report:
+
+```bash
+python3 examples/eval-harbor/scripts/report_results.py \
+  --run none=/tmp/cr-harbor-none/eval-harbor-smoke-formfill-none \
+  --run markdown=/tmp/cr-harbor-markdown/eval-harbor-smoke-formfill-markdown \
+  --run cr-mcp=/tmp/cr-harbor-cr-mcp/eval-harbor-smoke-formfill-cr-mcp \
+  --output /tmp/cr-harbor-report.md \
+  --json-output /tmp/cr-harbor-report.json
+```
+
+The report table includes agent, model, reward, field accuracy, parse failures,
+missing/wrong/overfill counts, runtime, and artifact roots. The command exits
+nonzero if required score or output artifacts are missing or malformed. Use
+`--allow-invalid` only when intentionally reviewing a broken run.
+
+## Version Control
+
+This harness is developed on the fork integration branch
+`codex/eval-harbor-harness-v2`. For each phase:
+
+1. Branch from `codex/eval-harbor-harness-v2`.
+2. Open a small PR back into that integration branch.
+3. Merge the phase PR only after local Harbor verification is recorded.
+4. Consider an upstream PR only after the feature train is coherent.
+
+The existing `examples/eval` product E2E suite is intentionally left untouched.
+It remains the place for backend form-fill, document-analysis, Vertex, and full
+product workflow checks.
