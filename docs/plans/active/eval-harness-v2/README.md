@@ -1,12 +1,12 @@
 # Harbor-Based Eval Harness V2
 
-- Status: active plan
+- Status: fork integration complete
 - Target branch: `codex/eval-harbor-harness-v2`
 - Epic: <https://github.com/ShenzheZhu/context-router/issues/1>
-- Phase issues: <https://github.com/ShenzheZhu/context-router/issues/2>, <https://github.com/ShenzheZhu/context-router/issues/3>, <https://github.com/ShenzheZhu/context-router/issues/4>, <https://github.com/ShenzheZhu/context-router/issues/5>, <https://github.com/ShenzheZhu/context-router/issues/6>
+- Phase issues: <https://github.com/ShenzheZhu/context-router/issues/2>, <https://github.com/ShenzheZhu/context-router/issues/3>, <https://github.com/ShenzheZhu/context-router/issues/4>, <https://github.com/ShenzheZhu/context-router/issues/5>, <https://github.com/ShenzheZhu/context-router/issues/6>, <https://github.com/ShenzheZhu/context-router/issues/12>
 - Harbor reference checked: local clone of `harbor-framework/harbor` at `89359f5`
 - Harbor cookbook reference checked: local clone of `harbor-framework/harbor-cookbook` at `e093c9a`
-- Last updated: 2026-06-29
+- Last updated: 2026-06-30
 
 ## Decision
 
@@ -259,6 +259,7 @@ as artifacts.
 | 2 | #4 | Codex run configs plus `markdown` memory baseline. |
 | 3 | #5 | `cr-mcp` memory mode with memory-only MCP sidecar/boundary. |
 | 4 | #6 | Comparison reports, docs, and fork PR workflow. |
+| 5 | #12 | Final audit cleanup for stale plan decisions. |
 
 ## Branch And PR Discipline
 
@@ -303,11 +304,20 @@ that score and final output artifacts exist and parse, and emits Markdown plus
 optional JSON. It exits nonzero when required artifacts are missing or malformed
 unless `--allow-invalid` is explicitly passed.
 
-## Open Decisions
+## Resolved Decisions
 
-- Whether the first task should reuse Maya data or start with a smaller
-  synthetic fixture designed only to validate the Harbor wiring.
-- Whether mode differences should be implemented through Harbor
-  `--extra-instruction-path`, separate generated task variants, or job configs.
-- Whether memory-state scoring should stay deterministic, use LLM-as-judge, or
-  support both.
+- The first task uses a small synthetic fixture to validate Harbor wiring before
+  porting larger Maya packet data.
+- Mode differences are implemented through Harbor job configs and
+  `extra_instruction_paths`; the `cr-mcp` mode adds a Docker Compose sidecar from
+  its job config.
+- V1 scoring is deterministic JSON form-field scoring. Memory-state scoring and
+  LLM-as-judge remain follow-up work for representation-sensitive memory evals.
+
+## Follow-Ups
+
+- Port the harder packet/document-trap datasets into Harbor tasks after the
+  harness boundary is reviewed.
+- Add over-time/multi-step tasks using Harbor's multi-step pattern.
+- Add optional memory-state scoring when final-task scoring is too indirect for
+  debugging extraction failures.
