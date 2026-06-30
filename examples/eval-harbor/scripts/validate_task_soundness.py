@@ -214,9 +214,9 @@ def validate_native_visible_contract(
 
 def validate_native_stage_contract(
     task_id: str,
-    checkpoint: dict[str, Any],
+    checkpoints: list[dict[str, Any]],
     difficulty: dict[str, Any],
-    visible_task: dict[str, Any],
+    visible_tasks: list[dict[str, Any]],
     staged: dict[str, Any] | None,
 ) -> list[str]:
     errors: list[str] = []
@@ -229,10 +229,15 @@ def validate_native_stage_contract(
         errors.append(f"{task_id}: native DynamicMem staged payload has no stages list")
         return errors
 
-    expected_kinds = ["memory-update", "memory-update", "downstream-task"]
+    expected_kinds = ["update-answer"] * len(checkpoints)
     actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
     if actual_kinds != expected_kinds:
         errors.append(f"{task_id}: native DynamicMem stage kind pattern mismatch: {actual_kinds}")
+    if len(stages) != len(checkpoints):
+        errors.append(
+            f"{task_id}: native DynamicMem stage/checkpoint count mismatch "
+            f"stages={len(stages)} checkpoints={len(checkpoints)}"
+        )
 
     raw_logs = native_raw_log_items(staged)
     raw_log_ids = [str(log.get("app_log_id") or "") for log in raw_logs]
@@ -241,7 +246,7 @@ def validate_native_stage_contract(
     timestamps = [str(log.get("timestamp") or "") for log in raw_logs]
     if timestamps != sorted(timestamps):
         errors.append(f"{task_id}: native DynamicMem staged raw logs are not chronological")
-    as_of = checkpoint.get("as_of") or {}
+    as_of = (checkpoints[-1].get("as_of") or {}) if checkpoints else {}
     log_index = as_of.get("log_index")
     if isinstance(log_index, int) and len(raw_logs) != log_index + 1:
         errors.append(
@@ -249,16 +254,30 @@ def validate_native_stage_contract(
             f"expected={log_index + 1} actual={len(raw_logs)}"
         )
 
-    dynamicmem_task_count = 0
+    visible_by_checkpoint_id = {
+        ((visible_task.get("checkpoint") or {}).get("checkpoint_id")): visible_task
+        for visible_task in visible_tasks
+        if isinstance(visible_task, dict)
+    }
+    expected_checkpoint_ids = [
+        checkpoint.get("checkpoint_id")
+        for checkpoint in checkpoints
+    ]
+    seen_checkpoint_ids = []
     for stage, item in native_stage_files(staged):
         if item.get("path") == "dynamicmem-task.json":
-            dynamicmem_task_count += 1
-            if stage.get("kind") != "downstream-task":
-                errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream stage")
-            if item.get("json") != visible_task:
-                errors.append(f"{task_id}: staged dynamicmem-task.json does not match visible-task.json")
-    if dynamicmem_task_count != 1:
-        errors.append(f"{task_id}: native DynamicMem task must expose exactly one dynamicmem-task.json")
+            if stage.get("kind") != "update-answer":
+                errors.append(f"{task_id}: dynamicmem-task.json must appear only in update-answer stages")
+            payload = item.get("json")
+            checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
+            seen_checkpoint_ids.append(checkpoint_id)
+            if payload != visible_by_checkpoint_id.get(checkpoint_id):
+                errors.append(f"{task_id}: staged dynamicmem-task.json does not match visible-tasks.json for {checkpoint_id}")
+    if seen_checkpoint_ids != expected_checkpoint_ids:
+        errors.append(
+            f"{task_id}: native DynamicMem task checkpoint exposure mismatch "
+            f"expected={expected_checkpoint_ids} actual={seen_checkpoint_ids}"
+        )
 
     totals = difficulty.get("totals", {})
     actual_doc_count = len(raw_logs)
@@ -307,11 +326,11 @@ def validate_native_dynamicmem_task(
         return False, []
 
     errors: list[str] = []
-    visible_task_path = task_dir / "tests" / "expected" / "visible-task.json"
+    visible_tasks_path = task_dir / "tests" / "expected" / "visible-tasks.json"
     difficulty_path = task_dir / "tests" / "expected" / "difficulty.json"
     soundness_path = task_dir / "tests" / "expected" / "soundness-report.md"
-    if not visible_task_path.exists():
-        errors.append(f"{task_id}: missing tests/expected/visible-task.json")
+    if not visible_tasks_path.exists():
+        errors.append(f"{task_id}: missing tests/expected/visible-tasks.json")
         return True, errors
     if not difficulty_path.exists():
         errors.append(f"{task_id}: missing tests/expected/difficulty.json")
@@ -320,39 +339,19 @@ def validate_native_dynamicmem_task(
         errors.append(f"{task_id}: missing tests/expected/soundness-report.md")
 
     benchmark = load_json(benchmark_path)
-    visible_task = load_json(visible_task_path)
+    visible_tasks = load_json(visible_tasks_path)
     difficulty = load_json(difficulty_path)
     checkpoints = benchmark.get("checkpoints")
-    if not isinstance(checkpoints, list) or len(checkpoints) != 1:
-        errors.append(f"{task_id}: native benchmark must contain exactly one checkpoint")
+    if not isinstance(checkpoints, list) or not checkpoints:
+        errors.append(f"{task_id}: native benchmark must contain at least one checkpoint")
         return True, errors
-    checkpoint = checkpoints[0]
-    scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
-    rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
-    if not scp_keys:
-        errors.append(f"{task_id}: native benchmark has no state_completion_pack keys")
-    if not rq_keys:
-        errors.append(f"{task_id}: native benchmark has no rq3_apply_service_qa keys")
-    errors.extend(validate_native_visible_contract(task_id, benchmark, checkpoint, visible_task))
-
-    visible_scp_keys = ((visible_task.get("state_completion") or {}).get("keys") or {})
-    visible_rq_keys = ((visible_task.get("personalized_service") or {}).get("keys") or {})
-    if set(visible_scp_keys) != set(scp_keys):
+    if not isinstance(visible_tasks, list) or len(visible_tasks) != len(checkpoints):
         errors.append(
-            f"{task_id}: visible state_completion keys mismatch "
-            f"hidden_only={sorted(set(scp_keys) - set(visible_scp_keys))[:10]} "
-            f"visible_only={sorted(set(visible_scp_keys) - set(scp_keys))[:10]}"
+            f"{task_id}: visible-tasks checkpoint count mismatch "
+            f"visible={len(visible_tasks) if isinstance(visible_tasks, list) else 'invalid'} "
+            f"hidden={len(checkpoints)}"
         )
-    if set(visible_rq_keys) != set(rq_keys):
-        errors.append(
-            f"{task_id}: visible personalized_service keys mismatch "
-            f"hidden_only={sorted(set(rq_keys) - set(visible_rq_keys))[:10]} "
-            f"visible_only={sorted(set(visible_rq_keys) - set(rq_keys))[:10]}"
-        )
-    hidden_qa_ids = native_service_item_ids(rq_keys)
-    visible_qa_ids = native_service_item_ids(visible_rq_keys)
-    if visible_qa_ids != hidden_qa_ids:
-        errors.append(f"{task_id}: visible personalized_service qa_id coverage mismatch")
+        return True, errors
 
     forbidden_visible_keys = {
         "validated_snapshot_state",
@@ -367,31 +366,71 @@ def validate_native_dynamicmem_task(
         "item_validation",
         "pack_identity",
     }
-    leaks = contains_forbidden_key(visible_task, forbidden_visible_keys)
+    leaks = contains_forbidden_key(visible_tasks, forbidden_visible_keys)
     if leaks:
         errors.append(f"{task_id}: visible DynamicMem task leaks hidden keys {leaks[:10]}")
 
+    catalog_slugs: set[str] = set()
+    state_key_count = 0
+    unique_state_keys: set[str] = set()
+    rq_key_count = 0
     rq_item_count = 0
-    for node in rq_keys.values():
-        if isinstance(node, dict):
-            rq_item_count += len([item for item in node.get("items", []) if isinstance(item, dict)])
+    for checkpoint, visible_task in zip(checkpoints, visible_tasks):
+        scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+        rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
+        if not scp_keys:
+            errors.append(f"{task_id}: native benchmark has no state_completion_pack keys")
+        if not rq_keys:
+            errors.append(f"{task_id}: native benchmark has no rq3_apply_service_qa keys")
+        errors.extend(validate_native_visible_contract(task_id, benchmark, checkpoint, visible_task))
+
+        visible_scp_keys = ((visible_task.get("state_completion") or {}).get("keys") or {})
+        visible_rq_keys = ((visible_task.get("personalized_service") or {}).get("keys") or {})
+        if set(visible_scp_keys) != set(scp_keys):
+            errors.append(
+                f"{task_id}: visible state_completion keys mismatch "
+                f"checkpoint={checkpoint.get('checkpoint_id')} "
+                f"hidden_only={sorted(set(scp_keys) - set(visible_scp_keys))[:10]} "
+                f"visible_only={sorted(set(visible_scp_keys) - set(scp_keys))[:10]}"
+            )
+        if set(visible_rq_keys) != set(rq_keys):
+            errors.append(
+                f"{task_id}: visible personalized_service keys mismatch "
+                f"checkpoint={checkpoint.get('checkpoint_id')} "
+                f"hidden_only={sorted(set(rq_keys) - set(visible_rq_keys))[:10]} "
+                f"visible_only={sorted(set(visible_rq_keys) - set(rq_keys))[:10]}"
+            )
+        hidden_qa_ids = native_service_item_ids(rq_keys)
+        visible_qa_ids = native_service_item_ids(visible_rq_keys)
+        if visible_qa_ids != hidden_qa_ids:
+            errors.append(f"{task_id}: visible personalized_service qa_id coverage mismatch")
+        catalog_slugs.update(str(key) for key in scp_keys)
+        state_key_count += len(scp_keys)
+        unique_state_keys.update(str(key) for key in scp_keys)
+        rq_key_count += len(rq_keys)
+        for node in rq_keys.values():
+            if isinstance(node, dict):
+                rq_item_count += len([item for item in node.get("items", []) if isinstance(item, dict)])
+
     totals = difficulty.get("totals", {})
-    if totals.get("stateCompletionKeyCount") != len(scp_keys):
+    if totals.get("stateCompletionKeyCount") != state_key_count:
         errors.append(f"{task_id}: difficulty stateCompletionKeyCount mismatch")
-    if totals.get("personalizedServiceKeyCount") != len(rq_keys):
+    if totals.get("uniqueStateCompletionKeyCount") != len(unique_state_keys):
+        errors.append(f"{task_id}: difficulty uniqueStateCompletionKeyCount mismatch")
+    if totals.get("personalizedServiceKeyCount") != rq_key_count:
         errors.append(f"{task_id}: difficulty personalizedServiceKeyCount mismatch")
     if totals.get("personalizedServiceItemCount") != rq_item_count:
         errors.append(f"{task_id}: difficulty personalizedServiceItemCount mismatch")
     errors.extend(
         validate_native_stage_contract(
             task_id,
-            checkpoint,
+            checkpoints,
             difficulty,
-            visible_task,
+            visible_tasks,
             staged,
         )
     )
-    errors.extend(validate_native_catalog(task_id, task_dir, scp_keys))
+    errors.extend(validate_native_catalog(task_id, task_dir, {key: {} for key in catalog_slugs}))
 
     return True, errors
 
@@ -680,18 +719,23 @@ def main() -> int:
             native_benchmark = task / "tests" / "expected" / "benchmark.json"
             if native_benchmark.exists():
                 benchmark = load_json(native_benchmark)
-                checkpoint = benchmark["checkpoints"][0]
-                scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
-                rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
-                rq_items = sum(
-                    len(node.get("items") or [])
-                    for node in rq_keys.values()
-                    if isinstance(node, dict)
-                )
+                checkpoints = benchmark.get("checkpoints") or []
+                state_key_count = 0
+                rq_items = 0
+                for checkpoint in checkpoints:
+                    scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+                    rq_keys = ((checkpoint.get("rq3_apply_service_qa") or {}).get("keys") or {})
+                    state_key_count += len(scp_keys)
+                    rq_items += sum(
+                        len(node.get("items") or [])
+                        for node in rq_keys.values()
+                        if isinstance(node, dict)
+                    )
                 print(
                     f"OK {task.name}: corpus={corpus_label} "
                     f"docs={docs_count} "
-                    f"state_keys={len(scp_keys)} service_items={rq_items}"
+                    f"checkpoints={len(checkpoints)} "
+                    f"state_keys={state_key_count} service_items={rq_items}"
                 )
             else:
                 expected = load_json(task / "tests" / "expected" / "forms.json")

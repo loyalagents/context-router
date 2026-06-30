@@ -10,5 +10,6 @@ Use these tools:
 - `searchPreferences` to read stored facts back before writing the final form.
 
 Do not create or rely on `/app/memory.md`. For a staged task, update MCP memory
-during memory-management stages, read it back before downstream work, and write
-the final output only when a revealed downstream stage asks for it.
+whenever new information is revealed. If a stage asks for an answer, read MCP
+memory back and update the requested output while preserving earlier checkpoint
+answers.

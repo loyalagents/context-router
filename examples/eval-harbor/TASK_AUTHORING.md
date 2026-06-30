@@ -189,15 +189,16 @@ benchmark. Record the source dataset, license, source user/split, and
 regeneration command in the task README. Do not copy hidden answer files into
 the agent-visible workspace.
 For DynamicMem-backed suites, migrate native task semantics instead of inventing
-random mixtures: preserve raw app logs, checkpoint identity,
+random mixtures: preserve raw app-log deltas, checkpoint identity,
 `state_completion_pack`, `rq3_apply_service_qa`, and the upstream prediction
-contract. The agent-visible downstream task may expose only sanitized queries,
-templates, and output shape; it must not expose reference answers, reference
-outputs, scoring points, gold evidence ids, validated snapshot state, or
-expected snapshot state. The suite manifest must include coverage over source
-users, checkpoints, observed-log counts, state-completion keys, Personalized
-Service items, and service families. Do not call a generated suite
-comprehensive until the coverage block supports that claim.
+contract across the selected checkpoint trajectory. Each update-and-answer stage
+may expose only sanitized queries, templates, and output shape for its current
+checkpoint; it must not expose reference answers, reference outputs, scoring
+points, gold evidence ids, validated snapshot state, or expected snapshot state.
+The suite manifest must include coverage over source users, checkpoints,
+checkpoints per task, observed-log counts, state-completion keys, Personalized
+Service items, and service families. Do not call a generated suite comprehensive
+until the coverage block supports that claim.
 Each generated task must also include a human-reviewable difficulty/soundness
 report. A reviewer should be able to answer, without reading generator code:
 what the agent sees in each stage, what memory-management action is expected,
@@ -312,9 +313,9 @@ Before opening or updating a PR, check:
   unless the task intentionally tests direct re-reading.
 - External dataset tasks include source, license, subset, and regeneration
   notes, and their visible workspace contains only task inputs.
-- DynamicMem native tasks preserve one upstream user/checkpoint per Harbor task;
+- DynamicMem native tasks preserve one upstream user trajectory per Harbor task;
   they do not chunk selected state keys or generate synthetic form schemas.
-- DynamicMem native tasks expose sanitized final-stage queries only; hidden
+- DynamicMem native tasks expose sanitized current-checkpoint queries only; hidden
   reference answers, reference outputs, scoring points, gold evidence ids,
   validated snapshot state, and expected snapshot state stay under
   `tests/expected/`.

@@ -23,12 +23,12 @@ class TaskPlan:
     corpus_id: str
     source_user_dir: str
     source_user_id: str
-    previous_checkpoint_index: int
-    final_checkpoint_index: int
-    checkpoint_id: str
-    checkpoint_timestamp: str
+    checkpoint_indices: list[int]
+    checkpoint_ids: list[str]
+    checkpoint_timestamps: list[str]
     observed_log_count: int
     state_completion_key_count: int
+    unique_state_completion_key_count: int
     personalized_service_key_count: int
     personalized_service_item_count: int
     service_families: list[str]
@@ -66,6 +66,14 @@ def checkpoint_timestamp(checkpoint: dict[str, Any]) -> str:
     return ""
 
 
+def checkpoint_label(indices: list[int]) -> str:
+    if not indices:
+        return "cp-none"
+    if indices == list(range(indices[0], indices[-1] + 1)):
+        return f"cp{indices[0]:02d}-{indices[-1]:02d}"
+    return "cp" + "-".join(f"{index:02d}" for index in indices)
+
+
 def observed_log_count(checkpoint: dict[str, Any], app_logs: list[dict[str, Any]]) -> int:
     builder = importlib.import_module("build_dynamicmem_task")
     return len(builder.observed_logs_for_checkpoint(checkpoint, builder.normalize_app_logs(app_logs)))
@@ -94,35 +102,51 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[
     source_user_id = task_packs["user_id"]
     source_user_dir = source_dir.name
     user_label = compact_user_label(source_user_id)
-    plans: list[TaskPlan] = []
+    selected_indices = []
+    selected_checkpoints = []
+    state_keys_seen: set[str] = set()
+    state_key_count = 0
+    rq_key_count_total = 0
+    rq_item_count_total = 0
+    service_families_seen: set[str] = set()
 
-    for final_index in checkpoint_indices:
-        if final_index < 0 or final_index >= len(checkpoints):
+    for index in checkpoint_indices:
+        if index < 0 or index >= len(checkpoints):
             continue
-        checkpoint = checkpoints[final_index]
+        checkpoint = checkpoints[index]
         scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
         rq_key_count, rq_item_count, service_families = apply_counts(checkpoint)
         if not scp_keys or not rq_item_count:
             continue
-        task_id = f"dynamicmem-{user_label}-cp{final_index:02d}-native-v1"
-        plans.append(
-            TaskPlan(
-                task_id=task_id,
-                corpus_id=f"{task_id}-corpus",
-                source_user_dir=source_user_dir,
-                source_user_id=source_user_id,
-                previous_checkpoint_index=final_index - 1,
-                final_checkpoint_index=final_index,
-                checkpoint_id=str(checkpoint.get("checkpoint_id") or ""),
-                checkpoint_timestamp=checkpoint_timestamp(checkpoint),
-                observed_log_count=observed_log_count(checkpoint, app_logs),
-                state_completion_key_count=len(scp_keys),
-                personalized_service_key_count=rq_key_count,
-                personalized_service_item_count=rq_item_count,
-                service_families=service_families,
-            )
+        selected_indices.append(index)
+        selected_checkpoints.append(checkpoint)
+        state_key_count += len(scp_keys)
+        state_keys_seen.update(str(key) for key in scp_keys)
+        rq_key_count_total += rq_key_count
+        rq_item_count_total += rq_item_count
+        service_families_seen.update(service_families)
+
+    if not selected_indices:
+        return []
+
+    task_id = f"dynamicmem-{user_label}-{checkpoint_label(selected_indices)}-trajectory-v1"
+    return [
+        TaskPlan(
+            task_id=task_id,
+            corpus_id=f"{task_id}-corpus",
+            source_user_dir=source_user_dir,
+            source_user_id=source_user_id,
+            checkpoint_indices=selected_indices,
+            checkpoint_ids=[str(checkpoint.get("checkpoint_id") or "") for checkpoint in selected_checkpoints],
+            checkpoint_timestamps=[checkpoint_timestamp(checkpoint) for checkpoint in selected_checkpoints],
+            observed_log_count=observed_log_count(selected_checkpoints[-1], app_logs),
+            state_completion_key_count=state_key_count,
+            unique_state_completion_key_count=len(state_keys_seen),
+            personalized_service_key_count=rq_key_count_total,
+            personalized_service_item_count=rq_item_count_total,
+            service_families=sorted(service_families_seen),
         )
-    return plans
+    ]
 
 
 def number_stats(values: list[int]) -> dict[str, Any]:
@@ -136,11 +160,13 @@ def suite_coverage(plans: list[TaskPlan]) -> dict[str, Any]:
         "taskCount": len(plans),
         "userCount": len({plan.source_user_id for plan in plans}),
         "sourceUserIds": sorted({plan.source_user_id for plan in plans}),
-        "checkpointIndices": sorted({plan.final_checkpoint_index for plan in plans}),
-        "checkpointIds": sorted({plan.checkpoint_id for plan in plans if plan.checkpoint_id}),
+        "checkpointIndices": sorted({index for plan in plans for index in plan.checkpoint_indices}),
+        "checkpointIds": sorted({checkpoint_id for plan in plans for checkpoint_id in plan.checkpoint_ids if checkpoint_id}),
+        "checkpointsPerTask": number_stats([len(plan.checkpoint_indices) for plan in plans]),
         "serviceFamilies": sorted({family for plan in plans for family in plan.service_families}),
         "observedLogsPerTask": number_stats([plan.observed_log_count for plan in plans]),
         "stateCompletionKeysPerTask": number_stats([plan.state_completion_key_count for plan in plans]),
+        "uniqueStateCompletionKeysPerTask": number_stats([plan.unique_state_completion_key_count for plan in plans]),
         "personalizedServiceItemsPerTask": number_stats([plan.personalized_service_item_count for plan in plans]),
     }
 
@@ -173,8 +199,7 @@ def generate_task(
             corpus_id=plan.corpus_id,
             source_user_dir=plan.source_user_dir,
             source_user_id=plan.source_user_id,
-            previous_checkpoint_index=plan.previous_checkpoint_index,
-            final_checkpoint_index=plan.final_checkpoint_index,
+            checkpoint_indices=tuple(plan.checkpoint_indices),
             model_name=model_name,
             reasoning_effort=reasoning_effort,
         ),
@@ -201,14 +226,14 @@ def write_suite_manifest(
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
                 "Harbor replaces only the runner. Each generated task preserves "
-                "one native DynamicMem user checkpoint, including raw app-log "
-                "history, state_completion_pack, rq3_apply_service_qa, and the "
-                "upstream prediction contract."
+                "one native DynamicMem user checkpoint trajectory, including raw "
+                "app-log deltas, state_completion_pack, rq3_apply_service_qa, "
+                "and the upstream prediction contract."
             ),
             "selectionPolicy": (
-                "Deterministic checkpoint migration. One Harbor task maps to one "
-                "DynamicMem user/checkpoint; no state-key chunking or synthetic "
-                "form schema generation is used."
+                "Deterministic checkpoint-trajectory migration. One Harbor task "
+                "maps to one DynamicMem user and the selected checkpoint indices; "
+                "no state-key chunking or synthetic form schema generation is used."
             ),
         },
         "modelName": model_name,
@@ -237,12 +262,15 @@ def write_suite_manifest(
                 "corpusId": plan.corpus_id,
                 "sourceUserDir": plan.source_user_dir,
                 "sourceUserId": plan.source_user_id,
-                "previousCheckpointIndex": plan.previous_checkpoint_index,
-                "finalCheckpointIndex": plan.final_checkpoint_index,
-                "checkpointId": plan.checkpoint_id,
-                "checkpointTimestamp": plan.checkpoint_timestamp,
+                "checkpointIndices": plan.checkpoint_indices,
+                "checkpointIds": plan.checkpoint_ids,
+                "checkpointTimestamps": plan.checkpoint_timestamps,
+                "finalCheckpointIndex": plan.checkpoint_indices[-1],
+                "finalCheckpointId": plan.checkpoint_ids[-1],
+                "finalCheckpointTimestamp": plan.checkpoint_timestamps[-1],
                 "observedLogCount": plan.observed_log_count,
                 "stateCompletionKeyCount": plan.state_completion_key_count,
+                "uniqueStateCompletionKeyCount": plan.unique_state_completion_key_count,
                 "personalizedServiceKeyCount": plan.personalized_service_key_count,
                 "personalizedServiceItemCount": plan.personalized_service_item_count,
                 "serviceFamilies": plan.service_families,
@@ -308,7 +336,7 @@ def main() -> int:
     for source_dir, plan in all_plans:
         print(
             f"{plan.task_id}: user={plan.source_user_id} "
-            f"checkpoint={plan.final_checkpoint_index} "
+            f"checkpoints={','.join(str(index) for index in plan.checkpoint_indices)} "
             f"logs={plan.observed_log_count} "
             f"state_keys={plan.state_completion_key_count} "
             f"service_items={plan.personalized_service_item_count}"

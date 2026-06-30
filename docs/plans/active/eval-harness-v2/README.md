@@ -95,8 +95,8 @@ DynamicMem-backed tasks should migrate the upstream task semantics, not the
 upstream runner. The adapter should preserve:
 
 - source user trajectory and timeline;
-- checkpoint index and checkpoint identity;
-- raw `app_log_large.json` entries up to the checkpoint;
+- selected checkpoint indices and identities;
+- raw `app_log_large.json` entries as chronological checkpoint deltas;
 - `state_completion_pack` as the State Completion contract;
 - `rq3_apply_service_qa` as the Personalized Service contract;
 - the upstream prediction schema with `snapshot_state`, `evidence`, and
@@ -106,10 +106,10 @@ upstream runner. The adapter should preserve:
 
 Harbor remains the execution harness so the three arms keep the same sandbox,
 stage reveal, output path, local smoke scorer, and resampling logic. Generated
-suite manifests must report coverage over users, checkpoints, observed-log
-counts, state-completion key counts, Personalized Service item counts, and
-service families. This is the guardrail against accidental random task
-synthesis or narrow task slices.
+suite manifests must report coverage over users, checkpoints, checkpoints per
+task, observed-log counts, state-completion key counts, Personalized Service
+item counts, and service families. This is the guardrail against accidental
+random task synthesis or narrow task slices.
 
 ## V1 Non-Goals
 
