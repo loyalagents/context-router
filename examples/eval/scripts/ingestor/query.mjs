@@ -26,6 +26,7 @@ query EvalIngestorPreferenceSchema($scope: ExportSchemaScope!) {
     slug
     valueType
     scope
+    options
     ownerUserId
     archivedAt
   }
@@ -38,6 +39,7 @@ mutation EvalIngestorCreateDefinition($input: CreatePreferenceDefinitionInput!) 
     slug
     valueType
     scope
+    options
     ownerUserId
   }
 }
@@ -49,6 +51,30 @@ mutation EvalIngestorSetPreference($input: SetPreferenceInput!) {
     slug
     value
     status
+  }
+}
+`,
+  `
+mutation EvalIngestorSuggestPreference($input: SuggestPreferenceInput!) {
+  suggestPreference(input: $input) {
+    id
+    slug
+    value
+    status
+    confidence
+    evidence
+  }
+}
+`,
+  `
+mutation EvalIngestorAcceptSuggestedPreference($id: ID!) {
+  acceptSuggestedPreference(id: $id) {
+    id
+    slug
+    value
+    status
+    confidence
+    evidence
   }
 }
 `,
@@ -73,5 +99,7 @@ export const [
   EXPORT_SCHEMA_QUERY,
   CREATE_DEFINITION_MUTATION,
   SET_PREFERENCE_MUTATION,
+  SUGGEST_PREFERENCE_MUTATION,
+  ACCEPT_SUGGESTED_PREFERENCE_MUTATION,
   APPLY_SUGGESTIONS_MUTATION,
 ] = INGESTOR_GRAPHQL_DOCUMENTS;

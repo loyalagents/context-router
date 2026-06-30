@@ -6,6 +6,9 @@
 
 ## Score Movement Ledger
 
+For the cross-family planning index, see `difficulty-matrix.md`. This file is
+only for score movement and live-run interpretation.
+
 | Packet / run | What changed | Score effect | Interpretation |
 | --- | --- | --- | --- |
 | `packet-medium` direct baseline | Baseline shared dossier | Passed; `known-fields=26/27` in reviewed run | Baseline is already strong enough for most scored form fields. |
@@ -24,6 +27,7 @@
 | `packet-hard-required-v4` direct `gemini-2.5-flash-lite` | Same v4 packet with canonical order | Passed; memory `21/25`, fields `26/27`, W-4 `6/6`, direct deposit `8/9`, ownership clean `7/7` | Score moved through the intended target. Flash-lite stored `payroll.direct_deposit.account_type = DDA` instead of resolving `DDA -> checking`, so direct-deposit `xcheck[0]` was missing. |
 | `packet-hard-required-v4` direct `gemini-2.5-pro` | Same v4 packet with stronger direct extraction model | Passed; memory `24/25`, fields `26/27`, I-9 `11/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | Score moved, but not through the intended v4 banking/W-4 lookup. Pro resolved `checking`, bank, and filing status, but stored citizenship as `person.citizenship.is_citizen = true` without the accepted `workAuthorization.citizenshipStatus = U.S. citizen`; the fill action tried to check `CB_1`, then condition validation treated it as inactive. |
 | `packet-hard-required-v4` MCP Claude | Same v4 packet through stored-memory agent path and backend form fill | Passed; memory `25/25`, fields `27/27`, I-9 `12/12`, W-4 `6/6`, direct deposit `9/9`, ownership clean `7/7` | MCP solved the v4 evidence paths, including `DDA -> checking`, RDFI key to bank name, W-4 choice code to filing status, and I-9 citizenship. |
+| `packet-hard-required-v4` Claude Code direct baseline | New direct Claude Code packet runner with strict empty MCP config, restricted tools/config, no backend memory source during extraction, backend materialized fill mode, and comparable model/thinking metadata | Runner implemented; live score pending | Intended to isolate memory extraction: Claude direct extracts facts, the harness materializes them into backend memory, then the same backend form-fill endpoint used by MCP fills forms. The direct runner is not an OS-level filesystem sandbox. Treat direct-vs-MCP Claude conclusions as provisional until canonical direct and MCP runs record matching `--model`, `--thinking-mode`, and backend-fill settings. |
 
 ## Reporter-Confirmed Results
 
@@ -65,6 +69,12 @@ pnpm eval:compare-packet-runs \
   exposed a separate boolean-vs-enum citizenship normalization issue.
 - MCP Claude handled v4 cleanly, so this packet currently differentiates direct
   open-schema extraction more than the MCP path.
+- A Claude Code direct backend-fill baseline is now available to test whether
+  v4 success is due to Claude/agentic extraction or MCP/backend memory tooling.
+  Historical Claude MCP comparisons remain provisional unless the run artifacts
+  record comparable model/thinking and backend-fill settings. Local fact-only
+  direct fill remains a diagnostic path, not the canonical Claude direct-vs-MCP
+  comparison.
 - JSON formatting failures are separate from memory/form quality and should be
   tracked as extraction reliability failures.
 - Backend structured-output failures are also separate from packet difficulty;

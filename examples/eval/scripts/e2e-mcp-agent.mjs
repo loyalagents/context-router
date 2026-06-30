@@ -32,6 +32,11 @@ import {
   formatResult as formatValidationResult,
   runValidation,
 } from './validate.mjs';
+import {
+  buildClaudeCodeArgs,
+  thinkingMetadata,
+  validateThinkingMode,
+} from './claude-code-cli.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -780,7 +785,12 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
     graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
     authToken: env.EVAL_AUTH_TOKEN,
+    model: env.EVAL_MODEL,
+    modelSource: env.EVAL_MODEL ? 'env' : 'unspecified',
     modelLabel: env.EVAL_MODEL_LABEL,
+    modelLabelSource: env.EVAL_MODEL_LABEL ? 'env' : 'unspecified',
+    thinkingMode: null,
+    thinkingSource: 'unspecified',
     resetMemory: false,
     resetMemoryMode: null,
     ensureDefinitions: true,
@@ -805,7 +815,9 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--agent-timeout-ms',
     '--prompt-template',
     '--mcp-config',
+    '--model',
     '--model-label',
+    '--thinking-mode',
     '--location-id',
     '--run-id',
   ]);
@@ -873,7 +885,18 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
     if (arg === '--prompt-template') options.promptTemplate = value;
     if (arg === '--mcp-config') options.mcpConfig = value;
-    if (arg === '--model-label') options.modelLabel = value;
+    if (arg === '--model') {
+      options.model = value;
+      options.modelSource = 'manual';
+    }
+    if (arg === '--model-label') {
+      options.modelLabel = value;
+      options.modelLabelSource = 'manual';
+    }
+    if (arg === '--thinking-mode') {
+      options.thinkingMode = value;
+      options.thinkingSource = 'manual';
+    }
     if (arg === '--location-id') options.locationId = value;
     if (arg === '--run-id') options.runId = value;
   }
@@ -940,6 +963,22 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
       message: 'Missing required --mcp-config when --agent claude is used',
     };
   }
+  if (options.agent === 'claude') {
+    if (options.thinkingSource !== 'manual') {
+      options.thinkingMode = env.EVAL_THINKING_MODE || 'default';
+      options.thinkingSource = env.EVAL_THINKING_MODE ? 'env' : 'default';
+    }
+    const thinkingError = validateThinkingMode(options.thinkingMode);
+    if (thinkingError) {
+      return { kind: 'usage-error', message: thinkingError };
+    }
+  } else {
+    if (options.thinkingSource === 'manual') {
+      return { kind: 'usage-error', message: '--thinking-mode is only supported with --agent claude.' };
+    }
+    options.thinkingMode = 'default';
+    options.thinkingSource = 'default';
+  }
   for (const [label, value] of [
     ['--user', options.userId],
     ['--corpus', options.corpusId],
@@ -996,7 +1035,9 @@ export function usage() {
     '  --mcp-config <path>               Required with --agent claude; loaded with --strict-mcp-config',
     '  --agent-timeout-ms <ms>           Defaults to 900000',
     '  --prompt-template <path>          Defaults by schema mode to the MCP known/open prompt template',
-    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; records manual model/config metadata',
+    '  --model <model>                   Defaults to EVAL_MODEL; passed to Claude Code when --agent claude',
+    '  --model-label <label>             Defaults to EVAL_MODEL_LABEL; metadata-only fallback',
+    '  --thinking-mode <mode>            Claude Code only: default|low|medium|high|xhigh|max',
     '  --reset-memory                    Clear current backend user memory values before the agent run',
     '  --reset-demo-data                 Clear current backend user demo data, including user-owned definitions; requires backend ENABLE_DEMO_RESET=true',
     '  --skip-ensure-definitions          Do not create missing known-schema definitions; forced in open mode',
@@ -1132,24 +1173,15 @@ export function buildAgentInvocation({ repoRoot, options, artifacts }) {
   const claudeSettings = artifacts?.claudeSettings ?? path.join(agentWorkspaceRoot, 'claude-settings.json');
   if (options.agent === 'claude') {
     const mcpConfigPath = path.resolve(repoRoot, options.mcpConfig);
-    const args = [
-      '--print',
-      '--permission-mode',
-      'dontAsk',
-      '--output-format',
-      'stream-json',
-      '--verbose',
-      '--no-session-persistence',
-      '--mcp-config',
-      mcpConfigPath,
-      '--strict-mcp-config',
-      '--settings',
-      claudeSettings,
-      '--tools',
-      CLAUDE_BUILTIN_TOOLS,
-      '--allowedTools',
-      `${CLAUDE_BUILTIN_TOOLS},mcp__${options.mcpServer}__*`,
-    ];
+    const args = buildClaudeCodeArgs({
+      model: options.model,
+      thinkingMode: options.thinkingMode,
+      mcpConfig: mcpConfigPath,
+      strictMcpConfig: true,
+      settings: claudeSettings,
+      tools: CLAUDE_BUILTIN_TOOLS,
+      allowedTools: `${CLAUDE_BUILTIN_TOOLS},mcp__${options.mcpServer}__*`,
+    });
     return {
       file: 'claude',
       args,
@@ -1367,7 +1399,7 @@ function initialAgentRun({ repoRoot, options, artifacts, setupResult, startedAt 
     backendUserId: setupResult.backendUserId ?? null,
     agent: {
       provider: options.agent,
-      modelLabel: options.modelLabel ?? null,
+      modelLabel: options.model ?? options.modelLabel ?? null,
       mcpServer: options.mcpServer,
       timeoutMs: options.agentTimeoutMs,
       command: null,
@@ -1673,16 +1705,29 @@ function generatedRunId(options, now) {
 }
 
 function modelMetadata(options) {
-  if (options.modelLabel) {
+  const label = options.model ?? options.modelLabel;
+  if (label) {
     return {
-      label: options.modelLabel,
-      source: 'manual',
+      label,
+      source: (
+        options.model
+          ? options.modelSource
+          : options.modelLabelSource
+      ) ?? 'manual',
     };
   }
   return {
     label: null,
     source: 'unspecified',
   };
+}
+
+export function mcpThinkingMetadata(options) {
+  if (options.agent !== 'claude') return null;
+  return thinkingMetadata({
+    thinkingMode: options.thinkingMode ?? 'default',
+    source: options.thinkingSource ?? 'unspecified',
+  });
 }
 
 function parsePositiveInteger(value, flag) {

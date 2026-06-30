@@ -166,47 +166,48 @@ wrong-fact counts, or overfill counts compared with `packet-medium`.
 
 ## Current Required-Hard Fixture Status
 
-`packet-hard-required-v1` is the next combined fixture after ownership and
-conflict. It is designed to address a lesson from the first live checks: the
-ownership and conflict packets added adversarial noise and useful leakage
-signals, but the clean `packet-medium` evidence was still sufficient for the
-main scored form fields.
+Required-evidence hardening has progressed from `packet-hard-required-v1`
+through `packet-hard-required-v4`. This family is designed to address a lesson
+from the first live checks: ownership and conflict packets added adversarial
+noise and useful leakage signals, but the clean `packet-medium` evidence was
+still sufficient for the main scored form fields.
 
 Implementation docs:
 
 - `required-hardening/implementation-plan.md`
 - `required-hardening/implementation-summary.md`
+- `required-hardening-v2/implementation-plan.md`
+- `required-hardening-v2/implementation-summary.md`
+- `required-hardening-v3/implementation-plan.md`
+- `required-hardening-v3/implementation-summary.md`
+- `required-hardening-v4/implementation-plan.md`
+- `required-hardening-v4/implementation-summary.md`
 
-Fixture shape:
+Current read:
 
-- one new corpus: `packet-hard-required-v1`;
-- based on `packet-hard-conflict-v1`, preserving conflict docs `031`-`035`;
-- removes clean direct-deposit proof docs `016`, `017`, and `018`;
-- adds Noah Kim's payment-election export as a current-looking ownership decoy;
-- withholds exact employment title/start from clean docs `006`, `008`, `009`,
-  `010`, and `022`;
-- makes current banking facts available only through doc `031`;
-- makes current employment title/start available only through doc `035`;
-- three independent one-form scenarios for I-9, W-4, and direct deposit;
-- no runner, scorer, backend, MCP, form-map, schema, or Maya profile changes.
+- `packet-hard-required-v1` removed clean banking proof and made employment
+  title/start depend on the correction thread. It moved direct memory score but
+  did not move form score.
+- `packet-hard-required-v2` made scored direct-deposit institution/type depend
+  on ACH reconciliation evidence. It moved weaker direct form score, but
+  stronger direct and MCP handled it.
+- `packet-hard-required-v3` made W-4 filing status depend on resolution-audit
+  evidence. It moved memory more than form score.
+- `packet-hard-required-v4` is the current score-moving required-evidence
+  fixture. It makes scored direct-deposit and W-4 values require multi-hop
+  lookup through docs `039`, `040`, and `041`, while intentionally avoiding
+  volume/order testing.
 
-Validation status:
+Validation and live-read status:
 
-```text
-focused corpus validation: 0 errors, 41 warnings
-scenario validations:      0 errors, 41 warnings each
-whole-tree validation:     0 errors, 192 warnings
-```
+- all required-hard corpora validate with zero errors;
+- v4 canonical live review moved direct form score while MCP Claude solved the
+  evidence path cleanly;
+- detailed score movement lives in `../TRACKING.md`.
 
-Static checks confirmed that current banking values appear in document bodies
-only in doc `031`, current employment title/start appear only in doc `035`,
-banking manifest includes point only at doc `031`, and employment title/start
-manifest includes point only at doc `035`.
-
-The expected live-run signal is whether direct and MCP paths still recover the
-current banking and employment facts when those facts require parsing the hard
-evidence documents, and whether stale or non-Maya values leak into active
-memory or filled forms.
+Use `../difficulty-matrix.md` for the cross-family index. Do not merge
+required-hard evidence with volume/noise in place; if that experiment becomes
+useful, create a new labeled corpus so failures remain attributable.
 
 ## Difficulty Order
 

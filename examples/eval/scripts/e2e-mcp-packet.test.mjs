@@ -76,6 +76,10 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   assert.equal(parsed.options.promptTemplate, 'examples/eval/prompts/mcp-open-schema-packet.md');
   assert.equal(parsed.options.documentOrder, 'canonical');
   assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
+  assert.equal(parsed.options.modelSource, 'unspecified');
+  assert.equal(parsed.options.modelLabelSource, 'unspecified');
+  assert.equal(parsed.options.thinkingMode, 'default');
+  assert.equal(parsed.options.thinkingSource, 'default');
   assert.match(
     parsed.options.runId,
     /^mcp-open-schema-packet-maya-chen-newhire-packet-small-2026-06-01T12-00-00-000Z$/,
@@ -100,6 +104,53 @@ test('mcp packet CLI parses defaults and rejects unsupported modes', () => {
   );
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
+
+  const commandThinking = parseArgs(
+    [
+      ...baseArgs,
+      '--thinking-mode',
+      'xhigh',
+    ],
+    { EVAL_AUTH_TOKEN: 'token' },
+    fixedNow,
+  );
+  assert.equal(commandThinking.kind, 'usage-error');
+  assert.match(commandThinking.message, /--agent claude/);
+
+  const controls = parseArgs(
+    [
+      ...replaceFlagValue(baseArgs, '--agent', 'claude'),
+      '--mcp-config',
+      '/private/tmp/mcp.json',
+      '--model',
+      'claude-sonnet-4-20250514',
+      '--thinking-mode',
+      'xhigh',
+    ],
+    { EVAL_AUTH_TOKEN: 'token' },
+    fixedNow,
+  );
+  assert.equal(controls.kind, 'ok');
+  assert.equal(controls.options.model, 'claude-sonnet-4-20250514');
+  assert.equal(controls.options.modelSource, 'manual');
+  assert.equal(controls.options.thinkingMode, 'xhigh');
+  assert.equal(controls.options.thinkingSource, 'manual');
+
+  const commandInvalidEnvThinking = parseArgs(baseArgs, {
+    EVAL_AUTH_TOKEN: 'token',
+    EVAL_THINKING_MODE: 'not-a-real-mode',
+  }, fixedNow);
+  assert.equal(commandInvalidEnvThinking.kind, 'ok');
+  assert.equal(commandInvalidEnvThinking.options.thinkingMode, 'default');
+  assert.equal(commandInvalidEnvThinking.options.thinkingSource, 'default');
+
+  const envModel = parseArgs(baseArgs, {
+    EVAL_AUTH_TOKEN: 'token',
+    EVAL_MODEL: 'env-claude-model',
+  }, fixedNow);
+  assert.equal(envModel.kind, 'ok');
+  assert.equal(envModel.options.model, 'env-claude-model');
+  assert.equal(envModel.options.modelSource, 'env');
 });
 
 test('mcp packet prompt describes one shared dossier for multiple forms', async () => {
@@ -545,6 +596,9 @@ test('mcp packet run ingests once and fills every scenario from shared memory', 
   const safeIndex = JSON.parse(
     await readFile(path.join(tmp, 'agent-workspace', 'documents.json'), 'utf8'),
   );
+  assert.equal(report.agent, 'command');
+  assert.deepEqual(report.model, { label: 'test-model', source: 'env' });
+  assert.equal(report.thinking, null);
   assert.equal(report.settings.documentOrder, 'relevant-last');
   assert.equal(report.documents.documentCount, 8);
   assert.equal(report.documents.sourceCharCount > 0, true);
