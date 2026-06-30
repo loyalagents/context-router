@@ -27,7 +27,29 @@ def is_blank(value):
     return value in (None, "", [], {})
 
 
-def score_form(form_id, expected_form):
+def score_metadata(actual, form_id, expected_schema_version, expected_task_id):
+    errors = []
+    expected_values = {
+        "schemaVersion": expected_schema_version,
+        "taskId": expected_task_id,
+        "formId": form_id,
+    }
+    for field, expected_value in expected_values.items():
+        actual_value = actual.get(field)
+        if actual_value != expected_value:
+            reason = "missing-metadata" if field not in actual else "wrong-metadata"
+            errors.append(
+                {
+                    "field": field,
+                    "expected": expected_value,
+                    "actual": actual_value,
+                    "reason": reason,
+                }
+            )
+    return errors
+
+
+def score_form(form_id, expected_form, expected_schema_version, expected_task_id):
     output_path = APP_OUTPUT_ROOT / f"{form_id}.json"
     expected_fields = expected_form["fields"]
     unsupported_fields = expected_form.get("unsupportedFields", {})
@@ -40,6 +62,7 @@ def score_form(form_id, expected_form):
         "missingFields": [],
         "wrongFields": [],
         "overfillFields": [],
+        "metadataErrors": [],
         "parseSuccess": False,
     }
 
@@ -59,11 +82,26 @@ def score_form(form_id, expected_form):
             "error": str(error),
         }
 
+    if not isinstance(actual, dict):
+        return {
+            **base,
+            "missingFields": sorted(expected_fields),
+            "error": "Output JSON must be an object.",
+        }
+
+    metadata_errors = score_metadata(
+        actual,
+        form_id,
+        expected_schema_version,
+        expected_task_id,
+    )
+
     actual_fields = actual.get("fields", {})
     if not isinstance(actual_fields, dict):
         return {
             **base,
             "missingFields": sorted(expected_fields),
+            "metadataErrors": metadata_errors,
             "error": "Output JSON must contain an object at `fields`.",
         }
 
@@ -104,14 +142,20 @@ def score_form(form_id, expected_form):
         "missingFields": missing,
         "wrongFields": wrong,
         "overfillFields": overfill,
+        "metadataErrors": metadata_errors,
         "parseSuccess": True,
     }
 
 
 def main():
     expected = load_json(EXPECTED)
+    expected_schema_version = expected.get("schemaVersion", 1)
+    expected_task_id = expected.get("taskId", "maya-packet-medium-formfill")
     forms = expected["forms"]
-    form_scores = [score_form(form_id, form) for form_id, form in forms.items()]
+    form_scores = [
+        score_form(form_id, form, expected_schema_version, expected_task_id)
+        for form_id, form in forms.items()
+    ]
 
     total_fields = sum(score["totalFields"] for score in form_scores)
     correct_fields = sum(score["correctFields"] for score in form_scores)
@@ -120,6 +164,7 @@ def main():
     missing_fields = []
     wrong_fields = []
     overfill_fields = []
+    metadata_errors = []
     for score in form_scores:
         form_id = score["formId"]
         missing_fields.extend(f"{form_id}.{key}" for key in score["missingFields"])
@@ -127,22 +172,33 @@ def main():
         overfill_fields.extend(
             {**entry, "formId": form_id} for entry in score["overfillFields"]
         )
+        metadata_errors.extend(
+            {**entry, "formId": form_id} for entry in score["metadataErrors"]
+        )
 
     field_accuracy = correct_fields / total_fields if total_fields else 0.0
     overfill_penalty = len(overfill_fields)
-    reward = max(0, correct_fields - overfill_penalty) / total_fields if total_fields else 0.0
+    metadata_penalty = len(metadata_errors)
+    reward = (
+        max(0, correct_fields - overfill_penalty - metadata_penalty) / total_fields
+        if total_fields
+        else 0.0
+    )
 
     summary = {
         "reward": reward,
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_failures == 0,
         "parseFailures": parse_failures,
+        "metadataSuccess": parse_failures == 0 and len(metadata_errors) == 0,
+        "metadataFailures": len(metadata_errors),
         "totalForms": len(forms),
         "totalFields": total_fields,
         "correctFields": correct_fields,
         "missingFields": missing_fields,
         "wrongFields": wrong_fields,
         "overfillFields": overfill_fields,
+        "metadataErrors": metadata_errors,
         "outputFiles": [f"{form_id}.json" for form_id in forms],
         "formScores": form_scores,
     }
@@ -161,6 +217,7 @@ def main():
             "reward": summary["reward"],
             "field_accuracy": summary["fieldAccuracy"],
             "parse_success": 1.0 if summary["parseSuccess"] else 0.0,
+            "metadata_success": 1.0 if summary["metadataSuccess"] else 0.0,
         },
     )
 

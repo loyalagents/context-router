@@ -162,6 +162,8 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     missing_fields = score.get("missingFields", [])
     wrong_fields = score.get("wrongFields", [])
     overfill_fields = score.get("overfillFields", [])
+    metadata_errors = score.get("metadataErrors")
+    metadata_count = count_list(metadata_errors) if isinstance(metadata_errors, list) else None
 
     return {
         "mode": mode,
@@ -176,12 +178,15 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_success,
         "parseFailures": score.get("parseFailures", 0 if parse_success is True else 1),
+        "metadataSuccess": score.get("metadataSuccess"),
+        "metadataCount": metadata_count,
         "missingCount": count_list(missing_fields),
         "wrongCount": count_wrong_fields(wrong_fields),
         "overfillCount": count_list(overfill_fields),
         "missingFields": missing_fields,
         "wrongFields": wrong_fields,
         "overfillFields": overfill_fields,
+        "metadataErrors": metadata_errors if isinstance(metadata_errors, list) else [],
         "mcpTools": mcp_tools,
         "crPreferenceCount": cr_preference_count,
         "validationErrors": validation_errors,
@@ -206,18 +211,19 @@ def fmt_bool(value: Any) -> str:
 
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reward | Field Accuracy | Parse Failures | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reward | Field Accuracy | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reward} | {field} | {parse_failures} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reward} | {field} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
                 parse_failures=row["parseFailures"],
+                metadata=fmt_value(row["metadataCount"]),
                 missing=row["missingCount"],
                 wrong=row["wrongCount"],
                 overfill=row["overfillCount"],
@@ -244,6 +250,8 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
             lines.append(f"- Wrong fields: `{json.dumps(row['wrongFields'])}`")
         if row["overfillFields"]:
             lines.append(f"- Overfill fields: `{json.dumps(row['overfillFields'])}`")
+        if row["metadataErrors"]:
+            lines.append(f"- Metadata errors: `{json.dumps(row['metadataErrors'])}`")
         if row["validationErrors"]:
             lines.append(
                 f"- Validation errors: `{json.dumps(row['validationErrors'])}`"

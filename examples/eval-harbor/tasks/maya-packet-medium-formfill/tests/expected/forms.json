@@ -1,4 +1,6 @@
 {
+  "schemaVersion": 1,
+  "taskId": "maya-packet-medium-formfill",
   "forms": {
     "direct-deposit-sf1199a-24": {
       "fields": {

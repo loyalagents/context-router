@@ -1,4 +1,6 @@
 {
+  "schemaVersion": 1,
+  "taskId": "smoke-formfill",
   "forms": {
     "new-hire": {
       "fields": {
