@@ -36,7 +36,15 @@
                 "type": "string"
               },
               "render": {
-                "enum": ["digits-only", "mmddyyyy"]
+                "oneOf": [
+                  {
+                    "enum": ["digits-only", "mmddyyyy"]
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^digit-at:(0|[1-9][0-9]*)$"
+                  }
+                ]
               },
               "when": {
                 "$ref": "#/$defs/condition"

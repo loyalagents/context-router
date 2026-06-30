@@ -122,6 +122,68 @@ test('runner value rendering and eval slug derivation are deterministic', () => 
     renderFieldValue('1994-07-18', { render: 'mmddyyyy' }),
     '07181994',
   );
+  assert.equal(
+    renderFieldValue('091-000-019', { render: 'digit-at:8' }),
+    '9',
+  );
+  assert.equal(
+    renderFieldValue('740182936451', { render: 'digit-at:11' }),
+    '1',
+  );
+});
+
+test('direct-deposit run plan scores routing and account digit boxes', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'maya-chen-newhire-direct-deposit-packet-hard-required-v4',
+  });
+  const runPlan = buildRunPlan(fixture);
+
+  assert.equal(
+    actionFor(runPlan, 'topmostSubform[0].Page1[0].rout1[0]').fillAction.value,
+    '0',
+  );
+  assert.equal(
+    actionFor(runPlan, 'topmostSubform[0].Page1[0].ckdigit[0]').fillAction.value,
+    '9',
+  );
+  assert.equal(
+    actionFor(runPlan, 'topmostSubform[0].Page1[0].acct1[0]').fillAction.value,
+    '7',
+  );
+  assert.equal(
+    actionFor(runPlan, 'topmostSubform[0].Page1[0].acct12[0]').fillAction.value,
+    '1',
+  );
+  assert.equal(
+    actionFor(runPlan, 'topmostSubform[0].Page1[0].acct13[0]').fillAction.action,
+    'SKIP',
+  );
+
+  const snapshot = buildFilledFormSnapshot({
+    fixture,
+    runPlan,
+    harnessResult: fakeHarnessResult(runPlan),
+  });
+
+  assert.equal(
+    snapshot.fields.find(
+      (field) => field.pdfFieldName === 'topmostSubform[0].Page1[0].rout1[0]',
+    ).classification,
+    'correct',
+  );
+  assert.equal(
+    snapshot.fields.find(
+      (field) => field.pdfFieldName === 'topmostSubform[0].Page1[0].acct12[0]',
+    ).classification,
+    'correct',
+  );
+  assert.equal(
+    snapshot.fields.find(
+      (field) => field.pdfFieldName === 'topmostSubform[0].Page1[0].acct13[0]',
+    ).classification,
+    'skipped-correctly',
+  );
 });
 
 test('run plan applies conditional I-9 citizenship branches', async () => {

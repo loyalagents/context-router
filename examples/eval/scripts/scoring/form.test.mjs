@@ -4,6 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { buildRunPlan } from '../eval-runner/actions.mjs';
+import { loadScenarioFixture } from '../eval-runner/fixtures.mjs';
+import { buildFilledFormSnapshot } from '../eval-runner/snapshots.mjs';
 import { scoreForm } from './form.mjs';
 import { validateWithSchema } from './io.mjs';
 import { jsonText } from '../shared.mjs';
@@ -346,3 +349,121 @@ test('form scorer maps unexpected should-fill snapshot classifications in band',
     'form fill score report',
   );
 });
+
+test('form scorer scores direct-deposit routing and account digit boxes', async () => {
+  const fixture = await loadScenarioFixture({
+    repoRoot,
+    scenarioId: 'maya-chen-newhire-direct-deposit-packet-hard-required-v4',
+  });
+  const runPlan = buildRunPlan(fixture);
+  const harnessResult = fakeHarnessResult(runPlan);
+  const missingRoutingField = 'topmostSubform[0].Page1[0].rout1[0]';
+  const wrongAccountField = 'topmostSubform[0].Page1[0].acct12[0]';
+  delete harnessResult.filledPdfFields[missingRoutingField];
+  harnessResult.response.summary.filledFields =
+    harnessResult.response.summary.filledFields.filter(
+      (field) => field.pdfFieldName !== missingRoutingField,
+    );
+  harnessResult.response.summary.filledCount -= 1;
+  harnessResult.response.summary.skippedCount += 1;
+  harnessResult.filledPdfFields[wrongAccountField].value = '0';
+
+  const snapshot = buildFilledFormSnapshot({
+    fixture,
+    runPlan,
+    harnessResult,
+  });
+
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'score-form-direct-deposit-'));
+  const filledFormPath = path.join(tmp, 'filled-form.json');
+  await writeFile(filledFormPath, jsonText(snapshot));
+
+  const report = await scoreForm({
+    repoRoot,
+    scenarioId: 'maya-chen-newhire-direct-deposit-packet-hard-required-v4',
+    filledFormPath,
+  });
+
+  assert.equal(
+    report.fields.find(
+      (field) => field.pdfFieldName === 'topmostSubform[0].Page1[0].ckdigit[0]',
+    ).classification,
+    'form_known_correct',
+  );
+  assert.equal(
+    report.fields.find((field) => field.pdfFieldName === missingRoutingField)
+      .classification,
+    'form_known_missing',
+  );
+  assert.equal(
+    report.fields.find((field) => field.pdfFieldName === wrongAccountField)
+      .classification,
+    'form_known_wrong',
+  );
+  assert.equal(
+    report.fields.find(
+      (field) => field.pdfFieldName === 'topmostSubform[0].Page1[0].acct13[0]',
+    ).classification,
+    'structural_skip',
+  );
+
+  await validateWithSchema(
+    repoRoot,
+    'form-fill-score-report.schema.json',
+    report,
+    'form fill score report',
+  );
+});
+
+function fakeHarnessResult(runPlan) {
+  const filledActions = runPlan.actionPlans.filter(
+    (plan) => plan.fillAction.action !== 'SKIP',
+  );
+  const skippedActions = runPlan.actionPlans.filter(
+    (plan) => plan.fillAction.action === 'SKIP',
+  );
+  const filledPdfFields = {};
+  for (const plan of filledActions) {
+    if (plan.fillAction.action === 'SET_TEXT') {
+      filledPdfFields[plan.pdfFieldName] = { value: plan.fillAction.value };
+    } else if (plan.fillAction.action === 'SELECT_OPTION') {
+      filledPdfFields[plan.pdfFieldName] = {
+        selected: [plan.fillAction.value],
+      };
+    } else if (plan.fillAction.action === 'CHECK') {
+      filledPdfFields[plan.pdfFieldName] = { checked: true };
+    } else if (plan.fillAction.action === 'UNCHECK') {
+      filledPdfFields[plan.pdfFieldName] = { checked: false };
+    }
+  }
+
+  return {
+    response: {
+      status: 'partial',
+      originalFilename: 'form.pdf',
+      outputFilename: 'filled-form.pdf',
+      outputMimeType: 'application/pdf',
+      filledPdfBase64: 'omitted-in-tests',
+      summary: {
+        totalFields: runPlan.actionPlans.length,
+        filledCount: filledActions.length,
+        skippedCount: skippedActions.length,
+        filledFields: filledActions.map((plan) => ({
+          pdfFieldName: plan.pdfFieldName,
+          fieldType: plan.fieldType,
+          sourceSlugs: plan.fillAction.sourceSlugs,
+          confidence: plan.fillAction.confidence,
+        })),
+        skippedFields: skippedActions.map((plan) => ({
+          pdfFieldName: plan.pdfFieldName,
+          fieldType: plan.fieldType,
+          reason: plan.fillAction.skipReason,
+          sourceSlugs: plan.fillAction.sourceSlugs,
+          confidence: plan.fillAction.confidence,
+        })),
+        warnings: [],
+      },
+    },
+    filledPdfFields,
+  };
+}

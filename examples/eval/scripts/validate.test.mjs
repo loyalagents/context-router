@@ -170,12 +170,28 @@ test('reports invalid V2 field-map condition and render hints', async (t) => {
   const fieldMap = await readJson(fieldMapPath);
   fieldMap.fields[2].when = { factKey: 'identity.notReal', equals: 'x' };
   fieldMap.fields[15].render = 'slashes';
+  fieldMap.fields[17].render = 'digit-at:-1';
   fieldMap.fields[16].when = { factKey: 'identity.firstName', equals: [] };
   await writeJson(fieldMapPath, fieldMap);
 
   const result = await validateElena(root);
   assertHasCode(result, 'FIELD_MAP_CONDITION_FACT_MISSING');
   assertHasCode(result, 'SCHEMA_VALIDATION_FAILED');
+});
+
+test('accepts V2 field-map digit-position render hints', async (t) => {
+  const root = await copyRepo(t);
+  const fieldMapPath = path.join(
+    root,
+    'examples/eval/forms/i-9/field-map.json',
+  );
+  const fieldMap = await readJson(fieldMapPath);
+  fieldMap.fields[15].render = 'digit-at:0';
+  await writeJson(fieldMapPath, fieldMap);
+
+  const result = await validateElena(root);
+  assert.equal(result.exitCode, 0, formatResult(result));
+  assertNoCode(result, 'SCHEMA_VALIDATION_FAILED');
 });
 
 test('reports I-9 citizenship checkbox group with no active branch for profile value', async (t) => {
