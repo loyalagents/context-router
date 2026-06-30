@@ -233,17 +233,22 @@ CODEX_FORCE_AUTH_JSON=1 harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
   --yes
 
-harbor run \
-  -p examples/eval-harbor/tasks/maya-newhire-formfill-cr-mcp \
-  -a codex \
-  -m gpt-5.3-codex-spark \
-  --extra-instruction-path examples/eval-harbor/modes/cr-mcp.md
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-cr-mcp.yaml \
+  --yes
 ```
 
 If the CR sidecar can be toggled cleanly without a separate task directory, keep
 one task and switch modes by job config. If Harbor requires separate task
 directories for compose vs non-compose environments, generate or maintain the
 task variants from shared source files to prevent benchmark drift.
+
+Phase 3 implements the first `cr-mcp` arm with an eval-only FastMCP sidecar
+rather than the product Nest backend. This is intentional for v1 because the
+current product `McpModule` imports workflow-backed tools. The sidecar exposes
+only `listPreferenceSlugs`, `searchPreferences`, and `mutatePreferences`, and
+Harbor collects its MCP config, tool-call trace, server log, and memory snapshot
+as artifacts.
 
 ## Phase Plan
 
