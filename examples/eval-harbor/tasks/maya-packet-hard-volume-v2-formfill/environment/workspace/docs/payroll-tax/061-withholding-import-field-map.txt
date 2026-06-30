@@ -1,0 +1,22 @@
+Source system: LedgerPay Tax
+Generated timestamp: 2026-06-20T08:31:00-07:00
+Status: active
+Document code: PLC-OPS-061
+Subject: withholding import field map
+Field IDs: tax_profile.row_id, filing_status.code, w4.field_map, reviewer.queue
+
+The tax import file contains federal filing status, multiple jobs, dependent amount, other income, deductions, and extra withholding fields.
+The field map has separate columns for display label and normalized filing status code.
+Rows that use a vendor-specific display phrase remain in review until the code column is populated.
+
+Operational note: payroll tax operations filed withholding import field map with withholding field-map version, reviewer queue, and import timestamp.
+
+Tax workbench provenance
+Tax workbench trace: PLC-PAYROLLT-061 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+Review checkpoint: tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
+Retention tag: withholding setup artifact, grouped with tax import diagnostics and field-map notes.
+
+Operational detail rows
+Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-061 was indexed from Withholding Import Field Map during the 2026-06-17 operations window.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for withholding import field map kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for withholding import field map audit reconstruction while preserving original row wording.

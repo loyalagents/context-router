@@ -1,0 +1,22 @@
+Source system: LedgerPay Banking
+Generated timestamp: 2026-06-20T08:48:00-07:00
+Status: active
+Document code: PLC-OPS-078
+Subject: bank verification review checklist
+Field IDs: identity_vendor.case_id, scan.channel, confidence.band, exception.route
+
+Reviewers compare account holder name, institution, routing number, account number, and account type before approving payment election.
+The checklist records reviewer initials and the source document ids viewed.
+It supports manual review but is not itself the employee bank document.
+
+Operational note: identity vendor review filed bank verification review checklist with capture channel, transcript state, and exception route.
+
+Identity vendor provenance
+Identity vendor trace: PLC-IDENTITY-078 retained source filename, OCR model version, review queue, and crop metadata.
+Review checkpoint: IdentityLens reviewers compare upload batch, document family, confidence score, and queue disposition before clearing a transcript.
+Retention tag: OCR processing artifact, stored with image-processing metadata and reviewer assignment.
+
+Operational detail rows
+Identity vendor logs keep OCR model, crop id, upload batch, source filename, reviewer queue, and confidence score. Row marker PLC-IDENTITY-078 was indexed from Bank Verification Review Checklist during the 2026-06-16 operations window.
+Document review compares image family, transcript state, redaction state, and accepted queue status before clearing the row. Review notes for bank verification review checklist kept identity vendor queue history, timestamp lineage, and handoff context with the retained record.
+The vendor export stores raw transcript snippets beside review metadata so support can reproduce OCR routing decisions. The retained identity vendor artifact keeps source metadata for bank verification review checklist audit reconstruction while preserving original row wording.

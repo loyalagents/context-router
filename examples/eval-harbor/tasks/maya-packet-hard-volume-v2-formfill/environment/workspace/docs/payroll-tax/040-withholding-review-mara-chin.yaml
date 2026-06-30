@@ -1,0 +1,45 @@
+source_system: HarborHire
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-20428
+topic: withholding review
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Mara Chin
+  first_name: Mara
+  last_name: Chin
+  title: Client Success Associate
+  start_date: 2026-07-06
+  work_email: mara.chin@pacificledger.test
+  address_line: 2846 Ashbury Court Apt 3D, Oakland, CA 94609
+payroll_snapshot:
+  tax_filing_status: single or married filing separately
+  bank_product_label: Classic Checking
+  institution_name: Golden Gate Municipal Credit Union
+  routing_number: "321171184"
+  account_last_four: "6154"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-14T09:12:00-07:00
+    owner_queue: Tax workbench trace
+    status: source_row_indexed
+  - timestamp: 2026-06-15T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - Tax workbench trace - PLC-PAYROLLT-040 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+  - Control total note - batch PLC-PAYROLLT-040 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Review checkpoint - tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
+  - Retention tag - withholding setup artifact, grouped with tax import diagnostics and field-map notes.
+operational_detail_rows:
+  - Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-040 was indexed from Withholding Review Mara Chin during the 2026-06-14 operations window.
+  - Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for withholding review mara chin kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+  - The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for withholding review mara chin audit reconstruction while preserving original row wording.

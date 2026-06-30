@@ -1,0 +1,60 @@
+{
+  "source_system": "PeopleBridge",
+  "export_id": "PEOPLEBRIDGE-PLC-19418-20260627",
+  "exported_at": "2026-06-27T08:42:19-07:00",
+  "status": "active",
+  "worker_id": "PLC-19418",
+  "person": {
+    "legal_name": "Maya Patel",
+    "personal_email": "maya.patel@personal.test",
+    "work_email": "maya.patel@pacificledger.test",
+    "title": "Operations Coordinator",
+    "start_date": "2026-06-15"
+  },
+  "topic": "prehire profile export",
+  "fields": {
+    "address_line": "910 Juniper Avenue Apt 12, Berkeley, CA 94704",
+    "city_state_zip": "Berkeley, CA 94704",
+    "ssn_last_four": "4417",
+    "tax_filing_status": "single or married filing separately"
+  },
+  "field_ids": [
+    "person.legal_name",
+    "contact.email",
+    "postal.address",
+    "tax.filing_status"
+  ],
+  "review_state": "ready_for_queue_review",
+  "review_history": [
+    {
+      "timestamp": "2026-06-24T09:12:00-07:00",
+      "owner_queue": "People Operations",
+      "status": "source_row_indexed"
+    },
+    {
+      "timestamp": "2026-06-25T16:40:00-07:00",
+      "owner_queue": "HarborHire Data",
+      "status": "queue_checkpoint_recorded"
+    }
+  ],
+  "control_observations": [
+    "PeopleBridge profile trace: PLC-PEOPLERE-032 kept export id, source worker id, directory sync status, and profile-review queue.",
+    "Profile checkpoint: PeopleBridge reviewers compare source system, row status, and worker id before linking records across HRIS and payroll.",
+    "Retention tag: profile export row, retained with cross-system matching diagnostics."
+  ],
+  "source_packet_marker": "PLC-PEOPLERE-032",
+  "operational_detail_rows": [
+    {
+      "sequence": 1,
+      "note": "PeopleBridge profile rows store export id, worker id, directory status, HRIS sync marker, and cross-system matching diagnostics. Row marker PLC-PEOPLERE-032 was indexed from Prehire Profile Maya Patel during the 2026-06-24 operations window."
+    },
+    {
+      "sequence": 2,
+      "note": "Profile matching compares name token, work email, source system, start-date row, and bridge status before linking records. Review notes for prehire profile maya patel kept people records queue history, timestamp lineage, and handoff context with the retained record."
+    },
+    {
+      "sequence": 3,
+      "note": "The profile export keeps the source row exactly as emitted so support can compare HRIS, payroll, and directory views. The retained people records artifact keeps source metadata for prehire profile maya patel audit reconstruction while preserving original row wording."
+    }
+  ]
+}

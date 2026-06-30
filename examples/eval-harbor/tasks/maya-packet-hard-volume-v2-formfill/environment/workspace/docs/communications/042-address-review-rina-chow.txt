@@ -1,0 +1,28 @@
+From: people.ops@pacificledger.test
+To: rina.chow@pacificledger.test
+Date: Fri, 26 Jun 2026 14:36:20 -0700
+Subject: Address review before payroll lock
+Message-ID: <plc-20518-address-review-before-payroll-lock-0626@pacificledger.test>
+
+Hi Rina,
+
+The payroll lock report has your address in the import queue and asks People Operations to compare it with the onboarding form submitted earlier in the week.
+
+The People Operations export currently lists your worker id as PLC-20518, your role as Client Operations Associate, and your start date as 2026-07-20. The address block visible to the onboarding coordinator reads 2864 Ashbury Street Apt 30, Oakland, CA 94609.
+
+This message was produced from the HarborHire communication queue after the payroll handoff batch was prepared. The footer below is added by the mail system for privacy and retention routing.
+
+Regards,
+People Operations
+
+Footer: Pacific Ledger Cooperative internal correspondence. Privacy routing tag PLC-PEOPLE-MAIL.
+
+Message archive provenance
+Mail archive: PLC-COMMUNIC-042 retained message headers, routing tag, delivery state, and the cohort communication queue that generated the notice.
+Delivery checkpoint: People Operations reviewed recipient address, worker id in the envelope metadata, and message family before closing the mail event.
+Retention tag: communication archive, stored with message id and queue owner for later support lookup.
+
+Operational detail rows
+Message archive records envelope recipient, generated subject, delivery status, reminder family, and queue-owned message id. Row marker PLC-COMMUNIC-042 was indexed from Address Review Rina Chow during the 2026-06-16 operations window.
+People Operations uses message metadata to trace whether a reminder was sent before or after payroll, tax, or work authorization lock. Review notes for address review rina chow kept communications queue history, timestamp lineage, and handoff context with the retained record.
+The mail export keeps privacy footer text, sender alias, cohort tag, and source queue for retention lookup. The retained communications artifact keeps source metadata for address review rina chow audit reconstruction while preserving original row wording.

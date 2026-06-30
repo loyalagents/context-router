@@ -1,0 +1,91 @@
+// OCR INGESTION REPORT - HORIZON SYSTEMS v3.4.1
+//==================================================================
+
+Source System: IdentityCapture Service
+Process ID: OCR-EXTRACT-98172-AXB
+Timestamp: 2026-06-24T09:42:00-07:00
+Source Filename: ssn_card_maya_chen_scan_2.jpeg
+Upload Batch ID: HH-UPL-MC-20418-MED
+Worker ID: PLC-20418
+Job Status: COMPLETED
+
+------------------------------------------------------------------
+// RAW OCR TEXT (Pre-Processing)
+------------------------------------------------------------------
+Zone 1 (Full Page Scan):
+
+   [IMAGE BOUNDARY START]
+
+   SOClAL SECURlTY
+
+   USA-1
+
+   [SEAL: UNITED STATES SOCIAL SECURITY ADMINISTRATION]
+
+   THIS NUMBER HAS BEEN ESTABLISHED FOR
+
+   MAYA LIN CHEN
+
+   000-00-0417
+
+   _________________________
+   SIGNATURE
+
+   This card is invalid if not signed. It is not for
+   identification purposes. Retain this card.
+
+   [IMAGE BOUNDARY END]
+
+------------------------------------------------------------------
+// IMAGE ANALYSIS & PRE-PROCESSING
+------------------------------------------------------------------
+Image Quality Score: 92.5% (Clear, well-lit, minor skew)
+Skew Detected: -0.8 degrees
+Skew Corrected: Yes
+Background Noise Reduction: Applied (Gaussian filter)
+Binarization Method: Otsu's method
+Document Type Detected: SOCIAL_SECURITY_CARD (Confidence: 99.8%)
+Issuing Authority: USA / Social Security Administration
+
+------------------------------------------------------------------
+// PARSED & VERIFIED DATA
+------------------------------------------------------------------
+Extraction Engine: Tesseract OCR Engine v5.3.0 with Custom Lexicon
+
+Field: NAME_FULL
+  Raw Text: MAYA LIN CHEN
+  Cleaned Value: Maya Lin Chen
+  Confidence: 99.91%
+  Coordinates: [150, 450, 850, 500]
+  Validation: Passed (Matches expected name format)
+
+Field: SOCIAL_SECURITY_NUMBER
+  Raw Text: 000-00-0417
+  Cleaned Value: 000-00-0417
+  Confidence: 99.98%
+  Coordinates: [150, 520, 550, 570]
+  Validation: Passed (Matches SSN format ###-##-####)
+  Redaction Status: Not Redacted. Full value extracted for verification.
+
+Field: SIGNATURE_PRESENT
+  Value: FALSE
+  Confidence: 98.0%
+  Note: Signature area detected as blank.
+
+------------------------------------------------------------------
+// SYSTEM LOGS & METADATA
+------------------------------------------------------------------
+LOG 2026-06-24T09:42:00-07:00 INFO: Starting OCR job for batch HH-UPL-MC-20418-MED.
+LOG 2026-06-24T09:42:00-07:00 INFO: Image ssn_card_maya_chen_scan_2.jpeg received. Size: 1.2MB.
+LOG 2026-06-24T09:42:01-07:00 INFO: Pre-processing image. Applying deskew and noise reduction.
+LOG 2026-06-24T09:42:01-07:00 INFO: Document type classified as SOCIAL_SECURITY_CARD with 99.8% confidence.
+LOG 2026-06-24T09:42:02-07:00 INFO: Running zonal OCR.
+LOG 2026-06-24T09:42:02-07:00 INFO: Extracting field 'NAME_FULL'. Value: "MAYA LIN CHEN", Confidence: 99.91%.
+LOG 2026-06-24T09:42:02-07:00 INFO: Extracting field 'SOCIAL_SECURITY_NUMBER'. Value: "000-00-0417", Confidence: 99.98%.
+LOG 2026-06-24T09:42:02-07:00 INFO: Checking for signature. Area is blank.
+LOG 2026-06-24T09:42:03-07:00 INFO: All fields extracted. Running validation rules.
+LOG 2026-06-24T09:42:03-07:00 INFO: Validation successful.
+LOG 2026-06-24T09:42:03-07:00 INFO: OCR process complete. Status: COMPLETED.
+LOG 2026-06-24T09:42:03-07:00 INFO: Sending results to verification queue: AUTO_VERIFIED.
+
+// END OF REPORT

@@ -1,0 +1,22 @@
+Source System: Screenshot OCR Staging Area
+Artifact ID: OCR-STAGE-W4-20260626-103
+Status: rejected_low_confidence
+Employee Context: Maya Lin Chen, worker PLC-20418
+
+OCR text extracted from a thumbnail preview:
+
+Federal W-4 Step 1(c)
+[ ] Single or married filing separately
+[x] Married filing jointly or qualifying surviving spouse
+[ ] Head of household
+
+Quality flags:
+- The OCR engine processed a thumbnail from a rejected staging preview.
+- Confidence for the selected checkbox was 0.41.
+- The reviewer marked this artifact as not admissible because it was generated
+  before the final W-4 resolution audit.
+
+Reviewer instruction:
+Do not use this OCR staging artifact as the employee's W-4 election. Use the
+approved LedgerPay W-4 resolution audit and the current production codebook.
+

@@ -1,0 +1,22 @@
+Source system: WorkRight Admin
+Generated timestamp: 2026-06-19T08:24:00-07:00
+Status: active
+Document code: PLC-OPS-094
+Subject: Section One status codes
+Field IDs: workright.branch_id, section1.task_id, vendor.webhook, reviewer.queue
+
+Section 1 status codes include drafted, submitted, needs correction, reopened, and closed.
+The status code list explains dashboard filters and vendor webhook payloads.
+It supports coordinator review of work authorization tasks.
+
+Operational note: WorkRight coordination indexed section one status codes with branch state, task family, and vendor routing metadata.
+
+Work authorization provenance
+Work authorization trace: PLC-WORKAUTH-094 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+Coordinator checkpoint: WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+Retention tag: employment eligibility workflow artifact, stored with branch and queue metadata.
+
+Operational detail rows
+Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-094 was indexed from Section One Status Codes during the 2026-06-14 operations window.
+Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for section one status codes kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for section one status codes audit reconstruction while preserving original row wording.

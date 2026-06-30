@@ -1,0 +1,22 @@
+Source system: IdentityLens
+Generated timestamp: 2026-06-13T08:18:00-07:00
+Status: active
+Document code: PLC-OPS-088
+Subject: OCR model change log
+Field IDs: identity_vendor.case_id, scan.channel, confidence.band, exception.route
+
+The OCR model update improved recognition for apartment markers, state abbreviations, and low-contrast SSN cards.
+The change log records model version, deployment timestamp, and reviewer fallback behavior.
+Identity uploads processed before the deployment remain in their original transcript format.
+
+Operational note: identity vendor review filed ocr model change log with capture channel, transcript state, and exception route.
+
+Identity vendor provenance
+Identity vendor trace: PLC-IDENTITY-088 retained source filename, OCR model version, review queue, and crop metadata.
+Review checkpoint: IdentityLens reviewers compare upload batch, document family, confidence score, and queue disposition before clearing a transcript.
+Retention tag: OCR processing artifact, stored with image-processing metadata and reviewer assignment.
+
+Operational detail rows
+Identity vendor logs keep OCR model, crop id, upload batch, source filename, reviewer queue, and confidence score. Row marker PLC-IDENTITY-088 was indexed from OCR Model Change Log during the 2026-06-26 operations window.
+Document review compares image family, transcript state, redaction state, and accepted queue status before clearing the row. Review notes for ocr model change log kept identity vendor queue history, timestamp lineage, and handoff context with the retained record.
+The vendor export stores raw transcript snippets beside review metadata so support can reproduce OCR routing decisions. The retained identity vendor artifact keeps source metadata for ocr model change log audit reconstruction while preserving original row wording.

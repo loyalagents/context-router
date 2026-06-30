@@ -221,6 +221,59 @@ Each trial artifact root should contain:
 - `artifacts/memory/cr-snapshot.json` for the `cr-mcp` arm
 - `artifacts/mcp/tool-calls.jsonl` for the `cr-mcp` arm
 
+## Maya Hard Packet Tasks
+
+The first hard Harbor packet tasks keep the same Maya forms, schemas, verifier,
+and hidden expected answers as `maya-packet-medium-formfill`. Only the visible
+packet documents change, so failures are attributable to agent document
+gathering, memory behavior, or field-value normalization rather than verifier
+drift.
+
+| Task | Source corpus | Primary pressure | Docs |
+| --- | --- | --- | ---: |
+| `maya-packet-hard-ownership-v1-formfill` | `packet-hard-ownership-v1` plus 3 Harbor adversarial docs | ownership/admissibility traps with nearby people and same-employer decoys | 38 |
+| `maya-packet-hard-conflict-v1-formfill` | `packet-hard-conflict-v1` plus 3 Harbor adversarial docs | conflict plus temporal validity, including stale/draft/lower-authority records | 38 |
+| `maya-packet-hard-required-v4-formfill` | `packet-hard-required-v4` plus 3 Harbor adversarial docs | evidence sufficiency through multi-hop code, directory lookups, and deprecated lookup traps | 41 |
+| `maya-packet-hard-volume-v2-formfill` | `packet-hard-volume-v2` | long-context mixed stress with 100 operational near-miss documents | 100 |
+
+Run any hard task through the three comparable arms by replacing
+`<corpus>` with one of `packet-hard-ownership-v1`, `packet-hard-conflict-v1`,
+`packet-hard-required-v4`, or `packet-hard-volume-v2`:
+
+```bash
+harbor run \
+  -p examples/eval-harbor/tasks/maya-<corpus>-formfill \
+  -a oracle \
+  --jobs-dir /tmp/cr-harbor-maya-<corpus>-oracle \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-<corpus>-none.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-<corpus>-none \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-<corpus>-markdown.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-<corpus>-markdown \
+  --yes
+
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/maya-<corpus>-cr-mcp.yaml \
+  --jobs-dir /tmp/cr-harbor-maya-<corpus>-cr-mcp \
+  --yes
+```
+
+Create a hard-task comparison report:
+
+```bash
+python3 examples/eval-harbor/scripts/report_results.py \
+  --run none=/tmp/cr-harbor-maya-<corpus>-none/eval-harbor-maya-<corpus>-none \
+  --run markdown=/tmp/cr-harbor-maya-<corpus>-markdown/eval-harbor-maya-<corpus>-markdown \
+  --run cr-mcp=/tmp/cr-harbor-maya-<corpus>-cr-mcp/eval-harbor-maya-<corpus>-cr-mcp \
+  --output /tmp/cr-harbor-maya-<corpus>-report.md \
+  --json-output /tmp/cr-harbor-maya-<corpus>-report.json
+```
+
 ## Version Control
 
 This harness is developed on the fork integration branch

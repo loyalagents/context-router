@@ -1,0 +1,22 @@
+Source system: People Operations
+Generated timestamp: 2026-06-24T08:29:00-07:00
+Status: active
+Document code: PLC-OPS-099
+Subject: First week checklist
+Field IDs: people_ops.playbook_id, cohort.marker, workflow.scope, release.owner
+
+The first-week checklist tracks laptop pickup, badge activation, manager introduction, payroll setup confirmation, and benefits orientation.
+It is maintained by the onboarding coordinator and updated after system events arrive.
+The checklist is used for work planning across the July cohort.
+
+Operational note: People Operations filed first week checklist with cohort ownership, release cadence, and coordinator lookup metadata.
+
+People Operations provenance
+People Operations trace: PLC-PEOPLEOP-099 tracked owner queue, process area, cohort window, and release note family.
+Coordinator checkpoint: reviewers compare process scope, system owner, and source timestamp before using the row for packet triage.
+Retention tag: people-ops knowledge artifact, versioned with cohort and owner metadata.
+
+Operational detail rows
+People Operations records track cohort, task family, owner queue, release window, and process owner for cross-team review. Row marker PLC-PEOPLEOP-099 was indexed from First Week Checklist during the 2026-06-19 operations window.
+Coordinator review uses source-system family, packet task state, queue owner, and version date to interpret operational rows. Review notes for first week checklist kept people operations queue history, timestamp lineage, and handoff context with the retained record.
+Knowledge-base artifacts keep process scope, review cadence, owner team, and affected workflow names in the header block. The retained people operations artifact keeps source metadata for first week checklist audit reconstruction while preserving original row wording.

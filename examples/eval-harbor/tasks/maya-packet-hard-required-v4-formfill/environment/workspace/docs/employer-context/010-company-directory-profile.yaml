@@ -1,0 +1,93 @@
+user_profile:
+  record_id: "up-9a8b7c6d-5e4f-3g2h-1i0j-k1l2m3n4o5p6"
+  worker_id: "PLC-20418"
+  source_system: "HarborHire"
+  export_timestamp: "2026-06-25T11:18:00-07:00"
+  profile_status: "PENDING_ACTIVATION"
+  data_schema_version: "2.1.0"
+  identity:
+    first_name: "Maya"
+    last_name: "Chen"
+    full_name: "Maya Chen"
+    preferred_name: null
+  employment:
+    company_name: "Pacific Ledger Cooperative"
+    title: null
+    final_assignment_reference: "HR correction case HR-48126"
+    department: null
+    cost_center: null
+    start_date: null
+    employment_type: "Full-Time"
+    manager_id: "PLC-10982"
+    work_location: "REMOTE"
+  contact:
+    work_email: "maya.chen@pacificledger.test"
+    personal_email: null
+    phone: null
+  provisioning_status:
+    directory_services:
+      status: "IN_PROGRESS"
+      notes: "Account creation triggered for Active Directory and Google Workspace."
+      assigned_to: "IT-PROV-QUEUE"
+      last_updated: "2026-06-25T11:15:20-07:00"
+    sso_access:
+      status: "PENDING"
+      notes: "SSO profile will be created upon directory account activation."
+      dependency: "directory_services"
+    hardware_shipment:
+      status: "NOT_STARTED"
+      notes: "Awaiting address confirmation from employee."
+  onboarding_workflows:
+    assigned_reviewer: "hr-onboarding-specialist-12"
+    overall_status: "IN_PROGRESS"
+    tasks:
+      - task_id: "I9_VERIFICATION"
+        task_name: "Form I-9 Employment Eligibility Verification"
+        status: "NOT_STARTED"
+        due_date: null
+        completed_at: null
+      - task_id: "W4_TAX_WITHHOLDING"
+        task_name: "W-4 Federal Tax Withholding"
+        status: "NOT_STARTED"
+        due_date: null
+        completed_at: null
+      - task_id: "DIRECT_DEPOSIT_SETUP"
+        task_name: "Direct Deposit Enrollment"
+        status: "NOT_STARTED"
+        due_date: null
+        completed_at: null
+      - task_id: "BENEFITS_ENROLLMENT"
+        task_name: "Benefits Package Selection"
+        status: "NOT_STARTED"
+        due_date: null
+        completed_at: null
+      - task_id: "POLICY_ACKNOWLEDGEMENT"
+        task_name: "Company Policy Handbook Review"
+        status: "NOT_STARTED"
+        due_date: null
+        completed_at: null
+  audit_trail:
+    - event_id: "evt_1a2b3c4d_create"
+      timestamp: "2026-06-25T09:05:12-07:00"
+      actor: "system-api@harborhire.system"
+      event_type: "PROFILE_CREATED"
+      description: "New hire profile created from accepted offer letter."
+      changes:
+        - field: "profile_status"
+          old_value: null
+          new_value: "PENDING_PROVISIONING"
+    - event_id: "evt_5e6f7g8h_update"
+      timestamp: "2026-06-25T11:15:20-07:00"
+      actor: "automation-rule-34"
+      event_type: "PROVISIONING_TRIGGERED"
+      description: "Automated provisioning for directory services initiated."
+      changes:
+        - field: "provisioning_status.directory_services.status"
+          old_value: "PENDING"
+          new_value: "IN_PROGRESS"
+    - event_id: "evt_9i0j1k2l_export"
+      timestamp: "2026-06-25T11:18:00-07:00"
+      actor: "api-user-integration-svc"
+      event_type: "PROFILE_EXPORTED"
+      description: "Profile data exported via API request."
+      notes: "Export initiated for downstream directory synchronization."

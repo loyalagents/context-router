@@ -1,0 +1,12 @@
+job_name: eval-harbor-maya-packet-hard-volume-v2-markdown
+n_concurrent_trials: 1
+
+agents:
+  - name: codex
+    model_name: gpt-5.3-codex-spark
+
+tasks:
+  - path: examples/eval-harbor/tasks/maya-packet-hard-volume-v2-formfill
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/markdown.md

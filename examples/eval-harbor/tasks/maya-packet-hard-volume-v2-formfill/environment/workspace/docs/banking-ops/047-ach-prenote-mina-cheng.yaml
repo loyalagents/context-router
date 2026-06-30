@@ -1,0 +1,45 @@
+source_system: HarborHire
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-20481
+topic: ach prenote row
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Mina Cheng
+  first_name: Mina
+  last_name: Cheng
+  title: Client Operations Analyst
+  start_date: 2026-07-06
+  work_email: mina.cheng@pacificledger.test
+  address_line: 2846 Asbury Street Apt 3B, Oakland, CA 94609
+payroll_snapshot:
+  tax_filing_status: single or married filing separately
+  bank_product_label: Total Access Checking
+  institution_name: Bay Harbor Credit Union
+  routing_number: "121042882"
+  account_last_four: "6452"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-21T09:12:00-07:00
+    owner_queue: Prenote trail
+    status: source_row_indexed
+  - timestamp: 2026-06-22T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - Prenote trail - PLC-BANKINGO-047 carried bank-product wording, ACH routing metadata, and queue disposition from the nightly banking file.
+  - Control total note - batch PLC-BANKINGO-047 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Reconciliation checkpoint - banking operations reviewed row ownership, return-code state, and account-label normalization at 15 -45 PDT on 2026-06-21.
+  - Control note - the payment-election queue stores product labels exactly as received from bank documents and maps them separately during payroll export.
+operational_detail_rows:
+  - Banking review stores the product wording exactly as it appears in the bank artifact, then records the normalized payroll account type in a separate export field. Row marker PLC-BANKINGO-047 was indexed from ACH Prenote Mina Cheng during the 2026-06-21 operations window.
+  - ACH operators compare routing syntax, account-length rules, and prenote queue status before the row is released to payroll preview. Review notes for ach prenote mina cheng kept banking operations queue history, timestamp lineage, and handoff context with the retained record.
+  - The reconciliation view keeps bank source name, account label, return-code slot, and election-state history beside the row marker. The retained banking operations artifact keeps source metadata for ach prenote mina cheng audit reconstruction while preserving original row wording.

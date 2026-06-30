@@ -1,0 +1,60 @@
+export_id: "exp-fedwh-9c8a1b9e-e8b2-4d2c-9a4f-5f0d3e1a0b7c"
+source_system: "LedgerPay"
+export_type: "FederalWithholdingUpdate"
+exported_at: "2026-06-25T13:28:00-07:00"
+payload:
+  worker_id: "PLC-20418"
+  personal_information:
+    first_name: "Maya"
+    last_name: "Chen"
+    ssn: "000-00-0417"
+    address:
+      street_line_1: "2846 Ashbury Street Apt 3D"
+      street_line_2: null
+      city: "Oakland"
+      state_province: "CA"
+      postal_code: "94609"
+      country: "USA"
+      display_address: "2846 Ashbury Street Apt 3D, Oakland, CA 94609"
+  tax_withholding_election:
+    form_type: "W-4"
+    form_year: "2026"
+    submitted_at: "2026-06-25T13:28:00-07:00"
+    status: "pending_review"
+    election_value_ref: "W4-RES-PLC-20418-20260625"
+    elections:
+      federal:
+        filing_status:
+          value_source: "resolution_audit"
+          value_included_in_this_export: false
+        multiple_jobs_or_spouse_works: not_imported
+        claim_dependents_amount: not_imported
+        other_income_amount: not_imported
+        deductions_amount: not_imported
+        extra_withholding_amount: not_imported
+  metadata:
+    status_history:
+      - timestamp: "2026-06-25T13:28:00-07:00"
+        status: "SUBMITTED"
+        actor: "PLC-20418"
+        source: "EmployeeSelfServicePortal"
+        note: "Employee submitted federal withholding changes."
+      - timestamp: "2026-06-25T13:28:01-07:00"
+        status: "ROUTED_FOR_REVIEW"
+        actor: "System"
+        source: "LedgerPay.WorkflowEngine"
+        note: "Change routed to payroll review queue W4-RES-PLC-20418-20260625."
+    review_queue: "North Bay Payroll Team"
+    field_validations:
+      - field_id: "personal_information.first_name"
+        status: "valid"
+      - field_id: "personal_information.last_name"
+        status: "valid"
+      - field_id: "personal_information.ssn"
+        status: "valid"
+      - field_id: "personal_information.address"
+        status: "valid"
+      - field_id: "tax_withholding_election.elections.federal.filing_status"
+        status: "value_held_in_resolution_audit"
+    reviewer_notes:
+      - "Optional W-4 sections (Step 2, 3, 4) were not imported in this export. No default values have been assumed."

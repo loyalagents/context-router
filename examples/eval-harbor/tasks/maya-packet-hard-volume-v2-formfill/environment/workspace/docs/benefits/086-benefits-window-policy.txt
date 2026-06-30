@@ -1,0 +1,22 @@
+Source system: BenefitsBridge
+Generated timestamp: 2026-06-11T08:16:00-07:00
+Status: active
+Document code: PLC-OPS-086
+Subject: Benefits window policy
+Field IDs: enrollment.queue, owner.team, eligibility.window, carrier.file_id
+
+Enrollment windows open after the HRIS profile reaches active status.
+Address and work email are copied into the benefits bridge after the profile export completes.
+The policy describes enrollment timing and support routing for the July cohort.
+
+Operational note: benefits operations filed benefits window policy with enrollment window, carrier handoff, and cohort marker metadata.
+
+Benefits bridge provenance
+Benefits bridge trace: PLC-BENEFITS-086 recorded the enrollment window, profile-copy timestamp, and benefits owner queue.
+Handoff checkpoint: the row was grouped with address and work-email propagation events for the July cohort.
+Retention tag: benefits setup metadata, retained with bridge timing diagnostics.
+
+Operational detail rows
+Benefits bridge diagnostics record enrollment-window state, copied address token, work-email handoff status, and carrier file export timing. Row marker PLC-BENEFITS-086 was indexed from Benefits Window Policy during the 2026-06-24 operations window.
+The benefits queue groups source rows by cohort, owner queue, carrier handoff, and profile-copy timestamp. Review notes for benefits window policy kept benefits operations queue history, timestamp lineage, and handoff context with the retained record.
+Bridge support checks whether an address came from HRIS, employee self service, or a correction lane before opening a carrier case. The retained benefits operations artifact keeps source metadata for benefits window policy audit reconstruction while preserving original row wording.

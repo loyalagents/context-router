@@ -161,7 +161,11 @@ Useful static checks:
 ```bash
 python3 -m py_compile \
   examples/eval-harbor/scripts/report_results.py \
+  examples/eval-harbor/scripts/validate_task_soundness.py \
   examples/eval-harbor/tasks/<task-id>/tests/score_<task>.py
+
+python3 examples/eval-harbor/scripts/validate_task_soundness.py \
+  examples/eval-harbor/tasks/<task-id>
 
 python3 - <<'PY'
 import json

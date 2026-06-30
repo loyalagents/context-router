@@ -1,0 +1,51 @@
+{
+  "source_system": "HarborHire",
+  "export_id": "HH-PROFILE-HISTORY-PLC-20418-20260625-1648",
+  "exported_timestamp": "2026-06-25T16:48:22-07:00",
+  "export_format_version": "profile-change-history-v3",
+  "worker_id": "PLC-20418",
+  "profile_status": "active",
+  "field_ids": [
+    "personalEmail",
+    "homeAddress.streetLine",
+    "homeAddress.cityStateZip"
+  ],
+  "change_history": [
+    {
+      "change_id": "addr-email-20418-20260625",
+      "change_type": "EMPLOYEE_PROFILE_CONTACT_UPDATE",
+      "submitted_by": "employee_self_service",
+      "approved_by": "hr_profile_reviewer",
+      "status": "approved",
+      "approved_at": "2026-06-25T16:44:09-07:00",
+      "previous_values": {
+        "record_status": "former",
+        "personal_email": "maya.l.chen@personalmail.test",
+        "home_address": {
+          "street_line": "1724 Parker Street Unit 8",
+          "city_state_zip": "Berkeley, CA 94703"
+        }
+      },
+      "current_values": {
+        "record_status": "current",
+        "personal_email": "maya.chen@gmail.test",
+        "home_address": {
+          "street_line": "2846 Ashbury Street Apt 3D",
+          "city_state_zip": "Oakland, CA 94609"
+        }
+      }
+    }
+  ],
+  "audit_notes": [
+    {
+      "timestamp": "2026-06-25T16:45:31-07:00",
+      "actor": "harborhire_profile_sync",
+      "message": "Old contact fields were replaced by approved current values for worker PLC-20418."
+    },
+    {
+      "timestamp": "2026-06-25T16:48:22-07:00",
+      "actor": "export_service",
+      "message": "Export includes before and after values for audit review; current_values is the authoritative active profile section."
+    }
+  ]
+}

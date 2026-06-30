@@ -1,0 +1,25 @@
+source_system: "LedgerPay Draft Queue"
+export_id: "LP-DRAFT-REVERSAL-20260626-102"
+exported_at: "2026-06-26T10:33:40-07:00"
+record_status: "draft_reversal_rejected"
+worker_id: "PLC-20418"
+employee_name: "Maya Lin Chen"
+
+draft_change:
+  request_type: "direct_deposit_reversal"
+  proposed_by: "payroll.support.temp"
+  proposed_bank_name: "East Bay Mutual"
+  proposed_account_type: "savings"
+  proposed_account_holder: "Maya Lin Chen"
+  reason_entered_by_requester: "copied from old prenote ticket"
+
+review:
+  reviewed_by: "payroll.ops.lead"
+  decision: "reject"
+  decision_time: "2026-06-26T10:39:21-07:00"
+  decision_reason: >
+    This reversal draft was opened against the wrong supporting ticket. Current
+    direct-deposit values for PLC-20418 remain in the approved LedgerPay payment
+    election and bank verification records. Do not use this draft value for
+    form filling or memory updates.
+

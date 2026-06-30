@@ -1,0 +1,146 @@
+{
+  "preferences": [
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee home address city",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.city",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee city, state, and ZIP line",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.cityStateZip",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee home address ZIP code",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.postalCode",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee home address state",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.state",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee home street address without unit",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.street",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee address line including unit",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.streetLine",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-hard-required-v4 fact for Employee apartment or unit",
+      "scope": "packet-hard-required-v4",
+      "slug": "address.current.unit",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-required-v4 fact for Account holder or depositor account title",
+      "scope": "packet-hard-required-v4",
+      "slug": "banking.accountHolderName",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-required-v4 fact for True when depositor account type is checking",
+      "scope": "packet-hard-required-v4",
+      "slug": "banking.accountType",
+      "valueType": "boolean"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-hard-required-v4 fact for Financial institution name",
+      "scope": "packet-hard-required-v4",
+      "slug": "banking.institutionName",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Maya packet-hard-required-v4 fact for Employee personal email address",
+      "scope": "packet-hard-required-v4",
+      "slug": "contact.email",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Nullable Maya packet-hard-required-v4 fact for Employee telephone number; abstain unless a phone number is supported for Maya Chen",
+      "scope": "packet-hard-required-v4",
+      "slug": "contact.phone",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Employee date of birth as MMDDYYYY digits",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.dateOfBirth",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Employee first name",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.firstName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Employee last name",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.lastName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Payee name",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.legalName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Employee middle initial",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.middleInitial",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-hard-required-v4 fact for Employee SSN as nine digits",
+      "scope": "packet-hard-required-v4",
+      "slug": "identity.ssn",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Maya packet-hard-required-v4 fact for True when filing status is single or married filing separately",
+      "scope": "packet-hard-required-v4",
+      "slug": "tax.filingStatus",
+      "valueType": "boolean"
+    },
+    {
+      "category": "workAuthorization",
+      "description": "Maya packet-hard-required-v4 fact for True when the employee attests they are a U.S. citizen",
+      "scope": "packet-hard-required-v4",
+      "slug": "workAuthorization.citizenshipStatus",
+      "valueType": "boolean"
+    }
+  ],
+  "schemaVersion": 1,
+  "taskId": "maya-packet-hard-required-v4-formfill"
+}

@@ -1,0 +1,72 @@
+Source System: Knowledge Base
+Article ID: PAY-DD-001
+Version: 2.1
+Status: Published
+Owner Group: Payroll Department
+Published: 2026-06-01T08:00:00-07:00
+Last Updated: 2026-06-01T08:00:00-07:00
+
+Title: How to Set Up and Manage Direct Deposit in LedgerPay
+
+This guide provides step-by-step instructions for setting up your direct deposit information in LedgerPay, our payroll system. Direct deposit is the fastest and most secure way to receive your paycheck. Your net pay is electronically transferred directly into your bank account(s) on payday, eliminating the risk of lost or stolen paper checks and providing you with immediate access to your funds.
+
+Before You Begin
+================
+To set up direct deposit, you will need the following information from your financial institution. You can typically find this information on a personal check or by logging into your online banking portal.
+
+* Bank Name
+* 9-Digit Bank Routing Number (also known as ABA Transit Number)
+* Your Bank Account Number
+* Account Type, as shown in your bank documentation
+
+Please have this information ready before you proceed. For security reasons, do not send this information via email or any other insecure method. All information must be entered directly into the LedgerPay system by you.
+
+Step-by-Step Instructions
+=========================
+
+1. Log in to LedgerPay:
+   Access the LedgerPay portal through the company intranet or the designated URL. Use your single sign-on (SSO) credentials to log in. If you have trouble logging in, please contact IT Support.
+
+2. Navigate to Payment Elections:
+   Once logged in, locate the main dashboard. Look for a section or menu item labeled "My Pay," "Payroll," or "Payments." Click on this section. From the dropdown menu or sub-navigation, select "Payment Elections" or "Direct Deposit."
+
+3. Add a Bank Account:
+   On the Payment Elections screen, you will see an option to "Add Account" or "Set Up Direct Deposit." Click this button to begin the process. If you already have an account set up, you will see it listed here and can choose to add another, edit, or delete an existing one.
+
+4. Enter Your Bank Information:
+   A form will appear asking for your bank details. Carefully enter the information you collected earlier:
+   *   Routing Number: Enter the 9-digit routing number for your bank. The system may validate this number against a database of financial institutions.
+   *   Account Number: Enter your full account number exactly as it appears on your bank statements or checks. For accuracy, we recommend entering it twice if prompted.
+   *   Account Type: Select the category that matches your bank documentation from the dropdown list.
+   *   Bank Name (Optional): Some forms may auto-populate this based on the routing number. If not, enter the name of your bank.
+
+5. Configure Deposit Distribution (Optional):
+   LedgerPay allows you to split your paycheck across multiple accounts. If you are only using one account, you can skip this step. The system will default to depositing 100% of your net pay into the single account.
+
+   To split your deposit:
+   *   After adding your first account, select the option to "Add Another Account" and repeat Step 4.
+   *   Once you have two or more accounts listed, you can specify how your pay should be distributed.
+   *   You can typically choose to deposit a specific flat amount (e.g., $500) into one account, with the remainder going to another.
+   *   Alternatively, you can use percentages (e.g., 50% to Account A, 50% to Account B). The total percentage must equal 100%.
+   *   The "Remainder" option is very useful. You can direct a fixed amount to one account, and the rest (the remainder) will go to your primary pay account.
+   *   Arrange the accounts in order of deposit priority if applicable.
+
+6. Review and Save:
+   Carefully review all the information you have entered for accuracy. Check account numbers and routing numbers one last time. Incorrect information can cause significant delays in receiving your pay. Once you are certain the information is correct, click the "Save" or "Submit" button. You may be asked to re-enter your password for security verification.
+
+Important Information and FAQs
+==============================
+
+* Activation Time: Please allow 1-2 pay cycles for your direct deposit instructions to become active or for any changes to take effect. This is due to the pre-notification (prenote) process, where a zero-dollar transaction is sent to your bank to verify the account information. You may receive a paper check during this verification period.
+
+* Finding Your Routing and Account Numbers: The easiest place to find these numbers is on a personal check. The routing number is the 9-digit number on the bottom left. Your account number is typically the number to the right of the routing number.
+
+* Updating Your Information: You can update your direct deposit information at any time by following the same steps. Remember that changes can take 1-2 pay cycles to process. Do not close an old bank account until you have confirmed that your pay has been successfully deposited into the new account.
+
+* Security: Your financial information is sensitive. Always log out of LedgerPay when you are finished. Access the system only from a secure computer and network. The Payroll Department will NEVER ask you for your bank account information via email.
+
+* Questions? If you have any questions or encounter issues while setting up your direct deposit, please submit a ticket to the Payroll Department for assistance.
+
+---
+End of Article
+---

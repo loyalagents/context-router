@@ -1,0 +1,38 @@
+job_name: eval-harbor-maya-packet-hard-conflict-v1-cr-mcp
+n_concurrent_trials: 1
+
+environment:
+  force_build: true
+  extra_docker_compose:
+    - examples/eval-harbor/jobs/maya-packet-hard-conflict-v1-cr-mcp.compose.yml
+
+agents:
+  - name: codex
+    model_name: gpt-5.3-codex-spark
+    mcp_servers:
+      - name: context-router-memory
+        transport: streamable-http
+        url: http://cr-memory:8000/mcp
+
+tasks:
+  - path: examples/eval-harbor/tasks/maya-packet-hard-conflict-v1-formfill
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/cr-mcp.md
+
+artifacts:
+  - source: /data/mcp-config.json
+    destination: mcp/config.json
+    service: cr-memory
+  - source: /data/preferences.json
+    destination: memory/cr-snapshot.json
+    service: cr-memory
+  - source: /data/tool-calls.jsonl
+    destination: mcp/tool-calls.jsonl
+    service: cr-memory
+  - source: /data/server.log
+    destination: mcp/server.log
+    service: cr-memory
+  - source: /data/catalog.json
+    destination: mcp/catalog.json
+    service: cr-memory

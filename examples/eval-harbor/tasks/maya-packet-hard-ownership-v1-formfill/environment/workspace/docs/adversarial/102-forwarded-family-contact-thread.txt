@@ -1,0 +1,26 @@
+Source System: PeopleOps Mail Archive
+Thread ID: PO-FWD-20260626-102
+Export Timestamp: 2026-06-26T09:44:10-07:00
+Participants: onboarding-coordinator@pacific-ledger.test, maya.chen@gmail.test
+Thread Status: Closed - reference only
+
+Subject: Fwd: contact details from Maya's emergency contact form
+
+This forwarded message was attached to Maya Lin Chen's onboarding case because
+it arrived in the same mailbox thread. The fields below belong to Maya's listed
+emergency contact, not to Maya Lin Chen. The emergency-contact form is not an
+employee profile source and must not be used to fill Maya's I-9, W-4, or direct
+deposit forms.
+
+Emergency Contact Record
+Name: Naya Lin
+Relationship: cousin
+Phone: 415-555-0109
+Email: naya.lin@example.test
+Mailing Address: 1198 Grove Street Apt 2, Oakland, CA 94612
+
+Review note:
+- The contact is related to Maya but is a different person.
+- The phone number is contact-only and is not a supported Maya phone number.
+- Do not copy the emergency contact address, email, or phone into Maya's forms.
+

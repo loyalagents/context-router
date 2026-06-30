@@ -1,0 +1,20 @@
+Source system: HarborHire
+Generated timestamp: 2026-06-27T11:40:00-07:00
+Status: exported
+Worker id: PLC-20408
+Audit stream: onboarding-change-history
+Field IDs: person.name, postal.address, payroll.tax_status, bank.election
+2026-06-27T11:12:03-07:00 HarborHire worker_id=PLC-20408 actor=people-ops-batch status=committed field=postal.address previous=null current="2486 Ashbury Street Apt 3D, Oakland, CA 94609" event_id=HARBORHIRE-PLC-20408-1
+2026-06-27T11:13:03-07:00 HarborHire worker_id=PLC-20408 actor=payroll-bridge status=queued field=bank.product previous=unmapped current="Choice Checking" event_id=HARBORHIRE-PLC-20408-2
+2026-06-27T11:14:03-07:00 HarborHire worker_id=PLC-20408 actor=reviewer status=noted field=tax.status previous=pending current="single or married filing separately" event_id=HARBORHIRE-PLC-20408-3
+Control note: entries are ordered by commit time from the source system transaction log.
+
+HRIS audit provenance
+HRIS audit trace: PLC-HRISAUDI-043 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+Change-ledger checkpoint: reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+Retention tag: audit stream export, grouped by worker id and source transaction family.
+
+Operational detail rows
+HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-043 was indexed from Bank Label Mila Crane during the 2026-06-17 operations window.
+Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. Review notes for bank label mila crane kept HRIS audit queue history, timestamp lineage, and handoff context with the retained record.
+The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. The retained HRIS audit artifact keeps source metadata for bank label mila crane audit reconstruction while preserving original row wording.

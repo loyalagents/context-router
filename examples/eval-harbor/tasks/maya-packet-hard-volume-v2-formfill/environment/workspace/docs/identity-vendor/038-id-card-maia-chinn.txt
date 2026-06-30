@@ -1,0 +1,25 @@
+OCR JOB PLC-20419-DRIVERLICENSEUPLOAD
+Source file: plc-20419-driver-license-upload.png
+OCR confidence: 0.91
+Upload batch id: HH-UPL-PLC-20419-0626
+Timestamp: 2026-06-26T16:05:22-07:00
+Status: routed_to_review
+Document type: Driver License Upload
+Worker id: PLC-20419
+
+Visible name: Maia Chinn
+Address line: 2848 Ashbury Street Apt 3D, Oakland, CA 94609
+Document queue worker id: PLC-20419
+Review crop label: Driver License Upload front image
+
+Extraction footer: image processed by IdentityLens model IL-2026.06; reviewer queue retained the raw crop and redaction overlay metadata.
+
+Identity vendor provenance
+Identity vendor trace: PLC-IDENTITY-038 retained source filename, OCR model version, review queue, and crop metadata.
+Review checkpoint: IdentityLens reviewers compare upload batch, document family, confidence score, and queue disposition before clearing a transcript.
+Retention tag: OCR processing artifact, stored with image-processing metadata and reviewer assignment.
+
+Operational detail rows
+Identity vendor logs keep OCR model, crop id, upload batch, source filename, reviewer queue, and confidence score. Row marker PLC-IDENTITY-038 was indexed from ID Card Maia Chinn during the 2026-06-12 operations window.
+Document review compares image family, transcript state, redaction state, and accepted queue status before clearing the row. Review notes for id card maia chinn kept identity vendor queue history, timestamp lineage, and handoff context with the retained record.
+The vendor export stores raw transcript snippets beside review metadata so support can reproduce OCR routing decisions. The retained identity vendor artifact keeps source metadata for id card maia chinn audit reconstruction while preserving original row wording.

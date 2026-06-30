@@ -1,0 +1,24 @@
+source_system: "LedgerPay RDFI Directory"
+export_id: "LP-RDFI-DIR-20260626-fragment"
+exported_timestamp: "2026-06-26T18:07:12-07:00"
+directory_version: "rdfi-directory-2026-06-26T18"
+join_key: "rdfi_key"
+
+directory_rows:
+  - rdfi_key: "RDFI-BHCU-091000019"
+    routing_number: "091000019"
+    display_name: "Bay Harbor Credit Union"
+    directory_status: "active"
+  - rdfi_key: "RDFI-RMB-121042882"
+    routing_number: "121042882"
+    display_name: "Redwood Mutual Bank"
+    directory_status: "active"
+  - rdfi_key: "RDFI-NCB-122105278"
+    routing_number: "122105278"
+    display_name: "Northstar Community Bank"
+    directory_status: "active"
+
+selection_context:
+  selected_row_id: "pn-4819-a"
+  selected_rdfi_key: "RDFI-BHCU-091000019"
+  source_batch_id: "PN-4819-20260626"

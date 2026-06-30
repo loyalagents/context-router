@@ -1,0 +1,254 @@
+{
+  "corpusId": "packet-hard-required-v4",
+  "documents": [
+    {
+      "category": "adversarial",
+      "id": "packet-hard-required-v4-adversarial-101",
+      "path": "adversarial/101-deprecated-w4-codebook.yaml",
+      "title": "Deprecated W-4 Codebook"
+    },
+    {
+      "category": "adversarial",
+      "id": "packet-hard-required-v4-adversarial-102",
+      "path": "adversarial/102-account-class-sandbox-crosswalk.txt",
+      "title": "Account Class Sandbox Crosswalk"
+    },
+    {
+      "category": "adversarial",
+      "id": "packet-hard-required-v4-adversarial-103",
+      "path": "adversarial/103-low-confidence-w4-screenshot-ocr.txt",
+      "title": "Low Confidence W-4 Screenshot OCR"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-009",
+      "path": "employer-context/009-offer-email.txt",
+      "title": "Offer Email Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-010",
+      "path": "employer-context/010-company-directory-profile.yaml",
+      "title": "Company Directory Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-014",
+      "path": "employer-context/014-w4-instructions.txt",
+      "title": "W-4 Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-019",
+      "path": "employer-context/019-payroll-direct-deposit-instructions.txt",
+      "title": "Payroll Direct Deposit Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-021",
+      "path": "employer-context/021-benefits-enrollment-profile.yaml",
+      "title": "Benefits Enrollment Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-required-v4-022",
+      "path": "employer-context/022-payroll-preview-export.yaml",
+      "title": "Payroll Preview Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-006",
+      "path": "hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "title": "HR Onboarding Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-007",
+      "path": "hr-onboarding/007-employee-self-service-profile.json",
+      "title": "Employee Self-Service Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-008",
+      "path": "hr-onboarding/008-onboarding-assignment-export.yaml",
+      "title": "Onboarding Assignment Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-023",
+      "path": "hr-onboarding/023-onboarding-support-ticket.txt",
+      "title": "Onboarding Support Ticket"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-024",
+      "path": "hr-onboarding/024-employee-profile-audit-log.txt",
+      "title": "Employee Profile Audit Log"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-032",
+      "path": "hr-onboarding/032-harborhire-profile-change-history.json",
+      "title": "HarborHire Profile Change History"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-required-v4-035",
+      "path": "hr-onboarding/035-hr-support-correction-thread.txt",
+      "title": "HR Support Correction Thread"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-required-v4-001",
+      "path": "identity/001-driver-license-upload-ocr.txt",
+      "title": "Driver License Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-required-v4-002",
+      "path": "identity/002-ssn-card-upload-ocr.txt",
+      "title": "SSN Card Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-required-v4-003",
+      "path": "identity/003-identity-verification-note.txt",
+      "title": "Identity Verification Intake Note"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-required-v4-015",
+      "path": "noise/015-blank-sample-w4-packet.txt",
+      "title": "Blank Sample W-4 Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-required-v4-020",
+      "path": "noise/020-sample-direct-deposit-packet-jordan.txt",
+      "title": "Sample Direct Deposit Packet Jordan"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-required-v4-028",
+      "path": "noise/028-other-employee-sample-packet.txt",
+      "title": "Other Employee Sample Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-required-v4-029",
+      "path": "noise/029-other-employee-w4-tax-sample.txt",
+      "title": "Other Employee W-4 Tax Sample"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-required-v4-030",
+      "path": "noise/030-payroll-support-faq.txt",
+      "title": "Payroll Support FAQ"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-required-v4-025",
+      "path": "partial-conflicting/025-stale-recruiter-profile.txt",
+      "title": "Stale Recruiter Profile"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-required-v4-026",
+      "path": "partial-conflicting/026-stale-payroll-bank-draft.txt",
+      "title": "Stale Payroll Bank Draft"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-required-v4-027",
+      "path": "partial-conflicting/027-stale-onboarding-export.yaml",
+      "title": "Stale Onboarding Export"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-required-v4-033",
+      "path": "partial-conflicting/033-recruiting-offer-draft-export.txt",
+      "title": "Recruiting Offer Draft Export"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-required-v4-034",
+      "path": "partial-conflicting/034-ledgerpay-w4-draft-autosave.yaml",
+      "title": "LedgerPay W-4 Draft Autosave"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-011",
+      "path": "payroll-tax/011-w4-withholding-setup-export.yaml",
+      "title": "W-4 Withholding Setup Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-012",
+      "path": "payroll-tax/012-payroll-tax-profile.json",
+      "title": "Payroll Tax Profile Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-013",
+      "path": "payroll-tax/013-w4-review-note.txt",
+      "title": "W-4 Review Note"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-031",
+      "path": "payroll-tax/031-ledgerpay-deposit-change-audit.yaml",
+      "title": "LedgerPay Deposit Change Audit"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-036",
+      "path": "payroll-tax/036-ledgerpay-other-employee-payment-election-export.yaml",
+      "title": "LedgerPay Other Employee Payment Election Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-037",
+      "path": "payroll-tax/037-ledgerpay-ach-prenote-reconciliation.yaml",
+      "title": "LedgerPay ACH Prenote Reconciliation Link Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-038",
+      "path": "payroll-tax/038-ledgerpay-w4-resolution-audit.yaml",
+      "title": "LedgerPay W-4 Resolution Code Link"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-039",
+      "path": "payroll-tax/039-ledgerpay-rdfi-directory-fragment.yaml",
+      "title": "LedgerPay RDFI Directory Fragment"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-040",
+      "path": "payroll-tax/040-ledgerpay-account-class-catalog.yaml",
+      "title": "LedgerPay Account Class Catalog"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-required-v4-041",
+      "path": "payroll-tax/041-federal-w4-choice-codebook.yaml",
+      "title": "Federal W-4 Choice Codebook"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-required-v4-004",
+      "path": "work-authorization/004-i9-section-one-draft-export.yaml",
+      "title": "I-9 Section One Draft Export"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-required-v4-005",
+      "path": "work-authorization/005-work-authorization-intake-field-export.txt",
+      "title": "Work Authorization Intake Field Export"
+    }
+  ],
+  "documentsRoot": "docs",
+  "schemaVersion": 1,
+  "userId": "maya-chen-newhire"
+}

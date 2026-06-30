@@ -1,0 +1,22 @@
+Source system: LedgerPay Preview
+Generated timestamp: 2026-06-12T08:40:00-07:00
+Status: active
+Document code: PLC-OPS-070
+Subject: payroll preview exception digest
+Field IDs: image.capture_id, transcript.status, accepted.queue, model.version
+
+The payroll preview digest lists workers whose profile, tax, or payment election data changed after the first preview.
+The digest is organized by exception code and owner queue.
+Exception rows include enough context for triage but are not a substitute for source exports.
+
+Operational note: identity vendor review filed payroll preview exception digest with capture channel, transcript state, and exception route.
+
+Identity vendor provenance
+Identity vendor trace: PLC-IDENTITY-070 retained source filename, OCR model version, review queue, and crop metadata.
+Review checkpoint: IdentityLens reviewers compare upload batch, document family, confidence score, and queue disposition before clearing a transcript.
+Retention tag: OCR processing artifact, stored with image-processing metadata and reviewer assignment.
+
+Operational detail rows
+Identity vendor logs keep OCR model, crop id, upload batch, source filename, reviewer queue, and confidence score. Row marker PLC-IDENTITY-070 was indexed from Payroll Preview Exception Digest during the 2026-06-26 operations window.
+Document review compares image family, transcript state, redaction state, and accepted queue status before clearing the row. Review notes for payroll preview exception digest kept identity vendor queue history, timestamp lineage, and handoff context with the retained record.
+The vendor export stores raw transcript snippets beside review metadata so support can reproduce OCR routing decisions. The retained identity vendor artifact keeps source metadata for payroll preview exception digest audit reconstruction while preserving original row wording.

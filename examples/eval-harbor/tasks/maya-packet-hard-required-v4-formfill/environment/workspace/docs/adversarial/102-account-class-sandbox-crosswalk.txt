@@ -1,0 +1,20 @@
+Source System: LedgerPay Sandbox Crosswalk
+Export ID: LP-ACCT-XWALK-SANDBOX-20260626-102
+Status: Deprecated sandbox reference
+Do Not Use With: production employee payment elections
+
+This crosswalk appears in the same export folder as production payroll support
+files because the vendor sent a mixed archive. It is explicitly a sandbox
+reference. It must not be used to interpret Maya Lin Chen's production account
+class code.
+
+Sandbox rows:
+class_code,display_label,form_checkbox
+C01,Savings,savings
+C02,Checking,checking
+C03,Payroll Card,other
+
+Production note:
+For production new-hire direct deposit, use the LedgerPay production account
+class catalog, not this sandbox crosswalk.
+
