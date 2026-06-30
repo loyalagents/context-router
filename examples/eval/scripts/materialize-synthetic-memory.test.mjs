@@ -34,6 +34,22 @@ test('definitionTargetsFromSnapshot maps synthetic definitions to backend defini
   );
 });
 
+test('definitionTargetsFromSnapshot adds backend-fill alias targets for W-4 filing status', () => {
+  const targets = definitionTargetsFromSnapshot(w4AliasSnapshot());
+
+  assert.deepEqual(targets.map((target) => target.slug), [
+    'tax.filing_status',
+    'tax.w4_filing_status',
+  ]);
+  assert.deepEqual(
+    targets.map((target) => [target.slug, target.valueType]),
+    [
+      ['tax.filing_status', 'STRING'],
+      ['tax.w4_filing_status', 'STRING'],
+    ],
+  );
+});
+
 test('materializeSyntheticMemorySnapshot resets memory, creates definitions, suggests, and accepts', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'materialize-synthetic-memory-'));
   const reportOutPath = path.join(tmp, 'memory-materialization-report.json');
@@ -113,6 +129,71 @@ test('materializeSyntheticMemorySnapshot resets memory, creates definitions, sug
   assert.equal(report.backendUserId, 'backend-user-123');
   assert.equal(report.settings.graphqlUrl, 'http://localhost:3000/graphql?token=redacted');
   assert.deepEqual(report.preferenceMaterialization.duplicateSlugs, ['profile.full_name']);
+});
+
+test('materializeSyntheticMemorySnapshot materializes fill-compatible W-4 filing alias', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'materialize-synthetic-memory-w4-'));
+  const reportOutPath = path.join(tmp, 'memory-materialization-report.json');
+  const fetchMock = createMaterializerFetchMock();
+
+  const result = await materializeSyntheticMemorySnapshot({
+    repoRoot,
+    memorySnapshot: w4AliasSnapshot(),
+    memorySnapshotPath: path.join(tmp, 'synthetic-memory-snapshot.json'),
+    reportOutPath,
+    graphqlUrl: 'http://localhost:3000/graphql',
+    authToken: 'secret-token',
+    resetMemoryEnabled: true,
+    fetchImpl: fetchMock.fetch,
+    now: fixedNow,
+  });
+
+  assert.equal(result.summary.preferenceInputCount, 1);
+  assert.equal(result.summary.preferenceMaterializationTargetCount, 2);
+  assert.equal(result.summary.generatedAliasPreferenceCount, 1);
+  assert.equal(result.summary.acceptedPreferenceCount, 2);
+  assert.deepEqual(fetchMock.createdDefinitions.map((input) => input.slug), [
+    'tax.filing_status',
+    'tax.w4_filing_status',
+  ]);
+  assert.deepEqual(fetchMock.suggestedPreferences.map((input) => input.slug), [
+    'tax.w4_filing_status',
+    'tax.filing_status',
+  ]);
+
+  const aliasSuggestion = fetchMock.suggestedPreferences[1];
+  assert.equal(aliasSuggestion.value, 'single or married filing separately');
+  assert.deepEqual(aliasSuggestion.evidence.generatedAlias, {
+    sourceSlug: 'tax.w4_filing_status',
+    targetSlug: 'tax.filing_status',
+    sourceSyntheticPreferenceId: 'pref-w4-filing-status',
+  });
+  assert.deepEqual(aliasSuggestion.evidence.extractionEvidence, {
+    factId: 'fact-0019',
+  });
+
+  const report = JSON.parse(await readFile(reportOutPath, 'utf8'));
+  assert.equal(report.status, 'pass');
+  assert.deepEqual(
+    report.preferenceMaterialization.accepted.map((entry) => ({
+      slug: entry.slug,
+      generatedAlias: entry.generatedAlias,
+    })),
+    [
+      {
+        slug: 'tax.w4_filing_status',
+        generatedAlias: null,
+      },
+      {
+        slug: 'tax.filing_status',
+        generatedAlias: {
+          sourceSlug: 'tax.w4_filing_status',
+          targetSlug: 'tax.filing_status',
+          sourceSyntheticPreferenceId: 'pref-w4-filing-status',
+        },
+      },
+    ],
+  );
 });
 
 test('materializeSyntheticMemorySnapshot surfaces GraphQL failures', async () => {
@@ -347,6 +428,36 @@ function fullNameOnlySnapshot() {
     preferences: snapshot.preferences.filter(
       (preference) => preference.slug === 'profile.full_name',
     ),
+  };
+}
+
+function w4AliasSnapshot() {
+  return {
+    schemaVersion: 1,
+    artifactType: 'memory-snapshot',
+    runId: 'run-w4',
+    userId: 'maya-chen-newhire',
+    corpusId: 'packet-small',
+    definitions: [
+      {
+        id: 'def-w4-filing-status',
+        slug: 'tax.w4_filing_status',
+        displayName: 'W-4 Filing Status',
+        description: '',
+        valueType: 'STRING',
+        isSensitive: false,
+      },
+    ],
+    preferences: [
+      {
+        id: 'pref-w4-filing-status',
+        slug: 'tax.w4_filing_status',
+        definitionId: 'def-w4-filing-status',
+        value: 'single or married filing separately',
+        confidence: 0.97,
+        evidence: { factId: 'fact-0019' },
+      },
+    ],
   };
 }
 

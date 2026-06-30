@@ -14,6 +14,9 @@ import {
 } from './scoring/io.mjs';
 
 const VALUE_TYPES = new Set(['ARRAY', 'BOOLEAN', 'ENUM', 'STRING']);
+const GENERATED_FILL_ALIAS_SLUGS = new Map([
+  ['tax.w4_filing_status', ['tax.filing_status']],
+]);
 
 export async function materializeSyntheticMemorySnapshot({
   repoRoot,
@@ -36,6 +39,7 @@ export async function materializeSyntheticMemorySnapshot({
     created: [],
     existing: [],
   };
+  let preferenceTargets = [];
   const accepted = [];
   const skipped = [];
   const duplicateSlugs = new Set();
@@ -79,7 +83,10 @@ export async function materializeSyntheticMemorySnapshot({
     const existing = existingDefinitionMap(existingSchema);
 
     stage = 'build-definition-targets';
-    definitionTargets = definitionTargetsFromSnapshot(memorySnapshot);
+    preferenceTargets = materializationPreferenceTargets(memorySnapshot);
+    definitionTargets = definitionTargetsFromSnapshot(memorySnapshot, {
+      preferenceTargets,
+    });
 
     for (const target of definitionTargets) {
       stage = 'setup-definition';
@@ -105,17 +112,21 @@ export async function materializeSyntheticMemorySnapshot({
     }
 
     currentDefinition = null;
-    const preferences = Array.isArray(memorySnapshot.preferences)
-      ? memorySnapshot.preferences
-      : [];
     const seenSlugs = new Set();
 
-    for (const [index, preference] of preferences.entries()) {
-      const slug = requiredString(preference.slug, `preferences[${index}].slug`);
+    for (const [materializationIndex, target] of preferenceTargets.entries()) {
+      const { preference, generatedAlias, inputIndex } = target;
+      const slug = requiredString(
+        preference.slug,
+        generatedAlias
+          ? `generatedAliasPreferences[${materializationIndex}].slug`
+          : `preferences[${inputIndex}].slug`,
+      );
       currentPreference = {
-        index,
+        index: inputIndex,
         slug,
         syntheticPreferenceId: preference.id ?? null,
+        ...(generatedAlias ? { materializationIndex, generatedAlias } : {}),
       };
       if (seenSlugs.has(slug)) duplicateSlugs.add(slug);
       seenSlugs.add(slug);
@@ -126,6 +137,7 @@ export async function materializeSyntheticMemorySnapshot({
         authToken,
         input: suggestionInput({
           preference,
+          generatedAlias,
           runId: memorySnapshot.runId,
           memorySnapshotPath: memorySnapshotPath
             ? relativePath(repoRoot, memorySnapshotPath)
@@ -138,6 +150,7 @@ export async function materializeSyntheticMemorySnapshot({
           slug,
           reason: 'suggestPreference returned null',
           syntheticPreferenceId: preference.id ?? null,
+          generatedAlias,
         });
         continue;
       }
@@ -155,6 +168,7 @@ export async function materializeSyntheticMemorySnapshot({
         activePreferenceId: active?.id ?? null,
         syntheticPreferenceId: preference.id ?? null,
         duplicateSlug: duplicateSlugs.has(slug),
+        generatedAlias,
       });
     }
     currentPreference = null;
@@ -172,6 +186,7 @@ export async function materializeSyntheticMemorySnapshot({
       endedAt: isoTimestamp(now),
       reset,
       definitionTargets,
+      preferenceTargets,
       definitionSetup,
       accepted,
       skipped,
@@ -200,6 +215,7 @@ export async function materializeSyntheticMemorySnapshot({
       endedAt: isoTimestamp(now),
       reset,
       definitionTargets,
+      preferenceTargets,
       definitionSetup,
       accepted,
       skipped,
@@ -219,12 +235,20 @@ export async function materializeSyntheticMemorySnapshot({
   }
 }
 
-export function definitionTargetsFromSnapshot(memorySnapshot) {
+export function definitionTargetsFromSnapshot(
+  memorySnapshot,
+  { preferenceTargets = materializationPreferenceTargets(memorySnapshot) } = {},
+) {
   const valuesBySlug = new Map();
-  for (const [index, preference] of (memorySnapshot.preferences ?? []).entries()) {
-    const slug = requiredString(preference.slug, `preferences[${index}].slug`);
+  for (const [index, target] of preferenceTargets.entries()) {
+    const slug = requiredString(
+      target.preference.slug,
+      target.generatedAlias
+        ? `generatedAliasPreferences[${index}].slug`
+        : `preferences[${target.inputIndex}].slug`,
+    );
     if (!valuesBySlug.has(slug)) valuesBySlug.set(slug, []);
-    valuesBySlug.get(slug).push(preference.value);
+    valuesBySlug.get(slug).push(target.preference.value);
   }
 
   const bySlug = new Map();
@@ -280,7 +304,53 @@ export function definitionTargetsFromSnapshot(memorySnapshot) {
     .sort((left, right) => (left.slug < right.slug ? -1 : left.slug > right.slug ? 1 : 0));
 }
 
-function suggestionInput({ preference, runId, memorySnapshotPath }) {
+function materializationPreferenceTargets(memorySnapshot) {
+  const preferences = Array.isArray(memorySnapshot?.preferences)
+    ? memorySnapshot.preferences
+    : [];
+  const originalSlugs = new Set(
+    preferences
+      .map((preference) => preference?.slug)
+      .filter((slug) => typeof slug === 'string' && slug.length > 0),
+  );
+  const targets = preferences.map((preference, inputIndex) => ({
+    preference,
+    inputIndex,
+    generatedAlias: null,
+  }));
+
+  for (const [inputIndex, preference] of preferences.entries()) {
+    const sourceSlug = preference?.slug;
+    if (typeof sourceSlug !== 'string' || sourceSlug.length === 0) continue;
+    for (const targetSlug of GENERATED_FILL_ALIAS_SLUGS.get(sourceSlug) ?? []) {
+      if (originalSlugs.has(targetSlug)) continue;
+      targets.push({
+        preference: {
+          ...preference,
+          id: generatedAliasSyntheticPreferenceId(preference, targetSlug),
+          slug: targetSlug,
+        },
+        inputIndex,
+        generatedAlias: {
+          sourceSlug,
+          targetSlug,
+          sourceSyntheticPreferenceId: preference.id ?? null,
+        },
+      });
+    }
+  }
+
+  return targets;
+}
+
+function generatedAliasSyntheticPreferenceId(preference, targetSlug) {
+  const sourceId = typeof preference?.id === 'string' && preference.id.length > 0
+    ? preference.id
+    : preference?.slug;
+  return `${sourceId}:alias:${targetSlug}`;
+}
+
+function suggestionInput({ preference, generatedAlias, runId, memorySnapshotPath }) {
   const slug = requiredString(preference.slug, 'preference.slug');
   return {
     slug,
@@ -294,6 +364,7 @@ function suggestionInput({ preference, runId, memorySnapshotPath }) {
       syntheticPreferenceId: preference.id ?? null,
       syntheticDefinitionId: preference.definitionId ?? null,
       extractionEvidence: preference.evidence ?? null,
+      ...(generatedAlias ? { generatedAlias } : {}),
     },
   };
 }
@@ -402,6 +473,7 @@ function buildMaterializationReport({
   endedAt,
   reset,
   definitionTargets,
+  preferenceTargets = [],
   definitionSetup,
   accepted,
   skipped,
@@ -441,6 +513,10 @@ function buildMaterializationReport({
       createdDefinitionCount: definitionSetup.created.length,
       existingDefinitionCount: definitionSetup.existing.length,
       preferenceInputCount: preferences.length,
+      preferenceMaterializationTargetCount: preferenceTargets.length,
+      generatedAliasPreferenceCount: preferenceTargets.filter(
+        (target) => Boolean(target.generatedAlias),
+      ).length,
       acceptedPreferenceCount: accepted.length,
       skippedSuggestionCount: skipped.length,
       duplicateSlugCount: duplicateSlugs.size,

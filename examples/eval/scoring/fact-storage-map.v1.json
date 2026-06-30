@@ -181,6 +181,7 @@
       "acceptedAliasSlugs": [
         "tax.federal_filing_status",
         "tax.filing_status",
+        "tax.w4_filing_status",
         "tax.filingStatus",
         "profile.tax.filing_status"
       ],

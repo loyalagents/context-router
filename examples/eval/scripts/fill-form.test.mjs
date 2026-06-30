@@ -293,6 +293,7 @@ test('buildFormFillFieldPolicies covers packet-small W-4 and direct-deposit slug
     'eval.tax.filing_status',
     'tax.federal_filing_status',
     'tax.filing_status',
+    'tax.w4_filing_status',
     'tax.filingStatus',
     'profile.tax.filing_status',
   ]);
