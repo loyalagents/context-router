@@ -297,6 +297,12 @@ expanding scope into the next phase.
 - Phase 4: comparison table generated from Harbor trial `result.json` files and
   collected `score-summary.json` artifacts.
 
+Phase 4 adds `examples/eval-harbor/scripts/report_results.py` for the first
+three-arm comparison. The script reads Harbor job or trial directories, validates
+that score and final output artifacts exist and parse, and emits Markdown plus
+optional JSON. It exits nonzero when required artifacts are missing or malformed
+unless `--allow-invalid` is explicitly passed.
+
 ## Open Decisions
 
 - Whether the first task should reuse Maya data or start with a smaller
