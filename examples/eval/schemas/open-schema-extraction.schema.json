@@ -24,12 +24,14 @@
     "schemaVersion": { "const": 1 },
     "artifactType": { "const": "direct-open-schema-extraction" },
     "runId": { "type": "string", "minLength": 1 },
-    "evaluationMode": { "const": "direct-vertex-open-schema" },
+    "evaluationMode": {
+      "enum": ["direct-vertex-open-schema", "direct-claude-code-open-schema"]
+    },
     "scenarioId": { "type": "string", "minLength": 1 },
     "userId": { "type": "string", "minLength": 1 },
     "corpusId": { "type": "string", "minLength": 1 },
     "formId": { "type": "string", "minLength": 1 },
-    "provider": { "const": "vertex" },
+    "provider": { "enum": ["vertex", "claude-code"] },
     "model": { "type": "string", "minLength": 1 },
     "promptVersion": { "const": "direct-open-schema-extraction-v4" },
     "facts": {

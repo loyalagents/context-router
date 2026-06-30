@@ -41,6 +41,16 @@ const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
 const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
 const DIRECT_OPEN_SCHEMA_PRODUCER = 'direct-open-schema-vertex';
 const DIRECT_OPEN_SCHEMA_EVALUATION_MODE = 'direct-vertex-open-schema';
+const DIRECT_OPEN_SCHEMA_PROVIDER_METADATA = {
+  vertex: {
+    evaluationMode: DIRECT_OPEN_SCHEMA_EVALUATION_MODE,
+    producer: DIRECT_OPEN_SCHEMA_PRODUCER,
+  },
+  'claude-code': {
+    evaluationMode: 'direct-claude-code-open-schema',
+    producer: 'direct-open-schema-claude-code',
+  },
+};
 const SYNTHETIC_SNAPSHOT_QUERY_NAME = 'SyntheticDirectOpenSchemaSnapshot';
 const SYNTHETIC_SCHEMA_RESET_MODE = 'synthetic-no-backend';
 
@@ -703,7 +713,7 @@ export function validateExtractionPayload({
       schemaVersion: 1,
       artifactType: 'direct-open-schema-extraction',
       runId,
-      evaluationMode: DIRECT_OPEN_SCHEMA_EVALUATION_MODE,
+      evaluationMode: directOpenSchemaEvaluationMode(provider),
       scenarioId: fixture.scenario.scenarioId,
       userId: fixture.scenario.userId,
       corpusId: fixture.scenario.corpusId,
@@ -850,13 +860,13 @@ export function buildSyntheticMemorySnapshot({
     schemaVersion: 1,
     artifactType: 'memory-snapshot',
     runId,
-    evaluationMode: DIRECT_OPEN_SCHEMA_EVALUATION_MODE,
+    evaluationMode: directOpenSchemaEvaluationMode(extraction.provider),
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     scenarioId: fixture.scenario.scenarioId,
     storageInput: {
       schemaMode: 'open',
-      producer: DIRECT_OPEN_SCHEMA_PRODUCER,
+      producer: directOpenSchemaProducer(extraction.provider),
       statusesScored: ['ACTIVE'],
       suggestionsWereAutoApplied: false,
     },
@@ -890,6 +900,20 @@ export function buildSyntheticMemorySnapshot({
       schemaResetMode: SYNTHETIC_SCHEMA_RESET_MODE,
     },
   };
+}
+
+function directOpenSchemaEvaluationMode(provider) {
+  return (
+    DIRECT_OPEN_SCHEMA_PROVIDER_METADATA[provider]?.evaluationMode ??
+    `direct-${provider ?? 'unknown'}-open-schema`
+  );
+}
+
+function directOpenSchemaProducer(provider) {
+  return (
+    DIRECT_OPEN_SCHEMA_PROVIDER_METADATA[provider]?.producer ??
+    `direct-open-schema-${provider ?? 'unknown'}`
+  );
 }
 
 function buildArtifacts({ repoRoot, artifactsRoot }) {

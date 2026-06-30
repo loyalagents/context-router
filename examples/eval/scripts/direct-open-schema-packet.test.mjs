@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, mkdtemp, readFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -8,6 +8,10 @@ import {
   parseArgs,
   runDirectOpenSchemaPacket,
 } from './direct-open-schema-packet.mjs';
+import { buildRunPlan } from './eval-runner/actions.mjs';
+import { loadScenarioFixture } from './eval-runner/fixtures.mjs';
+import { buildFilledFormSnapshot } from './eval-runner/snapshots.mjs';
+import { jsonText } from './shared.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '../../..');
@@ -54,9 +58,13 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   const parsed = parseArgs(baseArgs, {}, fixedNow);
   assert.equal(parsed.kind, 'ok');
   assert.deepEqual(parsed.options.scenarioIds, scenarioIds);
+  assert.equal(parsed.options.provider, 'vertex');
+  assert.equal(parsed.options.modelSource, 'manual');
   assert.equal(parsed.options.maxEvidenceChars, 200000);
+  assert.equal(parsed.options.fillMode, 'local-fact-fill');
   assert.equal(parsed.options.documentOrder, 'canonical');
   assert.equal(parsed.options.documentOrderSeed, 'packet-document-order-v1');
+  assert.equal(parsed.options.thinkingMode, 'default');
   assert.equal(
     parsed.options.documentsRoot,
     'examples/eval/users/maya-chen-newhire/corpora/packet-small',
@@ -77,6 +85,52 @@ test('direct-open-schema-packet CLI parses defaults', () => {
   );
   assert.equal(invalidOrder.kind, 'usage-error');
   assert.match(invalidOrder.message, /--document-order/);
+
+  const vertexEnvModel = parseArgs(
+    removeFlagValue(baseArgs, '--model'),
+    {
+      EVAL_DIRECT_OPEN_SCHEMA_MODEL: 'env-direct-model',
+      EVAL_CLAUDE_CODE_MODEL: 'env-claude-model',
+    },
+    fixedNow,
+  );
+  assert.equal(vertexEnvModel.kind, 'ok');
+  assert.equal(vertexEnvModel.options.provider, 'vertex');
+  assert.equal(vertexEnvModel.options.model, 'env-direct-model');
+  assert.equal(vertexEnvModel.options.modelSource, 'env');
+
+  const claudeEnvModel = parseArgs(
+    [
+      '--provider',
+      'claude-code',
+      ...removeFlagValue(baseArgs, '--model'),
+    ],
+    {
+      EVAL_DIRECT_OPEN_SCHEMA_MODEL: 'env-direct-model',
+      EVAL_CLAUDE_CODE_MODEL: 'env-claude-model',
+    },
+    fixedNow,
+  );
+  assert.equal(claudeEnvModel.kind, 'ok');
+  assert.equal(claudeEnvModel.options.model, 'env-claude-model');
+  assert.equal(claudeEnvModel.options.modelSource, 'env');
+
+  const vertexInvalidEnvThinking = parseArgs(
+    baseArgs,
+    { EVAL_THINKING_MODE: 'not-a-real-mode' },
+    fixedNow,
+  );
+  assert.equal(vertexInvalidEnvThinking.kind, 'ok');
+  assert.equal(vertexInvalidEnvThinking.options.thinkingMode, 'default');
+  assert.equal(vertexInvalidEnvThinking.options.thinkingSource, 'default');
+
+  const vertexExplicitThinking = parseArgs([...baseArgs, '--thinking-mode', 'high'], {}, fixedNow);
+  assert.equal(vertexExplicitThinking.kind, 'usage-error');
+  assert.match(vertexExplicitThinking.message, /claude-code/);
+
+  const backendWithoutToken = parseArgs([...baseArgs, '--fill-mode', 'backend'], {}, fixedNow);
+  assert.equal(backendWithoutToken.kind, 'usage-error');
+  assert.match(backendWithoutToken.message, /EVAL_AUTH_TOKEN/);
 });
 
 test('direct-open-schema-packet supports packet-hard-volume-v2 scenario wiring', async () => {
@@ -204,6 +258,11 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
 
   const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
   assert.equal(packet.status, 'pass');
+  assert.equal(packet.agent, 'vertex');
+  assert.equal(packet.evaluationMode, 'direct-vertex-open-schema-packet');
+  assert.deepEqual(packet.model, { label: 'test-model', source: 'manual' });
+  assert.equal(packet.thinking, null);
+  assert.equal(packet.artifacts.extractionTranscript, null);
   assert.equal(packet.settings.documentOrder, 'relevant-last');
   assert.equal(packet.settings.maxEvidenceChars, 1000000);
   assert.equal(packet.documents.documentCount, 8);
@@ -222,6 +281,290 @@ test('direct-open-schema-packet extracts once and fills every scenario', async (
   assert.equal(packet.qualitySummary.memoryOwnershipClean, '0/0');
   assert.equal(packet.qualitySummary.memoryOwnershipForbiddenLeaks, 0);
   assert.deepEqual(Object.keys(packet.scenarios), scenarioIds);
+  for (const scenario of Object.values(packet.scenarios)) {
+    assert.equal(Object.hasOwn(scenario.artifacts, 'fillTranscript'), false);
+  }
+  await assertReportedArtifactsExist(packet);
+});
+
+test('direct-open-schema-packet backend fill materializes memory and skips model fill', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-backend-'));
+  const calls = {
+    extract: 0,
+    materialize: 0,
+    exportMemorySnapshot: 0,
+    fillForm: [],
+    modelFill: 0,
+  };
+  let materializedSnapshot = null;
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--fill-mode',
+      'backend',
+      '--auth-token',
+      'secret-token',
+      '--reset-memory',
+    ],
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) => {
+      calls.extract += 1;
+      return JSON.stringify({
+        facts: [
+          {
+            slug: 'profile.full_name',
+            label: 'Legal name',
+            valueType: 'STRING',
+            value: 'Maya Lin Chen',
+            confidence: 0.9,
+            evidence: [
+              {
+                documentId: evidenceDocuments[0].id,
+                quote: 'Maya Lin Chen',
+              },
+            ],
+          },
+        ],
+        unresolved: [],
+      });
+    },
+    generateFillResponse: async () => {
+      calls.modelFill += 1;
+      throw new Error('model fill should not run in backend fill mode');
+    },
+    runners: {
+      materializeMemory: async ({ memorySnapshot, reportOutPath, resetMemoryEnabled }) => {
+        calls.materialize += 1;
+        assert.equal(resetMemoryEnabled, true);
+        materializedSnapshot = memorySnapshot;
+        await writeFile(
+          reportOutPath,
+          jsonText({
+            schemaVersion: 1,
+            artifactType: 'synthetic-memory-materialization-report',
+            status: 'pass',
+            backendUserId: 'backend-maya',
+            summary: {
+              definitionTargetCount: 1,
+              createdDefinitionCount: 1,
+              existingDefinitionCount: 0,
+              preferenceInputCount: 1,
+              acceptedPreferenceCount: 1,
+              skippedSuggestionCount: 0,
+              duplicateSlugCount: 0,
+            },
+          }),
+        );
+        return {
+          backendUserId: 'backend-maya',
+          summary: {
+            definitionTargetCount: 1,
+            createdDefinitionCount: 1,
+            existingDefinitionCount: 0,
+            preferenceInputCount: 1,
+            acceptedPreferenceCount: 1,
+            skippedSuggestionCount: 0,
+            duplicateSlugCount: 0,
+          },
+        };
+      },
+      exportMemorySnapshot: async ({ args }) => {
+        calls.exportMemorySnapshot += 1;
+        const out = valueAfter(args, '--out');
+        await writeFile(out, jsonText(materializedSnapshot));
+        return { exitCode: 0, lines: ['export ok'] };
+      },
+      fillForm: async ({ args }) => {
+        const scenarioId = valueAfter(args, '--scenario');
+        calls.fillForm.push(scenarioId);
+        const fixture = await loadScenarioFixture({ repoRoot, scenarioId });
+        const response = {
+          fillId: `backend-${scenarioId}`,
+          status: 'partial',
+          originalFilename: path.basename(fixture.formPdfPath),
+          outputFilename: `filled-${path.basename(fixture.formPdfPath)}`,
+          outputMimeType: 'application/pdf',
+          filledPdfBase64: Buffer.from('unit-pdf').toString('base64'),
+          summary: {
+            totalFields: fixture.joinedFields.length,
+            filledCount: 0,
+            skippedCount: fixture.joinedFields.length,
+            filledFields: [],
+            skippedFields: fixture.joinedFields.map(({ fieldMap }) => ({
+              pdfFieldName: fieldMap.pdfFieldName,
+              fieldType: 'unknown',
+              skipReason: 'test skip',
+            })),
+            warnings: [],
+          },
+        };
+        const snapshot = buildFilledFormSnapshot({
+          fixture,
+          runPlan: buildRunPlan(fixture),
+          harnessResult: {
+            response,
+            filledPdfFields: {},
+          },
+        });
+        await writeFile(valueAfter(args, '--response-out'), jsonText(response));
+        await writeFile(valueAfter(args, '--out'), jsonText(snapshot));
+        await writeFile(valueAfter(args, '--filled-pdf-out'), 'unit-pdf');
+        return { exitCode: 0, lines: ['fill ok'], response, snapshot };
+      },
+    },
+  });
+
+  assert.equal(result.exitCode, 0, result.lines.join('\n'));
+  assert.equal(calls.extract, 1);
+  assert.equal(calls.materialize, 1);
+  assert.equal(calls.exportMemorySnapshot, 1);
+  assert.deepEqual(calls.fillForm, scenarioIds);
+  assert.equal(calls.modelFill, 0);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'pass');
+  assert.equal(packet.backendUserId, 'backend-maya');
+  assert.equal(packet.settings.fillMode, 'backend');
+  assert.equal(packet.settings.resetMemory, true);
+  assert.equal(packet.artifacts.memoryMaterializationReport.endsWith('memory-materialization-report.json'), true);
+  assert.equal(
+    packet.artifacts.memorySnapshotAfterMaterialization.endsWith('memory-snapshot-after-materialization.json'),
+    true,
+  );
+  assert.equal(packet.summaries.materialization.acceptedPreferenceCount, 1);
+  for (const scenario of Object.values(packet.scenarios)) {
+    assert.equal(Object.hasOwn(scenario.artifacts, 'formFillResponse'), true);
+    assert.equal(Object.hasOwn(scenario.artifacts, 'fillPrompt'), false);
+    assert.equal(Object.hasOwn(scenario.artifacts, 'fillResponse'), false);
+  }
+  await assertReportedArtifactsExist(packet);
+});
+
+test('direct-open-schema-packet materialization failures point at a written report', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-materialize-fail-'));
+  const fetchMock = createMaterializationFailureFetchMock();
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: [
+      ...replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+      '--fill-mode',
+      'backend',
+      '--auth-token',
+      'secret-token',
+      '--reset-memory',
+    ],
+    env: {},
+    now: fixedNow,
+    fetchImpl: fetchMock.fetch,
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) =>
+      JSON.stringify({
+        facts: [
+          {
+            slug: 'payroll.account_type',
+            label: 'Account type',
+            valueType: 'ENUM',
+            value: 'checking',
+            confidence: 0.9,
+            evidence: [{ documentId: evidenceDocuments[0].id, quote: 'checking' }],
+          },
+        ],
+        unresolved: [],
+      }),
+    generateFillResponse: async () => {
+      throw new Error('model fill should not run in backend fill mode');
+    },
+    runners: {
+      exportMemorySnapshot: async () => {
+        throw new Error('export should not run after materialization failure');
+      },
+      fillForm: async () => {
+        throw new Error('backend fill should not run after materialization failure');
+      },
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(fetchMock.operations, [
+    'EvalIngestorMe',
+    'EvalIngestorResetMemory',
+    'EvalIngestorPreferenceSchema',
+  ]);
+
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.failureStage, 'materialize-synthetic-memory');
+  assert.match(
+    packet.failure.artifacts.memoryMaterializationReport,
+    /memory-materialization-report\.json$/,
+  );
+
+  const materializationReport = JSON.parse(
+    await readFile(
+      path.resolve(repoRoot, packet.failure.artifacts.memoryMaterializationReport),
+      'utf8',
+    ),
+  );
+  assert.equal(materializationReport.status, 'fail');
+  assert.equal(materializationReport.failure.stage, 'setup-definition');
+  assert.deepEqual(materializationReport.failure.currentDefinition, {
+    slug: 'payroll.account_type',
+  });
+});
+
+test('direct-open-schema-packet finalizes packet report on invalid extraction JSON', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-invalid-extract-'));
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async () => '{not json',
+  });
+
+  assert.equal(result.exitCode, 1);
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.endedAt, '2026-06-22T12:00:00.000Z');
+  assert.equal(packet.failureStage, 'extract-open-schema-facts');
+  assert.match(packet.failure.artifacts.extractionResponse, /open-schema-extraction-response\.json$/);
+});
+
+test('direct-open-schema-packet finalizes packet report on invalid local fill JSON', async () => {
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'direct-open-packet-invalid-fill-'));
+
+  const result = await runDirectOpenSchemaPacket({
+    repoRoot,
+    args: replaceFlagValue(baseArgs, '--artifacts-root', tmp),
+    env: {},
+    now: fixedNow,
+    generateExtractionResponse: async (_prompt, { evidenceDocuments }) =>
+      JSON.stringify({
+        facts: [
+          {
+            slug: 'profile.full_name',
+            label: 'Legal name',
+            valueType: 'STRING',
+            value: 'Maya Lin Chen',
+            confidence: 0.9,
+            evidence: [{ documentId: evidenceDocuments[0].id, quote: 'Maya Lin Chen' }],
+          },
+        ],
+        unresolved: [],
+      }),
+    generateFillResponse: async () => '{not json',
+  });
+
+  assert.equal(result.exitCode, 1);
+  const packet = JSON.parse(await readFile(path.join(tmp, 'packet-evaluation-run.json'), 'utf8'));
+  assert.equal(packet.status, 'fail');
+  assert.equal(packet.failureStage, 'fill-form-from-extracted-facts');
+  assert.equal(packet.failure.scenarioId, scenarioIds[0]);
+  assert.match(packet.failure.artifacts.fillResponse, /direct-open-schema-fill-response\.json$/);
 });
 
 test('direct-open-schema-packet cap failures preserve packet document metadata', async () => {
@@ -265,10 +608,95 @@ async function assertFile(filePath) {
   await access(filePath);
 }
 
+async function assertReportedArtifactsExist(packet) {
+  for (const artifactPath of Object.values(packet.artifacts)) {
+    if (artifactPath === null) continue;
+    await assertFile(path.resolve(repoRoot, artifactPath));
+  }
+  for (const scenario of Object.values(packet.scenarios)) {
+    for (const artifactPath of Object.values(scenario.artifacts)) {
+      if (artifactPath === null) continue;
+      await assertFile(path.resolve(repoRoot, artifactPath));
+    }
+  }
+}
+
 function replaceFlagValue(args, flag, value) {
   const index = args.indexOf(flag);
   assert.notEqual(index, -1);
   const next = [...args];
   next[index + 1] = value;
   return next;
+}
+
+function removeFlagValue(args, flag) {
+  const index = args.indexOf(flag);
+  assert.notEqual(index, -1);
+  const next = [...args];
+  next.splice(index, 2);
+  return next;
+}
+
+function valueAfter(args, flag) {
+  const index = args.indexOf(flag);
+  return index === -1 ? null : args[index + 1];
+}
+
+function createMaterializationFailureFetchMock() {
+  const operations = [];
+  return {
+    operations,
+    fetch: async (_url, request) => {
+      const body = JSON.parse(request.body);
+      const operation = operationName(body.query);
+      operations.push(operation);
+      if (operation === 'EvalIngestorMe') {
+        return jsonResponse({ data: { me: { userId: 'backend-user-123' } } });
+      }
+      if (operation === 'EvalIngestorResetMemory') {
+        return jsonResponse({
+          data: {
+            resetMyMemory: {
+              mode: body.variables.mode,
+              preferencesDeleted: 0,
+              preferenceDefinitionsDeleted: 0,
+              locationsDeleted: 0,
+              preferenceAuditEventsDeleted: 0,
+              mcpAccessEventsDeleted: 0,
+              permissionGrantsDeleted: 0,
+            },
+          },
+        });
+      }
+      if (operation === 'EvalIngestorPreferenceSchema') {
+        return jsonResponse({
+          data: {
+            exportPreferenceSchema: [
+              {
+                id: 'def-stale-account-type',
+                slug: 'payroll.account_type',
+                valueType: 'ENUM',
+                scope: 'GLOBAL',
+                options: ['savings'],
+                ownerUserId: 'backend-user-123',
+              },
+            ],
+          },
+        });
+      }
+      throw new Error(`Unexpected operation ${operation}`);
+    },
+  };
+}
+
+function operationName(query) {
+  const match = String(query).match(/\b(?:query|mutation)\s+(\w+)/);
+  return match?.[1] ?? '<unknown>';
+}
+
+function jsonResponse(payload, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
 }

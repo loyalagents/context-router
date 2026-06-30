@@ -1,12 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  ACCEPT_SUGGESTED_PREFERENCE_MUTATION,
   APPLY_SUGGESTIONS_MUTATION,
   CREATE_DEFINITION_MUTATION,
   EXPORT_SCHEMA_QUERY,
   ME_QUERY,
   RESET_MEMORY_MUTATION,
   SET_PREFERENCE_MUTATION,
+  SUGGEST_PREFERENCE_MUTATION,
 } from './query.mjs';
 
 export async function graphqlRequest({
@@ -119,6 +121,35 @@ export async function setPreference({ graphqlUrl, authToken, input, fetchImpl })
     label: `GraphQL setPreference ${input.slug}`,
   });
   return data.setPreference;
+}
+
+export async function suggestPreference({ graphqlUrl, authToken, input, fetchImpl }) {
+  const data = await graphqlRequest({
+    graphqlUrl,
+    authToken,
+    query: SUGGEST_PREFERENCE_MUTATION,
+    variables: { input },
+    fetchImpl,
+    label: `GraphQL suggestPreference ${input.slug}`,
+  });
+  return data.suggestPreference;
+}
+
+export async function acceptSuggestedPreference({
+  graphqlUrl,
+  authToken,
+  id,
+  fetchImpl,
+}) {
+  const data = await graphqlRequest({
+    graphqlUrl,
+    authToken,
+    query: ACCEPT_SUGGESTED_PREFERENCE_MUTATION,
+    variables: { id },
+    fetchImpl,
+    label: `GraphQL acceptSuggestedPreference ${id}`,
+  });
+  return data.acceptSuggestedPreference;
 }
 
 export async function applyPreferenceSuggestions({

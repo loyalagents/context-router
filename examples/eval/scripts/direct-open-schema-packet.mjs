@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRunPlan } from './eval-runner/actions.mjs';
@@ -32,10 +32,25 @@ import {
   validateDocumentOrder,
 } from './packet-documents.mjs';
 import { generateWithVertex } from './generate.mjs';
+import { buildAgentEnvironment } from './e2e-mcp-agent.mjs';
+import { runExportMemorySnapshot } from './export-memory-snapshot.mjs';
+import { runFillForm } from './fill-form.mjs';
+import { materializeSyntheticMemorySnapshot } from './materialize-synthetic-memory.mjs';
+import {
+  DEFAULT_CLAUDE_CODE_TIMEOUT_MS,
+  CLAUDE_CODE_DIRECT_TOOLS,
+  buildClaudeCodeArgs,
+  buildClaudeTranscript,
+  modelMetadata,
+  runClaudeCodePrompt,
+  thinkingMetadata,
+  validateThinkingMode,
+} from './claude-code-cli.mjs';
 import { scoreFormToFile } from './scoring/form.mjs';
 import { scoreOpenSchemaCombinedToFile } from './scoring/open-schema-combined.mjs';
 import { scoreOpenSchemaDatabaseToFile } from './scoring/open-schema-database.mjs';
 import {
+  readJson,
   relativePath,
   validateWithSchema,
   writeJson,
@@ -47,10 +62,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const defaultRepoRoot = path.resolve(__dirname, '../../..');
 const DEFAULT_TEMPERATURE = 0.2;
-const PROVIDERS = new Set(['vertex']);
+const PROVIDERS = new Set(['vertex', 'claude-code']);
+const FILL_MODES = new Set(['local-fact-fill', 'backend']);
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.75;
+const DEFAULT_BACKEND_URL = 'http://localhost:3000';
+const DEFAULT_GRAPHQL_URL = 'http://localhost:3000/graphql';
 const EXTRACTION_PROMPT_VERSION = 'direct-open-schema-extraction-v4';
 const FILL_PROMPT_VERSION = 'direct-open-schema-fill-v4';
+const CLAUDE_CODE_DIRECT_RUNTIME_GUARD = [
+  'Claude Code direct baseline runtime guard:',
+  '- Use only the prompt content and files in the current Claude direct workspace.',
+  '- Read only files in this workspace.',
+  '- Do not read parent directories, source repository files, generated artifacts, validation reports, score reports, profile files, manifests, expected snapshots, or other answer-key artifacts.',
+  '- Do not use MCP, mcp__* tools, backend memory, GraphQL, database APIs, or context-router memory APIs as information sources.',
+  '- The safe document index is documents.json; listed document paths are relative to this workspace.',
+].join('\n');
 
 export async function runDirectOpenSchemaPacket({
   repoRoot = defaultRepoRoot,
@@ -58,8 +84,11 @@ export async function runDirectOpenSchemaPacket({
   env = process.env,
   generateExtractionResponse = null,
   generateFillResponse = null,
+  fetchImpl = globalThis.fetch,
   pdfLib,
+  pdfFieldReader,
   now = () => new Date(),
+  runners = {},
 } = {}) {
   const parsed = parseArgs(args, env, now);
   if (parsed.kind === 'help') return { exitCode: 0, lines: [usage()] };
@@ -68,15 +97,61 @@ export async function runDirectOpenSchemaPacket({
   }
 
   const options = parsed.options;
+  const stageRunners = {
+    materializeMemory: materializeSyntheticMemorySnapshot,
+    exportMemorySnapshot: runExportMemorySnapshot,
+    fillForm: runFillForm,
+    ...runners,
+  };
   const artifacts = buildPacketArtifacts({ repoRoot, options });
   const startedAt = isoTimestamp(now);
   const report = initialPacketReport({ repoRoot, options, artifacts, startedAt });
   const writeReport = async () => writeJson(artifacts.packetRun, report);
+  let activeFailureContext = {
+    stage: 'initialize',
+    scenarioId: null,
+    artifacts: {},
+  };
+  const setActiveStage = (stage, scenarioId = null, stageArtifacts = {}) => {
+    activeFailureContext = { stage, scenarioId, artifacts: stageArtifacts };
+  };
+  const finalizeFailure = async ({
+    stage,
+    scenarioId = null,
+    lines = [],
+    artifacts: stageArtifacts = {},
+  }) => {
+    report.status = 'fail';
+    report.endedAt = isoTimestamp(now);
+    report.failureStage = stage;
+    report.failure = buildDirectFailure({
+      stage,
+      scenarioId,
+      lines,
+      artifacts: stageArtifacts,
+      authToken: options.authToken,
+    });
+    report.error = report.failure.message;
+    report.qualitySummary = buildPacketQualitySummary(report);
+    await writeReport().catch(() => {});
+    return failedResult({
+      lines: [
+        `stage=${stage}`,
+        scenarioId ? `scenario=${scenarioId}` : null,
+        ...artifactLines(stageArtifacts),
+        ...lines,
+      ].filter(Boolean),
+    });
+  };
 
   try {
+    setActiveStage('initialize');
     await mkdir(artifacts.artifactsRoot, { recursive: true });
     await writeReport();
 
+    setActiveStage('validate-corpus', null, {
+      validationReport: relativePath(repoRoot, artifacts.validationReport),
+    });
     const corpusValidation = await runValidation({
       repoRoot,
       args: [
@@ -96,6 +171,7 @@ export async function runDirectOpenSchemaPacket({
 
     const fixtures = [];
     for (const scenarioId of options.scenarioIds) {
+      setActiveStage('validate-scenario', scenarioId);
       const scenarioValidation = await runValidation({
         repoRoot,
         args: ['--scenario', scenarioId],
@@ -108,6 +184,7 @@ export async function runDirectOpenSchemaPacket({
       fixtures.push(fixture);
     }
 
+    setActiveStage('load-packet-documents');
     const extractionFixture = fixtures[0];
     const orderedDocuments = orderPacketDocuments(
       extractionFixture.manifest.documents ?? [],
@@ -117,6 +194,14 @@ export async function runDirectOpenSchemaPacket({
       documentsRoot: path.resolve(repoRoot, options.documentsRoot),
       documents: orderedDocuments,
     });
+    const claudeWorkspace = options.provider === 'claude-code'
+      ? await prepareClaudeDirectWorkspace({
+          repoRoot,
+          artifacts,
+          options,
+          documents: orderedDocuments,
+        })
+      : null;
     report.documents = buildPacketDocumentMetadata({
       documents: orderedDocuments,
       documentOrder: options.documentOrder,
@@ -146,17 +231,24 @@ export async function runDirectOpenSchemaPacket({
     });
     await writeReport();
     const model = options.model;
-    const extractionPrompt = buildExtractionPrompt({ evidenceDocuments });
+    setActiveStage('extract-open-schema-facts', null, {
+      extractionResponse: relativePath(repoRoot, artifacts.extractionResponse),
+    });
+    const extractionPrompt = buildProviderPrompt({
+      options,
+      prompt: buildExtractionPrompt({ evidenceDocuments }),
+    });
     await writeFile(artifacts.extractionPrompt, extractionPrompt);
     const extractionProvider =
       generateExtractionResponse ??
-      ((prompt) =>
-        generateWithVertex(prompt, {
-          env,
-          model,
-          temperature: options.temperature,
-          responseMimeType: 'application/json',
-        }));
+      ((prompt) => generateDirectResponse({
+        repoRoot,
+        env,
+        options,
+        prompt,
+        transcriptPath: artifacts.extractionTranscript,
+        cwd: claudeWorkspace?.root ?? repoRoot,
+      }));
     const rawExtractionText = await extractionProvider(extractionPrompt, {
       fixture: extractionFixture,
       evidenceDocuments,
@@ -185,14 +277,18 @@ export async function runDirectOpenSchemaPacket({
         rawText: rawExtractionText,
         parse: extractionParse,
         validation: extractionValidation,
+        transcriptPath: artifacts.extractionTranscript,
+        repoRoot,
         now,
       }),
     );
     if (!extractionValidation.ok) {
-      return failedResult({
+      return finalizeFailure({
+        stage: 'extract-open-schema-facts',
+        artifacts: {
+          extractionResponse: relativePath(repoRoot, artifacts.extractionResponse),
+        },
         lines: [
-          'stage=extract-open-schema-facts',
-          `response=${relativePath(repoRoot, artifacts.extractionResponse)}`,
           ...extractionValidation.validationDiagnostics,
           ...extractionParse.parseDiagnostics,
         ],
@@ -223,11 +319,88 @@ export async function runDirectOpenSchemaPacket({
       'synthetic memory snapshot',
     );
     await writeJson(artifacts.syntheticMemorySnapshot, memorySnapshot);
+    let databaseScoreMemorySnapshotPath = artifacts.syntheticMemorySnapshot;
+    if (options.fillMode === 'backend') {
+      setActiveStage('materialize-synthetic-memory', null, {
+        memoryMaterializationReport: relativePath(
+          repoRoot,
+          artifacts.memoryMaterializationReport,
+        ),
+      });
+      const materialization = await stageRunners.materializeMemory({
+        repoRoot,
+        memorySnapshot,
+        memorySnapshotPath: artifacts.syntheticMemorySnapshot,
+        reportOutPath: artifacts.memoryMaterializationReport,
+        graphqlUrl: options.graphqlUrl,
+        authToken: options.authToken,
+        resetMemoryEnabled: options.resetMemory,
+        resetMemoryMode: options.resetMemoryMode ?? 'MEMORY_ONLY',
+        fetchImpl,
+        now,
+      });
+      report.backendUserId = materialization.backendUserId ?? null;
+      report.summaries.materialization = materialization.summary ?? null;
+      await writeReport();
+
+      setActiveStage('export-materialized-memory', null, {
+        memorySnapshotAfterMaterialization: relativePath(
+          repoRoot,
+          artifacts.memorySnapshotAfterMaterialization,
+        ),
+      });
+      const exportResult = await stageRunners.exportMemorySnapshot({
+        repoRoot,
+        args: [
+          '--user',
+          options.userId,
+          '--corpus',
+          options.corpusId,
+          '--out',
+          artifacts.memorySnapshotAfterMaterialization,
+          '--graphql-url',
+          options.graphqlUrl,
+          '--auth-token',
+          options.authToken,
+          '--producer',
+          `direct-open-schema-${options.provider}-materialized`,
+          '--schema-mode',
+          'open',
+          '--schema-reset-mode',
+          'baseline-only',
+          '--run-id',
+          options.runId,
+        ],
+        env: {},
+        fetchImpl,
+        now,
+      });
+      if (exportResult.exitCode !== 0) {
+        return finalizeFailure({
+          stage: 'export-materialized-memory',
+          artifacts: {
+            memorySnapshotAfterMaterialization: relativePath(
+              repoRoot,
+              artifacts.memorySnapshotAfterMaterialization,
+            ),
+          },
+          lines: exportResult.lines ?? ['memory snapshot export failed'],
+        });
+      }
+      databaseScoreMemorySnapshotPath = artifacts.memorySnapshotAfterMaterialization;
+    }
+
+    setActiveStage('score-open-schema-database', null, {
+      openSchemaDatabaseScoreReport: relativePath(
+        repoRoot,
+        artifacts.openSchemaDatabaseScoreReport,
+      ),
+    });
     const databaseScore = await scoreOpenSchemaDatabaseToFile({
       repoRoot,
       userId: options.userId,
       corpusId: options.corpusId,
-      memorySnapshotPath: artifacts.syntheticMemorySnapshot,
+      memorySnapshotPath: databaseScoreMemorySnapshotPath,
       validationReportPath: artifacts.validationReport,
       outPath: artifacts.openSchemaDatabaseScoreReport,
     });
@@ -235,42 +408,111 @@ export async function runDirectOpenSchemaPacket({
     report.qualitySummary = buildPacketQualitySummary(report);
     await writeReport();
 
-    for (const fixture of fixtures) {
-      const scenarioId = fixture.scenario.scenarioId;
-      const scenarioArtifacts = artifacts.scenarios[scenarioId];
-      await mkdir(scenarioArtifacts.root, { recursive: true });
-      const fieldMetadata = buildDirectOpenSchemaFieldMetadata(
-        buildPromptFieldMetadata(fixture),
-      );
-      const fillPrompt = buildFactOnlyFillPrompt({ fieldMetadata, extraction });
-      await writeFile(scenarioArtifacts.fillPrompt, fillPrompt);
-      const fillProvider =
-        generateFillResponse ??
-        ((prompt) =>
-          generateWithVertex(prompt, {
+    if (options.fillMode === 'local-fact-fill') {
+      for (const fixture of fixtures) {
+        const scenarioId = fixture.scenario.scenarioId;
+        const scenarioArtifacts = artifacts.scenarios[scenarioId];
+        await mkdir(scenarioArtifacts.root, { recursive: true });
+        const fieldMetadata = buildDirectOpenSchemaFieldMetadata(
+          buildPromptFieldMetadata(fixture),
+        );
+        const fillPrompt = buildProviderPrompt({
+          options,
+          prompt: buildFactOnlyFillPrompt({ fieldMetadata, extraction }),
+        });
+        await writeFile(scenarioArtifacts.fillPrompt, fillPrompt);
+        const fillProvider =
+          generateFillResponse ??
+          ((prompt) => generateDirectResponse({
+            repoRoot,
             env,
-            model,
-            temperature: options.temperature,
-            responseMimeType: 'application/json',
+            options,
+            prompt,
+            transcriptPath: scenarioArtifacts.fillTranscript,
+            cwd: claudeWorkspace?.root ?? repoRoot,
           }));
-      const rawFillText = await fillProvider(fillPrompt, {
-        fixture,
-        fieldMetadata,
-        extraction,
-        model,
-        temperature: options.temperature,
-        stage: 'fill',
-      });
-      const fillParse = parseJsonObjectResponse(rawFillText);
-      const fillValidation = fillParse.parsed
-        ? validateFactFillActions({
-            actions: fillParse.parsed.fillActions,
-            fields: fieldMetadata,
-            facts: extraction.facts,
-            confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
-          })
-        : invalidFillValidation();
-      if (!fillValidation.ok) {
+        setActiveStage('fill-form-from-extracted-facts', scenarioId, {
+          fillResponse: relativePath(repoRoot, scenarioArtifacts.fillResponse),
+        });
+        const rawFillText = await fillProvider(fillPrompt, {
+          fixture,
+          fieldMetadata,
+          extraction,
+          model,
+          temperature: options.temperature,
+          stage: 'fill',
+        });
+        const fillParse = parseJsonObjectResponse(rawFillText);
+        const fillValidation = fillParse.parsed
+          ? validateFactFillActions({
+              actions: fillParse.parsed.fillActions,
+              fields: fieldMetadata,
+              facts: extraction.facts,
+              confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
+            })
+          : invalidFillValidation();
+        if (!fillValidation.ok) {
+          await writeJson(
+            scenarioArtifacts.fillResponse,
+            buildFillResponseArtifact({
+              fixture,
+              options,
+              model,
+              rawText: rawFillText,
+              parse: fillParse,
+              validation: fillValidation,
+              response: null,
+              transcriptPath: scenarioArtifacts.fillTranscript,
+              repoRoot,
+              now,
+            }),
+          );
+          return finalizeFailure({
+            stage: 'fill-form-from-extracted-facts',
+            scenarioId,
+            artifacts: {
+              fillResponse: relativePath(repoRoot, scenarioArtifacts.fillResponse),
+            },
+            lines: [
+              ...fillValidation.validationDiagnostics,
+              ...fillParse.parseDiagnostics,
+            ],
+          });
+        }
+
+        const formPdfBytes = await readFile(fixture.formPdfPath);
+        const filledPdfBytes = await fillPdfFromActions({
+          repoRoot,
+          pdfBytes: formPdfBytes,
+          actions: fillValidation.validActions,
+          pdfLib,
+        });
+        const filledPdfFields = await readFilledPdfFields({
+          repoRoot,
+          pdfBytes: filledPdfBytes,
+          pdfLib: pdfLib ?? loadBackendPdfLib(repoRoot),
+        });
+        const response = buildFormFillResponse({
+          fixture,
+          filledPdfBytes,
+          validationResult: fillValidation,
+        });
+        const snapshot = buildFilledFormSnapshot({
+          fixture,
+          runPlan: buildRunPlan(fixture),
+          harnessResult: {
+            response,
+            filledPdfFields,
+          },
+        });
+        await validateWithSchema(
+          repoRoot,
+          'filled-form-snapshot.schema.json',
+          snapshot,
+          'filled form snapshot',
+        );
+        await writeJson(scenarioArtifacts.filledForm, snapshot);
+        await writeFile(scenarioArtifacts.filledPdf, filledPdfBytes);
         await writeJson(
           scenarioArtifacts.fillResponse,
           buildFillResponseArtifact({
@@ -280,89 +522,121 @@ export async function runDirectOpenSchemaPacket({
             rawText: rawFillText,
             parse: fillParse,
             validation: fillValidation,
-            response: null,
+            response,
+            transcriptPath: scenarioArtifacts.fillTranscript,
+            repoRoot,
             now,
           }),
         );
-        return failedResult({
-          lines: [
-            `stage=fill-form-from-extracted-facts:${scenarioId}`,
-            `response=${relativePath(repoRoot, scenarioArtifacts.fillResponse)}`,
-            ...fillValidation.validationDiagnostics,
-            ...fillParse.parseDiagnostics,
-          ],
+
+        const formScore = await scoreFormToFile({
+          repoRoot,
+          scenarioId,
+          filledFormPath: scenarioArtifacts.filledForm,
+          outPath: scenarioArtifacts.formScoreReport,
         });
+        const combinedScore = await scoreOpenSchemaCombinedToFile({
+          repoRoot,
+          openSchemaDatabaseReportPath: artifacts.openSchemaDatabaseScoreReport,
+          formReportPath: scenarioArtifacts.formScoreReport,
+          outPath: scenarioArtifacts.openSchemaCombinedScoreReport,
+        });
+        report.scenarios[scenarioId] = {
+          artifacts: relativeScenarioArtifacts({
+            repoRoot,
+            scenarioArtifacts,
+            includeClaudeTranscripts: options.provider === 'claude-code',
+          }),
+          summaries: {
+            fill: response.summary,
+            formScore: formScore.summary,
+            combinedScore: combinedScore.summary,
+          },
+        };
+        report.qualitySummary = buildPacketQualitySummary(report);
+        await writeReport();
       }
+    } else {
+      for (const fixture of fixtures) {
+        const scenarioId = fixture.scenario.scenarioId;
+        const scenarioArtifacts = artifacts.scenarios[scenarioId];
+        await mkdir(scenarioArtifacts.root, { recursive: true });
+        const scenarioStageArtifacts = {
+          formFillResponse: relativePath(repoRoot, scenarioArtifacts.formFillResponse),
+          filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
+          filledPdf: relativePath(repoRoot, scenarioArtifacts.filledPdf),
+          formScoreReport: relativePath(repoRoot, scenarioArtifacts.formScoreReport),
+          openSchemaCombinedScoreReport: relativePath(
+            repoRoot,
+            scenarioArtifacts.openSchemaCombinedScoreReport,
+          ),
+        };
 
-      const formPdfBytes = await readFile(fixture.formPdfPath);
-      const filledPdfBytes = await fillPdfFromActions({
-        repoRoot,
-        pdfBytes: formPdfBytes,
-        actions: fillValidation.validActions,
-        pdfLib,
-      });
-      const filledPdfFields = await readFilledPdfFields({
-        repoRoot,
-        pdfBytes: filledPdfBytes,
-        pdfLib: pdfLib ?? loadBackendPdfLib(repoRoot),
-      });
-      const response = buildFormFillResponse({
-        fixture,
-        filledPdfBytes,
-        validationResult: fillValidation,
-      });
-      const snapshot = buildFilledFormSnapshot({
-        fixture,
-        runPlan: buildRunPlan(fixture),
-        harnessResult: {
-          response,
-          filledPdfFields,
-        },
-      });
-      await validateWithSchema(
-        repoRoot,
-        'filled-form-snapshot.schema.json',
-        snapshot,
-        'filled form snapshot',
-      );
-      await writeJson(scenarioArtifacts.filledForm, snapshot);
-      await writeFile(scenarioArtifacts.filledPdf, filledPdfBytes);
-      await writeJson(
-        scenarioArtifacts.fillResponse,
-        buildFillResponseArtifact({
-          fixture,
-          options,
-          model,
-          rawText: rawFillText,
-          parse: fillParse,
-          validation: fillValidation,
-          response,
-          now,
-        }),
-      );
+        setActiveStage('fill-form', scenarioId, scenarioStageArtifacts);
+        const fillResult = await stageRunners.fillForm({
+          repoRoot,
+          args: [
+            '--scenario',
+            scenarioId,
+            '--out',
+            scenarioArtifacts.filledForm,
+            '--backend-url',
+            options.backendUrl,
+            '--auth-token',
+            options.authToken,
+            '--filled-pdf-out',
+            scenarioArtifacts.filledPdf,
+            '--response-out',
+            scenarioArtifacts.formFillResponse,
+          ],
+          env: {},
+          fetchImpl,
+          ...(pdfFieldReader ? { pdfFieldReader } : {}),
+        });
+        if (fillResult.exitCode !== 0) {
+          return finalizeFailure({
+            stage: 'fill-form',
+            scenarioId,
+            artifacts: scenarioStageArtifacts,
+            lines: fillResult.lines ?? ['form fill failed'],
+          });
+        }
 
-      const formScore = await scoreFormToFile({
-        repoRoot,
-        scenarioId,
-        filledFormPath: scenarioArtifacts.filledForm,
-        outPath: scenarioArtifacts.formScoreReport,
-      });
-      const combinedScore = await scoreOpenSchemaCombinedToFile({
-        repoRoot,
-        openSchemaDatabaseReportPath: artifacts.openSchemaDatabaseScoreReport,
-        formReportPath: scenarioArtifacts.formScoreReport,
-        outPath: scenarioArtifacts.openSchemaCombinedScoreReport,
-      });
-      report.scenarios[scenarioId] = {
-        artifacts: relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }),
-        summaries: {
-          fill: response.summary,
-          formScore: formScore.summary,
-          combinedScore: combinedScore.summary,
-        },
-      };
-      report.qualitySummary = buildPacketQualitySummary(report);
-      await writeReport();
+        setActiveStage('score-form', scenarioId, scenarioStageArtifacts);
+        const formScore = await scoreFormToFile({
+          repoRoot,
+          scenarioId,
+          filledFormPath: scenarioArtifacts.filledForm,
+          outPath: scenarioArtifacts.formScoreReport,
+        });
+        setActiveStage('score-open-schema-combined', scenarioId, scenarioStageArtifacts);
+        const combinedScore = await scoreOpenSchemaCombinedToFile({
+          repoRoot,
+          openSchemaDatabaseReportPath: artifacts.openSchemaDatabaseScoreReport,
+          formReportPath: scenarioArtifacts.formScoreReport,
+          outPath: scenarioArtifacts.openSchemaCombinedScoreReport,
+        });
+        const formFillResponse = await readJson(scenarioArtifacts.formFillResponse);
+        report.scenarios[scenarioId] = {
+          artifacts: relativeScenarioArtifacts({
+            repoRoot,
+            scenarioArtifacts,
+            fillMode: options.fillMode,
+            includeClaudeTranscripts: false,
+          }),
+          summaries: {
+            fill:
+              formFillResponse.summary ??
+              formFillResponse.response?.summary ??
+              fillResult.response?.summary ??
+              null,
+            formScore: formScore.summary,
+            combinedScore: combinedScore.summary,
+          },
+        };
+        report.qualitySummary = buildPacketQualitySummary(report);
+        await writeReport();
+      }
     }
 
     report.status = 'pass';
@@ -377,20 +651,34 @@ export async function runDirectOpenSchemaPacket({
       extraction,
     };
   } catch (error) {
+    const failure = buildDirectFailure({
+      stage: activeFailureContext.stage,
+      scenarioId: activeFailureContext.scenarioId,
+      lines: [error?.stack ?? error?.message ?? String(error)],
+      artifacts: activeFailureContext.artifacts,
+      authToken: options.authToken,
+    });
     report.status = 'fail';
     report.endedAt = isoTimestamp(now);
-    report.error = error?.stack ?? error?.message ?? String(error);
+    report.failureStage = failure.stage;
+    report.failure = failure;
+    report.error = failure.message;
+    report.qualitySummary = buildPacketQualitySummary(report);
     await writeReport().catch(() => {});
     return {
       exitCode: 1,
       lines: [
         'eval direct-open-schema-packet failed',
+        `stage=${failure.stage}`,
+        failure.scenarioId ? `scenario=${failure.scenarioId}` : null,
+        ...artifactLines(failure.artifacts),
         `runId=${options.runId}`,
         `artifacts=${relativePath(repoRoot, artifacts.artifactsRoot)}`,
         '',
-        error?.stack ?? error?.message ?? String(error),
-      ],
+        ...failure.lines,
+      ].filter(Boolean),
       error,
+      report,
     };
   }
 }
@@ -400,11 +688,21 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
 
   const options = {
     provider: 'vertex',
-    model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL,
+    model: null,
+    modelSource: 'unspecified',
+    backendUrl: env.EVAL_BACKEND_URL || DEFAULT_BACKEND_URL,
+    graphqlUrl: env.EVAL_GRAPHQL_URL || DEFAULT_GRAPHQL_URL,
+    authToken: env.EVAL_AUTH_TOKEN,
+    fillMode: 'local-fact-fill',
+    resetMemory: false,
+    resetMemoryMode: null,
     temperature: DEFAULT_TEMPERATURE,
     maxEvidenceChars: DEFAULT_MAX_EVIDENCE_CHARS,
     documentOrder: DEFAULT_DOCUMENT_ORDER,
     documentOrderSeed: DEFAULT_DOCUMENT_ORDER_SEED,
+    thinkingMode: null,
+    thinkingSource: 'unspecified',
+    agentTimeoutMs: DEFAULT_CLAUDE_CODE_TIMEOUT_MS,
   };
   const valueArgs = new Set([
     '--user',
@@ -413,9 +711,15 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     '--artifacts-root',
     '--documents-root',
     '--provider',
+    '--fill-mode',
+    '--backend-url',
+    '--graphql-url',
+    '--auth-token',
     '--model',
     '--temperature',
     '--max-evidence-chars',
+    '--thinking-mode',
+    '--agent-timeout-ms',
     '--document-order',
     '--document-order-seed',
     '--run-id',
@@ -423,6 +727,28 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
+    if (arg === '--reset-memory') {
+      if (options.resetMemoryMode === 'DEMO_DATA') {
+        return {
+          kind: 'usage-error',
+          message: '--reset-memory and --reset-demo-data are mutually exclusive',
+        };
+      }
+      options.resetMemory = true;
+      options.resetMemoryMode = 'MEMORY_ONLY';
+      continue;
+    }
+    if (arg === '--reset-demo-data') {
+      if (options.resetMemoryMode === 'MEMORY_ONLY') {
+        return {
+          kind: 'usage-error',
+          message: '--reset-memory and --reset-demo-data are mutually exclusive',
+        };
+      }
+      options.resetMemory = true;
+      options.resetMemoryMode = 'DEMO_DATA';
+      continue;
+    }
     if (!valueArgs.has(arg)) {
       return { kind: 'usage-error', message: `Unsupported argument: ${arg}` };
     }
@@ -440,9 +766,21 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     if (arg === '--artifacts-root') options.artifactsRoot = value;
     if (arg === '--documents-root') options.documentsRoot = value;
     if (arg === '--provider') options.provider = value;
-    if (arg === '--model') options.model = value;
+    if (arg === '--fill-mode') options.fillMode = value;
+    if (arg === '--backend-url') options.backendUrl = value;
+    if (arg === '--graphql-url') options.graphqlUrl = value;
+    if (arg === '--auth-token') options.authToken = value;
+    if (arg === '--model') {
+      options.model = value;
+      options.modelSource = 'manual';
+    }
     if (arg === '--temperature') options.temperature = Number(value);
     if (arg === '--max-evidence-chars') options.maxEvidenceChars = Number(value);
+    if (arg === '--thinking-mode') {
+      options.thinkingMode = value;
+      options.thinkingSource = 'manual';
+    }
+    if (arg === '--agent-timeout-ms') options.agentTimeoutMs = Number(value);
     if (arg === '--document-order') options.documentOrder = value;
     if (arg === '--document-order-seed') options.documentOrderSeed = value;
     if (arg === '--run-id') options.runId = value;
@@ -470,7 +808,15 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
     }
   }
   if (!PROVIDERS.has(options.provider)) {
-    return { kind: 'usage-error', message: '--provider currently supports only vertex.' };
+    return { kind: 'usage-error', message: '--provider currently supports vertex or claude-code.' };
+  }
+  if (!FILL_MODES.has(options.fillMode)) {
+    return { kind: 'usage-error', message: '--fill-mode must be local-fact-fill or backend.' };
+  }
+  if (options.modelSource !== 'manual') {
+    const envModel = modelFromEnvForProvider({ provider: options.provider, env });
+    options.model = envModel.model;
+    options.modelSource = envModel.source;
   }
   if (
     typeof options.temperature !== 'number' ||
@@ -483,6 +829,25 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!isPositiveInteger(options.maxEvidenceChars)) {
     return { kind: 'usage-error', message: '--max-evidence-chars must be a positive integer.' };
   }
+  if (options.provider === 'claude-code') {
+    if (options.thinkingSource !== 'manual') {
+      options.thinkingMode = env.EVAL_THINKING_MODE || 'default';
+      options.thinkingSource = env.EVAL_THINKING_MODE ? 'env' : 'default';
+    }
+    const thinkingError = validateThinkingMode(options.thinkingMode);
+    if (thinkingError) {
+      return { kind: 'usage-error', message: thinkingError };
+    }
+  } else {
+    if (options.thinkingSource === 'manual') {
+      return { kind: 'usage-error', message: '--thinking-mode is only supported with --provider claude-code.' };
+    }
+    options.thinkingMode = 'default';
+    options.thinkingSource = 'default';
+  }
+  if (!isPositiveInteger(options.agentTimeoutMs)) {
+    return { kind: 'usage-error', message: '--agent-timeout-ms must be a positive integer.' };
+  }
   const documentOrderError = validateDocumentOrder(options);
   if (documentOrderError) {
     return { kind: 'usage-error', message: documentOrderError };
@@ -493,8 +858,13 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   if (!options.model) {
     return {
       kind: 'usage-error',
-      message: 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.',
+      message: options.provider === 'claude-code'
+        ? 'Set EVAL_CLAUDE_CODE_MODEL, EVAL_MODEL, or pass --model.'
+        : 'Set EVAL_DIRECT_OPEN_SCHEMA_MODEL or pass --model.',
     };
+  }
+  if (options.fillMode === 'backend' && !options.authToken) {
+    return { kind: 'usage-error', message: 'Missing required --auth-token or EVAL_AUTH_TOKEN for --fill-mode backend.' };
   }
 
   options.documentsRoot =
@@ -504,24 +874,46 @@ export function parseArgs(args, env = process.env, now = () => new Date()) {
   return { kind: 'ok', options };
 }
 
+function modelFromEnvForProvider({ provider, env }) {
+  if (provider === 'claude-code') {
+    return {
+      model: env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL || null,
+      source: env.EVAL_CLAUDE_CODE_MODEL || env.EVAL_MODEL ? 'env' : 'unspecified',
+    };
+  }
+  return {
+    model: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL || null,
+    source: env.EVAL_DIRECT_OPEN_SCHEMA_MODEL ? 'env' : 'unspecified',
+  };
+}
+
 export function usage() {
   return [
     'Usage:',
     '  pnpm eval:direct-open-schema-packet --user <userId> --corpus <corpusId> --scenarios <scenarioIds> --artifacts-root <dir> [options]',
     '',
     'Notes:',
-    '  This is a no-storage direct Vertex packet baseline.',
-    '  It extracts open-schema facts once from the corpus, then fills every listed form from that same extraction.',
-    '  It does not call backend memory, MCP, GraphQL, or the DB.',
+    '  This extracts open-schema facts once from the corpus, then fills every listed form.',
+    '  Default local-fact-fill mode is the historical no-storage direct baseline.',
+    '  Backend fill mode materializes extracted facts into backend memory after extraction, then calls the backend form-fill endpoint.',
+    '  Claude Code direct extraction does not use MCP, backend memory, GraphQL, or the DB as model information sources.',
     '',
     'Options:',
     '  --documents-root <dir>           Defaults to examples/eval/users/<user>/corpora/<corpus>',
-    '  --provider vertex                Only vertex is supported',
-    '  --model <model>                  Defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL',
+    '  --provider vertex|claude-code    Defaults to vertex',
+    '  --fill-mode <mode>               local-fact-fill|backend; defaults to local-fact-fill',
+    '  --backend-url <url>              Backend fill mode; defaults to EVAL_BACKEND_URL or http://localhost:3000',
+    '  --graphql-url <url>              Backend fill mode; defaults to EVAL_GRAPHQL_URL or http://localhost:3000/graphql',
+    '  --auth-token <token>             Backend fill mode; defaults to EVAL_AUTH_TOKEN',
+    '  --model <model>                  Vertex defaults to EVAL_DIRECT_OPEN_SCHEMA_MODEL; Claude Code defaults to EVAL_CLAUDE_CODE_MODEL or EVAL_MODEL',
     '  --temperature <number>           Defaults to 0.2',
     `  --max-evidence-chars <int>       Defaults to ${DEFAULT_MAX_EVIDENCE_CHARS}`,
+    '  --thinking-mode <mode>           Claude Code only: default|low|medium|high|xhigh|max',
+    `  --agent-timeout-ms <ms>          Claude Code only; defaults to ${DEFAULT_CLAUDE_CODE_TIMEOUT_MS}`,
     '  --document-order <mode>          canonical|reverse|seeded-random|relevant-first|relevant-last',
     `  --document-order-seed <seed>     Defaults to ${DEFAULT_DOCUMENT_ORDER_SEED}`,
+    '  --reset-memory                   Backend fill mode: clear current backend user memory values before materialization',
+    '  --reset-demo-data                Backend fill mode: clear current backend user demo data; requires backend ENABLE_DEMO_RESET=true',
     '  --run-id <id>                    Defaults to direct-open-schema-packet-<user>-<corpus>-<timestamp>',
   ].join('\n');
 }
@@ -535,6 +927,8 @@ function buildPacketArtifacts({ repoRoot, options }) {
       root: scenarioRoot,
       fillPrompt: path.join(scenarioRoot, 'direct-open-schema-fill-prompt.md'),
       fillResponse: path.join(scenarioRoot, 'direct-open-schema-fill-response.json'),
+      fillTranscript: path.join(scenarioRoot, 'claude-fill-transcript.txt'),
+      formFillResponse: path.join(scenarioRoot, 'form-fill-response.json'),
       filledForm: path.join(scenarioRoot, 'filled-form.json'),
       filledPdf: path.join(scenarioRoot, 'filled-form.pdf'),
       formScoreReport: path.join(scenarioRoot, 'form-score-report.json'),
@@ -546,12 +940,21 @@ function buildPacketArtifacts({ repoRoot, options }) {
   }
   return {
     artifactsRoot: root,
+    claudeWorkspaceRoot: path.join(root, 'claude-direct-workspace'),
+    claudeWorkspaceIndex: path.join(root, 'claude-direct-workspace', 'documents.json'),
+    claudeWorkspaceInstructions: path.join(root, 'claude-direct-workspace', 'CLAUDE.md'),
     packetRun: path.join(root, 'packet-evaluation-run.json'),
     validationReport: path.join(root, 'validation-report.json'),
     extractionPrompt: path.join(root, 'open-schema-extraction-prompt.md'),
     extractionResponse: path.join(root, 'open-schema-extraction-response.json'),
+    extractionTranscript: path.join(root, 'claude-extraction-transcript.txt'),
     extraction: path.join(root, 'open-schema-extraction.json'),
     syntheticMemorySnapshot: path.join(root, 'synthetic-memory-snapshot.json'),
+    memoryMaterializationReport: path.join(root, 'memory-materialization-report.json'),
+    memorySnapshotAfterMaterialization: path.join(
+      root,
+      'memory-snapshot-after-materialization.json',
+    ),
     openSchemaDatabaseScoreReport: path.join(root, 'open-schema-database-score-report.json'),
     scenarios,
   };
@@ -561,7 +964,9 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
   return {
     schemaVersion: 1,
     artifactType: 'direct-open-schema-packet-evaluation-run',
-    evaluationMode: 'direct-vertex-open-schema-packet',
+    evaluationMode: options.provider === 'claude-code'
+      ? 'direct-claude-code-open-schema-packet'
+      : 'direct-vertex-open-schema-packet',
     status: 'running',
     runId: options.runId,
     userId: options.userId,
@@ -569,15 +974,27 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     scenarioIds: options.scenarioIds,
     documentsRoot: options.documentsRoot,
     artifactsRoot: relativePath(repoRoot, artifacts.artifactsRoot),
-    model: {
-      label: options.model,
-      source: 'manual',
-    },
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
+    model: modelMetadata({
+      model: options.model,
+      modelSource: options.modelSource,
+    }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
+      : null,
+    backendUserId: null,
     settings: {
       provider: options.provider,
+      fillMode: options.fillMode,
+      resetMemory: options.fillMode === 'backend' ? options.resetMemory : false,
+      resetMode: options.fillMode === 'backend' ? options.resetMemoryMode : null,
       temperature: options.temperature,
       promptVersion: EXTRACTION_PROMPT_VERSION,
       maxEvidenceChars: options.maxEvidenceChars,
+      agentTimeoutMs: options.provider === 'claude-code' ? options.agentTimeoutMs : null,
       documentOrder: options.documentOrder,
       documentOrderSeed: options.documentOrderSeed,
     },
@@ -589,10 +1006,22 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     }),
     artifacts: {
       validationReport: relativePath(repoRoot, artifacts.validationReport),
+      claudeWorkspace: options.provider === 'claude-code'
+        ? relativePath(repoRoot, artifacts.claudeWorkspaceRoot)
+        : null,
       extractionPrompt: relativePath(repoRoot, artifacts.extractionPrompt),
       extractionResponse: relativePath(repoRoot, artifacts.extractionResponse),
+      extractionTranscript: options.provider === 'claude-code'
+        ? relativePath(repoRoot, artifacts.extractionTranscript)
+        : null,
       extraction: relativePath(repoRoot, artifacts.extraction),
       syntheticMemorySnapshot: relativePath(repoRoot, artifacts.syntheticMemorySnapshot),
+      memoryMaterializationReport: options.fillMode === 'backend'
+        ? relativePath(repoRoot, artifacts.memoryMaterializationReport)
+        : null,
+      memorySnapshotAfterMaterialization: options.fillMode === 'backend'
+        ? relativePath(repoRoot, artifacts.memorySnapshotAfterMaterialization)
+        : null,
       openSchemaDatabaseScoreReport: relativePath(
         repoRoot,
         artifacts.openSchemaDatabaseScoreReport,
@@ -603,6 +1032,8 @@ function initialPacketReport({ repoRoot, options, artifacts, startedAt }) {
     scenarios: {},
     startedAt,
     endedAt: null,
+    failureStage: null,
+    failure: null,
     error: null,
   };
 }
@@ -620,6 +1051,129 @@ function assertPacketFixtureMatchesOptions({ fixture, options }) {
   }
 }
 
+async function generateDirectResponse({
+  repoRoot,
+  env,
+  options,
+  prompt,
+  transcriptPath,
+  cwd,
+}) {
+  if (options.provider === 'vertex') {
+    return generateWithVertex(prompt, {
+      env,
+      model: options.model,
+      temperature: options.temperature,
+      responseMimeType: 'application/json',
+    });
+  }
+
+  const args = buildClaudeCodeArgs({
+    model: options.model,
+    thinkingMode: options.thinkingMode,
+    mcpConfig: '{"mcpServers":{}}',
+    strictMcpConfig: true,
+    settingSources: 'project',
+    tools: CLAUDE_CODE_DIRECT_TOOLS,
+    allowedTools: CLAUDE_CODE_DIRECT_TOOLS,
+    disableSlashCommands: true,
+    safeMode: true,
+  });
+  const result = await runClaudeCodePrompt({
+    prompt,
+    cwd,
+    env: buildAgentEnvironment(env),
+    timeoutMs: options.agentTimeoutMs,
+    args,
+  });
+  await writeFile(
+    transcriptPath,
+    buildClaudeTranscript({
+      command: result.command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      timedOut: result.timedOut,
+      exitCode: result.exitCode,
+    }),
+  );
+  if (result.exitCode !== 0 || result.timedOut) {
+    throw new Error(
+      [
+        'Claude Code direct generation failed.',
+        `exitCode=${result.exitCode}`,
+        `timedOut=${result.timedOut}`,
+        `transcript=${relativePath(repoRoot, transcriptPath)}`,
+        result.error?.message ?? null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    );
+  }
+  return result.text;
+}
+
+function buildProviderPrompt({ options, prompt }) {
+  if (options.provider !== 'claude-code') return prompt;
+  return `${CLAUDE_CODE_DIRECT_RUNTIME_GUARD}\n\n${prompt}`;
+}
+
+async function prepareClaudeDirectWorkspace({
+  repoRoot,
+  artifacts,
+  options,
+  documents,
+}) {
+  const root = artifacts.claudeWorkspaceRoot;
+  await rm(root, { recursive: true, force: true });
+  await mkdir(root, { recursive: true });
+
+  const sourceRoot = path.resolve(repoRoot, options.documentsRoot);
+  const safeDocuments = [];
+  for (const doc of documents ?? []) {
+    const relativeDocPath = safeRelativePath(doc.path, 'document path');
+    const sourcePath = path.resolve(sourceRoot, relativeDocPath);
+    if (!isInside(sourceRoot, sourcePath)) {
+      throw new Error(`Document path escapes documents root: ${doc.path}`);
+    }
+    const destinationPath = path.resolve(root, relativeDocPath);
+    if (!isInside(root, destinationPath)) {
+      throw new Error(`Document path escapes Claude direct workspace: ${doc.path}`);
+    }
+    await mkdir(path.dirname(destinationPath), { recursive: true });
+    await copyFile(sourcePath, destinationPath);
+    safeDocuments.push({
+      id: doc.id ?? null,
+      path: relativeDocPath,
+      title: doc.title ?? null,
+      category: doc.category ?? null,
+      outputExtension: doc.outputExtension ?? null,
+    });
+  }
+
+  await writeJson(artifacts.claudeWorkspaceIndex, {
+    schemaVersion: 1,
+    artifactType: 'claude-code-direct-document-index',
+    documentsRoot: '.',
+    documentCount: safeDocuments.length,
+    documents: safeDocuments,
+  });
+  await writeFile(
+    artifacts.claudeWorkspaceInstructions,
+    [
+      '# Claude Code Direct Eval Workspace',
+      '',
+      'Read only files in this workspace. Do not use MCP, backend memory, GraphQL, database APIs, source repository files, generated artifacts, validation reports, score reports, profile files, manifests, expected snapshots, or other answer-key artifacts.',
+      'The safe document index is `documents.json`; listed document paths are relative to this workspace.',
+      '',
+    ].join('\n'),
+  );
+
+  return {
+    root,
+    documents: safeDocuments,
+  };
+}
+
 function buildExtractionResponseArtifact({
   fixture,
   options,
@@ -627,6 +1181,8 @@ function buildExtractionResponseArtifact({
   rawText,
   parse,
   validation,
+  transcriptPath,
+  repoRoot,
   now,
 }) {
   return {
@@ -638,10 +1194,24 @@ function buildExtractionResponseArtifact({
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     formId: fixture.scenario.formId,
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
+    modelMetadata: modelMetadata({
+      model,
+      modelSource: options.modelSource,
+    }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
+      : null,
     temperature: options.temperature,
     promptVersion: EXTRACTION_PROMPT_VERSION,
+    transcript: options.provider === 'claude-code' && transcriptPath
+      ? relativePath(repoRoot, transcriptPath)
+      : null,
     rawText: String(rawText ?? ''),
     parsed: parse.parsed,
     parseDiagnostics: parse.parseDiagnostics,
@@ -660,6 +1230,8 @@ function buildFillResponseArtifact({
   parse,
   validation,
   response,
+  transcriptPath,
+  repoRoot,
   now,
 }) {
   return {
@@ -671,10 +1243,24 @@ function buildFillResponseArtifact({
     userId: fixture.scenario.userId,
     corpusId: fixture.scenario.corpusId,
     formId: fixture.scenario.formId,
+    agent: options.provider === 'claude-code' ? 'claude' : options.provider,
     provider: options.provider,
     model,
+    modelMetadata: modelMetadata({
+      model,
+      modelSource: options.modelSource,
+    }),
+    thinking: options.provider === 'claude-code'
+      ? thinkingMetadata({
+          thinkingMode: options.thinkingMode,
+          source: options.thinkingSource,
+        })
+      : null,
     temperature: options.temperature,
     promptVersion: FILL_PROMPT_VERSION,
+    transcript: options.provider === 'claude-code' && transcriptPath
+      ? relativePath(repoRoot, transcriptPath)
+      : null,
     rawText: String(rawText ?? ''),
     parsed: parse.parsed,
     parseDiagnostics: parse.parseDiagnostics,
@@ -743,8 +1329,41 @@ function isPositiveInteger(value) {
   return Number.isInteger(value) && value > 0;
 }
 
-function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {
-  return {
+function safeRelativePath(value, label) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`${label} must be a non-empty relative path.`);
+  }
+  if (path.isAbsolute(value)) {
+    throw new Error(`${label} must be relative: ${value}`);
+  }
+  const normalized = path.normalize(value);
+  if (normalized === '..' || normalized.startsWith(`..${path.sep}`)) {
+    throw new Error(`${label} escapes its root: ${value}`);
+  }
+  return normalized.split(path.sep).join('/');
+}
+
+function isInside(root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function relativeScenarioArtifacts({
+  repoRoot,
+  scenarioArtifacts,
+  fillMode = 'local-fact-fill',
+  includeClaudeTranscripts = false,
+}) {
+  const artifacts = fillMode === 'backend' ? {
+    formFillResponse: relativePath(repoRoot, scenarioArtifacts.formFillResponse),
+    filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
+    filledPdf: relativePath(repoRoot, scenarioArtifacts.filledPdf),
+    formScoreReport: relativePath(repoRoot, scenarioArtifacts.formScoreReport),
+    openSchemaCombinedScoreReport: relativePath(
+      repoRoot,
+      scenarioArtifacts.openSchemaCombinedScoreReport,
+    ),
+  } : {
     fillPrompt: relativePath(repoRoot, scenarioArtifacts.fillPrompt),
     fillResponse: relativePath(repoRoot, scenarioArtifacts.fillResponse),
     filledForm: relativePath(repoRoot, scenarioArtifacts.filledForm),
@@ -755,6 +1374,10 @@ function relativeScenarioArtifacts({ repoRoot, scenarioArtifacts }) {
       scenarioArtifacts.openSchemaCombinedScoreReport,
     ),
   };
+  if (includeClaudeTranscripts) {
+    artifacts.fillTranscript = relativePath(repoRoot, scenarioArtifacts.fillTranscript);
+  }
+  return artifacts;
 }
 
 function buildPacketQualitySummary(report) {
@@ -851,6 +1474,35 @@ function failedResult({ lines }) {
     exitCode: 1,
     lines: ['eval direct-open-schema-packet failed', ...lines],
   };
+}
+
+function buildDirectFailure({
+  stage,
+  scenarioId = null,
+  lines = [],
+  artifacts = {},
+  authToken,
+}) {
+  const redactedLines = lines
+    .map((line) => redactSecret(String(line), authToken))
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return {
+    stage,
+    scenarioId,
+    message: redactedLines.join('\n') || `Stage ${stage} failed.`,
+    lines: redactedLines,
+    artifacts,
+  };
+}
+
+function artifactLines(artifacts = {}) {
+  return Object.entries(artifacts).map(([key, value]) => `${key}=${value}`);
+}
+
+function redactSecret(text, secret) {
+  if (!secret) return text;
+  return String(text).split(secret).join('[redacted-auth-token]');
 }
 
 function generatedRunId(options, now) {

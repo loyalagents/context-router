@@ -35,7 +35,7 @@ intake_record:
         data_type: "date"
         source: "not_provided"
         status: "pending"
-    
+
     field_values:
       s1_legal_name_full: "Maya Lin Chen"
       s1_other_names_used: null
