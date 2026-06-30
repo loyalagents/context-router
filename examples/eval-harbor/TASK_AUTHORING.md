@@ -21,6 +21,50 @@ different job configs or mode instructions for:
 The task, documents, schemas, hidden expected answers, and verifier should stay
 identical across these arms.
 
+## Task Types
+
+Use a named task type in the task docs and PR description.
+
+| Type | Purpose | Agent-visible input | Primary score |
+| --- | --- | --- | --- |
+| `task-aware-formfill` | Debug extraction and output scoring for a known downstream task. | Docs plus form/schema in the same stage. | Exact form output correctness. |
+| `background-memory` | Test personal information management before future demand is known. | Docs/events during memory stages; downstream forms/questions only during downstream stages. | Memory quality diagnostics, plus downstream probe success. |
+
+Prefer `background-memory` for CR-focused research tasks. Form filling can still
+be included, but it should be a downstream probe that checks whether retained
+memory supports a later application.
+
+### Background-Memory Stage Contract
+
+Background-memory tasks use two stage types that may be interleaved:
+
+```text
+T1 -> T1 -> T2 -> T1 -> T2 -> T1
+```
+
+`T1 memory-management` stages:
+
+- reveal only the current docs/events batch;
+- do not reveal future forms, field lists, expected answers, or downstream
+  questions;
+- allow only the selected memory substrate for durable state, for example
+  `/app/memory.md` or CR MCP memory;
+- should evaluate whether memory updates keep current, user-owned, durable,
+  authoritative facts and ignore stale, wrong-owner, unsupported, or transient
+  facts.
+
+`T2 downstream-task` stages:
+
+- reveal the downstream task, such as a form, question, or audit request;
+- do not reveal the original docs/events unless the task explicitly tests
+  re-reading;
+- use retained memory as the source of truth;
+- score downstream success separately from memory quality.
+
+The task should make it possible to attribute failures to at least one of:
+missing memory, wrong memory, stale memory, wrong-owner memory, unsupported
+memory, downstream retrieval/use error, or output-format error.
+
 ## Required Shape
 
 Each task should have this shape:
@@ -76,8 +120,9 @@ when only the final step should determine the score.
 
 1. Define the task contract.
 
-   Write down the target user, document set, forms to fill, output paths, and
-   which fields are required, unsupported, or intentionally unsolved.
+   Write down the task type, target user, document/event set, stage sequence,
+   output paths, and which facts or fields are required, unsupported, or
+   intentionally unsolved.
 
 2. Build the visible workspace.
 
@@ -93,6 +138,8 @@ when only the final step should determine the score.
    `instruction.md` should name the working directory, document index, schemas,
    output files, and JSON output shape. Do not expose expected answers,
    source-trace files, field maps, profile truth, or verifier paths.
+   For background-memory `T1` stages, also avoid exposing downstream forms,
+   field lists, or future questions.
 
 4. Write hidden expected answers.
 
@@ -171,6 +218,8 @@ Before opening or updating a PR, check:
 
 - `documents.json` has the same files as `environment/workspace/docs/`.
 - Hidden expected answers are not present in `environment/workspace/`.
+- Background-memory `T1` stages do not expose downstream forms, field lists, or
+  future questions.
 - Every expected required value is supported by current, relevant documents.
 - Transformed values are documented, for example SSN digits or date format.
 - Unsupported fields have explicit expected behavior.
@@ -229,6 +278,8 @@ harbor run \
   traps.
 - Letting the oracle pass while metadata is invalid.
 - Leaving prior-step documents visible in the final step of an over-time task.
+- Calling a task background-memory when downstream forms or field lists are
+  visible during memory-management stages.
 - Adding product backend form-fill, document-analysis, workflows, or Vertex to
   the Harbor v1 task path.
 - Creating a hard task before the easy version has an oracle and verifier

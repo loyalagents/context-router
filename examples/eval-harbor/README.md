@@ -8,6 +8,37 @@ For creating new tasks, use [`TASK_AUTHORING.md`](TASK_AUTHORING.md). The README
 is the runbook for executing tasks; the authoring guide is the soundness
 checklist for adding task data, hidden truth, verifiers, and job configs.
 
+## Task Families
+
+Harbor is the evaluation runner. The task contract determines what research
+question we are measuring. Keep these task families explicit:
+
+| Family | Agent-visible input | Primary question | Main score |
+| --- | --- | --- | --- |
+| `task-aware-formfill` | Docs and form/schema are visible in the same task. | Can the agent extract the fields needed for a known downstream form? | Exact form output correctness. |
+| `background-memory` | Docs/events arrive before future downstream tasks are visible. | Can the agent manage personal information over time? | Memory quality, plus downstream probe success. |
+
+The current migrated packet tasks are mostly `task-aware-formfill`. They are
+useful for harness debugging and clean form-output scoring. CR's stronger
+research target is `background-memory`: the agent should decide what personal
+facts are durable, current, user-owned, authoritative, uncertain, or stale
+before knowing which downstream form or question will be asked.
+
+A realistic background-memory flow should support interleaved stages:
+
+```text
+T1 -> T1 -> T2 -> T1 -> T2 -> T1
+```
+
+- `T1 memory-management`: the agent sees new docs/events and updates the
+  allowed memory substrate only.
+- `T2 downstream-task`: the agent uses retained memory to answer a form,
+  question, or audit task without re-reading the original docs.
+
+Score memory quality after memory-management stages and score downstream task
+success after downstream stages. Form filling is a downstream probe, not the
+primary challenge.
+
 ## Smoke Task
 
 Run the first deterministic task with Harbor's oracle agent:
@@ -327,6 +358,11 @@ self-consistent. The markdown number is from a no-budget rerun of the markdown
 arm. This task separates no-memory from durable-memory behavior, but it does not
 currently separate markdown memory from CR MCP memory. In this run, markdown and
 `cr-mcp` both missed two fields, with different error patterns.
+
+This task has a `T1 -> T1 -> T1 -> T2` shape. It is a bridge toward
+background-memory evaluation, but the next research-focused task should be an
+interleaved background-memory task with multiple memory update and downstream
+use cycles.
 
 ## Version Control
 
