@@ -1,0 +1,23 @@
+services:
+  main:
+    depends_on:
+      cr-memory:
+        condition: service_healthy
+
+  cr-memory:
+    build:
+      context: ${CONTEXT_DIR}/../../../sidecars/cr-memory
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s

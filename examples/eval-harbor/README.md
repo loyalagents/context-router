@@ -40,3 +40,17 @@ CODEX_FORCE_AUTH_JSON=1 harbor run \
   -c examples/eval-harbor/jobs/smoke-formfill-markdown.yaml \
   --yes
 ```
+
+Run the CR MCP memory arm:
+
+```bash
+CODEX_FORCE_AUTH_JSON=1 harbor run \
+  -c examples/eval-harbor/jobs/smoke-formfill-cr-mcp.yaml \
+  --yes
+```
+
+The CR MCP arm uses an eval-only FastMCP sidecar with only
+`listPreferenceSlugs`, `searchPreferences`, and `mutatePreferences`. It does
+not invoke product backend form-fill, document-analysis, workflows, or Vertex.
+Reviewable artifacts include MCP config, tool-call trace, server log, CR memory
+snapshot, final form output, and score summary.
