@@ -415,6 +415,27 @@ conversation context from earlier stages. The `markdown` arm may only use
 `/app/memory.md`, and the `cr-mcp` arm uses the eval-only ContextRouter memory
 MCP sidecar.
 
+DynamicMem is a multi-file staged task: each checkpoint exposes
+`current_stage/documents.json`, many `current_stage/docs/events/*.json` raw
+app-log files, and one `current_stage/dynamicmem-task.json`. It is not a
+heterogeneous packet-file benchmark. It covers app/API/event-source diversity,
+but it does not replace packet-style tasks with mixed PDFs, OCR text, YAML,
+emails, templates, folder hierarchy traps, and wrong-person documents.
+
+For a shorter live-agent smoke before the full five-checkpoint run, use the
+committed three-turn fixture:
+
+```text
+dynamicmem-user001-cp00-02-trajectory-v1
+```
+
+It preserves the same native DynamicMem contract but uses only checkpoints
+`0,1,2`. Its suite manifest is:
+
+```text
+examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
+```
+
 Regenerate the task from a local DynamicMem user directory:
 
 ```bash
@@ -423,6 +444,20 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --checkpoint-indices 0-4 \
   --model gpt-5.4-mini \
   --reasoning-effort high
+```
+
+Regenerate the three-turn smoke suite:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
+  --source-root /path/to/DynamicMem \
+  --checkpoint-indices 0-2 \
+  --max-users 1 \
+  --max-tasks 1 \
+  --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
+  --model gpt-5.4-mini \
+  --reasoning-effort high \
+  --manifest examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
 ```
 
 Run all three arms:

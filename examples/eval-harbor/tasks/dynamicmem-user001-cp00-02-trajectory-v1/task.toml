@@ -7,7 +7,7 @@ artifacts = [
 ]
 
 [task]
-name = "context-router/dynamicmem-user001-cp00-04-trajectory-v1"
+name = "context-router/dynamicmem-user001-cp00-02-trajectory-v1"
 description = "DynamicMem user_001 native checkpoint trajectory Harbor background-memory task."
 authors = []
 keywords = ["context-router", "eval-harbor", "dynamicmem", "background-memory", "state-completion", "personalized-service"]

@@ -746,7 +746,7 @@ tags = ["dynamicmem", "background-memory", "continuous-session", "staged-reveal"
 timeout_sec = 120.0
 
 [agent]
-timeout_sec = 1200.0
+timeout_sec = 86400.0
 
 [environment]
 build_timeout_sec = 600.0
@@ -1285,14 +1285,9 @@ def solution_script(task_packs: dict[str, Any], checkpoints: list[dict[str, Any]
         "research_frame_version": task_packs.get("research_frame_version"),
         "predictions": [checkpoint_prediction(checkpoint) for checkpoint in checkpoints],
     }
-    reveal_lines = "".join(
-        f"/app/next_stage >/tmp/oracle-stage-{index}.log\n"
-        for index in range(1, len(checkpoints) + 1)
-    )
     return (
         "#!/bin/sh\n"
         "set -eu\n\n"
-        f"{reveal_lines}\n"
         "mkdir -p outputs\n\n"
         "cat > outputs/prediction.json <<'JSON'\n"
         f"{json.dumps(prediction, indent=2, sort_keys=True)}\n"
@@ -1536,6 +1531,29 @@ def parse_checkpoint_indices(value: str) -> list[int]:
     return sorted(set(indices))
 
 
+def compact_user_label(user_id: str) -> str:
+    return user_id.replace("_", "")
+
+
+def checkpoint_label(indices: list[int]) -> str:
+    if not indices:
+        return "cp-none"
+    if indices == list(range(indices[0], indices[-1] + 1)):
+        return f"cp{indices[0]:02d}-{indices[-1]:02d}"
+    return "cp" + "-".join(f"{index:02d}" for index in indices)
+
+
+def task_id_for_source(source_dir: Path, checkpoint_indices: list[int]) -> tuple[str, str, str, str]:
+    task_packs = load_json(source_dir / "task_packs.json")
+    source_user_id = str(task_packs.get("user_id") or SOURCE_USER_ID)
+    source_user_dir = source_dir.name
+    task_id = (
+        f"dynamicmem-{compact_user_label(source_user_id)}-"
+        f"{checkpoint_label(checkpoint_indices)}-trajectory-v1"
+    )
+    return task_id, f"{task_id}-corpus", source_user_dir, source_user_id
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -1547,7 +1565,7 @@ def main() -> int:
     parser.add_argument(
         "--task-dir",
         type=Path,
-        default=Path("examples/eval-harbor/tasks") / DEFAULT_BUILD_CONFIG.task_id,
+        default=None,
     )
     parser.add_argument(
         "--jobs-dir",
@@ -1574,23 +1592,28 @@ def main() -> int:
     )
     args = parser.parse_args()
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
+    task_id, corpus_id, source_user_dir, source_user_id = task_id_for_source(
+        args.source_dir,
+        checkpoint_indices,
+    )
+    task_dir = args.task_dir or Path("examples/eval-harbor/tasks") / task_id
 
     build_task(
         args.source_dir,
-        args.task_dir,
+        task_dir,
         args.jobs_dir,
         arm_configs=load_arm_configs(args.arms_config),
         config=BuildConfig(
-            task_id=DEFAULT_BUILD_CONFIG.task_id,
-            corpus_id=DEFAULT_BUILD_CONFIG.corpus_id,
-            source_user_dir=DEFAULT_BUILD_CONFIG.source_user_dir,
-            source_user_id=DEFAULT_BUILD_CONFIG.source_user_id,
+            task_id=task_id,
+            corpus_id=corpus_id,
+            source_user_dir=source_user_dir,
+            source_user_id=source_user_id,
             checkpoint_indices=tuple(checkpoint_indices),
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
         ),
     )
-    print(f"Generated {args.task_dir}")
+    print(f"Generated {task_dir}")
     return 0
 
 
