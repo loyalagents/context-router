@@ -56,19 +56,20 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, default=Path("/tmp/cr-harbor-dynamicmem-suite"))
     parser.add_argument("--harbor-bin", default="harbor")
     parser.add_argument("--samples", type=int, default=3)
+    parser.add_argument("--n-concurrent", type=int, default=1)
     parser.add_argument(
         "--modes",
         help="Comma-separated mode override. Defaults to arms listed in the manifest.",
     )
+    parser.add_argument("--env-file", action="append", default=[])
     parser.add_argument("--agent-env", action="append", default=["CODEX_FORCE_AUTH_JSON=true"])
+    parser.add_argument("--verifier-env", action="append", default=[])
     parser.add_argument("--yes", action="store_true", default=True)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     manifest = load_manifest(args.manifest) if args.manifest else None
-    task_ids = list(args.task_id)
-    if manifest:
-        task_ids.extend(task_ids_from_manifest(manifest))
+    task_ids = list(args.task_id) if args.task_id else task_ids_from_manifest(manifest or {})
     task_ids = sorted(set(task_ids))
     if not task_ids:
         raise SystemExit("provide --manifest or at least one --task-id")
@@ -97,9 +98,15 @@ def main() -> int:
                     str(job_path),
                     "--jobs-dir",
                     str(output_dir),
+                    "--n-concurrent",
+                    str(args.n_concurrent),
                 ]
+                for env_file in args.env_file:
+                    command.extend(["--env-file", env_file])
                 for env in args.agent_env:
                     command.extend(["--agent-env", env])
+                for env in args.verifier_env:
+                    command.extend(["--verifier-env", env])
                 if args.yes:
                     command.append("--yes")
                 run_command(command, dry_run=args.dry_run)

@@ -184,9 +184,7 @@ def main() -> int:
     args = parser.parse_args()
 
     manifest = load_manifest(args.manifest) if args.manifest else None
-    task_ids = list(args.task_id)
-    if manifest:
-        task_ids.extend(task_ids_from_manifest(manifest))
+    task_ids = list(args.task_id) if args.task_id else task_ids_from_manifest(manifest or {})
     task_ids = sorted(set(task_ids))
     if not task_ids:
         task_ids = sorted(child.name for child in args.root.iterdir() if child.is_dir())

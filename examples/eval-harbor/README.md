@@ -662,7 +662,13 @@ python3 examples/eval-harbor/scripts/run_harbor_resamples.py \
   --manifest examples/eval-harbor/suites/dynamicmem-smoke.json \
   --samples 3 \
   --harbor-bin /path/to/harbor \
-  --output-root /tmp/cr-harbor-dynamicmem-smoke
+  --output-root /tmp/cr-harbor-dynamicmem-smoke \
+  --env-file /path/to/judge.env \
+  --verifier-env 'DYNAMICMEM_LLM_JUDGE_API_KEY=${DYNAMICMEM_LLM_JUDGE_API_KEY}' \
+  --verifier-env 'DYNAMICMEM_LLM_JUDGE_BASE_URL=${DYNAMICMEM_LLM_JUDGE_BASE_URL}' \
+  --verifier-env 'DYNAMICMEM_LLM_JUDGE_MODEL=${DYNAMICMEM_LLM_JUDGE_MODEL}' \
+  --verifier-env 'DYNAMICMEM_JUDGE_MODE=${DYNAMICMEM_JUDGE_MODE}' \
+  --n-concurrent 1
 ```
 
 Aggregate the repeated samples:
