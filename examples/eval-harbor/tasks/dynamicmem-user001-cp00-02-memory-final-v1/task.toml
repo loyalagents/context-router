@@ -7,7 +7,7 @@ artifacts = [
 ]
 
 [task]
-name = "context-router/dynamicmem-user001-cp00-02-trajectory-v1"
+name = "context-router/dynamicmem-user001-cp00-02-memory-final-v1"
 description = "DynamicMem user_001 native checkpoint trajectory Harbor background-memory task."
 authors = []
 keywords = ["context-router", "eval-harbor", "dynamicmem", "background-memory", "state-completion", "personalized-service"]
@@ -37,7 +37,7 @@ DYNAMICMEM_JUDGE_MODE = "llm"
 DYNAMICMEM_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
 DYNAMICMEM_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
 DYNAMICMEM_LLM_JUDGE_MAX_ITEMS = "0"
-DYNAMICMEM_STAGE_PATTERN = "update-answer-every-checkpoint"
+DYNAMICMEM_STAGE_PATTERN = "update-only-then-final"
 
 [environment.env]
 

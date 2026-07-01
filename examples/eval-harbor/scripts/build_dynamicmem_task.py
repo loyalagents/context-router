@@ -21,6 +21,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from trajectory_framework import (
+    PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+    PATTERN_UPDATE_ONLY_THEN_FINAL,
+    STAGE_KIND_DOWNSTREAM_TASK,
+    STAGE_KIND_MEMORY_UPDATE,
+    STAGE_KIND_UPDATE_ANSWER,
+    STAGE_PATTERNS,
+    TrajectoryStage,
+    stage_pattern_suffix,
+)
+
 
 TASK_ID = "dynamicmem-user001-cp00-04-trajectory-v1"
 CORPUS_ID = "dynamicmem-user001-cp00-04-trajectory-corpus"
@@ -44,11 +55,15 @@ class BuildConfig:
     checkpoint_indices: tuple[int, ...] = CHECKPOINT_INDICES
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
+    stage_pattern: str = PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT
 
     def __post_init__(self) -> None:
         if self.reasoning_effort not in REASONING_EFFORT_CHOICES:
             choices = ", ".join(sorted(REASONING_EFFORT_CHOICES))
             raise ValueError(f"reasoning_effort must be one of: {choices}")
+        if self.stage_pattern not in STAGE_PATTERNS:
+            choices = ", ".join(sorted(STAGE_PATTERNS))
+            raise ValueError(f"stage_pattern must be one of: {choices}")
         if not self.checkpoint_indices:
             raise ValueError("checkpoint_indices must not be empty")
         if tuple(sorted(set(self.checkpoint_indices))) != self.checkpoint_indices:
@@ -484,6 +499,11 @@ def build_difficulty(
     config: BuildConfig = DEFAULT_BUILD_CONFIG,
 ) -> dict[str, Any]:
     stages = []
+    agent_tasks = {
+        STAGE_KIND_UPDATE_ANSWER: "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
+        STAGE_KIND_MEMORY_UPDATE: "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+        STAGE_KIND_DOWNSTREAM_TASK: "Answer the downstream DynamicMem checkpoint task using retained memory.",
+    }
     for stage in stage_payload["stages"]:
         files = stage.get("files", [])
         chars = sum(stage_file_chars(item) for item in files)
@@ -502,7 +522,7 @@ def build_difficulty(
                 "visibleDocCount": doc_count,
                 "visibleCharCount": chars,
                 "approxTokenCount": round(chars / 4),
-                "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
+                "agentTask": agent_tasks.get(str(stage.get("kind") or ""), "Run the trajectory stage."),
             }
         )
 
@@ -530,7 +550,9 @@ def build_difficulty(
         "schemaVersion": 1,
         "taskId": config.task_id,
         "taskType": "dynamicmem-native-background-memory-trajectory",
+        "taskContract": "dataset-adapter/trajectory-v1",
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
+        "stagePatternName": config.stage_pattern,
         "stagePattern": " -> ".join(stage["kind"] for stage in stages),
         "trajectory": {
             "sourceUserDir": config.source_user_dir,
@@ -545,10 +567,16 @@ def build_difficulty(
         "stages": stages,
         "totals": {
             "stageCount": len(stages),
-            "updateAnswerStageCount": sum(1 for stage in stages if stage["kind"] == "update-answer"),
-            "memoryUpdateStageCount": 0,
-            "downstreamStageCount": len(stages),
-            "checkpointCount": len(checkpoints),
+            "updateAnswerStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_UPDATE_ANSWER),
+            "memoryUpdateStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_MEMORY_UPDATE),
+            "downstreamStageCount": sum(
+                1
+                for stage in stages
+                if stage["kind"] in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK}
+            ),
+            "sourceCheckpointCount": len(checkpoints),
+            "scoredCheckpointCount": len(visible_tasks),
+            "checkpointCount": len(visible_tasks),
             "visibleDocCount": sum(stage["visibleDocCount"] for stage in stages),
             "visibleFileCount": sum(stage["visibleFileCount"] for stage in stages),
             "visibleCharCount": total_chars,
@@ -570,9 +598,9 @@ def build_difficulty(
         "challengeSignals": {
             "multiStage": len(stages) > 1,
             "checkpointTrajectory": len(checkpoints) > 1,
-            "updateAnswerEveryCheckpoint": True,
+            "updateAnswerEveryCheckpoint": config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
             "hiddenFutureCheckpoints": True,
-            "hiddenDownstreamUntilFinalStage": False,
+            "hiddenDownstreamUntilFinalStage": config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL,
             "nativeStateCompletion": True,
             "nativePersonalizedService": True,
             "deltaRawCheckpointHistory": True,
@@ -586,35 +614,79 @@ def build_stage_payload(
     stage_specs: list[dict[str, Any]],
     config: BuildConfig = DEFAULT_BUILD_CONFIG,
 ) -> dict[str, Any]:
-    stages = []
-    total_stages = len(stage_specs)
-    for index, spec in enumerate(stage_specs, start=1):
-        checkpoint_index = spec["checkpointIndex"]
-        checkpoint = spec["checkpoint"]
-        visible_task = spec["visibleTask"]
-        logs = spec["logs"]
-        stage_id = f"{index:02d}-cp{checkpoint_index:02d}-update-answer"
-        stages.append(
-            {
-                "stageId": stage_id,
-                "stageIndex": index,
-                "checkpointIndex": checkpoint_index,
-                "checkpointId": checkpoint.get("checkpoint_id"),
-                "kind": "update-answer",
-                "instruction": render_step_instruction(index, total_stages, checkpoint),
-                "files": [
-                    *documents_payload(
+    stages: list[dict[str, Any]] = []
+    if config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT:
+        total_stages = len(stage_specs)
+        for index, spec in enumerate(stage_specs, start=1):
+            checkpoint_index = spec["checkpointIndex"]
+            checkpoint = spec["checkpoint"]
+            visible_task = spec["visibleTask"]
+            logs = spec["logs"]
+            stage_id = f"{index:02d}-cp{checkpoint_index:02d}-update-answer"
+            stages.append(
+                TrajectoryStage(
+                    stage_id=stage_id,
+                    stage_index=index,
+                    checkpoint_index=checkpoint_index,
+                    checkpoint_id=checkpoint.get("checkpoint_id"),
+                    kind=STAGE_KIND_UPDATE_ANSWER,
+                    instruction=render_update_answer_stage_instruction(index, total_stages, checkpoint),
+                    files=[
+                        *documents_payload(
+                            logs,
+                            purpose=(
+                                "Raw DynamicMem app-log delta visible for this checkpoint "
+                                "trajectory stage."
+                            ),
+                            config=config,
+                        ),
+                        {"path": "dynamicmem-task.json", "json": visible_task},
+                    ],
+                ).as_payload()
+            )
+    elif config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
+        total_stages = len(stage_specs) + 1
+        for index, spec in enumerate(stage_specs, start=1):
+            checkpoint_index = spec["checkpointIndex"]
+            checkpoint = spec["checkpoint"]
+            logs = spec["logs"]
+            stage_id = f"{index:02d}-cp{checkpoint_index:02d}-memory-update"
+            stages.append(
+                TrajectoryStage(
+                    stage_id=stage_id,
+                    stage_index=index,
+                    checkpoint_index=checkpoint_index,
+                    checkpoint_id=checkpoint.get("checkpoint_id"),
+                    kind=STAGE_KIND_MEMORY_UPDATE,
+                    instruction=render_memory_update_stage_instruction(index, total_stages, checkpoint),
+                    files=documents_payload(
                         logs,
                         purpose=(
-                            "Raw DynamicMem app-log delta visible for this checkpoint "
-                            "trajectory stage."
+                            "Raw DynamicMem app-log delta visible for a memory-update "
+                            "stage. No downstream task is visible in this stage."
                         ),
                         config=config,
                     ),
-                    {"path": "dynamicmem-task.json", "json": visible_task},
-                ],
-            }
+                ).as_payload()
+            )
+        final_spec = stage_specs[-1]
+        final_index = len(stage_specs) + 1
+        final_checkpoint_index = final_spec["checkpointIndex"]
+        final_checkpoint = final_spec["checkpoint"]
+        stage_id = f"{final_index:02d}-cp{final_checkpoint_index:02d}-downstream-task"
+        stages.append(
+            TrajectoryStage(
+                stage_id=stage_id,
+                stage_index=final_index,
+                checkpoint_index=final_checkpoint_index,
+                checkpoint_id=final_checkpoint.get("checkpoint_id"),
+                kind=STAGE_KIND_DOWNSTREAM_TASK,
+                instruction=render_downstream_task_stage_instruction(final_index, total_stages, final_checkpoint),
+                files=[{"path": "dynamicmem-task.json", "json": final_spec["visibleTask"]}],
+            ).as_payload()
         )
+    else:
+        raise ValueError(f"unsupported stage pattern: {config.stage_pattern}")
     return {
         "schemaVersion": 1,
         "taskId": config.task_id,
@@ -629,27 +701,44 @@ def build_stage_payload(
     }
 
 
-def render_instruction() -> str:
-    return """This is a continuous-session Harbor task for a native DynamicMem checkpoint trajectory.
+def render_instruction(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
+    if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
+        stage_contract = """Stages can have two roles:
+
+- `memory-update`: read only the newly revealed raw app-log delta and update the
+  memory/state allowed by the selected eval mode. Do not create or modify
+  `outputs/prediction.json` in these stages.
+- `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
+  and answer using retained memory from earlier stages."""
+        steps = """1. Run `/app/next_stage` to reveal the next stage.
+2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
+   update only the allowed memory/state.
+3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
+   `outputs/prediction.json`.
+4. Repeat until `/app/next_stage` says no more stages are available."""
+    else:
+        stage_contract = """Each revealed stage is an update-and-answer checkpoint. Future checkpoint logs
+and future checkpoint tasks are not visible until their stage is revealed."""
+        steps = """1. Run `/app/next_stage` to reveal the next checkpoint stage.
+2. Read only that stage's raw app-log delta and `dynamicmem-task.json`.
+3. Update the memory/state allowed by the selected eval mode.
+4. Add or update that checkpoint's prediction in `outputs/prediction.json`.
+5. Repeat until `/app/next_stage` says no more stages are available."""
+    return f"""This is a continuous-session Harbor task for a native DynamicMem checkpoint trajectory.
 
 You will receive staged information over time inside one agent session. The
 runner is Harbor, but the task content follows DynamicMem:
 
-1. Run `/app/next_stage` to reveal the next checkpoint stage.
-2. Read only that stage's raw app-log delta and `dynamicmem-task.json`.
-3. Update the memory/state allowed by the selected eval mode.
-4. Add or update that checkpoint's prediction in `outputs/prediction.json`.
-5. Repeat until `/app/next_stage` says no more stages are available.
+{steps}
 
-Each revealed stage is an update-and-answer checkpoint. Future checkpoint logs
-and future checkpoint tasks are not visible until their stage is revealed.
+{stage_contract}
 
 Do not inspect hidden expected answers, verifier files, source dataset files, or
 any other answer-key artifacts.
 """
 
 
-def render_step_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
+def render_update_answer_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
     checkpoint_id = checkpoint.get("checkpoint_id")
     timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
     return f"""You are working in `/app`.
@@ -722,6 +811,95 @@ assistant message string.
 """
 
 
+def render_memory_update_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
+    return f"""You are working in `/app`.
+
+This is stage {step} of {total_steps}. It is a memory-update DynamicMem stage.
+
+Read:
+
+- `current_stage/documents.json`
+- `current_stage/docs/`
+
+Each file under `docs/` is a raw DynamicMem app-log object newly visible up to
+checkpoint `{checkpoint_id}` as of `{timestamp}`. Ingest these logs in
+chronological order and update only the memory/state allowed by the selected
+eval mode.
+
+No downstream task is visible in this stage. Do not create or modify
+`outputs/prediction.json` in this stage.
+"""
+
+
+def render_downstream_task_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
+    return f"""You are working in `/app`.
+
+This is stage {step} of {total_steps}. It is the downstream DynamicMem task
+stage.
+
+Read:
+
+- `current_stage/dynamicmem-task.json`
+
+No raw app-log documents are revealed in this stage. Use only retained memory,
+conversation context, or the memory substrate allowed by the selected eval mode.
+
+Write:
+
+- `outputs/prediction.json`
+
+Complete both native DynamicMem task families for checkpoint `{checkpoint_id}` as
+of `{timestamp}`:
+
+- `snapshot_state`: fill every key under `state_completion.keys`.
+- `evidence`: provide supporting evidence records per state key when available
+  from retained memory.
+- `rq3_apply_answers`: answer every item under `personalized_service.keys`.
+
+Use this exact top-level shape:
+
+```json
+{{
+  "task_contract_version": "taskabc_v2",
+  "research_frame_version": "rq_v2",
+  "predictions": [
+    {{
+      "checkpoint_id": "{checkpoint_id}",
+      "snapshot_state": {{}},
+      "evidence": {{}},
+      "rq3_apply_answers": {{}}
+    }}
+  ]
+}}
+```
+
+For `rq3_apply_answers`, use this shape per state key:
+
+```json
+{{
+  "items": [
+    {{
+      "qa_id": "q1",
+      "service_family": "user_communication",
+      "answer": "...",
+      "evidence": [
+        {{"app_log_id": "log_00001", "evidence_content": "short support"}}
+      ]
+    }}
+  ]
+}}
+```
+
+For structured service items, `answer` must be an object matching the visible
+`output_template`. For `user_communication`, `answer` should be a specific
+assistant message string.
+"""
+
+
 def render_task_toml(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
     return f"""schema_version = "1.3"
 
@@ -758,6 +936,11 @@ mcp_servers = []
 workdir = "/app"
 
 [verifier.env]
+DYNAMICMEM_JUDGE_MODE = "llm"
+DYNAMICMEM_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
+DYNAMICMEM_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
+DYNAMICMEM_LLM_JUDGE_MAX_ITEMS = "0"
+DYNAMICMEM_STAGE_PATTERN = "{config.stage_pattern}"
 
 [environment.env]
 
@@ -893,15 +1076,49 @@ def render_staged_compose() -> str:
 def score_script() -> str:
     return r'''#!/usr/bin/env python3
 import json
+import os
+import random
 import re
 import shutil
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 
-PREDICTION_PATH = Path("/app/outputs/prediction.json")
-EXPECTED_BENCHMARK = Path("/tests/expected/benchmark.json")
-ARTIFACT_ROOT = Path("/logs/artifacts")
-REWARD_DIR = Path("/logs/verifier")
+PREDICTION_PATH = Path(os.environ.get("DYNAMICMEM_PREDICTION_PATH", "/app/outputs/prediction.json"))
+EXPECTED_BENCHMARK = Path(os.environ.get("DYNAMICMEM_EXPECTED_BENCHMARK", "/tests/expected/benchmark.json"))
+ARTIFACT_ROOT = Path(os.environ.get("DYNAMICMEM_ARTIFACT_ROOT", "/logs/artifacts"))
+REWARD_DIR = Path(os.environ.get("DYNAMICMEM_REWARD_DIR", "/logs/verifier"))
+DEFAULT_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
+
+
+def env_int(name, default):
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def env_float(name, default):
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+JUDGE_MODE = os.environ.get("DYNAMICMEM_JUDGE_MODE", "llm").strip().lower()
+LLM_JUDGE_MODEL = os.environ.get("DYNAMICMEM_LLM_JUDGE_MODEL", DEFAULT_LLM_JUDGE_MODEL).strip()
+LLM_JUDGE_MAX_ITEMS = env_int("DYNAMICMEM_LLM_JUDGE_MAX_ITEMS", 0)
+LLM_JUDGE_BATCH_SIZE = max(1, env_int("DYNAMICMEM_LLM_JUDGE_BATCH_SIZE", 8))
+LLM_JUDGE_SEED = env_int("DYNAMICMEM_LLM_JUDGE_SEED", 13)
+LLM_JUDGE_TIMEOUT_SEC = env_float("DYNAMICMEM_LLM_JUDGE_TIMEOUT_SEC", 90.0)
 
 
 def load_json(path):
@@ -1075,6 +1292,298 @@ def score_apply(checkpoint, prediction):
     }
 
 
+def clamp_score(value):
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, min(1.0, score))
+
+
+def mean(values):
+    return sum(values) / len(values) if values else 0.0
+
+
+def checkpoint_id(checkpoint):
+    return str(checkpoint.get("checkpoint_id") or "")
+
+
+def state_question(checkpoint, state_key):
+    item = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {}).get(state_key)
+    if isinstance(item, dict):
+        return item.get("question_text")
+    return None
+
+
+def predicted_apply_item(prediction, state_key, qa_id):
+    predicted = prediction.get("rq3_apply_answers") or {}
+    pred_items = ((predicted.get(state_key) or {}).get("items") or [])
+    return next((row for row in pred_items if str(row.get("qa_id") or "") == qa_id), None)
+
+
+def build_llm_judge_items(checkpoints, predictions_by_id):
+    items = []
+    for checkpoint in checkpoints:
+        cp_id = checkpoint_id(checkpoint)
+        prediction = predictions_by_id.get(cp_id) or {}
+        actual_state = flatten_snapshot(prediction.get("snapshot_state") or {})
+        for state_key, expected_value in state_expected(checkpoint).items():
+            actual_value = actual_state.get(state_key)
+            deterministic_score = 1.0 if state_key in actual_state and values_match(actual_value, expected_value) else 0.0
+            items.append(
+                {
+                    "id": f"{cp_id}::state::{state_key}",
+                    "category": "state_completion",
+                    "checkpoint_id": cp_id,
+                    "state_key": state_key,
+                    "question_text": state_question(checkpoint, state_key),
+                    "expected": expected_value,
+                    "actual": actual_value,
+                    "deterministic_score": deterministic_score,
+                }
+            )
+        for state_key, item in expected_apply_items(checkpoint):
+            qa_id = str(item.get("qa_id") or "")
+            pred_item = predicted_apply_item(prediction, state_key, qa_id)
+            actual_answer = pred_item.get("answer") if isinstance(pred_item, dict) else None
+            if str(item.get("service_family") or "") == "user_communication":
+                deterministic_score = (
+                    1.0
+                    if values_match(actual_answer, item.get("reference_answer") or "")
+                    else score_user_communication(actual_answer, item.get("answer_scoring_points") or [])
+                )
+            else:
+                deterministic_score = score_structured_answer(actual_answer, item)
+            items.append(
+                {
+                    "id": f"{cp_id}::service::{state_key}::{qa_id}",
+                    "category": "personalized_service",
+                    "checkpoint_id": cp_id,
+                    "state_key": state_key,
+                    "qa_id": qa_id,
+                    "service_family": item.get("service_family"),
+                    "scenario": item.get("scenario") or item.get("apply_scenario"),
+                    "task_instruction": item.get("task_instruction") or item.get("apply_question") or item.get("question"),
+                    "output_template": item.get("output_template"),
+                    "reference_answer": item.get("reference_answer"),
+                    "reference_output": item.get("reference_output"),
+                    "answer_scoring_points": item.get("answer_scoring_points"),
+                    "actual": actual_answer,
+                    "deterministic_score": clamp_score(deterministic_score),
+                }
+            )
+    return items
+
+
+def select_llm_items(items):
+    if LLM_JUDGE_MAX_ITEMS <= 0 or LLM_JUDGE_MAX_ITEMS >= len(items):
+        return items, False
+    indexed = list(enumerate(items))
+    rng = random.Random(LLM_JUDGE_SEED)
+    rng.shuffle(indexed)
+    selected = sorted(indexed[:LLM_JUDGE_MAX_ITEMS], key=lambda pair: pair[0])
+    return [item for _, item in selected], True
+
+
+def extract_json_object(text):
+    if isinstance(text, dict):
+        return text
+    if not isinstance(text, str):
+        raise ValueError("LLM response content is not text")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start < 0 or end < start:
+            raise
+        return json.loads(text[start : end + 1])
+
+
+def call_openai_json(messages):
+    api_key = os.environ.get("DYNAMICMEM_LLM_JUDGE_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("missing OPENAI_API_KEY or DYNAMICMEM_LLM_JUDGE_API_KEY")
+    base_url = (
+        os.environ.get("DYNAMICMEM_LLM_JUDGE_BASE_URL")
+        or os.environ.get("OPENAI_BASE_URL")
+        or DEFAULT_LLM_JUDGE_BASE_URL
+    ).rstrip("/")
+    request_body = {
+        "model": LLM_JUDGE_MODEL,
+        "messages": messages,
+        "temperature": 0,
+        "response_format": {"type": "json_object"},
+    }
+    try:
+        payload = post_openai_json(base_url, api_key, request_body)
+    except urllib.error.HTTPError:
+        request_body.pop("response_format", None)
+        payload = post_openai_json(base_url, api_key, request_body)
+    content = payload["choices"][0]["message"]["content"]
+    return extract_json_object(content)
+
+
+def post_openai_json(base_url, api_key, request_body):
+    request = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=json.dumps(request_body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=LLM_JUDGE_TIMEOUT_SEC) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def judge_batch(batch):
+    rubric = """You are scoring DynamicMem predictions.
+
+Return a JSON object with exactly this shape:
+{"items":[{"id":"...","score":0.0,"label":"correct|partial|wrong|missing","reason":"short"}]}
+
+Use semantic equivalence, not string equality.
+
+Score 1.0 when the actual answer captures the same fact or task result as the reference.
+Score 0.5 when it is partly correct but missing important detail.
+Score 0.0 when it is missing, contradicted, belongs to the wrong entity, uses stale facts, or invents unsupported details.
+
+For state_completion, judge whether the actual memory value answers the question and preserves the expected durable fact.
+For personalized_service, judge whether the actual downstream answer would satisfy the task instruction using the expected reference/scoring points.
+Do not give credit for JSON formatting alone if the semantic value is wrong."""
+    messages = [
+        {"role": "system", "content": rubric},
+        {
+            "role": "user",
+            "content": json.dumps({"items": batch}, ensure_ascii=False, sort_keys=True),
+        },
+    ]
+    payload = call_openai_json(messages)
+    rows = payload.get("items")
+    if not isinstance(rows, list):
+        raise ValueError("LLM judge response missing items list")
+    by_id = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        item_id = str(row.get("id") or "")
+        if not item_id:
+            continue
+        by_id[item_id] = {
+            "id": item_id,
+            "score": clamp_score(row.get("score")),
+            "label": str(row.get("label") or ""),
+            "reason": str(row.get("reason") or "")[:500],
+        }
+    missing = [item["id"] for item in batch if item["id"] not in by_id]
+    if missing:
+        raise ValueError(f"LLM judge omitted item ids: {missing[:5]}")
+    return [by_id[item["id"]] for item in batch]
+
+
+def judge_batch_resilient(batch):
+    try:
+        return judge_batch(batch)
+    except (urllib.error.URLError, TimeoutError, RuntimeError, ValueError, KeyError, json.JSONDecodeError):
+        if len(batch) <= 1:
+            raise
+        midpoint = max(1, len(batch) // 2)
+        return judge_batch_resilient(batch[:midpoint]) + judge_batch_resilient(batch[midpoint:])
+
+
+def run_llm_judge(checkpoints, predictions_by_id, deterministic_reward, metadata_success):
+    all_items = build_llm_judge_items(checkpoints, predictions_by_id)
+    if JUDGE_MODE in {"deterministic", "off", "none", "disabled"}:
+        return {
+            "status": "disabled",
+            "mode": JUDGE_MODE,
+            "model": LLM_JUDGE_MODEL,
+            "totalItems": len(all_items),
+        }
+    if deterministic_reward >= 0.999 and metadata_success:
+        return {
+            "status": "skipped-perfect-deterministic",
+            "mode": JUDGE_MODE,
+            "model": LLM_JUDGE_MODEL,
+            "totalItems": len(all_items),
+            "judgedItems": 0,
+        }
+    if not (os.environ.get("DYNAMICMEM_LLM_JUDGE_API_KEY") or os.environ.get("OPENAI_API_KEY")):
+        return {
+            "status": "skipped-missing-api-key",
+            "mode": JUDGE_MODE,
+            "model": LLM_JUDGE_MODEL,
+            "totalItems": len(all_items),
+            "judgedItems": 0,
+            "error": "Set OPENAI_API_KEY or DYNAMICMEM_LLM_JUDGE_API_KEY to run LLM-as-judge.",
+        }
+
+    selected_items, sampled = select_llm_items(all_items)
+    judged = []
+    try:
+        for index in range(0, len(selected_items), LLM_JUDGE_BATCH_SIZE):
+            batch = selected_items[index : index + LLM_JUDGE_BATCH_SIZE]
+            judged.extend(judge_batch_resilient(batch))
+    except (urllib.error.URLError, TimeoutError, RuntimeError, ValueError, KeyError, json.JSONDecodeError) as error:
+        return {
+            "status": "error",
+            "mode": JUDGE_MODE,
+            "model": LLM_JUDGE_MODEL,
+            "totalItems": len(all_items),
+            "judgedItems": len(judged),
+            "sampled": sampled,
+            "error": str(error),
+        }
+
+    item_meta = {item["id"]: item for item in selected_items}
+    rows = []
+    for row in judged:
+        meta = item_meta[row["id"]]
+        rows.append(
+            {
+                **row,
+                "category": meta["category"],
+                "checkpointId": meta["checkpoint_id"],
+                "stateKey": meta["state_key"],
+                "qaId": meta.get("qa_id"),
+                "deterministicScore": meta["deterministic_score"],
+            }
+        )
+    state_scores = [row["score"] for row in rows if row["category"] == "state_completion"]
+    service_scores = [row["score"] for row in rows if row["category"] == "personalized_service"]
+    if state_scores and service_scores:
+        reward = (mean(state_scores) + mean(service_scores)) / 2
+    elif state_scores:
+        reward = mean(state_scores)
+    else:
+        reward = mean(service_scores)
+    return {
+        "status": "ok",
+        "mode": JUDGE_MODE,
+        "model": LLM_JUDGE_MODEL,
+        "totalItems": len(all_items),
+        "judgedItems": len(rows),
+        "sampled": sampled,
+        "sampleSeed": LLM_JUDGE_SEED if sampled else None,
+        "maxItems": LLM_JUDGE_MAX_ITEMS,
+        "batchSize": LLM_JUDGE_BATCH_SIZE,
+        "rewardBeforeMetadataPenalty": reward,
+        "stateCompletion": {
+            "judged": len(state_scores),
+            "meanScore": mean(state_scores),
+            "correct": sum(1 for score in state_scores if score >= 0.999),
+        },
+        "personalizedService": {
+            "judged": len(service_scores),
+            "meanScore": mean(service_scores),
+            "correct": sum(1 for score in service_scores if score >= 0.999),
+        },
+        "items": rows,
+    }
+
+
 def score_checkpoint(checkpoint, prediction):
     state = score_state(checkpoint, prediction)
     apply = score_apply(checkpoint, prediction)
@@ -1191,9 +1700,20 @@ def main():
     reward = aggregate["reward"]
     if not metadata_success:
         reward *= 0.5
+    deterministic_reward = reward
+    llm_judge = run_llm_judge(checkpoints, predictions_by_id, deterministic_reward, metadata_success)
+    reward_source = "deterministic"
+    if llm_judge.get("status") == "ok":
+        reward = llm_judge["rewardBeforeMetadataPenalty"]
+        if not metadata_success:
+            reward *= 0.5
+        reward_source = "llm-judge"
+    elif llm_judge.get("status") in {"skipped-missing-api-key", "error"} and JUDGE_MODE == "llm":
+        reward_source = "deterministic-fallback"
 
     summary = {
         "reward": reward,
+        "rewardSource": reward_source,
         "fieldAccuracy": aggregate["stateAccuracy"],
         "parseSuccess": parse_success,
         "metadataSuccess": metadata_success,
@@ -1216,8 +1736,13 @@ def main():
         "overfillFields": [],
         "outputRoot": "outputs",
         "outputFiles": ["prediction.json"],
-        "officialDynamicMemJudge": "not-run-in-harbor-local-scorer",
-        "note": "This deterministic Harbor scorer is a trajectory smoke/verifier proxy. The output contract is upstream DynamicMem-compatible for official LLM-as-judge evaluation.",
+        "llmJudge": llm_judge,
+        "deterministic": {
+            "reward": deterministic_reward,
+            "stateCompletionAccuracy": aggregate["stateAccuracy"],
+            "rq3ApplyMeanScore": aggregate["applyMeanScore"],
+        },
+        "note": "DynamicMem semantic scoring uses the configured LLM judge when available. Deterministic scoring is retained as a proxy and fallback for oracle/local smoke runs.",
     }
     ARTIFACT_ROOT.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(PREDICTION_PATH, ARTIFACT_ROOT / "prediction.json")
@@ -1226,10 +1751,12 @@ def main():
         REWARD_DIR / "reward.json",
         {
             "reward": reward,
+            "reward_source": reward_source,
             "state_completion_accuracy": aggregate["stateAccuracy"],
             "rq3_apply_mean_score": aggregate["applyMeanScore"],
             "parse_success": 1.0 if parse_success else 0.0,
             "metadata_success": 1.0 if metadata_success else 0.0,
+            "llm_judge_status": llm_judge.get("status"),
         },
     )
 
@@ -1335,9 +1862,11 @@ def render_soundness_report(
         "## Migration Contract",
         "",
         "- Harbor is only the runner.",
-        "- Each stage is an update-and-answer checkpoint turn.",
-        "- Each turn reveals only the raw DynamicMem app-log delta and native queries for that checkpoint.",
-        "- Hidden expected files preserve the upstream checkpoint task packs across the trajectory.",
+        f"- Stage pattern: `{config.stage_pattern}`.",
+        "- `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.",
+        "- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.",
+        "- `downstream-task` stages reveal native queries without raw documents and score retained memory use.",
+        "- Hidden expected files preserve the scored upstream checkpoint task packs.",
         "- Agent-visible task files remove reference answers, reference outputs, scoring points, and gold evidence ids.",
         "",
         "## What The Agent Sees",
@@ -1431,11 +1960,20 @@ def build_task(
         )
 
     observed_logs = observed_logs_for_checkpoint(selected[-1][1], app_logs)
+    if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
+        scored_checkpoints = [selected[-1]]
+        scored_checkpoint_payloads = [selected[-1][1]]
+        scored_visible_tasks = [visible_tasks[-1]]
+    else:
+        scored_checkpoints = selected
+        scored_checkpoint_payloads = selected_checkpoint_payloads
+        scored_visible_tasks = visible_tasks
+
     stage_payload = build_stage_payload(stage_specs=stage_specs, config=config)
     difficulty = build_difficulty(
         stage_payload=stage_payload,
         checkpoints=selected,
-        visible_tasks=visible_tasks,
+        visible_tasks=scored_visible_tasks,
         observed_logs=observed_logs,
         config=config,
     )
@@ -1454,20 +1992,20 @@ def build_task(
     write_text(workspace / "next_stage", NEXT_STAGE_SCRIPT, executable=True)
     write_json(task_dir / "stages" / "payload.json", stage_payload)
 
-    write_text(task_dir / "instruction.md", render_instruction())
+    write_text(task_dir / "instruction.md", render_instruction(config))
     write_text(task_dir / "task.toml", render_task_toml(config))
-    write_json(task_dir / "tests" / "expected" / "benchmark.json", hidden_benchmark(task_packs, selected_checkpoint_payloads))
-    write_json(task_dir / "tests" / "expected" / "visible-tasks.json", visible_tasks)
+    write_json(task_dir / "tests" / "expected" / "benchmark.json", hidden_benchmark(task_packs, scored_checkpoint_payloads))
+    write_json(task_dir / "tests" / "expected" / "visible-tasks.json", scored_visible_tasks)
     write_json(task_dir / "tests" / "expected" / "difficulty.json", difficulty)
-    write_text(task_dir / "tests" / "expected" / "soundness-report.md", render_soundness_report(difficulty, visible_tasks, config))
+    write_text(task_dir / "tests" / "expected" / "soundness-report.md", render_soundness_report(difficulty, scored_visible_tasks, config))
     write_text(task_dir / "tests" / "score_dynamicmem_prediction.py", score_script(), executable=True)
     write_text(
         task_dir / "tests" / "test.sh",
         "#!/bin/sh\nset -eu\n\npython3 /tests/score_dynamicmem_prediction.py\n",
         executable=True,
     )
-    write_text(task_dir / "solution" / "solve.sh", solution_script(task_packs, selected_checkpoint_payloads), executable=True)
-    write_json(task_dir / "mcp" / "catalog.json", build_catalog(visible_tasks, config))
+    write_text(task_dir / "solution" / "solve.sh", solution_script(task_packs, scored_checkpoint_payloads), executable=True)
+    write_json(task_dir / "mcp" / "catalog.json", build_catalog(scored_visible_tasks, config))
     write_text(
         task_dir / "README.md",
         f"""# {config.task_id}
@@ -1485,6 +2023,8 @@ checkpoint content:
 Source user: `{config.source_user_dir}` / `{config.source_user_id}`
 Checkpoint trajectory: `{', '.join(str(index) for index, _ in selected)}`
 Final checkpoint: `{selected[-1][1]['checkpoint_id']}` as of `{selected[-1][1]['as_of']['timestamp']}`
+Stage pattern: `{config.stage_pattern}`
+Scored checkpoints: `{', '.join(str(index) for index, _ in scored_checkpoints)}`
 Observed raw logs: `{len(observed_logs)}`
 State completion evaluations: `{difficulty['totals']['stateCompletionKeyCount']}`
 Personalized service items: `{difficulty['totals']['personalizedServiceItemCount']}`
@@ -1496,12 +2036,22 @@ Human-review materials:
 - `tests/expected/benchmark.json` hidden upstream-compatible benchmark slice
 - `tests/expected/visible-tasks.json` sanitized checkpoint-stage task payloads
 
+Scoring:
+
+- official DynamicMem reward uses the configured LLM-as-judge when
+  `DYNAMICMEM_LLM_JUDGE_API_KEY` or `OPENAI_API_KEY` is available;
+- generated tasks default to `DYNAMICMEM_LLM_JUDGE_BASE_URL=https://openrouter.ai/api/v1`
+  and `DYNAMICMEM_LLM_JUDGE_MODEL=google/gemini-3.5-flash`;
+- deterministic key/value scoring is retained in `score-summary.json` as a
+  proxy and fallback for oracle/local smoke runs.
+
 Regenerate from a local DynamicMem user directory:
 
 ```bash
 python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \\
   --source-dir /path/to/DynamicMem/{config.source_user_dir} \\
   --checkpoint-indices {','.join(str(index) for index, _ in selected)} \\
+  --stage-pattern {config.stage_pattern} \\
   --model {config.model_name} \\
   --reasoning-effort {config.reasoning_effort}
 ```
@@ -1543,13 +2093,13 @@ def checkpoint_label(indices: list[int]) -> str:
     return "cp" + "-".join(f"{index:02d}" for index in indices)
 
 
-def task_id_for_source(source_dir: Path, checkpoint_indices: list[int]) -> tuple[str, str, str, str]:
+def task_id_for_source(source_dir: Path, checkpoint_indices: list[int], stage_pattern: str) -> tuple[str, str, str, str]:
     task_packs = load_json(source_dir / "task_packs.json")
     source_user_id = str(task_packs.get("user_id") or SOURCE_USER_ID)
     source_user_dir = source_dir.name
     task_id = (
         f"dynamicmem-{compact_user_label(source_user_id)}-"
-        f"{checkpoint_label(checkpoint_indices)}-trajectory-v1"
+        f"{checkpoint_label(checkpoint_indices)}-{stage_pattern_suffix(stage_pattern)}"
     )
     return task_id, f"{task_id}-corpus", source_user_dir, source_user_id
 
@@ -1590,11 +2140,18 @@ def main() -> int:
         choices=sorted(REASONING_EFFORT_CHOICES),
         help="Codex model reasoning effort written into Harbor job kwargs.",
     )
+    parser.add_argument(
+        "--stage-pattern",
+        default=DEFAULT_BUILD_CONFIG.stage_pattern,
+        choices=sorted(STAGE_PATTERNS),
+        help="Trajectory stage contract to generate.",
+    )
     args = parser.parse_args()
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
     task_id, corpus_id, source_user_dir, source_user_id = task_id_for_source(
         args.source_dir,
         checkpoint_indices,
+        args.stage_pattern,
     )
     task_dir = args.task_dir or Path("examples/eval-harbor/tasks") / task_id
 
@@ -1611,6 +2168,7 @@ def main() -> int:
             checkpoint_indices=tuple(checkpoint_indices),
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
+            stage_pattern=args.stage_pattern,
         ),
     )
     print(f"Generated {task_dir}")

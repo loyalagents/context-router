@@ -94,6 +94,9 @@
     ],
     "selectionPolicy": "Deterministic checkpoint-trajectory migration. One Harbor task maps to one DynamicMem user and the selected checkpoint indices; no state-key chunking or synthetic form schema generation is used."
   },
+  "stagePatterns": [
+    "update-answer-every-checkpoint"
+  ],
   "tasks": [
     {
       "checkpointIds": [
@@ -198,6 +201,7 @@
           ]
         },
         "stagePattern": "update-answer -> update-answer -> update-answer",
+        "stagePatternName": "update-answer-every-checkpoint",
         "stages": [
           {
             "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
@@ -230,6 +234,7 @@
             "visibleFileCount": 252
           }
         ],
+        "taskContract": "dataset-adapter/trajectory-v1",
         "taskId": "dynamicmem-user001-cp00-02-trajectory-v1",
         "taskType": "dynamicmem-native-background-memory-trajectory",
         "totals": {
@@ -240,8 +245,10 @@
           "observedRawLogCount": 716,
           "personalizedServiceItemCount": 104,
           "personalizedServiceKeyCount": 104,
+          "scoredCheckpointCount": 3,
           "sourceApiCount": 39,
           "sourceAppCount": 16,
+          "sourceCheckpointCount": 3,
           "stageCount": 3,
           "stateCompletionKeyCount": 104,
           "uniqueStateCompletionKeyCount": 48,
@@ -286,6 +293,7 @@
       ],
       "sourceUserDir": "001_user_001",
       "sourceUserId": "user_001",
+      "stagePattern": "update-answer-every-checkpoint",
       "stateCompletionKeyCount": 104,
       "taskId": "dynamicmem-user001-cp00-02-trajectory-v1",
       "uniqueStateCompletionKeyCount": 48

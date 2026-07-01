@@ -60,10 +60,10 @@ memory supports a later application.
 Background-memory tasks use two stage types that may be interleaved:
 
 ```text
-T1 -> T1 -> T2 -> T1 -> T2 -> T1
+U -> U -> T -> U -> T -> U
 ```
 
-`T1 memory-management` stages:
+`U memory-update` stages:
 
 - reveal only the current docs/events batch;
 - do not reveal future forms, field lists, expected answers, or downstream
@@ -74,7 +74,7 @@ T1 -> T1 -> T2 -> T1 -> T2 -> T1
   authoritative facts and ignore stale, wrong-owner, unsupported, or transient
   facts.
 
-`T2 downstream-task` stages:
+`T downstream-task` stages:
 
 - reveal the downstream task, such as a form, question, or audit request;
 - do not reveal the original docs/events unless the task explicitly tests
@@ -92,6 +92,23 @@ tool such as `/app/next_stage`, while future stage payloads remain outside the
 main `/app` workspace, usually in the `stage-server` sidecar. Use Harbor
 multi-step only for a deliberate fresh-phase ablation or when the agent adapter
 is known to resume the same model conversation across steps.
+
+### Dataset Adapter Boundary
+
+Keep the runner contract separate from dataset-specific parsing and scoring.
+Adapters should translate source data into the shared staged trajectory contract
+in `scripts/trajectory_framework.py`:
+
+- `memory-update`: reveal only new documents/events and require no prediction.
+- `downstream-task`: reveal a downstream task and score answers from retained
+  memory.
+- `update-answer`: reveal both new documents/events and the current downstream
+  task when matching a native checkpoint benchmark.
+
+Dataset adapters may have their own hidden truth and verifier, but they should
+reuse the same arms, stage reveal mechanism, artifact paths, and mode
+instructions whenever possible. This keeps future datasets plug-in compatible
+with `context-only`, `markdown`, `cr-mcp`, and later arms.
 
 ## Required Shape
 
@@ -115,6 +132,8 @@ examples/eval-harbor/tasks/<task-id>/
     score_<task>.py
     expected/
       forms.json
+      benchmark.json         # DynamicMem/native external dataset hidden truth
+      visible-tasks.json     # sanitized downstream tasks for native datasets
       difficulty.json         # required for staged background-memory tasks
       soundness-report.md     # required for staged background-memory tasks
       source-trace.json      # required for migrated packet/form tasks
@@ -296,6 +315,9 @@ Before opening or updating a PR, check:
 - For staged background-memory tasks, `stages/payload.json` has ordered stages,
   each stage has one instruction, and every listed file has a safe relative
   path.
+- `memory-update` stages do not expose downstream task files, and
+  `downstream-task` stages do not expose raw docs unless the benchmark
+  explicitly tests re-reading.
 - Hidden expected answers are not present in `environment/workspace/`.
 - Background-memory `T1` stages do not expose downstream forms, field lists, or
   future questions.
@@ -319,6 +341,9 @@ Before opening or updating a PR, check:
   reference answers, reference outputs, scoring points, gold evidence ids,
   validated snapshot state, and expected snapshot state stay under
   `tests/expected/`.
+- DynamicMem native tasks use LLM-as-judge for the official semantic reward.
+  Deterministic key/value scoring should remain in `score-summary.json` only as
+  a proxy and fallback for oracle/local smoke runs.
 - The oracle run scores `1.0` reward, field accuracy, metadata success, and
   parse success.
 - At least one negative verifier probe proves metadata and overfill failures are

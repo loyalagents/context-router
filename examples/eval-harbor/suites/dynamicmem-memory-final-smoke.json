@@ -32,31 +32,27 @@
     "checkpointIds": [
       "cal_quarterly_001",
       "cal_quarterly_002",
-      "cal_quarterly_003",
-      "cal_quarterly_004",
-      "cal_quarterly_005"
+      "cal_quarterly_003"
     ],
     "checkpointIndices": [
       0,
       1,
-      2,
-      3,
-      4
+      2
     ],
     "checkpointsPerTask": {
-      "max": 5,
-      "mean": 5.0,
-      "min": 5
+      "max": 3,
+      "mean": 3.0,
+      "min": 3
     },
     "observedLogsPerTask": {
-      "max": 1455,
-      "mean": 1455.0,
-      "min": 1455
+      "max": 716,
+      "mean": 716.0,
+      "min": 716
     },
     "personalizedServiceItemsPerTask": {
-      "max": 189,
-      "mean": 189.0,
-      "min": 189
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
     },
     "serviceFamilies": [
       "action_configuration",
@@ -67,15 +63,15 @@
       "user_001"
     ],
     "stateCompletionKeysPerTask": {
-      "max": 189,
-      "mean": 189.0,
-      "min": 189
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
     },
     "taskCount": 1,
     "uniqueStateCompletionKeysPerTask": {
-      "max": 58,
-      "mean": 58.0,
-      "min": 58
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
     },
     "userCount": 1
   },
@@ -99,51 +95,43 @@
     "selectionPolicy": "Deterministic checkpoint-trajectory migration. One Harbor task maps to one DynamicMem user and the selected checkpoint indices; no state-key chunking or synthetic form schema generation is used."
   },
   "stagePatterns": [
-    "update-answer-every-checkpoint"
+    "update-only-then-final"
   ],
   "tasks": [
     {
       "checkpointIds": [
         "cal_quarterly_001",
         "cal_quarterly_002",
-        "cal_quarterly_003",
-        "cal_quarterly_004",
-        "cal_quarterly_005"
+        "cal_quarterly_003"
       ],
       "checkpointIndices": [
         0,
         1,
-        2,
-        3,
-        4
+        2
       ],
       "checkpointTimestamps": [
         "2023-12-31 19:30:00",
         "2024-03-31 14:30:00",
-        "2024-06-30 20:00:00",
-        "2024-10-01 05:45:00",
-        "2024-12-31 18:00:00"
+        "2024-06-30 20:00:00"
       ],
-      "corpusId": "dynamicmem-user001-cp00-04-trajectory-v1-corpus",
+      "corpusId": "dynamicmem-user001-cp00-02-memory-final-v1-corpus",
       "difficulty": {
         "challengeSignals": {
           "checkpointTrajectory": true,
           "deltaRawCheckpointHistory": true,
-          "hiddenDownstreamUntilFinalStage": false,
+          "hiddenDownstreamUntilFinalStage": true,
           "hiddenFutureCheckpoints": true,
           "longContextApprox70kPlus": true,
           "multiStage": true,
           "nativePersonalizedService": true,
           "nativeStateCompletion": true,
-          "updateAnswerEveryCheckpoint": true
+          "updateAnswerEveryCheckpoint": false
         },
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
         "schemaVersion": 1,
         "sourceDiversity": {
           "apiNames": [
-            "AddExperience",
             "AddSkill",
-            "AddToCart",
             "CheckIn",
             "Checkout",
             "ClickResult",
@@ -163,7 +151,6 @@
             "PlaceOrder",
             "PlayContent",
             "PlaySong",
-            "PostStory",
             "RateBook",
             "ReadEmail",
             "RecordActivity",
@@ -174,13 +161,9 @@
             "SearchPlaces",
             "SearchProducts",
             "SearchRestaurants",
-            "SearchSongs",
-            "SearchTransactions",
-            "SendConnectionRequest",
             "SendEmail",
             "SendMedia",
             "SendMessage",
-            "SetGoals",
             "ShowProduct",
             "ShowWishlist",
             "SyncDevice",
@@ -217,118 +200,102 @@
             "user_attributes_state"
           ]
         },
-        "stagePattern": "update-answer -> update-answer -> update-answer -> update-answer -> update-answer",
-        "stagePatternName": "update-answer-every-checkpoint",
+        "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
+        "stagePatternName": "update-only-then-final",
         "stages": [
           {
-            "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-            "approxTokenCount": 104447,
-            "kind": "update-answer",
-            "stageId": "01-cp00-update-answer",
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 90630,
+            "kind": "memory-update",
+            "stageId": "01-cp00-memory-update",
             "stageIndex": 1,
-            "visibleCharCount": 417789,
+            "visibleCharCount": 362520,
             "visibleDocCount": 180,
-            "visibleFileCount": 182
+            "visibleFileCount": 181
           },
           {
-            "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-            "approxTokenCount": 165374,
-            "kind": "update-answer",
-            "stageId": "02-cp01-update-answer",
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 147930,
+            "kind": "memory-update",
+            "stageId": "02-cp01-memory-update",
             "stageIndex": 2,
-            "visibleCharCount": 661497,
+            "visibleCharCount": 591721,
             "visibleDocCount": 286,
-            "visibleFileCount": 288
+            "visibleFileCount": 287
           },
           {
-            "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-            "approxTokenCount": 150228,
-            "kind": "update-answer",
-            "stageId": "03-cp02-update-answer",
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 133694,
+            "kind": "memory-update",
+            "stageId": "03-cp02-memory-update",
             "stageIndex": 3,
-            "visibleCharCount": 600913,
+            "visibleCharCount": 534778,
             "visibleDocCount": 250,
-            "visibleFileCount": 252
+            "visibleFileCount": 251
           },
           {
-            "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-            "approxTokenCount": 367515,
-            "kind": "update-answer",
-            "stageId": "04-cp03-update-answer",
+            "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
+            "approxTokenCount": 16543,
+            "kind": "downstream-task",
+            "stageId": "04-cp02-downstream-task",
             "stageIndex": 4,
-            "visibleCharCount": 1470059,
-            "visibleDocCount": 371,
-            "visibleFileCount": 373
-          },
-          {
-            "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-            "approxTokenCount": 229612,
-            "kind": "update-answer",
-            "stageId": "05-cp04-update-answer",
-            "stageIndex": 5,
-            "visibleCharCount": 918450,
-            "visibleDocCount": 368,
-            "visibleFileCount": 370
+            "visibleCharCount": 66173,
+            "visibleDocCount": 0,
+            "visibleFileCount": 1
           }
         ],
         "taskContract": "dataset-adapter/trajectory-v1",
-        "taskId": "dynamicmem-user001-cp00-04-trajectory-v1",
+        "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
         "taskType": "dynamicmem-native-background-memory-trajectory",
         "totals": {
-          "approxTokenCount": 1017177,
-          "checkpointCount": 5,
-          "downstreamStageCount": 5,
-          "memoryUpdateStageCount": 0,
-          "observedRawLogCount": 1455,
-          "personalizedServiceItemCount": 189,
-          "personalizedServiceKeyCount": 189,
-          "scoredCheckpointCount": 5,
-          "sourceApiCount": 46,
+          "approxTokenCount": 388798,
+          "checkpointCount": 1,
+          "downstreamStageCount": 1,
+          "memoryUpdateStageCount": 3,
+          "observedRawLogCount": 716,
+          "personalizedServiceItemCount": 37,
+          "personalizedServiceKeyCount": 37,
+          "scoredCheckpointCount": 1,
+          "sourceApiCount": 39,
           "sourceAppCount": 16,
-          "sourceCheckpointCount": 5,
-          "stageCount": 5,
-          "stateCompletionKeyCount": 189,
-          "uniqueStateCompletionKeyCount": 58,
-          "updateAnswerStageCount": 5,
-          "visibleCharCount": 4068708,
-          "visibleDocCount": 1455,
-          "visibleFileCount": 1465
+          "sourceCheckpointCount": 3,
+          "stageCount": 4,
+          "stateCompletionKeyCount": 37,
+          "uniqueStateCompletionKeyCount": 37,
+          "updateAnswerStageCount": 0,
+          "visibleCharCount": 1555192,
+          "visibleDocCount": 716,
+          "visibleFileCount": 720
         },
         "trajectory": {
           "checkpointIds": [
             "cal_quarterly_001",
             "cal_quarterly_002",
-            "cal_quarterly_003",
-            "cal_quarterly_004",
-            "cal_quarterly_005"
+            "cal_quarterly_003"
           ],
           "checkpointIndices": [
             0,
             1,
-            2,
-            3,
-            4
+            2
           ],
           "checkpointTimestamps": [
             "2023-12-31 19:30:00",
             "2024-03-31 14:30:00",
-            "2024-06-30 20:00:00",
-            "2024-10-01 05:45:00",
-            "2024-12-31 18:00:00"
+            "2024-06-30 20:00:00"
           ],
-          "finalCheckpointId": "cal_quarterly_005",
-          "finalCheckpointIndex": 4,
-          "finalCheckpointTimestamp": "2024-12-31 18:00:00",
+          "finalCheckpointId": "cal_quarterly_003",
+          "finalCheckpointIndex": 2,
+          "finalCheckpointTimestamp": "2024-06-30 20:00:00",
           "sourceUserDir": "001_user_001",
           "sourceUserId": "user_001"
         }
       },
-      "finalCheckpointId": "cal_quarterly_005",
-      "finalCheckpointIndex": 4,
-      "finalCheckpointTimestamp": "2024-12-31 18:00:00",
-      "observedLogCount": 1455,
-      "personalizedServiceItemCount": 189,
-      "personalizedServiceKeyCount": 189,
+      "finalCheckpointId": "cal_quarterly_003",
+      "finalCheckpointIndex": 2,
+      "finalCheckpointTimestamp": "2024-06-30 20:00:00",
+      "observedLogCount": 716,
+      "personalizedServiceItemCount": 37,
+      "personalizedServiceKeyCount": 37,
       "serviceFamilies": [
         "action_configuration",
         "information_request_construction",
@@ -336,10 +303,10 @@
       ],
       "sourceUserDir": "001_user_001",
       "sourceUserId": "user_001",
-      "stagePattern": "update-answer-every-checkpoint",
-      "stateCompletionKeyCount": 189,
-      "taskId": "dynamicmem-user001-cp00-04-trajectory-v1",
-      "uniqueStateCompletionKeyCount": 58
+      "stagePattern": "update-only-then-final",
+      "stateCompletionKeyCount": 37,
+      "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
+      "uniqueStateCompletionKeyCount": 37
     }
   ]
 }

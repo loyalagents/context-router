@@ -1,0 +1,35 @@
+services:
+  main:
+    depends_on:
+      stage-server:
+        condition: service_healthy
+      cr-memory:
+        condition: service_healthy
+
+  stage-server:
+    build:
+      context: ${CONTEXT_DIR}/../../../sidecars/stage-server
+    volumes:
+      - ${CONTEXT_DIR}/../stages/payload.json:/data/stages.json:ro
+    expose:
+      - "8765"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=2).read()"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  cr-memory:
+    build:
+      context: ${CONTEXT_DIR}/../../../sidecars/cr-memory
+    volumes:
+      - ${CONTEXT_DIR}/../mcp/catalog.json:/data/catalog.json:ro
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s

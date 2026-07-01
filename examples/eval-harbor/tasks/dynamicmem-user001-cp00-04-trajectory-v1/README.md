@@ -13,6 +13,8 @@ checkpoint content:
 Source user: `001_user_001` / `user_001`
 Checkpoint trajectory: `0, 1, 2, 3, 4`
 Final checkpoint: `cal_quarterly_005` as of `2024-12-31 18:00:00`
+Stage pattern: `update-answer-every-checkpoint`
+Scored checkpoints: `0, 1, 2, 3, 4`
 Observed raw logs: `1455`
 State completion evaluations: `189`
 Personalized service items: `189`
@@ -24,12 +26,22 @@ Human-review materials:
 - `tests/expected/benchmark.json` hidden upstream-compatible benchmark slice
 - `tests/expected/visible-tasks.json` sanitized checkpoint-stage task payloads
 
+Scoring:
+
+- official DynamicMem reward uses the configured LLM-as-judge when
+  `DYNAMICMEM_LLM_JUDGE_API_KEY` or `OPENAI_API_KEY` is available;
+- generated tasks default to `DYNAMICMEM_LLM_JUDGE_BASE_URL=https://openrouter.ai/api/v1`
+  and `DYNAMICMEM_LLM_JUDGE_MODEL=google/gemini-3.5-flash`;
+- deterministic key/value scoring is retained in `score-summary.json` as a
+  proxy and fallback for oracle/local smoke runs.
+
 Regenerate from a local DynamicMem user directory:
 
 ```bash
 python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --source-dir /path/to/DynamicMem/001_user_001 \
   --checkpoint-indices 0,1,2,3,4 \
+  --stage-pattern update-answer-every-checkpoint \
   --model gpt-5.4-mini \
   --reasoning-effort high
 ```

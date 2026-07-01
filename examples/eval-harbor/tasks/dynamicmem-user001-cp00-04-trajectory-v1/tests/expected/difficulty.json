@@ -91,6 +91,7 @@
     ]
   },
   "stagePattern": "update-answer -> update-answer -> update-answer -> update-answer -> update-answer",
+  "stagePatternName": "update-answer-every-checkpoint",
   "stages": [
     {
       "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
@@ -143,6 +144,7 @@
       "visibleFileCount": 370
     }
   ],
+  "taskContract": "dataset-adapter/trajectory-v1",
   "taskId": "dynamicmem-user001-cp00-04-trajectory-v1",
   "taskType": "dynamicmem-native-background-memory-trajectory",
   "totals": {
@@ -153,8 +155,10 @@
     "observedRawLogCount": 1455,
     "personalizedServiceItemCount": 189,
     "personalizedServiceKeyCount": 189,
+    "scoredCheckpointCount": 5,
     "sourceApiCount": 46,
     "sourceAppCount": 16,
+    "sourceCheckpointCount": 5,
     "stageCount": 5,
     "stateCompletionKeyCount": 189,
     "uniqueStateCompletionKeyCount": 58,

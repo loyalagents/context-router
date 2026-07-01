@@ -1,11 +1,11 @@
-# dynamicmem-user001-cp00-02-trajectory-v1 Soundness Report
+# dynamicmem-user001-cp00-02-memory-final-v1 Soundness Report
 
 This report is for benchmark reviewers. It is hidden from the agent.
 
 ## Migration Contract
 
 - Harbor is only the runner.
-- Stage pattern: `update-answer-every-checkpoint`.
+- Stage pattern: `update-only-then-final`.
 - `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.
 - `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.
 - `downstream-task` stages reveal native queries without raw documents and score retained memory use.
@@ -16,24 +16,25 @@ This report is for benchmark reviewers. It is hidden from the agent.
 
 | Stage | Kind | Visible docs | Visible files | Approx tokens | Agent task |
 | ---: | --- | ---: | ---: | ---: | --- |
-| 1 | update-answer | 180 | 182 | 104447 | Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks. |
-| 2 | update-answer | 286 | 288 | 165374 | Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks. |
-| 3 | update-answer | 250 | 252 | 150228 | Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks. |
+| 1 | memory-update | 180 | 181 | 90630 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
+| 2 | memory-update | 286 | 287 | 147930 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
+| 3 | memory-update | 250 | 251 | 133694 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
+| 4 | downstream-task | 0 | 1 | 16543 | Answer the downstream DynamicMem checkpoint task using retained memory. |
 
 ## Native Task Counts
 
-- State completion keys: `104`
-- Personalized service keys: `104`
-- Personalized service items: `104`
+- State completion keys: `37`
+- Personalized service keys: `37`
+- Personalized service items: `37`
 - Observed raw logs: `716`
 
 ## Service Families
 
 | Family | Count |
 | --- | ---: |
-| `action_configuration` | 48 |
-| `information_request_construction` | 26 |
-| `user_communication` | 30 |
+| `action_configuration` | 20 |
+| `information_request_construction` | 9 |
+| `user_communication` | 8 |
 
 ## Difficulty Block
 
@@ -42,13 +43,13 @@ This report is for benchmark reviewers. It is hidden from the agent.
   "challengeSignals": {
     "checkpointTrajectory": true,
     "deltaRawCheckpointHistory": true,
-    "hiddenDownstreamUntilFinalStage": false,
+    "hiddenDownstreamUntilFinalStage": true,
     "hiddenFutureCheckpoints": true,
     "longContextApprox70kPlus": true,
     "multiStage": true,
     "nativePersonalizedService": true,
     "nativeStateCompletion": true,
-    "updateAnswerEveryCheckpoint": true
+    "updateAnswerEveryCheckpoint": false
   },
   "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
   "schemaVersion": 1,
@@ -123,62 +124,72 @@ This report is for benchmark reviewers. It is hidden from the agent.
       "user_attributes_state"
     ]
   },
-  "stagePattern": "update-answer -> update-answer -> update-answer",
-  "stagePatternName": "update-answer-every-checkpoint",
+  "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
+  "stagePatternName": "update-only-then-final",
   "stages": [
     {
-      "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-      "approxTokenCount": 104447,
-      "kind": "update-answer",
-      "stageId": "01-cp00-update-answer",
+      "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+      "approxTokenCount": 90630,
+      "kind": "memory-update",
+      "stageId": "01-cp00-memory-update",
       "stageIndex": 1,
-      "visibleCharCount": 417789,
+      "visibleCharCount": 362520,
       "visibleDocCount": 180,
-      "visibleFileCount": 182
+      "visibleFileCount": 181
     },
     {
-      "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-      "approxTokenCount": 165374,
-      "kind": "update-answer",
-      "stageId": "02-cp01-update-answer",
+      "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+      "approxTokenCount": 147930,
+      "kind": "memory-update",
+      "stageId": "02-cp01-memory-update",
       "stageIndex": 2,
-      "visibleCharCount": 661497,
+      "visibleCharCount": 591721,
       "visibleDocCount": 286,
-      "visibleFileCount": 288
+      "visibleFileCount": 287
     },
     {
-      "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
-      "approxTokenCount": 150228,
-      "kind": "update-answer",
-      "stageId": "03-cp02-update-answer",
+      "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+      "approxTokenCount": 133694,
+      "kind": "memory-update",
+      "stageId": "03-cp02-memory-update",
       "stageIndex": 3,
-      "visibleCharCount": 600913,
+      "visibleCharCount": 534778,
       "visibleDocCount": 250,
-      "visibleFileCount": 252
+      "visibleFileCount": 251
+    },
+    {
+      "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
+      "approxTokenCount": 16543,
+      "kind": "downstream-task",
+      "stageId": "04-cp02-downstream-task",
+      "stageIndex": 4,
+      "visibleCharCount": 66173,
+      "visibleDocCount": 0,
+      "visibleFileCount": 1
     }
   ],
   "taskContract": "dataset-adapter/trajectory-v1",
-  "taskId": "dynamicmem-user001-cp00-02-trajectory-v1",
+  "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
   "taskType": "dynamicmem-native-background-memory-trajectory",
   "totals": {
-    "approxTokenCount": 420050,
-    "checkpointCount": 3,
-    "downstreamStageCount": 3,
-    "memoryUpdateStageCount": 0,
+    "approxTokenCount": 388798,
+    "checkpointCount": 1,
+    "downstreamStageCount": 1,
+    "memoryUpdateStageCount": 3,
     "observedRawLogCount": 716,
-    "personalizedServiceItemCount": 104,
-    "personalizedServiceKeyCount": 104,
-    "scoredCheckpointCount": 3,
+    "personalizedServiceItemCount": 37,
+    "personalizedServiceKeyCount": 37,
+    "scoredCheckpointCount": 1,
     "sourceApiCount": 39,
     "sourceAppCount": 16,
     "sourceCheckpointCount": 3,
-    "stageCount": 3,
-    "stateCompletionKeyCount": 104,
-    "uniqueStateCompletionKeyCount": 48,
-    "updateAnswerStageCount": 3,
-    "visibleCharCount": 1680199,
+    "stageCount": 4,
+    "stateCompletionKeyCount": 37,
+    "uniqueStateCompletionKeyCount": 37,
+    "updateAnswerStageCount": 0,
+    "visibleCharCount": 1555192,
     "visibleDocCount": 716,
-    "visibleFileCount": 722
+    "visibleFileCount": 720
   },
   "trajectory": {
     "checkpointIds": [

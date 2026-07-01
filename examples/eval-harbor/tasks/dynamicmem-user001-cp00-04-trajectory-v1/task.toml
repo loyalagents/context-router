@@ -33,6 +33,11 @@ mcp_servers = []
 workdir = "/app"
 
 [verifier.env]
+DYNAMICMEM_JUDGE_MODE = "llm"
+DYNAMICMEM_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
+DYNAMICMEM_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
+DYNAMICMEM_LLM_JUDGE_MAX_ITEMS = "0"
+DYNAMICMEM_STAGE_PATTERN = "update-answer-every-checkpoint"
 
 [environment.env]
 

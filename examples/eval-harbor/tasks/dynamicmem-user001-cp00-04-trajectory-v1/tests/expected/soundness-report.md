@@ -5,9 +5,11 @@ This report is for benchmark reviewers. It is hidden from the agent.
 ## Migration Contract
 
 - Harbor is only the runner.
-- Each stage is an update-and-answer checkpoint turn.
-- Each turn reveals only the raw DynamicMem app-log delta and native queries for that checkpoint.
-- Hidden expected files preserve the upstream checkpoint task packs across the trajectory.
+- Stage pattern: `update-answer-every-checkpoint`.
+- `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.
+- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.
+- `downstream-task` stages reveal native queries without raw documents and score retained memory use.
+- Hidden expected files preserve the scored upstream checkpoint task packs.
 - Agent-visible task files remove reference answers, reference outputs, scoring points, and gold evidence ids.
 
 ## What The Agent Sees
@@ -131,6 +133,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
     ]
   },
   "stagePattern": "update-answer -> update-answer -> update-answer -> update-answer -> update-answer",
+  "stagePatternName": "update-answer-every-checkpoint",
   "stages": [
     {
       "agentTask": "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
@@ -183,6 +186,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
       "visibleFileCount": 370
     }
   ],
+  "taskContract": "dataset-adapter/trajectory-v1",
   "taskId": "dynamicmem-user001-cp00-04-trajectory-v1",
   "taskType": "dynamicmem-native-background-memory-trajectory",
   "totals": {
@@ -193,8 +197,10 @@ This report is for benchmark reviewers. It is hidden from the agent.
     "observedRawLogCount": 1455,
     "personalizedServiceItemCount": 189,
     "personalizedServiceKeyCount": 189,
+    "scoredCheckpointCount": 5,
     "sourceApiCount": 46,
     "sourceAppCount": 16,
+    "sourceCheckpointCount": 5,
     "stageCount": 5,
     "stateCompletionKeyCount": 189,
     "uniqueStateCompletionKeyCount": 58,

@@ -8,6 +8,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from trajectory_framework import (
+    STAGE_KIND_DOWNSTREAM_TASK,
+    STAGE_KIND_MEMORY_UPDATE,
+    STAGE_KIND_UPDATE_ANSWER,
+)
+
 
 HIDDEN_MARKERS = [
     "tests/expected",
@@ -229,11 +235,16 @@ def validate_native_stage_contract(
         errors.append(f"{task_id}: native DynamicMem staged payload has no stages list")
         return errors
 
-    expected_kinds = ["update-answer"] * len(checkpoints)
     actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
-    if actual_kinds != expected_kinds:
+    is_update_answer = actual_kinds == [STAGE_KIND_UPDATE_ANSWER] * len(checkpoints)
+    is_memory_final = (
+        len(actual_kinds) >= 2
+        and actual_kinds[:-1] == [STAGE_KIND_MEMORY_UPDATE] * (len(actual_kinds) - 1)
+        and actual_kinds[-1] == STAGE_KIND_DOWNSTREAM_TASK
+    )
+    if not (is_update_answer or is_memory_final):
         errors.append(f"{task_id}: native DynamicMem stage kind pattern mismatch: {actual_kinds}")
-    if len(stages) != len(checkpoints):
+    if is_update_answer and len(stages) != len(checkpoints):
         errors.append(
             f"{task_id}: native DynamicMem stage/checkpoint count mismatch "
             f"stages={len(stages)} checkpoints={len(checkpoints)}"
@@ -266,13 +277,19 @@ def validate_native_stage_contract(
     seen_checkpoint_ids = []
     for stage, item in native_stage_files(staged):
         if item.get("path") == "dynamicmem-task.json":
-            if stage.get("kind") != "update-answer":
-                errors.append(f"{task_id}: dynamicmem-task.json must appear only in update-answer stages")
+            if stage.get("kind") not in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK}:
+                errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream/update-answer stages")
             payload = item.get("json")
             checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
             seen_checkpoint_ids.append(checkpoint_id)
             if payload != visible_by_checkpoint_id.get(checkpoint_id):
                 errors.append(f"{task_id}: staged dynamicmem-task.json does not match visible-tasks.json for {checkpoint_id}")
+        if stage.get("kind") == STAGE_KIND_MEMORY_UPDATE and item.get("path") == "dynamicmem-task.json":
+            errors.append(f"{task_id}: memory-update stage exposes dynamicmem-task.json")
+        if stage.get("kind") == STAGE_KIND_DOWNSTREAM_TASK and isinstance(item.get("path"), str) and item["path"].startswith("docs/"):
+            errors.append(f"{task_id}: downstream-task stage exposes raw docs")
+        if stage.get("kind") == STAGE_KIND_DOWNSTREAM_TASK and item.get("path") == "documents.json":
+            errors.append(f"{task_id}: downstream-task stage exposes documents.json")
     if seen_checkpoint_ids != expected_checkpoint_ids:
         errors.append(
             f"{task_id}: native DynamicMem task checkpoint exposure mismatch "
@@ -280,6 +297,8 @@ def validate_native_stage_contract(
         )
 
     totals = difficulty.get("totals", {})
+    if totals.get("stageCount") != len(stages):
+        errors.append(f"{task_id}: difficulty stageCount mismatch")
     actual_doc_count = len(raw_logs)
     actual_file_count = sum(len(stage.get("files", [])) for stage in stages if isinstance(stage, dict))
     if totals.get("visibleDocCount") != actual_doc_count:
@@ -288,6 +307,13 @@ def validate_native_stage_contract(
         errors.append(f"{task_id}: difficulty visibleFileCount mismatch")
     if totals.get("observedRawLogCount") != actual_doc_count:
         errors.append(f"{task_id}: difficulty observedRawLogCount mismatch")
+    if totals.get("memoryUpdateStageCount") != actual_kinds.count(STAGE_KIND_MEMORY_UPDATE):
+        errors.append(f"{task_id}: difficulty memoryUpdateStageCount mismatch")
+    if totals.get("updateAnswerStageCount") != actual_kinds.count(STAGE_KIND_UPDATE_ANSWER):
+        errors.append(f"{task_id}: difficulty updateAnswerStageCount mismatch")
+    expected_downstream_count = actual_kinds.count(STAGE_KIND_DOWNSTREAM_TASK) + actual_kinds.count(STAGE_KIND_UPDATE_ANSWER)
+    if totals.get("downstreamStageCount") != expected_downstream_count:
+        errors.append(f"{task_id}: difficulty downstreamStageCount mismatch")
     return errors
 
 

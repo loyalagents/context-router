@@ -10,6 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from trajectory_framework import (
+    PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+    PATTERN_UPDATE_ONLY_THEN_FINAL,
+    STAGE_PATTERNS,
+    stage_pattern_suffix,
+)
+
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_REASONING_EFFORT = "high"
@@ -26,6 +33,7 @@ class TaskPlan:
     checkpoint_indices: list[int]
     checkpoint_ids: list[str]
     checkpoint_timestamps: list[str]
+    stage_pattern: str
     observed_log_count: int
     state_completion_key_count: int
     unique_state_completion_key_count: int
@@ -95,7 +103,7 @@ def apply_counts(checkpoint: dict[str, Any]) -> tuple[int, int, list[str]]:
     return len(keys), item_count, sorted(families)
 
 
-def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[TaskPlan]:
+def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pattern: str) -> list[TaskPlan]:
     app_logs = load_json(source_dir / "app_log_large.json")
     task_packs = load_json(source_dir / "task_packs.json")
     checkpoints = task_packs["checkpoints"]
@@ -104,11 +112,8 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[
     user_label = compact_user_label(source_user_id)
     selected_indices = []
     selected_checkpoints = []
-    state_keys_seen: set[str] = set()
-    state_key_count = 0
-    rq_key_count_total = 0
-    rq_item_count_total = 0
-    service_families_seen: set[str] = set()
+    if stage_pattern not in STAGE_PATTERNS:
+        raise ValueError(f"unsupported stage pattern: {stage_pattern}")
 
     for index in checkpoint_indices:
         if index < 0 or index >= len(checkpoints):
@@ -120,16 +125,30 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[
             continue
         selected_indices.append(index)
         selected_checkpoints.append(checkpoint)
+
+    if not selected_indices:
+        return []
+
+    scored_checkpoints = (
+        [selected_checkpoints[-1]]
+        if stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL
+        else selected_checkpoints
+    )
+    state_keys_seen: set[str] = set()
+    state_key_count = 0
+    rq_key_count_total = 0
+    rq_item_count_total = 0
+    service_families_seen: set[str] = set()
+    for checkpoint in scored_checkpoints:
+        scp_keys = ((checkpoint.get("state_completion_pack") or {}).get("keys") or {})
+        rq_key_count, rq_item_count, service_families = apply_counts(checkpoint)
         state_key_count += len(scp_keys)
         state_keys_seen.update(str(key) for key in scp_keys)
         rq_key_count_total += rq_key_count
         rq_item_count_total += rq_item_count
         service_families_seen.update(service_families)
 
-    if not selected_indices:
-        return []
-
-    task_id = f"dynamicmem-{user_label}-{checkpoint_label(selected_indices)}-trajectory-v1"
+    task_id = f"dynamicmem-{user_label}-{checkpoint_label(selected_indices)}-{stage_pattern_suffix(stage_pattern)}"
     return [
         TaskPlan(
             task_id=task_id,
@@ -139,6 +158,7 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int]) -> list[
             checkpoint_indices=selected_indices,
             checkpoint_ids=[str(checkpoint.get("checkpoint_id") or "") for checkpoint in selected_checkpoints],
             checkpoint_timestamps=[checkpoint_timestamp(checkpoint) for checkpoint in selected_checkpoints],
+            stage_pattern=stage_pattern,
             observed_log_count=observed_log_count(selected_checkpoints[-1], app_logs),
             state_completion_key_count=state_key_count,
             unique_state_completion_key_count=len(state_keys_seen),
@@ -202,6 +222,7 @@ def generate_task(
             checkpoint_indices=tuple(plan.checkpoint_indices),
             model_name=model_name,
             reasoning_effort=reasoning_effort,
+            stage_pattern=plan.stage_pattern,
         ),
     )
 
@@ -238,6 +259,7 @@ def write_suite_manifest(
         },
         "modelName": model_name,
         "reasoningEffort": reasoning_effort,
+        "stagePatterns": sorted({plan.stage_pattern for plan in plans}),
         "agentConfig": {
             "agent": "codex",
             "modelName": model_name,
@@ -265,6 +287,7 @@ def write_suite_manifest(
                 "checkpointIndices": plan.checkpoint_indices,
                 "checkpointIds": plan.checkpoint_ids,
                 "checkpointTimestamps": plan.checkpoint_timestamps,
+                "stagePattern": plan.stage_pattern,
                 "finalCheckpointIndex": plan.checkpoint_indices[-1],
                 "finalCheckpointId": plan.checkpoint_ids[-1],
                 "finalCheckpointTimestamp": plan.checkpoint_timestamps[-1],
@@ -316,6 +339,11 @@ def main() -> int:
     parser.add_argument("--max-users", type=int, default=5)
     parser.add_argument("--max-tasks", type=int, default=10)
     parser.add_argument("--checkpoint-indices", default="0-4")
+    parser.add_argument(
+        "--stage-pattern",
+        default=PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+        choices=sorted(STAGE_PATTERNS),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -323,7 +351,11 @@ def main() -> int:
     arm_configs = load_arm_configs(args.arms_config)
     all_plans: list[tuple[Path, TaskPlan]] = []
     for source_dir in user_dirs(args.source_root)[: args.max_users]:
-        for plan in plan_user_tasks(source_dir, checkpoint_indices=checkpoint_indices):
+        for plan in plan_user_tasks(
+            source_dir,
+            checkpoint_indices=checkpoint_indices,
+            stage_pattern=args.stage_pattern,
+        ):
             all_plans.append((source_dir, plan))
             if len(all_plans) >= args.max_tasks:
                 break
@@ -337,6 +369,7 @@ def main() -> int:
         print(
             f"{plan.task_id}: user={plan.source_user_id} "
             f"checkpoints={','.join(str(index) for index in plan.checkpoint_indices)} "
+            f"stage_pattern={plan.stage_pattern} "
             f"logs={plan.observed_log_count} "
             f"state_keys={plan.state_completion_key_count} "
             f"service_items={plan.personalized_service_item_count}"

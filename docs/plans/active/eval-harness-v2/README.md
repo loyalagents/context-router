@@ -56,7 +56,7 @@ proved a Harbor blocker.
 | Artifacts | `/logs/artifacts/` convention and configured artifact collection | Store outputs, memory snapshots, logs, and score evidence as Harbor artifacts. |
 | Deterministic verifier | `tests/test.sh` and `reward.json` / `reward.txt` | Score form JSON locally after the agent exits. |
 | LLM-as-judge | Verifier scripts can call LLM APIs and write named scores | Add later for memory representation scoring if deterministic rules are too brittle. |
-| Long-horizon / over-time tasks | Multi-step tasks share one environment across ordered steps | Use later for dynamic memory update experiments. |
+| Long-horizon / over-time tasks | Single Harbor task with a stage-server sidecar for continuous-session reveal; multi-step only for explicit fresh-phase ablations | Use staged reveal for the default dynamic-memory comparison. |
 
 Cookbook recipes that map directly to this work:
 
@@ -110,6 +110,17 @@ suite manifests must report coverage over users, checkpoints, checkpoints per
 task, observed-log counts, state-completion key counts, Personalized Service
 item counts, and service families. This is the guardrail against accidental
 random task synthesis or narrow task slices.
+
+The first DynamicMem adapter supports two stage contracts:
+
+- `update-answer-every-checkpoint`: `UA(cp0) -> UA(cp1) -> ...`; every selected
+  checkpoint reveals log deltas plus native tasks and is scored.
+- `update-only-then-final`: `U(cp0) -> U(cp1) -> ... -> T(final)`; memory
+  stages reveal only log deltas, the final downstream task is hidden until the
+  last stage, and only that final checkpoint is scored.
+
+Future datasets should add their own adapter that emits the same staged
+trajectory contract rather than copying DynamicMem parsing/scoring code.
 
 ## V1 Non-Goals
 
