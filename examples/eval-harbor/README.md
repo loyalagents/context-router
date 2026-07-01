@@ -76,6 +76,12 @@ passes to Codex as `model_reasoning_effort`. The default is `high`; pass
 `--reasoning-effort low|medium|high|xhigh` when generating DynamicMem tasks or
 suites to change it intentionally.
 
+DynamicMem timeout settings are also explicit eval parameters. Generated tasks
+default to `--agent-timeout-sec 86400`, `--verifier-timeout-sec 86400`, and
+`--build-timeout-sec 600`. The suite manifest records these values under
+`timeouts`, so experiment reports can disclose them instead of relying on local
+defaults.
+
 Run the no-memory baseline:
 
 ```bash
@@ -471,7 +477,10 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --checkpoint-indices 0-4 \
   --stage-pattern update-answer-every-checkpoint \
   --model gpt-5.4-mini \
-  --reasoning-effort high
+  --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600
 ```
 
 Regenerate the three-turn smoke suite:
@@ -486,6 +495,9 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600 \
   --manifest examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
 ```
 
@@ -571,6 +583,9 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600 \
   --dry-run
 ```
 
@@ -586,6 +601,9 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600 \
   --manifest examples/eval-harbor/suites/dynamicmem-smoke.json
 ```
 

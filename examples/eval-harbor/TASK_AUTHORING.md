@@ -27,6 +27,11 @@ defaults. DynamicMem job generation writes `agents[].model_name` and
 across arms unless the experiment is explicitly a model/effort ablation, and
 make sure reports show both fields.
 
+Agent, verifier, and build timeouts are also controlled variables. DynamicMem
+generation exposes `--agent-timeout-sec`, `--verifier-timeout-sec`, and
+`--build-timeout-sec`; reports should disclose these values with the model,
+reasoning effort, judge model, and arm results.
+
 For DynamicMem-backed suites, define arms in
 `examples/eval-harbor/arms/dynamicmem-default.json` or pass another JSON file
 with `--arms-config`. Do not duplicate runner logic to add an arm. A new arm

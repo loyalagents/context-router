@@ -43,6 +43,9 @@ SOURCE_USER_ID = "user_001"
 CHECKPOINT_INDICES = (0, 1, 2, 3, 4)
 MODEL_NAME = "gpt-5.4-mini"
 REASONING_EFFORT = "high"
+DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
+DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
+DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
 
@@ -58,6 +61,9 @@ class BuildConfig:
     checkpoint_indices: tuple[int, ...] = CHECKPOINT_INDICES
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
+    agent_timeout_sec: float = DEFAULT_AGENT_TIMEOUT_SEC
+    verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC
+    build_timeout_sec: float = DEFAULT_BUILD_TIMEOUT_SEC
     stage_pattern: str = PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT
     stage_schedule: tuple[str, ...] | None = None
 
@@ -72,6 +78,12 @@ class BuildConfig:
             raise ValueError("checkpoint_indices must not be empty")
         if tuple(sorted(set(self.checkpoint_indices))) != self.checkpoint_indices:
             raise ValueError("checkpoint_indices must be sorted and unique")
+        if self.agent_timeout_sec <= 0:
+            raise ValueError("agent_timeout_sec must be positive")
+        if self.verifier_timeout_sec <= 0:
+            raise ValueError("verifier_timeout_sec must be positive")
+        if self.build_timeout_sec <= 0:
+            raise ValueError("build_timeout_sec must be positive")
         if self.stage_schedule is not None:
             if not self.stage_schedule:
                 raise ValueError("stage_schedule must not be empty")
@@ -1039,13 +1051,13 @@ category = "personal-memory"
 tags = ["dynamicmem", "background-memory", "continuous-session", "staged-reveal", "state-completion", "personalized-service", "native-task-pack"]
 
 [verifier]
-timeout_sec = 86400.0
+timeout_sec = {config.verifier_timeout_sec:.1f}
 
 [agent]
-timeout_sec = 86400.0
+timeout_sec = {config.agent_timeout_sec:.1f}
 
 [environment]
-build_timeout_sec = 600.0
+build_timeout_sec = {config.build_timeout_sec:.1f}
 cpus = 1
 memory_mb = 2048
 storage_mb = 10240
@@ -2177,7 +2189,10 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \\
   --checkpoint-indices {','.join(str(index) for index, _ in selected)} \\
   {render_stage_cli_arg(config)} \\
   --model {config.model_name} \\
-  --reasoning-effort {config.reasoning_effort}
+  --reasoning-effort {config.reasoning_effort} \\
+  --agent-timeout-sec {config.agent_timeout_sec:g} \\
+  --verifier-timeout-sec {config.verifier_timeout_sec:g} \\
+  --build-timeout-sec {config.build_timeout_sec:g}
 ```
 
 Do not expose `tests/expected/` files to agents.
@@ -2271,6 +2286,24 @@ def main() -> int:
         help="Codex model reasoning effort written into Harbor job kwargs.",
     )
     parser.add_argument(
+        "--agent-timeout-sec",
+        type=float,
+        default=DEFAULT_BUILD_CONFIG.agent_timeout_sec,
+        help="Harbor agent timeout in seconds written into task.toml.",
+    )
+    parser.add_argument(
+        "--verifier-timeout-sec",
+        type=float,
+        default=DEFAULT_BUILD_CONFIG.verifier_timeout_sec,
+        help="Harbor verifier timeout in seconds written into task.toml.",
+    )
+    parser.add_argument(
+        "--build-timeout-sec",
+        type=float,
+        default=DEFAULT_BUILD_CONFIG.build_timeout_sec,
+        help="Harbor environment build timeout in seconds written into task.toml.",
+    )
+    parser.add_argument(
         "--stage-pattern",
         default=DEFAULT_BUILD_CONFIG.stage_pattern,
         choices=sorted(STAGE_PATTERNS),
@@ -2308,6 +2341,9 @@ def main() -> int:
             checkpoint_indices=tuple(checkpoint_indices),
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
+            agent_timeout_sec=args.agent_timeout_sec,
+            verifier_timeout_sec=args.verifier_timeout_sec,
+            build_timeout_sec=args.build_timeout_sec,
             stage_pattern=args.stage_pattern,
             stage_schedule=stage_schedule,
         ),

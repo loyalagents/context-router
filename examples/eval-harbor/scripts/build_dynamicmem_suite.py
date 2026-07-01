@@ -22,6 +22,9 @@ from trajectory_framework import (
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_REASONING_EFFORT = "high"
+DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
+DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
+DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
 
@@ -241,6 +244,9 @@ def generate_task(
     jobs_root: Path,
     model_name: str,
     reasoning_effort: str,
+    agent_timeout_sec: float,
+    verifier_timeout_sec: float,
+    build_timeout_sec: float,
     arm_configs: list[dict[str, Any]],
 ) -> None:
     builder = importlib.import_module("build_dynamicmem_task")
@@ -257,6 +263,9 @@ def generate_task(
             checkpoint_indices=tuple(plan.checkpoint_indices),
             model_name=model_name,
             reasoning_effort=reasoning_effort,
+            agent_timeout_sec=agent_timeout_sec,
+            verifier_timeout_sec=verifier_timeout_sec,
+            build_timeout_sec=build_timeout_sec,
             stage_pattern=plan.stage_pattern,
             stage_schedule=tuple(plan.stage_schedule) if plan.stage_schedule is not None else None,
         ),
@@ -271,6 +280,9 @@ def write_suite_manifest(
     jobs_root: Path,
     model_name: str,
     reasoning_effort: str,
+    agent_timeout_sec: float,
+    verifier_timeout_sec: float,
+    build_timeout_sec: float,
     samples: int,
     arm_configs: list[dict[str, Any]],
 ) -> None:
@@ -301,6 +313,14 @@ def write_suite_manifest(
             "modelName": model_name,
             "reasoningEffort": reasoning_effort,
             "reasoningEffortConfigKey": "model_reasoning_effort",
+            "agentTimeoutSec": agent_timeout_sec,
+            "verifierTimeoutSec": verifier_timeout_sec,
+            "buildTimeoutSec": build_timeout_sec,
+        },
+        "timeouts": {
+            "agentSec": agent_timeout_sec,
+            "verifierSec": verifier_timeout_sec,
+            "buildSec": build_timeout_sec,
         },
         "samplesPerTaskArm": samples,
         "paths": {"tasksRoot": str(tasks_root), "jobsRoot": str(jobs_root)},
@@ -312,6 +332,9 @@ def write_suite_manifest(
                 "instructionPath": arm["instructionPath"],
                 "compose": arm.get("compose", "staged"),
                 "reasoningEffort": reasoning_effort,
+                "agentTimeoutSec": agent_timeout_sec,
+                "verifierTimeoutSec": verifier_timeout_sec,
+                "buildTimeoutSec": build_timeout_sec,
             }
             for arm in arm_configs
         ],
@@ -375,6 +398,24 @@ def main() -> int:
         choices=sorted(REASONING_EFFORT_CHOICES),
         help="Codex reasoning effort written into every generated Harbor job.",
     )
+    parser.add_argument(
+        "--agent-timeout-sec",
+        type=float,
+        default=DEFAULT_AGENT_TIMEOUT_SEC,
+        help="Harbor agent timeout in seconds written into every generated task.toml.",
+    )
+    parser.add_argument(
+        "--verifier-timeout-sec",
+        type=float,
+        default=DEFAULT_VERIFIER_TIMEOUT_SEC,
+        help="Harbor verifier timeout in seconds written into every generated task.toml.",
+    )
+    parser.add_argument(
+        "--build-timeout-sec",
+        type=float,
+        default=DEFAULT_BUILD_TIMEOUT_SEC,
+        help="Harbor environment build timeout in seconds written into every generated task.toml.",
+    )
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--max-users", type=int, default=5)
     parser.add_argument("--max-tasks", type=int, default=10)
@@ -432,6 +473,9 @@ def main() -> int:
                 jobs_root=args.jobs_root,
                 model_name=args.model,
                 reasoning_effort=args.reasoning_effort,
+                agent_timeout_sec=args.agent_timeout_sec,
+                verifier_timeout_sec=args.verifier_timeout_sec,
+                build_timeout_sec=args.build_timeout_sec,
                 arm_configs=arm_configs,
             )
 
@@ -446,6 +490,9 @@ def main() -> int:
         jobs_root=args.jobs_root,
         model_name=args.model,
         reasoning_effort=args.reasoning_effort,
+        agent_timeout_sec=args.agent_timeout_sec,
+        verifier_timeout_sec=args.verifier_timeout_sec,
+        build_timeout_sec=args.build_timeout_sec,
         samples=args.samples,
         arm_configs=arm_configs,
     )

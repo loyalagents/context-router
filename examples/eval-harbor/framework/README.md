@@ -176,7 +176,10 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --checkpoint-indices 0-2 \
   --stage-pattern update-only-then-final \
   --model gpt-5.4-mini \
-  --reasoning-effort high
+  --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600
 ```
 
 Generate a suite:
@@ -191,8 +194,15 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600 \
   --manifest examples/eval-harbor/suites/dynamicmem-memory-final-smoke.json
 ```
+
+Timeouts are part of the experiment contract, not hidden local defaults. The
+DynamicMem builders write these values into generated `task.toml` files, and
+the suite builder records them in the suite manifest under `timeouts`.
 
 Use `--stage-pattern update-answer-every-checkpoint` for `UA -> UA -> ...`
 tasks.
@@ -209,7 +219,10 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --checkpoint-indices 0-2 \
   --stage-schedule U,U,T,U,T \
   --model gpt-5.4-mini \
-  --reasoning-effort high
+  --reasoning-effort high \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600
 ```
 
 The builder rejects schedules that start with `T`, score the same checkpoint
