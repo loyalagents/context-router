@@ -187,12 +187,25 @@ def score_structured_answer(answer, item):
     return 1.0 if answer == reference_output else 0.0
 
 
+def predicted_apply_items(predicted, state_key):
+    if not isinstance(predicted, dict):
+        return []
+    node = predicted.get(state_key)
+    if isinstance(node, dict):
+        items = node.get("items") or []
+    elif isinstance(node, list):
+        items = node
+    else:
+        items = []
+    return [item for item in items if isinstance(item, dict)]
+
+
 def score_apply(checkpoint, prediction):
     predicted = prediction.get("rq3_apply_answers") or {}
     rows, scores = [], []
     for state_key, item in expected_apply_items(checkpoint):
         qa_id = str(item.get("qa_id") or "")
-        pred_items = ((predicted.get(state_key) or {}).get("items") or [])
+        pred_items = predicted_apply_items(predicted, state_key)
         pred_item = next((row for row in pred_items if str(row.get("qa_id") or "") == qa_id), None)
         if not isinstance(pred_item, dict):
             rows.append({"stateKey": state_key, "qaId": qa_id, "score": 0.0, "reason": "missing"})
@@ -241,7 +254,7 @@ def state_question(checkpoint, state_key):
 
 def predicted_apply_item(prediction, state_key, qa_id):
     predicted = prediction.get("rq3_apply_answers") or {}
-    pred_items = ((predicted.get(state_key) or {}).get("items") or [])
+    pred_items = predicted_apply_items(predicted, state_key)
     return next((row for row in pred_items if str(row.get("qa_id") or "") == qa_id), None)
 
 
