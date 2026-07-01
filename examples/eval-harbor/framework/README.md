@@ -197,6 +197,25 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
 Use `--stage-pattern update-answer-every-checkpoint` for `UA -> UA -> ...`
 tasks.
 
+Use `--stage-schedule` when a task needs an explicit interleaved trajectory.
+`U` and `UA` each consume one selected checkpoint; `T` consumes no new logs and
+asks the downstream task for the most recently updated checkpoint. For example,
+this creates `U(checkpoint 0) -> U(checkpoint 1) -> T(checkpoint 1) ->
+U(checkpoint 2) -> T(checkpoint 2)`:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
+  --source-dir /path/to/DynamicMem/001_user_001 \
+  --checkpoint-indices 0-2 \
+  --stage-schedule U,U,T,U,T \
+  --model gpt-5.4-mini \
+  --reasoning-effort high
+```
+
+The builder rejects schedules that start with `T`, score the same checkpoint
+twice, leave the final updated checkpoint unscored, or have a different number
+of `U`/`UA` tokens than selected checkpoints.
+
 ## Adding A New Dataset
 
 To add a new dataset, create a dataset adapter instead of changing the runner.

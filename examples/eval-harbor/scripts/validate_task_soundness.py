@@ -236,19 +236,41 @@ def validate_native_stage_contract(
         return errors
 
     actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
+    allowed_kinds = {
+        STAGE_KIND_UPDATE_ANSWER,
+        STAGE_KIND_MEMORY_UPDATE,
+        STAGE_KIND_DOWNSTREAM_TASK,
+    }
     is_update_answer = actual_kinds == [STAGE_KIND_UPDATE_ANSWER] * len(checkpoints)
     is_memory_final = (
         len(actual_kinds) >= 2
         and actual_kinds[:-1] == [STAGE_KIND_MEMORY_UPDATE] * (len(actual_kinds) - 1)
         and actual_kinds[-1] == STAGE_KIND_DOWNSTREAM_TASK
     )
-    if not (is_update_answer or is_memory_final):
+    is_custom_valid = (
+        bool(actual_kinds)
+        and all(kind in allowed_kinds for kind in actual_kinds)
+        and any(kind in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK} for kind in actual_kinds)
+    )
+    if not (is_update_answer or is_memory_final or is_custom_valid):
         errors.append(f"{task_id}: native DynamicMem stage kind pattern mismatch: {actual_kinds}")
     if is_update_answer and len(stages) != len(checkpoints):
         errors.append(
             f"{task_id}: native DynamicMem stage/checkpoint count mismatch "
             f"stages={len(stages)} checkpoints={len(checkpoints)}"
         )
+    updated_checkpoint_ids: set[str] = set()
+    for stage in stages:
+        if not isinstance(stage, dict):
+            continue
+        kind = stage.get("kind")
+        checkpoint_id = str(stage.get("checkpointId") or "")
+        if kind in {STAGE_KIND_MEMORY_UPDATE, STAGE_KIND_UPDATE_ANSWER} and checkpoint_id:
+            updated_checkpoint_ids.add(checkpoint_id)
+        if kind == STAGE_KIND_DOWNSTREAM_TASK and checkpoint_id not in updated_checkpoint_ids:
+            errors.append(
+                f"{task_id}: downstream-task stage appears before update for checkpoint {checkpoint_id}"
+            )
 
     raw_logs = native_raw_log_items(staged)
     raw_log_ids = [str(log.get("app_log_id") or "") for log in raw_logs]

@@ -7,6 +7,7 @@ dataset-specific scoring in their own verifier.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,6 +28,16 @@ PATTERN_UPDATE_ONLY_THEN_FINAL = "update-only-then-final"
 STAGE_PATTERNS = {
     PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
     PATTERN_UPDATE_ONLY_THEN_FINAL,
+}
+
+STAGE_SHORTHANDS = {
+    "UA": STAGE_KIND_UPDATE_ANSWER,
+    "U": STAGE_KIND_MEMORY_UPDATE,
+    "T": STAGE_KIND_DOWNSTREAM_TASK,
+}
+
+STAGE_KIND_SHORTHANDS = {
+    value: key for key, value in STAGE_SHORTHANDS.items()
 }
 
 
@@ -64,6 +75,36 @@ def stage_pattern_suffix(stage_pattern: str) -> str:
         return "memory-final-v1"
     choices = ", ".join(sorted(STAGE_PATTERNS))
     raise ValueError(f"stage_pattern must be one of: {choices}")
+
+
+def parse_stage_schedule(value: str) -> tuple[str, ...]:
+    tokens = [
+        token.strip().upper()
+        for token in re.split(r"\s*(?:->|,|\s+)\s*", value.strip())
+        if token.strip()
+    ]
+    if not tokens:
+        raise ValueError("stage schedule must not be empty")
+    unknown = [token for token in tokens if token not in STAGE_SHORTHANDS]
+    if unknown:
+        choices = ", ".join(sorted(STAGE_SHORTHANDS))
+        raise ValueError(f"unsupported stage schedule token(s) {unknown}; use {choices}")
+    return tuple(STAGE_SHORTHANDS[token] for token in tokens)
+
+
+def stage_schedule_label(schedule: tuple[str, ...]) -> str:
+    return " -> ".join(STAGE_KIND_SHORTHANDS.get(kind, kind) for kind in schedule)
+
+
+def stage_schedule_suffix(schedule: tuple[str, ...]) -> str:
+    if not schedule:
+        raise ValueError("stage schedule must not be empty")
+    parts = []
+    for kind in schedule:
+        if kind not in STAGE_KIND_SHORTHANDS:
+            raise ValueError(f"unsupported stage schedule kind: {kind}")
+        parts.append(STAGE_KIND_SHORTHANDS[kind].lower())
+    return f"schedule-{''.join(parts)}-v1"
 
 
 def count_stage_kinds(stages: list[dict[str, Any]]) -> dict[str, int]:

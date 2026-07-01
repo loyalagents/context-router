@@ -12,9 +12,11 @@ from typing import Any
 
 from trajectory_framework import (
     PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
-    PATTERN_UPDATE_ONLY_THEN_FINAL,
     STAGE_PATTERNS,
+    parse_stage_schedule,
     stage_pattern_suffix,
+    stage_schedule_label,
+    stage_schedule_suffix,
 )
 
 
@@ -34,6 +36,9 @@ class TaskPlan:
     checkpoint_ids: list[str]
     checkpoint_timestamps: list[str]
     stage_pattern: str
+    stage_schedule: list[str] | None
+    stage_schedule_display: str
+    scored_checkpoint_ids: list[str]
     observed_log_count: int
     state_completion_key_count: int
     unique_state_completion_key_count: int
@@ -103,7 +108,21 @@ def apply_counts(checkpoint: dict[str, Any]) -> tuple[int, int, list[str]]:
     return len(keys), item_count, sorted(families)
 
 
-def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pattern: str) -> list[TaskPlan]:
+def stage_contract_suffix(stage_pattern: str, stage_schedule: tuple[str, ...] | None) -> str:
+    return stage_schedule_suffix(stage_schedule) if stage_schedule is not None else stage_pattern_suffix(stage_pattern)
+
+
+def stage_contract_display(stage_pattern: str, stage_schedule: tuple[str, ...] | None) -> str:
+    return stage_schedule_label(stage_schedule) if stage_schedule is not None else stage_pattern
+
+
+def plan_user_tasks(
+    source_dir: Path,
+    *,
+    checkpoint_indices: list[int],
+    stage_pattern: str,
+    stage_schedule: tuple[str, ...] | None = None,
+) -> list[TaskPlan]:
     app_logs = load_json(source_dir / "app_log_large.json")
     task_packs = load_json(source_dir / "task_packs.json")
     checkpoints = task_packs["checkpoints"]
@@ -112,7 +131,7 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pa
     user_label = compact_user_label(source_user_id)
     selected_indices = []
     selected_checkpoints = []
-    if stage_pattern not in STAGE_PATTERNS:
+    if stage_schedule is None and stage_pattern not in STAGE_PATTERNS:
         raise ValueError(f"unsupported stage pattern: {stage_pattern}")
 
     for index in checkpoint_indices:
@@ -129,11 +148,24 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pa
     if not selected_indices:
         return []
 
-    scored_checkpoints = (
-        [selected_checkpoints[-1]]
-        if stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL
-        else selected_checkpoints
+    builder = importlib.import_module("build_dynamicmem_task")
+    stage_specs = [
+        {"checkpointIndex": index, "checkpoint": checkpoint}
+        for index, checkpoint in zip(selected_indices, selected_checkpoints)
+    ]
+    stage_plan = builder.resolve_stage_plan(
+        stage_specs,
+        builder.BuildConfig(
+            task_id="suite-plan",
+            corpus_id="suite-plan-corpus",
+            source_user_dir=source_user_dir,
+            source_user_id=source_user_id,
+            checkpoint_indices=tuple(selected_indices),
+            stage_pattern=stage_pattern,
+            stage_schedule=stage_schedule,
+        ),
     )
+    scored_checkpoints = [item.spec["checkpoint"] for item in stage_plan if item.scores_checkpoint]
     state_keys_seen: set[str] = set()
     state_key_count = 0
     rq_key_count_total = 0
@@ -148,7 +180,7 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pa
         rq_item_count_total += rq_item_count
         service_families_seen.update(service_families)
 
-    task_id = f"dynamicmem-{user_label}-{checkpoint_label(selected_indices)}-{stage_pattern_suffix(stage_pattern)}"
+    task_id = f"dynamicmem-{user_label}-{checkpoint_label(selected_indices)}-{stage_contract_suffix(stage_pattern, stage_schedule)}"
     return [
         TaskPlan(
             task_id=task_id,
@@ -159,6 +191,9 @@ def plan_user_tasks(source_dir: Path, *, checkpoint_indices: list[int], stage_pa
             checkpoint_ids=[str(checkpoint.get("checkpoint_id") or "") for checkpoint in selected_checkpoints],
             checkpoint_timestamps=[checkpoint_timestamp(checkpoint) for checkpoint in selected_checkpoints],
             stage_pattern=stage_pattern,
+            stage_schedule=list(stage_schedule) if stage_schedule is not None else None,
+            stage_schedule_display=stage_contract_display(stage_pattern, stage_schedule),
+            scored_checkpoint_ids=[str(checkpoint.get("checkpoint_id") or "") for checkpoint in scored_checkpoints],
             observed_log_count=observed_log_count(selected_checkpoints[-1], app_logs),
             state_completion_key_count=state_key_count,
             unique_state_completion_key_count=len(state_keys_seen),
@@ -223,6 +258,7 @@ def generate_task(
             model_name=model_name,
             reasoning_effort=reasoning_effort,
             stage_pattern=plan.stage_pattern,
+            stage_schedule=tuple(plan.stage_schedule) if plan.stage_schedule is not None else None,
         ),
     )
 
@@ -268,6 +304,7 @@ def write_suite_manifest(
         },
         "samplesPerTaskArm": samples,
         "paths": {"tasksRoot": str(tasks_root), "jobsRoot": str(jobs_root)},
+        "stageSchedules": sorted({plan.stage_schedule_display for plan in plans}),
         "arms": [
             {
                 "mode": arm["mode"],
@@ -288,6 +325,9 @@ def write_suite_manifest(
                 "checkpointIds": plan.checkpoint_ids,
                 "checkpointTimestamps": plan.checkpoint_timestamps,
                 "stagePattern": plan.stage_pattern,
+                "stageSchedule": plan.stage_schedule,
+                "stageScheduleDisplay": plan.stage_schedule_display,
+                "scoredCheckpointIds": plan.scored_checkpoint_ids,
                 "finalCheckpointIndex": plan.checkpoint_indices[-1],
                 "finalCheckpointId": plan.checkpoint_ids[-1],
                 "finalCheckpointTimestamp": plan.checkpoint_timestamps[-1],
@@ -344,10 +384,19 @@ def main() -> int:
         default=PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
         choices=sorted(STAGE_PATTERNS),
     )
+    parser.add_argument(
+        "--stage-schedule",
+        default=None,
+        help=(
+            "Custom staged trajectory using U, T, and UA tokens, for example "
+            "'U,U,T,U,T'. When set, this overrides --stage-pattern."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
+    stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
     arm_configs = load_arm_configs(args.arms_config)
     all_plans: list[tuple[Path, TaskPlan]] = []
     for source_dir in user_dirs(args.source_root)[: args.max_users]:
@@ -355,6 +404,7 @@ def main() -> int:
             source_dir,
             checkpoint_indices=checkpoint_indices,
             stage_pattern=args.stage_pattern,
+            stage_schedule=stage_schedule,
         ):
             all_plans.append((source_dir, plan))
             if len(all_plans) >= args.max_tasks:
@@ -369,7 +419,7 @@ def main() -> int:
         print(
             f"{plan.task_id}: user={plan.source_user_id} "
             f"checkpoints={','.join(str(index) for index in plan.checkpoint_indices)} "
-            f"stage_pattern={plan.stage_pattern} "
+            f"stage_schedule={plan.stage_schedule_display} "
             f"logs={plan.observed_log_count} "
             f"state_keys={plan.state_completion_key_count} "
             f"service_items={plan.personalized_service_item_count}"

@@ -589,6 +589,15 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --manifest examples/eval-harbor/suites/dynamicmem-smoke.json
 ```
 
+Use `--stage-schedule` for explicit interleaved trajectories. `U` and `UA`
+consume one selected checkpoint; `T` asks the downstream task for the most
+recently updated checkpoint. For example, `--checkpoint-indices 0-2
+--stage-schedule U,U,T,U,T` creates:
+
+```text
+U(checkpoint 0) -> U(checkpoint 1) -> T(checkpoint 1) -> U(checkpoint 2) -> T(checkpoint 2)
+```
+
 Inspect the native-source coverage:
 
 ```bash

@@ -29,7 +29,10 @@ from trajectory_framework import (
     STAGE_KIND_UPDATE_ANSWER,
     STAGE_PATTERNS,
     TrajectoryStage,
+    parse_stage_schedule,
     stage_pattern_suffix,
+    stage_schedule_label,
+    stage_schedule_suffix,
 )
 
 
@@ -56,6 +59,7 @@ class BuildConfig:
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
     stage_pattern: str = PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT
+    stage_schedule: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         if self.reasoning_effort not in REASONING_EFFORT_CHOICES:
@@ -68,6 +72,26 @@ class BuildConfig:
             raise ValueError("checkpoint_indices must not be empty")
         if tuple(sorted(set(self.checkpoint_indices))) != self.checkpoint_indices:
             raise ValueError("checkpoint_indices must be sorted and unique")
+        if self.stage_schedule is not None:
+            if not self.stage_schedule:
+                raise ValueError("stage_schedule must not be empty")
+            invalid = [kind for kind in self.stage_schedule if kind not in {
+                STAGE_KIND_UPDATE_ANSWER,
+                STAGE_KIND_MEMORY_UPDATE,
+                STAGE_KIND_DOWNSTREAM_TASK,
+            }]
+            if invalid:
+                raise ValueError(f"unsupported stage_schedule kind(s): {invalid}")
+
+    @property
+    def stage_contract_name(self) -> str:
+        return "custom-stage-schedule" if self.stage_schedule is not None else self.stage_pattern
+
+    @property
+    def stage_contract_display(self) -> str:
+        if self.stage_schedule is not None:
+            return stage_schedule_label(self.stage_schedule)
+        return self.stage_pattern
 
 
 DEFAULT_BUILD_CONFIG = BuildConfig()
@@ -465,6 +489,82 @@ def visible_dynamicmem_task(
     }
 
 
+@dataclass(frozen=True)
+class StagePlanItem:
+    kind: str
+    spec: dict[str, Any]
+    scores_checkpoint: bool
+
+
+def preset_stage_schedule(config: BuildConfig, checkpoint_count: int) -> tuple[str, ...]:
+    if config.stage_schedule is not None:
+        return config.stage_schedule
+    if config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT:
+        return tuple(STAGE_KIND_UPDATE_ANSWER for _ in range(checkpoint_count))
+    if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
+        return tuple(STAGE_KIND_MEMORY_UPDATE for _ in range(checkpoint_count)) + (
+            STAGE_KIND_DOWNSTREAM_TASK,
+        )
+    raise ValueError(f"unsupported stage pattern: {config.stage_pattern}")
+
+
+def resolve_stage_plan(
+    stage_specs: list[dict[str, Any]],
+    config: BuildConfig = DEFAULT_BUILD_CONFIG,
+) -> list[StagePlanItem]:
+    schedule = preset_stage_schedule(config, len(stage_specs))
+    update_kinds = {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_MEMORY_UPDATE}
+    update_count = sum(1 for kind in schedule if kind in update_kinds)
+    if update_count != len(stage_specs):
+        raise ValueError(
+            "stage schedule must contain exactly one U/UA token per selected "
+            f"checkpoint: updates={update_count} checkpoints={len(stage_specs)}"
+        )
+
+    checkpoint_cursor = 0
+    latest_spec: dict[str, Any] | None = None
+    stage_plan: list[StagePlanItem] = []
+    scored_checkpoint_ids: set[str] = set()
+
+    for kind in schedule:
+        if kind in update_kinds:
+            if checkpoint_cursor >= len(stage_specs):
+                raise ValueError("stage schedule consumes more checkpoints than selected")
+            spec = stage_specs[checkpoint_cursor]
+            checkpoint_cursor += 1
+            latest_spec = spec
+            scores_checkpoint = kind == STAGE_KIND_UPDATE_ANSWER
+        elif kind == STAGE_KIND_DOWNSTREAM_TASK:
+            if latest_spec is None:
+                raise ValueError("stage schedule cannot reveal T before any U/UA stage")
+            spec = latest_spec
+            scores_checkpoint = True
+        else:
+            raise ValueError(f"unsupported stage schedule kind: {kind}")
+
+        if scores_checkpoint:
+            checkpoint_id = str(spec["checkpoint"].get("checkpoint_id") or "")
+            if checkpoint_id in scored_checkpoint_ids:
+                raise ValueError(f"stage schedule scores checkpoint more than once: {checkpoint_id}")
+            scored_checkpoint_ids.add(checkpoint_id)
+        stage_plan.append(StagePlanItem(kind=kind, spec=spec, scores_checkpoint=scores_checkpoint))
+
+    if checkpoint_cursor != len(stage_specs):
+        raise ValueError("stage schedule did not consume every selected checkpoint")
+    if not scored_checkpoint_ids:
+        raise ValueError("stage schedule must include at least one T or UA scored checkpoint")
+    if latest_spec is not None:
+        latest_checkpoint_id = str(latest_spec["checkpoint"].get("checkpoint_id") or "")
+        if latest_checkpoint_id not in scored_checkpoint_ids:
+            raise ValueError("stage schedule must score the final updated checkpoint")
+
+    return stage_plan
+
+
+def scored_specs_from_stage_plan(stage_plan: list[StagePlanItem]) -> list[dict[str, Any]]:
+    return [item.spec for item in stage_plan if item.scores_checkpoint]
+
+
 def hidden_benchmark(task_packs: dict[str, Any], checkpoints: list[dict[str, Any]]) -> dict[str, Any]:
     out = {
         key: deepcopy(value)
@@ -546,14 +646,25 @@ def build_difficulty(
         str((checkpoint.get("as_of") or {}).get("timestamp") or "")
         for _, checkpoint in checkpoints
     ]
+    scored_checkpoint_ids = [
+        str((task.get("checkpoint") or {}).get("checkpoint_id") or "")
+        for task in visible_tasks
+    ]
+    kind_sequence = [stage["kind"] for stage in stages]
+    is_memory_final = (
+        len(kind_sequence) >= 2
+        and kind_sequence[:-1] == [STAGE_KIND_MEMORY_UPDATE] * (len(kind_sequence) - 1)
+        and kind_sequence[-1] == STAGE_KIND_DOWNSTREAM_TASK
+    )
     return {
         "schemaVersion": 1,
         "taskId": config.task_id,
         "taskType": "dynamicmem-native-background-memory-trajectory",
         "taskContract": "dataset-adapter/trajectory-v1",
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
-        "stagePatternName": config.stage_pattern,
-        "stagePattern": " -> ".join(stage["kind"] for stage in stages),
+        "stagePatternName": config.stage_contract_name,
+        "stagePattern": " -> ".join(kind_sequence),
+        "stageSchedule": config.stage_contract_display,
         "trajectory": {
             "sourceUserDir": config.source_user_dir,
             "sourceUserId": config.source_user_id,
@@ -563,6 +674,7 @@ def build_difficulty(
             "finalCheckpointIndex": checkpoints[-1][0],
             "finalCheckpointId": checkpoint_ids[-1],
             "finalCheckpointTimestamp": checkpoint_timestamps[-1],
+            "scoredCheckpointIds": scored_checkpoint_ids,
         },
         "stages": stages,
         "totals": {
@@ -598,9 +710,14 @@ def build_difficulty(
         "challengeSignals": {
             "multiStage": len(stages) > 1,
             "checkpointTrajectory": len(checkpoints) > 1,
-            "updateAnswerEveryCheckpoint": config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+            "customStageSchedule": config.stage_schedule is not None,
+            "updateAnswerEveryCheckpoint": all(kind == STAGE_KIND_UPDATE_ANSWER for kind in kind_sequence),
             "hiddenFutureCheckpoints": True,
-            "hiddenDownstreamUntilFinalStage": config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL,
+            "hiddenDownstreamUntilFinalStage": is_memory_final,
+            "interleavedDownstreamTasks": any(
+                kind == STAGE_KIND_DOWNSTREAM_TASK
+                for kind in kind_sequence[:-1]
+            ),
             "nativeStateCompletion": True,
             "nativePersonalizedService": True,
             "deltaRawCheckpointHistory": True,
@@ -615,78 +732,55 @@ def build_stage_payload(
     config: BuildConfig = DEFAULT_BUILD_CONFIG,
 ) -> dict[str, Any]:
     stages: list[dict[str, Any]] = []
-    if config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT:
-        total_stages = len(stage_specs)
-        for index, spec in enumerate(stage_specs, start=1):
-            checkpoint_index = spec["checkpointIndex"]
-            checkpoint = spec["checkpoint"]
-            visible_task = spec["visibleTask"]
-            logs = spec["logs"]
-            stage_id = f"{index:02d}-cp{checkpoint_index:02d}-update-answer"
-            stages.append(
-                TrajectoryStage(
-                    stage_id=stage_id,
-                    stage_index=index,
-                    checkpoint_index=checkpoint_index,
-                    checkpoint_id=checkpoint.get("checkpoint_id"),
-                    kind=STAGE_KIND_UPDATE_ANSWER,
-                    instruction=render_update_answer_stage_instruction(index, total_stages, checkpoint),
-                    files=[
-                        *documents_payload(
-                            logs,
-                            purpose=(
-                                "Raw DynamicMem app-log delta visible for this checkpoint "
-                                "trajectory stage."
-                            ),
-                            config=config,
-                        ),
-                        {"path": "dynamicmem-task.json", "json": visible_task},
-                    ],
-                ).as_payload()
-            )
-    elif config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
-        total_stages = len(stage_specs) + 1
-        for index, spec in enumerate(stage_specs, start=1):
-            checkpoint_index = spec["checkpointIndex"]
-            checkpoint = spec["checkpoint"]
-            logs = spec["logs"]
-            stage_id = f"{index:02d}-cp{checkpoint_index:02d}-memory-update"
-            stages.append(
-                TrajectoryStage(
-                    stage_id=stage_id,
-                    stage_index=index,
-                    checkpoint_index=checkpoint_index,
-                    checkpoint_id=checkpoint.get("checkpoint_id"),
-                    kind=STAGE_KIND_MEMORY_UPDATE,
-                    instruction=render_memory_update_stage_instruction(index, total_stages, checkpoint),
-                    files=documents_payload(
-                        logs,
-                        purpose=(
-                            "Raw DynamicMem app-log delta visible for a memory-update "
-                            "stage. No downstream task is visible in this stage."
-                        ),
-                        config=config,
+    stage_plan = resolve_stage_plan(stage_specs, config)
+    total_stages = len(stage_plan)
+    for index, item in enumerate(stage_plan, start=1):
+        spec = item.spec
+        checkpoint_index = spec["checkpointIndex"]
+        checkpoint = spec["checkpoint"]
+        visible_task = spec["visibleTask"]
+        logs = spec["logs"]
+        stage_id = f"{index:02d}-cp{checkpoint_index:02d}-{item.kind}"
+        files: list[dict[str, Any]]
+        if item.kind == STAGE_KIND_UPDATE_ANSWER:
+            instruction = render_update_answer_stage_instruction(index, total_stages, checkpoint)
+            files = [
+                *documents_payload(
+                    logs,
+                    purpose=(
+                        "Raw DynamicMem app-log delta visible for this update-answer "
+                        "checkpoint stage."
                     ),
-                ).as_payload()
+                    config=config,
+                ),
+                {"path": "dynamicmem-task.json", "json": visible_task},
+            ]
+        elif item.kind == STAGE_KIND_MEMORY_UPDATE:
+            instruction = render_memory_update_stage_instruction(index, total_stages, checkpoint)
+            files = documents_payload(
+                logs,
+                purpose=(
+                    "Raw DynamicMem app-log delta visible for a memory-update "
+                    "stage. No downstream task is visible in this stage."
+                ),
+                config=config,
             )
-        final_spec = stage_specs[-1]
-        final_index = len(stage_specs) + 1
-        final_checkpoint_index = final_spec["checkpointIndex"]
-        final_checkpoint = final_spec["checkpoint"]
-        stage_id = f"{final_index:02d}-cp{final_checkpoint_index:02d}-downstream-task"
+        elif item.kind == STAGE_KIND_DOWNSTREAM_TASK:
+            instruction = render_downstream_task_stage_instruction(index, total_stages, checkpoint)
+            files = [{"path": "dynamicmem-task.json", "json": visible_task}]
+        else:
+            raise ValueError(f"unsupported stage schedule kind: {item.kind}")
         stages.append(
             TrajectoryStage(
                 stage_id=stage_id,
-                stage_index=final_index,
-                checkpoint_index=final_checkpoint_index,
-                checkpoint_id=final_checkpoint.get("checkpoint_id"),
-                kind=STAGE_KIND_DOWNSTREAM_TASK,
-                instruction=render_downstream_task_stage_instruction(final_index, total_stages, final_checkpoint),
-                files=[{"path": "dynamicmem-task.json", "json": final_spec["visibleTask"]}],
+                stage_index=index,
+                checkpoint_index=checkpoint_index,
+                checkpoint_id=checkpoint.get("checkpoint_id"),
+                kind=item.kind,
+                instruction=instruction,
+                files=files,
             ).as_payload()
         )
-    else:
-        raise ValueError(f"unsupported stage pattern: {config.stage_pattern}")
     return {
         "schemaVersion": 1,
         "taskId": config.task_id,
@@ -702,7 +796,31 @@ def build_stage_payload(
 
 
 def render_instruction(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
-    if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
+    if config.stage_schedule is not None:
+        stage_contract = f"""The generated stage schedule is:
+
+```text
+{config.stage_contract_display}
+```
+
+Stages can have three roles:
+
+- `memory-update`: read only the newly revealed raw app-log delta and update the
+  memory/state allowed by the selected eval mode. Do not create or modify
+  `outputs/prediction.json` in these stages.
+- `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
+  and answer using retained memory from earlier stages.
+- `update-answer`: read newly revealed raw app-log deltas plus
+  `dynamicmem-task.json`, then both update memory and answer."""
+        steps = """1. Run `/app/next_stage` to reveal the next stage.
+2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
+   update only the allowed memory/state.
+3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
+   `outputs/prediction.json` without using raw docs from the stage.
+4. If the stage is `update-answer`, read both the raw app-log delta and
+   `dynamicmem-task.json`, then update memory and write/update the prediction.
+5. Repeat until `/app/next_stage` says no more stages are available."""
+    elif config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
         stage_contract = """Stages can have two roles:
 
 - `memory-update`: read only the newly revealed raw app-log delta and update the
@@ -940,7 +1058,8 @@ DYNAMICMEM_JUDGE_MODE = "llm"
 DYNAMICMEM_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
 DYNAMICMEM_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
 DYNAMICMEM_LLM_JUDGE_MAX_ITEMS = "0"
-DYNAMICMEM_STAGE_PATTERN = "{config.stage_pattern}"
+DYNAMICMEM_STAGE_PATTERN = "{config.stage_contract_name}"
+DYNAMICMEM_STAGE_SCHEDULE = "{config.stage_contract_display}"
 
 [environment.env]
 
@@ -1862,7 +1981,7 @@ def render_soundness_report(
         "## Migration Contract",
         "",
         "- Harbor is only the runner.",
-        f"- Stage pattern: `{config.stage_pattern}`.",
+        f"- Stage contract: `{config.stage_contract_display}`.",
         "- `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.",
         "- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.",
         "- `downstream-task` stages reveal native queries without raw documents and score retained memory use.",
@@ -1918,6 +2037,12 @@ def render_soundness_report(
     return "\n".join(lines)
 
 
+def render_stage_cli_arg(config: BuildConfig) -> str:
+    if config.stage_schedule is not None:
+        return f"--stage-schedule {stage_schedule_label(config.stage_schedule).replace(' -> ', ',')}"
+    return f"--stage-pattern {config.stage_pattern}"
+
+
 def build_task(
     source_dir: Path,
     task_dir: Path,
@@ -1929,7 +2054,6 @@ def build_task(
     app_logs = normalize_app_logs(load_json(source_dir / "app_log_large.json"))
     task_packs = load_json(source_dir / "task_packs.json")
     selected = selected_checkpoints(task_packs, config)
-    selected_checkpoint_payloads = [checkpoint for _, checkpoint in selected]
 
     if task_packs.get("user_id") != config.source_user_id:
         raise ValueError(f"expected {config.source_user_id}, got {task_packs.get('user_id')}")
@@ -1960,14 +2084,14 @@ def build_task(
         )
 
     observed_logs = observed_logs_for_checkpoint(selected[-1][1], app_logs)
-    if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
-        scored_checkpoints = [selected[-1]]
-        scored_checkpoint_payloads = [selected[-1][1]]
-        scored_visible_tasks = [visible_tasks[-1]]
-    else:
-        scored_checkpoints = selected
-        scored_checkpoint_payloads = selected_checkpoint_payloads
-        scored_visible_tasks = visible_tasks
+    stage_plan = resolve_stage_plan(stage_specs, config)
+    scored_specs = scored_specs_from_stage_plan(stage_plan)
+    scored_checkpoints = [
+        (spec["checkpointIndex"], spec["checkpoint"])
+        for spec in scored_specs
+    ]
+    scored_checkpoint_payloads = [spec["checkpoint"] for spec in scored_specs]
+    scored_visible_tasks = [spec["visibleTask"] for spec in scored_specs]
 
     stage_payload = build_stage_payload(stage_specs=stage_specs, config=config)
     difficulty = build_difficulty(
@@ -2023,7 +2147,7 @@ checkpoint content:
 Source user: `{config.source_user_dir}` / `{config.source_user_id}`
 Checkpoint trajectory: `{', '.join(str(index) for index, _ in selected)}`
 Final checkpoint: `{selected[-1][1]['checkpoint_id']}` as of `{selected[-1][1]['as_of']['timestamp']}`
-Stage pattern: `{config.stage_pattern}`
+Stage contract: `{config.stage_contract_display}`
 Scored checkpoints: `{', '.join(str(index) for index, _ in scored_checkpoints)}`
 Observed raw logs: `{len(observed_logs)}`
 State completion evaluations: `{difficulty['totals']['stateCompletionKeyCount']}`
@@ -2051,7 +2175,7 @@ Regenerate from a local DynamicMem user directory:
 python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \\
   --source-dir /path/to/DynamicMem/{config.source_user_dir} \\
   --checkpoint-indices {','.join(str(index) for index, _ in selected)} \\
-  --stage-pattern {config.stage_pattern} \\
+  {render_stage_cli_arg(config)} \\
   --model {config.model_name} \\
   --reasoning-effort {config.reasoning_effort}
 ```
@@ -2093,13 +2217,19 @@ def checkpoint_label(indices: list[int]) -> str:
     return "cp" + "-".join(f"{index:02d}" for index in indices)
 
 
-def task_id_for_source(source_dir: Path, checkpoint_indices: list[int], stage_pattern: str) -> tuple[str, str, str, str]:
+def task_id_for_source(
+    source_dir: Path,
+    checkpoint_indices: list[int],
+    stage_pattern: str,
+    stage_schedule: tuple[str, ...] | None = None,
+) -> tuple[str, str, str, str]:
     task_packs = load_json(source_dir / "task_packs.json")
     source_user_id = str(task_packs.get("user_id") or SOURCE_USER_ID)
     source_user_dir = source_dir.name
+    suffix = stage_schedule_suffix(stage_schedule) if stage_schedule is not None else stage_pattern_suffix(stage_pattern)
     task_id = (
         f"dynamicmem-{compact_user_label(source_user_id)}-"
-        f"{checkpoint_label(checkpoint_indices)}-{stage_pattern_suffix(stage_pattern)}"
+        f"{checkpoint_label(checkpoint_indices)}-{suffix}"
     )
     return task_id, f"{task_id}-corpus", source_user_dir, source_user_id
 
@@ -2146,12 +2276,22 @@ def main() -> int:
         choices=sorted(STAGE_PATTERNS),
         help="Trajectory stage contract to generate.",
     )
+    parser.add_argument(
+        "--stage-schedule",
+        default=None,
+        help=(
+            "Custom staged trajectory using U, T, and UA tokens, for example "
+            "'U,U,T,U,T'. When set, this overrides --stage-pattern."
+        ),
+    )
     args = parser.parse_args()
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
+    stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
     task_id, corpus_id, source_user_dir, source_user_id = task_id_for_source(
         args.source_dir,
         checkpoint_indices,
         args.stage_pattern,
+        stage_schedule,
     )
     task_dir = args.task_dir or Path("examples/eval-harbor/tasks") / task_id
 
@@ -2169,6 +2309,7 @@ def main() -> int:
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
             stage_pattern=args.stage_pattern,
+            stage_schedule=stage_schedule,
         ),
     )
     print(f"Generated {task_dir}")
