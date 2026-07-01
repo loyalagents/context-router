@@ -25,6 +25,8 @@ reasoning effort should stay fixed across arms.
 
 ## Architecture
 
+![Harbor staged-memory workflow](workflow.svg)
+
 ```mermaid
 flowchart LR
   Dataset["Dataset adapter<br/>DynamicMem now, other datasets later"]
