@@ -1,0 +1,413 @@
+{
+  "preferences": [
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits backyard bbq hosting (habits_state:backyard_bbq_hosting) using this template: {\"habits_state:backyard_bbq_hosting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:backyard_bbq_hosting",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits budget review (habits_state:budget_review) using this template: {\"habits_state:budget_review\": {\"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:budget_review",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits client technical briefing (habits_state:client_technical_briefing) using this template: {\"habits_state:client_technical_briefing\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:client_technical_briefing",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits commute audiobook listening (habits_state:commute_audiobook_listening) using this template: {\"habits_state:commute_audiobook_listening\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\", \"<fill the blank>\", \"<fill the blank>\", \"<fill the blank>\", \"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:commute_audiobook_listening",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits evening stretching (habits_state:evening_stretching) using this template: {\"habits_state:evening_stretching\": {\"location\": \"<fill the blank>\", \"schedule\": {\"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"end_time\": \"<fill the blank>\", \"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:evening_stretching",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits family movie night (habits_state:family_movie_night) using this template: {\"habits_state:family_movie_night\": {\"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:family_movie_night",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits home maintenance audit (habits_state:home_maintenance_audit) using this template: {\"habits_state:home_maintenance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:home_maintenance_audit",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits home strength training (habits_state:home_strength_training) using this template: {\"habits_state:home_strength_training\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\", \"<fill the blank>\", \"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"end_time\": \"<fill the blank>\", \"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:home_strength_training",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits industry news review (habits_state:industry_news_review) using this template: {\"habits_state:industry_news_review\": {\"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:industry_news_review",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits investment transfer (habits_state:investment_transfer) using this template: {\"habits_state:investment_transfer\": {\"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:investment_transfer",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits mental health therapy (habits_state:mental_health_therapy) using this template: {\"habits_state:mental_health_therapy\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:mental_health_therapy",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits monthly hoa meeting (habits_state:monthly_hoa_meeting) using this template: {\"habits_state:monthly_hoa_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:monthly_hoa_meeting",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits neighbor walk chat (habits_state:neighbor_walk_chat) using this template: {\"habits_state:neighbor_walk_chat\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\", \"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"end_time\": \"<fill the blank>\", \"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:neighbor_walk_chat",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits outdoor cycling (habits_state:outdoor_cycling) using this template: {\"habits_state:outdoor_cycling\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\", \"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"end_time\": \"<fill the blank>\", \"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:outdoor_cycling",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits regulatory compliance audit (habits_state:regulatory_compliance_audit) using this template: {\"habits_state:regulatory_compliance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:regulatory_compliance_audit",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits rotary breakfast meeting (habits_state:rotary_breakfast_meeting) using this template: {\"habits_state:rotary_breakfast_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:rotary_breakfast_meeting",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits spouse date night (habits_state:spouse_date_night) using this template: {\"habits_state:spouse_date_night\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:spouse_date_night",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits sunday family dinner (habits_state:sunday_family_dinner) using this template: {\"habits_state:sunday_family_dinner\": {\"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:sunday_family_dinner",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits tax document organization (habits_state:tax_document_organization) using this template: {\"habits_state:tax_document_organization\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:tax_document_organization",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits weekend neighborhood walk (habits_state:weekend_neighborhood_walk) using this template: {\"habits_state:weekend_neighborhood_walk\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\", \"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"end_time\": \"<fill the blank>\", \"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:weekend_neighborhood_walk",
+      "valueType": "json"
+    },
+    {
+      "category": "habits_state",
+      "description": "Infer the user's current state for habits weekend woodworking session (habits_state:weekend_woodworking_session) using this template: {\"habits_state:weekend_woodworking_session\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "habits_state:weekend_woodworking_session",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences capital allocation (preferences_state:capital_allocation) using this template: {\"preferences_state:capital_allocation\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:capital_allocation",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences community involvement type (preferences_state:community_involvement_type) using this template: {\"preferences_state:community_involvement_type\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:community_involvement_type",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences conflict resolution style (preferences_state:conflict_resolution_style) using this template: {\"preferences_state:conflict_resolution_style\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:conflict_resolution_style",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences fitness philosophy (preferences_state:fitness_philosophy) using this template: {\"preferences_state:fitness_philosophy\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:fitness_philosophy",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences health management approach (preferences_state:health_management_approach) using this template: {\"preferences_state:health_management_approach\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:health_management_approach",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences learning modality (preferences_state:learning_modality) using this template: {\"preferences_state:learning_modality\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:learning_modality",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences leisure activity type (preferences_state:leisure_activity_type) using this template: {\"preferences_state:leisure_activity_type\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:leisure_activity_type",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences material acquisition (preferences_state:material_acquisition) using this template: {\"preferences_state:material_acquisition\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:material_acquisition",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences media content genre (preferences_state:media_content_genre) using this template: {\"preferences_state:media_content_genre\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:media_content_genre",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences shared activity planning (preferences_state:shared_activity_planning) using this template: {\"preferences_state:shared_activity_planning\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:shared_activity_planning",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences social interaction format (preferences_state:social_interaction_format) using this template: {\"preferences_state:social_interaction_format\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:social_interaction_format",
+      "valueType": "json"
+    },
+    {
+      "category": "preferences_state",
+      "description": "Infer the user's current state for preferences work collaboration style (preferences_state:work_collaboration_style) using this template: {\"preferences_state:work_collaboration_style\": {\"statement\": \"<fill the blank>\"}}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "preferences_state:work_collaboration_style",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes community memberships (user_attributes_state:community_memberships) using this template: {\"user_attributes_state:community_memberships\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:community_memberships",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes current project focus (user_attributes_state:current_project_focus) using this template: {\"user_attributes_state:current_project_focus\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:current_project_focus",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes daily supplements (user_attributes_state:daily_supplements) using this template: {\"user_attributes_state:daily_supplements\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:daily_supplements",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes digital subscriptions (user_attributes_state:digital_subscriptions) using this template: {\"user_attributes_state:digital_subscriptions\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:digital_subscriptions",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes family sports gear (user_attributes_state:family_sports_gear) using this template: {\"user_attributes_state:family_sports_gear\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:family_sports_gear",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes home infrastructure assets (user_attributes_state:home_infrastructure_assets) using this template: {\"user_attributes_state:home_infrastructure_assets\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:home_infrastructure_assets",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes home media server (user_attributes_state:home_media_server) using this template: {\"user_attributes_state:home_media_server\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:home_media_server",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes industry software skills (user_attributes_state:industry_software_skills) using this template: {\"user_attributes_state:industry_software_skills\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:industry_software_skills",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes insurance portfolio (user_attributes_state:insurance_portfolio) using this template: {\"user_attributes_state:insurance_portfolio\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:insurance_portfolio",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes leisure hardware (user_attributes_state:leisure_hardware) using this template: {\"user_attributes_state:leisure_hardware\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:leisure_hardware",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes main investment account (user_attributes_state:main_investment_account) using this template: {\"user_attributes_state:main_investment_account\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:main_investment_account",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes main leisure hobby (user_attributes_state:main_leisure_hobby) using this template: {\"user_attributes_state:main_leisure_hobby\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:main_leisure_hobby",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes main tech tool (user_attributes_state:main_tech_tool) using this template: {\"user_attributes_state:main_tech_tool\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:main_tech_tool",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary family vehicle (user_attributes_state:primary_family_vehicle) using this template: {\"user_attributes_state:primary_family_vehicle\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_family_vehicle",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary health focus (user_attributes_state:primary_health_focus) using this template: {\"user_attributes_state:primary_health_focus\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_health_focus",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary job role (user_attributes_state:primary_job_role) using this template: {\"user_attributes_state:primary_job_role\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_job_role",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary residence mortgage (user_attributes_state:primary_residence_mortgage) using this template: {\"user_attributes_state:primary_residence_mortgage\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_residence_mortgage",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary social circle (user_attributes_state:primary_social_circle) using this template: {\"user_attributes_state:primary_social_circle\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_social_circle",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes primary workplace (user_attributes_state:primary_workplace) using this template: {\"user_attributes_state:primary_workplace\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:primary_workplace",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes professional certifications (user_attributes_state:professional_certifications) using this template: {\"user_attributes_state:professional_certifications\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:professional_certifications",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes professional memberships (user_attributes_state:professional_memberships) using this template: {\"user_attributes_state:professional_memberships\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:professional_memberships",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes recovery tools (user_attributes_state:recovery_tools) using this template: {\"user_attributes_state:recovery_tools\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:recovery_tools",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes secondary credit card (user_attributes_state:secondary_credit_card) using this template: {\"user_attributes_state:secondary_credit_card\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:secondary_credit_card",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes social digital platforms (user_attributes_state:social_digital_platforms) using this template: {\"user_attributes_state:social_digital_platforms\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:social_digital_platforms",
+      "valueType": "json"
+    },
+    {
+      "category": "user_attributes_state",
+      "description": "Infer the user's current state for user attributes travel equipment (user_attributes_state:travel_equipment) using this template: {\"user_attributes_state:travel_equipment\": \"<fill the blank>\"}.",
+      "scope": "dynamicmem-user001-cp00-04-trajectory-v1",
+      "slug": "user_attributes_state:travel_equipment",
+      "valueType": "json"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": "DynamicMem user_001 trajectory state-completion keys",
+  "taskId": "dynamicmem-user001-cp00-04-trajectory-v1"
+}

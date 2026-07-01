@@ -1,0 +1,12 @@
+{
+  "taskId": "smoke-staged-memory-v1",
+  "summary": "Tiny U -> U -> U -> T staged smoke for Harbor/Codex plumbing validation.",
+  "totals": {
+    "stageCount": 4,
+    "requiredFieldCount": 3,
+    "memoryUpdateStageCount": 3,
+    "downstreamStageCount": 1,
+    "visibleDocCount": 3,
+    "visibleFileCount": 8
+  }
+}

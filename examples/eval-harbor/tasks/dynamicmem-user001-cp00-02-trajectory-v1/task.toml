@@ -1,0 +1,44 @@
+schema_version = "1.3"
+
+artifacts = [
+  "/app/outputs/prediction.json",
+  "/app/memory.md",
+  "/app/stage-log.jsonl",
+]
+
+[task]
+name = "context-router/dynamicmem-user001-cp00-02-trajectory-v1"
+description = "DynamicMem user_001 native checkpoint trajectory Harbor background-memory task."
+authors = []
+keywords = ["context-router", "eval-harbor", "dynamicmem", "background-memory", "state-completion", "personalized-service"]
+
+[metadata]
+difficulty = "hard"
+category = "personal-memory"
+tags = ["dynamicmem", "background-memory", "continuous-session", "staged-reveal", "state-completion", "personalized-service", "native-task-pack"]
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 86400.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+mcp_servers = []
+workdir = "/app"
+
+[verifier.env]
+DYNAMICMEM_JUDGE_MODE = "llm"
+DYNAMICMEM_LLM_JUDGE_BASE_URL = "https://openrouter.ai/api/v1"
+DYNAMICMEM_LLM_JUDGE_MODEL = "google/gemini-3.5-flash"
+DYNAMICMEM_LLM_JUDGE_MAX_ITEMS = "0"
+DYNAMICMEM_STAGE_PATTERN = "update-answer-every-checkpoint"
+
+[environment.env]
+
+[solution.env]

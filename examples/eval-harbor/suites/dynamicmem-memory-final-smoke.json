@@ -1,0 +1,312 @@
+{
+  "agentConfig": {
+    "agent": "codex",
+    "modelName": "gpt-5.4-mini",
+    "reasoningEffort": "high",
+    "reasoningEffortConfigKey": "model_reasoning_effort"
+  },
+  "arms": [
+    {
+      "compose": "staged",
+      "instructionPath": "examples/eval-harbor/modes/context-only.md",
+      "memoryMode": "context-only",
+      "mode": "context-only",
+      "reasoningEffort": "high"
+    },
+    {
+      "compose": "staged",
+      "instructionPath": "examples/eval-harbor/modes/markdown.md",
+      "memoryMode": "markdown",
+      "mode": "markdown",
+      "reasoningEffort": "high"
+    },
+    {
+      "compose": "cr-mcp",
+      "instructionPath": "examples/eval-harbor/modes/cr-mcp.md",
+      "memoryMode": "cr-mcp",
+      "mode": "cr-mcp",
+      "reasoningEffort": "high"
+    }
+  ],
+  "coverage": {
+    "checkpointIds": [
+      "cal_quarterly_001",
+      "cal_quarterly_002",
+      "cal_quarterly_003"
+    ],
+    "checkpointIndices": [
+      0,
+      1,
+      2
+    ],
+    "checkpointsPerTask": {
+      "max": 3,
+      "mean": 3.0,
+      "min": 3
+    },
+    "observedLogsPerTask": {
+      "max": 716,
+      "mean": 716.0,
+      "min": 716
+    },
+    "personalizedServiceItemsPerTask": {
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
+    },
+    "serviceFamilies": [
+      "action_configuration",
+      "information_request_construction",
+      "user_communication"
+    ],
+    "sourceUserIds": [
+      "user_001"
+    ],
+    "stateCompletionKeysPerTask": {
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
+    },
+    "taskCount": 1,
+    "uniqueStateCompletionKeysPerTask": {
+      "max": 37,
+      "mean": 37.0,
+      "min": 37
+    },
+    "userCount": 1
+  },
+  "issue": 137,
+  "modelName": "gpt-5.4-mini",
+  "paths": {
+    "jobsRoot": "examples/eval-harbor/jobs",
+    "tasksRoot": "examples/eval-harbor/tasks"
+  },
+  "reasoningEffort": "high",
+  "samplesPerTaskArm": 3,
+  "schemaVersion": 1,
+  "sourceDataset": {
+    "license": "MIT",
+    "migrationPolicy": "Harbor replaces only the runner. Each generated task preserves one native DynamicMem user checkpoint trajectory, including raw app-log deltas, state_completion_pack, rq3_apply_service_qa, and the upstream prediction contract.",
+    "name": "xiewenya/dynamicmem",
+    "nativeInputs": [
+      "app_log_large.json",
+      "task_packs.json"
+    ],
+    "selectionPolicy": "Deterministic checkpoint-trajectory migration. One Harbor task maps to one DynamicMem user and the selected checkpoint indices; no state-key chunking or synthetic form schema generation is used."
+  },
+  "stagePatterns": [
+    "update-only-then-final"
+  ],
+  "tasks": [
+    {
+      "checkpointIds": [
+        "cal_quarterly_001",
+        "cal_quarterly_002",
+        "cal_quarterly_003"
+      ],
+      "checkpointIndices": [
+        0,
+        1,
+        2
+      ],
+      "checkpointTimestamps": [
+        "2023-12-31 19:30:00",
+        "2024-03-31 14:30:00",
+        "2024-06-30 20:00:00"
+      ],
+      "corpusId": "dynamicmem-user001-cp00-02-memory-final-v1-corpus",
+      "difficulty": {
+        "challengeSignals": {
+          "checkpointTrajectory": true,
+          "deltaRawCheckpointHistory": true,
+          "hiddenDownstreamUntilFinalStage": true,
+          "hiddenFutureCheckpoints": true,
+          "longContextApprox70kPlus": true,
+          "multiStage": true,
+          "nativePersonalizedService": true,
+          "nativeStateCompletion": true,
+          "updateAnswerEveryCheckpoint": false
+        },
+        "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
+        "schemaVersion": 1,
+        "sourceDiversity": {
+          "apiNames": [
+            "AddSkill",
+            "CheckIn",
+            "Checkout",
+            "ClickResult",
+            "CommentOnPost",
+            "ContinueConversation",
+            "CreateConversation",
+            "CreateDatabaseEntry",
+            "CreatePage",
+            "CreatePost",
+            "GetBalance",
+            "GetDirections",
+            "GetFeed",
+            "GetPortfolio",
+            "GetTransactions",
+            "LogWorkout",
+            "PayBill",
+            "PlaceOrder",
+            "PlayContent",
+            "PlaySong",
+            "RateBook",
+            "ReadEmail",
+            "RecordActivity",
+            "ReplyEmail",
+            "Search",
+            "SearchBooks",
+            "SearchContent",
+            "SearchPlaces",
+            "SearchProducts",
+            "SearchRestaurants",
+            "SendEmail",
+            "SendMedia",
+            "SendMessage",
+            "ShowProduct",
+            "ShowWishlist",
+            "SyncDevice",
+            "TransferMoney",
+            "UpdatePage",
+            "UpdateProfile"
+          ],
+          "appNames": [
+            "Amazon",
+            "Chase",
+            "Fitbit",
+            "Gmail",
+            "Goodreads",
+            "Google",
+            "Google Maps",
+            "Instagram",
+            "LLM Assistant",
+            "LinkedIn",
+            "Netflix",
+            "Notion",
+            "Robinhood",
+            "Spotify",
+            "UberEats",
+            "WhatsApp"
+          ],
+          "serviceFamilies": [
+            "action_configuration",
+            "information_request_construction",
+            "user_communication"
+          ],
+          "stateGroups": [
+            "habits_state",
+            "preferences_state",
+            "user_attributes_state"
+          ]
+        },
+        "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
+        "stagePatternName": "update-only-then-final",
+        "stages": [
+          {
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 90630,
+            "kind": "memory-update",
+            "stageId": "01-cp00-memory-update",
+            "stageIndex": 1,
+            "visibleCharCount": 362520,
+            "visibleDocCount": 180,
+            "visibleFileCount": 181
+          },
+          {
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 147930,
+            "kind": "memory-update",
+            "stageId": "02-cp01-memory-update",
+            "stageIndex": 2,
+            "visibleCharCount": 591721,
+            "visibleDocCount": 286,
+            "visibleFileCount": 287
+          },
+          {
+            "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
+            "approxTokenCount": 133694,
+            "kind": "memory-update",
+            "stageId": "03-cp02-memory-update",
+            "stageIndex": 3,
+            "visibleCharCount": 534778,
+            "visibleDocCount": 250,
+            "visibleFileCount": 251
+          },
+          {
+            "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
+            "approxTokenCount": 16543,
+            "kind": "downstream-task",
+            "stageId": "04-cp02-downstream-task",
+            "stageIndex": 4,
+            "visibleCharCount": 66173,
+            "visibleDocCount": 0,
+            "visibleFileCount": 1
+          }
+        ],
+        "taskContract": "dataset-adapter/trajectory-v1",
+        "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
+        "taskType": "dynamicmem-native-background-memory-trajectory",
+        "totals": {
+          "approxTokenCount": 388798,
+          "checkpointCount": 1,
+          "downstreamStageCount": 1,
+          "memoryUpdateStageCount": 3,
+          "observedRawLogCount": 716,
+          "personalizedServiceItemCount": 37,
+          "personalizedServiceKeyCount": 37,
+          "scoredCheckpointCount": 1,
+          "sourceApiCount": 39,
+          "sourceAppCount": 16,
+          "sourceCheckpointCount": 3,
+          "stageCount": 4,
+          "stateCompletionKeyCount": 37,
+          "uniqueStateCompletionKeyCount": 37,
+          "updateAnswerStageCount": 0,
+          "visibleCharCount": 1555192,
+          "visibleDocCount": 716,
+          "visibleFileCount": 720
+        },
+        "trajectory": {
+          "checkpointIds": [
+            "cal_quarterly_001",
+            "cal_quarterly_002",
+            "cal_quarterly_003"
+          ],
+          "checkpointIndices": [
+            0,
+            1,
+            2
+          ],
+          "checkpointTimestamps": [
+            "2023-12-31 19:30:00",
+            "2024-03-31 14:30:00",
+            "2024-06-30 20:00:00"
+          ],
+          "finalCheckpointId": "cal_quarterly_003",
+          "finalCheckpointIndex": 2,
+          "finalCheckpointTimestamp": "2024-06-30 20:00:00",
+          "sourceUserDir": "001_user_001",
+          "sourceUserId": "user_001"
+        }
+      },
+      "finalCheckpointId": "cal_quarterly_003",
+      "finalCheckpointIndex": 2,
+      "finalCheckpointTimestamp": "2024-06-30 20:00:00",
+      "observedLogCount": 716,
+      "personalizedServiceItemCount": 37,
+      "personalizedServiceKeyCount": 37,
+      "serviceFamilies": [
+        "action_configuration",
+        "information_request_construction",
+        "user_communication"
+      ],
+      "sourceUserDir": "001_user_001",
+      "sourceUserId": "user_001",
+      "stagePattern": "update-only-then-final",
+      "stateCompletionKeyCount": 37,
+      "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
+      "uniqueStateCompletionKeyCount": 37
+    }
+  ]
+}

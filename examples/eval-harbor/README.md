@@ -7,6 +7,12 @@ evaluation suite.
 For creating new tasks, use [`TASK_AUTHORING.md`](TASK_AUTHORING.md). The README
 is the runbook for executing tasks; the authoring guide is the soundness
 checklist for adding task data, hidden truth, verifiers, and job configs.
+For the general staged-memory framework contract, see
+[`framework/README.md`](framework/README.md).
+
+The Harbor CLI is an external runner dependency, not a binary checked into this
+repo. Install it with Python 3.12+ before running jobs, or call an explicit
+venv path such as `/tmp/cr-harbor-cli-venv/bin/harbor`.
 
 ## Task Families
 
@@ -27,12 +33,12 @@ before knowing which downstream form or question will be asked.
 A realistic background-memory flow should support interleaved stages:
 
 ```text
-T1 -> T1 -> T2 -> T1 -> T2 -> T1
+U -> U -> T -> U -> T -> U
 ```
 
-- `T1 memory-management`: the agent sees new docs/events and updates the
+- `U memory-update`: the agent sees new docs/events and updates the
   allowed memory substrate only.
-- `T2 downstream-task`: the agent uses retained memory to answer a form,
+- `T downstream-task`: the agent uses retained memory to answer a form,
   question, or audit task without re-reading the original docs.
 
 Score memory quality after memory-management stages and score downstream task
@@ -374,52 +380,113 @@ arm. This task separates no-memory from durable-memory behavior, but it does not
 currently separate markdown memory from CR MCP memory. In this run, markdown and
 `cr-mcp` both missed two fields, with different error patterns.
 
-This task has a `T1 -> T1 -> T1 -> T2` shape. It is a bridge toward
+This task has a `U -> U -> U -> T` shape. It is a bridge toward
 background-memory evaluation, but the next research-focused task should be an
 interleaved background-memory task with multiple memory update and downstream
 use cycles.
 
-## DynamicMem Native Checkpoint Task
+## DynamicMem Native Checkpoint-Trajectory Task
 
-`dynamicmem-user001-cp01-native-v1` is the first dataset-backed
-personal-memory task that preserves the native DynamicMem task contract. It is
-generated from the public
+`dynamicmem-user001-cp00-04-trajectory-v1` is the first dataset-backed
+personal-memory task that preserves the native DynamicMem task contract across a
+continuous checkpoint trajectory. It is generated from the public
 [`xiewenya/dynamicmem`](https://huggingface.co/datasets/xiewenya/dynamicmem)
 dataset, which is published under the MIT license.
 
 Harbor only replaces the runner. The task preserves one DynamicMem user
-checkpoint end to end:
+trajectory end to end:
 
-- raw `app_log_large.json` entries up to the checkpoint;
-- the checkpoint `state_completion_pack`;
-- the checkpoint `rq3_apply_service_qa` Personalized Service tasks;
+- raw `app_log_large.json` entries as chronological checkpoint deltas;
+- each selected checkpoint's `state_completion_pack`;
+- each selected checkpoint's `rq3_apply_service_qa` Personalized Service tasks;
 - the upstream prediction contract at `outputs/prediction.json`.
 
 It is a `background-memory` task:
 
 ```text
-T1 initial raw app logs -> T1 later raw app logs -> T2 native DynamicMem tasks
+UA(cp0) -> UA(cp1) -> UA(cp2) -> UA(cp3) -> UA(cp4)
 ```
+
+The DynamicMem adapter supports two stage contracts:
+
+| Stage pattern | Flow | Use |
+| --- | --- | --- |
+| `update-answer-every-checkpoint` | `UA(cp0) -> UA(cp1) -> ...` | Native DynamicMem checkpoint trajectory. Every checkpoint reveals logs plus the current task and is scored. |
+| `update-only-then-final` | `U(cp0) -> U(cp1) -> ... -> T(final)` | Stronger background-memory probe. Earlier stages reveal only logs; the final downstream task is hidden until the last stage and is scored alone. |
 
 The task runs as one continuous Codex session. The agent reveals each stage by
 running `/app/next_stage`; future stage files are held by the `stage-server`
-sidecar and are not present in `/app` until revealed. The final stage removes
-the app logs as files and asks the agent to answer both native task families:
+sidecar and are not present in `/app` until revealed. Each stage reveals only
+the new raw app-log delta and the current checkpoint's native task pack. The
+agent updates memory, then answers both native task families for that checkpoint:
 State Completion (`snapshot_state`) and Personalized Service
-(`rq3_apply_answers`).
+(`rq3_apply_answers`). The final `outputs/prediction.json` keeps predictions for
+all revealed checkpoints.
 
 The `context-only` arm has no external durable memory but can use the live
 conversation context from earlier stages. The `markdown` arm may only use
 `/app/memory.md`, and the `cr-mcp` arm uses the eval-only ContextRouter memory
 MCP sidecar.
 
+DynamicMem is a multi-file staged task: each checkpoint exposes
+`current_stage/documents.json`, many `current_stage/docs/events/*.json` raw
+app-log files, and one `current_stage/dynamicmem-task.json`. It is not a
+heterogeneous packet-file benchmark. It covers app/API/event-source diversity,
+but it does not replace packet-style tasks with mixed PDFs, OCR text, YAML,
+emails, templates, folder hierarchy traps, and wrong-person documents.
+
+For a shorter live-agent smoke before the full five-checkpoint run, use the
+committed three-turn fixture:
+
+```text
+dynamicmem-user001-cp00-02-trajectory-v1
+```
+
+It preserves the same native DynamicMem contract but uses only checkpoints
+`0,1,2`. Its suite manifest is:
+
+```text
+examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
+```
+
+For the stricter retained-memory smoke, use:
+
+```text
+dynamicmem-user001-cp00-02-memory-final-v1
+```
+
+It has a `U -> U -> U -> T` shape. The first three stages expose only raw log
+deltas; the fourth stage exposes the final DynamicMem task with no raw docs.
+Only the final checkpoint is scored. Its suite manifest is:
+
+```text
+examples/eval-harbor/suites/dynamicmem-memory-final-smoke.json
+```
+
 Regenerate the task from a local DynamicMem user directory:
 
 ```bash
 python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --source-dir /path/to/DynamicMem/001_user_001 \
+  --checkpoint-indices 0-4 \
+  --stage-pattern update-answer-every-checkpoint \
   --model gpt-5.4-mini \
   --reasoning-effort high
+```
+
+Regenerate the three-turn smoke suite:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
+  --source-root /path/to/DynamicMem \
+  --checkpoint-indices 0-2 \
+  --stage-pattern update-answer-every-checkpoint \
+  --max-users 1 \
+  --max-tasks 1 \
+  --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
+  --model gpt-5.4-mini \
+  --reasoning-effort high \
+  --manifest examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
 ```
 
 Run all three arms:
@@ -427,8 +494,8 @@ Run all three arms:
 ```bash
 for mode in context-only markdown cr-mcp; do
   harbor run \
-    -c examples/eval-harbor/jobs/dynamicmem-user001-cp01-native-v1-${mode}.yaml \
-    --jobs-dir /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-${mode} \
+    -c examples/eval-harbor/jobs/dynamicmem-user001-cp00-04-trajectory-v1-${mode}.yaml \
+    --jobs-dir /tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-${mode} \
     --agent-env CODEX_FORCE_AUTH_JSON=true \
     --yes
 done
@@ -438,37 +505,53 @@ Create the comparison report:
 
 ```bash
 python3 examples/eval-harbor/scripts/report_results.py \
-  --run context-only=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-context-only/eval-harbor-dynamicmem-user001-cp01-native-v1-context-only \
-  --run markdown=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-markdown/eval-harbor-dynamicmem-user001-cp01-native-v1-markdown \
-  --run cr-mcp=/tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-cr-mcp/eval-harbor-dynamicmem-user001-cp01-native-v1-cr-mcp \
-  --output /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-report.md \
-  --json-output /tmp/cr-harbor-dynamicmem-user001-cp01-native-v1-report.json
+  --run context-only=/tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-context-only/eval-harbor-dynamicmem-user001-cp00-04-trajectory-v1-context-only \
+  --run markdown=/tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-markdown/eval-harbor-dynamicmem-user001-cp00-04-trajectory-v1-markdown \
+  --run cr-mcp=/tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-cr-mcp/eval-harbor-dynamicmem-user001-cp00-04-trajectory-v1-cr-mcp \
+  --output /tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-report.md \
+  --json-output /tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-report.json
 ```
 
-The Harbor verifier includes a deterministic local proxy score for quick
-shakeout. It is not the official DynamicMem LLM-as-judge score. The important
-contract is that `outputs/prediction.json` is upstream-compatible for official
-DynamicMem evaluation.
+The Harbor verifier uses an LLM-as-judge semantic score for DynamicMem when a
+judge API key is available. The generated tasks default to OpenRouter
+`google/gemini-3.5-flash`:
+
+```bash
+export DYNAMICMEM_LLM_JUDGE_API_KEY="<openrouter-key>"
+export DYNAMICMEM_LLM_JUDGE_BASE_URL="https://openrouter.ai/api/v1"
+export DYNAMICMEM_LLM_JUDGE_MODEL="google/gemini-3.5-flash"
+```
+
+The score summary records `rewardSource`, `llmJudge`, and `deterministic`
+diagnostic metrics. If no judge key is available, the verifier falls back to
+the deterministic local proxy so oracle and smoke checks still run, but those
+fallback rewards should not be treated as the official DynamicMem semantic
+score.
 
 ### DynamicMem Suite Generation
 
 Use the suite generator when scaling beyond the single `user001` task. It scans
-DynamicMem user directories, maps each selected checkpoint to one Harbor task,
-and writes matching
+DynamicMem user directories, maps each selected user's checkpoint sequence to one
+Harbor trajectory task, and writes matching
 `context-only`, `markdown`, and `cr-mcp` jobs.
 
-This is a native-semantics migration, not random task synthesis. The adapter
-preserves DynamicMem's user timeline, raw app logs up to the checkpoint,
-checkpoint identity, `state_completion_pack`, `rq3_apply_service_qa`, and
-prediction contract. Harbor only replaces the runner so every arm uses the same
-continuous-session sandbox, stage reveal, output path, and verifier.
+The suite generator is a DynamicMem adapter on top of the shared trajectory
+contract in `examples/eval-harbor/scripts/trajectory_framework.py`. Future
+datasets should add their own adapter that emits the same staged contract rather
+than copying DynamicMem-specific parsing or scoring code.
 
-Task selection is deterministic. One generated task equals one
-DynamicMem user/checkpoint; there is no state-key chunking or synthetic form
-schema generation. The generated suite manifest includes a `coverage` block with
-users, checkpoints, observed-log counts, state-completion key counts,
-Personalized Service item counts, and service families. Review this coverage
-before spending live agent runs.
+This is a native-semantics migration, not random task synthesis. The adapter
+preserves DynamicMem's user timeline, raw app-log deltas, checkpoint identities,
+`state_completion_pack`, `rq3_apply_service_qa`, and prediction contract. Harbor
+only replaces the runner so every arm uses the same continuous-session sandbox,
+stage reveal, output path, and verifier.
+
+Task selection is deterministic. One generated task equals one DynamicMem user
+trajectory over the selected checkpoint indices; there is no state-key chunking
+or synthetic form schema generation. The generated suite manifest includes a
+`coverage` block with users, checkpoints, checkpoints per task, observed-log
+counts, state-completion key counts, Personalized Service item counts, and
+service families. Review this coverage before spending live agent runs.
 
 The arms are not hardcoded in the runner. The default arm config lives at
 `examples/eval-harbor/arms/dynamicmem-default.json`. To add another arm, add a
@@ -482,6 +565,7 @@ Start with a dry run:
 python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --source-root /path/to/DynamicMem \
   --checkpoint-indices 0-4 \
+  --stage-pattern update-answer-every-checkpoint \
   --max-users 5 \
   --max-tasks 5 \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
@@ -496,6 +580,7 @@ Generate the smoke suite:
 python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --source-root /path/to/DynamicMem \
   --checkpoint-indices 0-4 \
+  --stage-pattern update-answer-every-checkpoint \
   --max-users 5 \
   --max-tasks 5 \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
