@@ -27,6 +27,8 @@ reasoning effort should stay fixed across arms.
 
 ![Harbor staged-memory workflow](workflow.svg)
 
+PDF export: [`workflow.pdf`](workflow.pdf)
+
 ```mermaid
 flowchart LR
   Dataset["Dataset adapter<br/>DynamicMem now, other datasets later"]
