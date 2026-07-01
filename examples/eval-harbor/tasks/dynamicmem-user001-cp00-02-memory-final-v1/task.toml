@@ -18,7 +18,7 @@ category = "personal-memory"
 tags = ["dynamicmem", "background-memory", "continuous-session", "staged-reveal", "state-completion", "personalized-service", "native-task-pack"]
 
 [verifier]
-timeout_sec = 120.0
+timeout_sec = 86400.0
 
 [agent]
 timeout_sec = 86400.0

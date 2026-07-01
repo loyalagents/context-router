@@ -1039,7 +1039,7 @@ category = "personal-memory"
 tags = ["dynamicmem", "background-memory", "continuous-session", "staged-reveal", "state-completion", "personalized-service", "native-task-pack"]
 
 [verifier]
-timeout_sec = 120.0
+timeout_sec = 86400.0
 
 [agent]
 timeout_sec = 86400.0
@@ -1870,12 +1870,12 @@ def main():
         REWARD_DIR / "reward.json",
         {
             "reward": reward,
-            "reward_source": reward_source,
             "state_completion_accuracy": aggregate["stateAccuracy"],
             "rq3_apply_mean_score": aggregate["applyMeanScore"],
             "parse_success": 1.0 if parse_success else 0.0,
             "metadata_success": 1.0 if metadata_success else 0.0,
-            "llm_judge_status": llm_judge.get("status"),
+            "reward_source_is_llm_judge": 1.0 if reward_source == "llm-judge" else 0.0,
+            "llm_judge_ok": 1.0 if llm_judge.get("status") == "ok" else 0.0,
         },
     )
 
