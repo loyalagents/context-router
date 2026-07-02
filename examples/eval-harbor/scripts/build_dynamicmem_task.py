@@ -1109,15 +1109,23 @@ def render_yaml_list(items: list[dict[str, Any]], indent: int) -> str:
     return "\n".join(lines)
 
 
-def render_job(arm: dict[str, Any], config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
+def render_job(
+    arm: dict[str, Any],
+    config: BuildConfig = DEFAULT_BUILD_CONFIG,
+    *,
+    task_path: Path | None = None,
+    jobs_dir: Path | None = None,
+) -> str:
     mode = arm["mode"]
     memory_mode = arm.get("memoryMode", mode)
     instruction_path = arm["instructionPath"]
     compose = arm.get("compose", "staged")
+    task_path = task_path or Path("examples/eval-harbor/tasks") / config.task_id
+    jobs_dir = jobs_dir or Path("examples/eval-harbor/jobs")
     compose_path = (
-        f"examples/eval-harbor/jobs/{config.task_id}-cr-mcp.compose.yml"
+        jobs_dir / f"{config.task_id}-cr-mcp.compose.yml"
         if compose == "cr-mcp"
-        else f"examples/eval-harbor/jobs/{config.task_id}-staged.compose.yml"
+        else jobs_dir / f"{config.task_id}-staged.compose.yml"
     )
     suffix = f"{config.task_id}-{mode}"
     mcp_servers = arm.get("mcpServers", [])
@@ -1148,7 +1156,7 @@ def render_job(arm: dict[str, Any], config: BuildConfig = DEFAULT_BUILD_CONFIG) 
         [
             "",
             "tasks:",
-            f"  - path: examples/eval-harbor/tasks/{config.task_id}",
+            f"  - path: {task_path}",
             "",
             "extra_instruction_paths:",
             f"  - {instruction_path}",
@@ -2233,7 +2241,10 @@ Do not expose `tests/expected/` files to agents.
 
     jobs_dir.mkdir(parents=True, exist_ok=True)
     for arm in arm_configs or load_arm_configs():
-        write_text(jobs_dir / f"{config.task_id}-{arm['mode']}.yaml", render_job(arm, config))
+        write_text(
+            jobs_dir / f"{config.task_id}-{arm['mode']}.yaml",
+            render_job(arm, config, task_path=task_dir, jobs_dir=jobs_dir),
+        )
     write_text(jobs_dir / f"{config.task_id}-staged.compose.yml", render_staged_compose())
     write_text(jobs_dir / f"{config.task_id}-cr-mcp.compose.yml", render_cr_mcp_compose())
 
