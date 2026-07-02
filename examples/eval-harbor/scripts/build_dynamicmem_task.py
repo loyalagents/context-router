@@ -1069,7 +1069,6 @@ def render_task_toml(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
 
 artifacts = [
   "/app/outputs/prediction.json",
-  "/app/memory.md",
   "/app/stage-log.jsonl",
 ]
 
