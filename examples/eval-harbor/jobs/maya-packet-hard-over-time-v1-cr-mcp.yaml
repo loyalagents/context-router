@@ -11,6 +11,9 @@ environment:
 agents:
   - name: codex
     model_name: gpt-5.3-codex-spark
+    kwargs:
+      web_search: disabled
+      model_auto_compact_token_limit: 256000
     mcp_servers:
       - name: context-router-memory
         transport: streamable-http

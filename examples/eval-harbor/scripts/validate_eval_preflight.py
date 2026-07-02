@@ -245,6 +245,15 @@ def validate_job_preflight(job_path: Path, repo_root: Path) -> list[str]:
     text = job_path.read_text(encoding="utf-8")
     if not re.search(r"^\s*web_search:\s*disabled\s*$", text, re.MULTILINE):
         errors.append(f"{job_path}: Codex job must set web_search: disabled")
+    compact_match = re.search(
+        r"^\s*model_auto_compact_token_limit:\s*(\d+)\s*$",
+        text,
+        re.MULTILINE,
+    )
+    if not compact_match:
+        errors.append(f"{job_path}: Codex job must set model_auto_compact_token_limit")
+    elif int(compact_match.group(1)) <= 0:
+        errors.append(f"{job_path}: model_auto_compact_token_limit must be positive")
 
     task_paths = extract_job_task_paths(job_path)
     if not task_paths:

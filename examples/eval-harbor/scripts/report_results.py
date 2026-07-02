@@ -568,6 +568,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         or agent_config.get("web_search")
         or "n/a"
     )
+    codex_auto_compact_token_limit = (
+        agent_kwargs.get("model_auto_compact_token_limit")
+        or agent_config.get("model_auto_compact_token_limit")
+        or "n/a"
+    )
     if (agent_config.get("name") or "").lower() == "codex" and codex_web_search != "disabled":
         validation_errors.append(
             f"Codex web_search must be disabled, got {codex_web_search!r}"
@@ -601,6 +606,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             or "n/a"
         ),
         "codexWebSearch": codex_web_search,
+        "codexAutoCompactTokenLimit": codex_auto_compact_token_limit,
         "agentTimeoutSec": task_timeouts.get("agentTimeoutSec"),
         "verifierTimeoutSec": task_timeouts.get("verifierTimeoutSec"),
         "buildTimeoutSec": task_timeouts.get("buildTimeoutSec"),

@@ -26,6 +26,7 @@ from trajectory_framework import (
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_REASONING_EFFORT = "high"
 DEFAULT_CODEX_WEB_SEARCH = "disabled"
+DEFAULT_CODEX_AUTO_COMPACT_TOKEN_LIMIT = 256000
 DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
@@ -277,6 +278,7 @@ def generate_task(
     model_name: str,
     reasoning_effort: str,
     codex_web_search: str,
+    codex_auto_compact_token_limit: int,
     agent_timeout_sec: float,
     verifier_timeout_sec: float,
     build_timeout_sec: float,
@@ -297,6 +299,7 @@ def generate_task(
             model_name=model_name,
             reasoning_effort=reasoning_effort,
             codex_web_search=codex_web_search,
+            codex_auto_compact_token_limit=codex_auto_compact_token_limit,
             agent_timeout_sec=agent_timeout_sec,
             verifier_timeout_sec=verifier_timeout_sec,
             build_timeout_sec=build_timeout_sec,
@@ -317,6 +320,7 @@ def write_suite_manifest(
     model_name: str,
     reasoning_effort: str,
     codex_web_search: str,
+    codex_auto_compact_token_limit: int,
     agent_timeout_sec: float,
     verifier_timeout_sec: float,
     build_timeout_sec: float,
@@ -355,6 +359,8 @@ def write_suite_manifest(
             "reasoningEffortConfigKey": "model_reasoning_effort",
             "codexWebSearch": codex_web_search,
             "codexWebSearchConfigKey": "web_search",
+            "codexAutoCompactTokenLimit": codex_auto_compact_token_limit,
+            "codexAutoCompactConfigKey": "model_auto_compact_token_limit",
             "agentTimeoutSec": agent_timeout_sec,
             "verifierTimeoutSec": verifier_timeout_sec,
             "buildTimeoutSec": build_timeout_sec,
@@ -379,6 +385,7 @@ def write_suite_manifest(
                 "compose": arm.get("compose", "staged"),
                 "reasoningEffort": reasoning_effort,
                 "codexWebSearch": codex_web_search,
+                "codexAutoCompactTokenLimit": codex_auto_compact_token_limit,
                 "agentTimeoutSec": agent_timeout_sec,
                 "verifierTimeoutSec": verifier_timeout_sec,
                 "buildTimeoutSec": build_timeout_sec,
@@ -499,6 +506,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Codex web_search policy written into every generated Harbor job.",
     )
     parser.add_argument(
+        "--codex-auto-compact-token-limit",
+        type=int,
+        default=DEFAULT_CODEX_AUTO_COMPACT_TOKEN_LIMIT,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "--agent-timeout-sec",
         type=float,
         default=DEFAULT_AGENT_TIMEOUT_SEC,
@@ -551,6 +564,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
     stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
+    if args.codex_auto_compact_token_limit <= 0:
+        raise SystemExit("ERROR --codex-auto-compact-token-limit must be positive")
     arm_configs = load_arm_configs(args.arms_config)
     try:
         source_resolution = resolve_dynamicmem_source_root(
@@ -606,6 +621,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 model_name=args.model,
                 reasoning_effort=args.reasoning_effort,
                 codex_web_search=args.codex_web_search,
+                codex_auto_compact_token_limit=args.codex_auto_compact_token_limit,
                 agent_timeout_sec=args.agent_timeout_sec,
                 verifier_timeout_sec=args.verifier_timeout_sec,
                 build_timeout_sec=args.build_timeout_sec,
@@ -626,6 +642,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         model_name=args.model,
         reasoning_effort=args.reasoning_effort,
         codex_web_search=args.codex_web_search,
+        codex_auto_compact_token_limit=args.codex_auto_compact_token_limit,
         agent_timeout_sec=args.agent_timeout_sec,
         verifier_timeout_sec=args.verifier_timeout_sec,
         build_timeout_sec=args.build_timeout_sec,

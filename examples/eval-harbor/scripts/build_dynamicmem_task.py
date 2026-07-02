@@ -44,6 +44,7 @@ CHECKPOINT_INDICES = (0, 1, 2, 3, 4)
 MODEL_NAME = "gpt-5.4-mini"
 REASONING_EFFORT = "high"
 CODEX_WEB_SEARCH = "disabled"
+CODEX_AUTO_COMPACT_TOKEN_LIMIT = 256000
 DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
@@ -64,6 +65,7 @@ class BuildConfig:
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
     codex_web_search: str = CODEX_WEB_SEARCH
+    codex_auto_compact_token_limit: int = CODEX_AUTO_COMPACT_TOKEN_LIMIT
     agent_timeout_sec: float = DEFAULT_AGENT_TIMEOUT_SEC
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC
     build_timeout_sec: float = DEFAULT_BUILD_TIMEOUT_SEC
@@ -77,6 +79,8 @@ class BuildConfig:
         if self.codex_web_search not in CODEX_WEB_SEARCH_CHOICES:
             choices = ", ".join(sorted(CODEX_WEB_SEARCH_CHOICES))
             raise ValueError(f"codex_web_search must be one of: {choices}")
+        if self.codex_auto_compact_token_limit <= 0:
+            raise ValueError("codex_auto_compact_token_limit must be positive")
         if self.stage_pattern not in STAGE_PATTERNS:
             choices = ", ".join(sorted(STAGE_PATTERNS))
             raise ValueError(f"stage_pattern must be one of: {choices}")
@@ -1148,6 +1152,7 @@ def render_job(
         "    kwargs:",
         f"      reasoning_effort: {config.reasoning_effort}",
         f"      web_search: {config.codex_web_search}",
+        f"      model_auto_compact_token_limit: {config.codex_auto_compact_token_limit}",
     ]
     if mcp_servers:
         lines.append("    mcp_servers:")
@@ -2335,6 +2340,12 @@ def main() -> int:
         help="Codex web_search policy written into Harbor job kwargs.",
     )
     parser.add_argument(
+        "--codex-auto-compact-token-limit",
+        type=int,
+        default=DEFAULT_BUILD_CONFIG.codex_auto_compact_token_limit,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "--agent-timeout-sec",
         type=float,
         default=DEFAULT_BUILD_CONFIG.agent_timeout_sec,
@@ -2391,6 +2402,7 @@ def main() -> int:
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
             codex_web_search=args.codex_web_search,
+            codex_auto_compact_token_limit=args.codex_auto_compact_token_limit,
             agent_timeout_sec=args.agent_timeout_sec,
             verifier_timeout_sec=args.verifier_timeout_sec,
             build_timeout_sec=args.build_timeout_sec,
