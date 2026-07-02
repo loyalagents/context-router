@@ -211,6 +211,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             or agent_config.get("reasoning_effort")
             or "n/a"
         ),
+        "serviceTier": (
+            agent_kwargs.get("service_tier")
+            or agent_config.get("service_tier")
+            or "standard"
+        ),
         "runtimeSeconds": duration_seconds(result),
         "reward": reward,
         "fieldAccuracy": field_accuracy,
@@ -251,16 +256,17 @@ def fmt_bool(value: Any) -> str:
 
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reasoning Effort | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Service Tier | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reasoning_effort} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {service_tier} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
                 reasoning_effort=row["reasoningEffort"],
+                service_tier=row["serviceTier"],
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
                 state=fmt_value(row["stateCompletionAccuracy"]),

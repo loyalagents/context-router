@@ -9,7 +9,7 @@ environment:
     - examples/eval-harbor/jobs/dynamicmem-user001-cp00-02-memory-final-v1-staged.compose.yml
 
 agents:
-  - name: codex
+  - import_path: examples.eval_harbor_agents.codex_service_tier:CodexWithServiceTier
     model_name: gpt-5.4-mini
     kwargs:
       reasoning_effort: high

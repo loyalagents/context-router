@@ -34,10 +34,22 @@ This creates `${HARBOR_VENV:-/tmp/cr-harbor-cli-venv}` and installs Harbor from
 Harbor install is not required. If your default `python3` is older than 3.12,
 run `PYTHON_BIN=python3.12 pnpm eval-harbor:bootstrap`.
 
+The staged smoke and DynamicMem jobs use a repo-local Codex adapter extension at
+`examples/eval_harbor_agents/codex_service_tier.py`. It preserves Harbor's
+pinned Codex behavior and adds only the missing `service_tier` CLI mapping. The
+wrapper scripts set `PYTHONPATH` to the repo root so Harbor can import this
+adapter from the pinned virtualenv.
+
 Run the tiny staged smoke before any larger benchmark:
 
 ```bash
 pnpm eval-harbor:smoke
+```
+
+To test Codex Fast speed on the smoke job, run:
+
+```bash
+HARBOR_CODEX_SERVICE_TIER=fast pnpm eval-harbor:smoke
 ```
 
 The live Codex jobs pass `--agent-env CODEX_FORCE_AUTH_JSON=true`; make sure
@@ -84,6 +96,9 @@ HARBOR_SKIP_EXISTING=1 pnpm eval-harbor:dynamicmem
 # Run selected arms concurrently.
 HARBOR_PARALLEL=1 pnpm eval-harbor:dynamicmem
 
+# Run with Codex Fast speed. This maps to service_tier=priority.
+HARBOR_CODEX_SERVICE_TIER=fast pnpm eval-harbor:dynamicmem
+
 # Rerun even when skip-existing is enabled.
 HARBOR_FORCE=1 HARBOR_SKIP_EXISTING=1 pnpm eval-harbor:dynamicmem
 ```
@@ -93,6 +108,11 @@ HARBOR_FORCE=1 HARBOR_SKIP_EXISTING=1 pnpm eval-harbor:dynamicmem
 It does not inspect whether the score is high or low. Use `HARBOR_FORCE=1`
 when code, prompts, judge settings, or model settings changed and you need a
 fresh result.
+
+`HARBOR_CODEX_SERVICE_TIER` accepts `standard`, `fast`, or `priority`.
+`standard` is the default and passes no `service_tier` override. `fast` is a
+convenience alias for Codex `service_tier=priority`; it can change usage/cost,
+so report it when comparing runs.
 
 If the judge env is missing, DynamicMem verifiers can still run with the local
 deterministic fallback, but those fallback rewards should not be treated as the
@@ -159,6 +179,11 @@ write it into Harbor's Codex agent kwargs as `reasoning_effort`, which Harbor
 passes to Codex as `model_reasoning_effort`. The default is `high`; pass
 `--reasoning-effort low|medium|high|xhigh` when generating DynamicMem tasks or
 suites to change it intentionally.
+
+Codex service tier is also an explicit eval parameter. Generated DynamicMem
+jobs default to `--service-tier standard`, which omits `service_tier` from
+Codex config. Use `--service-tier priority` for Codex Fast speed. The local
+runner wrapper also accepts `HARBOR_CODEX_SERVICE_TIER=fast` as an alias.
 
 DynamicMem timeout settings are also explicit eval parameters. Generated tasks
 default to `--agent-timeout-sec 86400`, `--verifier-timeout-sec 86400`, and
@@ -231,7 +256,7 @@ python3 examples/eval-harbor/scripts/report_results.py \
   --json-output /tmp/cr-harbor-report.json
 ```
 
-The report table includes agent, model, reasoning effort, reward, field
+The report table includes agent, model, reasoning effort, service tier, reward, field
 accuracy, parse failures, metadata failures, missing/wrong/overfill counts,
 runtime, and artifact roots.
 The command exits nonzero if required score or output artifacts are missing or
@@ -562,6 +587,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --stage-pattern update-answer-every-checkpoint \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600
@@ -579,6 +605,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600 \
@@ -589,6 +616,12 @@ Run the committed retained-memory smoke across all three arms:
 
 ```bash
 pnpm eval-harbor:dynamicmem
+```
+
+Run the same DynamicMem benchmark with Codex Fast speed:
+
+```bash
+HARBOR_CODEX_SERVICE_TIER=fast pnpm eval-harbor:dynamicmem
 ```
 
 The wrapper prints the exact comparison report command after the selected runs
@@ -671,6 +704,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600 \
@@ -689,6 +723,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600 \

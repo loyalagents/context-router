@@ -22,10 +22,12 @@ from trajectory_framework import (
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_REASONING_EFFORT = "high"
+DEFAULT_SERVICE_TIER = "standard"
 DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
+SERVICE_TIER_CHOICES = {"standard", "priority"}
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
 
 
@@ -244,6 +246,7 @@ def generate_task(
     jobs_root: Path,
     model_name: str,
     reasoning_effort: str,
+    service_tier: str,
     agent_timeout_sec: float,
     verifier_timeout_sec: float,
     build_timeout_sec: float,
@@ -263,6 +266,7 @@ def generate_task(
             checkpoint_indices=tuple(plan.checkpoint_indices),
             model_name=model_name,
             reasoning_effort=reasoning_effort,
+            service_tier=service_tier,
             agent_timeout_sec=agent_timeout_sec,
             verifier_timeout_sec=verifier_timeout_sec,
             build_timeout_sec=build_timeout_sec,
@@ -280,6 +284,7 @@ def write_suite_manifest(
     jobs_root: Path,
     model_name: str,
     reasoning_effort: str,
+    service_tier: str,
     agent_timeout_sec: float,
     verifier_timeout_sec: float,
     build_timeout_sec: float,
@@ -307,12 +312,15 @@ def write_suite_manifest(
         },
         "modelName": model_name,
         "reasoningEffort": reasoning_effort,
+        "serviceTier": service_tier,
         "stagePatterns": sorted({plan.stage_pattern for plan in plans}),
         "agentConfig": {
             "agent": "codex",
             "modelName": model_name,
             "reasoningEffort": reasoning_effort,
             "reasoningEffortConfigKey": "model_reasoning_effort",
+            "serviceTier": service_tier,
+            "serviceTierConfigKey": "service_tier",
             "agentTimeoutSec": agent_timeout_sec,
             "verifierTimeoutSec": verifier_timeout_sec,
             "buildTimeoutSec": build_timeout_sec,
@@ -332,6 +340,7 @@ def write_suite_manifest(
                 "instructionPath": arm["instructionPath"],
                 "compose": arm.get("compose", "staged"),
                 "reasoningEffort": reasoning_effort,
+                "serviceTier": service_tier,
                 "agentTimeoutSec": agent_timeout_sec,
                 "verifierTimeoutSec": verifier_timeout_sec,
                 "buildTimeoutSec": build_timeout_sec,
@@ -397,6 +406,12 @@ def main() -> int:
         default=DEFAULT_REASONING_EFFORT,
         choices=sorted(REASONING_EFFORT_CHOICES),
         help="Codex reasoning effort written into every generated Harbor job.",
+    )
+    parser.add_argument(
+        "--service-tier",
+        default=DEFAULT_SERVICE_TIER,
+        choices=sorted(SERVICE_TIER_CHOICES),
+        help="Codex service_tier written into generated Harbor job kwargs when not standard.",
     )
     parser.add_argument(
         "--agent-timeout-sec",
@@ -473,6 +488,7 @@ def main() -> int:
                 jobs_root=args.jobs_root,
                 model_name=args.model,
                 reasoning_effort=args.reasoning_effort,
+                service_tier=args.service_tier,
                 agent_timeout_sec=args.agent_timeout_sec,
                 verifier_timeout_sec=args.verifier_timeout_sec,
                 build_timeout_sec=args.build_timeout_sec,
@@ -490,6 +506,7 @@ def main() -> int:
         jobs_root=args.jobs_root,
         model_name=args.model,
         reasoning_effort=args.reasoning_effort,
+        service_tier=args.service_tier,
         agent_timeout_sec=args.agent_timeout_sec,
         verifier_timeout_sec=args.verifier_timeout_sec,
         build_timeout_sec=args.build_timeout_sec,

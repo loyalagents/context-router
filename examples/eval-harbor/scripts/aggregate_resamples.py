@@ -52,6 +52,7 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "validationErrors": row.get("validationErrors", []),
         "model": row.get("model"),
         "reasoningEffort": row.get("reasoningEffort"),
+        "serviceTier": row.get("serviceTier", "standard"),
     }
 
 
@@ -80,6 +81,12 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
             if sample.get("reasoningEffort") not in (None, "")
         }
     )
+    service_tiers = sorted(
+        {
+            str(sample.get("serviceTier") or "standard")
+            for sample in samples
+        }
+    )
 
     def stats(values: list[float]) -> dict[str, float | None]:
         if not values:
@@ -103,6 +110,7 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "metadataFailures": metadata_failures,
         "validationFailures": validation_failures,
         "reasoningEfforts": reasoning_efforts,
+        "serviceTiers": service_tiers,
     }
 
 
@@ -135,8 +143,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Service Tier | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail |",
+        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -146,10 +154,11 @@ def markdown_report(payload: dict[str, Any]) -> str:
             state_accuracy = aggregate["stateCompletionAccuracy"]
             service_score = aggregate["rq3ApplyMeanScore"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {service_tier} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
+                    service_tier=", ".join(aggregate["serviceTiers"]) or "standard",
                     samples=aggregate["samples"],
                     reward_mean=fmt_float(reward["mean"]),
                     reward_std=fmt_float(reward["std"]),
