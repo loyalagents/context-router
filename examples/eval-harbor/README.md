@@ -133,15 +133,13 @@ python3 examples/eval-harbor/scripts/run_harbor_resamples.py \
   --harbor-bin harbor \
   --samples 3 \
   --n-concurrent 3 \
-  --env-file /tmp/dynamicmem-judge.env \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_API_KEY=${DYNAMICMEM_LLM_JUDGE_API_KEY}' \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_BASE_URL=${DYNAMICMEM_LLM_JUDGE_BASE_URL}' \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_MODEL=${DYNAMICMEM_LLM_JUDGE_MODEL}' \
-  --verifier-env 'DYNAMICMEM_JUDGE_MODE=${DYNAMICMEM_JUDGE_MODE}'
+  --env-file /tmp/dynamicmem-judge.env
 ```
 
 The runner performs preflight before Harbor starts and post-run validation after
-each sample. A policy or data-leak failure should block the experiment.
+each sample. For DynamicMem, it also bridges judge env-file values into the
+Harbor verifier and rejects missing LLM-judge metrics, metadata failures,
+missing checkpoint predictions, policy failures, or data-leak failures.
 
 Aggregate repeated samples:
 

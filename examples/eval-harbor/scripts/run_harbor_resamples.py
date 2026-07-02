@@ -18,6 +18,16 @@ from validate_eval_preflight import (
 
 
 DEFAULT_MODES = ["context-only", "markdown", "cr-mcp"]
+DYNAMICMEM_VERIFIER_ENV_BRIDGE = [
+    "DYNAMICMEM_LLM_JUDGE_API_KEY",
+    "DYNAMICMEM_LLM_JUDGE_BASE_URL",
+    "DYNAMICMEM_LLM_JUDGE_MODEL",
+    "DYNAMICMEM_JUDGE_MODE",
+    "DYNAMICMEM_LLM_JUDGE_MAX_ITEMS",
+    "DYNAMICMEM_LLM_JUDGE_BATCH_SIZE",
+    "DYNAMICMEM_LLM_JUDGE_TIMEOUT_SEC",
+    "DYNAMICMEM_LLM_JUDGE_SEED",
+]
 
 
 def load_manifest(path: Path) -> dict:
@@ -124,6 +134,52 @@ def run_command(command: list[str], *, dry_run: bool) -> None:
         subprocess.run(command, check=True)
 
 
+def verifier_env_with_dynamicmem_defaults(
+    verifier_env: list[str],
+    env_files: list[str],
+    manifest: dict | None,
+) -> list[str]:
+    """Bridge DynamicMem judge env-file values into Harbor verifier env.
+
+    Harbor's --env-file is not enough for verifier execution in current local
+    runs. Passing VAR=${VAR} keeps secrets out of the command text while letting
+    Harbor resolve values from the env file/process env.
+    """
+
+    merged = list(verifier_env)
+    configured_names = {item.split("=", 1)[0] for item in merged}
+    is_dynamicmem = False
+    if isinstance(manifest, dict):
+        source = manifest.get("sourceDataset")
+        is_dynamicmem = (
+            isinstance(source, dict)
+            and str(source.get("name") or "") == "xiewenya/dynamicmem"
+        )
+    env_file_has_dynamicmem = any(
+        env_file_has_dynamicmem_keys(path)
+        for path in env_files
+    )
+    if not is_dynamicmem and not env_file_has_dynamicmem:
+        return merged
+
+    for name in DYNAMICMEM_VERIFIER_ENV_BRIDGE:
+        if name not in configured_names:
+            merged.append(f"{name}=${{{name}}}")
+    return merged
+
+
+def env_file_has_dynamicmem_keys(path: str) -> bool:
+    try:
+        text = Path(path).expanduser().read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return any(
+        line.lstrip().startswith("DYNAMICMEM_")
+        for line in text.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run 3x Harbor resampling for each task and memory arm."
@@ -199,6 +255,12 @@ def main() -> int:
         source_roots=source_roots,
     )
 
+    verifier_env = verifier_env_with_dynamicmem_defaults(
+        list(args.verifier_env),
+        list(args.env_file),
+        manifest,
+    )
+
     for task_id in task_ids:
         for mode in modes:
             job_path = jobs_root / f"{task_id}-{mode}.yaml"
@@ -220,7 +282,7 @@ def main() -> int:
                     command.extend(["--env-file", env_file])
                 for env in args.agent_env:
                     command.extend(["--agent-env", env])
-                for env in args.verifier_env:
+                for env in verifier_env:
                     command.extend(["--verifier-env", env])
                 if args.yes:
                     command.append("--yes")

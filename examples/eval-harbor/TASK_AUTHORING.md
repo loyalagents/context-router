@@ -136,12 +136,15 @@ python3 examples/eval-harbor/scripts/run_harbor_resamples.py \
   --harbor-bin harbor \
   --samples 3 \
   --n-concurrent 3 \
-  --env-file /tmp/dynamicmem-judge.env \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_API_KEY=${DYNAMICMEM_LLM_JUDGE_API_KEY}' \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_BASE_URL=${DYNAMICMEM_LLM_JUDGE_BASE_URL}' \
-  --verifier-env 'DYNAMICMEM_LLM_JUDGE_MODEL=${DYNAMICMEM_LLM_JUDGE_MODEL}' \
-  --verifier-env 'DYNAMICMEM_JUDGE_MODE=${DYNAMICMEM_JUDGE_MODE}'
+  --env-file /tmp/dynamicmem-judge.env
+```
 
+For DynamicMem manifests, the runner automatically forwards judge env-file
+values into the Harbor verifier. A run is not considered valid unless
+`rewardSource=llm-judge`, required usage metrics are present, metadata is valid,
+and every scored checkpoint has a prediction.
+
+```bash
 python3 examples/eval-harbor/scripts/aggregate_resamples.py \
   --root /tmp/cr-harbor/runs \
   --manifest /tmp/cr-harbor/suite.json \

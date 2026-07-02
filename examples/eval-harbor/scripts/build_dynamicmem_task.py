@@ -509,6 +509,9 @@ def visible_dynamicmem_task(
         },
         "output": {
             "path": "outputs/prediction.json",
+            "write_mode": "append_or_update_checkpoint_prediction",
+            "preserve_existing_predictions": True,
+            "current_checkpoint_id": checkpoint.get("checkpoint_id"),
             "contract": {
                 "task_contract_version": task_packs.get("task_contract_version"),
                 "research_frame_version": task_packs.get("research_frame_version"),
@@ -925,6 +928,11 @@ Write or update:
 
 - `outputs/prediction.json`
 
+If `outputs/prediction.json` already exists, read it first, keep every existing
+object in its `predictions` array, and add or replace only the prediction object
+whose `checkpoint_id` is `{checkpoint_id}`. Never drop earlier checkpoint
+predictions.
+
 Complete both native DynamicMem task families for checkpoint `{checkpoint_id}` as
 of `{timestamp}`:
 
@@ -949,8 +957,9 @@ Use this exact top-level shape:
 }}
 ```
 
-Keep prior checkpoint predictions in the same `predictions` array if they were
-already completed. Add one prediction object for checkpoint `{checkpoint_id}`.
+The JSON example above shows the required object for the current checkpoint. In
+multi-answer trajectories, the final file must contain one prediction object per
+scored checkpoint completed so far.
 
 For `rq3_apply_answers`, use this shape per state key:
 
@@ -1016,6 +1025,11 @@ Write:
 
 - `outputs/prediction.json`
 
+If `outputs/prediction.json` already exists, read it first, keep every existing
+object in its `predictions` array, and add or replace only the prediction object
+whose `checkpoint_id` is `{checkpoint_id}`. Never drop earlier checkpoint
+predictions.
+
 Complete both native DynamicMem task families for checkpoint `{checkpoint_id}` as
 of `{timestamp}`:
 
@@ -1040,6 +1054,10 @@ Use this exact top-level shape:
   ]
 }}
 ```
+
+The JSON example above shows the required object for the current checkpoint. In
+multi-answer trajectories, the final file must contain one prediction object per
+scored checkpoint completed so far.
 
 For `rq3_apply_answers`, use this shape per state key:
 

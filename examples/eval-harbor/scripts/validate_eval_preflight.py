@@ -13,7 +13,9 @@ from typing import Any
 from report_results import (
     command_policy_violations,
     find_trial_dir,
+    find_score_path,
     load_json,
+    missing_required_report_metrics,
     memory_policy_violations,
     read_codex_trace,
     read_stage_log,
@@ -298,6 +300,14 @@ def validate_run_preflight(mode: str, run_path: Path) -> list[str]:
     errors.extend(summary.get("validationErrors") or [])
 
     trial_dir = find_trial_dir(run_path)
+    try:
+        score = load_json(find_score_path(trial_dir))
+    except ValueError as error:
+        score = {}
+        errors.append(str(error))
+    if is_dynamicmem_score(score):
+        errors.extend(dynamicmem_score_errors(score, summary))
+
     config = load_json(trial_dir / "config.json")
     score_artifact_root = Path(summary.get("artifactRoot") or trial_dir / "artifacts")
     stage_log_path = score_artifact_root / STAGE_LOG_PATH.relative_to("artifacts")
@@ -317,6 +327,49 @@ def validate_run_preflight(mode: str, run_path: Path) -> list[str]:
         rendered = json.dumps(violation, sort_keys=True)
         if f"policy violation: {rendered}" not in errors:
             errors.append(f"policy violation: {rendered}")
+    return errors
+
+
+def is_dynamicmem_score(score: dict[str, Any]) -> bool:
+    return any(
+        key in score
+        for key in (
+            "llmJudge",
+            "missingCheckpointPredictions",
+            "stateCompletion",
+            "personalizedService",
+        )
+    )
+
+
+def dynamicmem_score_errors(score: dict[str, Any], summary: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    missing_metrics = missing_required_report_metrics(summary)
+    if missing_metrics:
+        errors.append(f"missing required report metrics: {', '.join(missing_metrics)}")
+
+    if score.get("metadataSuccess") is not True:
+        metadata_errors = score.get("metadataErrors") or []
+        errors.append(f"DynamicMem metadataSuccess must be true: {metadata_errors}")
+
+    missing_predictions = score.get("missingCheckpointPredictions") or []
+    if missing_predictions:
+        errors.append(
+            "DynamicMem prediction missing checkpoint(s): "
+            + ", ".join(str(item) for item in missing_predictions)
+        )
+
+    llm_judge = score.get("llmJudge") or {}
+    if score.get("rewardSource") != "llm-judge":
+        errors.append(
+            "DynamicMem rewardSource must be llm-judge, "
+            f"got {score.get('rewardSource')!r}"
+        )
+    if llm_judge.get("status") != "ok":
+        errors.append(
+            "DynamicMem llmJudge status must be ok, "
+            f"got {llm_judge.get('status')!r}: {llm_judge.get('error') or ''}"
+        )
     return errors
 
 
