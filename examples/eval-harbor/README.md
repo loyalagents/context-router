@@ -735,7 +735,6 @@ Core options:
 | `--checkpoint-indices 0-3` | Exact selected checkpoint list, not a startpoint. `0-3` means checkpoints `0,1,2,3`; `4` means only checkpoint `4`. |
 | `--stage-schedule U,U,T` | Explicit staged trajectory. Overrides `--stage-pattern`. |
 | `--tasks-root`, `--jobs-root`, `--manifest` | Output locations. Use `/tmp/...` for local experiments when generated tasks should not enter git. |
-| `--max-users`, `--max-tasks` | Batch guardrails. They limit how many users/tasks can be generated; they do not define task semantics. |
 | `--skip-preflight` | Debug-only escape hatch. Normal generation should leave automatic preflight enabled. |
 
 Stage tokens:
@@ -777,8 +776,6 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --source-users user003 \
   --checkpoint-indices 0-1 \
   --stage-schedule U,T,U,T \
-  --max-users 1 \
-  --max-tasks 1 \
   --tasks-root /tmp/cr-dynamicmem-user003/tasks \
   --jobs-root /tmp/cr-dynamicmem-user003/jobs \
   --manifest /tmp/cr-dynamicmem-user003/suite.json \
