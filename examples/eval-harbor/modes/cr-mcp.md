@@ -25,6 +25,12 @@ state has been written with `mutatePreferences`. Do not create new slugs,
 grouped slugs, summary slugs, or catch-all slugs. `mutatePreferences` rejects
 unknown slugs. Use only exact slugs returned by `listPreferenceSlugs`.
 
+Do not create durable scratch notes, summaries, copied raw-document files, or
+any external memory outside the configured ContextRouter MCP server. During a
+downstream-task stage, answer only from MCP memory, the current conversation
+context, and the currently revealed task file. The run validator will reject
+cr-mcp runs that create `/app/memory.md` or other durable scratch state.
+
 For DynamicMem staged tasks, the visible `state_completion.keys` names are the
 CR memory slugs. Store each inferred state under its matching exact state key,
 for example `habits_state:budget_review`; do not store a combined object under a
