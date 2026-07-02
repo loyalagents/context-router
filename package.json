@@ -43,6 +43,13 @@
     "eval:e2e-mcp-packet": "node examples/eval/scripts/e2e-mcp-packet.mjs",
     "eval:test": "node --test examples/eval/scripts",
     "eval:verify": "pnpm eval:test && pnpm eval:validate",
+    "eval-harbor:bootstrap": "bash examples/eval-harbor/scripts/bootstrap_runner.sh",
+    "eval-harbor:check": "bash examples/eval-harbor/scripts/check_static.sh",
+    "eval-harbor:smoke": "bash examples/eval-harbor/scripts/run_smoke.sh",
+    "eval-harbor:dynamicmem": "bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+    "eval-harbor:dynamicmem:resume": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+    "eval-harbor:dynamicmem:fast": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+    "eval-harbor:dynamicmem:fresh-fast": "env HARBOR_SKIP_EXISTING=0 HARBOR_FORCE=1 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },
