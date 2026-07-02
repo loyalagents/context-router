@@ -26,7 +26,10 @@
         "research_frame_version": "rq_v2",
         "task_contract_version": "taskabc_v2"
       },
-      "path": "outputs/prediction.json"
+      "current_checkpoint_id": "cal_quarterly_003",
+      "path": "outputs/prediction.json",
+      "preserve_existing_predictions": true,
+      "write_mode": "append_or_update_checkpoint_prediction"
     },
     "personalized_service": {
       "keys": {

@@ -8,6 +8,9 @@ environment:
 agents:
   - name: codex
     model_name: gpt-5.3-codex-spark
+    kwargs:
+      web_search: disabled
+      model_auto_compact_token_limit: 256000
 
 tasks:
   - path: examples/eval-harbor/tasks/maya-packet-hard-over-time-v1-formfill

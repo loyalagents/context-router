@@ -13,7 +13,8 @@ agents:
     model_name: gpt-5.4-mini
     kwargs:
       reasoning_effort: high
-
+      web_search: disabled
+      model_auto_compact_token_limit: 256000
 tasks:
   - path: examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1
 

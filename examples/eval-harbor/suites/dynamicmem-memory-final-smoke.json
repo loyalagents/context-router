@@ -1,31 +1,53 @@
 {
   "agentConfig": {
     "agent": "codex",
+    "agentTimeoutSec": 86400.0,
+    "buildTimeoutSec": 600.0,
+    "codexAutoCompactConfigKey": "model_auto_compact_token_limit",
+    "codexAutoCompactTokenLimit": 256000,
+    "codexWebSearch": "disabled",
+    "codexWebSearchConfigKey": "web_search",
     "modelName": "gpt-5.4-mini",
     "reasoningEffort": "high",
-    "reasoningEffortConfigKey": "model_reasoning_effort"
+    "reasoningEffortConfigKey": "model_reasoning_effort",
+    "verifierTimeoutSec": 86400.0
   },
   "arms": [
     {
+      "agentTimeoutSec": 86400.0,
+      "buildTimeoutSec": 600.0,
+      "codexAutoCompactTokenLimit": 256000,
+      "codexWebSearch": "disabled",
       "compose": "staged",
       "instructionPath": "examples/eval-harbor/modes/context-only.md",
       "memoryMode": "context-only",
       "mode": "context-only",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "verifierTimeoutSec": 86400.0
     },
     {
+      "agentTimeoutSec": 86400.0,
+      "buildTimeoutSec": 600.0,
+      "codexAutoCompactTokenLimit": 256000,
+      "codexWebSearch": "disabled",
       "compose": "staged",
       "instructionPath": "examples/eval-harbor/modes/markdown.md",
       "memoryMode": "markdown",
       "mode": "markdown",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "verifierTimeoutSec": 86400.0
     },
     {
+      "agentTimeoutSec": 86400.0,
+      "buildTimeoutSec": 600.0,
+      "codexAutoCompactTokenLimit": 256000,
+      "codexWebSearch": "disabled",
       "compose": "cr-mcp",
       "instructionPath": "examples/eval-harbor/modes/cr-mcp.md",
       "memoryMode": "cr-mcp",
       "mode": "cr-mcp",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "verifierTimeoutSec": 86400.0
     }
   ],
   "coverage": {
@@ -79,22 +101,29 @@
   "modelName": "gpt-5.4-mini",
   "paths": {
     "jobsRoot": "examples/eval-harbor/jobs",
+    "sourceRoot": "/Users/zhu/.cache/context-router/eval-harbor/datasets/dynamicmem",
     "tasksRoot": "examples/eval-harbor/tasks"
   },
   "reasoningEffort": "high",
-  "samplesPerTaskArm": 3,
+  "samplesPerTaskArm": 1,
   "schemaVersion": 1,
   "sourceDataset": {
+    "downloaded": false,
     "license": "MIT",
-    "migrationPolicy": "Harbor replaces only the runner. Each generated task preserves one native DynamicMem user checkpoint trajectory, including raw app-log deltas, state_completion_pack, rq3_apply_service_qa, and the upstream prediction contract.",
+    "migrationPolicy": "Harbor replaces only the runner. Each generated task adapts one DynamicMem user checkpoint trajectory into the shared U/T staged contract, preserving raw app-log deltas, state_completion_pack, rq3_apply_service_qa, and the upstream prediction contract.",
     "name": "xiewenya/dynamicmem",
     "nativeInputs": [
       "app_log_large.json",
       "task_packs.json"
     ],
-    "selectionPolicy": "Deterministic checkpoint-trajectory migration. One Harbor task maps to one DynamicMem user and the selected checkpoint indices; no state-key chunking or synthetic form schema generation is used."
+    "selectionPolicy": "Deterministic checkpoint-trajectory migration. One Harbor task maps to one DynamicMem user and the selected checkpoint indices; no state-key chunking or synthetic form schema generation is used.",
+    "sourceKind": "cache",
+    "sourceRoot": "/Users/zhu/.cache/context-router/eval-harbor/datasets/dynamicmem"
   },
   "stagePatterns": [
+    "update-only-then-final"
+  ],
+  "stageSchedules": [
     "update-only-then-final"
   ],
   "tasks": [
@@ -118,14 +147,15 @@
       "difficulty": {
         "challengeSignals": {
           "checkpointTrajectory": true,
+          "customStageSchedule": false,
           "deltaRawCheckpointHistory": true,
           "hiddenDownstreamUntilFinalStage": true,
           "hiddenFutureCheckpoints": true,
+          "interleavedDownstreamTasks": false,
           "longContextApprox70kPlus": true,
           "multiStage": true,
           "nativePersonalizedService": true,
-          "nativeStateCompletion": true,
-          "updateAnswerEveryCheckpoint": false
+          "nativeStateCompletion": true
         },
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
         "schemaVersion": 1,
@@ -202,6 +232,7 @@
         },
         "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
         "stagePatternName": "update-only-then-final",
+        "stageSchedule": "update-only-then-final",
         "stages": [
           {
             "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
@@ -235,20 +266,20 @@
           },
           {
             "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
-            "approxTokenCount": 16543,
+            "approxTokenCount": 16578,
             "kind": "downstream-task",
             "stageId": "04-cp02-downstream-task",
             "stageIndex": 4,
-            "visibleCharCount": 66173,
+            "visibleCharCount": 66314,
             "visibleDocCount": 0,
             "visibleFileCount": 1
           }
         ],
         "taskContract": "dataset-adapter/trajectory-v1",
         "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
-        "taskType": "dynamicmem-native-background-memory-trajectory",
+        "taskType": "dynamicmem-background-memory-trajectory",
         "totals": {
-          "approxTokenCount": 388798,
+          "approxTokenCount": 388833,
           "checkpointCount": 1,
           "downstreamStageCount": 1,
           "memoryUpdateStageCount": 3,
@@ -262,8 +293,7 @@
           "stageCount": 4,
           "stateCompletionKeyCount": 37,
           "uniqueStateCompletionKeyCount": 37,
-          "updateAnswerStageCount": 0,
-          "visibleCharCount": 1555192,
+          "visibleCharCount": 1555333,
           "visibleDocCount": 716,
           "visibleFileCount": 720
         },
@@ -286,6 +316,9 @@
           "finalCheckpointId": "cal_quarterly_003",
           "finalCheckpointIndex": 2,
           "finalCheckpointTimestamp": "2024-06-30 20:00:00",
+          "scoredCheckpointIds": [
+            "cal_quarterly_003"
+          ],
           "sourceUserDir": "001_user_001",
           "sourceUserId": "user_001"
         }
@@ -296,6 +329,9 @@
       "observedLogCount": 716,
       "personalizedServiceItemCount": 37,
       "personalizedServiceKeyCount": 37,
+      "scoredCheckpointIds": [
+        "cal_quarterly_003"
+      ],
       "serviceFamilies": [
         "action_configuration",
         "information_request_construction",
@@ -304,9 +340,16 @@
       "sourceUserDir": "001_user_001",
       "sourceUserId": "user_001",
       "stagePattern": "update-only-then-final",
+      "stageSchedule": null,
+      "stageScheduleDisplay": "update-only-then-final",
       "stateCompletionKeyCount": 37,
       "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
       "uniqueStateCompletionKeyCount": 37
     }
-  ]
+  ],
+  "timeouts": {
+    "agentSec": 86400.0,
+    "buildSec": 600.0,
+    "verifierSec": 86400.0
+  }
 }
