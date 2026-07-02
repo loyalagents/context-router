@@ -155,29 +155,39 @@ def verifier_env_with_dynamicmem_defaults(
             isinstance(source, dict)
             and str(source.get("name") or "") == "xiewenya/dynamicmem"
         )
-    env_file_has_dynamicmem = any(
-        env_file_has_dynamicmem_keys(path)
-        for path in env_files
-    )
+    env_file_names: set[str] = set()
+    for path in env_files:
+        env_file_names.update(env_file_dynamicmem_names(path))
+    env_file_has_dynamicmem = bool(env_file_names)
     if not is_dynamicmem and not env_file_has_dynamicmem:
         return merged
 
     for name in DYNAMICMEM_VERIFIER_ENV_BRIDGE:
-        if name not in configured_names:
+        if name not in configured_names and (
+            name in os.environ or name in env_file_names
+        ):
             merged.append(f"{name}=${{{name}}}")
     return merged
 
 
 def env_file_has_dynamicmem_keys(path: str) -> bool:
+    return bool(env_file_dynamicmem_names(path))
+
+
+def env_file_dynamicmem_names(path: str) -> set[str]:
     try:
         text = Path(path).expanduser().read_text(encoding="utf-8")
     except OSError:
-        return False
-    return any(
-        line.lstrip().startswith("DYNAMICMEM_")
-        for line in text.splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    )
+        return set()
+    names: set[str] = set()
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        name = stripped.split("=", 1)[0].strip()
+        if name.startswith("DYNAMICMEM_"):
+            names.add(name)
+    return names
 
 
 def main() -> int:
