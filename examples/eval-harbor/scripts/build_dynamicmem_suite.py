@@ -552,11 +552,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
     stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
     arm_configs = load_arm_configs(args.arms_config)
-    source_resolution = resolve_dynamicmem_source_root(
-        args.source_root,
-        raw_cache_root=args.dataset_cache_root,
-        download_missing=not args.no_download,
-    )
+    try:
+        source_resolution = resolve_dynamicmem_source_root(
+            args.source_root,
+            raw_cache_root=args.dataset_cache_root,
+            download_missing=not args.no_download,
+        )
+    except (FileNotFoundError, RuntimeError, ValueError) as error:
+        raise SystemExit(f"ERROR {error}") from None
     source_root = source_resolution.source_root
     allowed_users = parse_source_users(args.source_users)
     print(

@@ -30,8 +30,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         description=(
             "Build Harbor tasks/jobs/suite manifests from external benchmark "
             "datasets. Dataset-specific options are forwarded to the selected adapter."
-        )
+        ),
+        add_help=False,
     )
+    parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("--dataset", choices=sorted(DATASET_ADAPTERS), required=False)
     parser.add_argument("--list-datasets", action="store_true")
     args, remaining = parser.parse_known_args(argv)
@@ -41,10 +43,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"{adapter.name}: {adapter.description}")
         return 0
     if not args.dataset:
+        if args.help:
+            print("usage: build_dataset_suite.py --dataset DATASET [dataset options]")
+            print()
+            print(parser.description)
+            print()
+            print("available datasets:")
+            for adapter in DATASET_ADAPTERS.values():
+                print(f"  {adapter.name}: {adapter.description}")
+            return 0
         parser.error("--dataset is required unless --list-datasets is set")
 
     adapter = DATASET_ADAPTERS[args.dataset]
     module = importlib.import_module(adapter.module)
+    if args.help:
+        remaining = ["--help", *remaining]
     return int(module.main(list(remaining)))
 
 
