@@ -280,6 +280,7 @@ def write_suite_manifest(
     plans: list[TaskPlan],
     *,
     output: Path,
+    source_root: Path,
     tasks_root: Path,
     jobs_root: Path,
     model_name: str,
@@ -297,6 +298,7 @@ def write_suite_manifest(
         "sourceDataset": {
             "name": "xiewenya/dynamicmem",
             "license": "MIT",
+            "sourceRoot": str(source_root),
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
                 "Harbor replaces only the runner. Each generated task preserves "
@@ -330,7 +332,11 @@ def write_suite_manifest(
             "buildSec": build_timeout_sec,
         },
         "samplesPerTaskArm": samples,
-        "paths": {"tasksRoot": str(tasks_root), "jobsRoot": str(jobs_root)},
+        "paths": {
+            "tasksRoot": str(tasks_root),
+            "jobsRoot": str(jobs_root),
+            "sourceRoot": str(source_root),
+        },
         "stageSchedules": sorted({plan.stage_schedule_display for plan in plans}),
         "arms": [
             {
@@ -501,6 +507,7 @@ def main() -> int:
     write_suite_manifest(
         [plan for _, plan in all_plans],
         output=args.manifest,
+        source_root=args.source_root,
         tasks_root=args.tasks_root,
         jobs_root=args.jobs_root,
         model_name=args.model,

@@ -201,6 +201,49 @@ def read_stage_log(stage_log_path: Path) -> list[dict[str, Any]]:
     return entries
 
 
+def configured_task_path(config: dict[str, Any]) -> Path | None:
+    task_config = config.get("task") or {}
+    raw_task_path = task_config.get("path")
+    if not isinstance(raw_task_path, str) or not raw_task_path:
+        return None
+
+    task_path = Path(raw_task_path)
+    candidates = [task_path]
+    if task_path.name == "task.toml":
+        candidates.append(task_path.parent)
+    if not task_path.is_absolute():
+        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+
+    for candidate in candidates:
+        if candidate.is_file() and candidate.name == "task.toml":
+            return candidate.parent
+        if candidate.is_dir() and (candidate / "stages" / "payload.json").exists():
+            return candidate
+    return None
+
+
+def expected_stage_sequence_from_config(config: dict[str, Any]) -> list[dict[str, Any]]:
+    task_path = configured_task_path(config)
+    if task_path is None:
+        return []
+    payload_path = task_path / "stages" / "payload.json"
+    if not payload_path.exists():
+        return []
+    payload = load_json(payload_path)
+    stages = payload.get("stages")
+    if not isinstance(stages, list):
+        return []
+    return [
+        {
+            "stageId": stage.get("stageId"),
+            "stageIndex": stage.get("stageIndex"),
+            "kind": stage.get("kind"),
+        }
+        for stage in stages
+        if isinstance(stage, dict)
+    ]
+
+
 def truncate(value: str, limit: int = 240) -> str:
     return value if len(value) <= limit else f"{value[: limit - 3]}..."
 
@@ -262,9 +305,22 @@ def command_policy_violations(commands: list[dict[str, str]]) -> list[dict[str, 
     return violations
 
 
-def stage_policy_violations(stage_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def stage_policy_violations(
+    stage_log: list[dict[str, Any]],
+    expected_stage_sequence: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     violations: list[dict[str, Any]] = []
-    for entry in stage_log:
+    revealed_entries = [entry for entry in stage_log if entry.get("done") is not True]
+    for expected_index, entry in enumerate(revealed_entries, start=1):
+        if entry.get("stageIndex") != expected_index:
+            violations.append(
+                {
+                    "type": "stage_log_order_mismatch",
+                    "stageId": entry.get("stageId"),
+                    "expectedStageIndex": expected_index,
+                    "actualStageIndex": entry.get("stageIndex"),
+                }
+            )
         if entry.get("kind") != "downstream-task":
             continue
         if entry.get("rawDocsVisible") is True:
@@ -291,6 +347,27 @@ def stage_policy_violations(stage_log: list[dict[str, Any]]) -> list[dict[str, A
                     "reason": "downstream-task stage did not reveal dynamicmem-task.json",
                 }
             )
+    if expected_stage_sequence is not None and expected_stage_sequence:
+        if len(revealed_entries) != len(expected_stage_sequence):
+            violations.append(
+                {
+                    "type": "stage_log_count_mismatch",
+                    "expected": len(expected_stage_sequence),
+                    "actual": len(revealed_entries),
+                }
+            )
+        for actual, expected in zip(revealed_entries, expected_stage_sequence):
+            for key in ("stageId", "stageIndex", "kind"):
+                if actual.get(key) != expected.get(key):
+                    violations.append(
+                        {
+                            "type": "stage_log_sequence_mismatch",
+                            "key": key,
+                            "expected": expected.get(key),
+                            "actual": actual.get(key),
+                        }
+                    )
+                    break
     return violations
 
 
@@ -299,11 +376,12 @@ def run_policy_violations(
     mode: str,
     codex_trace: dict[str, Any],
     stage_log: list[dict[str, Any]],
+    expected_stage_sequence: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     violations = []
     violations.extend(command_policy_violations(codex_trace["commands"]))
     violations.extend(memory_policy_violations(mode, codex_trace["fileChanges"]))
-    violations.extend(stage_policy_violations(stage_log))
+    violations.extend(stage_policy_violations(stage_log, expected_stage_sequence))
     return violations
 
 
@@ -471,10 +549,12 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     except (ValueError, json.JSONDecodeError) as error:
         stage_log = []
         validation_errors.append(f"malformed stage log: {error}")
+    expected_stage_sequence = expected_stage_sequence_from_config(config)
     policy_violations = run_policy_violations(
         mode=mode,
         codex_trace=codex_trace,
         stage_log=stage_log,
+        expected_stage_sequence=expected_stage_sequence,
     )
     disallowed_tool_calls = {
         "web_search": codex_item_counts.get("web_search", 0),
@@ -482,6 +562,15 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     if disallowed_tool_calls["web_search"]:
         validation_errors.append(
             f"disallowed Codex web_search calls: {disallowed_tool_calls['web_search']}"
+        )
+    codex_web_search = (
+        agent_kwargs.get("web_search")
+        or agent_config.get("web_search")
+        or "n/a"
+    )
+    if (agent_config.get("name") or "").lower() == "codex" and codex_web_search != "disabled":
+        validation_errors.append(
+            f"Codex web_search must be disabled, got {codex_web_search!r}"
         )
     for violation in policy_violations:
         validation_errors.append(f"policy violation: {json.dumps(violation, sort_keys=True)}")
@@ -511,11 +600,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             or agent_config.get("reasoning_effort")
             or "n/a"
         ),
-        "codexWebSearch": (
-            agent_kwargs.get("web_search")
-            or agent_config.get("web_search")
-            or "n/a"
-        ),
+        "codexWebSearch": codex_web_search,
         "agentTimeoutSec": task_timeouts.get("agentTimeoutSec"),
         "verifierTimeoutSec": task_timeouts.get("verifierTimeoutSec"),
         "buildTimeoutSec": task_timeouts.get("buildTimeoutSec"),

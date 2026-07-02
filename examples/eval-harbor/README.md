@@ -181,6 +181,34 @@ memory files for the selected arm; or reveal raw documents during a
 may use only conversation context, markdown may persist only `/app/memory.md`,
 and cr-mcp may persist only through the ContextRouter MCP memory server.
 
+The official resample runner treats validation as a hard gate, not a manual
+checklist. Before starting Harbor it automatically checks generated task
+soundness, exact DynamicMem staged-log reconstruction when the source dataset is
+available, downstream-stage close-book exposure, `web_search: disabled` job
+config, and stage ordering. After each sample finishes, it also checks
+hidden-path trace access, mode-specific durable writes, web-search usage, and
+run-time `stage-log.jsonl` ordering.
+
+The underlying validator can be run directly only for debugging a failed gate:
+
+```bash
+python3 examples/eval-harbor/scripts/validate_eval_preflight.py \
+  --dynamicmem-source-root /path/to/dynamicmem-users \
+  --task examples/eval-harbor/tasks/<task-id> \
+  --job examples/eval-harbor/jobs/<task-id>-context-only.yaml \
+  --job examples/eval-harbor/jobs/<task-id>-markdown.yaml \
+  --job examples/eval-harbor/jobs/<task-id>-cr-mcp.yaml
+```
+
+Run artifacts use the same validator:
+
+```bash
+python3 examples/eval-harbor/scripts/validate_eval_preflight.py \
+  --run context-only=/path/to/context-only-run \
+  --run markdown=/path/to/markdown-run \
+  --run cr-mcp=/path/to/cr-mcp-run
+```
+
 Run the no-memory baseline:
 
 ```bash
