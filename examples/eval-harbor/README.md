@@ -704,11 +704,25 @@ new arm entry there, or pass another file with `--arms-config`. The suite
 manifest records the arms it was generated with, and the resampling/aggregate
 scripts read those arms by default.
 
+Prefer the generic dataset-suite entrypoint. It keeps Harbor task generation
+dataset-pluggable: `--dataset dynamicmem` selects the DynamicMem adapter today,
+and future datasets should add another adapter behind the same CLI instead of
+forking the runner.
+
+The command resolves DynamicMem source data in this order:
+
+1. explicit `--source-root`;
+2. `DYNAMICMEM_SOURCE_ROOT`;
+3. repo-local external paths such as `examples/eval-harbor/external/dynamicmem`
+   if the team later wants a submodule-like checkout;
+4. local cache under `~/.cache/context-router/eval-harbor/datasets/dynamicmem`;
+5. Hugging Face download of `xiewenya/dynamicmem`, unless `--no-download` is set.
+
 Start with a dry run:
 
 ```bash
-python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
-  --source-root /path/to/DynamicMem \
+python3 examples/eval-harbor/scripts/build_dataset_suite.py \
+  --dataset dynamicmem \
   --checkpoint-indices 0-4 \
   --stage-pattern update-answer-every-checkpoint \
   --max-users 5 \
@@ -726,8 +740,8 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
 Generate the smoke suite:
 
 ```bash
-python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
-  --source-root /path/to/DynamicMem \
+python3 examples/eval-harbor/scripts/build_dataset_suite.py \
+  --dataset dynamicmem \
   --checkpoint-indices 0-4 \
   --stage-pattern update-answer-every-checkpoint \
   --max-users 5 \
@@ -741,6 +755,9 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --build-timeout-sec 600 \
   --manifest examples/eval-harbor/suites/dynamicmem-smoke.json
 ```
+
+Generation runs task/job preflight by default. Use `--skip-preflight` only while
+debugging the builder itself.
 
 Use `--stage-schedule` for explicit interleaved trajectories. `U` and `UA`
 consume one selected checkpoint; `T` asks the downstream task for the most

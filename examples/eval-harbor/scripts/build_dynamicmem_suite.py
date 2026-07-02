@@ -8,7 +8,10 @@ import importlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
+
+from dataset_sources import SourceResolution, resolve_dynamicmem_source_root
+from validate_eval_preflight import validate_job_preflight, validate_task_preflight
 
 from trajectory_framework import (
     PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
@@ -62,7 +65,10 @@ def load_arm_configs(path: Path) -> list[dict[str, Any]]:
 
 
 def user_dirs(source_root: Path) -> list[Path]:
-    if (source_root / "app_log_large.json").exists() and (source_root / "task_packs.json").exists():
+    if (
+        (source_root / "app_log_large.json").exists()
+        and (source_root / "task_packs.json").exists()
+    ):
         return [source_root]
     return sorted(
         child
@@ -71,6 +77,30 @@ def user_dirs(source_root: Path) -> list[Path]:
         and (child / "app_log_large.json").exists()
         and (child / "task_packs.json").exists()
     )
+
+
+def source_roots_for_preflight(source_root: Path) -> list[Path]:
+    if (
+        (source_root / "app_log_large.json").exists()
+        and (source_root / "task_packs.json").exists()
+    ):
+        return [source_root.resolve(), source_root.parent.resolve()]
+    return [source_root.resolve()]
+
+
+def parse_source_users(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    return {part.strip() for part in value.split(",") if part.strip()}
+
+
+def source_user_matches(source_dir: Path, allowed_users: set[str]) -> bool:
+    if not allowed_users:
+        return True
+    task_packs = load_json(source_dir / "task_packs.json")
+    source_user_id = str(task_packs.get("user_id") or "")
+    compact = compact_user_label(source_user_id)
+    return bool({source_dir.name, source_user_id, compact} & allowed_users)
 
 
 def compact_user_label(user_id: str) -> str:
@@ -281,6 +311,7 @@ def write_suite_manifest(
     *,
     output: Path,
     source_root: Path,
+    source_resolution: SourceResolution,
     tasks_root: Path,
     jobs_root: Path,
     model_name: str,
@@ -299,6 +330,8 @@ def write_suite_manifest(
             "name": "xiewenya/dynamicmem",
             "license": "MIT",
             "sourceRoot": str(source_root),
+            "sourceKind": source_resolution.source_kind,
+            "downloaded": source_resolution.downloaded,
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
                 "Harbor replaces only the runner. Each generated task preserves "
@@ -398,9 +431,56 @@ def parse_checkpoint_indices(value: str) -> list[int]:
     return sorted(set(indices))
 
 
-def main() -> int:
+def run_generated_preflight(
+    plans: list[TaskPlan],
+    *,
+    source_root: Path,
+    tasks_root: Path,
+    jobs_root: Path,
+    arm_configs: list[dict[str, Any]],
+) -> None:
+    repo_root = Path.cwd().resolve()
+    source_roots = source_roots_for_preflight(source_root)
+    errors: list[str] = []
+
+    for plan in plans:
+        task_path = tasks_root / plan.task_id
+        errors.extend(validate_task_preflight(task_path, repo_root, source_roots))
+        for arm in arm_configs:
+            errors.extend(
+                validate_job_preflight(
+                    jobs_root / f"{plan.task_id}-{arm['mode']}.yaml",
+                    repo_root,
+                )
+            )
+
+    if errors:
+        for error in errors:
+            print(f"ERROR {error}")
+        raise SystemExit(1)
+    print(f"Preflight OK: {len(plans)} task(s), {len(plans) * len(arm_configs)} job(s)")
+
+
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate native DynamicMem Harbor tasks.")
-    parser.add_argument("--source-root", type=Path, required=True)
+    parser.add_argument(
+        "--source-root",
+        default=None,
+        help=(
+            "DynamicMem source root or user dir. Use 'auto' or omit to resolve "
+            "from DYNAMICMEM_SOURCE_ROOT, repo external paths, cache, or Hugging Face."
+        ),
+    )
+    parser.add_argument(
+        "--dataset-cache-root",
+        default=None,
+        help="Cache root for auto-downloaded benchmark datasets.",
+    )
+    parser.add_argument(
+        "--no-download",
+        action="store_true",
+        help="Do not download DynamicMem when no local source root is found.",
+    )
     parser.add_argument("--tasks-root", type=Path, default=Path("examples/eval-harbor/tasks"))
     parser.add_argument("--jobs-root", type=Path, default=Path("examples/eval-harbor/jobs"))
     parser.add_argument("--manifest", type=Path, default=Path("examples/eval-harbor/suites/dynamicmem-suite.json"))
@@ -439,6 +519,14 @@ def main() -> int:
     parser.add_argument("--samples", type=int, default=3)
     parser.add_argument("--max-users", type=int, default=5)
     parser.add_argument("--max-tasks", type=int, default=10)
+    parser.add_argument(
+        "--source-users",
+        default=None,
+        help=(
+            "Optional comma-separated DynamicMem users to include. Accepts "
+            "directory names like 008_user_008, ids like user_008, or compact labels like user008."
+        ),
+    )
     parser.add_argument("--checkpoint-indices", default="0-4")
     parser.add_argument(
         "--stage-pattern",
@@ -454,13 +542,34 @@ def main() -> int:
         ),
     )
     parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--skip-preflight",
+        action="store_true",
+        help="Skip generated task/job preflight checks. This should only be used while debugging builders.",
+    )
+    args = parser.parse_args(argv)
 
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
     stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
     arm_configs = load_arm_configs(args.arms_config)
+    source_resolution = resolve_dynamicmem_source_root(
+        args.source_root,
+        raw_cache_root=args.dataset_cache_root,
+        download_missing=not args.no_download,
+    )
+    source_root = source_resolution.source_root
+    allowed_users = parse_source_users(args.source_users)
+    print(
+        f"DynamicMem source root: {source_root} "
+        f"(source={source_resolution.source_kind}, downloaded={source_resolution.downloaded})"
+    )
     all_plans: list[tuple[Path, TaskPlan]] = []
-    for source_dir in user_dirs(args.source_root)[: args.max_users]:
+    selected_source_dirs = [
+        source_dir
+        for source_dir in user_dirs(source_root)
+        if source_user_matches(source_dir, allowed_users)
+    ][: args.max_users]
+    for source_dir in selected_source_dirs:
         for plan in plan_user_tasks(
             source_dir,
             checkpoint_indices=checkpoint_indices,
@@ -507,7 +616,8 @@ def main() -> int:
     write_suite_manifest(
         [plan for _, plan in all_plans],
         output=args.manifest,
-        source_root=args.source_root,
+        source_root=source_root,
+        source_resolution=source_resolution,
         tasks_root=args.tasks_root,
         jobs_root=args.jobs_root,
         model_name=args.model,
@@ -520,6 +630,14 @@ def main() -> int:
         arm_configs=arm_configs,
     )
     print(f"Wrote suite manifest: {args.manifest}")
+    if not args.skip_preflight:
+        run_generated_preflight(
+            [plan for _, plan in all_plans],
+            source_root=source_root,
+            tasks_root=args.tasks_root,
+            jobs_root=args.jobs_root,
+            arm_configs=arm_configs,
+        )
     return 0
 
 

@@ -195,11 +195,11 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --build-timeout-sec 600
 ```
 
-Generate a suite:
+Generate a suite with the generic dataset-suite CLI:
 
 ```bash
-python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
-  --source-root /path/to/DynamicMem \
+python3 examples/eval-harbor/scripts/build_dataset_suite.py \
+  --dataset dynamicmem \
   --checkpoint-indices 0-2 \
   --stage-pattern update-only-then-final \
   --max-users 5 \
@@ -212,6 +212,11 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --build-timeout-sec 600 \
   --manifest examples/eval-harbor/suites/dynamicmem-memory-final-smoke.json
 ```
+
+The generic CLI resolves source data from `--source-root`, dataset-specific env
+vars such as `DYNAMICMEM_SOURCE_ROOT`, repo-local external dataset checkouts,
+the eval cache, or automatic dataset download. It also runs generated task/job
+preflight by default, so one command should produce Harbor-ready artifacts.
 
 Timeouts are part of the experiment contract, not hidden local defaults. The
 DynamicMem builders write these values into generated `task.toml` files, and
@@ -256,17 +261,18 @@ The adapter should:
 6. Add a soundness report that explains what is visible, what is hidden, what is
    scored, and why the task is valid.
 
-After generation, run:
+Generated suites run task/job preflight automatically. For code changes to an
+adapter, also run:
 
 ```bash
 python3 -m py_compile \
+  examples/eval-harbor/scripts/dataset_sources.py \
+  examples/eval-harbor/scripts/build_dataset_suite.py \
   examples/eval-harbor/scripts/trajectory_framework.py \
   examples/eval-harbor/scripts/build_dynamicmem_task.py \
   examples/eval-harbor/scripts/build_dynamicmem_suite.py \
+  examples/eval-harbor/scripts/validate_eval_preflight.py \
   examples/eval-harbor/scripts/validate_task_soundness.py
-
-python3 examples/eval-harbor/scripts/validate_task_soundness.py \
-  examples/eval-harbor/tasks/<task-id>
 
 git diff --check
 ```

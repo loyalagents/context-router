@@ -115,6 +115,11 @@ reuse the same arms, stage reveal mechanism, artifact paths, and mode
 instructions whenever possible. This keeps future datasets plug-in compatible
 with `context-only`, `markdown`, `cr-mcp`, and later arms.
 
+Dataset-backed suite generation should go through
+`scripts/build_dataset_suite.py --dataset <name>`. Adapter-specific builders may
+exist internally, but the public path should stay one command that resolves raw
+source data, emits Harbor tasks/jobs/manifests, and runs generated preflight.
+
 ## Required Shape
 
 Each task should have this shape:
