@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "taskId": "smoke-staged-memory-v1",
+  "forms": {
+    "smoke-memory": {
+      "fields": {
+        "legalName": "Maya Chen",
+        "mailingCity": "San Francisco",
+        "payrollBankLast4": "4821"
+      },
+      "unsupportedFields": {}
+    }
+  }
+}

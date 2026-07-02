@@ -1,0 +1,36 @@
+Source System: HarborHire Recruiting Archive
+Export Timestamp: 2026-05-19T09:20:00-07:00
+Export ID: 8A4B11C9-E2F0-4B1D-89C3-F5E6A0D7B241
+
+--- CANDIDATE PROFILE (ARCHIVED) ---
+
+Candidate ID: CAND-45892
+Status: CLOSED - HIRED (SUPERSEDED)
+
+Name: Maya Chen
+
+-- Contact Information (Archived at Time of Application) --
+Email: maya.chen@oldmail.test
+Address: 910 Juniper Avenue Apt 12, Berkeley, CA 94704
+
+-- Application History --
+2026-03-12 11:45 PST: Application Received for Software Engineer II
+2026-03-20 14:00 PST: Technical Screen - Pass
+2026-04-02 09:30 PST: On-site Interview Loop
+2026-04-15 17:05 PST: Offer Extended
+2026-04-21 10:11 PST: Offer Accepted
+2026-05-18 16:30 PST: Candidate profile marked for archival. Pre-hire process complete.
+
+--- SYSTEM NOTES ---
+
+Note ID: N77401
+Date: 2026-05-18T16:30:55-07:00
+Author: system_migration_bot
+Note: Candidate has been hired. This recruiting profile is now considered superseded and is for archival purposes only. All further updates will be made to the active employee profile in the primary HRIS.
+
+Note ID: N77402
+Date: 2026-05-18T16:35:11-07:00
+Author: reviewer_j.smith
+Reviewer Note: Data in this record is STALE and should not be used for current contact or employment verification. The contact information (email, address) is from the time of application and may not be current. Please refer to the active employee profile in HarborHire (Worker ID: PLC-20418) for all current information. This record is maintained for compliance and historical recruiting metrics only. DO NOT USE for outreach or official communication.
+
+--- END OF RECORD ---

@@ -1,0 +1,309 @@
+{
+  "derivedFrom": {
+    "corpus": "examples/eval/users/maya-chen-newhire/corpora/packet-hard-conflict-v1",
+    "forms": [
+      {
+        "fieldMap": "examples/eval/forms/i-9/field-map.json",
+        "fieldsGenerated": "examples/eval/forms/i-9/fields.generated.json",
+        "formId": "i-9",
+        "scenarioId": "maya-chen-newhire-i9-packet-medium"
+      },
+      {
+        "fieldMap": "examples/eval/forms/fw4/field-map.json",
+        "fieldsGenerated": "examples/eval/forms/fw4/fields.generated.json",
+        "formId": "fw4",
+        "scenarioId": "maya-chen-newhire-fw4-packet-medium"
+      },
+      {
+        "fieldMap": "examples/eval/forms/direct-deposit-sf1199a-24/field-map.json",
+        "fieldsGenerated": "examples/eval/forms/direct-deposit-sf1199a-24/fields.generated.json",
+        "formId": "direct-deposit-sf1199a-24",
+        "scenarioId": "maya-chen-newhire-direct-deposit-packet-medium"
+      }
+    ],
+    "notes": "Expected form values reuse the Maya profile and form field-map lineage; visible packet documents come from packet-hard-conflict-v1.",
+    "profile": "examples/eval/users/maya-chen-newhire/profile.yaml"
+  },
+  "forms": {
+    "direct-deposit-sf1199a-24": {
+      "fieldMap": "examples/eval/forms/direct-deposit-sf1199a-24/field-map.json",
+      "fields": {
+        "section1.accountType.checking": {
+          "expectedValue": true,
+          "oldAction": "CHECK",
+          "oldFactKey": "banking.accountType",
+          "oldFieldIndex": 1,
+          "oldGeneratedType": "checkbox",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].xcheck[0]",
+          "render": null
+        },
+        "section1.payeeAddress.city": {
+          "expectedValue": "Oakland",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.city",
+          "oldFieldIndex": 21,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].paycity[0]",
+          "render": null
+        },
+        "section1.payeeAddress.postalCode": {
+          "expectedValue": "94609",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.postalCode",
+          "oldFieldIndex": 23,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].payzip[0]",
+          "render": null
+        },
+        "section1.payeeAddress.state": {
+          "expectedValue": "CA",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.state",
+          "oldFieldIndex": 22,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].paystate[0]",
+          "render": null
+        },
+        "section1.payeeAddress.streetLine": {
+          "expectedValue": "2846 Ashbury Street Apt 3D",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.streetLine",
+          "oldFieldIndex": 3,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].paystreet[0]",
+          "render": null
+        },
+        "section1.payeeName": {
+          "expectedValue": "Maya Lin Chen",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.legalName",
+          "oldFieldIndex": 0,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].payname[0]",
+          "render": null
+        },
+        "section1.personEntitledToPayment": {
+          "expectedValue": "Maya Lin Chen",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.legalName",
+          "oldFieldIndex": 25,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].entname[0]",
+          "render": null
+        },
+        "section3.accountHolderName": {
+          "expectedValue": "Maya Lin Chen",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "banking.accountHolderName",
+          "oldFieldIndex": 65,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].acctitle[0]",
+          "render": null
+        },
+        "section3.financialInstitutionName": {
+          "expectedValue": "Bay Harbor Credit Union",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "banking.institutionName",
+          "oldFieldIndex": 55,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].inst[0]",
+          "render": null
+        }
+      },
+      "scenarioId": "maya-chen-newhire-direct-deposit-packet-medium",
+      "unsupportedFields": {
+        "section1.payeePhone": {
+          "expectedValue": null,
+          "oldFactKey": "contact.phone",
+          "oldFieldIndex": 24,
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].payphone[0]"
+        }
+      }
+    },
+    "fw4": {
+      "fieldMap": "examples/eval/forms/fw4/field-map.json",
+      "fields": {
+        "step1.address.cityStateZip": {
+          "expectedValue": "Oakland, CA 94609",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.cityStateZip",
+          "oldFieldIndex": 3,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_04[0]",
+          "render": null
+        },
+        "step1.address.streetLine": {
+          "expectedValue": "2846 Ashbury Street Apt 3D",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.streetLine",
+          "oldFieldIndex": 2,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_03[0]",
+          "render": null
+        },
+        "step1.filingStatus.singleOrMarriedFilingSeparately": {
+          "expectedValue": true,
+          "oldAction": "CHECK",
+          "oldFactKey": "tax.filingStatus",
+          "oldFieldIndex": 5,
+          "oldGeneratedType": "checkbox",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].c1_1[0]",
+          "render": null
+        },
+        "step1.firstName": {
+          "expectedValue": "Maya",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.firstName",
+          "oldFieldIndex": 0,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_01[0]",
+          "render": null
+        },
+        "step1.lastName": {
+          "expectedValue": "Chen",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.lastName",
+          "oldFieldIndex": 1,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].Step1a[0].f1_02[0]",
+          "render": null
+        },
+        "step1.ssnDigits": {
+          "expectedValue": "000000417",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.ssn",
+          "oldFieldIndex": 4,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "topmostSubform[0].Page1[0].f1_05[0]",
+          "render": "digits-only"
+        }
+      },
+      "scenarioId": "maya-chen-newhire-fw4-packet-medium",
+      "unsupportedFields": {}
+    },
+    "i-9": {
+      "fieldMap": "examples/eval/forms/i-9/field-map.json",
+      "fields": {
+        "section1.address.city": {
+          "expectedValue": "Oakland",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.city",
+          "oldFieldIndex": 21,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "City or Town",
+          "render": null
+        },
+        "section1.address.postalCode": {
+          "expectedValue": "94609",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.postalCode",
+          "oldFieldIndex": 14,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "ZIP Code",
+          "render": null
+        },
+        "section1.address.state": {
+          "expectedValue": "CA",
+          "oldAction": "SELECT_OPTION",
+          "oldFactKey": "address.current.state",
+          "oldFieldIndex": 13,
+          "oldGeneratedType": "dropdown",
+          "oldPdfFieldName": "State",
+          "render": null
+        },
+        "section1.address.street": {
+          "expectedValue": "2846 Ashbury Street",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.street",
+          "oldFieldIndex": 19,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Address Street Number and Name",
+          "render": null
+        },
+        "section1.address.unit": {
+          "expectedValue": "Apt 3D",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "address.current.unit",
+          "oldFieldIndex": 20,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Apt Number (if any)",
+          "render": null
+        },
+        "section1.citizenship.usCitizen": {
+          "expectedValue": true,
+          "oldAction": "CHECK",
+          "oldFactKey": "workAuthorization.citizenshipStatus",
+          "oldFieldIndex": 8,
+          "oldGeneratedType": "checkbox",
+          "oldPdfFieldName": "CB_1",
+          "render": null
+        },
+        "section1.dateOfBirthMmddyyyy": {
+          "expectedValue": "02221991",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.dateOfBirth",
+          "oldFieldIndex": 15,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Date of Birth mmddyyyy",
+          "render": "mmddyyyy"
+        },
+        "section1.email": {
+          "expectedValue": "maya.chen@gmail.test",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "contact.email",
+          "oldFieldIndex": 22,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Employees E-mail Address",
+          "render": null
+        },
+        "section1.firstName": {
+          "expectedValue": "Maya",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.firstName",
+          "oldFieldIndex": 2,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "First Name Given Name",
+          "render": null
+        },
+        "section1.lastName": {
+          "expectedValue": "Chen",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.lastName",
+          "oldFieldIndex": 18,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Last Name (Family Name)",
+          "render": null
+        },
+        "section1.middleInitial": {
+          "expectedValue": "L",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.middleInitial",
+          "oldFieldIndex": 3,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "Employee Middle Initial (if any)",
+          "render": null
+        },
+        "section1.ssnDigits": {
+          "expectedValue": "000000417",
+          "oldAction": "SET_TEXT",
+          "oldFactKey": "identity.ssn",
+          "oldFieldIndex": 16,
+          "oldGeneratedType": "text",
+          "oldPdfFieldName": "US Social Security Number",
+          "render": "digits-only"
+        }
+      },
+      "scenarioId": "maya-chen-newhire-i9-packet-medium",
+      "unsupportedFields": {
+        "section1.phone": {
+          "expectedValue": null,
+          "oldFactKey": "contact.phone",
+          "oldFieldIndex": 17,
+          "oldPdfFieldName": "Telephone Number"
+        }
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "taskId": "maya-packet-hard-conflict-v1-formfill"
+}

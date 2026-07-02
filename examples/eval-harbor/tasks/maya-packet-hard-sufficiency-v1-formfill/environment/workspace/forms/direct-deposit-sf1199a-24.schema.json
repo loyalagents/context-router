@@ -1,0 +1,72 @@
+{
+  "formId": "direct-deposit-sf1199a-24",
+  "outputPath": "outputs/forms/direct-deposit-sf1199a-24.json",
+  "outputShape": {
+    "abstentions": "object keyed by optional field key when evidence is missing",
+    "fields": "object keyed by required field key",
+    "formId": "direct-deposit-sf1199a-24",
+    "notes": "array",
+    "schemaVersion": "number",
+    "taskId": "maya-packet-hard-sufficiency-v1-formfill"
+  },
+  "requiredFields": [
+    {
+      "description": "Payee name",
+      "key": "section1.payeeName",
+      "type": "string"
+    },
+    {
+      "description": "True when depositor account type is checking",
+      "key": "section1.accountType.checking",
+      "type": "boolean"
+    },
+    {
+      "description": "Payee street address including unit",
+      "key": "section1.payeeAddress.streetLine",
+      "type": "string"
+    },
+    {
+      "description": "Payee city",
+      "key": "section1.payeeAddress.city",
+      "type": "string"
+    },
+    {
+      "description": "Payee state",
+      "key": "section1.payeeAddress.state",
+      "type": "string"
+    },
+    {
+      "description": "Payee ZIP code",
+      "key": "section1.payeeAddress.postalCode",
+      "type": "string"
+    },
+    {
+      "description": "Person entitled to payment",
+      "key": "section1.personEntitledToPayment",
+      "type": "string"
+    },
+    {
+      "description": "Financial institution name",
+      "key": "section3.financialInstitutionName",
+      "type": "string"
+    },
+    {
+      "description": "Account holder or depositor account title",
+      "key": "section3.accountHolderName",
+      "type": "string"
+    }
+  ],
+  "schemaVersion": 1,
+  "optionalFields": [
+    {
+      "description": "Payee phone number, if current employee-confirmed evidence supports one",
+      "key": "section1.payeePhone",
+      "type": "string"
+    },
+    {
+      "description": "Fixed allotment amount, if current direct-deposit evidence provides a dollar amount",
+      "key": "section2.allotmentAmount",
+      "type": "string"
+    }
+  ]
+}

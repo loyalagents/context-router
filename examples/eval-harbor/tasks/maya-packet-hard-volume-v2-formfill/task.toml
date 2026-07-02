@@ -1,0 +1,40 @@
+schema_version = "1.1"
+
+artifacts = [
+  "/app/outputs/forms/i-9.json",
+  "/app/outputs/forms/fw4.json",
+  "/app/outputs/forms/direct-deposit-sf1199a-24.json",
+  "/app/memory.md",
+]
+
+[task]
+name = "context-router/maya-packet-hard-volume-v2-formfill"
+description = "Maya Chen packet-hard-volume-v2 high-volume mixed-trap triple-form Harbor task."
+authors = []
+keywords = ["context-router", "eval-harbor", "maya-chen-newhire", "packet-hard-volume-v2"]
+
+[metadata]
+difficulty = "hard"
+category = "information-gathering"
+tags = ["phase-7", "packet-hard-volume-v2", "triple-form", "formfill-json", "long-context", "high-volume", "near-miss", "stale-current-user", "admissibility"]
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 300.0
+
+[environment]
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+mcp_servers = []
+workdir = "/app"
+
+[verifier.env]
+
+[environment.env]
+
+[solution.env]

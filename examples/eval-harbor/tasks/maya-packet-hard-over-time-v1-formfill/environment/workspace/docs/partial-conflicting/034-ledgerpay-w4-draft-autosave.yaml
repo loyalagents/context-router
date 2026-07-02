@@ -1,0 +1,31 @@
+source_system: "LedgerPay"
+export_id: "LP-W4-DRAFT-PLC-20418-20260624-1126"
+saved_timestamp: "2026-06-24T11:26:33-07:00"
+workspace: "w4_draft_autosave"
+worker_id: "PLC-20418"
+employee_display_name: "Maya Chen"
+draft_status: "superseded_unsubmitted_draft"
+field_ids:
+  - federalW4.filingStatus
+  - federalW4.otherIncome
+  - federalW4.deductions
+  - federalW4.extraWithholding
+
+draft_values:
+  filing_status: "head of household"
+  other_income: 913
+  deductions: 2475
+  extra_withholding: 127
+  multiple_jobs_checkbox: false
+
+autosave_history:
+  - timestamp: "2026-06-24T11:26:33-07:00"
+    actor: "employee_portal_autosave"
+    action: "SAVE_DRAFT_ONLY"
+    result: "not_submitted"
+  - timestamp: "2026-06-25T13:28:00-07:00"
+    actor: "ledgerpay_w4_sync"
+    action: "MARK_OLD_DRAFT_SUPERSEDED"
+    result: "draft no longer active after employee submitted approved W-4 setup"
+
+handling_note: "This old W-4 autosave is an inactive draft. It was never submitted to payroll and should not be used for current federal withholding setup."

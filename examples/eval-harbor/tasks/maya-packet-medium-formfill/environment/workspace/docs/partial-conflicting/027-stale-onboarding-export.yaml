@@ -1,0 +1,118 @@
+export_metadata:
+  source_system: "HarborHire"
+  export_id: "exp-a7b3c1d9-8e4f-4a3c-9c7d-6f5e4d3c2b1a"
+  timestamp_utc: "2026-06-25T18:18:00Z"
+  export_format_version: "v1.4"
+  status: "ARCHIVED_DATA"
+  note: "This is a stale, archived data export. Information contained herein is superseded and should not be used for current processing. Refer to the active employee profile for authoritative data."
+
+profile_status: "ARCHIVED_SUPERSEDED"
+
+worker_record:
+  worker_id: "PLC-20418"
+  record_authority: "DO_NOT_USE_STALE_DATA"
+  record_state: "INVALID"
+  personal_information:
+    first_name: "[REDACTED]"
+    last_name: "[REDACTED]"
+    legal_name:
+      first_name: "[REDACTED]"
+      middle_name: null
+      last_name: "[REDACTED]"
+    contact:
+      email_personal: "[REDACTED]"
+      phone: null
+  employment_details:
+    status: "SUPERSEDED"
+    job_title: not_imported
+    start_date: not_imported
+    department: not_imported
+    manager: not_imported
+    cost_center: not_imported
+    employment_type: not_imported
+    compensation:
+      status: "PENDING_FINALIZATION_SUPERSEDED"
+      base_salary: null
+      currency: null
+      pay_frequency: null
+
+onboarding_plan:
+  plan_id: "ONB-PLC-20418-2026-Q2-OLD"
+  plan_status: "CANCELED_SUPERSEDED"
+  assigned_to: "hr_specialist_j.doe"
+  tasks:
+    - task_id: "I9_SECTION1"
+      task_name: "Complete Form I-9 Section 1"
+      status: "Not Started"
+      details: "Employee needs to complete Section 1 of Form I-9. Requires employee to present documentation for verification."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "W4_FED"
+      task_name: "Complete Federal W-4 Form"
+      status: "Not Started"
+      details: "Submit federal tax withholding information via the W-4 form."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "W4_STATE"
+      task_name: "Complete State Tax Form"
+      status: "Not Started"
+      details: "Submit state tax withholding information. Form varies by state of residence."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "DIRECT_DEPOSIT"
+      task_name: "Set up Direct Deposit"
+      status: "Not Started"
+      details: "Provide bank account information for payroll direct deposit. Up to two accounts can be configured."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "POLICY_REVIEW"
+      task_name: "Review Company Policies"
+      status: "Not Started"
+      details: "Acknowledge review of key company policies, including Code of Conduct, IT Usage, and Employee Handbook."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "EQUIPMENT_SELECTION"
+      task_name: "Select Work Equipment"
+      status: "Not Started"
+      details: "Choose standard issue laptop and peripherals. Selections will be provisioned by IT."
+      assignee: "candidate"
+      dependencies: []
+    - task_id: "BACKGROUND_CHECK"
+      task_name: "Background Check Authorization"
+      status: "Pending"
+      details: "Awaiting results from third-party background check vendor."
+      assignee: "system_vendor"
+      dependencies: []
+
+system_audit_trail:
+  - event_id: "evt-001-a9c3"
+    timestamp: "2026-06-22T14:30:15Z"
+    actor: "api_integration_ats"
+    action: "CREATE_PROFILE"
+    notes: "New hire profile created from ATS import."
+    data_changed:
+      - "worker_id"
+      - "profile_status"
+  - event_id: "evt-002-b4d1"
+    timestamp: "2026-06-23T09:05:00Z"
+    actor: "hr_specialist_j.doe"
+    action: "ASSIGN_ONBOARDING_PLAN"
+    notes: "Assigned standard new hire plan."
+    data_changed:
+      - "onboarding_plan.plan_id"
+      - "onboarding_plan.status"
+  - event_id: "evt-003-c8f9"
+    timestamp: "2026-06-25T11:15:00Z"
+    actor: "hr_specialist_j.doe"
+    action: "UPDATE_PROFILE_SUPERSEDED"
+    notes: "Profile data has been superseded by an updated record. Marking this entry as archived."
+    data_changed:
+      - "profile_status"
+      - "employment_details.status"
+      - "onboarding_plan.plan_status"
+  - event_id: "evt-004-d2a0"
+    timestamp: "2026-06-25T11:18:00-07:00"
+    actor: "system_export_daemon"
+    action: "EXPORT_DATA"
+    notes: "Data exported for archival purposes."
+    data_changed: []

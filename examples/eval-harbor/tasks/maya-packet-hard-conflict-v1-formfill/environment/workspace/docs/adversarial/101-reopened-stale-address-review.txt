@@ -1,0 +1,27 @@
+Source System: HarborHire Case Review
+Case ID: HH-ADDR-REOPEN-20260626-101
+Export Timestamp: 2026-06-26T10:07:22-07:00
+Case Status: Reopened then rejected
+Employee Worker ID: PLC-20418
+Employee Name: Maya Lin Chen
+
+Summary:
+An archived recruiting address was accidentally reopened during a profile
+cleanup review. The reopened value below is not current and was rejected by HRIS
+because the active employee profile already has a later employee-confirmed
+address.
+
+Rejected reopened value:
+Address line 1: 910 Juniper Avenue
+Address line 2: Apt 12
+City: Berkeley
+State: CA
+Postal code: 94704
+Personal email: maya.chen@oldmail.test
+
+Resolution:
+2026-06-26T10:04:18-07:00 - HRIS reviewer rejected this reopen request.
+Use the active employee profile for worker PLC-20418, not the recruiting
+archive. This case remains visible only because the rejected value was attached
+to the case timeline.
+

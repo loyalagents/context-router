@@ -1,0 +1,46 @@
+{
+  "formId": "fw4",
+  "outputPath": "outputs/forms/fw4.json",
+  "outputShape": {
+    "abstentions": "object keyed by unsupported field key when evidence is missing",
+    "fields": "object keyed by required field key",
+    "formId": "fw4",
+    "notes": "array",
+    "schemaVersion": "number",
+    "taskId": "maya-packet-hard-ownership-v1-formfill"
+  },
+  "requiredFields": [
+    {
+      "description": "Employee first name",
+      "key": "step1.firstName",
+      "type": "string"
+    },
+    {
+      "description": "Employee last name",
+      "key": "step1.lastName",
+      "type": "string"
+    },
+    {
+      "description": "Employee address line including unit",
+      "key": "step1.address.streetLine",
+      "type": "string"
+    },
+    {
+      "description": "Employee city, state, and ZIP line",
+      "key": "step1.address.cityStateZip",
+      "type": "string"
+    },
+    {
+      "description": "Employee SSN as nine digits",
+      "key": "step1.ssnDigits",
+      "type": "string"
+    },
+    {
+      "description": "True when filing status is single or married filing separately",
+      "key": "step1.filingStatus.singleOrMarriedFilingSeparately",
+      "type": "boolean"
+    }
+  ],
+  "schemaVersion": 1,
+  "unsupportedFields": []
+}

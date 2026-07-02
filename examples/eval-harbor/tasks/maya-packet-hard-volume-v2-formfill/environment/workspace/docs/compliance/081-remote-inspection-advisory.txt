@@ -1,0 +1,21 @@
+Source system: WorkRight Compliance
+Generated timestamp: 2026-06-23T08:11:00-07:00
+Status: active
+Document code: PLC-OPS-081
+Subject: Remote inspection advisory
+Field IDs: guidance.version, queue.coverage, advisory.id, inspection.mode
+
+Remote inspection workflows require coordinator review, image upload status, and employer representative attestation before Section 2.
+The advisory describes queue routing, retention tags, and audit timestamps for the vendor dashboard.
+
+Operational note: compliance filed remote inspection advisory with policy owner, vendor workflow area, and release-calendar metadata.
+
+Compliance provenance
+Compliance library trace: PLC-COMPLIAN-081 tracked owner team, release window, and affected workflow queues for coordinator lookup.
+Review checkpoint: WorkRight coordination compared version date, topic area, and queue coverage before linking the guidance to training search.
+Retention tag: compliance guidance, versioned with policy owner and release notes.
+
+Operational detail rows
+Compliance notes are versioned by release owner, workflow area, affected queue, coordinator role, and review date. Row marker PLC-COMPLIAN-081 was indexed from Remote Inspection Advisory during the 2026-06-19 operations window.
+WorkRight guidance rows carry status-code references, document-family labels, retention rule names, and reviewer routing examples. Review notes for remote inspection advisory kept compliance library queue history, timestamp lineage, and handoff context with the retained record.
+The compliance library stores policy text with advisory id, publication timestamp, owner team, and maintenance window references. The retained compliance library artifact keeps source metadata for remote inspection advisory audit reconstruction while preserving original row wording.

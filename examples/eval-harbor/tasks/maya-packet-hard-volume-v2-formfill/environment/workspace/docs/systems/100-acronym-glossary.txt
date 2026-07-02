@@ -1,0 +1,22 @@
+Source system: PeopleBridge Data
+Generated timestamp: 2026-06-25T08:30:00-07:00
+Status: active
+Document code: PLC-OPS-100
+Subject: Acronym glossary
+Field IDs: integration.name, payload.family, field_contract.id, migration.note
+
+The glossary expands system acronyms used in onboarding exports: HRIS, ESS, ACH, OCR, I-9, W-4, and EEV.
+It also maps internal queue abbreviations to owner teams.
+The glossary helps support agents interpret operational artifacts.
+
+Operational note: systems integration filed acronym glossary with endpoint ownership, payload family, and deployment-window metadata.
+
+Systems provenance
+Systems note trace: PLC-SYSTEMS-100 recorded release owner, affected interfaces, deployment window, and file-layout family.
+Data checkpoint: platform reviewers compare version, endpoint owner, and source-system contract before updating integration docs.
+Retention tag: systems documentation artifact, versioned with release and interface metadata.
+
+Operational detail rows
+Systems documentation tracks release owner, interface contract, file-layout version, deployment window, and affected downstream job. Row marker PLC-SYSTEMS-100 was indexed from Acronym Glossary during the 2026-06-20 operations window.
+Data reviewers compare endpoint owner, source field contract, queue impact, and migration note before updating integration guidance. Review notes for acronym glossary kept systems integration queue history, timestamp lineage, and handoff context with the retained record.
+The systems archive keeps release notes with interface names, payload families, illustrative column order, and versioned control ids. The retained systems integration artifact keeps source metadata for acronym glossary audit reconstruction while preserving original row wording.

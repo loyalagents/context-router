@@ -1,0 +1,73 @@
+{
+  "batchId": "01-identity",
+  "corpusId": "packet-hard-over-time-v1",
+  "documents": [
+    {
+      "category": "adversarial",
+      "id": "packet-hard-over-time-v1-adversarial-103",
+      "path": "adversarial/103-low-confidence-w4-screenshot-ocr.txt",
+      "title": "Low Confidence W-4 Screenshot OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-001",
+      "path": "identity/001-driver-license-upload-ocr.txt",
+      "title": "Driver License Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-002",
+      "path": "identity/002-ssn-card-upload-ocr.txt",
+      "title": "SSN Card Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-003",
+      "path": "identity/003-identity-verification-note.txt",
+      "title": "Identity Verification Intake Note"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-015",
+      "path": "noise/015-blank-sample-w4-packet.txt",
+      "title": "Blank Sample W-4 Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-020",
+      "path": "noise/020-sample-direct-deposit-packet-jordan.txt",
+      "title": "Sample Direct Deposit Packet Jordan"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-028",
+      "path": "noise/028-other-employee-sample-packet.txt",
+      "title": "Other Employee Sample Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-029",
+      "path": "noise/029-other-employee-w4-tax-sample.txt",
+      "title": "Other Employee W-4 Tax Sample"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-030",
+      "path": "noise/030-payroll-support-faq.txt",
+      "title": "Payroll Support FAQ"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-025",
+      "path": "partial-conflicting/025-stale-recruiter-profile.txt",
+      "title": "Stale Recruiter Profile"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-027",
+      "path": "partial-conflicting/027-stale-onboarding-export.yaml",
+      "title": "Stale Onboarding Export"
+    }
+  ],
+  "documentsRoot": "docs"
+}

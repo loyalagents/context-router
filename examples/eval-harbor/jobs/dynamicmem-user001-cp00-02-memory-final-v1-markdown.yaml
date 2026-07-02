@@ -1,0 +1,21 @@
+job_name: eval-harbor-dynamicmem-user001-cp00-02-memory-final-v1-markdown
+n_concurrent_trials: 1
+
+environment:
+  force_build: true
+  env:
+    EVAL_MEMORY_MODE: markdown
+  extra_docker_compose:
+    - examples/eval-harbor/jobs/dynamicmem-user001-cp00-02-memory-final-v1-staged.compose.yml
+
+agents:
+  - name: codex
+    model_name: gpt-5.4-mini
+    kwargs:
+      reasoning_effort: high
+
+tasks:
+  - path: examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/markdown.md

@@ -1,0 +1,146 @@
+{
+  "preferences": [
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee home address city",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.city",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee city, state, and ZIP line",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.cityStateZip",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee home address ZIP code",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.postalCode",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee home address state",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.state",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee home street address without unit",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.street",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee address line including unit",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.streetLine",
+      "valueType": "string"
+    },
+    {
+      "category": "address",
+      "description": "Maya packet-medium fact for Employee apartment or unit",
+      "scope": "maya-packet-medium",
+      "slug": "address.current.unit",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-medium fact for Account holder or depositor account title",
+      "scope": "maya-packet-medium",
+      "slug": "banking.accountHolderName",
+      "valueType": "string"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-medium fact for True when depositor account type is checking",
+      "scope": "maya-packet-medium",
+      "slug": "banking.accountType",
+      "valueType": "boolean"
+    },
+    {
+      "category": "banking",
+      "description": "Maya packet-medium fact for Financial institution name",
+      "scope": "maya-packet-medium",
+      "slug": "banking.institutionName",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Maya packet-medium fact for Employee personal email address",
+      "scope": "maya-packet-medium",
+      "slug": "contact.email",
+      "valueType": "string"
+    },
+    {
+      "category": "contact",
+      "description": "Nullable Maya packet-medium fact for Employee telephone number; abstain unless a phone number is supported for Maya Chen",
+      "scope": "maya-packet-medium",
+      "slug": "contact.phone",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Employee date of birth as MMDDYYYY digits",
+      "scope": "maya-packet-medium",
+      "slug": "identity.dateOfBirth",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Employee first name",
+      "scope": "maya-packet-medium",
+      "slug": "identity.firstName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Employee last name",
+      "scope": "maya-packet-medium",
+      "slug": "identity.lastName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Payee name",
+      "scope": "maya-packet-medium",
+      "slug": "identity.legalName",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Employee middle initial",
+      "scope": "maya-packet-medium",
+      "slug": "identity.middleInitial",
+      "valueType": "string"
+    },
+    {
+      "category": "identity",
+      "description": "Maya packet-medium fact for Employee SSN as nine digits",
+      "scope": "maya-packet-medium",
+      "slug": "identity.ssn",
+      "valueType": "string"
+    },
+    {
+      "category": "tax",
+      "description": "Maya packet-medium fact for True when filing status is single or married filing separately",
+      "scope": "maya-packet-medium",
+      "slug": "tax.filingStatus",
+      "valueType": "boolean"
+    },
+    {
+      "category": "workAuthorization",
+      "description": "Maya packet-medium fact for True when the employee attests they are a U.S. citizen",
+      "scope": "maya-packet-medium",
+      "slug": "workAuthorization.citizenshipStatus",
+      "valueType": "boolean"
+    }
+  ],
+  "schemaVersion": 1,
+  "taskId": "maya-packet-medium-formfill"
+}

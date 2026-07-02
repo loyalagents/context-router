@@ -1,0 +1,82 @@
+{
+  "formId": "i-9",
+  "outputPath": "outputs/forms/i-9.json",
+  "outputShape": {
+    "abstentions": "object keyed by unsupported field key when evidence is missing",
+    "fields": "object keyed by required field key",
+    "formId": "i-9",
+    "notes": "array",
+    "schemaVersion": "number",
+    "taskId": "maya-packet-hard-required-v4-formfill"
+  },
+  "requiredFields": [
+    {
+      "description": "Employee first name",
+      "key": "section1.firstName",
+      "type": "string"
+    },
+    {
+      "description": "Employee middle initial",
+      "key": "section1.middleInitial",
+      "type": "string"
+    },
+    {
+      "description": "True when the employee attests they are a U.S. citizen",
+      "key": "section1.citizenship.usCitizen",
+      "type": "boolean"
+    },
+    {
+      "description": "Employee home address state",
+      "key": "section1.address.state",
+      "type": "string"
+    },
+    {
+      "description": "Employee home address ZIP code",
+      "key": "section1.address.postalCode",
+      "type": "string"
+    },
+    {
+      "description": "Employee date of birth as MMDDYYYY digits",
+      "key": "section1.dateOfBirthMmddyyyy",
+      "type": "string"
+    },
+    {
+      "description": "Employee SSN as nine digits",
+      "key": "section1.ssnDigits",
+      "type": "string"
+    },
+    {
+      "description": "Employee last name",
+      "key": "section1.lastName",
+      "type": "string"
+    },
+    {
+      "description": "Employee home street address without unit",
+      "key": "section1.address.street",
+      "type": "string"
+    },
+    {
+      "description": "Employee apartment or unit",
+      "key": "section1.address.unit",
+      "type": "string"
+    },
+    {
+      "description": "Employee home address city",
+      "key": "section1.address.city",
+      "type": "string"
+    },
+    {
+      "description": "Employee personal email address",
+      "key": "section1.email",
+      "type": "string"
+    }
+  ],
+  "schemaVersion": 1,
+  "unsupportedFields": [
+    {
+      "description": "Employee telephone number; abstain unless a phone number is supported for Maya Chen",
+      "key": "section1.phone",
+      "type": "string"
+    }
+  ]
+}

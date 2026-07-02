@@ -1,0 +1,32 @@
+{
+  "sourceSystem": "HarborHire Profile Merge Review",
+  "exportId": "HH-PHONE-CANDIDATES-20260627-105",
+  "exportedAt": "2026-06-27T10:39:22-07:00",
+  "targetRecord": {
+    "workerId": "PLC-20418",
+    "legalName": "Maya Lin Chen",
+    "currentPhone": null
+  },
+  "mergeDecision": "do_not_update",
+  "candidateValues": [
+    {
+      "phone": "415-555-0109",
+      "source": "emergency_contact",
+      "owner": "Naya Lin",
+      "decision": "reject_wrong_person"
+    },
+    {
+      "phone": "415-555-0191",
+      "source": "vendor_registry",
+      "owner": "Maya Chen, contractor VND-99172",
+      "decision": "reject_wrong_worker"
+    },
+    {
+      "phone": "510-555-0144",
+      "source": "hr_support_ticket",
+      "owner": "PeopleOps support desk",
+      "decision": "reject_not_personal_phone"
+    }
+  ],
+  "reviewerInstruction": "No accepted phone value exists for Maya Lin Chen. Leave optional phone fields blank."
+}

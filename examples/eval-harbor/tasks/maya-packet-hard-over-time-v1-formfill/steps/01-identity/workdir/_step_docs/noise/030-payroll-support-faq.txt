@@ -1,0 +1,74 @@
+Source System: Internal Knowledge Base
+Article ID: PAY-FAQ-001
+Version: 1.1
+Owner Group: Payroll Department
+Status: Published
+Published Date: 2026-06-01
+Last Modified: 2026-06-01
+
+Category: Payroll & Timekeeping
+Path: /support/articles/payroll/faq
+
+Payroll Support - Frequently Asked Questions
+
+This article provides answers to common questions about pay, paystubs, direct deposit, and taxes. Our primary payroll processing platform is LedgerPay.
+
+----------------------------------------------------------------------
+
+Q: How do I view my paystubs?
+
+A: Your paystubs are available 24/7 through the LedgerPay employee self-service portal. To access them:
+1. Log in to LedgerPay using your single sign-on (SSO) credentials.
+2. From the main dashboard, navigate to the "Pay" section.
+3. Click on "Pay History" or "Paystubs".
+4. You will see a list of your pay statements, sorted by pay date. You can view, download (as a PDF), or print any statement.
+Paystubs are typically available 1-2 business days before the actual payday.
+
+---
+
+Q: When is payday?
+
+A: The company operates on a bi-weekly pay schedule. Paydays are every other Friday. You can find a detailed calendar of pay periods and corresponding pay dates for the entire year in LedgerPay under the "Company Resources" or "Payroll Calendar" section.
+If a scheduled payday falls on a bank holiday, you will be paid on the preceding business day.
+
+---
+
+Q: How do I set up or change my direct deposit information?
+
+A: You can manage your direct deposit accounts directly within LedgerPay. We strongly recommend direct deposit for secure and timely payment.
+To add or edit your account(s):
+1. Log in to LedgerPay and go to the "Pay" section.
+2. Select "Direct Deposit" or "Payment Elections".
+3. You can add a new account or edit an existing one. You will need your bank's routing number and your account number.
+4. You can split your pay across multiple accounts by percentage or a flat amount.
+For security, any changes to direct deposit information may trigger a pre-note verification process, where a zero-dollar transaction is sent to the bank to confirm the account details. This can take 3-5 business days. Changes made close to a payroll processing deadline may not take effect until the following pay cycle.
+
+---
+
+Q: I think there is an error on my paystub. What should I do?
+
+A: Please review your paystub carefully each pay period. If you believe there is an error in your hours, pay rate, deductions, or taxes, please contact the Payroll Department immediately. The best way to report a potential issue is by submitting a support ticket through the internal helpdesk portal. This ensures your query is tracked and routed to the correct person.
+For urgent inquiries, you can email our support team at payroll-support@examplecorp.com or call the Payroll Helpline at (800) 555-0199 during business hours (8:00 AM - 5:00 PM, Mon-Fri).
+Please be prepared to provide your name, employee ID, the pay date in question, and a specific description of the issue.
+
+---
+
+Q: How do I change my tax withholdings?
+
+A: You can update your federal (Form W-4) and state tax withholding information at any time through LedgerPay.
+1. In LedgerPay, find the "Taxes" or "Tax Withholding" section.
+2. Select the form you wish to update (Federal W-4 or your state's equivalent).
+3. The system will guide you through the digital form, which mirrors the official IRS form.
+4. Once you submit your changes, they will be applied to the next available payroll run. Please note the payroll processing deadlines posted on the Payroll Calendar. Changes submitted after the deadline will be reflected in the subsequent pay cycle.
+The Payroll Department cannot provide tax advice. Please consult a qualified tax professional if you have questions about how to fill out your W-4.
+
+---
+
+Q: Where can I find my year-end tax forms (W-2)?
+
+A: Year-end tax forms (W-2) are provided by January 31st of the following year. We encourage all employees to consent to electronic delivery for faster, more secure access.
+You can view and manage your consent status in LedgerPay under "Taxes" > "Year-End Forms". If you consent to electronic delivery, you will receive an email notification as soon as your W-2 is available to view and download in the portal. If you do not consent, a paper copy will be mailed to the home address we have on file.
+
+---
+
+If you have further questions not covered here, please browse other articles in the Payroll section of the Knowledge Base or contact the Payroll Department via the helpdesk.

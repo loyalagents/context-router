@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Harbor staged-memory evaluation workflow</title>
+  <desc id="desc">A Harbor harness runs the same staged task through three comparable memory environments. Inside each environment the agent stays in one continuous session while staged updates reveal new documents or events and optional downstream form tasks over time.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#f97316"/>
+    </marker>
+    <filter id="soft-shadow" x="-12%" y="-12%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .label { font-family: Helvetica, Arial, sans-serif; fill: #0f172a; }
+      .muted { fill: #475569; }
+      .blue-text { fill: #1d4ed8; }
+      .orange-text { fill: #c2410c; }
+      .small { font-size: 14px; }
+      .body { font-size: 16px; }
+      .heading { font-size: 25px; font-weight: 700; }
+      .card-title { font-size: 15px; font-weight: 700; }
+      .node-title { font-size: 28px; font-weight: 800; }
+      .node-subtitle { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
+      .caption { font-size: 12px; }
+      .tiny { font-size: 11px; }
+      .pill { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
+      .mono { font-family: Courier, monospace; }
+    </style>
+  </defs>
+
+  <rect width="900" height="900" fill="#ffffff"/>
+
+  <rect x="24" y="24" width="852" height="832" rx="24" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+  <text x="54" y="64" class="label heading">Harbor harness</text>
+  <text x="54" y="92" class="label body muted">same staged task, model, output contract, verifier, and scorer across environments</text>
+
+  <g id="environments" filter="url(#soft-shadow)">
+    <rect x="54" y="120" width="248" height="88" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+    <circle cx="80" cy="151" r="8" fill="#64748b"/>
+    <text x="96" y="156" class="label card-title">Env 1: context-only</text>
+    <text x="80" y="181" class="label caption muted">durable memory: none</text>
+    <text x="80" y="199" class="label caption muted">continuous session context only</text>
+
+    <rect x="326" y="120" width="248" height="88" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+    <circle cx="352" cy="151" r="8" fill="#64748b"/>
+    <text x="368" y="156" class="label card-title">Env 2: markdown</text>
+    <text x="352" y="181" class="label caption muted">durable memory: /app/memory.md</text>
+    <text x="352" y="199" class="label caption muted">naive file-backed baseline</text>
+
+    <rect x="598" y="120" width="248" height="88" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+    <circle cx="624" cy="151" r="8" fill="#64748b"/>
+    <text x="640" y="156" class="label card-title">Env 3: cr-mcp</text>
+    <text x="624" y="181" class="label caption muted">durable memory: CR MCP</text>
+    <text x="624" y="199" class="label caption muted">same task, CR memory substrate</text>
+  </g>
+
+  <rect x="54" y="232" width="792" height="48" rx="24" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="450" y="262" text-anchor="middle" class="label body">one continuous agent session inside each environment</text>
+
+  <g id="legend">
+    <rect x="54" y="304" width="214" height="42" rx="12" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="78" y="331" class="label pill blue-text">U</text>
+    <text x="103" y="331" class="label caption">docs/events -> memory</text>
+
+    <rect x="292" y="304" width="198" height="42" rx="12" fill="#ffedd5" stroke="#f97316"/>
+    <text x="316" y="331" class="label pill orange-text">T</text>
+    <text x="341" y="331" class="label caption">form/task -> answer</text>
+
+    <text x="524" y="329" class="label caption muted">stages revealed by</text>
+    <text x="634" y="329" class="label caption mono muted">/app/next_stage</text>
+  </g>
+
+  <text x="68" y="390" class="label body">Staged reveal timeline</text>
+  <text x="68" y="414" class="label small muted">Documents/events update the same retained state; downstream form/tasks read that accumulated state.</text>
+
+  <line x1="98" y1="488" x2="800" y2="488" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="809" y="492" class="label caption muted">time</text>
+
+  <g id="checkpoint-0">
+    <text x="126" y="448" text-anchor="middle" class="label caption muted">checkpoint 0</text>
+    <rect x="70" y="458" width="112" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="126" y="474" text-anchor="middle" class="label tiny blue-text">new docs/events</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="76" y="500" width="100" height="94" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="126" y="535" text-anchor="middle" class="label node-title blue-text">U0</text>
+      <text x="126" y="561" text-anchor="middle" class="label node-subtitle blue-text">memory</text>
+      <text x="126" y="582" text-anchor="middle" class="label tiny muted">docs visible</text>
+    </g>
+  </g>
+
+  <g id="checkpoint-1">
+    <text x="290" y="448" text-anchor="middle" class="label caption muted">checkpoint 1</text>
+    <rect x="234" y="458" width="112" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="290" y="474" text-anchor="middle" class="label tiny blue-text">new docs/events</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="240" y="500" width="100" height="94" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="290" y="535" text-anchor="middle" class="label node-title blue-text">U1</text>
+      <text x="290" y="561" text-anchor="middle" class="label node-subtitle blue-text">memory</text>
+      <text x="290" y="582" text-anchor="middle" class="label tiny muted">docs visible</text>
+    </g>
+    <path d="M290 664 C290 674, 290 682, 290 690" fill="none" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+    <rect x="234" y="672" width="112" height="22" rx="11" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="290" y="688" text-anchor="middle" class="label tiny orange-text">new form/task</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="222" y="696" width="136" height="62" rx="14" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+      <text x="290" y="725" text-anchor="middle" class="label node-title orange-text">T1</text>
+      <text x="290" y="747" text-anchor="middle" class="label node-subtitle orange-text">downstream</text>
+    </g>
+  </g>
+
+  <g id="checkpoint-2">
+    <text x="454" y="448" text-anchor="middle" class="label caption muted">checkpoint 2</text>
+    <rect x="398" y="458" width="112" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="454" y="474" text-anchor="middle" class="label tiny blue-text">new docs/events</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="404" y="500" width="100" height="94" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="454" y="535" text-anchor="middle" class="label node-title blue-text">U2</text>
+      <text x="454" y="561" text-anchor="middle" class="label node-subtitle blue-text">memory</text>
+      <text x="454" y="582" text-anchor="middle" class="label tiny muted">docs visible</text>
+    </g>
+  </g>
+
+  <g id="checkpoint-3">
+    <text x="618" y="448" text-anchor="middle" class="label caption muted">checkpoint 3</text>
+    <rect x="562" y="458" width="112" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="618" y="474" text-anchor="middle" class="label tiny blue-text">new docs/events</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="568" y="500" width="100" height="94" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="618" y="535" text-anchor="middle" class="label node-title blue-text">U3</text>
+      <text x="618" y="561" text-anchor="middle" class="label node-subtitle blue-text">memory</text>
+      <text x="618" y="582" text-anchor="middle" class="label tiny muted">docs visible</text>
+    </g>
+    <path d="M618 664 C618 674, 618 682, 618 690" fill="none" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+    <rect x="562" y="672" width="112" height="22" rx="11" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="618" y="688" text-anchor="middle" class="label tiny orange-text">new form/task</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="550" y="696" width="136" height="62" rx="14" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+      <text x="618" y="725" text-anchor="middle" class="label node-title orange-text">T3</text>
+      <text x="618" y="747" text-anchor="middle" class="label node-subtitle orange-text">downstream</text>
+    </g>
+  </g>
+
+  <g id="checkpoint-4">
+    <text x="782" y="448" text-anchor="middle" class="label caption muted">checkpoint 4</text>
+    <rect x="726" y="458" width="112" height="22" rx="11" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="782" y="474" text-anchor="middle" class="label tiny blue-text">new docs/events</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="732" y="500" width="100" height="94" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+      <text x="782" y="535" text-anchor="middle" class="label node-title blue-text">U4</text>
+      <text x="782" y="561" text-anchor="middle" class="label node-subtitle blue-text">memory</text>
+      <text x="782" y="582" text-anchor="middle" class="label tiny muted">docs visible</text>
+    </g>
+    <path d="M782 664 C782 674, 782 682, 782 690" fill="none" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+    <rect x="726" y="672" width="112" height="22" rx="11" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="782" y="688" text-anchor="middle" class="label tiny orange-text">new form/task</text>
+    <g filter="url(#soft-shadow)">
+      <rect x="714" y="696" width="136" height="62" rx="14" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+      <text x="782" y="725" text-anchor="middle" class="label node-title orange-text">T4</text>
+      <text x="782" y="747" text-anchor="middle" class="label node-subtitle orange-text">downstream</text>
+    </g>
+  </g>
+
+  <path d="M176 547 L238 547" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <path d="M340 547 L402 547" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <path d="M504 547 L566 547" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <path d="M668 547 L730 547" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+
+  <g id="persistent-memory-state">
+    <rect x="64" y="614" width="772" height="50" rx="25" fill="#eef6ff" stroke="#2563eb" stroke-width="1.8" stroke-dasharray="7 5"/>
+    <text x="450" y="637" text-anchor="middle" class="label card-title blue-text">persistent memory/context state</text>
+    <text x="450" y="656" text-anchor="middle" class="label caption muted">carried forward across checkpoints and updated cumulatively; not reset per checkpoint</text>
+    <path d="M126 594 L126 614" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <path d="M290 594 L290 614" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <path d="M454 594 L454 614" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <path d="M618 594 L618 614" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <path d="M782 594 L782 614" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  </g>
+
+  <text x="68" y="792" class="label caption muted">Example schedules</text>
+  <text x="68" y="816" class="label caption muted">hidden final task:</text>
+  <text x="178" y="816" class="label caption mono muted">U -> U -> U -> T</text>
+  <text x="68" y="838" class="label caption muted">interleaved probes:</text>
+  <text x="190" y="838" class="label caption mono muted">U -> U -> T -> U -> T</text>
+</svg>

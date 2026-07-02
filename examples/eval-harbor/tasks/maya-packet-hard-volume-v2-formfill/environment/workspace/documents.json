@@ -1,0 +1,608 @@
+{
+  "corpusId": "packet-hard-volume-v2",
+  "documents": [
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-001",
+      "path": "identity/001-driver-license-upload-ocr.txt",
+      "title": "Driver License Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-002",
+      "path": "identity/002-ssn-card-upload-ocr.txt",
+      "title": "SSN Card Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-003",
+      "path": "identity/003-identity-verification-note.txt",
+      "title": "Identity Verification Intake Note"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-004",
+      "path": "work-authorization/004-i9-section-one-draft-export.yaml",
+      "title": "I-9 Section One Draft Export"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-005",
+      "path": "work-authorization/005-work-authorization-intake-field-export.txt",
+      "title": "Work Authorization Intake Field Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-006",
+      "path": "hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "title": "HR Onboarding Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-007",
+      "path": "hr-onboarding/007-employee-self-service-profile.json",
+      "title": "Employee Self-Service Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-008",
+      "path": "hr-onboarding/008-onboarding-assignment-export.yaml",
+      "title": "Onboarding Assignment Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-009",
+      "path": "employer-context/009-offer-email.txt",
+      "title": "Offer Email Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-010",
+      "path": "employer-context/010-company-directory-profile.yaml",
+      "title": "Company Directory Profile"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-011",
+      "path": "payroll-tax/011-w4-withholding-setup-export.yaml",
+      "title": "W-4 Withholding Setup Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-012",
+      "path": "payroll-tax/012-payroll-tax-profile.json",
+      "title": "Payroll Tax Profile Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-013",
+      "path": "payroll-tax/013-w4-review-note.txt",
+      "title": "W-4 Review Note"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-014",
+      "path": "payroll-tax/014-tax-election-import-mina-cheng.json",
+      "title": "Tax Election Import Mina Cheng"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-015",
+      "path": "work-authorization/015-section-one-intake-maia-chinn.yaml",
+      "title": "Section One Intake Maia Chinn"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-016",
+      "path": "payroll-tax/016-direct-deposit-confirmation.yaml",
+      "title": "Direct Deposit Confirmation"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-017",
+      "path": "payroll-tax/017-bank-verification-letter-ocr.txt",
+      "title": "Bank Verification Letter OCR"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-018",
+      "path": "payroll-tax/018-voided-check-ocr.txt",
+      "title": "Voided Check OCR"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-019",
+      "path": "banking-ops/019-prenote-review-naya-lin.txt",
+      "title": "Prenote Review Naya Lin"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-020",
+      "path": "banking-ops/020-bank-letter-ocr-mara-chin.txt",
+      "title": "Bank Letter OCR Mara Chin"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-021",
+      "path": "employer-context/021-benefits-enrollment-profile.yaml",
+      "title": "Benefits Enrollment Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-022",
+      "path": "employer-context/022-payroll-preview-export.yaml",
+      "title": "Payroll Preview Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-023",
+      "path": "hr-onboarding/023-onboarding-support-ticket.txt",
+      "title": "Onboarding Support Ticket"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-024",
+      "path": "hr-onboarding/024-employee-profile-audit-log.txt",
+      "title": "Employee Profile Audit Log"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-025",
+      "path": "archive/025-maya-recruiter-history.txt",
+      "title": "Maya recruiter History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-026",
+      "path": "archive/026-maya-bank-history.txt",
+      "title": "Maya bank History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-027",
+      "path": "archive/027-maya-address-history.yaml",
+      "title": "Maya address History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-028",
+      "path": "archive/028-maya-tax-history.txt",
+      "title": "Maya tax History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-029",
+      "path": "archive/029-maya-workauth-history.txt",
+      "title": "Maya workauth History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-030",
+      "path": "archive/030-maya-recruiter-history.txt",
+      "title": "Maya recruiter History"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-031",
+      "path": "archive/031-maya-bank-history.txt",
+      "title": "Maya bank History"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-032",
+      "path": "people-records/032-prehire-profile-maya-patel.json",
+      "title": "Prehire Profile Maya Patel"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-033",
+      "path": "hris-audit/033-address-sync-rina-chow.yaml",
+      "title": "Address Sync Rina Chow"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-034",
+      "path": "support-cases/034-directory-name-case-mila-crane.txt",
+      "title": "Directory Name Case Mila Crane"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-035",
+      "path": "communications/035-payroll-onboarding-jules-carter.txt",
+      "title": "Payroll Onboarding Jules Carter"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-036",
+      "path": "hris-audit/036-profile-change-niko-torres.txt",
+      "title": "Profile Change Niko Torres"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-037",
+      "path": "payroll-ops/037-tax-batch-mina-cheng.txt",
+      "title": "Tax Batch Mina Cheng"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-038",
+      "path": "identity-vendor/038-id-card-maia-chinn.txt",
+      "title": "ID Card Maia Chinn"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-039",
+      "path": "banking-ops/039-account-election-naya-lin.json",
+      "title": "Account Election Naya Lin"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-040",
+      "path": "payroll-tax/040-withholding-review-mara-chin.yaml",
+      "title": "Withholding Review Mara Chin"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-041",
+      "path": "support-cases/041-start-date-case-maya-patel.txt",
+      "title": "Start Date Case Maya Patel"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-042",
+      "path": "communications/042-address-review-rina-chow.txt",
+      "title": "Address Review Rina Chow"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-043",
+      "path": "hris-audit/043-bank-label-mila-crane.txt",
+      "title": "Bank Label Mila Crane"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-044",
+      "path": "payroll-ops/044-worker-crosswalk-jules-carter.txt",
+      "title": "Worker Crosswalk Jules Carter"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-045",
+      "path": "work-authorization/045-i9-id-scan-niko-torres.txt",
+      "title": "I9 ID Scan Niko Torres"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-046",
+      "path": "people-records/046-coordinator-profile-priya-shah.json",
+      "title": "Coordinator Profile Priya Shah"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-047",
+      "path": "banking-ops/047-ach-prenote-mina-cheng.yaml",
+      "title": "ACH Prenote Mina Cheng"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-048",
+      "path": "support-cases/048-tax-status-case-maia-chinn.txt",
+      "title": "Tax Status Case Maia Chinn"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-049",
+      "path": "communications/049-i9-reminder-naya-lin.txt",
+      "title": "I9 Reminder Naya Lin"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-050",
+      "path": "hris-audit/050-address-token-mara-chin.txt",
+      "title": "Address Token Mara Chin"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-051",
+      "path": "payroll-tax/051-w4-review-maya-patel.txt",
+      "title": "W4 Review Maya Patel"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-052",
+      "path": "banking-ops/052-voided-check-rina-chow.txt",
+      "title": "Voided Check Rina Chow"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-053",
+      "path": "people-records/053-onboarding-profile-mila-crane.json",
+      "title": "Onboarding Profile Mila Crane"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-054",
+      "path": "work-authorization/054-eligibility-intake-jules-carter.yaml",
+      "title": "Eligibility Intake Jules Carter"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-055",
+      "path": "support-cases/055-account-type-case-niko-torres.txt",
+      "title": "Account Type Case Niko Torres"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-056",
+      "path": "payroll-ops/056-payroll-import-exception-queue.txt",
+      "title": "Payroll Import Exception Queue"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-057",
+      "path": "people-ops/057-new-hire-cohort-lock-calendar.txt",
+      "title": "New Hire Cohort Lock Calendar"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-058",
+      "path": "banking-ops/058-ach-prenote-result-handling.txt",
+      "title": "ACH Prenote Result Handling"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-059",
+      "path": "work-authorization/059-i-9-assisted-intake-branch-cleanup.txt",
+      "title": "I-9 Assisted Intake Branch Cleanup"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-060",
+      "path": "hris-audit/060-address-normalization-nightly-job.txt",
+      "title": "Address Normalization Nightly Job"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-061",
+      "path": "payroll-tax/061-withholding-import-field-map.txt",
+      "title": "Withholding Import Field Map"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-062",
+      "path": "identity-vendor/062-identity-document-ocr-routing.txt",
+      "title": "Identity Document OCR Routing"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-063",
+      "path": "support-cases/063-support-case-merge-procedure.txt",
+      "title": "Support Case Merge Procedure"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-064",
+      "path": "payroll-ops/064-directory-profile-display-names.txt",
+      "title": "Directory Profile Display Names"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-065",
+      "path": "people-ops/065-bank-product-label-normalization.txt",
+      "title": "Bank Product Label Normalization"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-066",
+      "path": "banking-ops/066-onboarding-assignment-export-timing.txt",
+      "title": "Onboarding Assignment Export Timing"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-067",
+      "path": "work-authorization/067-benefits-address-handoff.txt",
+      "title": "Benefits Address Handoff"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-068",
+      "path": "hris-audit/068-tax-review-workbench-release.txt",
+      "title": "Tax Review Workbench Release"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-069",
+      "path": "payroll-tax/069-work-email-provisioning-events.txt",
+      "title": "Work Email Provisioning Events"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-070",
+      "path": "identity-vendor/070-payroll-preview-exception-digest.txt",
+      "title": "Payroll Preview Exception Digest"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-071",
+      "path": "support-cases/071-document-upload-retry-lane.txt",
+      "title": "Document Upload Retry Lane"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-072",
+      "path": "payroll-ops/072-employment-title-crosswalk.txt",
+      "title": "Employment Title Crosswalk"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-073",
+      "path": "people-ops/073-field-ownership-registry.txt",
+      "title": "Field Ownership Registry"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-074",
+      "path": "banking-ops/074-vendor-maintenance-window-advisory.txt",
+      "title": "Vendor Maintenance Window Advisory"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-075",
+      "path": "work-authorization/075-pay-group-assignment-batch.txt",
+      "title": "Pay Group Assignment Batch"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-076",
+      "path": "hris-audit/076-employee-id-collision-monitor.txt",
+      "title": "Employee Id Collision Monitor"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-077",
+      "path": "payroll-tax/077-new-hire-packet-completion-dashboard.txt",
+      "title": "New-Hire Packet Completion Dashboard"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-078",
+      "path": "identity-vendor/078-bank-verification-review-checklist.txt",
+      "title": "Bank Verification Review Checklist"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-079",
+      "path": "support-cases/079-employee-self-service-correction-lane.txt",
+      "title": "Employee Self-Service Correction Lane"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-080",
+      "path": "payroll-ops/080-cohort-communications-digest.txt",
+      "title": "Cohort Communications Digest"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-081",
+      "path": "compliance/081-remote-inspection-advisory.txt",
+      "title": "Remote Inspection Advisory"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-082",
+      "path": "compliance/082-receipt-rule-field-guide.txt",
+      "title": "Receipt Rule Field Guide"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-083",
+      "path": "systems/083-peoplebridge-release-note.txt",
+      "title": "PeopleBridge Release Note"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-084",
+      "path": "systems/084-ledgerpay-file-layout-bulletin.txt",
+      "title": "LedgerPay File Layout Bulletin"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-085",
+      "path": "people-ops/085-newhire-cohort-agenda.txt",
+      "title": "Newhire Cohort Agenda"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-086",
+      "path": "benefits/086-benefits-window-policy.txt",
+      "title": "Benefits Window Policy"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-087",
+      "path": "payroll-ops/087-offcycle-request-procedure.txt",
+      "title": "Offcycle Request Procedure"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-088",
+      "path": "identity-vendor/088-ocr-model-change-log.txt",
+      "title": "OCR Model Change Log"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-089",
+      "path": "support-cases/089-case-routing-matrix.txt",
+      "title": "Case Routing Matrix"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-090",
+      "path": "people-ops/090-manager-handoff-playbook.txt",
+      "title": "Manager Handoff Playbook"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-091",
+      "path": "systems/091-directory-sync-contract.txt",
+      "title": "Directory Sync Contract"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-092",
+      "path": "payroll-tax/092-federal-tax-label-guide.txt",
+      "title": "Federal Tax Label Guide"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-093",
+      "path": "banking-ops/093-account-type-normalization-guide.txt",
+      "title": "Account Type Normalization Guide"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-094",
+      "path": "work-authorization/094-section-one-status-codes.txt",
+      "title": "Section One Status Codes"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-095",
+      "path": "hris-audit/095-address-parser-release.txt",
+      "title": "Address Parser Release"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-096",
+      "path": "compliance/096-record-retention-schedule.txt",
+      "title": "Record Retention Schedule"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-097",
+      "path": "systems/097-nightly-batch-monitor.txt",
+      "title": "Nightly Batch Monitor"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-098",
+      "path": "support-cases/098-payroll-case-macro-pack.txt",
+      "title": "Payroll Case Macro Pack"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-099",
+      "path": "people-ops/099-first-week-checklist.txt",
+      "title": "First Week Checklist"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-volume-v2-100",
+      "path": "systems/100-acronym-glossary.txt",
+      "title": "Acronym Glossary"
+    }
+  ],
+  "documentsRoot": "docs",
+  "schemaVersion": 1,
+  "userId": "maya-chen-newhire"
+}

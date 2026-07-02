@@ -1,0 +1,20 @@
+source_system,LedgerPay cohort file
+generated_timestamp,2026-06-27T06:15:00-07:00
+status,ready
+field_ids,worker_id;legal_name;work_email;title;start_date;bank_product;tax_status
+
+worker_id,legal_name,work_email,title,start_date,address_line,bank_product,tax_status
+PLC-19418,Maya Patel,maya.patel@pacificledger.test,Operations Coordinator,2026-06-15,910 Juniper Avenue Apt 12, Berkeley, CA 94704,Direct Checking,single or married filing separately
+
+control_total,1
+batch_window,2026-06-26 18:00 PDT to 2026-06-27 06:00 PDT
+
+Tax workbench provenance
+Tax workbench trace: PLC-PAYROLLT-051 stored filing-status label, normalized tax code, source field id, and reviewer queue.
+Review checkpoint: tax operations compare display phrase, normalized code, and saved election timestamp before releasing a row from review.
+Retention tag: withholding setup artifact, grouped with tax import diagnostics and field-map notes.
+
+Operational detail rows
+Tax workbench rows keep display label, normalized filing-status code, source field id, save timestamp, and reviewer queue. Row marker PLC-PAYROLLT-051 was indexed from W4 Review Maya Patel during the 2026-06-25 operations window.
+Withholding import review compares federal status, multiple-jobs flag, dependent amount fields, and field-map version. Review notes for w4 review maya patel kept payroll tax queue history, timestamp lineage, and handoff context with the retained record.
+The tax export stores both vendor phrase and payroll code because the review screen shows them side by side. The retained payroll tax artifact keeps source metadata for w4 review maya patel audit reconstruction while preserving original row wording.

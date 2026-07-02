@@ -1,0 +1,76 @@
+apiVersion: "ledgerpay.v1"
+kind: "PayrollPreviewExport"
+export_metadata:
+  source_system: "LedgerPay"
+  export_id: "e-7a8b3c4d-9e0f-4a1b-8c2d-5f6a7b8d9c0e"
+  export_timestamp: "2026-06-25T11:18:00-07:00"
+  generated_by: "service-account-onboarding-connector"
+  data_context: "NEW_HIRE_PROFILE_SYNC"
+preview_run_details:
+  run_id: "pr-a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+  run_type: "ON_DEMAND_PREVIEW"
+  run_trigger: "API_CALL"
+  target_pay_period: null
+  calculation_engine_version: "3.14.1"
+  status: "COMPLETED"
+  notes: "Initial payroll preview for new hire profile. No calculation data available until first pay cycle."
+worker_record:
+  worker_id: "PLC-20418"
+  record_status: "ACTIVE"
+  profile_status: "PENDING_FIRST_PAYROLL"
+  employment_data:
+    company:
+      id: "PLC"
+      name: "Pacific Ledger Cooperative"
+    job_profile:
+      title: null
+      final_assignment_reference: "HR correction case HR-48126"
+      job_code: "CAO-105"
+      is_exempt: null
+      pay_type: null
+  compensation_data:
+    pay_rate: null
+    pay_frequency: null
+    effective_date: null
+    currency: "USD"
+  payroll_preview_calculation:
+    gross_pay: "0.00"
+    total_deductions: "0.00"
+    total_taxes: "0.00"
+    net_pay: "0.00"
+    earnings: []
+    pre_tax_deductions: []
+    post_tax_deductions: []
+    employee_taxes: []
+    employer_taxes: []
+    memos:
+      - code: "PREVIEW_MODE"
+        message: "This is a non-binding preview. Values are zero as no time data or configuration is present."
+      - code: "AWAITING_SETUP"
+        message: "Employee tax and direct deposit setup is not yet reflected in payroll system."
+status_history:
+  - timestamp: "2026-06-25T11:17:58-07:00"
+    actor: "system@onboarding.api"
+    event: "WORKER_PROFILE_CREATED"
+    details: "New worker profile created via API from upstream onboarding system."
+    transaction_id: "txn-f209d8c6-a51e-4588-912e-b34e277a0c10"
+  - timestamp: "2026-06-25T11:17:59-07:00"
+    actor: "payroll_automation_daemon"
+    event: "DEFAULT_PAYGROUP_ASSIGNED"
+    details: "Worker PLC-20418 assigned to default pay group based on job profile."
+    assignment_id: "pg-assign-0987"
+  - timestamp: "2026-06-25T11:18:00-07:00"
+    actor: "service-account-onboarding-connector"
+    event: "PREVIEW_EXPORT_REQUESTED"
+    details: "Payroll preview export initiated for new worker."
+    request_id: "req-c3d4e5f6-a1b2-4c3d-b4e5-f6a7b8c9d0e1"
+  - timestamp: "2026-06-25T11:18:00-07:00"
+    actor: "payroll_calculation_engine"
+    event: "PREVIEW_CALCULATION_SUCCESS"
+    details: "Zero-value preview calculation completed successfully. Awaiting first pay run with time/earning inputs."
+    calculation_id: "calc-1234-abcd"
+  - timestamp: "2026-06-25T11:18:00-07:00"
+    actor: "system@export.service"
+    event: "EXPORT_GENERATED"
+    details: "YAML export artifact generated."
+    export_ref: "e-7a8b3c4d-9e0f-4a1b-8c2d-5f6a7b8d9c0e"

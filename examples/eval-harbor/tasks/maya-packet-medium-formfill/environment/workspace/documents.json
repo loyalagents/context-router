@@ -1,0 +1,158 @@
+{
+  "corpusId": "packet-medium",
+  "documents": [
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-medium-001",
+      "path": "identity/001-driver-license-upload-ocr.txt"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-medium-002",
+      "path": "identity/002-ssn-card-upload-ocr.txt"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-medium-003",
+      "path": "identity/003-identity-verification-note.txt"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-medium-004",
+      "path": "work-authorization/004-i9-section-one-draft-export.yaml"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-medium-005",
+      "path": "work-authorization/005-work-authorization-intake-field-export.txt"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-medium-006",
+      "path": "hr-onboarding/006-hr-onboarding-profile-export.yaml"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-medium-007",
+      "path": "hr-onboarding/007-employee-self-service-profile.json"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-medium-008",
+      "path": "hr-onboarding/008-onboarding-assignment-export.yaml"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-009",
+      "path": "employer-context/009-offer-email.txt"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-010",
+      "path": "employer-context/010-company-directory-profile.yaml"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-011",
+      "path": "payroll-tax/011-w4-withholding-setup-export.yaml"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-012",
+      "path": "payroll-tax/012-payroll-tax-profile.json"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-013",
+      "path": "payroll-tax/013-w4-review-note.txt"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-014",
+      "path": "employer-context/014-w4-instructions.txt"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-medium-015",
+      "path": "noise/015-blank-sample-w4-packet.txt"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-016",
+      "path": "payroll-tax/016-direct-deposit-confirmation.yaml"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-017",
+      "path": "payroll-tax/017-bank-verification-letter-ocr.txt"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-medium-018",
+      "path": "payroll-tax/018-voided-check-ocr.txt"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-019",
+      "path": "employer-context/019-payroll-direct-deposit-instructions.txt"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-medium-020",
+      "path": "noise/020-sample-direct-deposit-packet-jordan.txt"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-021",
+      "path": "employer-context/021-benefits-enrollment-profile.yaml"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-medium-022",
+      "path": "employer-context/022-payroll-preview-export.yaml"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-medium-023",
+      "path": "hr-onboarding/023-onboarding-support-ticket.txt"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-medium-024",
+      "path": "hr-onboarding/024-employee-profile-audit-log.txt"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-medium-025",
+      "path": "partial-conflicting/025-stale-recruiter-profile.txt"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-medium-026",
+      "path": "partial-conflicting/026-stale-payroll-bank-draft.txt"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-medium-027",
+      "path": "partial-conflicting/027-stale-onboarding-export.yaml"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-medium-028",
+      "path": "noise/028-other-employee-sample-packet.txt"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-medium-029",
+      "path": "noise/029-other-employee-w4-tax-sample.txt"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-medium-030",
+      "path": "noise/030-payroll-support-faq.txt"
+    }
+  ],
+  "documentsRoot": "docs",
+  "schemaVersion": 1,
+  "userId": "maya-chen-newhire"
+}

@@ -1,0 +1,36 @@
+source_system: Pacific Ledger Directory
+export_id: DIR-TEAM-CLIENTOPS-20260625
+exported_at: 2026-06-25T12:05:00-07:00
+status: published
+record_type: team_directory_export
+field_ids:
+  - team.name
+  - team.member.worker_id
+  - team.member.display_name
+  - team.member.role
+  - team.member.manager_name
+  - manager.email
+  - manager.desk_phone
+
+team:
+  name: Client Operations - North Bay
+  cost_center: CLIOPS-NB
+
+members:
+  - worker_id: PLC-20418
+    display_name: Maya Chen
+    role: Client Operations Associate
+    manager_name: Victor Alvarez
+    manager_worker_id: PLC-10988
+  - worker_id: PLC-10988
+    display_name: Victor Alvarez
+    role: Client Operations Manager
+    manager_name: Dana Cho
+    email: victor.alvarez@pacificledger.test
+    desk_phone: 510-555-0276
+    office_location: Oakland Operations Hub, Floor 4
+
+review:
+  owner_group: People Operations Systems
+  reviewer_note: Manager contact fields are published for escalation routing in the directory export. New-hire rows may show manager linkage before the employee contact row is populated.
+  retention_bucket: directory-team-exports

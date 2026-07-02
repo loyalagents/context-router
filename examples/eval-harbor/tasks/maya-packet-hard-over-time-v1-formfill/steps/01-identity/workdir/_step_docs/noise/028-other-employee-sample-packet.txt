@@ -1,0 +1,99 @@
+Source System: Internal Knowledge Base (KB)
+Export Timestamp: 2026-06-01T08:00:00-07:00
+Document ID: NH-SAMPLE-PACKET-JD-v1.2
+Status: Published, For Demonstration Purposes Only
+Owner Group: HR Onboarding Team
+Version: 1.2
+
+SAMPLE NEW HIRE ONBOARDING PACKET - JOHN DOE
+
+*** FOR ILLUSTRATIVE PURPOSES ONLY. DO NOT USE FOR ACTUAL ONBOARDING. ***
+
+Welcome to the team! This document provides a sample of the forms and information you will be asked to complete during your first few days. All official forms will be assigned to you through our onboarding portal. The information below for "John Doe" is entirely fictional and used for demonstration.
+
+--------------------------------------------------
+SECTION 1: PERSONAL DATA (SAMPLE)
+--------------------------------------------------
+This information is typically collected to create your employee profile.
+
+Employee Full Name: John Doe
+Start Date: 2026-07-15
+Job Title: Sample Analyst
+Department: Sample Department
+
+Home Address:
+123 Main Street
+Anytown, USA 12345
+
+Personal Email: j.doe@example.com
+
+Emergency Contact:
+Name: Jane Doe
+Relationship: Spouse
+Primary Phone: [REDACTED FOR PRIVACY IN SAMPLE]
+
+--------------------------------------------------
+SECTION 2: EMPLOYMENT ELIGIBILITY (FORM I-9)
+--------------------------------------------------
+All new employees are required to complete Form I-9 to verify their identity and authorization to work in the United States.
+
+Instructions:
+1. On or before your first day, you will receive a task to complete Section 1 of the Form I-9 electronically.
+2. Within your first three days of employment, you must present original, unexpired documents to an HR representative to complete Section 2.
+3. A list of acceptable documents will be provided with the electronic form. Common examples include a U.S. Passport OR a combination of a Driver's License and Social Security Card.
+
+Please prepare to bring your chosen documents with you on your first day.
+
+--------------------------------------------------
+SECTION 3: TAX WITHHOLDING FORMS (W-4)
+--------------------------------------------------
+Your federal and state tax withholding information is managed through our payroll system, LedgerPay. You will receive an invitation to register for LedgerPay and complete your tax forms.
+
+Sample Federal W-4 Information:
+(This is an example only and does not constitute tax advice.)
+
+Step 1: Personal Information
+Filing Status: sample employee selected option A
+
+Step 2: Multiple Jobs or Spouse Works
+(Checkbox is left blank in this example)
+
+Step 3: Claim Dependents
+(Value is $0 in this example)
+
+Step 4: Other Adjustments
+(All fields are left blank in this example)
+
+You are responsible for ensuring your W-4 is accurate. Please consult a tax professional if you have questions.
+
+--------------------------------------------------
+SECTION 4: DIRECT DEPOSIT AUTHORIZATION
+--------------------------------------------------
+We encourage all employees to enroll in direct deposit for secure and timely payment. This is also managed within the LedgerPay payroll system.
+
+To set up direct deposit, you will need the following information for your bank account(s):
+- Bank Name
+- Bank Routing Number (9 digits)
+- Bank Account Number
+- Account Category
+
+You can split your deposit between multiple accounts.
+
+Sample Setup in LedgerPay:
+Bank Name: Example First National Bank
+Account Category: Sample category A
+Routing Number: XXXXXXXXX
+Account Number: ******1234
+Deposit: 100% of net pay
+
+--------------------------------------------------
+SECTION 5: EMPLOYEE HANDBOOK ACKNOWLEDGEMENT
+--------------------------------------------------
+New hires must acknowledge receipt and understanding of the Employee Handbook. You will be provided with a link to the most current version of the handbook and an electronic form to sign.
+
+Sample Acknowledgement Text:
+
+"I acknowledge that I have received a copy of the Employee Handbook, which outlines the policies, procedures, and expectations of employment. I understand that it is my responsibility to read, understand, and comply with the provisions of the handbook. I also understand that the handbook is not a contract of employment and that the company reserves the right to amend it at any time."
+
+Employee Signature: _______________________
+Date: _______________________

@@ -1,0 +1,45 @@
+source_system: HarborHire
+exported_at: 2026-06-27T09:18:04-07:00
+status: open
+worker_id: PLC-20518
+topic: address sync review
+record_owner: people-operations
+field_ids:
+  - person.legal_name
+  - work.email
+  - payroll.tax_status
+  - banking.election
+person:
+  legal_name: Rina Chow
+  first_name: Rina
+  last_name: Chow
+  title: Client Operations Associate
+  start_date: 2026-07-20
+  work_email: rina.chow@pacificledger.test
+  address_line: 2864 Ashbury Street Apt 30, Oakland, CA 94609
+payroll_snapshot:
+  tax_filing_status: single or married filing separately
+  bank_product_label: Business Checking
+  institution_name: Bay Harbor Credit Union
+  routing_number: "121100782"
+  account_last_four: "6451"
+queue_notes:
+  - matched during nightly PeopleBridge export
+  - awaiting normal payroll cutover review
+
+review_history:
+  - timestamp: 2026-06-25T09:12:00-07:00
+    owner_queue: HRIS audit trace
+    status: source_row_indexed
+  - timestamp: 2026-06-26T16:40:00-07:00
+    owner_queue: source-control-review
+    status: queue_checkpoint_recorded
+control_observations:
+  - HRIS audit trace - PLC-HRISAUDI-033 kept source transaction ids, actor, commit time, and changed-field labels from the source log.
+  - Control total note - batch PLC-HRISAUDI-033 balanced against the source-system row count and was released to the evidence archive with unchanged free-text notes.
+  - Change-ledger checkpoint - reviewers compare current row status, event order, and field ownership before copying values into downstream systems.
+  - Retention tag - audit stream export, grouped by worker id and source transaction family.
+operational_detail_rows:
+  - HRIS audit rows capture actor, source field, previous token, current token, commit timestamp, and downstream sync family. Row marker PLC-HRISAUDI-033 was indexed from Address Sync Rina Chow during the 2026-06-25 operations window.
+  - Profile change review compares event order, batch id, field ownership, and bridge status before interpreting a row. Review notes for address sync rina chow kept HRIS audit queue history, timestamp lineage, and handoff context with the retained record.
+  - The audit export keeps both normalized address components and original source text for review by PeopleBridge data staff. The retained HRIS audit artifact keeps source metadata for address sync rina chow audit reconstruction while preserving original row wording.

@@ -1,0 +1,236 @@
+{
+  "corpusId": "packet-hard-ownership-v1",
+  "documents": [
+    {
+      "category": "adversarial",
+      "id": "packet-hard-ownership-v1-adversarial-101",
+      "path": "adversarial/101-same-name-contractor-profile.yaml",
+      "title": "Same Name Contractor Profile"
+    },
+    {
+      "category": "adversarial",
+      "id": "packet-hard-ownership-v1-adversarial-102",
+      "path": "adversarial/102-forwarded-family-contact-thread.txt",
+      "title": "Forwarded Family Contact Thread"
+    },
+    {
+      "category": "adversarial",
+      "id": "packet-hard-ownership-v1-adversarial-103",
+      "path": "adversarial/103-payroll-clipboard-neighbor-row.txt",
+      "title": "Payroll Clipboard Neighbor Row"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-009",
+      "path": "employer-context/009-offer-email.txt",
+      "title": "Offer Email Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-010",
+      "path": "employer-context/010-company-directory-profile.yaml",
+      "title": "Company Directory Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-014",
+      "path": "employer-context/014-w4-instructions.txt",
+      "title": "W-4 Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-019",
+      "path": "employer-context/019-payroll-direct-deposit-instructions.txt",
+      "title": "Payroll Direct Deposit Instructions"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-021",
+      "path": "employer-context/021-benefits-enrollment-profile.yaml",
+      "title": "Benefits Enrollment Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-022",
+      "path": "employer-context/022-payroll-preview-export.yaml",
+      "title": "Payroll Preview Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-033",
+      "path": "employer-context/033-team-directory-export.yaml",
+      "title": "Team Directory Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-006",
+      "path": "hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "title": "HR Onboarding Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-007",
+      "path": "hr-onboarding/007-employee-self-service-profile.json",
+      "title": "Employee Self-Service Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-008",
+      "path": "hr-onboarding/008-onboarding-assignment-export.yaml",
+      "title": "Onboarding Assignment Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-023",
+      "path": "hr-onboarding/023-onboarding-support-ticket.txt",
+      "title": "Onboarding Support Ticket"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-024",
+      "path": "hr-onboarding/024-employee-profile-audit-log.txt",
+      "title": "Employee Profile Audit Log"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-032",
+      "path": "hr-onboarding/032-harborhire-emergency-contact-export.yaml",
+      "title": "HarborHire Emergency Contact Export"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-001",
+      "path": "identity/001-driver-license-upload-ocr.txt",
+      "title": "Driver License Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-002",
+      "path": "identity/002-ssn-card-upload-ocr.txt",
+      "title": "SSN Card Upload OCR"
+    },
+    {
+      "category": "identity",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-003",
+      "path": "identity/003-identity-verification-note.txt",
+      "title": "Identity Verification Intake Note"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-015",
+      "path": "noise/015-blank-sample-w4-packet.txt",
+      "title": "Blank Sample W-4 Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-020",
+      "path": "noise/020-sample-direct-deposit-packet-jordan.txt",
+      "title": "Sample Direct Deposit Packet Jordan"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-028",
+      "path": "noise/028-other-employee-sample-packet.txt",
+      "title": "Other Employee Sample Packet"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-029",
+      "path": "noise/029-other-employee-w4-tax-sample.txt",
+      "title": "Other Employee W-4 Tax Sample"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-030",
+      "path": "noise/030-payroll-support-faq.txt",
+      "title": "Payroll Support FAQ"
+    },
+    {
+      "category": "noise",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-035",
+      "path": "noise/035-w4-example-article.txt",
+      "title": "W-4 Example Article"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-025",
+      "path": "partial-conflicting/025-stale-recruiter-profile.txt",
+      "title": "Stale Recruiter Profile"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-026",
+      "path": "partial-conflicting/026-stale-payroll-bank-draft.txt",
+      "title": "Stale Payroll Bank Draft"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-027",
+      "path": "partial-conflicting/027-stale-onboarding-export.yaml",
+      "title": "Stale Onboarding Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-011",
+      "path": "payroll-tax/011-w4-withholding-setup-export.yaml",
+      "title": "W-4 Withholding Setup Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-012",
+      "path": "payroll-tax/012-payroll-tax-profile.json",
+      "title": "Payroll Tax Profile Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-013",
+      "path": "payroll-tax/013-w4-review-note.txt",
+      "title": "W-4 Review Note"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-016",
+      "path": "payroll-tax/016-direct-deposit-confirmation.yaml",
+      "title": "Direct Deposit Confirmation"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-017",
+      "path": "payroll-tax/017-bank-verification-letter-ocr.txt",
+      "title": "Bank Verification Letter OCR"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-018",
+      "path": "payroll-tax/018-voided-check-ocr.txt",
+      "title": "Voided Check OCR"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-031",
+      "path": "payroll-tax/031-ledgerpay-payment-election-export.yaml",
+      "title": "LedgerPay Payment Election Export"
+    },
+    {
+      "category": "payroll-tax",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-034",
+      "path": "payroll-tax/034-ledgerpay-support-case-export.txt",
+      "title": "LedgerPay Support Case Export"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-004",
+      "path": "work-authorization/004-i9-section-one-draft-export.yaml",
+      "title": "I-9 Section One Draft Export"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-ownership-v1-005",
+      "path": "work-authorization/005-work-authorization-intake-field-export.txt",
+      "title": "Work Authorization Intake Field Export"
+    }
+  ],
+  "documentsRoot": "docs",
+  "schemaVersion": 1,
+  "userId": "maya-chen-newhire"
+}

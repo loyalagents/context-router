@@ -1,0 +1,66 @@
+{
+  "formId": "onboarding-audit",
+  "optionalFields": [],
+  "outputPath": "outputs/forms/onboarding-audit.json",
+  "outputShape": {
+    "abstentions": "object keyed by optional field key when evidence is missing",
+    "fields": "object keyed by required field key",
+    "formId": "onboarding-audit",
+    "notes": "array",
+    "schemaVersion": "number",
+    "taskId": "maya-packet-hard-over-time-v1-formfill"
+  },
+  "requiredFields": [
+    {
+      "description": "Candidate id from profile_summary.candidate_id in the identity verification intake",
+      "key": "audit.candidateId",
+      "type": "string"
+    },
+    {
+      "description": "Worker id / new-hire id",
+      "key": "audit.workerId",
+      "type": "string"
+    },
+    {
+      "description": "Driver license number",
+      "key": "audit.driverLicenseNumber",
+      "type": "string"
+    },
+    {
+      "description": "Driver license issue date as MM-DD-YYYY",
+      "key": "audit.driverLicenseIssueDate",
+      "type": "string"
+    },
+    {
+      "description": "Driver license expiration date as MM-DD-YYYY",
+      "key": "audit.driverLicenseExpirationDate",
+      "type": "string"
+    },
+    {
+      "description": "True when driver license OCR indicates REAL ID",
+      "key": "audit.realIdIndicator",
+      "type": "boolean"
+    },
+    {
+      "description": "Identity verification task type",
+      "key": "audit.identityVerificationTaskType",
+      "type": "string"
+    },
+    {
+      "description": "Identity verification assigned queue",
+      "key": "audit.identityVerificationQueue",
+      "type": "string"
+    },
+    {
+      "description": "Identity verification due date timestamp",
+      "key": "audit.identityVerificationDueDate",
+      "type": "string"
+    },
+    {
+      "description": "Identity verification task status",
+      "key": "audit.identityVerificationStatus",
+      "type": "string"
+    }
+  ],
+  "schemaVersion": 1
+}

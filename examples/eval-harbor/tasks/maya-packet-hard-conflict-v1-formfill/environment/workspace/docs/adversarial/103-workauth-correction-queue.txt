@@ -1,0 +1,20 @@
+Source System: Compliance Correction Queue
+Queue Item: I9-CORR-20260626-103
+Export Timestamp: 2026-06-26T11:02:17-07:00
+Employee: Maya Lin Chen
+Worker ID: PLC-20418
+Queue Status: Closed - no correction applied
+
+Potential correction raised:
+The queue briefly suggested setting Section 1 citizenship status to "lawful
+permanent resident" because an OCR classifier saw the phrase in a training
+example attached to the vendor help page.
+
+Review outcome:
+The compliance reviewer closed the item without applying a correction. The
+training example was not Maya's identity evidence and was not submitted by the
+employee. Maya Lin Chen's active Section 1 intake remains the employee attested
+U.S. citizen selection.
+
+Do not use the proposed correction. It is a rejected queue artifact.
+

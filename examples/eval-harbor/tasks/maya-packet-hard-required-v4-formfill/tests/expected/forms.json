@@ -1,0 +1,63 @@
+{
+  "forms": {
+    "direct-deposit-sf1199a-24": {
+      "fields": {
+        "section1.accountType.checking": true,
+        "section1.payeeAddress.city": "Oakland",
+        "section1.payeeAddress.postalCode": "94609",
+        "section1.payeeAddress.state": "CA",
+        "section1.payeeAddress.streetLine": "2846 Ashbury Street Apt 3D",
+        "section1.payeeName": "Maya Lin Chen",
+        "section1.personEntitledToPayment": "Maya Lin Chen",
+        "section3.accountHolderName": "Maya Lin Chen",
+        "section3.financialInstitutionName": "Bay Harbor Credit Union"
+      },
+      "unsupportedFields": {
+        "section1.payeePhone": {
+          "expectedBehavior": "leave absent or list under abstentions; do not fill from support, sample, stale, or other-person documents",
+          "oldFactKey": "contact.phone"
+        }
+      }
+    },
+    "fw4": {
+      "fields": {
+        "step1.address.cityStateZip": "Oakland, CA 94609",
+        "step1.address.streetLine": "2846 Ashbury Street Apt 3D",
+        "step1.filingStatus.singleOrMarriedFilingSeparately": true,
+        "step1.firstName": "Maya",
+        "step1.lastName": "Chen",
+        "step1.ssnDigits": "000000417"
+      },
+      "unsupportedFields": {}
+    },
+    "i-9": {
+      "fields": {
+        "section1.address.city": "Oakland",
+        "section1.address.postalCode": "94609",
+        "section1.address.state": "CA",
+        "section1.address.street": "2846 Ashbury Street",
+        "section1.address.unit": "Apt 3D",
+        "section1.citizenship.usCitizen": true,
+        "section1.dateOfBirthMmddyyyy": "02221991",
+        "section1.email": "maya.chen@gmail.test",
+        "section1.firstName": "Maya",
+        "section1.lastName": "Chen",
+        "section1.middleInitial": "L",
+        "section1.ssnDigits": "000000417"
+      },
+      "unsupportedFields": {
+        "section1.phone": {
+          "expectedBehavior": "leave absent or list under abstentions; do not fill from support, sample, stale, or other-person documents",
+          "oldFactKey": "contact.phone"
+        }
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "source": {
+    "corpusId": "packet-medium",
+    "profile": "examples/eval/users/maya-chen-newhire/profile.yaml",
+    "userId": "maya-chen-newhire"
+  },
+  "taskId": "maya-packet-hard-required-v4-formfill"
+}

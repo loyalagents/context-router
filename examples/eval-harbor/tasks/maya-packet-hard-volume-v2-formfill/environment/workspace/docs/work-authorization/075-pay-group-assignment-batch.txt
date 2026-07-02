@@ -1,0 +1,22 @@
+Source system: LedgerPay Ops
+Generated timestamp: 2026-06-17T08:45:00-07:00
+Status: active
+Document code: PLC-OPS-075
+Subject: pay group assignment batch
+Field IDs: i9.workflow_state, upload.batch, coordinator.queue, branch.history
+
+Pay group assignment uses company, worker type, start date, and department to route the employee to a payroll calendar.
+The batch records pay group code, preview date, and owner queue.
+Pay group data helps schedule payroll but does not provide tax or banking values.
+
+Operational note: WorkRight coordination indexed pay group assignment batch with branch state, task family, and vendor routing metadata.
+
+Work authorization provenance
+Work authorization trace: PLC-WORKAUTH-075 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+Coordinator checkpoint: WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+Retention tag: employment eligibility workflow artifact, stored with branch and queue metadata.
+
+Operational detail rows
+Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-075 was indexed from Pay Group Assignment Batch during the 2026-06-13 operations window.
+Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for pay group assignment batch kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for pay group assignment batch audit reconstruction while preserving original row wording.

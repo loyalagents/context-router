@@ -1,0 +1,36 @@
+source_system: "VendorAccess Contractor Registry"
+export_id: "VAR-collision-review-2026-06-26-101"
+exported_at: "2026-06-26T08:12:33-07:00"
+record_status: "active_vendor_record"
+review_status: "identity_collision_not_target_employee"
+
+collision_context:
+  requested_employee_worker_id: "PLC-20418"
+  requested_employee_name: "Maya Lin Chen"
+  registry_record_owner_worker_id: "VND-99172"
+  registry_record_owner_name: "Maya Chen"
+  resolution_note: >
+    This vendor registry row has a near-identical display name but is not the
+    Pacific Ledger Cooperative employee record for PLC-20418. Do not merge this
+    row into Maya Lin Chen's employee onboarding profile.
+
+vendor_profile:
+  legal_name: "Maya Chen"
+  worker_type: "external_contractor"
+  company: "North Pier Staffing"
+  personal_email: "mchen.vendor@example.test"
+  home_address:
+    line1: "744 Pine Street"
+    line2: "Unit 9"
+    city: "San Jose"
+    state: "CA"
+    postal_code: "95112"
+  tax_profile:
+    federal_status: "head of household"
+  bank_profile:
+    institution_name: "Pioneer Valley Bank"
+    account_holder: "Maya Chen"
+    account_type: "savings"
+  identity_fragment:
+    ssn_last4: "0418"
+

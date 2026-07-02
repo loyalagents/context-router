@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "smoke-staged-memory-v1-corpus",
+  "taskId": "smoke-staged-memory-v1",
+  "stages": [
+    {
+      "stageId": "01-profile-memory-update",
+      "stageIndex": 1,
+      "kind": "memory-update",
+      "instruction": "This is stage 1 of 4. Read `current_stage/documents.json` and `current_stage/docs/profile.json`. Retain the user's legal name. Do not write `outputs/prediction.json` yet.",
+      "files": [
+        {
+          "path": "documents.json",
+          "json": {
+            "corpusId": "smoke-staged-memory-v1-corpus",
+            "documentsRoot": "docs",
+            "documents": [
+              {
+                "path": "profile.json",
+                "kind": "profile-note",
+                "timestamp": "2026-01-02T09:00:00Z"
+              }
+            ]
+          }
+        },
+        {
+          "path": "docs/profile.json",
+          "json": {
+            "user": "Maya Chen",
+            "legalName": "Maya Chen"
+          }
+        }
+      ]
+    },
+    {
+      "stageId": "02-address-memory-update",
+      "stageIndex": 2,
+      "kind": "memory-update",
+      "instruction": "This is stage 2 of 4. Read `current_stage/documents.json` and `current_stage/docs/address.json`. Retain the current mailing city. Do not write `outputs/prediction.json` yet.",
+      "files": [
+        {
+          "path": "documents.json",
+          "json": {
+            "corpusId": "smoke-staged-memory-v1-corpus",
+            "documentsRoot": "docs",
+            "documents": [
+              {
+                "path": "address.json",
+                "kind": "address-note",
+                "timestamp": "2026-01-03T10:00:00Z"
+              }
+            ]
+          }
+        },
+        {
+          "path": "docs/address.json",
+          "json": {
+            "mailingAddress": {
+              "street": "240 King Street, Unit 12B",
+              "city": "San Francisco",
+              "state": "CA",
+              "postalCode": "94107"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stageId": "03-payroll-memory-update",
+      "stageIndex": 3,
+      "kind": "memory-update",
+      "instruction": "This is stage 3 of 4. Read `current_stage/documents.json` and `current_stage/docs/payroll.json`. Retain the payroll bank account last four digits. Do not write `outputs/prediction.json` yet.",
+      "files": [
+        {
+          "path": "documents.json",
+          "json": {
+            "corpusId": "smoke-staged-memory-v1-corpus",
+            "documentsRoot": "docs",
+            "documents": [
+              {
+                "path": "payroll.json",
+                "kind": "payroll-note",
+                "timestamp": "2026-01-04T11:00:00Z"
+              }
+            ]
+          }
+        },
+        {
+          "path": "docs/payroll.json",
+          "json": {
+            "directDeposit": {
+              "bankName": "First Republic",
+              "accountLast4": "4821",
+              "accountType": "checking"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "stageId": "04-downstream-task",
+      "stageIndex": 4,
+      "kind": "downstream-task",
+      "instruction": "This is stage 4 of 4. No source documents are revealed. Read `current_stage/dynamicmem-task.json` and answer from facts retained in earlier stages. Write `outputs/prediction.json`.",
+      "files": [
+        {
+          "path": "forms/smoke-memory.schema.json",
+          "json": {
+            "schemaVersion": 1,
+            "formId": "smoke-memory",
+            "outputShape": {
+              "taskId": "smoke-staged-memory-v1",
+              "formId": "smoke-memory",
+              "fieldsPath": "answers"
+            },
+            "requiredFields": [
+              {
+                "key": "legalName",
+                "label": "Legal name"
+              },
+              {
+                "key": "mailingCity",
+                "label": "Mailing city"
+              },
+              {
+                "key": "payrollBankLast4",
+                "label": "Payroll bank account last four"
+              }
+            ],
+            "unsupportedFields": []
+          }
+        },
+        {
+          "path": "dynamicmem-task.json",
+          "json": {
+            "taskId": "smoke-staged-memory-v1",
+            "outputPath": "outputs/prediction.json",
+            "requiredShape": {
+              "taskId": "smoke-staged-memory-v1",
+              "answers": {
+                "legalName": "string",
+                "mailingCity": "string",
+                "payrollBankLast4": "string"
+              }
+            },
+            "questions": [
+              "What is the user's legal name?",
+              "What is the user's current mailing city?",
+              "What are the last four digits of the payroll bank account?"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+Source System: LedgerPay Support Clipboard
+Export ID: CLIP-20260626-103
+Exported By: payroll.support.trainee
+Status: Not an authoritative profile export
+
+The following rows were copied from a support triage screen while investigating
+several new-hire deposit questions. Only rows whose worker_id exactly matches
+the employee's active HRIS worker id should be used. The Maya Lin Chen packet is
+for worker_id PLC-20418.
+
+row,worker_id,display_name,deposit_owner,bank_name,account_type,w4_status,note
+1,PLC-20418,Maya Lin Chen,,,"","",current worker under review; see official LedgerPay exports
+2,PLC-20481,Maya Chin,Maya Chin,Harbor Teachers Credit Union,checking,married filing jointly,neighbor row from same onboarding cohort
+3,VND-99172,Maya Chen,Maya Chen,Pioneer Valley Bank,savings,head of household,vendor contractor row from identity collision queue
+4,PLC-21408,Mina Cheng,Mina Cheng,North Coast Bank,checking,single or married filing separately,unrelated employee
+
+Support note:
+This clipboard is useful only as a pointer to which official record to inspect.
+It should not be treated as a source of truth for Maya Lin Chen.
+

@@ -1,0 +1,22 @@
+Source system: BenefitsBridge
+Generated timestamp: 2026-06-26T08:37:00-07:00
+Status: active
+Document code: PLC-OPS-067
+Subject: benefits address handoff
+Field IDs: eligibility.status_code, document_family.route, correction.reason, intake.owner
+
+Benefits enrollment copies the employee mailing address after the HRIS profile save event.
+The bridge stores original text, normalized line fields, and employee id.
+If benefits receives a profile correction after enrollment opens, the prior row remains visible in the bridge audit.
+
+Operational note: WorkRight coordination indexed benefits address handoff with branch state, task family, and vendor routing metadata.
+
+Work authorization provenance
+Work authorization trace: PLC-WORKAUTH-067 retained intake branch, status code, queue owner, and vendor workflow timestamp.
+Coordinator checkpoint: WorkRight reviewers compare branch state, submitted packet id, and document upload status before advancing a Section 1 task.
+Retention tag: employment eligibility workflow artifact, stored with branch and queue metadata.
+
+Operational detail rows
+Work authorization exports track intake branch, status code, vendor queue, document upload state, and reviewer assignment. Row marker PLC-WORKAUTH-067 was indexed from Benefits Address Handoff during the 2026-06-23 operations window.
+Coordinator review compares branch state, Section 1 task id, source upload timestamp, and vendor webhook status. Review notes for benefits address handoff kept work authorization queue history, timestamp lineage, and handoff context with the retained record.
+The WorkRight queue stores eligibility label, branch history, correction reason code, and document-family routing beside each row. The retained work authorization artifact keeps source metadata for benefits address handoff audit reconstruction while preserving original row wording.

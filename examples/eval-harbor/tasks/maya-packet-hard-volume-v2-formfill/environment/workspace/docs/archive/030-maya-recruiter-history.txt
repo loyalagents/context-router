@@ -1,0 +1,21 @@
+Source system: HarborHire Recruiting Archive
+Exported timestamp: 2026-05-19T09:20:00-07:00
+Status: former recruiting workspace
+Worker id: PLC-CAND-7719
+Candidate: Maya Lin Chen
+Candidate email: maya.chen@oldmail.test
+Candidate address: 910 Juniper Avenue Apt 12, Berkeley, CA 94704
+Candidate title in req: Operations Coordinator
+Planned start date: 2026-06-15
+Field IDs: candidate.name, candidate.email, candidate.address, req.title, req.start_date
+Recruiting note: the requisition was closed after the applicant moved into the new-hire workspace. The archive export keeps the original candidate fields for audit review.
+
+Archive provenance
+Archive ledger: PLC-ARCHIVE-030 stayed in the historical stream with its original close reason and source timestamp.
+Retrieval note: archive reviewers compare status, worker id, and supersession chain before attaching a row to an active packet work item.
+Retention tag: prior-state audit row, preserved under the new-hire correction retention schedule.
+
+Operational detail rows
+Archive index cross-reference links the row to the original source transaction, the close reason, and the later correction event kept in the change ledger. Row marker PLC-ARCHIVE-030 was indexed from Maya recruiter History during the 2026-06-22 operations window.
+Historical review keeps the previous value text, the supersession timestamp, and the source queue that owned the transition. Review notes for maya recruiter history kept archive ledger queue history, timestamp lineage, and handoff context with the retained record.
+Audit staff search these rows by worker id, archive family, and date range when reconstructing a correction sequence. The retained archive ledger artifact keeps source metadata for maya recruiter history audit reconstruction while preserving original row wording.

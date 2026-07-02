@@ -1,0 +1,91 @@
+{
+  "batchId": "02-profile-corrections",
+  "corpusId": "packet-hard-over-time-v1",
+  "documents": [
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-009",
+      "path": "employer-context/009-offer-email.txt",
+      "title": "Offer Email Export"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-010",
+      "path": "employer-context/010-company-directory-profile.yaml",
+      "title": "Company Directory Profile"
+    },
+    {
+      "category": "employer-context",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-021",
+      "path": "employer-context/021-benefits-enrollment-profile.yaml",
+      "title": "Benefits Enrollment Profile"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-006",
+      "path": "hr-onboarding/006-hr-onboarding-profile-export.yaml",
+      "title": "HR Onboarding Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-007",
+      "path": "hr-onboarding/007-employee-self-service-profile.json",
+      "title": "Employee Self-Service Profile Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-008",
+      "path": "hr-onboarding/008-onboarding-assignment-export.yaml",
+      "title": "Onboarding Assignment Export"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-023",
+      "path": "hr-onboarding/023-onboarding-support-ticket.txt",
+      "title": "Onboarding Support Ticket"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-024",
+      "path": "hr-onboarding/024-employee-profile-audit-log.txt",
+      "title": "Employee Profile Audit Log"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-032",
+      "path": "hr-onboarding/032-harborhire-profile-change-history.json",
+      "title": "HarborHire Profile Change History"
+    },
+    {
+      "category": "hr-onboarding",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-035",
+      "path": "hr-onboarding/035-hr-support-correction-thread.txt",
+      "title": "HR Support Correction Thread"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-033",
+      "path": "partial-conflicting/033-recruiting-offer-draft-export.txt",
+      "title": "Recruiting Offer Draft Export"
+    },
+    {
+      "category": "partial-conflicting",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-034",
+      "path": "partial-conflicting/034-ledgerpay-w4-draft-autosave.yaml",
+      "title": "LedgerPay W-4 Draft Autosave"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-004",
+      "path": "work-authorization/004-i9-section-one-draft-export.yaml",
+      "title": "I-9 Section One Draft Export"
+    },
+    {
+      "category": "work-authorization",
+      "id": "maya-chen-newhire-packet-hard-over-time-v1-005",
+      "path": "work-authorization/005-work-authorization-intake-field-export.txt",
+      "title": "Work Authorization Intake Field Export"
+    }
+  ],
+  "documentsRoot": "docs"
+}

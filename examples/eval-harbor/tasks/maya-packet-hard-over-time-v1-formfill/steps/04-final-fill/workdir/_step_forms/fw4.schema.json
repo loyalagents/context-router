@@ -1,0 +1,77 @@
+{
+  "formId": "fw4",
+  "outputPath": "outputs/forms/fw4.json",
+  "outputShape": {
+    "abstentions": "object keyed by optional field key when evidence is missing",
+    "fields": "object keyed by required field key",
+    "formId": "fw4",
+    "notes": "array",
+    "schemaVersion": "number",
+    "taskId": "maya-packet-hard-over-time-v1-formfill"
+  },
+  "requiredFields": [
+    {
+      "description": "Employee first name",
+      "key": "step1.firstName",
+      "type": "string"
+    },
+    {
+      "description": "Employee last name",
+      "key": "step1.lastName",
+      "type": "string"
+    },
+    {
+      "description": "Employee address line including unit",
+      "key": "step1.address.streetLine",
+      "type": "string"
+    },
+    {
+      "description": "Employee city, state, and ZIP line",
+      "key": "step1.address.cityStateZip",
+      "type": "string"
+    },
+    {
+      "description": "Employee SSN as nine digits",
+      "key": "step1.ssnDigits",
+      "type": "string"
+    },
+    {
+      "description": "True when filing status is single or married filing separately",
+      "key": "step1.filingStatus.singleOrMarriedFilingSeparately",
+      "type": "boolean"
+    }
+  ],
+  "schemaVersion": 1,
+  "optionalFields": [
+    {
+      "description": "Step 2 checkbox, if current Maya W-4 evidence supports it",
+      "key": "step2.multipleJobsOrSpouseWorks",
+      "type": "boolean"
+    },
+    {
+      "description": "Step 3 qualifying children amount, if current Maya W-4 evidence supports it",
+      "key": "step3.qualifyingChildrenAmount",
+      "type": "string"
+    },
+    {
+      "description": "Step 3 other dependents amount, if current Maya W-4 evidence supports it",
+      "key": "step3.otherDependentsAmount",
+      "type": "string"
+    },
+    {
+      "description": "Step 4(a) other income, if current Maya W-4 evidence supports it",
+      "key": "step4a.otherIncome",
+      "type": "string"
+    },
+    {
+      "description": "Step 4(b) deductions, if current Maya W-4 evidence supports it",
+      "key": "step4b.deductions",
+      "type": "string"
+    },
+    {
+      "description": "Step 4(c) extra withholding, if current Maya W-4 evidence supports it",
+      "key": "step4c.extraWithholding",
+      "type": "string"
+    }
+  ]
+}
