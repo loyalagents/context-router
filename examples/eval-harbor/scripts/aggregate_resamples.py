@@ -57,6 +57,7 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "outputTokens": row.get("outputTokens"),
         "totalTokens": row.get("totalTokens"),
         "costUsd": row.get("costUsd"),
+        "runtimeSeconds": row.get("runtimeSeconds"),
         "agentTimeoutSec": row.get("agentTimeoutSec"),
         "verifierTimeoutSec": row.get("verifierTimeoutSec"),
         "buildTimeoutSec": row.get("buildTimeoutSec"),
@@ -84,6 +85,7 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
     output_tokens = numeric_values(samples, "outputTokens")
     total_tokens = numeric_values(samples, "totalTokens")
     costs = numeric_values(samples, "costUsd")
+    runtimes = numeric_values(samples, "runtimeSeconds")
     success_count = sum(1 for sample in samples if sample.get("reward") == 1.0)
     parse_failures = sum(1 for sample in samples if sample.get("parseSuccess") is not True)
     metadata_failures = sum(1 for sample in samples if sample.get("metadataSuccess") is not True)
@@ -162,6 +164,7 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "totalTokens": stats(total_tokens),
         "costUsd": stats(costs),
         "costTotal": sum(costs) if costs else None,
+        "runtimeSeconds": stats(runtimes),
         "passAtSamples": success_count > 0,
         "perfectSamples": success_count,
         "parseFailures": parse_failures,
@@ -221,8 +224,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | LLM State Mean | LLM Service Mean | Input Tok Mean | Output Tok Mean | Total Tok Mean | Cost Mean | Cost Total | Perfect Samples | Parse Fail | Metadata Fail | Missing Metric Fail | Artifact Fail | Tool Fail | Policy Fail |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | LLM State Mean | LLM Service Mean | Input Tok Mean | Output Tok Mean | Total Tok Mean | Cost Mean | Cost Total | Runtime Mean (s) | Perfect Samples | Parse Fail | Metadata Fail | Missing Metric Fail | Artifact Fail | Tool Fail | Policy Fail |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -235,8 +238,9 @@ def markdown_report(payload: dict[str, Any]) -> str:
             output_tokens = aggregate["outputTokens"]
             total_tokens = aggregate["totalTokens"]
             cost = aggregate["costUsd"]
+            runtime = aggregate["runtimeSeconds"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {input_tokens} | {output_tokens} | {total_tokens} | {cost_mean} | {cost_total} | {perfect} | {parse_fail} | {metadata_fail} | {missing_metric_fail} | {validation_fail} | {tool_fail} | {policy_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {input_tokens} | {output_tokens} | {total_tokens} | {cost_mean} | {cost_total} | {runtime_mean} | {perfect} | {parse_fail} | {metadata_fail} | {missing_metric_fail} | {validation_fail} | {tool_fail} | {policy_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
@@ -255,6 +259,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
                     total_tokens=fmt_float(total_tokens["mean"]),
                     cost_mean=fmt_cost(cost["mean"]),
                     cost_total=fmt_cost(aggregate["costTotal"]),
+                    runtime_mean=fmt_float(runtime["mean"]),
                     perfect=aggregate["perfectSamples"],
                     parse_fail=aggregate["parseFailures"],
                     metadata_fail=aggregate["metadataFailures"],

@@ -169,6 +169,8 @@ def extract_usage_metrics(result: dict[str, Any], score: dict[str, Any]) -> dict
             "inputTokens",
             "prompt_tokens",
             "promptTokens",
+            "n_input_tokens",
+            "nInputTokens",
             "total_input_tokens",
             "totalInputTokens",
         }
@@ -179,6 +181,8 @@ def extract_usage_metrics(result: dict[str, Any], score: dict[str, Any]) -> dict
             "outputTokens",
             "completion_tokens",
             "completionTokens",
+            "n_output_tokens",
+            "nOutputTokens",
             "total_output_tokens",
             "totalOutputTokens",
         }
@@ -189,6 +193,8 @@ def extract_usage_metrics(result: dict[str, Any], score: dict[str, Any]) -> dict
             "totalTokens",
             "tokens_total",
             "tokensTotal",
+            "n_tokens",
+            "nTokens",
         }
     )
     if total_tokens is None and input_tokens is not None and output_tokens is not None:
@@ -211,6 +217,16 @@ def extract_usage_metrics(result: dict[str, Any], score: dict[str, Any]) -> dict
         "totalTokens": total_tokens,
         "costUsd": cost_usd,
     }
+
+
+def load_job_result_for_trial(trial_dir: Path) -> dict[str, Any]:
+    job_result_path = trial_dir.parent / "result.json"
+    if not job_result_path.exists():
+        return {}
+    try:
+        return load_json(job_result_path)
+    except ValueError:
+        return {}
 
 
 def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
@@ -618,6 +634,7 @@ def artifact_root_for_score(score_path: Path) -> Path:
 def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     trial_dir = find_trial_dir(path)
     result = load_json(trial_dir / "result.json")
+    job_result = load_job_result_for_trial(trial_dir)
     config = load_json(trial_dir / "config.json")
 
     validation_errors: list[str] = []
@@ -711,7 +728,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     overfill_fields = score.get("overfillFields", [])
     metadata_errors = score.get("metadataErrors")
     metadata_count = count_list(metadata_errors) if isinstance(metadata_errors, list) else None
-    usage_metrics = extract_usage_metrics(result, score)
+    usage_metrics = extract_usage_metrics(job_result or result, score)
 
     row = {
         "mode": mode,
