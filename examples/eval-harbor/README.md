@@ -168,6 +168,23 @@ with missing `inputTokens`, `outputTokens`, `totalTokens`, `costUsd`,
 `llmJudge.personalizedService.meanScore` is incomplete and should be rerun rather
 than logged as a valid datapoint.
 
+Split token usage by staged phase:
+
+```bash
+python3 examples/eval-harbor/scripts/report_stage_token_usage.py \
+  /tmp/cr-harbor/runs \
+  --json-out /tmp/cr-harbor/stage-token-usage.json \
+  --md-out /tmp/cr-harbor/stage-token-usage.md \
+  --detail
+```
+
+This report attributes each Codex model-call step to the visible Harbor stage:
+`memory-update` for `U`, `downstream-task` for `T`, and `overhead` for stage
+reveal or post-stage bookkeeping. Stage token counts are exact sums from
+`agent/trajectory.json`. Per-stage cost is named `estimatedCostUsd` because
+Codex currently exposes cost as a whole-run total, so the stage report allocates
+it proportionally by total tokens.
+
 DynamicMem metric meanings:
 
 | Metric | Meaning |
@@ -216,6 +233,7 @@ Run validation checks include:
 | `scripts/trajectory_framework.py` | Stage kinds and schedule parsing |
 | `scripts/run_harbor_resamples.py` | Preflight, Harbor run, post-run validation |
 | `scripts/aggregate_resamples.py` | Multi-sample report aggregation |
+| `scripts/report_stage_token_usage.py` | Token distribution by `U`/`T` stage |
 | `scripts/validate_eval_preflight.py` | Task, job, and run policy checks |
 | `modes/` | Per-arm agent instructions |
 | `arms/dynamicmem-default.json` | Default arm definitions |
