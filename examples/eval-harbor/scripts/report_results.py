@@ -53,7 +53,7 @@ def find_trial_dir(path: Path) -> Path:
         and (child / "result.json").exists()
     )
     if len(candidates) == 1:
-        return candidates[0]
+        return find_trial_dir(candidates[0])
     if len(candidates) > 1:
         raise ValueError(
             f"expected exactly one Harbor trial directory under {path}, "
@@ -62,6 +62,22 @@ def find_trial_dir(path: Path) -> Path:
 
     if (path / "config.json").exists() and (path / "result.json").exists():
         return path
+
+    nested = []
+    for child in sorted(path.iterdir()):
+        if not child.is_dir():
+            continue
+        try:
+            nested.append(find_trial_dir(child))
+        except ValueError:
+            continue
+    if len(nested) == 1:
+        return nested[0]
+    if len(nested) > 1:
+        raise ValueError(
+            f"expected exactly one nested Harbor trial directory under {path}, "
+            f"found {len(nested)}"
+        )
 
     raise ValueError(f"no Harbor trial directory found under {path}")
 
