@@ -1,282 +1,119 @@
-# Eval Harbor Framework
+# Staged Memory Framework
 
-This folder documents the general evaluation framework under
-`examples/eval-harbor`. The goal is to keep the runner, task contract, memory
-arms, and scoring boundary explicit so new datasets can be added without
-rewriting the harness.
+This framework keeps the eval runner, task data, model, verifier, and reporting
+fixed while swapping only the memory substrate.
 
-## What This Framework Measures
+## Research Contract
 
-The framework asks:
+The question is:
 
-> Given the same agent, documents/events, sandbox, downstream task, output
-> contract, and scorer, how does the memory substrate change task performance?
+> Given the same stream of documents or events, which memory substrate lets an
+> agent retain and use the right information over time?
 
-The memory substrate is the experimental variable. The current arms are:
+Current arms:
 
-| Arm | Memory substrate | Allowed durable memory |
+| Arm | Memory substrate |
+| --- | --- |
+| `context-only` | Continuous agent conversation context only |
+| `markdown` | A single `/app/memory.md` file |
+| `cr-mcp` | ContextRouter memory through an MCP sidecar |
+
+The framework should not include product-specific backend form-fill or
+task-specific retrieval services. Those belong to product E2E evals.
+
+## Stage Model
+
+The shared stage vocabulary lives in `scripts/trajectory_framework.py`.
+
+| Token | Stage kind | Agent action |
 | --- | --- | --- |
-| `context-only` | Agent conversation context only | No external memory file or MCP memory |
-| `markdown` | Naive external memory | `/app/memory.md` |
-| `cr-mcp` | ContextRouter memory | Memory-only CR MCP sidecar |
+| `U` | `memory-update` | Read newly revealed docs/events and update memory |
+| `T` | `downstream-task` | Answer from retained memory; no raw docs are revealed |
+| `UA` | `update-answer` | Read new docs/events, update memory, and answer now |
 
-The task data, staged reveal sequence, output path, verifier, model, and
-reasoning effort should stay fixed across arms.
+Supported shapes include `U -> T`, `U -> T -> U -> T`,
+`U -> U -> T`, `U -> U -> U -> U -> T`, and native DynamicMem
+`UA -> UA -> ...` checkpoint trajectories.
 
-## Architecture
-
-![Harbor staged-memory workflow](workflow.svg)
-
-PDF export: [`workflow.pdf`](workflow.pdf)
+## Runtime Flow
 
 ```mermaid
 flowchart LR
-  Dataset["Dataset adapter<br/>DynamicMem now, other datasets later"]
-  Task["Harbor task pack<br/>instruction.md<br/>task.toml<br/>stages/payload.json"]
-  Stage["stage-server sidecar<br/>reveals one stage at a time"]
-  Agent["Agent container<br/>context-only / markdown / cr-mcp"]
-  Memory["Memory substrate<br/>context / memory.md / CR MCP"]
-  Output["outputs/prediction.json"]
-  Verifier["verifier<br/>deterministic smoke<br/>LLM judge when configured"]
-  Report["score-summary.json<br/>reward.json<br/>artifacts"]
+  subgraph Harbor["Harbor job"]
+    Agent["Continuous agent session"]
+    Stage["/app/next_stage"]
+    Memory["Allowed memory substrate"]
+    Output["outputs/prediction.json"]
+  end
 
-  Dataset --> Task
-  Task --> Stage
-  Stage --> Agent
-  Agent <--> Memory
+  Stage -->|"U: new docs/events"| Agent
+  Agent -->|"update"| Memory
+  Stage -->|"T: downstream task only"| Agent
+  Memory -->|"retrieve/use"| Agent
   Agent --> Output
-  Output --> Verifier
-  Verifier --> Report
 ```
 
-The shared stage vocabulary lives in
-`examples/eval-harbor/scripts/trajectory_framework.py`. Dataset adapters should
-emit this contract, then keep dataset-specific parsing and scoring in their own
-builder/verifier.
+The stage server reveals one stage at a time through `/app/next_stage`.
+`U` and `UA` stages expose only the new delta since the previous selected
+checkpoint. `T` stages expose the downstream task but not the source docs.
 
-## Turn Types
+The whole trajectory runs in one continuous agent session. If the arm is
+`context-only`, the only retained state is the live conversation. If the arm is
+`markdown` or `cr-mcp`, the agent may also use that arm's allowed external
+memory.
 
-The framework uses three stage kinds:
+## Data Protection Invariants
 
-| Stage kind | Shorthand | Agent-visible input | Expected output |
-| --- | --- | --- | --- |
-| `memory-update` | `U` | New documents/events only | Update the allowed memory substrate; do not write a prediction |
-| `downstream-task` | `T` | A downstream task only | Write `outputs/prediction.json` from retained memory |
-| `update-answer` | `UA` | New documents/events plus the current downstream task | Update memory and write or update a prediction for that checkpoint |
+Every valid task must satisfy:
 
-`U` and `UA` are both useful. `UA` preserves native checkpoint benchmarks where
-each checkpoint asks questions immediately. `U -> ... -> T` is stricter for
-background-memory evaluation because the downstream task is hidden until later.
+- hidden truth stays under `tests/expected`;
+- staged payloads and raw source metadata are not agent-readable;
+- downstream `T` stages do not expose docs or `documents.json`;
+- `web_search` is disabled unless an experiment explicitly changes that;
+- mode policies are enforced by both prompt instructions and validators;
+- post-run validation rejects hidden path reads and disallowed durable writes.
 
-## Current DynamicMem Adapter
+These checks are part of the experimental contract, not optional manual review.
 
-The current dataset-backed adapter migrates native DynamicMem user trajectories
-into Harbor staged tasks.
+## Dataset Adapter Contract
 
-DynamicMem provides:
+Dataset adapters translate external benchmarks into the shared staged contract.
+They should emit:
 
-- chronological app logs for one user;
-- checkpoint task packs;
-- State Completion questions, which test retained personal state;
-- Personalized Service tasks, which test downstream use of that state.
+- a Harbor task directory;
+- staged payload with ordered `U`, `T`, and/or `UA` stages;
+- hidden expected data for the verifier;
+- one job per arm;
+- a suite manifest with source metadata, selected users/checkpoints, model,
+  reasoning effort, web-search policy, timeouts, arms, and sample count.
 
-The adapter preserves DynamicMem semantics and only replaces the runner:
-
-- raw app logs become staged document/event batches;
-- sanitized task packs become agent-visible downstream tasks;
-- hidden expected state, reference answers, scoring points, and gold evidence
-  stay under `tests/expected/`;
-- the agent writes the upstream-compatible `outputs/prediction.json`.
-
-## Supported Workflows
-
-### Native Checkpoint Trajectory
-
-```text
-UA(cp0) -> UA(cp1) -> UA(cp2)
-```
-
-Every stage reveals new logs and the current checkpoint's DynamicMem task. Every
-checkpoint is scored. Use this when matching the original DynamicMem checkpoint
-style.
-
-Generated task example:
-
-```text
-examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-trajectory-v1
-```
-
-### Hidden-Final Background Memory
-
-```text
-U(cp0 logs) -> U(cp1 delta logs) -> U(cp2 delta logs) -> T(cp2 task)
-```
-
-The first stages reveal only logs. The final stage reveals the downstream task
-with no raw docs. Only the final checkpoint is scored. Use this to test whether
-the memory substrate preserved useful information before knowing the final task.
-
-Generated task example:
-
-```text
-examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1
-```
-
-## Running The Smoke Task
-
-Use the tiny staged smoke to verify live Harbor/Codex plumbing without running
-the larger DynamicMem corpus:
-
-```bash
-pnpm eval-harbor:check
-pnpm eval-harbor:bootstrap
-pnpm eval-harbor:smoke
-```
-
-Expected behavior:
-
-- Harbor starts the `stage-server` sidecar.
-- The live Codex agent runs `U -> U -> U -> T`.
-- The verifier reports `reward = 1.0`, `correctFields = 3`, `exceptions = 0`.
-
-The bootstrap command installs the pinned Harbor runner into
-`${HARBOR_VENV:-/tmp/cr-harbor-cli-venv}`. The smoke wrapper uses
-`${HARBOR_BIN:-/tmp/cr-harbor-cli-venv/bin/harbor}` and fails before starting
-Docker if Harbor is missing. Docker must be running. Codex jobs pass
-`--agent-env CODEX_FORCE_AUTH_JSON=true`, so local Codex auth must be available.
-
-Run the three comparable DynamicMem arms only when you want an actual benchmark
-smoke, not just runner validation:
-
-```bash
-pnpm eval-harbor:dynamicmem
-```
-
-The default command runs all three arms sequentially and fresh. For long local
-runs, use:
-
-```bash
-pnpm eval-harbor:dynamicmem:resume      # skip arms with an existing result.json
-pnpm eval-harbor:dynamicmem:fast        # skip existing arms, run remaining arms in parallel
-pnpm eval-harbor:dynamicmem:fresh-fast  # rerun all selected arms in parallel
-```
-
-The underlying wrapper also supports `HARBOR_MODES=markdown,cr-mcp`,
-`HARBOR_SKIP_EXISTING=1`, `HARBOR_PARALLEL=1`, and `HARBOR_FORCE=1`.
-Skip-existing only checks for Harbor's completed `result.json`; it does not
-judge whether that result has a good score.
-
-For official DynamicMem semantic scoring, set the variables from
-`examples/eval-harbor/judge.env.example` first. Without a judge API key, the
-verifier may use deterministic fallback scoring; fallback rewards are useful
-for plumbing checks but are not the official semantic score.
-
-A container-level smoke can be used when the Harbor CLI is not installed. It
-should verify that:
-
-- `/app/next_stage` reveals `U -> U -> U -> T -> done`;
-- `memory-update` stages do not expose `dynamicmem-task.json`;
-- the final `downstream-task` stage exposes no raw docs;
-- the verifier can score an oracle prediction with reward `1.0`.
-
-## Creating New DynamicMem Tasks
-
-Generate one task from a local DynamicMem user directory:
-
-```bash
-python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
-  --source-dir /path/to/DynamicMem/001_user_001 \
-  --checkpoint-indices 0-2 \
-  --stage-pattern update-only-then-final \
-  --model gpt-5.4-mini \
-  --reasoning-effort high \
-  --agent-timeout-sec 86400 \
-  --verifier-timeout-sec 86400 \
-  --build-timeout-sec 600
-```
-
-Generate a suite with the generic dataset-suite CLI:
+The generic entrypoint is:
 
 ```bash
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
-  --checkpoint-indices 0-2 \
-  --stage-pattern update-only-then-final \
-  --max-users 5 \
-  --max-tasks 5 \
-  --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
-  --model gpt-5.4-mini \
-  --reasoning-effort high \
-  --agent-timeout-sec 86400 \
-  --verifier-timeout-sec 86400 \
-  --build-timeout-sec 600 \
-  --manifest examples/eval-harbor/suites/dynamicmem-memory-final-smoke.json
+  --source-users user008 \
+  --checkpoint-indices 0-1 \
+  --stage-schedule U,U,T
 ```
 
-The generic CLI resolves source data from `--source-root`, dataset-specific env
-vars such as `DYNAMICMEM_SOURCE_ROOT`, repo-local external dataset checkouts,
-the eval cache, or automatic dataset download. It also runs generated task/job
-preflight by default, so one command should produce Harbor-ready artifacts.
+DynamicMem is the first adapter. Future datasets should plug into the same
+entrypoint instead of adding a new runner.
 
-Timeouts are part of the experiment contract, not hidden local defaults. The
-DynamicMem builders write these values into generated `task.toml` files, and
-the suite builder records them in the suite manifest under `timeouts`.
+## Scoring Contract
 
-Use `--stage-pattern update-answer-every-checkpoint` for `UA -> UA -> ...`
-tasks.
+The verifier scores only agent outputs, not hidden memory internals. For
+DynamicMem, LLM-as-judge reward is the primary score when judge credentials are
+provided; deterministic state/service diagnostics are retained for debugging.
 
-Use `--stage-schedule` when a task needs an explicit interleaved trajectory.
-`U` and `UA` each consume one selected checkpoint; `T` consumes no new logs and
-asks the downstream task for the most recently updated checkpoint. For example,
-this creates `U(checkpoint 0) -> U(checkpoint 1) -> T(checkpoint 1) ->
-U(checkpoint 2) -> T(checkpoint 2)`:
+Reports should make every experimental setting explicit:
 
-```bash
-python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
-  --source-dir /path/to/DynamicMem/001_user_001 \
-  --checkpoint-indices 0-2 \
-  --stage-schedule U,U,T,U,T \
-  --model gpt-5.4-mini \
-  --reasoning-effort high \
-  --agent-timeout-sec 86400 \
-  --verifier-timeout-sec 86400 \
-  --build-timeout-sec 600
-```
+- dataset, task id, source user, checkpoint range, and stage schedule;
+- arm, model, reasoning effort, web-search policy, and timeout settings;
+- sample count and concurrency;
+- judge model and judge mode;
+- reward/accuracy statistics;
+- validation, tool-policy, parse, and metadata failures.
 
-The builder rejects schedules that start with `T`, score the same checkpoint
-twice, leave the final updated checkpoint unscored, or have a different number
-of `U`/`UA` tokens than selected checkpoints.
-
-## Adding A New Dataset
-
-To add a new dataset, create a dataset adapter instead of changing the runner.
-The adapter should:
-
-1. Load the source dataset and select a user/session/task slice.
-2. Emit ordered stages using the shared stage kinds.
-3. Keep hidden truth under `tests/expected/`.
-4. Write a verifier that reads `outputs/prediction.json`.
-5. Reuse the same arm config pattern for `context-only`, `markdown`, and
-   `cr-mcp`.
-6. Add a soundness report that explains what is visible, what is hidden, what is
-   scored, and why the task is valid.
-
-Generated suites run task/job preflight automatically. For code changes to an
-adapter, also run:
-
-```bash
-python3 -m py_compile \
-  examples/eval-harbor/scripts/dataset_sources.py \
-  examples/eval-harbor/scripts/build_dataset_suite.py \
-  examples/eval-harbor/scripts/trajectory_framework.py \
-  examples/eval-harbor/scripts/build_dynamicmem_task.py \
-  examples/eval-harbor/scripts/build_dynamicmem_suite.py \
-  examples/eval-harbor/scripts/validate_eval_preflight.py \
-  examples/eval-harbor/scripts/validate_task_soundness.py
-
-git diff --check
-```
-
-The benchmark is only useful if the task contract is sound. Do not merge tasks
-that leak hidden answers, expose downstream tasks during `U` stages, hide
-required evidence, or score fields that cannot be supported by the visible data.
+The benchmark is only useful if the task contract is sound. Treat failed
+preflight or post-run validation as a failed experiment, not a noisy datapoint.
