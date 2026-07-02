@@ -3,7 +3,9 @@
     "agent": "codex",
     "modelName": "gpt-5.4-mini",
     "reasoningEffort": "high",
-    "reasoningEffortConfigKey": "model_reasoning_effort"
+    "reasoningEffortConfigKey": "model_reasoning_effort",
+    "codexWebSearch": "disabled",
+    "codexWebSearchConfigKey": "web_search"
   },
   "arms": [
     {
@@ -11,21 +13,24 @@
       "instructionPath": "examples/eval-harbor/modes/context-only.md",
       "memoryMode": "context-only",
       "mode": "context-only",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "codexWebSearch": "disabled"
     },
     {
       "compose": "staged",
       "instructionPath": "examples/eval-harbor/modes/markdown.md",
       "memoryMode": "markdown",
       "mode": "markdown",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "codexWebSearch": "disabled"
     },
     {
       "compose": "cr-mcp",
       "instructionPath": "examples/eval-harbor/modes/cr-mcp.md",
       "memoryMode": "cr-mcp",
       "mode": "cr-mcp",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "codexWebSearch": "disabled"
     }
   ],
   "coverage": {
@@ -45,17 +50,17 @@
     ],
     "checkpointsPerTask": {
       "max": 5,
-      "mean": 5.0,
+      "mean": 5,
       "min": 5
     },
     "observedLogsPerTask": {
       "max": 1455,
-      "mean": 1455.0,
+      "mean": 1455,
       "min": 1455
     },
     "personalizedServiceItemsPerTask": {
       "max": 189,
-      "mean": 189.0,
+      "mean": 189,
       "min": 189
     },
     "serviceFamilies": [
@@ -68,13 +73,13 @@
     ],
     "stateCompletionKeysPerTask": {
       "max": 189,
-      "mean": 189.0,
+      "mean": 189,
       "min": 189
     },
     "taskCount": 1,
     "uniqueStateCompletionKeysPerTask": {
       "max": 58,
-      "mean": 58.0,
+      "mean": 58,
       "min": 58
     },
     "userCount": 1

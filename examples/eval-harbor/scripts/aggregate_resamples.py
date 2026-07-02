@@ -52,6 +52,8 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "validationErrors": row.get("validationErrors", []),
         "model": row.get("model"),
         "reasoningEffort": row.get("reasoningEffort"),
+        "codexWebSearch": row.get("codexWebSearch"),
+        "disallowedToolCalls": row.get("disallowedToolCalls", {}),
     }
 
 
@@ -73,11 +75,23 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
     parse_failures = sum(1 for sample in samples if sample.get("parseSuccess") is not True)
     metadata_failures = sum(1 for sample in samples if sample.get("metadataSuccess") is not True)
     validation_failures = sum(1 for sample in samples if sample.get("validationErrors"))
+    disallowed_tool_failures = sum(
+        1
+        for sample in samples
+        if any((sample.get("disallowedToolCalls") or {}).values())
+    )
     reasoning_efforts = sorted(
         {
             str(sample.get("reasoningEffort"))
             for sample in samples
             if sample.get("reasoningEffort") not in (None, "")
+        }
+    )
+    codex_web_search_policies = sorted(
+        {
+            str(sample.get("codexWebSearch"))
+            for sample in samples
+            if sample.get("codexWebSearch") not in (None, "")
         }
     )
 
@@ -102,7 +116,9 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "parseFailures": parse_failures,
         "metadataFailures": metadata_failures,
         "validationFailures": validation_failures,
+        "disallowedToolFailures": disallowed_tool_failures,
         "reasoningEfforts": reasoning_efforts,
+        "codexWebSearchPolicies": codex_web_search_policies,
     }
 
 
@@ -135,8 +151,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Web Search | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail |",
+        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -146,10 +162,11 @@ def markdown_report(payload: dict[str, Any]) -> str:
             state_accuracy = aggregate["stateCompletionAccuracy"]
             service_score = aggregate["rq3ApplyMeanScore"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {web_search} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
+                    web_search=", ".join(aggregate["codexWebSearchPolicies"]) or "n/a",
                     samples=aggregate["samples"],
                     reward_mean=fmt_float(reward["mean"]),
                     reward_std=fmt_float(reward["std"]),
@@ -162,6 +179,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
                     parse_fail=aggregate["parseFailures"],
                     metadata_fail=aggregate["metadataFailures"],
                     validation_fail=aggregate["validationFailures"],
+                    tool_fail=aggregate["disallowedToolFailures"],
                 )
             )
     lines.append("")

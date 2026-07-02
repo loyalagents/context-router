@@ -43,11 +43,13 @@ SOURCE_USER_ID = "user_001"
 CHECKPOINT_INDICES = (0, 1, 2, 3, 4)
 MODEL_NAME = "gpt-5.4-mini"
 REASONING_EFFORT = "high"
+CODEX_WEB_SEARCH = "disabled"
 DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
+CODEX_WEB_SEARCH_CHOICES = {"disabled", "cached", "live"}
 
 TASK_A_EXCLUDED_VALUE_FIELDS_V2 = {"priority", "schedule_date", "schedule_dates"}
 
@@ -61,6 +63,7 @@ class BuildConfig:
     checkpoint_indices: tuple[int, ...] = CHECKPOINT_INDICES
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
+    codex_web_search: str = CODEX_WEB_SEARCH
     agent_timeout_sec: float = DEFAULT_AGENT_TIMEOUT_SEC
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC
     build_timeout_sec: float = DEFAULT_BUILD_TIMEOUT_SEC
@@ -71,6 +74,9 @@ class BuildConfig:
         if self.reasoning_effort not in REASONING_EFFORT_CHOICES:
             choices = ", ".join(sorted(REASONING_EFFORT_CHOICES))
             raise ValueError(f"reasoning_effort must be one of: {choices}")
+        if self.codex_web_search not in CODEX_WEB_SEARCH_CHOICES:
+            choices = ", ".join(sorted(CODEX_WEB_SEARCH_CHOICES))
+            raise ValueError(f"codex_web_search must be one of: {choices}")
         if self.stage_pattern not in STAGE_PATTERNS:
             choices = ", ".join(sorted(STAGE_PATTERNS))
             raise ValueError(f"stage_pattern must be one of: {choices}")
@@ -1122,6 +1128,7 @@ def render_job(arm: dict[str, Any], config: BuildConfig = DEFAULT_BUILD_CONFIG) 
         f"    model_name: {config.model_name}",
         "    kwargs:",
         f"      reasoning_effort: {config.reasoning_effort}",
+        f"      web_search: {config.codex_web_search}",
     ]
     if mcp_servers:
         lines.append("    mcp_servers:")
@@ -2203,6 +2210,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \\
   {render_stage_cli_arg(config)} \\
   --model {config.model_name} \\
   --reasoning-effort {config.reasoning_effort} \\
+  --codex-web-search {config.codex_web_search} \\
   --agent-timeout-sec {config.agent_timeout_sec:g} \\
   --verifier-timeout-sec {config.verifier_timeout_sec:g} \\
   --build-timeout-sec {config.build_timeout_sec:g}
@@ -2299,6 +2307,12 @@ def main() -> int:
         help="Codex model reasoning effort written into Harbor job kwargs.",
     )
     parser.add_argument(
+        "--codex-web-search",
+        default=DEFAULT_BUILD_CONFIG.codex_web_search,
+        choices=sorted(CODEX_WEB_SEARCH_CHOICES),
+        help="Codex web_search policy written into Harbor job kwargs.",
+    )
+    parser.add_argument(
         "--agent-timeout-sec",
         type=float,
         default=DEFAULT_BUILD_CONFIG.agent_timeout_sec,
@@ -2354,6 +2368,7 @@ def main() -> int:
             checkpoint_indices=tuple(checkpoint_indices),
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
+            codex_web_search=args.codex_web_search,
             agent_timeout_sec=args.agent_timeout_sec,
             verifier_timeout_sec=args.verifier_timeout_sec,
             build_timeout_sec=args.build_timeout_sec,

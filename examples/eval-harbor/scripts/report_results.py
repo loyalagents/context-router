@@ -120,6 +120,26 @@ def read_cr_preference_count(snapshot_path: Path) -> int | None:
     raise ValueError(f"malformed CR snapshot preferences: {snapshot_path}")
 
 
+def read_codex_item_counts(trial_dir: Path) -> tuple[dict[str, int], list[str]]:
+    counts: dict[str, int] = {}
+    trace_paths = sorted(trial_dir.rglob("agent/codex.txt"))
+    for trace_path in trace_paths:
+        for line in trace_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line.strip():
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            item = payload.get("item")
+            if not isinstance(item, dict):
+                continue
+            item_type = item.get("type")
+            if isinstance(item_type, str):
+                counts[item_type] = counts.get(item_type, 0) + 1
+    return counts, [str(path) for path in trace_paths]
+
+
 def output_files_from_score(score: dict[str, Any]) -> list[str]:
     output_files = score.get("outputFiles")
     if isinstance(output_files, list) and all(
@@ -201,6 +221,14 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     agent_config = config.get("agent") or {}
     agent_kwargs = agent_config.get("kwargs") or {}
     rewards = (result.get("verifier_result") or {}).get("rewards") or {}
+    codex_item_counts, codex_trace_paths = read_codex_item_counts(trial_dir)
+    disallowed_tool_calls = {
+        "web_search": codex_item_counts.get("web_search", 0),
+    }
+    if disallowed_tool_calls["web_search"]:
+        validation_errors.append(
+            f"disallowed Codex web_search calls: {disallowed_tool_calls['web_search']}"
+        )
 
     reward = score.get("reward", rewards.get("reward"))
     field_accuracy = score.get("fieldAccuracy", rewards.get("field_accuracy"))
@@ -227,6 +255,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             or agent_config.get("reasoning_effort")
             or "n/a"
         ),
+        "codexWebSearch": (
+            agent_kwargs.get("web_search")
+            or agent_config.get("web_search")
+            or "n/a"
+        ),
         "runtimeSeconds": duration_seconds(result),
         "reward": reward,
         "fieldAccuracy": field_accuracy,
@@ -245,6 +278,9 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "metadataErrors": metadata_errors if isinstance(metadata_errors, list) else [],
         "mcpTools": mcp_tools,
         "crPreferenceCount": cr_preference_count,
+        "codexItemCounts": codex_item_counts,
+        "codexTracePaths": codex_trace_paths,
+        "disallowedToolCalls": disallowed_tool_calls,
         "validationErrors": validation_errors,
     }
 
@@ -267,16 +303,17 @@ def fmt_bool(value: Any) -> str:
 
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reasoning Effort | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Web Search | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reasoning_effort} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
                 reasoning_effort=row["reasoningEffort"],
+                web_search=row["codexWebSearch"],
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
                 state=fmt_value(row["stateCompletionAccuracy"]),
@@ -303,6 +340,10 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
             lines.append(f"- MCP tools: `{', '.join(row['mcpTools'])}`")
         if row["crPreferenceCount"] is not None:
             lines.append(f"- CR preferences: `{row['crPreferenceCount']}`")
+        if row["codexTracePaths"]:
+            lines.append(f"- Codex traces: `{', '.join(row['codexTracePaths'])}`")
+        if any(row["disallowedToolCalls"].values()):
+            lines.append(f"- Disallowed tool calls: `{json.dumps(row['disallowedToolCalls'])}`")
         if row["missingFields"]:
             lines.append(f"- Missing fields: `{json.dumps(row['missingFields'])}`")
         if row["wrongFields"]:

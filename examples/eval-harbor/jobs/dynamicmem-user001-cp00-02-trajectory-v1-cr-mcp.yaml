@@ -13,6 +13,7 @@ agents:
     model_name: gpt-5.4-mini
     kwargs:
       reasoning_effort: high
+      web_search: disabled
     mcp_servers:
       - name: context-router-memory
         transport: streamable-http
