@@ -157,9 +157,9 @@ The report summarizes reward, accuracy, state/service reward, token usage,
 cost, parse failures, metadata failures, validation failures, tool-policy
 failures, runtime, model, reasoning effort, web-search policy, and timeout
 settings. Official experiment reports must include token usage and cost. A run
-with missing `totalTokens`, `costUsd`, `stateCompletion.accuracy`, or
-`personalizedService.meanScore` is incomplete and should be rerun rather than
-logged as a valid datapoint.
+with missing `totalTokens`, `costUsd`, `llmJudge.stateCompletion.meanScore`, or
+`llmJudge.personalizedService.meanScore` is incomplete and should be rerun
+rather than logged as a valid datapoint.
 
 DynamicMem metric meanings:
 
@@ -169,6 +169,8 @@ DynamicMem metric meanings:
 | `fieldAccuracy` | State-completion accuracy over expected state keys. This is the same value reported as `stateCompletion.accuracy`. |
 | `stateCompletion.accuracy` | `correct state keys / expected state keys` under deterministic diagnostics. |
 | `personalizedService.meanScore` | Mean score for DynamicMem personalized-service/apply items. |
+| `llmJudge.stateCompletion.meanScore` | LLM-as-judge mean score over state-completion items; reported as `LLM State Mean`. |
+| `llmJudge.personalizedService.meanScore` | LLM-as-judge mean score over personalized-service items; reported as `LLM Service Mean`. |
 | `inputTokens`, `outputTokens`, `totalTokens` | Agent token usage recorded from Harbor/Codex artifacts. |
 | `costUsd` | Estimated run cost in USD recorded from Harbor/Codex artifacts. |
 | `rewardSource` | `llm-judge`, `deterministic`, or `deterministic-fallback`. |

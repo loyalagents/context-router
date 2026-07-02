@@ -232,8 +232,8 @@ def load_job_result_for_trial(trial_dir: Path) -> dict[str, Any]:
 def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
     required = [
         "reward",
-        "stateCompletionAccuracy",
-        "rq3ApplyMeanScore",
+        "llmStateMeanScore",
+        "llmServiceMeanScore",
         "totalTokens",
         "costUsd",
     ]
@@ -729,6 +729,9 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     metadata_errors = score.get("metadataErrors")
     metadata_count = count_list(metadata_errors) if isinstance(metadata_errors, list) else None
     usage_metrics = extract_usage_metrics(job_result or result, score)
+    llm_judge = score.get("llmJudge") or {}
+    llm_state = (llm_judge.get("stateCompletion") or {}).get("meanScore")
+    llm_service = (llm_judge.get("personalizedService") or {}).get("meanScore")
 
     row = {
         "mode": mode,
@@ -767,6 +770,8 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "overfillFields": overfill_fields,
         "stateCompletionAccuracy": (score.get("stateCompletion") or {}).get("accuracy"),
         "rq3ApplyMeanScore": (score.get("personalizedService") or {}).get("meanScore"),
+        "llmStateMeanScore": llm_state,
+        "llmServiceMeanScore": llm_service,
         "metadataErrors": metadata_errors if isinstance(metadata_errors, list) else [],
         "mcpTools": mcp_tools,
         "crPreferenceCount": cr_preference_count,
@@ -840,8 +845,8 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
                 timeouts=fmt_timeout_triplet(row),
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
-                state=fmt_value(row["stateCompletionAccuracy"]),
-                service=fmt_value(row["rq3ApplyMeanScore"]),
+                state=fmt_value(row["llmStateMeanScore"]),
+                service=fmt_value(row["llmServiceMeanScore"]),
                 input_tokens=fmt_value(row["inputTokens"]),
                 output_tokens=fmt_value(row["outputTokens"]),
                 total_tokens=fmt_value(row["totalTokens"]),

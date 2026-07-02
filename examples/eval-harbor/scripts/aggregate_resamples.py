@@ -41,6 +41,8 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "fieldAccuracy": row.get("fieldAccuracy"),
         "stateCompletionAccuracy": row.get("stateCompletionAccuracy"),
         "rq3ApplyMeanScore": row.get("rq3ApplyMeanScore"),
+        "llmStateMeanScore": row.get("llmStateMeanScore"),
+        "llmServiceMeanScore": row.get("llmServiceMeanScore"),
         "parseSuccess": row.get("parseSuccess"),
         "metadataSuccess": row.get("metadataSuccess"),
         "missingCount": row.get("missingCount"),
@@ -81,6 +83,8 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
     accuracies = numeric_values(samples, "fieldAccuracy")
     state_accuracies = numeric_values(samples, "stateCompletionAccuracy")
     service_scores = numeric_values(samples, "rq3ApplyMeanScore")
+    llm_state_scores = numeric_values(samples, "llmStateMeanScore")
+    llm_service_scores = numeric_values(samples, "llmServiceMeanScore")
     input_tokens = numeric_values(samples, "inputTokens")
     output_tokens = numeric_values(samples, "outputTokens")
     total_tokens = numeric_values(samples, "totalTokens")
@@ -97,8 +101,8 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
             sample.get(key) is None
             for key in (
                 "reward",
-                "stateCompletionAccuracy",
-                "rq3ApplyMeanScore",
+                "llmStateMeanScore",
+                "llmServiceMeanScore",
                 "totalTokens",
                 "costUsd",
             )
@@ -159,6 +163,8 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "fieldAccuracy": stats(accuracies),
         "stateCompletionAccuracy": stats(state_accuracies),
         "rq3ApplyMeanScore": stats(service_scores),
+        "llmStateMeanScore": stats(llm_state_scores),
+        "llmServiceMeanScore": stats(llm_service_scores),
         "inputTokens": stats(input_tokens),
         "outputTokens": stats(output_tokens),
         "totalTokens": stats(total_tokens),
@@ -232,8 +238,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
             aggregate = arm["aggregate"]
             reward = aggregate["reward"]
             accuracy = aggregate["fieldAccuracy"]
-            state_accuracy = aggregate["stateCompletionAccuracy"]
-            service_score = aggregate["rq3ApplyMeanScore"]
+            state_score = aggregate["llmStateMeanScore"]
+            service_score = aggregate["llmServiceMeanScore"]
             input_tokens = aggregate["inputTokens"]
             output_tokens = aggregate["outputTokens"]
             total_tokens = aggregate["totalTokens"]
@@ -252,7 +258,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
                     reward_min=fmt_float(reward["min"]),
                     reward_max=fmt_float(reward["max"]),
                     acc_mean=fmt_float(accuracy["mean"]),
-                    state_mean=fmt_float(state_accuracy["mean"]),
+                    state_mean=fmt_float(state_score["mean"]),
                     service_mean=fmt_float(service_score["mean"]),
                     input_tokens=fmt_float(input_tokens["mean"]),
                     output_tokens=fmt_float(output_tokens["mean"]),

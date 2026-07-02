@@ -165,10 +165,10 @@ Every experiment should record:
 Do not compare arms if the task, visible evidence, model, scorer, or validation
 status differs between arms.
 
-`Reward`, `LLM State Mean`, `LLM Service Mean`, `totalTokens`, and `costUsd`
-are mandatory for DynamicMem logbook entries. If any of these fields are
-missing, mark the run incomplete and rerun it. Do not paste partial results into
-the experiment logbook as if they were complete.
+`Reward`, `llmJudge.stateCompletion.meanScore`, `llmJudge.personalizedService.meanScore`,
+`totalTokens`, and `costUsd` are mandatory for DynamicMem logbook entries. If
+any of these fields are missing, mark the run incomplete and rerun it. Do not
+paste partial results into the experiment logbook as if they were complete.
 
 ## Adding Another Dataset
 
