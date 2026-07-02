@@ -102,6 +102,13 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --checkpoint-indices 0-1 \
   --stage-schedule U,T,U,T
 
+# user008: U(cp0) -> T(cp0) -> U(cp1+cp2+cp3 delta) -> T(cp3)
+python3 examples/eval-harbor/scripts/build_dataset_suite.py \
+  --dataset dynamicmem \
+  --source-users user008 \
+  --checkpoint-indices 0,3 \
+  --stage-schedule U,T,U,T
+
 # user007: U(cp0) -> U(cp1) -> T(cp1)
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
@@ -119,6 +126,9 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
 
 `--max-users` and `--max-tasks` are suite-size caps. They do not define the
 trajectory; `--checkpoint-indices` plus `--stage-schedule` define the trajectory.
+Non-contiguous checkpoint selections are supported: for example,
+`--checkpoint-indices 0,3 --stage-schedule U,T,U,T` scores cp0 and cp3, while
+the second `U` stage reveals the chronological delta between cp0 and cp3.
 
 ## Run And Aggregate
 
@@ -155,9 +165,10 @@ The report summarizes reward, accuracy, state/service reward, token usage,
 cost, parse failures, metadata failures, validation failures, tool-policy
 failures, runtime, model, reasoning effort, web-search policy, and timeout
 settings. Official experiment reports must include token usage and cost. A run
-with missing `totalTokens`, `costUsd`, `llmJudge.stateCompletion.meanScore`, or
-`llmJudge.personalizedService.meanScore` is incomplete and should be rerun
-rather than logged as a valid datapoint.
+with missing `inputTokens`, `outputTokens`, `totalTokens`, `costUsd`,
+`llmJudge.stateCompletion.meanScore`, or
+`llmJudge.personalizedService.meanScore` is incomplete and should be rerun rather
+than logged as a valid datapoint.
 
 DynamicMem metric meanings:
 
