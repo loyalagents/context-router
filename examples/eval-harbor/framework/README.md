@@ -128,12 +128,9 @@ Use the tiny staged smoke to verify live Harbor/Codex plumbing without running
 the larger DynamicMem corpus:
 
 ```bash
-CODEX_FORCE_AUTH_JSON=1 harbor run \
-  -c examples/eval-harbor/jobs/smoke-staged-memory-v1-context-only.yaml \
-  --jobs-dir /tmp/cr-harbor-live-smoke-staged \
-  --agent-env CODEX_FORCE_AUTH_JSON=true \
-  --yes \
-  --n-concurrent 1
+pnpm eval-harbor:check
+pnpm eval-harbor:bootstrap
+pnpm eval-harbor:smoke
 ```
 
 Expected behavior:
@@ -142,21 +139,37 @@ Expected behavior:
 - The live Codex agent runs `U -> U -> U -> T`.
 - The verifier reports `reward = 1.0`, `correctFields = 3`, `exceptions = 0`.
 
-The Harbor CLI is not part of this repo. If it is not on `PATH`, install Harbor
-with Python 3.12+ or call the explicit venv binary.
+The bootstrap command installs the pinned Harbor runner into
+`${HARBOR_VENV:-/tmp/cr-harbor-cli-venv}`. The smoke wrapper uses
+`${HARBOR_BIN:-/tmp/cr-harbor-cli-venv/bin/harbor}` and fails before starting
+Docker if Harbor is missing. Docker must be running. Codex jobs pass
+`--agent-env CODEX_FORCE_AUTH_JSON=true`, so local Codex auth must be available.
 
 Run the three comparable DynamicMem arms only when you want an actual benchmark
 smoke, not just runner validation:
 
 ```bash
-for mode in context-only markdown cr-mcp; do
-  harbor run \
-    -c examples/eval-harbor/jobs/dynamicmem-user001-cp00-02-memory-final-v1-${mode}.yaml \
-    --jobs-dir /tmp/cr-harbor-dynamicmem-user001-cp00-02-memory-final-v1-${mode} \
-    --agent-env CODEX_FORCE_AUTH_JSON=true \
-    --yes
-done
+pnpm eval-harbor:dynamicmem
 ```
+
+The default command runs all three arms sequentially and fresh. For long local
+runs, use:
+
+```bash
+pnpm eval-harbor:dynamicmem:resume      # skip arms with an existing result.json
+pnpm eval-harbor:dynamicmem:fast        # skip existing arms, run remaining arms in parallel
+pnpm eval-harbor:dynamicmem:fresh-fast  # rerun all selected arms in parallel
+```
+
+The underlying wrapper also supports `HARBOR_MODES=markdown,cr-mcp`,
+`HARBOR_SKIP_EXISTING=1`, `HARBOR_PARALLEL=1`, and `HARBOR_FORCE=1`.
+Skip-existing only checks for Harbor's completed `result.json`; it does not
+judge whether that result has a good score.
+
+For official DynamicMem semantic scoring, set the variables from
+`examples/eval-harbor/judge.env.example` first. Without a judge API key, the
+verifier may use deterministic fallback scoring; fallback rewards are useful
+for plumbing checks but are not the official semantic score.
 
 A container-level smoke can be used when the Harbor CLI is not installed. It
 should verify that:

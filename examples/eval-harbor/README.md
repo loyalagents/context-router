@@ -14,6 +14,90 @@ The Harbor CLI is an external runner dependency, not a binary checked into this
 repo. Install it with Python 3.12+ before running jobs, or call an explicit
 venv path such as `/tmp/cr-harbor-cli-venv/bin/harbor`.
 
+## Quick Start
+
+Run the static task checks first. These do not require Harbor:
+
+```bash
+pnpm eval-harbor:check
+```
+
+Install the pinned Harbor runner into an eval-scoped virtualenv:
+
+```bash
+pnpm eval-harbor:bootstrap
+```
+
+This creates `${HARBOR_VENV:-/tmp/cr-harbor-cli-venv}` and installs Harbor from
+`harbor-framework/harbor@89359f5`. The wrappers use
+`${HARBOR_BIN:-/tmp/cr-harbor-cli-venv/bin/harbor}` by default, so a global
+Harbor install is not required. If your default `python3` is older than 3.12,
+run `PYTHON_BIN=python3.12 pnpm eval-harbor:bootstrap`.
+
+Run the tiny staged smoke before any larger benchmark:
+
+```bash
+pnpm eval-harbor:smoke
+```
+
+The live Codex jobs pass `--agent-env CODEX_FORCE_AUTH_JSON=true`; make sure
+your local Codex auth is available before running them. Docker must also be
+installed and running.
+
+For official DynamicMem semantic scoring, copy the judge env template and set
+an API key before running the DynamicMem benchmark:
+
+```bash
+cp examples/eval-harbor/judge.env.example /tmp/judge.env
+# fill DYNAMICMEM_LLM_JUDGE_API_KEY, then source it
+set -a
+. /tmp/judge.env
+set +a
+
+pnpm eval-harbor:dynamicmem
+```
+
+The default DynamicMem command runs all three arms sequentially and reruns them
+fresh. For long local runs, the wrapper also supports explicit resume and
+parallel modes:
+
+```bash
+# Resume a partial run by skipping arms that already wrote result.json.
+pnpm eval-harbor:dynamicmem:resume
+
+# Resume a partial run and run the remaining arms in parallel.
+pnpm eval-harbor:dynamicmem:fast
+
+# Rerun all selected arms fresh, but run them in parallel.
+pnpm eval-harbor:dynamicmem:fresh-fast
+```
+
+Advanced controls:
+
+```bash
+# Run only selected arms.
+HARBOR_MODES=markdown,cr-mcp pnpm eval-harbor:dynamicmem
+
+# Skip a completed arm when its Harbor result.json already exists.
+HARBOR_SKIP_EXISTING=1 pnpm eval-harbor:dynamicmem
+
+# Run selected arms concurrently.
+HARBOR_PARALLEL=1 pnpm eval-harbor:dynamicmem
+
+# Rerun even when skip-existing is enabled.
+HARBOR_FORCE=1 HARBOR_SKIP_EXISTING=1 pnpm eval-harbor:dynamicmem
+```
+
+`HARBOR_SKIP_EXISTING=1` only checks for a completed Harbor result file such as
+`/tmp/cr-harbor-dynamicmem-user001-cp00-02-memory-final-v1-context-only/eval-harbor-dynamicmem-user001-cp00-02-memory-final-v1-context-only/result.json`.
+It does not inspect whether the score is high or low. Use `HARBOR_FORCE=1`
+when code, prompts, judge settings, or model settings changed and you need a
+fresh result.
+
+If the judge env is missing, DynamicMem verifiers can still run with the local
+deterministic fallback, but those fallback rewards should not be treated as the
+official semantic score.
+
 ## Task Families
 
 Harbor is the evaluation runner. The task contract determines what research
@@ -501,19 +585,23 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --manifest examples/eval-harbor/suites/dynamicmem-three-turn-smoke.json
 ```
 
-Run all three arms:
+Run the committed retained-memory smoke across all three arms:
 
 ```bash
-for mode in context-only markdown cr-mcp; do
-  harbor run \
-    -c examples/eval-harbor/jobs/dynamicmem-user001-cp00-04-trajectory-v1-${mode}.yaml \
-    --jobs-dir /tmp/cr-harbor-dynamicmem-user001-cp00-04-trajectory-v1-${mode} \
-    --agent-env CODEX_FORCE_AUTH_JSON=true \
-    --yes
-done
+pnpm eval-harbor:dynamicmem
 ```
 
-Create the comparison report:
+The wrapper prints the exact comparison report command after the selected runs
+complete. The default run is fresh, sequential, and includes all three arms:
+`context-only`, `markdown`, and `cr-mcp`. For local iteration, use
+`pnpm eval-harbor:dynamicmem:resume` to skip arms that already wrote
+`result.json`, `pnpm eval-harbor:dynamicmem:fast` to resume remaining arms in
+parallel, or `pnpm eval-harbor:dynamicmem:fresh-fast` to rerun all selected arms
+fresh in parallel. To run the longer five-checkpoint trajectory manually, use
+the same Harbor binary from `/tmp/cr-harbor-cli-venv/bin/harbor` with the
+`dynamicmem-user001-cp00-04-trajectory-v1-*` job configs.
+
+Create the five-checkpoint trajectory comparison report:
 
 ```bash
 python3 examples/eval-harbor/scripts/report_results.py \
