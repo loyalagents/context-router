@@ -111,13 +111,15 @@ task, observed-log counts, state-completion key counts, Personalized Service
 item counts, and service families. This is the guardrail against accidental
 random task synthesis or narrow task slices.
 
-The first DynamicMem adapter supports two stage contracts:
+The DynamicMem adapter emits the shared U/T staged contract:
 
-- `update-answer-every-checkpoint`: `UA(cp0) -> UA(cp1) -> ...`; every selected
-  checkpoint reveals log deltas plus native tasks and is scored.
-- `update-only-then-final`: `U(cp0) -> U(cp1) -> ... -> T(final)`; memory
-  stages reveal only log deltas, the final downstream task is hidden until the
-  last stage, and only that final checkpoint is scored.
+- `U(cp0) -> U(cp1) -> ... -> T(final)` for hidden-final background-memory
+  probes.
+- `U(cp0) -> T(cp0) -> U(cp1) -> T(cp1)` for interleaved update/probe
+  trajectories.
+
+`U` stages reveal only log deltas. `T` stages reveal downstream tasks without
+raw docs and are scored from retained memory.
 
 Future datasets should add their own adapter that emits the same staged
 trajectory contract rather than copying DynamicMem parsing/scoring code.
