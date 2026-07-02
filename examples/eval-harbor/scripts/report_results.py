@@ -140,6 +140,61 @@ def read_codex_item_counts(trial_dir: Path) -> tuple[dict[str, int], list[str]]:
     return counts, [str(path) for path in trace_paths]
 
 
+def parse_float_literal(value: str) -> float | None:
+    try:
+        return float(value.strip().strip('"'))
+    except ValueError:
+        return None
+
+
+def parse_task_timeout_file(path: Path) -> dict[str, float | None]:
+    section = ""
+    timeouts: dict[str, float | None] = {
+        "agentTimeoutSec": None,
+        "verifierTimeoutSec": None,
+        "buildTimeoutSec": None,
+    }
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line.strip("[]").strip()
+            continue
+        if "=" not in line:
+            continue
+        key, value = [part.strip() for part in line.split("=", 1)]
+        if section == "agent" and key == "timeout_sec":
+            timeouts["agentTimeoutSec"] = parse_float_literal(value)
+        elif section == "verifier" and key == "timeout_sec":
+            timeouts["verifierTimeoutSec"] = parse_float_literal(value)
+        elif section == "environment" and key == "build_timeout_sec":
+            timeouts["buildTimeoutSec"] = parse_float_literal(value)
+    return timeouts
+
+
+def read_task_timeouts(config: dict[str, Any]) -> dict[str, float | None]:
+    task_config = config.get("task") or {}
+    raw_task_path = task_config.get("path")
+    if not isinstance(raw_task_path, str) or not raw_task_path:
+        return {}
+
+    task_path = Path(raw_task_path)
+    candidates = []
+    if task_path.name == "task.toml":
+        candidates.append(task_path)
+    else:
+        candidates.append(task_path / "task.toml")
+    if not task_path.is_absolute():
+        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        return parse_task_timeout_file(candidate)
+    return {}
+
+
 def output_files_from_score(score: dict[str, Any]) -> list[str]:
     output_files = score.get("outputFiles")
     if isinstance(output_files, list) and all(
@@ -220,6 +275,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     model_info = agent_info.get("model_info") or {}
     agent_config = config.get("agent") or {}
     agent_kwargs = agent_config.get("kwargs") or {}
+    task_timeouts = read_task_timeouts(config)
     rewards = (result.get("verifier_result") or {}).get("rewards") or {}
     codex_item_counts, codex_trace_paths = read_codex_item_counts(trial_dir)
     disallowed_tool_calls = {
@@ -260,6 +316,9 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             or agent_config.get("web_search")
             or "n/a"
         ),
+        "agentTimeoutSec": task_timeouts.get("agentTimeoutSec"),
+        "verifierTimeoutSec": task_timeouts.get("verifierTimeoutSec"),
+        "buildTimeoutSec": task_timeouts.get("buildTimeoutSec"),
         "runtimeSeconds": duration_seconds(result),
         "reward": reward,
         "fieldAccuracy": field_accuracy,
@@ -301,19 +360,37 @@ def fmt_bool(value: Any) -> str:
     return "n/a"
 
 
+def fmt_seconds(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if float(value).is_integer():
+            return str(int(value))
+        return f"{value:.1f}"
+    return str(value)
+
+
+def fmt_timeout_triplet(row: dict[str, Any]) -> str:
+    agent = fmt_seconds(row.get("agentTimeoutSec"))
+    verifier = fmt_seconds(row.get("verifierTimeoutSec"))
+    build = fmt_seconds(row.get("buildTimeoutSec"))
+    return f"{agent}/{verifier}/{build}"
+
+
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reasoning Effort | Web Search | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Web Search | Timeout A/V/B (s) | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {timeouts} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
                 reasoning_effort=row["reasoningEffort"],
                 web_search=row["codexWebSearch"],
+                timeouts=fmt_timeout_triplet(row),
                 reward=fmt_value(row["reward"]),
                 field=fmt_value(row["fieldAccuracy"]),
                 state=fmt_value(row["stateCompletionAccuracy"]),

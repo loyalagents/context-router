@@ -53,6 +53,9 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "model": row.get("model"),
         "reasoningEffort": row.get("reasoningEffort"),
         "codexWebSearch": row.get("codexWebSearch"),
+        "agentTimeoutSec": row.get("agentTimeoutSec"),
+        "verifierTimeoutSec": row.get("verifierTimeoutSec"),
+        "buildTimeoutSec": row.get("buildTimeoutSec"),
         "disallowedToolCalls": row.get("disallowedToolCalls", {}),
     }
 
@@ -94,6 +97,20 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
             if sample.get("codexWebSearch") not in (None, "")
         }
     )
+    timeout_labels = sorted(
+        {
+            "{agent}/{verifier}/{build}".format(
+                agent=fmt_seconds(sample.get("agentTimeoutSec")),
+                verifier=fmt_seconds(sample.get("verifierTimeoutSec")),
+                build=fmt_seconds(sample.get("buildTimeoutSec")),
+            )
+            for sample in samples
+            if any(
+                sample.get(key) is not None
+                for key in ("agentTimeoutSec", "verifierTimeoutSec", "buildTimeoutSec")
+            )
+        }
+    )
 
     def stats(values: list[float]) -> dict[str, float | None]:
         if not values:
@@ -119,6 +136,7 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "disallowedToolFailures": disallowed_tool_failures,
         "reasoningEfforts": reasoning_efforts,
         "codexWebSearchPolicies": codex_web_search_policies,
+        "timeoutLabels": timeout_labels,
     }
 
 
@@ -147,12 +165,22 @@ def fmt_float(value: Any) -> str:
     return f"{value:.3f}"
 
 
+def fmt_seconds(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if float(value).is_integer():
+            return str(int(value))
+        return f"{value:.1f}"
+    return str(value)
+
+
 def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Web Search | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail |",
-        "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -162,11 +190,12 @@ def markdown_report(payload: dict[str, Any]) -> str:
             state_accuracy = aggregate["stateCompletionAccuracy"]
             service_score = aggregate["rq3ApplyMeanScore"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {web_search} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
                     web_search=", ".join(aggregate["codexWebSearchPolicies"]) or "n/a",
+                    timeouts=", ".join(aggregate["timeoutLabels"]) or "n/a",
                     samples=aggregate["samples"],
                     reward_mean=fmt_float(reward["mean"]),
                     reward_std=fmt_float(reward["std"]),

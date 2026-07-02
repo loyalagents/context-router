@@ -163,8 +163,8 @@ suites to change it intentionally.
 DynamicMem timeout settings are also explicit eval parameters. Generated tasks
 default to `--agent-timeout-sec 86400`, `--verifier-timeout-sec 86400`, and
 `--build-timeout-sec 600`. The suite manifest records these values under
-`timeouts`, so experiment reports can disclose them instead of relying on local
-defaults.
+`timeouts`, and experiment reports disclose the agent/verifier/build timeout
+triplet instead of relying on local defaults.
 
 Codex web search is disabled by default for benchmark soundness. Generated jobs
 write `web_search: disabled` into Harbor's Codex agent kwargs, which Harbor
