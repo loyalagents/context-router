@@ -49,6 +49,7 @@ DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
+SIDECARS_SOURCE_DIR = Path(__file__).resolve().parents[1] / "sidecars"
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
 CODEX_WEB_SEARCH_CHOICES = {"disabled", "cached", "live"}
 
@@ -278,6 +279,18 @@ def write_text(path: Path, text: str, *, executable: bool = False) -> None:
     path.write_text(text, encoding="utf-8")
     if executable:
         path.chmod(0o755)
+
+
+def ensure_sidecars_available(task_dir: Path) -> None:
+    target_dir = task_dir.parent.parent / "sidecars"
+    if target_dir.resolve() == SIDECARS_SOURCE_DIR.resolve():
+        return
+    shutil.copytree(
+        SIDECARS_SOURCE_DIR,
+        target_dir,
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
 
 
 def load_arm_configs(path: Path | None = None) -> list[dict[str, Any]]:
@@ -2250,6 +2263,7 @@ Do not expose `tests/expected/` files to agents.
             jobs_dir / f"{config.task_id}-{arm['mode']}.yaml",
             render_job(arm, config, task_path=task_dir, jobs_dir=jobs_dir),
         )
+    ensure_sidecars_available(task_dir)
     write_text(jobs_dir / f"{config.task_id}-staged.compose.yml", render_staged_compose())
     write_text(jobs_dir / f"{config.task_id}-cr-mcp.compose.yml", render_cr_mcp_compose())
 
