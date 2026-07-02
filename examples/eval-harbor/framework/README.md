@@ -112,8 +112,12 @@ Reports should make every experimental setting explicit:
 - arm, model, reasoning effort, web-search policy, and timeout settings;
 - sample count and concurrency;
 - judge model and judge mode;
-- reward/accuracy statistics;
+- reward/accuracy statistics, LLM State Mean, LLM Service Mean, tokens, and cost;
 - validation, tool-policy, parse, and metadata failures.
+
+For DynamicMem experiments, missing token usage, cost, LLM State Mean, or LLM
+Service Mean makes the run incomplete. Treat it as a failed reporting artifact
+and rerun before updating the shared logbook.
 
 The benchmark is only useful if the task contract is sound. Treat failed
 preflight or post-run validation as a failed experiment, not a noisy datapoint.

@@ -53,6 +53,10 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "model": row.get("model"),
         "reasoningEffort": row.get("reasoningEffort"),
         "codexWebSearch": row.get("codexWebSearch"),
+        "inputTokens": row.get("inputTokens"),
+        "outputTokens": row.get("outputTokens"),
+        "totalTokens": row.get("totalTokens"),
+        "costUsd": row.get("costUsd"),
         "agentTimeoutSec": row.get("agentTimeoutSec"),
         "verifierTimeoutSec": row.get("verifierTimeoutSec"),
         "buildTimeoutSec": row.get("buildTimeoutSec"),
@@ -76,10 +80,28 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
     accuracies = numeric_values(samples, "fieldAccuracy")
     state_accuracies = numeric_values(samples, "stateCompletionAccuracy")
     service_scores = numeric_values(samples, "rq3ApplyMeanScore")
+    input_tokens = numeric_values(samples, "inputTokens")
+    output_tokens = numeric_values(samples, "outputTokens")
+    total_tokens = numeric_values(samples, "totalTokens")
+    costs = numeric_values(samples, "costUsd")
     success_count = sum(1 for sample in samples if sample.get("reward") == 1.0)
     parse_failures = sum(1 for sample in samples if sample.get("parseSuccess") is not True)
     metadata_failures = sum(1 for sample in samples if sample.get("metadataSuccess") is not True)
     validation_failures = sum(1 for sample in samples if sample.get("validationErrors"))
+    missing_report_metric_failures = sum(
+        1
+        for sample in samples
+        if any(
+            sample.get(key) is None
+            for key in (
+                "reward",
+                "stateCompletionAccuracy",
+                "rq3ApplyMeanScore",
+                "totalTokens",
+                "costUsd",
+            )
+        )
+    )
     disallowed_tool_failures = sum(
         1
         for sample in samples
@@ -135,11 +157,17 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "fieldAccuracy": stats(accuracies),
         "stateCompletionAccuracy": stats(state_accuracies),
         "rq3ApplyMeanScore": stats(service_scores),
+        "inputTokens": stats(input_tokens),
+        "outputTokens": stats(output_tokens),
+        "totalTokens": stats(total_tokens),
+        "costUsd": stats(costs),
+        "costTotal": sum(costs) if costs else None,
         "passAtSamples": success_count > 0,
         "perfectSamples": success_count,
         "parseFailures": parse_failures,
         "metadataFailures": metadata_failures,
         "validationFailures": validation_failures,
+        "missingReportMetricFailures": missing_report_metric_failures,
         "disallowedToolFailures": disallowed_tool_failures,
         "policyFailures": policy_failures,
         "reasoningEfforts": reasoning_efforts,
@@ -173,6 +201,12 @@ def fmt_float(value: Any) -> str:
     return f"{value:.3f}"
 
 
+def fmt_cost(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    return f"${value:.4f}"
+
+
 def fmt_seconds(value: Any) -> str:
     if value is None:
         return "n/a"
@@ -187,8 +221,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail | Policy Fail |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | LLM State Mean | LLM Service Mean | Input Tok Mean | Output Tok Mean | Total Tok Mean | Cost Mean | Cost Total | Perfect Samples | Parse Fail | Metadata Fail | Missing Metric Fail | Artifact Fail | Tool Fail | Policy Fail |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -197,8 +231,12 @@ def markdown_report(payload: dict[str, Any]) -> str:
             accuracy = aggregate["fieldAccuracy"]
             state_accuracy = aggregate["stateCompletionAccuracy"]
             service_score = aggregate["rq3ApplyMeanScore"]
+            input_tokens = aggregate["inputTokens"]
+            output_tokens = aggregate["outputTokens"]
+            total_tokens = aggregate["totalTokens"]
+            cost = aggregate["costUsd"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} | {policy_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {input_tokens} | {output_tokens} | {total_tokens} | {cost_mean} | {cost_total} | {perfect} | {parse_fail} | {metadata_fail} | {missing_metric_fail} | {validation_fail} | {tool_fail} | {policy_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
@@ -212,9 +250,15 @@ def markdown_report(payload: dict[str, Any]) -> str:
                     acc_mean=fmt_float(accuracy["mean"]),
                     state_mean=fmt_float(state_accuracy["mean"]),
                     service_mean=fmt_float(service_score["mean"]),
+                    input_tokens=fmt_float(input_tokens["mean"]),
+                    output_tokens=fmt_float(output_tokens["mean"]),
+                    total_tokens=fmt_float(total_tokens["mean"]),
+                    cost_mean=fmt_cost(cost["mean"]),
+                    cost_total=fmt_cost(aggregate["costTotal"]),
                     perfect=aggregate["perfectSamples"],
                     parse_fail=aggregate["parseFailures"],
                     metadata_fail=aggregate["metadataFailures"],
+                    missing_metric_fail=aggregate["missingReportMetricFailures"],
                     validation_fail=aggregate["validationFailures"],
                     tool_fail=aggregate["disallowedToolFailures"],
                     policy_fail=aggregate["policyFailures"],
@@ -237,6 +281,15 @@ def main() -> int:
     )
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--allow-missing-report-metrics",
+        action="store_true",
+        help=(
+            "Emit aggregate output even when required metrics such as tokens, "
+            "cost, state mean, or service mean are missing. Use only for "
+            "debugging incomplete runs."
+        ),
+    )
     args = parser.parse_args()
 
     manifest = load_manifest(args.manifest) if args.manifest else None
@@ -260,6 +313,21 @@ def main() -> int:
     if args.json_output:
         args.json_output.parent.mkdir(parents=True, exist_ok=True)
         args.json_output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    missing_report_metric_failures = [
+        {
+            "taskId": task["taskId"],
+            "mode": arm["mode"],
+            "missingSamples": arm["aggregate"]["missingReportMetricFailures"],
+        }
+        for task in payload["tasks"]
+        for arm in task["arms"]
+        if arm["aggregate"]["missingReportMetricFailures"]
+    ]
+    if missing_report_metric_failures and not args.allow_missing_report_metrics:
+        raise SystemExit(
+            "ERROR missing required report metrics: "
+            + json.dumps(missing_report_metric_failures, sort_keys=True)
+        )
     return 0
 
 

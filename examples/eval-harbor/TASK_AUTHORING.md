@@ -158,12 +158,17 @@ Every experiment should record:
 | Dataset/tasks | Dataset name, task ids, source users, checkpoints, schedule |
 | Settings | Model, reasoning effort, web-search policy, timeout settings, judge model |
 | Runs | Arms, sample count, concurrency, failures/retries |
-| Metrics | Mean/std/min/max reward, accuracy, state reward, service reward |
+| Metrics | Mean/std/min/max reward, accuracy, LLM State Mean, LLM Service Mean, token usage, and cost |
 | Validation | Preflight status, post-run policy failures, parse/metadata failures |
 | Interpretation | What failed, whether failures are memory-related, limitations |
 
 Do not compare arms if the task, visible evidence, model, scorer, or validation
 status differs between arms.
+
+`Reward`, `LLM State Mean`, `LLM Service Mean`, `totalTokens`, and `costUsd`
+are mandatory for DynamicMem logbook entries. If any of these fields are
+missing, mark the run incomplete and rerun it. Do not paste partial results into
+the experiment logbook as if they were complete.
 
 ## Adding Another Dataset
 

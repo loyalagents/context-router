@@ -104,6 +104,126 @@ def count_list(value: Any) -> int:
     return 0
 
 
+def normalize_metric_key(value: str) -> str:
+    return "".join(char for char in value.lower() if char.isalnum())
+
+
+def as_number(value: Any) -> float | int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return value
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+def find_numeric_metric(payload: Any, aliases: set[str]) -> float | int | None:
+    normalized_aliases = {normalize_metric_key(alias) for alias in aliases}
+    stack = [payload]
+    while stack:
+        current = stack.pop(0)
+        if isinstance(current, dict):
+            for key, value in current.items():
+                if normalize_metric_key(str(key)) in normalized_aliases:
+                    number = as_number(value)
+                    if number is not None:
+                        return number
+                if isinstance(value, (dict, list)):
+                    stack.append(value)
+        elif isinstance(current, list):
+            stack.extend(item for item in current if isinstance(item, (dict, list)))
+    return None
+
+
+def extract_usage_metrics(result: dict[str, Any], score: dict[str, Any]) -> dict[str, Any]:
+    candidate_roots: list[Any] = [
+        result.get("usage"),
+        result.get("token_usage"),
+        result.get("usage_metrics"),
+        result.get("metrics"),
+        result.get("billing"),
+        result.get("agent_info"),
+        score.get("usage"),
+        score.get("tokenUsage"),
+        result,
+    ]
+
+    def find(aliases: set[str]) -> float | int | None:
+        for root in candidate_roots:
+            if root is None:
+                continue
+            value = find_numeric_metric(root, aliases)
+            if value is not None:
+                return value
+        return None
+
+    input_tokens = find(
+        {
+            "input_tokens",
+            "inputTokens",
+            "prompt_tokens",
+            "promptTokens",
+            "total_input_tokens",
+            "totalInputTokens",
+        }
+    )
+    output_tokens = find(
+        {
+            "output_tokens",
+            "outputTokens",
+            "completion_tokens",
+            "completionTokens",
+            "total_output_tokens",
+            "totalOutputTokens",
+        }
+    )
+    total_tokens = find(
+        {
+            "total_tokens",
+            "totalTokens",
+            "tokens_total",
+            "tokensTotal",
+        }
+    )
+    if total_tokens is None and input_tokens is not None and output_tokens is not None:
+        total_tokens = input_tokens + output_tokens
+    cost_usd = find(
+        {
+            "cost_usd",
+            "costUsd",
+            "total_cost_usd",
+            "totalCostUsd",
+            "estimated_cost_usd",
+            "estimatedCostUsd",
+            "total_cost",
+            "totalCost",
+        }
+    )
+    return {
+        "inputTokens": input_tokens,
+        "outputTokens": output_tokens,
+        "totalTokens": total_tokens,
+        "costUsd": cost_usd,
+    }
+
+
+def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
+    required = [
+        "reward",
+        "stateCompletionAccuracy",
+        "rq3ApplyMeanScore",
+        "totalTokens",
+        "costUsd",
+    ]
+    return [key for key in required if row.get(key) is None]
+
+
 def read_mcp_tools(trace_path: Path) -> list[str]:
     if not trace_path.exists():
         return []
@@ -591,8 +711,9 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     overfill_fields = score.get("overfillFields", [])
     metadata_errors = score.get("metadataErrors")
     metadata_count = count_list(metadata_errors) if isinstance(metadata_errors, list) else None
+    usage_metrics = extract_usage_metrics(result, score)
 
-    return {
+    row = {
         "mode": mode,
         "trialDir": str(trial_dir),
         "artifactRoot": str(artifact_root),
@@ -611,6 +732,10 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "verifierTimeoutSec": task_timeouts.get("verifierTimeoutSec"),
         "buildTimeoutSec": task_timeouts.get("buildTimeoutSec"),
         "runtimeSeconds": duration_seconds(result),
+        "inputTokens": usage_metrics["inputTokens"],
+        "outputTokens": usage_metrics["outputTokens"],
+        "totalTokens": usage_metrics["totalTokens"],
+        "costUsd": usage_metrics["costUsd"],
         "reward": reward,
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_success,
@@ -638,6 +763,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "disallowedToolCalls": disallowed_tool_calls,
         "validationErrors": validation_errors,
     }
+    return row
 
 
 def fmt_value(value: Any) -> str:
@@ -673,14 +799,22 @@ def fmt_timeout_triplet(row: dict[str, Any]) -> str:
     return f"{agent}/{verifier}/{build}"
 
 
+def fmt_cost(value: Any) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return f"${value:.4f}"
+    return str(value)
+
+
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reasoning Effort | Web Search | Timeout A/V/B (s) | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Policy Fail | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Web Search | Timeout A/V/B (s) | Reward | Field Accuracy | LLM State Mean | LLM Service Mean | Input Tok | Output Tok | Total Tok | Cost | Parse Failures | Metadata | Missing | Wrong | Overfill | Policy Fail | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {timeouts} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {policy_fail} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {timeouts} | {reward} | {field} | {state} | {service} | {input_tokens} | {output_tokens} | {total_tokens} | {cost} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {policy_fail} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
@@ -691,6 +825,10 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
                 field=fmt_value(row["fieldAccuracy"]),
                 state=fmt_value(row["stateCompletionAccuracy"]),
                 service=fmt_value(row["rq3ApplyMeanScore"]),
+                input_tokens=fmt_value(row["inputTokens"]),
+                output_tokens=fmt_value(row["outputTokens"]),
+                total_tokens=fmt_value(row["totalTokens"]),
+                cost=fmt_cost(row["costUsd"]),
                 parse_failures=row["parseFailures"],
                 metadata=fmt_value(row["metadataCount"]),
                 missing=row["missingCount"],
@@ -710,6 +848,9 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
     for row in rows:
         lines = [f"### {row['mode']}"]
         lines.append(f"- Trial: `{row['trialDir']}`")
+        missing_report_metrics = missing_required_report_metrics(row)
+        if missing_report_metrics:
+            lines.append(f"- Missing required report metrics: `{', '.join(missing_report_metrics)}`")
         if row["mcpTools"]:
             lines.append(f"- MCP tools: `{', '.join(row['mcpTools'])}`")
         if row["crPreferenceCount"] is not None:
@@ -781,6 +922,15 @@ def main() -> int:
         action="store_true",
         help="Emit a report but exit 0 even when required artifacts are invalid.",
     )
+    parser.add_argument(
+        "--allow-missing-report-metrics",
+        action="store_true",
+        help=(
+            "Emit a report even when required experiment metrics such as "
+            "tokens, cost, state mean, or service mean are missing. Use only "
+            "for debugging incomplete runs."
+        ),
+    )
     args = parser.parse_args()
 
     rows = [summarize_run(mode, path) for mode, path in args.run]
@@ -803,6 +953,18 @@ def main() -> int:
     has_validation_errors = any(row["validationErrors"] for row in rows)
     if has_validation_errors and not args.allow_invalid:
         print("error: one or more runs failed artifact validation", file=sys.stderr)
+        return 1
+    missing_report_metrics = {
+        row["mode"]: missing_required_report_metrics(row)
+        for row in rows
+        if missing_required_report_metrics(row)
+    }
+    if missing_report_metrics and not args.allow_missing_report_metrics:
+        print(
+            "error: one or more runs are missing required report metrics: "
+            f"{json.dumps(missing_report_metrics, sort_keys=True)}",
+            file=sys.stderr,
+        )
         return 1
     return 0
 
