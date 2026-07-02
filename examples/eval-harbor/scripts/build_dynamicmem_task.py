@@ -25,6 +25,8 @@ from trajectory_framework import (
     PATTERN_UPDATE_ONLY_THEN_FINAL,
     STAGE_KIND_DOWNSTREAM_TASK,
     STAGE_KIND_MEMORY_UPDATE,
+    STAGE_KIND_SERVICE_TASK,
+    STAGE_KIND_STATE_TASK,
     STAGE_PATTERNS,
     TrajectoryStage,
     parse_stage_schedule,
@@ -96,10 +98,13 @@ class BuildConfig:
         if self.stage_schedule is not None:
             if not self.stage_schedule:
                 raise ValueError("stage_schedule must not be empty")
-            invalid = [kind for kind in self.stage_schedule if kind not in {
+            valid_kinds = {
                 STAGE_KIND_MEMORY_UPDATE,
                 STAGE_KIND_DOWNSTREAM_TASK,
-            }]
+                STAGE_KIND_STATE_TASK,
+                STAGE_KIND_SERVICE_TASK,
+            }
+            invalid = [kind for kind in self.stage_schedule if kind not in valid_kinds]
             if invalid:
                 raise ValueError(f"unsupported stage_schedule kind(s): {invalid}")
 
@@ -183,6 +188,8 @@ APP_ROOT = Path("/app")
 CURRENT_STAGE = APP_ROOT / "current_stage"
 STAGE_LOG = APP_ROOT / "stage-log.jsonl"
 STAGE_URL = "http://stage-server:8765/next"
+PREDICTION_PATH = APP_ROOT / "outputs" / "prediction.json"
+SUBMISSIONS_ROOT = APP_ROOT / "outputs" / "submissions"
 
 
 def write_json(path, payload):
@@ -207,11 +214,78 @@ def fetch_next_stage():
         return json.loads(response.read().decode("utf-8"))
 
 
+def current_stage_metadata():
+    path = CURRENT_STAGE / "stage.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"Current stage metadata is invalid JSON: {error}") from error
+
+
+def prediction_checkpoint_ids():
+    if not PREDICTION_PATH.exists():
+        return set()
+    try:
+        payload = json.loads(PREDICTION_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()
+    predictions = payload.get("predictions") if isinstance(payload, dict) else None
+    if not isinstance(predictions, list):
+        return set()
+    return {
+        str(item.get("checkpoint_id") or "")
+        for item in predictions
+        if isinstance(item, dict)
+    }
+
+
+def ensure_current_stage_complete():
+    metadata = current_stage_metadata()
+    if not metadata:
+        return
+    kind = metadata.get("kind")
+    checkpoint_id = str(metadata.get("checkpointId") or "")
+    if not checkpoint_id:
+        return
+    if kind == "state-task":
+        required = SUBMISSIONS_ROOT / checkpoint_id / "state.json"
+        if not required.exists():
+            raise SystemExit(
+                "Cannot advance: current state-task has no valid submission. "
+                "Run `/app/submit_state <state.json>` and retry `/app/next_stage`."
+            )
+    elif kind == "service-task":
+        required = SUBMISSIONS_ROOT / checkpoint_id / "service.json"
+        if not required.exists():
+            raise SystemExit(
+                "Cannot advance: current service-task has no valid submission. "
+                "Run `/app/submit_service <service.json>` and retry `/app/next_stage`."
+            )
+    elif kind == "downstream-task":
+        if checkpoint_id not in prediction_checkpoint_ids():
+            raise SystemExit(
+                "Cannot advance: current downstream-task has no prediction for "
+                f"`{checkpoint_id}` in `/app/outputs/prediction.json`."
+            )
+
+
 def materialize_stage(stage):
     if CURRENT_STAGE.exists():
         shutil.rmtree(CURRENT_STAGE)
     CURRENT_STAGE.mkdir(parents=True, exist_ok=True)
 
+    write_json(
+        CURRENT_STAGE / "stage.json",
+        {
+            "stageId": stage["stageId"],
+            "stageIndex": stage["stageIndex"],
+            "kind": stage["kind"],
+            "checkpointId": stage.get("checkpointId"),
+            "checkpointIndex": stage.get("checkpointIndex"),
+        },
+    )
     write_text(CURRENT_STAGE / "instruction.md", stage["instruction"])
     for item in stage.get("files", []):
         rel_path = item["path"]
@@ -232,11 +306,14 @@ def materialize_stage(stage):
             "rawDocsVisible": (CURRENT_STAGE / "docs").exists(),
             "hasDocumentsJson": (CURRENT_STAGE / "documents.json").exists(),
             "hasDynamicMemTask": (CURRENT_STAGE / "dynamicmem-task.json").exists(),
+            "hasDynamicMemStateTask": (CURRENT_STAGE / "dynamicmem-state-task.json").exists(),
+            "hasDynamicMemServiceTask": (CURRENT_STAGE / "dynamicmem-service-task.json").exists(),
         }
     )
 
 
 def main():
+    ensure_current_stage_complete()
     try:
         payload = fetch_next_stage()
     except urllib.error.URLError as error:
@@ -254,6 +331,232 @@ def main():
     print(stage["instruction"])
     print()
     print("Stage files are under /app/current_stage.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+
+SUBMIT_STAGE_SCRIPT = """#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+APP_ROOT = Path("/app")
+CURRENT_STAGE = APP_ROOT / "current_stage"
+OUTPUTS = APP_ROOT / "outputs"
+PREDICTION_PATH = OUTPUTS / "prediction.json"
+SUBMISSIONS_ROOT = OUTPUTS / "submissions"
+
+
+def load_json(path):
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def write_json(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+
+
+def fail(message):
+    print(f"ERROR: {message}", file=sys.stderr)
+    return 2
+
+
+def helper_kind():
+    name = Path(sys.argv[0]).name
+    if name.endswith("submit_state"):
+        return "state"
+    if name.endswith("submit_service"):
+        return "service"
+    if len(sys.argv) >= 2 and sys.argv[1] in {"state", "service"}:
+        return sys.argv.pop(1)
+    raise SystemExit("ERROR: helper must be invoked as submit_state or submit_service")
+
+
+def current_stage():
+    path = CURRENT_STAGE / "stage.json"
+    if not path.exists():
+        raise SystemExit("ERROR: no current stage is active; run /app/next_stage first")
+    return load_json(path)
+
+
+def task_for(kind):
+    filename = "dynamicmem-state-task.json" if kind == "state" else "dynamicmem-service-task.json"
+    path = CURRENT_STAGE / filename
+    if not path.exists():
+        raise SystemExit(f"ERROR: current stage does not expose {filename}")
+    return load_json(path)
+
+
+def read_answer(path):
+    try:
+        payload = load_json(path)
+    except FileNotFoundError:
+        raise SystemExit(f"ERROR: answer file not found: {path}")
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: answer file is not valid JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise SystemExit("ERROR: answer file must contain a JSON object")
+    return payload
+
+
+def expected_state_keys(task):
+    return set(((task.get("state_completion") or {}).get("keys") or {}).keys())
+
+
+def expected_service_items(task):
+    expected = {}
+    keys = ((task.get("personalized_service") or {}).get("keys") or {})
+    for state_key, node in keys.items():
+        ids = set()
+        if isinstance(node, dict):
+            for item in node.get("items") or []:
+                if isinstance(item, dict) and item.get("qa_id") is not None:
+                    ids.add(str(item["qa_id"]))
+        expected[state_key] = ids
+    return expected
+
+
+def validate_state(payload, checkpoint_id, task):
+    allowed = {"checkpoint_id", "snapshot_state", "evidence"}
+    extra = sorted(set(payload) - allowed)
+    if extra:
+        return f"state answer has unexpected top-level keys: {extra}"
+    if payload.get("checkpoint_id") != checkpoint_id:
+        return f"expected checkpoint_id {checkpoint_id}, got {payload.get('checkpoint_id')!r}"
+    snapshot = payload.get("snapshot_state")
+    evidence = payload.get("evidence")
+    if not isinstance(snapshot, dict):
+        return "snapshot_state must be an object"
+    if evidence is not None and not isinstance(evidence, dict):
+        return "evidence must be an object when present"
+    missing = sorted(expected_state_keys(task) - set(snapshot))
+    if missing:
+        return f"snapshot_state missing required state keys: {missing[:12]}"
+    return None
+
+
+def validate_service(payload, checkpoint_id, task):
+    allowed = {"checkpoint_id", "rq3_apply_answers"}
+    extra = sorted(set(payload) - allowed)
+    if extra:
+        return f"service answer has unexpected top-level keys: {extra}"
+    if payload.get("checkpoint_id") != checkpoint_id:
+        return f"expected checkpoint_id {checkpoint_id}, got {payload.get('checkpoint_id')!r}"
+    answers = payload.get("rq3_apply_answers")
+    if not isinstance(answers, dict):
+        return "rq3_apply_answers must be an object"
+    for state_key, qa_ids in expected_service_items(task).items():
+        node = answers.get(state_key)
+        if not isinstance(node, dict):
+            return f"rq3_apply_answers missing state key {state_key}"
+        items = node.get("items")
+        if not isinstance(items, list):
+            return f"rq3_apply_answers[{state_key!r}].items must be a list"
+        actual_ids = {
+            str(item.get("qa_id") or "")
+            for item in items
+            if isinstance(item, dict)
+        }
+        missing = sorted(qa_ids - actual_ids)
+        if missing:
+            return f"rq3_apply_answers[{state_key!r}] missing qa_id(s): {missing}"
+        for item in items:
+            if not isinstance(item, dict):
+                return f"rq3_apply_answers[{state_key!r}].items must contain objects"
+            qa_id = str(item.get("qa_id") or "")
+            if qa_id in qa_ids and "answer" not in item:
+                return f"rq3_apply_answers[{state_key!r}] item {qa_id} missing answer"
+    return None
+
+
+def empty_prediction_root(task):
+    return {
+        "task_contract_version": task.get("task_contract_version"),
+        "research_frame_version": task.get("research_frame_version"),
+        "predictions": [],
+    }
+
+
+def load_prediction_root(task):
+    if not PREDICTION_PATH.exists():
+        return empty_prediction_root(task)
+    try:
+        payload = load_json(PREDICTION_PATH)
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: existing prediction.json is invalid JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise SystemExit("ERROR: existing prediction.json must contain a JSON object")
+    if not isinstance(payload.get("predictions"), list):
+        payload["predictions"] = []
+    payload.setdefault("task_contract_version", task.get("task_contract_version"))
+    payload.setdefault("research_frame_version", task.get("research_frame_version"))
+    return payload
+
+
+def checkpoint_prediction(root, checkpoint_id):
+    predictions = root.setdefault("predictions", [])
+    for item in predictions:
+        if isinstance(item, dict) and item.get("checkpoint_id") == checkpoint_id:
+            item.setdefault("snapshot_state", {})
+            item.setdefault("evidence", {})
+            item.setdefault("rq3_apply_answers", {})
+            return item
+    item = {
+        "checkpoint_id": checkpoint_id,
+        "snapshot_state": {},
+        "evidence": {},
+        "rq3_apply_answers": {},
+    }
+    predictions.append(item)
+    predictions.sort(key=lambda row: str(row.get("checkpoint_id") or ""))
+    return item
+
+
+def main():
+    kind = helper_kind()
+    answer_arg_index = 1
+    if len(sys.argv) <= answer_arg_index:
+        return fail(f"usage: /app/submit_{kind} <answer.json>")
+    answer_path = Path(sys.argv[answer_arg_index])
+    if not answer_path.is_absolute():
+        answer_path = Path.cwd() / answer_path
+
+    stage = current_stage()
+    expected_stage_kind = "state-task" if kind == "state" else "service-task"
+    if stage.get("kind") != expected_stage_kind:
+        return fail(f"submit_{kind} can only run in a {expected_stage_kind} stage, current stage is {stage.get('kind')!r}")
+    checkpoint_id = str(stage.get("checkpointId") or "")
+    if not checkpoint_id:
+        return fail("current stage has no checkpointId")
+
+    task = task_for(kind)
+    payload = read_answer(answer_path)
+    error = (
+        validate_state(payload, checkpoint_id, task)
+        if kind == "state"
+        else validate_service(payload, checkpoint_id, task)
+    )
+    if error:
+        return fail(error)
+
+    root = load_prediction_root(task)
+    prediction = checkpoint_prediction(root, checkpoint_id)
+    if kind == "state":
+        prediction["snapshot_state"] = payload["snapshot_state"]
+        prediction["evidence"] = payload.get("evidence") or {}
+    else:
+        prediction["rq3_apply_answers"] = payload["rq3_apply_answers"]
+
+    write_json(PREDICTION_PATH, root)
+    submission_path = SUBMISSIONS_ROOT / checkpoint_id / f"{kind}.json"
+    write_json(submission_path, payload)
+    print(f"OK: accepted {kind} submission for {checkpoint_id}")
+    print(f"Updated {PREDICTION_PATH}")
     return 0
 
 
@@ -527,6 +830,69 @@ def visible_dynamicmem_task(
     }
 
 
+def visible_dynamicmem_state_task(
+    checkpoint: dict[str, Any],
+    task_packs: dict[str, Any],
+    config: BuildConfig = DEFAULT_BUILD_CONFIG,
+) -> dict[str, Any]:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    return {
+        "schemaVersion": 1,
+        "taskId": config.task_id,
+        "sourceDataset": "xiewenya/dynamicmem",
+        "userId": task_packs.get("user_id"),
+        "task_contract_version": task_packs.get("task_contract_version"),
+        "research_frame_version": task_packs.get("research_frame_version"),
+        "checkpoint": {
+            "checkpoint_id": checkpoint_id,
+            "as_of": checkpoint.get("as_of"),
+        },
+        "output": {
+            "path": f"outputs/submissions/{checkpoint_id}/state.json",
+            "submit_helper": "/app/submit_state",
+            "retry_until_valid": True,
+            "current_checkpoint_id": checkpoint_id,
+            "contract": {
+                "checkpoint_id": checkpoint_id,
+                "snapshot_state": {},
+                "evidence": {},
+            },
+        },
+        "state_completion": sanitized_state_completion(checkpoint),
+    }
+
+
+def visible_dynamicmem_service_task(
+    checkpoint: dict[str, Any],
+    task_packs: dict[str, Any],
+    config: BuildConfig = DEFAULT_BUILD_CONFIG,
+) -> dict[str, Any]:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    return {
+        "schemaVersion": 1,
+        "taskId": config.task_id,
+        "sourceDataset": "xiewenya/dynamicmem",
+        "userId": task_packs.get("user_id"),
+        "task_contract_version": task_packs.get("task_contract_version"),
+        "research_frame_version": task_packs.get("research_frame_version"),
+        "checkpoint": {
+            "checkpoint_id": checkpoint_id,
+            "as_of": checkpoint.get("as_of"),
+        },
+        "output": {
+            "path": f"outputs/submissions/{checkpoint_id}/service.json",
+            "submit_helper": "/app/submit_service",
+            "retry_until_valid": True,
+            "current_checkpoint_id": checkpoint_id,
+            "contract": {
+                "checkpoint_id": checkpoint_id,
+                "rq3_apply_answers": {},
+            },
+        },
+        "personalized_service": sanitized_rq3_apply(checkpoint),
+    }
+
+
 @dataclass(frozen=True)
 class StagePlanItem:
     kind: str
@@ -559,7 +925,7 @@ def resolve_stage_plan(
     checkpoint_cursor = 0
     latest_spec: dict[str, Any] | None = None
     stage_plan: list[StagePlanItem] = []
-    scored_checkpoint_ids: set[str] = set()
+    task_parts_by_checkpoint_id: dict[str, set[str]] = {}
 
     for kind in schedule:
         if kind == STAGE_KIND_MEMORY_UPDATE:
@@ -569,9 +935,9 @@ def resolve_stage_plan(
             checkpoint_cursor += 1
             latest_spec = spec
             scores_checkpoint = False
-        elif kind == STAGE_KIND_DOWNSTREAM_TASK:
+        elif kind in {STAGE_KIND_DOWNSTREAM_TASK, STAGE_KIND_STATE_TASK, STAGE_KIND_SERVICE_TASK}:
             if latest_spec is None:
-                raise ValueError("stage schedule cannot reveal T before any U stage")
+                raise ValueError("stage schedule cannot reveal a task stage before any U stage")
             spec = latest_spec
             scores_checkpoint = True
         else:
@@ -579,25 +945,53 @@ def resolve_stage_plan(
 
         if scores_checkpoint:
             checkpoint_id = str(spec["checkpoint"].get("checkpoint_id") or "")
-            if checkpoint_id in scored_checkpoint_ids:
-                raise ValueError(f"stage schedule scores checkpoint more than once: {checkpoint_id}")
-            scored_checkpoint_ids.add(checkpoint_id)
+            parts = task_parts_by_checkpoint_id.setdefault(checkpoint_id, set())
+            if kind == STAGE_KIND_DOWNSTREAM_TASK:
+                if parts:
+                    raise ValueError(
+                        f"stage schedule mixes T with split S/A stages for checkpoint: {checkpoint_id}"
+                    )
+                parts.add("combined")
+            elif kind == STAGE_KIND_STATE_TASK:
+                if "combined" in parts or "state" in parts:
+                    raise ValueError(f"stage schedule repeats state task for checkpoint: {checkpoint_id}")
+                parts.add("state")
+            elif kind == STAGE_KIND_SERVICE_TASK:
+                if "combined" in parts or "service" in parts:
+                    raise ValueError(f"stage schedule repeats service task for checkpoint: {checkpoint_id}")
+                parts.add("service")
         stage_plan.append(StagePlanItem(kind=kind, spec=spec, scores_checkpoint=scores_checkpoint))
 
     if checkpoint_cursor != len(stage_specs):
         raise ValueError("stage schedule did not consume every selected checkpoint")
-    if not scored_checkpoint_ids:
-        raise ValueError("stage schedule must include at least one T scored checkpoint")
+    if not task_parts_by_checkpoint_id:
+        raise ValueError("stage schedule must include at least one scored task stage")
+    for checkpoint_id, parts in task_parts_by_checkpoint_id.items():
+        if "combined" not in parts and parts != {"state", "service"}:
+            raise ValueError(
+                "split DynamicMem task stages must include both S and A for "
+                f"checkpoint {checkpoint_id}; got {sorted(parts)}"
+            )
     if latest_spec is not None:
         latest_checkpoint_id = str(latest_spec["checkpoint"].get("checkpoint_id") or "")
-        if latest_checkpoint_id not in scored_checkpoint_ids:
+        if latest_checkpoint_id not in task_parts_by_checkpoint_id:
             raise ValueError("stage schedule must score the final updated checkpoint")
 
     return stage_plan
 
 
 def scored_specs_from_stage_plan(stage_plan: list[StagePlanItem]) -> list[dict[str, Any]]:
-    return [item.spec for item in stage_plan if item.scores_checkpoint]
+    scored: list[dict[str, Any]] = []
+    seen_checkpoint_ids: set[str] = set()
+    for item in stage_plan:
+        if not item.scores_checkpoint:
+            continue
+        checkpoint_id = str(item.spec["checkpoint"].get("checkpoint_id") or "")
+        if checkpoint_id in seen_checkpoint_ids:
+            continue
+        seen_checkpoint_ids.add(checkpoint_id)
+        scored.append(item.spec)
+    return scored
 
 
 def hidden_benchmark(task_packs: dict[str, Any], checkpoints: list[dict[str, Any]]) -> dict[str, Any]:
@@ -637,6 +1031,8 @@ def build_difficulty(
     agent_tasks = {
         STAGE_KIND_MEMORY_UPDATE: "Ingest new raw DynamicMem app-log delta and update retained memory only.",
         STAGE_KIND_DOWNSTREAM_TASK: "Answer the downstream DynamicMem checkpoint task using retained memory.",
+        STAGE_KIND_STATE_TASK: "Submit the DynamicMem state snapshot for the current checkpoint using retained memory.",
+        STAGE_KIND_SERVICE_TASK: "Submit the DynamicMem personalized-service answers for the current checkpoint using retained memory.",
     }
     for stage in stage_payload["stages"]:
         files = stage.get("files", [])
@@ -685,10 +1081,19 @@ def build_difficulty(
         for task in visible_tasks
     ]
     kind_sequence = [stage["kind"] for stage in stages]
+    task_stage_kinds = {
+        STAGE_KIND_DOWNSTREAM_TASK,
+        STAGE_KIND_STATE_TASK,
+        STAGE_KIND_SERVICE_TASK,
+    }
+    first_task_index = next(
+        (index for index, kind in enumerate(kind_sequence) if kind in task_stage_kinds),
+        None,
+    )
     is_memory_final = (
-        len(kind_sequence) >= 2
-        and kind_sequence[:-1] == [STAGE_KIND_MEMORY_UPDATE] * (len(kind_sequence) - 1)
-        and kind_sequence[-1] == STAGE_KIND_DOWNSTREAM_TASK
+        first_task_index is not None
+        and all(kind == STAGE_KIND_MEMORY_UPDATE for kind in kind_sequence[:first_task_index])
+        and all(kind in task_stage_kinds for kind in kind_sequence[first_task_index:])
     )
     return {
         "schemaVersion": 1,
@@ -719,6 +1124,9 @@ def build_difficulty(
                 for stage in stages
                 if stage["kind"] == STAGE_KIND_DOWNSTREAM_TASK
             ),
+            "stateTaskStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_STATE_TASK),
+            "serviceTaskStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_SERVICE_TASK),
+            "taskStageCount": sum(1 for stage in stages if stage["kind"] in task_stage_kinds),
             "sourceCheckpointCount": len(checkpoints),
             "scoredCheckpointCount": len(visible_tasks),
             "checkpointCount": len(visible_tasks),
@@ -746,10 +1154,8 @@ def build_difficulty(
             "customStageSchedule": config.stage_schedule is not None,
             "hiddenFutureCheckpoints": True,
             "hiddenDownstreamUntilFinalStage": is_memory_final,
-            "interleavedDownstreamTasks": any(
-                kind == STAGE_KIND_DOWNSTREAM_TASK
-                for kind in kind_sequence[:-1]
-            ),
+            "interleavedDownstreamTasks": not is_memory_final,
+            "splitStateAndServiceTasks": any(kind in {STAGE_KIND_STATE_TASK, STAGE_KIND_SERVICE_TASK} for kind in kind_sequence),
             "nativeStateCompletion": True,
             "nativePersonalizedService": True,
             "deltaRawCheckpointHistory": True,
@@ -787,6 +1193,12 @@ def build_stage_payload(
         elif item.kind == STAGE_KIND_DOWNSTREAM_TASK:
             instruction = render_downstream_task_stage_instruction(index, total_stages, checkpoint)
             files = [{"path": "dynamicmem-task.json", "json": visible_task}]
+        elif item.kind == STAGE_KIND_STATE_TASK:
+            instruction = render_state_task_stage_instruction(index, total_stages, checkpoint)
+            files = [{"path": "dynamicmem-state-task.json", "json": spec["visibleStateTask"]}]
+        elif item.kind == STAGE_KIND_SERVICE_TASK:
+            instruction = render_service_task_stage_instruction(index, total_stages, checkpoint)
+            files = [{"path": "dynamicmem-service-task.json", "json": spec["visibleServiceTask"]}]
         else:
             raise ValueError(f"unsupported stage schedule kind: {item.kind}")
         stages.append(
@@ -824,19 +1236,32 @@ The generated stage schedule is:
 {config.stage_contract_display}
 ```
 """.rstrip()
-    stage_contract = """Stages can have two roles:
+    stage_contract = """Stages can have four roles:
 
 - `memory-update`: read only the newly revealed raw app-log delta and update the
   memory/state allowed by the selected eval mode. Do not create or modify
   `outputs/prediction.json` in these stages.
 - `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
-  and answer using retained memory from earlier stages."""
+  and answer both DynamicMem task families using retained memory from earlier
+  stages. This is the legacy combined `T` task.
+- `state-task`: no source logs are revealed. Read
+  `dynamicmem-state-task.json`, write a state answer JSON, and submit it with
+  `/app/submit_state`. Retry until the helper prints `OK`.
+- `service-task`: no source logs are revealed. Read
+  `dynamicmem-service-task.json`, write a service answer JSON, and submit it
+  with `/app/submit_service`. Retry until the helper prints `OK`."""
     steps = """1. Run `/app/next_stage` to reveal the next stage.
 2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
    update only the allowed memory/state.
 3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
    `outputs/prediction.json`.
-4. Repeat until `/app/next_stage` says no more stages are available."""
+4. If the stage is `state-task`, read `dynamicmem-state-task.json`, write a
+   candidate JSON, then run `/app/submit_state <candidate.json>`. If validation
+   fails, fix the candidate and retry until it is accepted.
+5. If the stage is `service-task`, read `dynamicmem-service-task.json`, write a
+   candidate JSON, then run `/app/submit_service <candidate.json>`. If
+   validation fails, fix the candidate and retry until it is accepted.
+6. Repeat until `/app/next_stage` says no more stages are available."""
     schedule_section = f"\n\n{schedule_block}" if schedule_block else ""
     return f"""This is a continuous-session Harbor staged-memory task backed by DynamicMem.
 
@@ -854,8 +1279,8 @@ source files.
 
 Do not preserve raw stage documents for later stages by copying them into
 scratch files, summaries, caches, or hidden memory files. A downstream-task stage
-is closed-book with respect to raw app-log documents: use only the currently
-revealed `dynamicmem-task.json`, the conversation context, and the memory
+or split task stage is closed-book with respect to raw app-log documents: use
+only the currently revealed task JSON, the conversation context, and the memory
 substrate allowed by the selected eval mode.
 """
 
@@ -958,11 +1383,104 @@ assistant message string.
 """
 
 
+def render_state_task_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
+    return f"""You are working in `/app`.
+
+This is stage {step} of {total_steps}. It is a DynamicMem state-task stage.
+
+Read:
+
+- `current_stage/dynamicmem-state-task.json`
+
+No raw app-log documents are revealed in this stage. Use only retained memory,
+conversation context, or the memory substrate allowed by the selected eval mode.
+
+Create a candidate JSON file with this exact top-level shape:
+
+```json
+{{
+  "checkpoint_id": "{checkpoint_id}",
+  "snapshot_state": {{}},
+  "evidence": {{}}
+}}
+```
+
+Fill every key listed under `state_completion.keys` for checkpoint
+`{checkpoint_id}` as of `{timestamp}`. Then submit it:
+
+```bash
+/app/submit_state <candidate.json>
+```
+
+If the helper prints `ERROR`, fix the candidate and rerun `/app/submit_state`.
+Do not run `/app/next_stage` until `/app/submit_state` prints `OK`.
+"""
+
+
+def render_service_task_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
+    checkpoint_id = checkpoint.get("checkpoint_id")
+    timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
+    return f"""You are working in `/app`.
+
+This is stage {step} of {total_steps}. It is a DynamicMem service-task stage.
+
+Read:
+
+- `current_stage/dynamicmem-service-task.json`
+
+No raw app-log documents are revealed in this stage. Use only retained memory,
+conversation context, or the memory substrate allowed by the selected eval mode.
+
+Create a candidate JSON file with this exact top-level shape:
+
+```json
+{{
+  "checkpoint_id": "{checkpoint_id}",
+  "rq3_apply_answers": {{}}
+}}
+```
+
+Answer every item under `personalized_service.keys` for checkpoint
+`{checkpoint_id}` as of `{timestamp}`. Then submit it:
+
+```bash
+/app/submit_service <candidate.json>
+```
+
+For `rq3_apply_answers`, use this shape per state key:
+
+```json
+{{
+  "items": [
+    {{
+      "qa_id": "q1",
+      "service_family": "user_communication",
+      "answer": "...",
+      "evidence": [
+        {{"app_log_id": "log_00001", "evidence_content": "short support"}}
+      ]
+    }}
+  ]
+}}
+```
+
+For structured service items, `answer` must be an object matching the visible
+`output_template`. For `user_communication`, `answer` should be a specific
+assistant message string.
+
+If the helper prints `ERROR`, fix the candidate and rerun `/app/submit_service`.
+Do not run `/app/next_stage` until `/app/submit_service` prints `OK`.
+"""
+
+
 def render_task_toml(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
     return f"""schema_version = "1.3"
 
 artifacts = [
   "/app/outputs/prediction.json",
+  "/app/outputs/submissions",
   "/app/stage-log.jsonl",
 ]
 
@@ -1945,7 +2463,8 @@ def render_soundness_report(
         "- Harbor is only the runner.",
         f"- Stage contract: `{config.stage_contract_display}`.",
         "- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.",
-        "- `downstream-task` stages reveal native queries without raw documents and score retained memory use.",
+        "- `state-task` and `service-task` stages reveal split native queries without raw documents and score retained memory use.",
+        "- `downstream-task` is retained only as the legacy combined state+service task stage.",
         "- Hidden expected files preserve the scored upstream checkpoint task packs.",
         "- Agent-visible task files remove reference answers, reference outputs, scoring points, and gold evidence ids.",
         "",
@@ -2041,6 +2560,8 @@ def build_task(
                 "checkpoint": checkpoint,
                 "logs": delta_logs,
                 "visibleTask": visible_task,
+                "visibleStateTask": visible_dynamicmem_state_task(checkpoint, task_packs, config),
+                "visibleServiceTask": visible_dynamicmem_service_task(checkpoint, task_packs, config),
             }
         )
 
@@ -2072,9 +2593,12 @@ def build_task(
         "FROM python:3.12-slim\n\n"
         "WORKDIR /app\n\n"
         "COPY workspace/ /app/\n\n"
-        "RUN chmod +x /app/next_stage && mkdir -p /app/outputs\n",
+        "RUN chmod +x /app/next_stage /app/submit_state /app/submit_service "
+        "&& mkdir -p /app/outputs/submissions\n",
     )
     write_text(workspace / "next_stage", NEXT_STAGE_SCRIPT, executable=True)
+    write_text(workspace / "submit_state", SUBMIT_STAGE_SCRIPT, executable=True)
+    write_text(workspace / "submit_service", SUBMIT_STAGE_SCRIPT, executable=True)
     write_json(task_dir / "stages" / "payload.json", stage_payload)
 
     write_text(task_dir / "instruction.md", render_instruction(config))
@@ -2101,9 +2625,13 @@ checkpoint content:
 
 - raw `app_log_large.json` entries are revealed as chronological checkpoint deltas;
 - hidden expected files store the upstream checkpoint task packs for the full trajectory;
-- each visible stage exposes sanitized State Completion and Personalized
-  Service queries for that checkpoint;
-- the agent writes upstream-compatible `outputs/prediction.json`.
+- split `S/A` task stages expose sanitized State Completion and Personalized
+  Service queries separately and require `/app/submit_state` or
+  `/app/submit_service` validation before advancing;
+- legacy `T` stages expose the combined State Completion and Personalized
+  Service task for that checkpoint;
+- accepted split submissions are merged into upstream-compatible
+  `outputs/prediction.json`.
 
 Source user: `{config.source_user_dir}` / `{config.source_user_id}`
 Checkpoint trajectory: `{', '.join(str(index) for index, _ in selected)}`
@@ -2279,8 +2807,8 @@ def main() -> int:
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U and T tokens, for example "
-            "'U,U,T,U,T'. When set, this overrides --stage-pattern."
+            "Custom staged trajectory using U/S/A/T tokens, for example "
+            "'U,U,S,A' or legacy 'U,T'. When set, this overrides --stage-pattern."
         ),
     )
     args = parser.parse_args()

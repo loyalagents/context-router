@@ -28,10 +28,12 @@ The shared stage vocabulary lives in `scripts/trajectory_framework.py`.
 | Token | Stage kind | Agent action |
 | --- | --- | --- |
 | `U` | `memory-update` | Read newly revealed docs/events and update memory |
-| `T` | `downstream-task` | Answer from retained memory; no raw docs are revealed |
+| `S` | `state-task` | Submit the state snapshot from retained memory |
+| `A` | `service-task` | Submit personalized-service answers from retained memory |
+| `T` | `downstream-task` | Legacy combined state+service task; no raw docs are revealed |
 
-Supported shapes include `U -> T`, `U -> T -> U -> T`,
-`U -> U -> T`, and `U -> U -> U -> U -> T`.
+Supported shapes include `U -> S -> A`, `U -> S -> A -> U -> S -> A`,
+`U -> U -> S -> A`, `U -> U -> U -> U -> S -> A`, and legacy `U -> T`.
 
 ## Runtime Flow
 
@@ -46,14 +48,17 @@ flowchart LR
 
   Stage -->|"U: new docs/events"| Agent
   Agent -->|"update"| Memory
-  Stage -->|"T: downstream task only"| Agent
+  Stage -->|"S/A/T: close-book task only"| Agent
   Memory -->|"retrieve/use"| Agent
   Agent --> Output
 ```
 
 The stage server reveals one stage at a time through `/app/next_stage`.
 `U` stages expose only the new delta since the previous selected checkpoint.
-`T` stages expose the downstream task but not the source docs.
+`S`, `A`, and legacy `T` stages expose task files but not the source docs.
+For DynamicMem, `S/A` is the preferred path because the submit helpers validate
+that the current stage answer covers the expected keys/items before the stage
+server can advance.
 
 The whole trajectory runs in one continuous agent session. If the arm is
 `context-only`, the only retained state is the live conversation. If the arm is
@@ -66,7 +71,7 @@ Every valid task must satisfy:
 
 - hidden truth stays under `tests/expected`;
 - staged payloads and raw source metadata are not agent-readable;
-- downstream `T` stages do not expose docs or `documents.json`;
+- task stages (`S`, `A`, and legacy `T`) do not expose docs or `documents.json`;
 - `web_search` is disabled unless an experiment explicitly changes that;
 - mode policies are enforced by both prompt instructions and validators;
 - post-run validation rejects hidden path reads and disallowed durable writes.
@@ -79,7 +84,7 @@ Dataset adapters translate external benchmarks into the shared staged contract.
 They should emit:
 
 - a Harbor task directory;
-- staged payload with ordered `U` and `T` stages;
+- staged payload with ordered `U`, `S`, `A`, and optional legacy `T` stages;
 - hidden expected data for the verifier;
 - one job per arm;
 - a suite manifest with source metadata, selected users/checkpoints, model,
@@ -92,7 +97,7 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user008 \
   --checkpoint-indices 0-1 \
-  --stage-schedule U,U,T
+  --stage-schedule U,U,S,A
 ```
 
 DynamicMem is the first adapter. Future datasets should plug into the same

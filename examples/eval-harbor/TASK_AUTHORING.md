@@ -10,7 +10,8 @@ Current tasks should focus on background information management:
 
 1. New documents or events arrive over time.
 2. The agent updates memory without necessarily knowing the future task.
-3. A downstream `T` stage later asks for an answer from retained memory.
+3. Split downstream stages later ask for state and service answers from retained
+   memory.
 4. The same task, scorer, model, and settings run across `context-only`,
    `markdown`, and `cr-mcp`.
 
@@ -25,19 +26,24 @@ Use the shared tokens:
 | Token | Meaning |
 | --- | --- |
 | `U` | Update memory from new docs/events; no score |
-| `T` | Answer a downstream task from retained memory; scored |
+| `S` | Submit the state snapshot from retained memory; scored with `A` |
+| `A` | Submit personalized-service answers from retained memory; scored with `S` |
+| `T` | Legacy combined state+service task from retained memory; scored |
 
 Common schedules:
 
 | Goal | CLI settings |
 | --- | --- |
-| One checkpoint smoke test | `--checkpoint-indices 0 --stage-schedule U,T` |
-| Interleaved probes | `--checkpoint-indices 0-1 --stage-schedule U,T,U,T` |
-| Hidden final task | `--checkpoint-indices 0-1 --stage-schedule U,U,T` |
-| Long background memory | `--checkpoint-indices 0-3 --stage-schedule U,U,U,U,T` |
+| One checkpoint smoke test | `--checkpoint-indices 0 --stage-schedule U,S,A` |
+| Interleaved probes | `--checkpoint-indices 0-1 --stage-schedule U,S,A,U,S,A` |
+| Hidden final task | `--checkpoint-indices 0-1 --stage-schedule U,U,S,A` |
+| Long background memory | `--checkpoint-indices 0-3 --stage-schedule U,U,U,U,S,A` |
 
-`U` consumes one selected checkpoint. `T` consumes no new checkpoint; it asks the
-downstream task for the most recently updated checkpoint.
+`U` consumes one selected checkpoint. `S`, `A`, and `T` consume no new
+checkpoint; they ask task questions for the most recently updated checkpoint.
+For new DynamicMem tasks, prefer `S/A` over legacy `T`. The generated
+`/app/submit_state` and `/app/submit_service` helpers reject malformed or
+incomplete stage submissions, so the agent must retry before it can advance.
 
 ## DynamicMem Task Creation
 
@@ -48,7 +54,7 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user008 \
   --checkpoint-indices 0 \
-  --stage-schedule U,T \
+  --stage-schedule U,S,A \
   --model gpt-5.5 \
   --reasoning-effort medium \
   --codex-web-search disabled \
@@ -89,7 +95,7 @@ the verifier accepts vague summaries.
 Before running expensive live agents, confirm:
 
 - generated stage events reconstruct the original source logs;
-- `T` stages do not expose docs or `documents.json`;
+- task stages (`S`, `A`, and legacy `T`) do not expose docs or `documents.json`;
 - hidden expected data stays under `tests/expected`;
 - no hidden paths are mentioned in visible instructions;
 - jobs set `web_search: disabled`;

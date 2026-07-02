@@ -11,6 +11,8 @@ from typing import Any
 from trajectory_framework import (
     STAGE_KIND_DOWNSTREAM_TASK,
     STAGE_KIND_MEMORY_UPDATE,
+    STAGE_KIND_SERVICE_TASK,
+    STAGE_KIND_STATE_TASK,
 )
 
 
@@ -235,9 +237,14 @@ def validate_native_stage_contract(
         return errors
 
     actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
-    allowed_kinds = {STAGE_KIND_MEMORY_UPDATE, STAGE_KIND_DOWNSTREAM_TASK}
+    task_kinds = {
+        STAGE_KIND_DOWNSTREAM_TASK,
+        STAGE_KIND_STATE_TASK,
+        STAGE_KIND_SERVICE_TASK,
+    }
+    allowed_kinds = {STAGE_KIND_MEMORY_UPDATE, *task_kinds}
     is_custom_valid = bool(actual_kinds) and all(kind in allowed_kinds for kind in actual_kinds) and (
-        STAGE_KIND_DOWNSTREAM_TASK in actual_kinds
+        any(kind in task_kinds for kind in actual_kinds)
     )
     if not is_custom_valid:
         errors.append(f"{task_id}: DynamicMem stage kind pattern mismatch: {actual_kinds}")
@@ -249,9 +256,9 @@ def validate_native_stage_contract(
         checkpoint_id = str(stage.get("checkpointId") or "")
         if kind == STAGE_KIND_MEMORY_UPDATE and checkpoint_id:
             updated_checkpoint_ids.add(checkpoint_id)
-        if kind == STAGE_KIND_DOWNSTREAM_TASK and checkpoint_id not in updated_checkpoint_ids:
+        if kind in task_kinds and checkpoint_id not in updated_checkpoint_ids:
             errors.append(
-                f"{task_id}: downstream-task stage appears before update for checkpoint {checkpoint_id}"
+                f"{task_id}: task stage appears before update for checkpoint {checkpoint_id}"
             )
 
     raw_logs = native_raw_log_items(staged)
@@ -278,26 +285,84 @@ def validate_native_stage_contract(
         checkpoint.get("checkpoint_id")
         for checkpoint in checkpoints
     ]
-    seen_checkpoint_ids = []
+    seen_task_parts_by_checkpoint_id: dict[str, set[str]] = {}
     for stage, item in native_stage_files(staged):
+        kind = stage.get("kind")
+        path = item.get("path")
+        if kind in task_kinds and isinstance(path, str) and path.startswith("docs/"):
+            errors.append(f"{task_id}: task stage exposes raw docs")
+        if kind in task_kinds and path == "documents.json":
+            errors.append(f"{task_id}: task stage exposes documents.json")
+        if kind == STAGE_KIND_MEMORY_UPDATE and path in {
+            "dynamicmem-task.json",
+            "dynamicmem-state-task.json",
+            "dynamicmem-service-task.json",
+        }:
+            errors.append(f"{task_id}: memory-update stage exposes {path}")
+
         if item.get("path") == "dynamicmem-task.json":
             if stage.get("kind") != STAGE_KIND_DOWNSTREAM_TASK:
                 errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream-task stages")
             payload = item.get("json")
             checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
-            seen_checkpoint_ids.append(checkpoint_id)
+            seen_task_parts_by_checkpoint_id.setdefault(str(checkpoint_id), set()).add("combined")
             if payload != visible_by_checkpoint_id.get(checkpoint_id):
                 errors.append(f"{task_id}: staged dynamicmem-task.json does not match visible-tasks.json for {checkpoint_id}")
-        if stage.get("kind") == STAGE_KIND_MEMORY_UPDATE and item.get("path") == "dynamicmem-task.json":
-            errors.append(f"{task_id}: memory-update stage exposes dynamicmem-task.json")
-        if stage.get("kind") == STAGE_KIND_DOWNSTREAM_TASK and isinstance(item.get("path"), str) and item["path"].startswith("docs/"):
-            errors.append(f"{task_id}: downstream-task stage exposes raw docs")
-        if stage.get("kind") == STAGE_KIND_DOWNSTREAM_TASK and item.get("path") == "documents.json":
-            errors.append(f"{task_id}: downstream-task stage exposes documents.json")
-    if seen_checkpoint_ids != expected_checkpoint_ids:
+        if item.get("path") == "dynamicmem-state-task.json":
+            if stage.get("kind") != STAGE_KIND_STATE_TASK:
+                errors.append(f"{task_id}: dynamicmem-state-task.json must appear only in state-task stages")
+            payload = item.get("json")
+            checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
+            visible_task = visible_by_checkpoint_id.get(checkpoint_id)
+            seen_task_parts_by_checkpoint_id.setdefault(str(checkpoint_id), set()).add("state")
+            if not isinstance(payload, dict):
+                errors.append(f"{task_id}: staged dynamicmem-state-task.json must be a JSON object")
+            elif not isinstance(visible_task, dict):
+                errors.append(f"{task_id}: staged dynamicmem-state-task.json has unknown checkpoint {checkpoint_id}")
+            else:
+                if "personalized_service" in payload:
+                    errors.append(f"{task_id}: state-task payload must not expose personalized_service")
+                expected_keys = set(((visible_task.get("state_completion") or {}).get("keys") or {}))
+                actual_keys = set(((payload.get("state_completion") or {}).get("keys") or {}))
+                if actual_keys != expected_keys:
+                    errors.append(f"{task_id}: state-task state_completion keys mismatch for {checkpoint_id}")
+        if item.get("path") == "dynamicmem-service-task.json":
+            if stage.get("kind") != STAGE_KIND_SERVICE_TASK:
+                errors.append(f"{task_id}: dynamicmem-service-task.json must appear only in service-task stages")
+            payload = item.get("json")
+            checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
+            visible_task = visible_by_checkpoint_id.get(checkpoint_id)
+            seen_task_parts_by_checkpoint_id.setdefault(str(checkpoint_id), set()).add("service")
+            if not isinstance(payload, dict):
+                errors.append(f"{task_id}: staged dynamicmem-service-task.json must be a JSON object")
+            elif not isinstance(visible_task, dict):
+                errors.append(f"{task_id}: staged dynamicmem-service-task.json has unknown checkpoint {checkpoint_id}")
+            else:
+                if "state_completion" in payload:
+                    errors.append(f"{task_id}: service-task payload must not expose state_completion")
+                expected_keys = set(((visible_task.get("personalized_service") or {}).get("keys") or {}))
+                actual_keys = set(((payload.get("personalized_service") or {}).get("keys") or {}))
+                if actual_keys != expected_keys:
+                    errors.append(f"{task_id}: service-task personalized_service keys mismatch for {checkpoint_id}")
+
+    completed_checkpoint_ids = []
+    for checkpoint_id in expected_checkpoint_ids:
+        parts = seen_task_parts_by_checkpoint_id.get(str(checkpoint_id), set())
+        if "combined" in parts:
+            if len(parts) > 1:
+                errors.append(f"{task_id}: checkpoint {checkpoint_id} mixes combined and split task stages")
+            completed_checkpoint_ids.append(checkpoint_id)
+        elif parts == {"state", "service"}:
+            completed_checkpoint_ids.append(checkpoint_id)
+        elif parts:
+            errors.append(f"{task_id}: checkpoint {checkpoint_id} has incomplete split task stages: {sorted(parts)}")
+    extra_checkpoint_ids = sorted(set(seen_task_parts_by_checkpoint_id) - {str(item) for item in expected_checkpoint_ids})
+    if extra_checkpoint_ids:
+        errors.append(f"{task_id}: DynamicMem task exposes unexpected checkpoint ids {extra_checkpoint_ids}")
+    if completed_checkpoint_ids != expected_checkpoint_ids:
         errors.append(
             f"{task_id}: DynamicMem task checkpoint exposure mismatch "
-            f"expected={expected_checkpoint_ids} actual={seen_checkpoint_ids}"
+            f"expected={expected_checkpoint_ids} actual={completed_checkpoint_ids}"
         )
 
     totals = difficulty.get("totals", {})
@@ -316,6 +381,12 @@ def validate_native_stage_contract(
     expected_downstream_count = actual_kinds.count(STAGE_KIND_DOWNSTREAM_TASK)
     if totals.get("downstreamStageCount") != expected_downstream_count:
         errors.append(f"{task_id}: difficulty downstreamStageCount mismatch")
+    if totals.get("stateTaskStageCount") != actual_kinds.count(STAGE_KIND_STATE_TASK):
+        errors.append(f"{task_id}: difficulty stateTaskStageCount mismatch")
+    if totals.get("serviceTaskStageCount") != actual_kinds.count(STAGE_KIND_SERVICE_TASK):
+        errors.append(f"{task_id}: difficulty serviceTaskStageCount mismatch")
+    if totals.get("taskStageCount") != sum(1 for kind in actual_kinds if kind in task_kinds):
+        errors.append(f"{task_id}: difficulty taskStageCount mismatch")
     return errors
 
 

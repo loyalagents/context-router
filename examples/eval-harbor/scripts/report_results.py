@@ -447,6 +447,7 @@ def stage_policy_violations(
 ) -> list[dict[str, Any]]:
     violations: list[dict[str, Any]] = []
     revealed_entries = [entry for entry in stage_log if entry.get("done") is not True]
+    task_stage_kinds = {"downstream-task", "state-task", "service-task"}
     for expected_index, entry in enumerate(revealed_entries, start=1):
         if entry.get("stageIndex") != expected_index:
             violations.append(
@@ -457,30 +458,47 @@ def stage_policy_violations(
                     "actualStageIndex": entry.get("stageIndex"),
                 }
             )
-        if entry.get("kind") != "downstream-task":
+        kind = entry.get("kind")
+        if kind not in task_stage_kinds:
             continue
         if entry.get("rawDocsVisible") is True:
             violations.append(
                 {
-                    "type": "downstream_raw_docs_visible",
+                    "type": "task_stage_raw_docs_visible",
                     "stageId": entry.get("stageId"),
-                    "reason": "downstream-task stage revealed current_stage/docs",
+                    "reason": f"{kind} stage revealed current_stage/docs",
                 }
             )
         if entry.get("hasDocumentsJson") is True:
             violations.append(
                 {
-                    "type": "downstream_documents_index_visible",
+                    "type": "task_stage_documents_index_visible",
                     "stageId": entry.get("stageId"),
-                    "reason": "downstream-task stage revealed current_stage/documents.json",
+                    "reason": f"{kind} stage revealed current_stage/documents.json",
                 }
             )
-        if "hasDynamicMemTask" in entry and entry.get("hasDynamicMemTask") is not True:
+        if kind == "downstream-task" and "hasDynamicMemTask" in entry and entry.get("hasDynamicMemTask") is not True:
             violations.append(
                 {
                     "type": "downstream_task_missing",
                     "stageId": entry.get("stageId"),
                     "reason": "downstream-task stage did not reveal dynamicmem-task.json",
+                }
+            )
+        if kind == "state-task" and "hasDynamicMemStateTask" in entry and entry.get("hasDynamicMemStateTask") is not True:
+            violations.append(
+                {
+                    "type": "state_task_missing",
+                    "stageId": entry.get("stageId"),
+                    "reason": "state-task stage did not reveal dynamicmem-state-task.json",
+                }
+            )
+        if kind == "service-task" and "hasDynamicMemServiceTask" in entry and entry.get("hasDynamicMemServiceTask") is not True:
+            violations.append(
+                {
+                    "type": "service_task_missing",
+                    "stageId": entry.get("stageId"),
+                    "reason": "service-task stage did not reveal dynamicmem-service-task.json",
                 }
             )
     if expected_stage_sequence is not None and expected_stage_sequence:

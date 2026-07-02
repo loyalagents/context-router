@@ -201,7 +201,8 @@ def plan_user_tasks(
             stage_schedule=stage_schedule,
         ),
     )
-    scored_checkpoints = [item.spec["checkpoint"] for item in stage_plan if item.scores_checkpoint]
+    scored_specs = builder.scored_specs_from_stage_plan(stage_plan)
+    scored_checkpoints = [spec["checkpoint"] for spec in scored_specs]
     state_keys_seen: set[str] = set()
     state_key_count = 0
     rq_key_count_total = 0
@@ -339,7 +340,7 @@ def write_suite_manifest(
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
                 "Harbor replaces only the runner. Each generated task adapts one "
-                "DynamicMem user checkpoint trajectory into the shared U/T staged "
+                "DynamicMem user checkpoint trajectory into the shared U/S/A/T staged "
                 "contract, preserving raw app-log deltas, state_completion_pack, "
                 "rq3_apply_service_qa, and the upstream prediction contract."
             ),
@@ -550,8 +551,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U and T tokens, for example "
-            "'U,U,T,U,T'. When set, this overrides --stage-pattern."
+            "Custom staged trajectory using U/S/A/T tokens, for example "
+            "'U,U,S,A' or legacy 'U,T'. When set, this overrides --stage-pattern."
         ),
     )
     parser.add_argument("--dry-run", action="store_true")
@@ -588,12 +589,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         if source_user_matches(source_dir, allowed_users)
     ][: args.max_users]
     for source_dir in selected_source_dirs:
-        for plan in plan_user_tasks(
-            source_dir,
-            checkpoint_indices=checkpoint_indices,
-            stage_pattern=args.stage_pattern,
-            stage_schedule=stage_schedule,
-        ):
+        try:
+            user_plans = list(
+                plan_user_tasks(
+                    source_dir,
+                    checkpoint_indices=checkpoint_indices,
+                    stage_pattern=args.stage_pattern,
+                    stage_schedule=stage_schedule,
+                )
+            )
+        except ValueError as error:
+            raise SystemExit(f"ERROR {error}") from None
+        for plan in user_plans:
             all_plans.append((source_dir, plan))
             if len(all_plans) >= args.max_tasks:
                 break
