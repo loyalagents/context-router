@@ -5,8 +5,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
 ## Migration Contract
 
 - Harbor is only the runner.
-- Stage pattern: `update-only-then-final`.
-- `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.
+- Stage contract: `update-only-then-final`.
 - `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.
 - `downstream-task` stages reveal native queries without raw documents and score retained memory use.
 - Hidden expected files preserve the scored upstream checkpoint task packs.
@@ -19,7 +18,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
 | 1 | memory-update | 180 | 181 | 90630 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
 | 2 | memory-update | 286 | 287 | 147930 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
 | 3 | memory-update | 250 | 251 | 133694 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
-| 4 | downstream-task | 0 | 1 | 16543 | Answer the downstream DynamicMem checkpoint task using retained memory. |
+| 4 | downstream-task | 0 | 1 | 16578 | Answer the downstream DynamicMem checkpoint task using retained memory. |
 
 ## Native Task Counts
 
@@ -42,14 +41,15 @@ This report is for benchmark reviewers. It is hidden from the agent.
 {
   "challengeSignals": {
     "checkpointTrajectory": true,
+    "customStageSchedule": false,
     "deltaRawCheckpointHistory": true,
     "hiddenDownstreamUntilFinalStage": true,
     "hiddenFutureCheckpoints": true,
+    "interleavedDownstreamTasks": false,
     "longContextApprox70kPlus": true,
     "multiStage": true,
     "nativePersonalizedService": true,
-    "nativeStateCompletion": true,
-    "updateAnswerEveryCheckpoint": false
+    "nativeStateCompletion": true
   },
   "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
   "schemaVersion": 1,
@@ -126,6 +126,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
   },
   "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
   "stagePatternName": "update-only-then-final",
+  "stageSchedule": "update-only-then-final",
   "stages": [
     {
       "agentTask": "Ingest new raw DynamicMem app-log delta and update retained memory only.",
@@ -159,20 +160,20 @@ This report is for benchmark reviewers. It is hidden from the agent.
     },
     {
       "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
-      "approxTokenCount": 16543,
+      "approxTokenCount": 16578,
       "kind": "downstream-task",
       "stageId": "04-cp02-downstream-task",
       "stageIndex": 4,
-      "visibleCharCount": 66173,
+      "visibleCharCount": 66314,
       "visibleDocCount": 0,
       "visibleFileCount": 1
     }
   ],
   "taskContract": "dataset-adapter/trajectory-v1",
   "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
-  "taskType": "dynamicmem-native-background-memory-trajectory",
+  "taskType": "dynamicmem-background-memory-trajectory",
   "totals": {
-    "approxTokenCount": 388798,
+    "approxTokenCount": 388833,
     "checkpointCount": 1,
     "downstreamStageCount": 1,
     "memoryUpdateStageCount": 3,
@@ -186,8 +187,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
     "stageCount": 4,
     "stateCompletionKeyCount": 37,
     "uniqueStateCompletionKeyCount": 37,
-    "updateAnswerStageCount": 0,
-    "visibleCharCount": 1555192,
+    "visibleCharCount": 1555333,
     "visibleDocCount": 716,
     "visibleFileCount": 720
   },
@@ -210,6 +210,9 @@ This report is for benchmark reviewers. It is hidden from the agent.
     "finalCheckpointId": "cal_quarterly_003",
     "finalCheckpointIndex": 2,
     "finalCheckpointTimestamp": "2024-06-30 20:00:00",
+    "scoredCheckpointIds": [
+      "cal_quarterly_003"
+    ],
     "sourceUserDir": "001_user_001",
     "sourceUserId": "user_001"
   }

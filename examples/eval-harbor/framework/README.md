@@ -29,11 +29,9 @@ The shared stage vocabulary lives in `scripts/trajectory_framework.py`.
 | --- | --- | --- |
 | `U` | `memory-update` | Read newly revealed docs/events and update memory |
 | `T` | `downstream-task` | Answer from retained memory; no raw docs are revealed |
-| `UA` | `update-answer` | Read new docs/events, update memory, and answer now |
 
 Supported shapes include `U -> T`, `U -> T -> U -> T`,
-`U -> U -> T`, `U -> U -> U -> U -> T`, and native DynamicMem
-`UA -> UA -> ...` checkpoint trajectories.
+`U -> U -> T`, and `U -> U -> U -> U -> T`.
 
 ## Runtime Flow
 
@@ -54,8 +52,8 @@ flowchart LR
 ```
 
 The stage server reveals one stage at a time through `/app/next_stage`.
-`U` and `UA` stages expose only the new delta since the previous selected
-checkpoint. `T` stages expose the downstream task but not the source docs.
+`U` stages expose only the new delta since the previous selected checkpoint.
+`T` stages expose the downstream task but not the source docs.
 
 The whole trajectory runs in one continuous agent session. If the arm is
 `context-only`, the only retained state is the live conversation. If the arm is
@@ -81,7 +79,7 @@ Dataset adapters translate external benchmarks into the shared staged contract.
 They should emit:
 
 - a Harbor task directory;
-- staged payload with ordered `U`, `T`, and/or `UA` stages;
+- staged payload with ordered `U` and `T` stages;
 - hidden expected data for the verifier;
 - one job per arm;
 - a suite manifest with source metadata, selected users/checkpoints, model,

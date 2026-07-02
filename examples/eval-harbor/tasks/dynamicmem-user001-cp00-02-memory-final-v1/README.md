@@ -1,7 +1,7 @@
 # dynamicmem-user001-cp00-02-memory-final-v1
 
 This Harbor task is generated from DynamicMem (`xiewenya/dynamicmem`, MIT
-license). Harbor is only the runner. The task preserves the native DynamicMem
+license). Harbor is only the runner. The task preserves the DynamicMem
 checkpoint content:
 
 - raw `app_log_large.json` entries are revealed as chronological checkpoint deltas;
@@ -13,7 +13,7 @@ checkpoint content:
 Source user: `001_user_001` / `user_001`
 Checkpoint trajectory: `0, 1, 2`
 Final checkpoint: `cal_quarterly_003` as of `2024-06-30 20:00:00`
-Stage pattern: `update-only-then-final`
+Stage contract: `update-only-then-final`
 Scored checkpoints: `2`
 Observed raw logs: `716`
 State completion evaluations: `37`
@@ -43,7 +43,11 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --checkpoint-indices 0,1,2 \
   --stage-pattern update-only-then-final \
   --model gpt-5.4-mini \
-  --reasoning-effort high
+  --reasoning-effort high \
+  --codex-web-search disabled \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600
 ```
 
 Do not expose `tests/expected/` files to agents.

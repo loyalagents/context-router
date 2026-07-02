@@ -24,13 +24,12 @@ policy, timeouts, verifier, and report path across arms.
 
 ## Stage Tokens
 
-The shared staged contract uses three tokens:
+The shared staged contract uses two tokens:
 
 | Token | Stage kind | Reveals new docs/events? | Reveals downstream task? | Scored? |
 | --- | --- | ---: | ---: | ---: |
 | `U` | `memory-update` | Yes | No | No |
 | `T` | `downstream-task` | No | Yes | Yes |
-| `UA` | `update-answer` | Yes | Yes | Yes |
 
 `T` is close-book: raw docs are not exposed in the downstream stage. The answer
 must come from the active conversation and the arm's allowed memory substrate.
@@ -43,11 +42,10 @@ Examples:
 | `U -> T -> U -> T` | Interleaved update/probe trajectory |
 | `U -> U -> T` | Hide the downstream task until after two update stages |
 | `U -> U -> U -> U -> T` | Long background-memory probe |
-| `UA -> UA -> UA` | Native DynamicMem checkpoint style |
 
-For `U` and `UA`, each selected checkpoint reveals only the new delta logs since
-the previous selected checkpoint. Earlier information must be retained through
-conversation context, Markdown memory, or CR MCP memory.
+Each `U` stage consumes one selected checkpoint and reveals only the new delta
+logs since the previous selected checkpoint. Earlier information must be
+retained through conversation context, Markdown memory, or CR MCP memory.
 
 ## Prerequisites
 

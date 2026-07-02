@@ -12,26 +12,21 @@ from dataclasses import dataclass
 from typing import Any
 
 
-STAGE_KIND_UPDATE_ANSWER = "update-answer"
 STAGE_KIND_MEMORY_UPDATE = "memory-update"
 STAGE_KIND_DOWNSTREAM_TASK = "downstream-task"
 
 STAGE_KINDS = {
-    STAGE_KIND_UPDATE_ANSWER,
     STAGE_KIND_MEMORY_UPDATE,
     STAGE_KIND_DOWNSTREAM_TASK,
 }
 
-PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT = "update-answer-every-checkpoint"
 PATTERN_UPDATE_ONLY_THEN_FINAL = "update-only-then-final"
 
 STAGE_PATTERNS = {
-    PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
     PATTERN_UPDATE_ONLY_THEN_FINAL,
 }
 
 STAGE_SHORTHANDS = {
-    "UA": STAGE_KIND_UPDATE_ANSWER,
     "U": STAGE_KIND_MEMORY_UPDATE,
     "T": STAGE_KIND_DOWNSTREAM_TASK,
 }
@@ -69,8 +64,6 @@ class TrajectoryStage:
 
 
 def stage_pattern_suffix(stage_pattern: str) -> str:
-    if stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT:
-        return "trajectory-v1"
     if stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
         return "memory-final-v1"
     choices = ", ".join(sorted(STAGE_PATTERNS))

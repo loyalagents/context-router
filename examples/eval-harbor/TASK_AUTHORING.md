@@ -26,7 +26,6 @@ Use the shared tokens:
 | --- | --- |
 | `U` | Update memory from new docs/events; no score |
 | `T` | Answer a downstream task from retained memory; scored |
-| `UA` | Update memory and answer at the same checkpoint; scored |
 
 Common schedules:
 
@@ -36,10 +35,9 @@ Common schedules:
 | Interleaved probes | `--checkpoint-indices 0-1 --stage-schedule U,T,U,T` |
 | Hidden final task | `--checkpoint-indices 0-1 --stage-schedule U,U,T` |
 | Long background memory | `--checkpoint-indices 0-3 --stage-schedule U,U,U,U,T` |
-| Native DynamicMem style | `--stage-pattern update-answer-every-checkpoint` |
 
-`U` and `UA` consume selected checkpoints. `T` consumes no new checkpoint; it
-asks the downstream task for the most recently updated checkpoint.
+`U` consumes one selected checkpoint. `T` consumes no new checkpoint; it asks the
+downstream task for the most recently updated checkpoint.
 
 ## DynamicMem Task Creation
 

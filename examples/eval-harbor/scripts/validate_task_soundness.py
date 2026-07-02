@@ -11,7 +11,6 @@ from typing import Any
 from trajectory_framework import (
     STAGE_KIND_DOWNSTREAM_TASK,
     STAGE_KIND_MEMORY_UPDATE,
-    STAGE_KIND_UPDATE_ANSWER,
 )
 
 
@@ -227,45 +226,28 @@ def validate_native_stage_contract(
 ) -> list[str]:
     errors: list[str] = []
     if staged is None:
-        errors.append(f"{task_id}: native DynamicMem task must use staged reveal")
+        errors.append(f"{task_id}: DynamicMem task must use staged reveal")
         return errors
 
     stages = staged.get("stages")
     if not isinstance(stages, list):
-        errors.append(f"{task_id}: native DynamicMem staged payload has no stages list")
+        errors.append(f"{task_id}: DynamicMem staged payload has no stages list")
         return errors
 
     actual_kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
-    allowed_kinds = {
-        STAGE_KIND_UPDATE_ANSWER,
-        STAGE_KIND_MEMORY_UPDATE,
-        STAGE_KIND_DOWNSTREAM_TASK,
-    }
-    is_update_answer = actual_kinds == [STAGE_KIND_UPDATE_ANSWER] * len(checkpoints)
-    is_memory_final = (
-        len(actual_kinds) >= 2
-        and actual_kinds[:-1] == [STAGE_KIND_MEMORY_UPDATE] * (len(actual_kinds) - 1)
-        and actual_kinds[-1] == STAGE_KIND_DOWNSTREAM_TASK
+    allowed_kinds = {STAGE_KIND_MEMORY_UPDATE, STAGE_KIND_DOWNSTREAM_TASK}
+    is_custom_valid = bool(actual_kinds) and all(kind in allowed_kinds for kind in actual_kinds) and (
+        STAGE_KIND_DOWNSTREAM_TASK in actual_kinds
     )
-    is_custom_valid = (
-        bool(actual_kinds)
-        and all(kind in allowed_kinds for kind in actual_kinds)
-        and any(kind in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK} for kind in actual_kinds)
-    )
-    if not (is_update_answer or is_memory_final or is_custom_valid):
-        errors.append(f"{task_id}: native DynamicMem stage kind pattern mismatch: {actual_kinds}")
-    if is_update_answer and len(stages) != len(checkpoints):
-        errors.append(
-            f"{task_id}: native DynamicMem stage/checkpoint count mismatch "
-            f"stages={len(stages)} checkpoints={len(checkpoints)}"
-        )
+    if not is_custom_valid:
+        errors.append(f"{task_id}: DynamicMem stage kind pattern mismatch: {actual_kinds}")
     updated_checkpoint_ids: set[str] = set()
     for stage in stages:
         if not isinstance(stage, dict):
             continue
         kind = stage.get("kind")
         checkpoint_id = str(stage.get("checkpointId") or "")
-        if kind in {STAGE_KIND_MEMORY_UPDATE, STAGE_KIND_UPDATE_ANSWER} and checkpoint_id:
+        if kind == STAGE_KIND_MEMORY_UPDATE and checkpoint_id:
             updated_checkpoint_ids.add(checkpoint_id)
         if kind == STAGE_KIND_DOWNSTREAM_TASK and checkpoint_id not in updated_checkpoint_ids:
             errors.append(
@@ -275,15 +257,15 @@ def validate_native_stage_contract(
     raw_logs = native_raw_log_items(staged)
     raw_log_ids = [str(log.get("app_log_id") or "") for log in raw_logs]
     if len(raw_log_ids) != len(set(raw_log_ids)):
-        errors.append(f"{task_id}: native DynamicMem staged raw logs contain duplicate app_log_id")
+        errors.append(f"{task_id}: DynamicMem staged raw logs contain duplicate app_log_id")
     timestamps = [str(log.get("timestamp") or "") for log in raw_logs]
     if timestamps != sorted(timestamps):
-        errors.append(f"{task_id}: native DynamicMem staged raw logs are not chronological")
+        errors.append(f"{task_id}: DynamicMem staged raw logs are not chronological")
     as_of = (checkpoints[-1].get("as_of") or {}) if checkpoints else {}
     log_index = as_of.get("log_index")
     if isinstance(log_index, int) and len(raw_logs) != log_index + 1:
         errors.append(
-            f"{task_id}: native DynamicMem raw log count must equal checkpoint log_index + 1 "
+            f"{task_id}: DynamicMem raw log count must equal checkpoint log_index + 1 "
             f"expected={log_index + 1} actual={len(raw_logs)}"
         )
 
@@ -299,8 +281,8 @@ def validate_native_stage_contract(
     seen_checkpoint_ids = []
     for stage, item in native_stage_files(staged):
         if item.get("path") == "dynamicmem-task.json":
-            if stage.get("kind") not in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK}:
-                errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream/update-answer stages")
+            if stage.get("kind") != STAGE_KIND_DOWNSTREAM_TASK:
+                errors.append(f"{task_id}: dynamicmem-task.json must appear only in downstream-task stages")
             payload = item.get("json")
             checkpoint_id = ((payload or {}).get("checkpoint") or {}).get("checkpoint_id") if isinstance(payload, dict) else None
             seen_checkpoint_ids.append(checkpoint_id)
@@ -314,7 +296,7 @@ def validate_native_stage_contract(
             errors.append(f"{task_id}: downstream-task stage exposes documents.json")
     if seen_checkpoint_ids != expected_checkpoint_ids:
         errors.append(
-            f"{task_id}: native DynamicMem task checkpoint exposure mismatch "
+            f"{task_id}: DynamicMem task checkpoint exposure mismatch "
             f"expected={expected_checkpoint_ids} actual={seen_checkpoint_ids}"
         )
 
@@ -331,9 +313,7 @@ def validate_native_stage_contract(
         errors.append(f"{task_id}: difficulty observedRawLogCount mismatch")
     if totals.get("memoryUpdateStageCount") != actual_kinds.count(STAGE_KIND_MEMORY_UPDATE):
         errors.append(f"{task_id}: difficulty memoryUpdateStageCount mismatch")
-    if totals.get("updateAnswerStageCount") != actual_kinds.count(STAGE_KIND_UPDATE_ANSWER):
-        errors.append(f"{task_id}: difficulty updateAnswerStageCount mismatch")
-    expected_downstream_count = actual_kinds.count(STAGE_KIND_DOWNSTREAM_TASK) + actual_kinds.count(STAGE_KIND_UPDATE_ANSWER)
+    expected_downstream_count = actual_kinds.count(STAGE_KIND_DOWNSTREAM_TASK)
     if totals.get("downstreamStageCount") != expected_downstream_count:
         errors.append(f"{task_id}: difficulty downstreamStageCount mismatch")
     return errors
@@ -346,21 +326,21 @@ def validate_native_catalog(
 ) -> list[str]:
     catalog_path = task_dir / "mcp" / "catalog.json"
     if not catalog_path.exists():
-        return [f"{task_id}: native DynamicMem task missing mcp/catalog.json"]
+        return [f"{task_id}: DynamicMem task missing mcp/catalog.json"]
     catalog = load_json(catalog_path)
     errors: list[str] = []
     if catalog.get("taskId") != task_id:
-        errors.append(f"{task_id}: native DynamicMem catalog taskId mismatch")
+        errors.append(f"{task_id}: DynamicMem catalog taskId mismatch")
     catalog_slugs = {pref.get("slug") for pref in catalog.get("preferences", [])}
     if catalog_slugs != set(scp_keys):
         errors.append(
-            f"{task_id}: native DynamicMem catalog slug mismatch "
+            f"{task_id}: DynamicMem catalog slug mismatch "
             f"catalog_only={sorted(catalog_slugs - set(scp_keys))[:10]} "
             f"hidden_only={sorted(set(scp_keys) - catalog_slugs)[:10]}"
         )
     scopes = {pref.get("scope") for pref in catalog.get("preferences", [])}
     if scopes != {task_id}:
-        errors.append(f"{task_id}: native DynamicMem catalog scopes must be only {task_id}")
+        errors.append(f"{task_id}: DynamicMem catalog scopes must be only {task_id}")
     return errors
 
 

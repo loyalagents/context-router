@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a Harbor task that preserves native DynamicMem task semantics.
+"""Build a Harbor staged-memory task from DynamicMem benchmark content.
 
 The runner is Harbor/staged, but the benchmark content stays DynamicMem-native:
 
@@ -22,11 +22,9 @@ from pathlib import Path
 from typing import Any
 
 from trajectory_framework import (
-    PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
     PATTERN_UPDATE_ONLY_THEN_FINAL,
     STAGE_KIND_DOWNSTREAM_TASK,
     STAGE_KIND_MEMORY_UPDATE,
-    STAGE_KIND_UPDATE_ANSWER,
     STAGE_PATTERNS,
     TrajectoryStage,
     parse_stage_schedule,
@@ -70,7 +68,7 @@ class BuildConfig:
     agent_timeout_sec: float = DEFAULT_AGENT_TIMEOUT_SEC
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC
     build_timeout_sec: float = DEFAULT_BUILD_TIMEOUT_SEC
-    stage_pattern: str = PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT
+    stage_pattern: str = PATTERN_UPDATE_ONLY_THEN_FINAL
     stage_schedule: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
@@ -99,7 +97,6 @@ class BuildConfig:
             if not self.stage_schedule:
                 raise ValueError("stage_schedule must not be empty")
             invalid = [kind for kind in self.stage_schedule if kind not in {
-                STAGE_KIND_UPDATE_ANSWER,
                 STAGE_KIND_MEMORY_UPDATE,
                 STAGE_KIND_DOWNSTREAM_TASK,
             }]
@@ -540,8 +537,6 @@ class StagePlanItem:
 def preset_stage_schedule(config: BuildConfig, checkpoint_count: int) -> tuple[str, ...]:
     if config.stage_schedule is not None:
         return config.stage_schedule
-    if config.stage_pattern == PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT:
-        return tuple(STAGE_KIND_UPDATE_ANSWER for _ in range(checkpoint_count))
     if config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
         return tuple(STAGE_KIND_MEMORY_UPDATE for _ in range(checkpoint_count)) + (
             STAGE_KIND_DOWNSTREAM_TASK,
@@ -554,11 +549,10 @@ def resolve_stage_plan(
     config: BuildConfig = DEFAULT_BUILD_CONFIG,
 ) -> list[StagePlanItem]:
     schedule = preset_stage_schedule(config, len(stage_specs))
-    update_kinds = {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_MEMORY_UPDATE}
-    update_count = sum(1 for kind in schedule if kind in update_kinds)
+    update_count = sum(1 for kind in schedule if kind == STAGE_KIND_MEMORY_UPDATE)
     if update_count != len(stage_specs):
         raise ValueError(
-            "stage schedule must contain exactly one U/UA token per selected "
+            "stage schedule must contain exactly one U token per selected "
             f"checkpoint: updates={update_count} checkpoints={len(stage_specs)}"
         )
 
@@ -568,16 +562,16 @@ def resolve_stage_plan(
     scored_checkpoint_ids: set[str] = set()
 
     for kind in schedule:
-        if kind in update_kinds:
+        if kind == STAGE_KIND_MEMORY_UPDATE:
             if checkpoint_cursor >= len(stage_specs):
                 raise ValueError("stage schedule consumes more checkpoints than selected")
             spec = stage_specs[checkpoint_cursor]
             checkpoint_cursor += 1
             latest_spec = spec
-            scores_checkpoint = kind == STAGE_KIND_UPDATE_ANSWER
+            scores_checkpoint = False
         elif kind == STAGE_KIND_DOWNSTREAM_TASK:
             if latest_spec is None:
-                raise ValueError("stage schedule cannot reveal T before any U/UA stage")
+                raise ValueError("stage schedule cannot reveal T before any U stage")
             spec = latest_spec
             scores_checkpoint = True
         else:
@@ -593,7 +587,7 @@ def resolve_stage_plan(
     if checkpoint_cursor != len(stage_specs):
         raise ValueError("stage schedule did not consume every selected checkpoint")
     if not scored_checkpoint_ids:
-        raise ValueError("stage schedule must include at least one T or UA scored checkpoint")
+        raise ValueError("stage schedule must include at least one T scored checkpoint")
     if latest_spec is not None:
         latest_checkpoint_id = str(latest_spec["checkpoint"].get("checkpoint_id") or "")
         if latest_checkpoint_id not in scored_checkpoint_ids:
@@ -641,7 +635,6 @@ def build_difficulty(
 ) -> dict[str, Any]:
     stages = []
     agent_tasks = {
-        STAGE_KIND_UPDATE_ANSWER: "Ingest new raw DynamicMem app logs and answer the current checkpoint's native tasks.",
         STAGE_KIND_MEMORY_UPDATE: "Ingest new raw DynamicMem app-log delta and update retained memory only.",
         STAGE_KIND_DOWNSTREAM_TASK: "Answer the downstream DynamicMem checkpoint task using retained memory.",
     }
@@ -700,7 +693,7 @@ def build_difficulty(
     return {
         "schemaVersion": 1,
         "taskId": config.task_id,
-        "taskType": "dynamicmem-native-background-memory-trajectory",
+        "taskType": "dynamicmem-background-memory-trajectory",
         "taskContract": "dataset-adapter/trajectory-v1",
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
         "stagePatternName": config.stage_contract_name,
@@ -720,12 +713,11 @@ def build_difficulty(
         "stages": stages,
         "totals": {
             "stageCount": len(stages),
-            "updateAnswerStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_UPDATE_ANSWER),
             "memoryUpdateStageCount": sum(1 for stage in stages if stage["kind"] == STAGE_KIND_MEMORY_UPDATE),
             "downstreamStageCount": sum(
                 1
                 for stage in stages
-                if stage["kind"] in {STAGE_KIND_UPDATE_ANSWER, STAGE_KIND_DOWNSTREAM_TASK}
+                if stage["kind"] == STAGE_KIND_DOWNSTREAM_TASK
             ),
             "sourceCheckpointCount": len(checkpoints),
             "scoredCheckpointCount": len(visible_tasks),
@@ -752,7 +744,6 @@ def build_difficulty(
             "multiStage": len(stages) > 1,
             "checkpointTrajectory": len(checkpoints) > 1,
             "customStageSchedule": config.stage_schedule is not None,
-            "updateAnswerEveryCheckpoint": all(kind == STAGE_KIND_UPDATE_ANSWER for kind in kind_sequence),
             "hiddenFutureCheckpoints": True,
             "hiddenDownstreamUntilFinalStage": is_memory_final,
             "interleavedDownstreamTasks": any(
@@ -783,20 +774,7 @@ def build_stage_payload(
         logs = spec["logs"]
         stage_id = f"{index:02d}-cp{checkpoint_index:02d}-{item.kind}"
         files: list[dict[str, Any]]
-        if item.kind == STAGE_KIND_UPDATE_ANSWER:
-            instruction = render_update_answer_stage_instruction(index, total_stages, checkpoint)
-            files = [
-                *documents_payload(
-                    logs,
-                    purpose=(
-                        "Raw DynamicMem app-log delta visible for this update-answer "
-                        "checkpoint stage."
-                    ),
-                    config=config,
-                ),
-                {"path": "dynamicmem-task.json", "json": visible_task},
-            ]
-        elif item.kind == STAGE_KIND_MEMORY_UPDATE:
+        if item.kind == STAGE_KIND_MEMORY_UPDATE:
             instruction = render_memory_update_stage_instruction(index, total_stages, checkpoint)
             files = documents_payload(
                 logs,
@@ -837,59 +815,36 @@ def build_stage_payload(
 
 
 def render_instruction(config: BuildConfig = DEFAULT_BUILD_CONFIG) -> str:
+    schedule_block = ""
     if config.stage_schedule is not None:
-        stage_contract = f"""The generated stage schedule is:
+        schedule_block = f"""
+The generated stage schedule is:
 
 ```text
 {config.stage_contract_display}
 ```
-
-Stages can have three roles:
-
-- `memory-update`: read only the newly revealed raw app-log delta and update the
-  memory/state allowed by the selected eval mode. Do not create or modify
-  `outputs/prediction.json` in these stages.
-- `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
-  and answer using retained memory from earlier stages.
-- `update-answer`: read newly revealed raw app-log deltas plus
-  `dynamicmem-task.json`, then both update memory and answer."""
-        steps = """1. Run `/app/next_stage` to reveal the next stage.
-2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
-   update only the allowed memory/state.
-3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
-   `outputs/prediction.json` without using raw docs from the stage.
-4. If the stage is `update-answer`, read both the raw app-log delta and
-   `dynamicmem-task.json`, then update memory and write/update the prediction.
-5. Repeat until `/app/next_stage` says no more stages are available."""
-    elif config.stage_pattern == PATTERN_UPDATE_ONLY_THEN_FINAL:
-        stage_contract = """Stages can have two roles:
+""".rstrip()
+    stage_contract = """Stages can have two roles:
 
 - `memory-update`: read only the newly revealed raw app-log delta and update the
   memory/state allowed by the selected eval mode. Do not create or modify
   `outputs/prediction.json` in these stages.
 - `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
   and answer using retained memory from earlier stages."""
-        steps = """1. Run `/app/next_stage` to reveal the next stage.
+    steps = """1. Run `/app/next_stage` to reveal the next stage.
 2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
    update only the allowed memory/state.
 3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
    `outputs/prediction.json`.
 4. Repeat until `/app/next_stage` says no more stages are available."""
-    else:
-        stage_contract = """Each revealed stage is an update-and-answer checkpoint. Future checkpoint logs
-and future checkpoint tasks are not visible until their stage is revealed."""
-        steps = """1. Run `/app/next_stage` to reveal the next checkpoint stage.
-2. Read only that stage's raw app-log delta and `dynamicmem-task.json`.
-3. Update the memory/state allowed by the selected eval mode.
-4. Add or update that checkpoint's prediction in `outputs/prediction.json`.
-5. Repeat until `/app/next_stage` says no more stages are available."""
-    return f"""This is a continuous-session Harbor task for a native DynamicMem checkpoint trajectory.
+    schedule_section = f"\n\n{schedule_block}" if schedule_block else ""
+    return f"""This is a continuous-session Harbor staged-memory task backed by DynamicMem.
 
 You will receive staged information over time inside one agent session. The
 runner is Harbor, but the task content follows DynamicMem:
 
 {steps}
-
+{schedule_section}
 {stage_contract}
 
 Do not inspect hidden expected answers, verifier files, source dataset files, or
@@ -902,85 +857,6 @@ scratch files, summaries, caches, or hidden memory files. A downstream-task stag
 is closed-book with respect to raw app-log documents: use only the currently
 revealed `dynamicmem-task.json`, the conversation context, and the memory
 substrate allowed by the selected eval mode.
-"""
-
-
-def render_update_answer_stage_instruction(step: int, total_steps: int, checkpoint: dict[str, Any]) -> str:
-    checkpoint_id = checkpoint.get("checkpoint_id")
-    timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
-    return f"""You are working in `/app`.
-
-This is stage {step} of {total_steps}. It is an update-and-answer DynamicMem
-checkpoint stage.
-
-Read:
-
-- `current_stage/documents.json`
-- `current_stage/docs/`
-- `current_stage/dynamicmem-task.json`
-
-Each file under `docs/` is a raw DynamicMem app-log object newly visible for
-this checkpoint. Ingest these logs in chronological order, update only the
-memory/state allowed by the selected eval mode, then answer the current
-checkpoint task.
-
-Write or update:
-
-- `outputs/prediction.json`
-
-If `outputs/prediction.json` already exists, read it first, keep every existing
-object in its `predictions` array, and add or replace only the prediction object
-whose `checkpoint_id` is `{checkpoint_id}`. Never drop earlier checkpoint
-predictions.
-
-Complete both native DynamicMem task families for checkpoint `{checkpoint_id}` as
-of `{timestamp}`:
-
-- `snapshot_state`: fill every key under `state_completion.keys`.
-- `evidence`: provide supporting evidence records per state key.
-- `rq3_apply_answers`: answer every item under `personalized_service.keys`.
-
-Use this exact top-level shape:
-
-```json
-{{
-  "task_contract_version": "taskabc_v2",
-  "research_frame_version": "rq_v2",
-  "predictions": [
-    {{
-      "checkpoint_id": "{checkpoint_id}",
-      "snapshot_state": {{}},
-      "evidence": {{}},
-      "rq3_apply_answers": {{}}
-    }}
-  ]
-}}
-```
-
-The JSON example above shows the required object for the current checkpoint. In
-multi-answer trajectories, the final file must contain one prediction object per
-scored checkpoint completed so far.
-
-For `rq3_apply_answers`, use this shape per state key:
-
-```json
-{{
-  "items": [
-    {{
-      "qa_id": "q1",
-      "service_family": "user_communication",
-      "answer": "...",
-      "evidence": [
-        {{"app_log_id": "log_00001", "evidence_content": "short support"}}
-      ]
-    }}
-  ]
-}}
-```
-
-For structured service items, `answer` must be an object matching the visible
-`output_template`. For `user_communication`, `answer` should be a specific
-assistant message string.
 """
 
 
@@ -1030,7 +906,7 @@ object in its `predictions` array, and add or replace only the prediction object
 whose `checkpoint_id` is `{checkpoint_id}`. Never drop earlier checkpoint
 predictions.
 
-Complete both native DynamicMem task families for checkpoint `{checkpoint_id}` as
+Complete both DynamicMem task families for checkpoint `{checkpoint_id}` as
 of `{timestamp}`:
 
 - `snapshot_state`: fill every key under `state_completion.keys`.
@@ -1092,7 +968,7 @@ artifacts = [
 
 [task]
 name = "context-router/{config.task_id}"
-description = "DynamicMem {config.source_user_id} native checkpoint trajectory Harbor background-memory task."
+description = "DynamicMem {config.source_user_id} staged Harbor background-memory task."
 authors = []
 keywords = ["context-router", "eval-harbor", "dynamicmem", "background-memory", "state-completion", "personalized-service"]
 
@@ -1187,9 +1063,9 @@ def render_job(
     if mcp_servers:
         lines.append("    mcp_servers:")
         lines.append(render_yaml_list(mcp_servers, 6))
+        lines.append("")
     lines.extend(
         [
-            "",
             "tasks:",
             f"  - path: {task_path}",
             "",
@@ -2068,7 +1944,6 @@ def render_soundness_report(
         "",
         "- Harbor is only the runner.",
         f"- Stage contract: `{config.stage_contract_display}`.",
-        "- `update-answer` stages reveal raw DynamicMem app-log deltas plus native queries for that checkpoint.",
         "- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.",
         "- `downstream-task` stages reveal native queries without raw documents and score retained memory use.",
         "- Hidden expected files preserve the scored upstream checkpoint task packs.",
@@ -2221,7 +2096,7 @@ def build_task(
         f"""# {config.task_id}
 
 This Harbor task is generated from DynamicMem (`xiewenya/dynamicmem`, MIT
-license). Harbor is only the runner. The task preserves the native DynamicMem
+license). Harbor is only the runner. The task preserves the DynamicMem
 checkpoint content:
 
 - raw `app_log_large.json` entries are revealed as chronological checkpoint deltas;
@@ -2404,7 +2279,7 @@ def main() -> int:
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U, T, and UA tokens, for example "
+            "Custom staged trajectory using U and T tokens, for example "
             "'U,U,T,U,T'. When set, this overrides --stage-pattern."
         ),
     )

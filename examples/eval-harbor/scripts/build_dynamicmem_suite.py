@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Harbor tasks from native DynamicMem user checkpoints."""
+"""Generate Harbor staged-memory tasks from DynamicMem user checkpoints."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from dataset_sources import SourceResolution, resolve_dynamicmem_source_root
 from validate_eval_preflight import validate_job_preflight, validate_task_preflight
 
 from trajectory_framework import (
-    PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+    PATTERN_UPDATE_ONLY_THEN_FINAL,
     STAGE_PATTERNS,
     parse_stage_schedule,
     stage_pattern_suffix,
@@ -338,10 +338,10 @@ def write_suite_manifest(
             "downloaded": source_resolution.downloaded,
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
-                "Harbor replaces only the runner. Each generated task preserves "
-                "one native DynamicMem user checkpoint trajectory, including raw "
-                "app-log deltas, state_completion_pack, rq3_apply_service_qa, "
-                "and the upstream prediction contract."
+                "Harbor replaces only the runner. Each generated task adapts one "
+                "DynamicMem user checkpoint trajectory into the shared U/T staged "
+                "contract, preserving raw app-log deltas, state_completion_pack, "
+                "rq3_apply_service_qa, and the upstream prediction contract."
             ),
             "selectionPolicy": (
                 "Deterministic checkpoint-trajectory migration. One Harbor task "
@@ -469,7 +469,7 @@ def run_generated_preflight(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Generate native DynamicMem Harbor tasks.")
+    parser = argparse.ArgumentParser(description="Generate DynamicMem Harbor staged-memory tasks.")
     parser.add_argument(
         "--source-root",
         default=None,
@@ -543,14 +543,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--checkpoint-indices", default="0-4")
     parser.add_argument(
         "--stage-pattern",
-        default=PATTERN_UPDATE_ANSWER_EVERY_CHECKPOINT,
+        default=PATTERN_UPDATE_ONLY_THEN_FINAL,
         choices=sorted(STAGE_PATTERNS),
     )
     parser.add_argument(
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U, T, and UA tokens, for example "
+            "Custom staged trajectory using U and T tokens, for example "
             "'U,U,T,U,T'. When set, this overrides --stage-pattern."
         ),
     )
