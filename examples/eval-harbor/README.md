@@ -718,6 +718,85 @@ The command resolves DynamicMem source data in this order:
 4. local cache under `~/.cache/context-router/eval-harbor/datasets/dynamicmem`;
 5. Hugging Face download of `xiewenya/dynamicmem`, unless `--no-download` is set.
 
+#### Task Creator CLI Contract
+
+Use `build_dataset_suite.py --dataset dynamicmem` as the public task-creator
+entrypoint. A single command should resolve raw data, generate Harbor tasks,
+generate the matching jobs for all configured arms, write a suite manifest, and
+run task/job preflight.
+
+Core options:
+
+| Option | Meaning |
+| --- | --- |
+| `--dataset dynamicmem` | Selects the DynamicMem adapter. Future benchmarks should add new dataset adapters behind this same CLI. |
+| `--source-root PATH` | Optional raw DynamicMem source root or one user directory. Omit it to use env/cache/Hugging Face resolution. |
+| `--source-users user003` | Optional user filter. Accepts `user003`, `user_003`, or `003_user_003`. |
+| `--checkpoint-indices 0-3` | Exact selected checkpoint list, not a startpoint. `0-3` means checkpoints `0,1,2,3`; `4` means only checkpoint `4`. |
+| `--stage-schedule U,U,T` | Explicit staged trajectory. Overrides `--stage-pattern`. |
+| `--tasks-root`, `--jobs-root`, `--manifest` | Output locations. Use `/tmp/...` for local experiments when generated tasks should not enter git. |
+| `--max-users`, `--max-tasks` | Batch guardrails. They limit how many users/tasks can be generated; they do not define task semantics. |
+| `--skip-preflight` | Debug-only escape hatch. Normal generation should leave automatic preflight enabled. |
+
+Stage tokens:
+
+| Token | Consumes a checkpoint? | Exposes raw logs? | Exposes downstream task? | Scored? |
+| --- | ---: | ---: | ---: | ---: |
+| `U` | Yes | Yes, only the new delta logs for that checkpoint | No | No |
+| `T` | No | No | Yes, for the most recent updated checkpoint | Yes |
+| `UA` | Yes | Yes, only the new delta logs for that checkpoint | Yes, for that checkpoint | Yes |
+
+For `U` and `UA`, the builder reveals only the checkpoint delta since the
+previous selected checkpoint. It does not re-show all earlier logs. The
+continuity comes from the continuous agent session plus the selected memory
+substrate (`context-only`, `markdown`, or `cr-mcp`). Each call to
+`/app/next_stage` replaces `/app/current_stage`.
+
+Schedule examples:
+
+| Goal | Command shape |
+| --- | --- |
+| `U(checkpoint 0) -> T(checkpoint 0)` | `--checkpoint-indices 0 --stage-schedule U,T` |
+| `U(checkpoint 0) -> T(checkpoint 0) -> U(checkpoint 1) -> T(checkpoint 1)` | `--checkpoint-indices 0-1 --stage-schedule U,T,U,T` |
+| `U(checkpoint 0) -> U(checkpoint 1) -> T(checkpoint 1)` | `--checkpoint-indices 0-1 --stage-schedule U,U,T` |
+| `U(checkpoint 0) -> U(checkpoint 1) -> U(checkpoint 2) -> U(checkpoint 3) -> T(checkpoint 3)` | `--checkpoint-indices 0-3 --stage-schedule U,U,U,U,T` |
+| `U(checkpoint 3) -> T(checkpoint 3) -> U(checkpoint 4) -> T(checkpoint 4)` | `--checkpoint-indices 3-4 --stage-schedule U,T,U,T` |
+
+This is invalid because the schedule needs two update checkpoints but only one
+checkpoint is selected:
+
+```bash
+--checkpoint-indices 4 --stage-schedule U,T,U,T
+```
+
+Generate one explicit task into `/tmp`:
+
+```bash
+python3 examples/eval-harbor/scripts/build_dataset_suite.py \
+  --dataset dynamicmem \
+  --source-users user003 \
+  --checkpoint-indices 0-1 \
+  --stage-schedule U,T,U,T \
+  --max-users 1 \
+  --max-tasks 1 \
+  --tasks-root /tmp/cr-dynamicmem-user003/tasks \
+  --jobs-root /tmp/cr-dynamicmem-user003/jobs \
+  --manifest /tmp/cr-dynamicmem-user003/suite.json \
+  --model gpt-5.5 \
+  --reasoning-effort medium \
+  --codex-web-search disabled \
+  --agent-timeout-sec 86400 \
+  --verifier-timeout-sec 86400 \
+  --build-timeout-sec 600
+```
+
+Expected success signal:
+
+```text
+Wrote suite manifest: ...
+Preflight OK: 1 task(s), 3 job(s)
+```
+
 Start with a dry run:
 
 ```bash
