@@ -1256,11 +1256,11 @@ The generated stage schedule is:
 3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
    `outputs/prediction.json`.
 4. If the stage is `state-task`, read `dynamicmem-state-task.json`, write a
-   candidate JSON, then run `/app/submit_state <candidate.json>`. If validation
-   fails, fix the candidate and retry until it is accepted.
+   candidate JSON under `/tmp`, then run `/app/submit_state <candidate.json>`.
+   If validation fails, fix the candidate and retry until it is accepted.
 5. If the stage is `service-task`, read `dynamicmem-service-task.json`, write a
-   candidate JSON, then run `/app/submit_service <candidate.json>`. If
-   validation fails, fix the candidate and retry until it is accepted.
+   candidate JSON under `/tmp`, then run `/app/submit_service <candidate.json>`.
+   If validation fails, fix the candidate and retry until it is accepted.
 6. Repeat until `/app/next_stage` says no more stages are available."""
     schedule_section = f"\n\n{schedule_block}" if schedule_block else ""
     return f"""This is a continuous-session Harbor staged-memory task backed by DynamicMem.
@@ -1397,7 +1397,8 @@ Read:
 No raw app-log documents are revealed in this stage. Use only retained memory,
 conversation context, or the memory substrate allowed by the selected eval mode.
 
-Create a candidate JSON file with this exact top-level shape:
+Create a candidate JSON file under `/tmp`, for example
+`/tmp/state-answer.json`, with this exact top-level shape:
 
 ```json
 {{
@@ -1411,7 +1412,7 @@ Fill every key listed under `state_completion.keys` for checkpoint
 `{checkpoint_id}` as of `{timestamp}`. Then submit it:
 
 ```bash
-/app/submit_state <candidate.json>
+/app/submit_state /tmp/state-answer.json
 ```
 
 If the helper prints `ERROR`, fix the candidate and rerun `/app/submit_state`.
@@ -1433,7 +1434,8 @@ Read:
 No raw app-log documents are revealed in this stage. Use only retained memory,
 conversation context, or the memory substrate allowed by the selected eval mode.
 
-Create a candidate JSON file with this exact top-level shape:
+Create a candidate JSON file under `/tmp`, for example
+`/tmp/service-answer.json`, with this exact top-level shape:
 
 ```json
 {{
@@ -1446,7 +1448,7 @@ Answer every item under `personalized_service.keys` for checkpoint
 `{checkpoint_id}` as of `{timestamp}`. Then submit it:
 
 ```bash
-/app/submit_service <candidate.json>
+/app/submit_service /tmp/service-answer.json
 ```
 
 For `rq3_apply_answers`, use this shape per state key:
