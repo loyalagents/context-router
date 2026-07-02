@@ -15,6 +15,16 @@ GENERIC_OUTPUT_ROOT = Path("artifacts/app/outputs")
 DEFAULT_OUTPUT_FILES = ["new-hire.json"]
 CR_SNAPSHOT_PATH = Path("artifacts/memory/cr-snapshot.json")
 MCP_TRACE_PATH = Path("artifacts/mcp/tool-calls.jsonl")
+STAGE_LOG_PATH = Path("artifacts/app/stage-log.jsonl")
+DISALLOWED_COMMAND_PATTERNS = [
+    "stages/payload.json",
+    "tests/expected",
+    "score_dynamicmem_prediction.py",
+    "/data/stages.json",
+    "/tests",
+]
+OUTPUT_PREFIX = "/app/outputs/"
+MEMORY_MD_PATH = "/app/memory.md"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -120,9 +130,13 @@ def read_cr_preference_count(snapshot_path: Path) -> int | None:
     raise ValueError(f"malformed CR snapshot preferences: {snapshot_path}")
 
 
-def read_codex_item_counts(trial_dir: Path) -> tuple[dict[str, int], list[str]]:
+def read_codex_trace(trial_dir: Path) -> dict[str, Any]:
     counts: dict[str, int] = {}
     trace_paths = sorted(trial_dir.rglob("agent/codex.txt"))
+    commands: list[dict[str, str]] = []
+    file_changes: list[dict[str, str]] = []
+    seen_commands: set[tuple[str, str]] = set()
+    seen_file_changes: set[tuple[str, str, str]] = set()
     for trace_path in trace_paths:
         for line in trace_path.read_text(encoding="utf-8", errors="replace").splitlines():
             if not line.strip():
@@ -137,7 +151,160 @@ def read_codex_item_counts(trial_dir: Path) -> tuple[dict[str, int], list[str]]:
             item_type = item.get("type")
             if isinstance(item_type, str):
                 counts[item_type] = counts.get(item_type, 0) + 1
-    return counts, [str(path) for path in trace_paths]
+            if item_type == "command_execution":
+                command = item.get("command")
+                if isinstance(command, str):
+                    key = (str(trace_path), command)
+                    if key not in seen_commands:
+                        seen_commands.add(key)
+                        commands.append({"tracePath": str(trace_path), "command": command})
+            elif item_type == "file_change":
+                changes = item.get("changes")
+                if not isinstance(changes, list):
+                    continue
+                for change in changes:
+                    if not isinstance(change, dict):
+                        continue
+                    path = change.get("path")
+                    if not isinstance(path, str):
+                        continue
+                    kind = str(change.get("kind") or "")
+                    key = (str(trace_path), path, kind)
+                    if key in seen_file_changes:
+                        continue
+                    seen_file_changes.add(key)
+                    file_changes.append(
+                        {
+                            "tracePath": str(trace_path),
+                            "path": path,
+                            "kind": kind,
+                        }
+                    )
+    return {
+        "itemCounts": counts,
+        "tracePaths": [str(path) for path in trace_paths],
+        "commands": commands,
+        "fileChanges": file_changes,
+    }
+
+
+def read_stage_log(stage_log_path: Path) -> list[dict[str, Any]]:
+    if not stage_log_path.exists():
+        return []
+    entries: list[dict[str, Any]] = []
+    for line in stage_log_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        payload = json.loads(line)
+        if isinstance(payload, dict):
+            entries.append(payload)
+    return entries
+
+
+def truncate(value: str, limit: int = 240) -> str:
+    return value if len(value) <= limit else f"{value[: limit - 3]}..."
+
+
+def is_output_path(path: str) -> bool:
+    return path == "/app/outputs" or path.startswith(OUTPUT_PREFIX)
+
+
+def is_app_durable_write(path: str) -> bool:
+    return path.startswith("/app/") and not is_output_path(path)
+
+
+def memory_policy_violations(mode: str, file_changes: list[dict[str, str]]) -> list[dict[str, Any]]:
+    violations: list[dict[str, Any]] = []
+    normalized_mode = mode.strip().lower()
+    for change in file_changes:
+        path = change["path"]
+        if not is_app_durable_write(path):
+            continue
+        if normalized_mode == "markdown" and path == MEMORY_MD_PATH:
+            continue
+        if path.startswith("/app/current_stage/") or path == "/app/stage-log.jsonl":
+            # These are stage runner files when visible in traces; they are not
+            # external memory substrates.
+            continue
+        if normalized_mode in {"context-only", "none"}:
+            reason = "durable memory/scratch write is disallowed for context-only/none"
+        elif normalized_mode == "markdown":
+            reason = "durable memory/scratch write outside /app/memory.md is disallowed for markdown"
+        elif normalized_mode == "cr-mcp":
+            reason = "durable memory/scratch write is disallowed for cr-mcp"
+        else:
+            reason = "durable memory/scratch write uses an unknown eval mode policy"
+        violations.append(
+            {
+                "type": "disallowed_file_write",
+                "path": path,
+                "kind": change.get("kind"),
+                "reason": reason,
+            }
+        )
+    return violations
+
+
+def command_policy_violations(commands: list[dict[str, str]]) -> list[dict[str, Any]]:
+    violations: list[dict[str, Any]] = []
+    for command in commands:
+        raw_command = command["command"]
+        for pattern in DISALLOWED_COMMAND_PATTERNS:
+            if pattern in raw_command:
+                violations.append(
+                    {
+                        "type": "disallowed_hidden_path_access",
+                        "pattern": pattern,
+                        "command": truncate(raw_command),
+                    }
+                )
+                break
+    return violations
+
+
+def stage_policy_violations(stage_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    violations: list[dict[str, Any]] = []
+    for entry in stage_log:
+        if entry.get("kind") != "downstream-task":
+            continue
+        if entry.get("rawDocsVisible") is True:
+            violations.append(
+                {
+                    "type": "downstream_raw_docs_visible",
+                    "stageId": entry.get("stageId"),
+                    "reason": "downstream-task stage revealed current_stage/docs",
+                }
+            )
+        if entry.get("hasDocumentsJson") is True:
+            violations.append(
+                {
+                    "type": "downstream_documents_index_visible",
+                    "stageId": entry.get("stageId"),
+                    "reason": "downstream-task stage revealed current_stage/documents.json",
+                }
+            )
+        if "hasDynamicMemTask" in entry and entry.get("hasDynamicMemTask") is not True:
+            violations.append(
+                {
+                    "type": "downstream_task_missing",
+                    "stageId": entry.get("stageId"),
+                    "reason": "downstream-task stage did not reveal dynamicmem-task.json",
+                }
+            )
+    return violations
+
+
+def run_policy_violations(
+    *,
+    mode: str,
+    codex_trace: dict[str, Any],
+    stage_log: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    violations = []
+    violations.extend(command_policy_violations(codex_trace["commands"]))
+    violations.extend(memory_policy_violations(mode, codex_trace["fileChanges"]))
+    violations.extend(stage_policy_violations(stage_log))
+    return violations
 
 
 def parse_float_literal(value: str) -> float | None:
@@ -210,6 +377,27 @@ def output_root_from_score(score: dict[str, Any]) -> Path:
     return FORM_OUTPUT_ROOT
 
 
+def expected_output_paths(score: dict[str, Any], artifact_root: Path) -> list[Path]:
+    output_files = score.get("outputFiles")
+    if isinstance(output_files, list) and all(
+        isinstance(item, str) for item in output_files
+    ):
+        output_root = output_root_from_score(score)
+        return [
+            artifact_root / output_root.relative_to("artifacts") / output_file
+            for output_file in output_files
+        ]
+
+    dynamicmem_prediction = artifact_root / GENERIC_OUTPUT_ROOT.relative_to("artifacts") / "prediction.json"
+    if dynamicmem_prediction.exists():
+        return [dynamicmem_prediction]
+
+    return [
+        artifact_root / FORM_OUTPUT_ROOT.relative_to("artifacts") / output_file
+        for output_file in output_files_from_score(score)
+    ]
+
+
 def find_score_path(trial_dir: Path) -> Path:
     root_score = trial_dir / SCORE_PATH
     if root_score.exists():
@@ -245,9 +433,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         score = {}
         validation_errors.append(str(error))
 
-    output_root = output_root_from_score(score)
-    for output_file in output_files_from_score(score):
-        final_output = artifact_root / output_root.relative_to("artifacts") / output_file
+    for final_output in expected_output_paths(score, artifact_root):
         if not final_output.exists():
             validation_errors.append(f"missing final output: {final_output}")
         else:
@@ -277,7 +463,19 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     agent_kwargs = agent_config.get("kwargs") or {}
     task_timeouts = read_task_timeouts(config)
     rewards = (result.get("verifier_result") or {}).get("rewards") or {}
-    codex_item_counts, codex_trace_paths = read_codex_item_counts(trial_dir)
+    codex_trace = read_codex_trace(trial_dir)
+    codex_item_counts = codex_trace["itemCounts"]
+    codex_trace_paths = codex_trace["tracePaths"]
+    try:
+        stage_log = read_stage_log(artifact_root / STAGE_LOG_PATH.relative_to("artifacts"))
+    except (ValueError, json.JSONDecodeError) as error:
+        stage_log = []
+        validation_errors.append(f"malformed stage log: {error}")
+    policy_violations = run_policy_violations(
+        mode=mode,
+        codex_trace=codex_trace,
+        stage_log=stage_log,
+    )
     disallowed_tool_calls = {
         "web_search": codex_item_counts.get("web_search", 0),
     }
@@ -285,6 +483,8 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         validation_errors.append(
             f"disallowed Codex web_search calls: {disallowed_tool_calls['web_search']}"
         )
+    for violation in policy_violations:
+        validation_errors.append(f"policy violation: {json.dumps(violation, sort_keys=True)}")
 
     reward = score.get("reward", rewards.get("reward"))
     field_accuracy = score.get("fieldAccuracy", rewards.get("field_accuracy"))
@@ -339,6 +539,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "crPreferenceCount": cr_preference_count,
         "codexItemCounts": codex_item_counts,
         "codexTracePaths": codex_trace_paths,
+        "codexCommands": codex_trace["commands"],
+        "codexFileChanges": codex_trace["fileChanges"],
+        "stageLog": stage_log,
+        "policyViolations": policy_violations,
+        "policyViolationCount": len(policy_violations),
         "disallowedToolCalls": disallowed_tool_calls,
         "validationErrors": validation_errors,
     }
@@ -379,12 +584,12 @@ def fmt_timeout_triplet(row: dict[str, Any]) -> str:
 
 def markdown_table(rows: list[dict[str, Any]]) -> str:
     lines = [
-        "| Mode | Agent | Model | Reasoning Effort | Web Search | Timeout A/V/B (s) | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Artifacts OK | Runtime (s) | Artifact Root |",
-        "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
+        "| Mode | Agent | Model | Reasoning Effort | Web Search | Timeout A/V/B (s) | Reward | Field Accuracy | State Acc. | Service Mean | Parse Failures | Metadata | Missing | Wrong | Overfill | Policy Fail | Artifacts OK | Runtime (s) | Artifact Root |",
+        "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |",
     ]
     for row in rows:
         lines.append(
-            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {timeouts} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
+            "| {mode} | {agent} | {model} | {reasoning_effort} | {web_search} | {timeouts} | {reward} | {field} | {state} | {service} | {parse_failures} | {metadata} | {missing} | {wrong} | {overfill} | {policy_fail} | {artifacts_ok} | {runtime} | `{artifact}` |".format(
                 mode=row["mode"],
                 agent=row["agent"],
                 model=row["model"],
@@ -400,6 +605,7 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
                 missing=row["missingCount"],
                 wrong=row["wrongCount"],
                 overfill=row["overfillCount"],
+                policy_fail=row["policyViolationCount"],
                 artifacts_ok=fmt_bool(not row["validationErrors"]),
                 runtime=fmt_value(row["runtimeSeconds"]),
                 artifact=row["artifactRoot"],
@@ -421,6 +627,8 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
             lines.append(f"- Codex traces: `{', '.join(row['codexTracePaths'])}`")
         if any(row["disallowedToolCalls"].values()):
             lines.append(f"- Disallowed tool calls: `{json.dumps(row['disallowedToolCalls'])}`")
+        if row["policyViolations"]:
+            lines.append(f"- Policy violations: `{json.dumps(row['policyViolations'])}`")
         if row["missingFields"]:
             lines.append(f"- Missing fields: `{json.dumps(row['missingFields'])}`")
         if row["wrongFields"]:

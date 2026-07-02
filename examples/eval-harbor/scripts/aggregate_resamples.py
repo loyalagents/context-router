@@ -57,6 +57,8 @@ def summarize_sample(mode: str, sample_dir: Path) -> dict[str, Any]:
         "verifierTimeoutSec": row.get("verifierTimeoutSec"),
         "buildTimeoutSec": row.get("buildTimeoutSec"),
         "disallowedToolCalls": row.get("disallowedToolCalls", {}),
+        "policyViolationCount": row.get("policyViolationCount", 0),
+        "policyViolations": row.get("policyViolations", []),
     }
 
 
@@ -82,6 +84,11 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         1
         for sample in samples
         if any((sample.get("disallowedToolCalls") or {}).values())
+    )
+    policy_failures = sum(
+        1
+        for sample in samples
+        if int(sample.get("policyViolationCount") or 0) > 0
     )
     reasoning_efforts = sorted(
         {
@@ -134,6 +141,7 @@ def aggregate_samples(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "metadataFailures": metadata_failures,
         "validationFailures": validation_failures,
         "disallowedToolFailures": disallowed_tool_failures,
+        "policyFailures": policy_failures,
         "reasoningEfforts": reasoning_efforts,
         "codexWebSearchPolicies": codex_web_search_policies,
         "timeoutLabels": timeout_labels,
@@ -179,8 +187,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
     lines = [
         "# Harbor DynamicMem Resampling Report",
         "",
-        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail |",
-        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Arm | Reasoning Effort | Web Search | Timeout A/V/B (s) | Samples | Reward Mean | Reward Std | Reward Min | Reward Max | Field Acc. Mean | State Acc. Mean | Service Mean | Perfect Samples | Parse Fail | Metadata Fail | Artifact Fail | Tool Fail | Policy Fail |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for task in payload["tasks"]:
         for arm in task["arms"]:
@@ -190,7 +198,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
             state_accuracy = aggregate["stateCompletionAccuracy"]
             service_score = aggregate["rq3ApplyMeanScore"]
             lines.append(
-                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} |".format(
+                "| {task} | {mode} | {reasoning_effort} | {web_search} | {timeouts} | {samples} | {reward_mean} | {reward_std} | {reward_min} | {reward_max} | {acc_mean} | {state_mean} | {service_mean} | {perfect} | {parse_fail} | {metadata_fail} | {validation_fail} | {tool_fail} | {policy_fail} |".format(
                     task=task["taskId"],
                     mode=arm["mode"],
                     reasoning_effort=", ".join(aggregate["reasoningEfforts"]) or "n/a",
@@ -209,6 +217,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
                     metadata_fail=aggregate["metadataFailures"],
                     validation_fail=aggregate["validationFailures"],
                     tool_fail=aggregate["disallowedToolFailures"],
+                    policy_fail=aggregate["policyFailures"],
                 )
             )
     lines.append("")

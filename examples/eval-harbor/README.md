@@ -173,6 +173,14 @@ only for experiments that explicitly study external search. The report scripts
 scan Codex traces and mark any `web_search` item as an artifact/tool-policy
 failure.
 
+Reports also run a policy validator over Codex traces and staged artifacts. The
+validator fails runs that read hidden benchmark paths such as `/data/stages.json`,
+`/tests`, `stages/payload.json`, or `tests/expected`; create disallowed durable
+memory files for the selected arm; or reveal raw documents during a
+`downstream-task` stage. DynamicMem mode prompts mirror these rules: context-only
+may use only conversation context, markdown may persist only `/app/memory.md`,
+and cr-mcp may persist only through the ContextRouter MCP memory server.
+
 Run the no-memory baseline:
 
 ```bash

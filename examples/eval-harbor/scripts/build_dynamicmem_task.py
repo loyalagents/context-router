@@ -227,6 +227,9 @@ def materialize_stage(stage):
             "stageIndex": stage["stageIndex"],
             "kind": stage["kind"],
             "fileCount": len(stage.get("files", [])),
+            "rawDocsVisible": (CURRENT_STAGE / "docs").exists(),
+            "hasDocumentsJson": (CURRENT_STAGE / "documents.json").exists(),
+            "hasDynamicMemTask": (CURRENT_STAGE / "dynamicmem-task.json").exists(),
         }
     )
 
@@ -870,7 +873,15 @@ runner is Harbor, but the task content follows DynamicMem:
 {stage_contract}
 
 Do not inspect hidden expected answers, verifier files, source dataset files, or
-any other answer-key artifacts.
+any other answer-key artifacts. In particular, do not read `/tests`,
+`/data/stages.json`, `stages/payload.json`, `tests/expected`, or verifier
+source files.
+
+Do not preserve raw stage documents for later stages by copying them into
+scratch files, summaries, caches, or hidden memory files. A downstream-task stage
+is closed-book with respect to raw app-log documents: use only the currently
+revealed `dynamicmem-task.json`, the conversation context, and the memory
+substrate allowed by the selected eval mode.
 """
 
 
