@@ -20,8 +20,8 @@ The memory substrate is the experimental variable. The current arms are:
 | `markdown` | Naive external memory | `/app/memory.md` |
 | `cr-mcp` | ContextRouter memory | Memory-only CR MCP sidecar |
 
-The task data, staged reveal sequence, output path, verifier, model, and
-reasoning effort should stay fixed across arms.
+The task data, staged reveal sequence, output path, verifier, model, reasoning
+effort, and service tier should stay fixed across arms.
 
 ## Architecture
 
@@ -162,9 +162,14 @@ pnpm eval-harbor:dynamicmem:fresh-fast  # rerun all selected arms in parallel
 ```
 
 The underlying wrapper also supports `HARBOR_MODES=markdown,cr-mcp`,
-`HARBOR_SKIP_EXISTING=1`, `HARBOR_PARALLEL=1`, and `HARBOR_FORCE=1`.
+`HARBOR_SKIP_EXISTING=1`, `HARBOR_PARALLEL=1`, `HARBOR_FORCE=1`, and
+`HARBOR_CODEX_SERVICE_TIER=fast`.
 Skip-existing only checks for Harbor's completed `result.json`; it does not
 judge whether that result has a good score.
+
+`HARBOR_CODEX_SERVICE_TIER=fast` is a convenience alias for Codex
+`service_tier=priority`. The default is standard, which passes no service-tier
+override. Fast can change usage/cost, so disclose it in benchmark reports.
 
 For official DynamicMem semantic scoring, set the variables from
 `examples/eval-harbor/judge.env.example` first. Without a judge API key, the
@@ -190,6 +195,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --stage-pattern update-only-then-final \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600
@@ -207,6 +213,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_suite.py \
   --arms-config examples/eval-harbor/arms/dynamicmem-default.json \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600 \
@@ -233,6 +240,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --stage-schedule U,U,T,U,T \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \
   --build-timeout-sec 600

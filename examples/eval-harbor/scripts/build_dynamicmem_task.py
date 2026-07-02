@@ -43,11 +43,16 @@ SOURCE_USER_ID = "user_001"
 CHECKPOINT_INDICES = (0, 1, 2, 3, 4)
 MODEL_NAME = "gpt-5.4-mini"
 REASONING_EFFORT = "high"
+SERVICE_TIER = "standard"
+CODEX_SERVICE_TIER_AGENT_IMPORT_PATH = (
+    "examples.eval_harbor_agents.codex_service_tier:CodexWithServiceTier"
+)
 DEFAULT_AGENT_TIMEOUT_SEC = 86400.0
 DEFAULT_VERIFIER_TIMEOUT_SEC = 86400.0
 DEFAULT_BUILD_TIMEOUT_SEC = 600.0
 DEFAULT_ARM_CONFIG_PATH = Path("examples/eval-harbor/arms/dynamicmem-default.json")
 REASONING_EFFORT_CHOICES = {"low", "medium", "high", "xhigh"}
+SERVICE_TIER_CHOICES = {"standard", "priority"}
 
 TASK_A_EXCLUDED_VALUE_FIELDS_V2 = {"priority", "schedule_date", "schedule_dates"}
 
@@ -61,6 +66,7 @@ class BuildConfig:
     checkpoint_indices: tuple[int, ...] = CHECKPOINT_INDICES
     model_name: str = MODEL_NAME
     reasoning_effort: str = REASONING_EFFORT
+    service_tier: str = SERVICE_TIER
     agent_timeout_sec: float = DEFAULT_AGENT_TIMEOUT_SEC
     verifier_timeout_sec: float = DEFAULT_VERIFIER_TIMEOUT_SEC
     build_timeout_sec: float = DEFAULT_BUILD_TIMEOUT_SEC
@@ -71,6 +77,9 @@ class BuildConfig:
         if self.reasoning_effort not in REASONING_EFFORT_CHOICES:
             choices = ", ".join(sorted(REASONING_EFFORT_CHOICES))
             raise ValueError(f"reasoning_effort must be one of: {choices}")
+        if self.service_tier not in SERVICE_TIER_CHOICES:
+            choices = ", ".join(sorted(SERVICE_TIER_CHOICES))
+            raise ValueError(f"service_tier must be one of: {choices}")
         if self.stage_pattern not in STAGE_PATTERNS:
             choices = ", ".join(sorted(STAGE_PATTERNS))
             raise ValueError(f"stage_pattern must be one of: {choices}")
@@ -674,6 +683,15 @@ def build_difficulty(
         "taskType": "dynamicmem-native-background-memory-trajectory",
         "taskContract": "dataset-adapter/trajectory-v1",
         "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
+        "agentConfig": {
+            "agent": "codex",
+            "agentImportPath": CODEX_SERVICE_TIER_AGENT_IMPORT_PATH,
+            "modelName": config.model_name,
+            "reasoningEffort": config.reasoning_effort,
+            "reasoningEffortConfigKey": "model_reasoning_effort",
+            "serviceTier": config.service_tier,
+            "serviceTierConfigKey": "service_tier",
+        },
         "stagePatternName": config.stage_contract_name,
         "stagePattern": " -> ".join(kind_sequence),
         "stageSchedule": config.stage_contract_display,
@@ -1118,11 +1136,13 @@ def render_job(arm: dict[str, Any], config: BuildConfig = DEFAULT_BUILD_CONFIG) 
         f"    - {compose_path}",
         "",
         "agents:",
-        "  - name: codex",
+        f"  - import_path: {CODEX_SERVICE_TIER_AGENT_IMPORT_PATH}",
         f"    model_name: {config.model_name}",
         "    kwargs:",
         f"      reasoning_effort: {config.reasoning_effort}",
     ]
+    if config.service_tier == "priority":
+        lines.append("      service_tier: priority")
     if mcp_servers:
         lines.append("    mcp_servers:")
         lines.append(render_yaml_list(mcp_servers, 6))
@@ -2203,6 +2223,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \\
   {render_stage_cli_arg(config)} \\
   --model {config.model_name} \\
   --reasoning-effort {config.reasoning_effort} \\
+  --service-tier {config.service_tier} \\
   --agent-timeout-sec {config.agent_timeout_sec:g} \\
   --verifier-timeout-sec {config.verifier_timeout_sec:g} \\
   --build-timeout-sec {config.build_timeout_sec:g}
@@ -2299,6 +2320,12 @@ def main() -> int:
         help="Codex model reasoning effort written into Harbor job kwargs.",
     )
     parser.add_argument(
+        "--service-tier",
+        default=DEFAULT_BUILD_CONFIG.service_tier,
+        choices=sorted(SERVICE_TIER_CHOICES),
+        help="Codex service_tier written into Harbor job kwargs when not standard.",
+    )
+    parser.add_argument(
         "--agent-timeout-sec",
         type=float,
         default=DEFAULT_BUILD_CONFIG.agent_timeout_sec,
@@ -2354,6 +2381,7 @@ def main() -> int:
             checkpoint_indices=tuple(checkpoint_indices),
             model_name=args.model,
             reasoning_effort=args.reasoning_effort,
+            service_tier=args.service_tier,
             agent_timeout_sec=args.agent_timeout_sec,
             verifier_timeout_sec=args.verifier_timeout_sec,
             build_timeout_sec=args.build_timeout_sec,

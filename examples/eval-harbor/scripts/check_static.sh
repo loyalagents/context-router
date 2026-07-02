@@ -12,6 +12,9 @@ PYTHON_FILES=()
 while IFS= read -r path; do
   PYTHON_FILES+=("${path}")
 done < <(find examples/eval-harbor/scripts -maxdepth 1 -type f -name "*.py" | sort)
+while IFS= read -r path; do
+  PYTHON_FILES+=("${path}")
+done < <(find examples/eval_harbor_agents -maxdepth 1 -type f -name "*.py" | sort)
 
 echo "Compiling eval-harbor Python scripts..."
 "${PYTHON_BIN}" -m py_compile "${PYTHON_FILES[@]}"
