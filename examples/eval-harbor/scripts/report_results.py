@@ -250,16 +250,41 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
         return [key for key in required if row.get(key) is None]
     required = [
         "reward",
-        "llmStateMeanScore",
-        "llmServiceMeanScore",
         "totalTokens",
         "costUsd",
     ]
+    if row.get("taskType") == "dynamicmem":
+        required.extend(
+            [
+                "llmStateMeanScore",
+                "llmServiceMeanScore",
+            ]
+        )
     return [key for key in required if row.get(key) is None]
 
 
 def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def is_dynamicmem_score(score: dict[str, Any]) -> bool:
+    return any(
+        key in score
+        for key in (
+            "llmJudge",
+            "missingCheckpointPredictions",
+            "stateCompletion",
+            "personalizedService",
+        )
+    )
+
+
+def report_task_type(*, sensitive_policy: dict[str, Any] | None, score: dict[str, Any]) -> str:
+    if sensitive_policy is not None:
+        return "sensitive-policy"
+    if is_dynamicmem_score(score):
+        return "dynamicmem"
+    return "generic"
 
 
 def sensitive_policy_score_errors(score: dict[str, Any]) -> list[str]:
@@ -858,12 +883,13 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     llm_judge = score.get("llmJudge") or {}
     llm_state = (llm_judge.get("stateCompletion") or {}).get("meanScore")
     llm_service = (llm_judge.get("personalizedService") or {}).get("meanScore")
+    task_type = report_task_type(sensitive_policy=sensitive_policy, score=score)
 
     row = {
         "mode": mode,
         "trialDir": str(trial_dir),
         "artifactRoot": str(artifact_root),
-        "taskType": "sensitive-policy" if sensitive_policy is not None else "generic",
+        "taskType": task_type,
         "sensitivePolicyTaskDir": str(sensitive_task_dir) if sensitive_task_dir else None,
         "taskName": result.get("task_name"),
         "agent": agent_label or "n/a",

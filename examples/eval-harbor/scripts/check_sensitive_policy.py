@@ -298,6 +298,30 @@ def test_score_contract() -> None:
     }
     assert_equal(missing, expected_missing, "missing sensitive report metrics")
 
+    generic_row = {
+        "taskType": "generic",
+        "reward": 1.0,
+        "totalTokens": 100,
+        "costUsd": 0.01,
+    }
+    assert_equal(
+        missing_required_report_metrics(generic_row),
+        [],
+        "generic rows do not require DynamicMem judge metrics",
+    )
+
+    dynamicmem_row = {
+        "taskType": "dynamicmem",
+        "reward": 1.0,
+        "totalTokens": 100,
+        "costUsd": 0.01,
+    }
+    assert_equal(
+        set(missing_required_report_metrics(dynamicmem_row)),
+        {"llmStateMeanScore", "llmServiceMeanScore"},
+        "DynamicMem rows require judge metrics",
+    )
+
 
 def test_artifact_scans() -> None:
     policy = {
