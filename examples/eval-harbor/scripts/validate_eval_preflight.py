@@ -14,6 +14,7 @@ from report_results import (
     command_policy_violations,
     find_trial_dir,
     find_score_path,
+    is_dynamicmem_score,
     load_json,
     missing_required_report_metrics,
     memory_policy_violations,
@@ -331,19 +332,6 @@ def validate_run_preflight(mode: str, run_path: Path) -> list[str]:
         if f"policy violation: {rendered}" not in errors:
             errors.append(f"policy violation: {rendered}")
     return errors
-
-
-def is_dynamicmem_score(score: dict[str, Any]) -> bool:
-    return any(
-        key in score
-        for key in (
-            "llmJudge",
-            "missingCheckpointPredictions",
-            "stateCompletion",
-            "personalizedService",
-        )
-    )
-
 
 def dynamicmem_score_errors(score: dict[str, Any]) -> list[str]:
     errors: list[str] = []
