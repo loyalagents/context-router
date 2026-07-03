@@ -152,7 +152,7 @@ def read_json_text_if_exists(path: Path) -> str:
         return read_text_if_exists(path)
 
 
-def read_mcp_argument_text(trace_path: Path) -> str:
+def read_mcp_argument_text(trace_path: Path, *, tools: set[str] | None = None) -> str:
     if not trace_path.exists():
         return ""
     parts: list[str] = []
@@ -163,7 +163,12 @@ def read_mcp_argument_text(trace_path: Path) -> str:
             payload = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if isinstance(payload, dict) and "arguments" in payload:
+        if not isinstance(payload, dict):
+            continue
+        tool = payload.get("tool")
+        if tools is not None and tool not in tools:
+            continue
+        if "arguments" in payload:
             parts.append(json.dumps(payload["arguments"], sort_keys=True))
     return "\n".join(parts)
 
@@ -222,7 +227,10 @@ def scan_artifacts(
     attempted_text = ""
     attempted_applicable = normalized_mode == "cr-mcp"
     if attempted_applicable:
-        attempted_text = read_mcp_argument_text(artifact_root / "mcp" / "tool-calls.jsonl")
+        attempted_text = read_mcp_argument_text(
+            artifact_root / "mcp" / "tool-calls.jsonl",
+            tools={"mutatePreferences"},
+        )
     attempted_hits = (
         find_value_hits(attempted_text, blocked_records)
         if attempted_applicable
@@ -317,7 +325,11 @@ def sensitive_policy_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, A
     return comparisons
 
 
-def find_sensitive_policy_for_config(config: dict[str, Any]) -> tuple[Path | None, dict[str, Any] | None]:
+def find_sensitive_policy_for_config(
+    config: dict[str, Any],
+    *,
+    base_dirs: list[Path] | None = None,
+) -> tuple[Path | None, dict[str, Any] | None]:
     task_config = config.get("task") or {}
     raw_task_path = task_config.get("path")
     if not isinstance(raw_task_path, str) or not raw_task_path:
@@ -328,10 +340,15 @@ def find_sensitive_policy_for_config(config: dict[str, Any]) -> tuple[Path | Non
     if task_path.name == "task.toml":
         candidates.append(task_path.parent)
     if not task_path.is_absolute():
-        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+        relative_candidates = list(candidates)
+        search_roots = [Path.cwd()]
+        if base_dirs:
+            search_roots.extend(base_dirs)
+        for base_dir in search_roots:
+            candidates.extend(base_dir / candidate for candidate in relative_candidates)
 
     for candidate in candidates:
-        task_dir = candidate.parent if candidate.is_file() else candidate
+        task_dir = candidate.parent if candidate.name == "task.toml" else candidate
         policy = load_sensitive_policy(task_dir)
         if policy is not None:
             return task_dir, policy

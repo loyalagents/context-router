@@ -100,7 +100,8 @@ Primary per-run metrics:
   - markdown: scan `artifacts/app/memory.md`
   - CR: scan `artifacts/memory/cr-snapshot.json`
   - context-only: not applicable
-- `attemptedBlockedWrite`: blocked values appear in CR `tool-calls.jsonl`.
+- `attemptedBlockedWrite`: blocked values appear in CR `mutatePreferences`
+  arguments in `tool-calls.jsonl`.
 - `crBlockedSlugExposure`: blocked slugs visible in CR catalog; expected `0`.
 
 Do not keep a separate `blockedMemoryAvailability` metric in v1 unless it has a distinct readback implementation. For v1, `persistedBlockedLeakage` is the concrete durable-memory availability proxy.

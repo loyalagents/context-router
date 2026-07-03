@@ -31,6 +31,7 @@ DISALLOWED_COMMAND_PATTERNS = [
 ]
 OUTPUT_PREFIX = "/app/outputs/"
 MEMORY_MD_PATH = "/app/memory.md"
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -239,6 +240,12 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
     if row.get("taskType") == "sensitive-policy":
         required = [
             "reward",
+            "totalTokens",
+            "costUsd",
+            "allowedUtilityAccuracy",
+            "blockedOutputLeakage",
+            "outputRoot",
+            "outputFiles",
         ]
         return [key for key in required if row.get(key) is None]
     required = [
@@ -249,6 +256,55 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
         "costUsd",
     ]
     return [key for key in required if row.get(key) is None]
+
+
+def is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def sensitive_policy_score_errors(score: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if score.get("taskType") != "sensitive-policy":
+        errors.append("sensitive-policy score-summary taskType must be sensitive-policy")
+    for key in ("reward", "allowedUtilityAccuracy"):
+        if not is_number(score.get(key)):
+            errors.append(f"sensitive-policy score-summary {key} must be numeric")
+    if score.get("outputRoot") != "outputs":
+        errors.append("sensitive-policy score-summary outputRoot must be outputs")
+    if score.get("outputFiles") != ["permissions-report.json"]:
+        errors.append(
+            "sensitive-policy score-summary outputFiles must be "
+            "['permissions-report.json']"
+        )
+
+    leakage = score.get("blockedOutputLeakage")
+    if not isinstance(leakage, dict):
+        errors.append("sensitive-policy score-summary blockedOutputLeakage must be an object")
+    else:
+        for key in ("hitCount", "rawHitCount"):
+            if not isinstance(leakage.get(key), int) or isinstance(leakage.get(key), bool):
+                errors.append(
+                    f"sensitive-policy score-summary blockedOutputLeakage.{key} "
+                    "must be an integer"
+                )
+        if not isinstance(leakage.get("hitsByCategory"), dict):
+            errors.append(
+                "sensitive-policy score-summary blockedOutputLeakage.hitsByCategory "
+                "must be an object"
+            )
+        if not isinstance(leakage.get("hits"), list):
+            errors.append(
+                "sensitive-policy score-summary blockedOutputLeakage.hits "
+                "must be a list"
+            )
+
+    abstention = score.get("blockedAbstentionAccuracy")
+    if abstention is not None and not is_number(abstention):
+        errors.append(
+            "sensitive-policy score-summary blockedAbstentionAccuracy "
+            "must be numeric or null"
+        )
+    return errors
 
 
 def read_mcp_tools(trace_path: Path) -> list[str]:
@@ -359,7 +415,9 @@ def configured_task_path(config: dict[str, Any]) -> Path | None:
     if task_path.name == "task.toml":
         candidates.append(task_path.parent)
     if not task_path.is_absolute():
-        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+        relative_candidates = list(candidates)
+        for base_dir in (Path.cwd(), REPO_ROOT):
+            candidates.extend(base_dir / candidate for candidate in relative_candidates)
 
     for candidate in candidates:
         if candidate.is_file() and candidate.name == "task.toml":
@@ -596,7 +654,9 @@ def read_task_timeouts(config: dict[str, Any]) -> dict[str, float | None]:
     else:
         candidates.append(task_path / "task.toml")
     if not task_path.is_absolute():
-        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+        relative_candidates = list(candidates)
+        for base_dir in (Path.cwd(), REPO_ROOT):
+            candidates.extend(base_dir / candidate for candidate in relative_candidates)
 
     for candidate in candidates:
         if not candidate.exists():
@@ -677,9 +737,13 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         score = {}
         validation_errors.append(str(error))
 
-    sensitive_task_dir, sensitive_policy = find_sensitive_policy_for_config(config)
+    sensitive_task_dir, sensitive_policy = find_sensitive_policy_for_config(
+        config,
+        base_dirs=[REPO_ROOT, trial_dir, trial_dir.parent],
+    )
     sensitive_policy_metrics = None
     if sensitive_policy is not None:
+        validation_errors.extend(sensitive_policy_score_errors(score))
         sensitive_policy_metrics = scan_sensitive_policy_artifacts(
             mode=mode,
             policy=sensitive_policy,
@@ -695,6 +759,12 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             validation_errors.append(
                 "sensitive-policy CR catalog exposes blocked slug(s): "
                 + json.dumps(catalog_exposure.get("exposedSlugs", []), sort_keys=True)
+            )
+    else:
+        raw_task_path = (config.get("task") or {}).get("path")
+        if isinstance(raw_task_path, str) and "sensitive-policy" in raw_task_path:
+            validation_errors.append(
+                f"sensitive-policy task path did not resolve: {raw_task_path}"
             )
 
     for final_output in expected_output_paths(score, artifact_root):
@@ -820,6 +890,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "totalTokens": usage_metrics["totalTokens"],
         "costUsd": usage_metrics["costUsd"],
         "reward": reward,
+        "allowedUtilityAccuracy": score.get("allowedUtilityAccuracy"),
+        "blockedAbstentionAccuracy": score.get("blockedAbstentionAccuracy"),
+        "blockedOutputLeakage": score.get("blockedOutputLeakage"),
+        "outputRoot": score.get("outputRoot"),
+        "outputFiles": score.get("outputFiles"),
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_success,
         "parseFailures": score.get("parseFailures", 0 if parse_success is True else 1),

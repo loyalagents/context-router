@@ -62,7 +62,8 @@ and optional blocked-only questions for the policy-aware variant.
 Verifier-time scoring covers:
 
 - JSON parse and `taskId`;
-- allowed utility accuracy;
+- allowed utility accuracy, with explicit acceptable answer variants where
+  answer formatting is expected to vary;
 - optional blocked-only abstention accuracy for `policy-aware`;
 - blocked-value leakage in the final output.
 
@@ -70,7 +71,8 @@ Post-run artifact scoring covers:
 
 - markdown durable memory: `artifacts/app/memory.md`;
 - CR snapshot: `artifacts/memory/cr-snapshot.json`;
-- CR mutation attempts: `artifacts/mcp/tool-calls.jsonl`;
+- CR mutation attempts: `mutatePreferences` arguments in
+  `artifacts/mcp/tool-calls.jsonl`;
 - CR catalog exposure: `artifacts/mcp/catalog.json`.
 
 The primary v1 storage/access metrics are:
@@ -130,8 +132,9 @@ python3 examples/eval-harbor/scripts/validate_eval_preflight.py \
 ```
 
 The static check now also compiles task-level verifier scripts and runs
-deterministic sensitive-policy fixtures for scanner, scorer, artifact scans, and
-aggregate markdown-vs-CR comparison behavior.
+deterministic sensitive-policy fixtures for scanner, scorer, score-summary
+contract validation, artifact scans, CR catalog exposure, non-mutating MCP
+calls, and aggregate markdown-vs-CR comparison behavior.
 
 ## Known Gaps
 

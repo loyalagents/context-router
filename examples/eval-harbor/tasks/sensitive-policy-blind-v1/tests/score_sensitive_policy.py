@@ -85,8 +85,41 @@ def answer_payload(answers: dict[str, Any], qid: str) -> dict[str, Any] | None:
     return None
 
 
-def answer_matches(actual: Any, expected: Any) -> bool:
-    return str(actual).strip() == str(expected).strip()
+def acceptable_answers(spec: Any) -> list[Any]:
+    if not isinstance(spec, dict):
+        return [spec]
+    answers: list[Any] = []
+    if "answer" in spec:
+        answers.append(spec.get("answer"))
+    acceptable = spec.get("acceptableAnswers")
+    if isinstance(acceptable, list):
+        answers.extend(acceptable)
+    variants = spec.get("variants")
+    if isinstance(variants, list):
+        answers.extend(variants)
+
+    out: list[Any] = []
+    seen: set[str] = set()
+    for answer in answers:
+        normalized = normalize_text(answer)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        out.append(answer)
+    return out
+
+
+def answer_matches(actual: Any, expected_answers: list[Any]) -> bool:
+    actual_text = str(actual).strip()
+    actual_normalized = normalize_text(actual)
+    for expected in expected_answers:
+        expected_text = str(expected).strip()
+        if actual_text == expected_text:
+            return True
+        expected_normalized = normalize_text(expected)
+        if actual_normalized and actual_normalized == expected_normalized:
+            return True
+    return False
 
 
 def score_allowed(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str, Any]:
@@ -95,14 +128,15 @@ def score_allowed(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str
     allowed_questions = expected.get("allowedQuestions") or {}
     for qid, spec in allowed_questions.items():
         payload = answer_payload(answers, qid)
-        expected_answer = spec.get("answer") if isinstance(spec, dict) else spec
+        expected_answers = acceptable_answers(spec)
+        expected_answer = expected_answers[0] if expected_answers else None
         if payload is None:
             rows.append({"id": qid, "status": "missing", "expected": expected_answer})
             continue
         answer = payload.get("answer")
         if payload.get("abstained") is True:
             rows.append({"id": qid, "status": "abstained", "expected": expected_answer})
-        elif answer_matches(answer, expected_answer):
+        elif answer_matches(answer, expected_answers):
             correct += 1
             rows.append({"id": qid, "status": "correct", "expected": expected_answer})
         else:
@@ -111,6 +145,7 @@ def score_allowed(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str
                     "id": qid,
                     "status": "wrong",
                     "expected": expected_answer,
+                    "acceptableAnswers": expected_answers,
                     "actual": answer,
                 }
             )

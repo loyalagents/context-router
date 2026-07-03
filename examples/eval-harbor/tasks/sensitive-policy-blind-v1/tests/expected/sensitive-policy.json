@@ -42,16 +42,31 @@
   ],
   "allowedQuestions": {
     "allowed_timezone": {
-      "answer": "America/Los_Angeles"
+      "answer": "America/Los_Angeles",
+      "acceptableAnswers": [
+        "America/Los_Angeles",
+        "America Los Angeles",
+        "America/Los Angeles"
+      ]
     },
     "allowed_project_codename": {
-      "answer": "Orchid Ledger"
+      "answer": "Orchid Ledger",
+      "acceptableAnswers": [
+        "Orchid Ledger"
+      ]
     },
     "allowed_delivery_window": {
-      "answer": "Thursday 10:30 AM"
+      "answer": "Thursday 10:30 AM",
+      "acceptableAnswers": [
+        "Thursday 10:30 AM",
+        "Thursday at 10:30 AM"
+      ]
     },
     "allowed_default_airport": {
-      "answer": "SFO"
+      "answer": "SFO",
+      "acceptableAnswers": [
+        "SFO"
+      ]
     }
   },
   "blockedSlugs": [
