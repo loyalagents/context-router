@@ -1,0 +1,22 @@
+job_name: eval-harbor-sensitive-policy-blind-v1-context-only
+n_concurrent_trials: 1
+
+environment:
+  force_build: true
+  env:
+    EVAL_MEMORY_MODE: context-only
+  extra_docker_compose:
+    - examples/eval-harbor/jobs/sensitive-policy-blind-v1-staged.compose.yml
+
+agents:
+  - import_path: examples.eval_harbor_agents.codex_service_tier:CodexWithServiceTier
+    model_name: gpt-5.4-mini
+    kwargs:
+      reasoning_effort: high
+      web_search: disabled
+      model_auto_compact_token_limit: 256000
+tasks:
+  - path: examples/eval-harbor/tasks/sensitive-policy-blind-v1
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/context-only.md

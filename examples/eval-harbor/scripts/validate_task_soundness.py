@@ -14,6 +14,13 @@ from trajectory_framework import (
     STAGE_KIND_SERVICE_TASK,
     STAGE_KIND_STATE_TASK,
 )
+from sensitive_policy import (
+    blocked_slug_exposure,
+    blocked_value_records,
+    find_value_hits,
+    load_sensitive_policy,
+    text_from_payload,
+)
 
 
 HIDDEN_MARKERS = [
@@ -534,6 +541,165 @@ def validate_native_dynamicmem_task(
     return True, errors
 
 
+def validate_sensitive_policy_task(
+    task_id: str,
+    task_dir: Path,
+    staged: dict[str, Any] | None,
+    corpus_id: str | None,
+) -> tuple[bool, list[str]]:
+    policy = load_sensitive_policy(task_dir)
+    if policy is None:
+        return False, []
+
+    errors: list[str] = []
+    if policy.get("taskId") != task_id:
+        errors.append(f"{task_id}: sensitive-policy taskId mismatch")
+    variant = policy.get("variant")
+    if variant not in {"policy-aware", "policy-blind"}:
+        errors.append(f"{task_id}: sensitive-policy variant must be policy-aware or policy-blind")
+    allowed_questions = policy.get("allowedQuestions")
+    if not isinstance(allowed_questions, dict) or not allowed_questions:
+        errors.append(f"{task_id}: sensitive-policy allowedQuestions must be a nonempty object")
+    if variant == "policy-aware":
+        blocked_questions = policy.get("blockedQuestions")
+        if not isinstance(blocked_questions, dict) or not blocked_questions:
+            errors.append(f"{task_id}: policy-aware task must define blockedQuestions")
+
+    blocked_records = blocked_value_records(policy)
+    if not blocked_records:
+        errors.append(f"{task_id}: sensitive-policy blockedValues must be nonempty")
+    categories = {str(record.get("category") or "") for record in blocked_records}
+    expected_categories = {"health", "ordinary_preference"}
+    if categories != expected_categories:
+        errors.append(
+            f"{task_id}: sensitive-policy blocked categories mismatch "
+            f"expected={sorted(expected_categories)} actual={sorted(categories)}"
+        )
+
+    allowed_slugs = {
+        str(slug)
+        for slug in policy.get("allowedCrSlugs", [])
+        if isinstance(slug, str) and slug
+    }
+    if not allowed_slugs:
+        errors.append(f"{task_id}: sensitive-policy allowedCrSlugs must be nonempty")
+
+    catalog_path = task_dir / "mcp" / "catalog.json"
+    if not catalog_path.exists():
+        errors.append(f"{task_id}: sensitive-policy task missing mcp/catalog.json")
+    else:
+        catalog = load_json(catalog_path)
+        if catalog.get("taskId") != task_id:
+            errors.append(f"{task_id}: sensitive-policy catalog taskId mismatch")
+        catalog_slugs = {
+            str(pref.get("slug"))
+            for pref in catalog.get("preferences", [])
+            if isinstance(pref, dict) and pref.get("slug") is not None
+        }
+        if catalog_slugs != allowed_slugs:
+            errors.append(
+                f"{task_id}: sensitive-policy catalog slug mismatch "
+                f"catalog_only={sorted(catalog_slugs - allowed_slugs)} "
+                f"expected_only={sorted(allowed_slugs - catalog_slugs)}"
+            )
+        scopes = {
+            pref.get("scope")
+            for pref in catalog.get("preferences", [])
+            if isinstance(pref, dict)
+        }
+        allowed_scopes = {task_id}
+        if corpus_id:
+            allowed_scopes.add(corpus_id)
+        if scopes and not scopes <= allowed_scopes:
+            errors.append(f"{task_id}: sensitive-policy catalog scope mismatch: {sorted(scopes)}")
+        exposure = blocked_slug_exposure(policy, catalog)
+        if exposure.get("exposedCount"):
+            errors.append(
+                f"{task_id}: sensitive-policy catalog exposes blocked slugs "
+                f"{exposure.get('exposedSlugs')}"
+            )
+
+    if staged is None:
+        errors.append(f"{task_id}: sensitive-policy task must use staged reveal")
+        return True, errors
+
+    stages = staged.get("stages")
+    if not isinstance(stages, list) or not stages:
+        errors.append(f"{task_id}: sensitive-policy staged payload has no stages")
+        return True, errors
+
+    kinds = [stage.get("kind") for stage in stages if isinstance(stage, dict)]
+    if kinds.count(STAGE_KIND_DOWNSTREAM_TASK) != 1:
+        errors.append(f"{task_id}: sensitive-policy task must have exactly one downstream-task")
+    if not any(kind == STAGE_KIND_MEMORY_UPDATE for kind in kinds):
+        errors.append(f"{task_id}: sensitive-policy task must have at least one memory-update")
+    seen_downstream = False
+    for kind in kinds:
+        if kind == STAGE_KIND_DOWNSTREAM_TASK:
+            seen_downstream = True
+        elif seen_downstream and kind == STAGE_KIND_MEMORY_UPDATE:
+            errors.append(f"{task_id}: sensitive-policy memory-update appears after downstream-task")
+
+    def leak_errors(label: str, text: str) -> None:
+        hits = find_value_hits(text, blocked_records)
+        if hits:
+            rendered_hits = [
+                {
+                    "id": hit.get("id"),
+                    "category": hit.get("category"),
+                    "needle": hit.get("needle"),
+                }
+                for hit in hits[:5]
+            ]
+            errors.append(f"{task_id}: blocked value leaked in {label}: {rendered_hits}")
+
+    task_instruction = task_dir / "instruction.md"
+    if task_instruction.exists():
+        leak_errors("instruction.md", task_instruction.read_text(encoding="utf-8", errors="ignore"))
+
+    workspace = task_dir / "environment" / "workspace"
+    if workspace.exists():
+        for path in sorted(workspace.rglob("*")):
+            if path.is_file():
+                leak_errors(
+                    path.relative_to(task_dir).as_posix(),
+                    path.read_text(encoding="utf-8", errors="ignore"),
+                )
+
+    for stage in stages:
+        if not isinstance(stage, dict):
+            continue
+        stage_id = str(stage.get("stageId") or "")
+        kind = stage.get("kind")
+        leak_errors(f"{stage_id} instruction", str(stage.get("instruction") or ""))
+        for item in stage.get("files", []):
+            if not isinstance(item, dict):
+                continue
+            path = str(item.get("path") or "")
+            if kind == STAGE_KIND_DOWNSTREAM_TASK and (
+                path == "documents.json" or path.startswith("docs/")
+            ):
+                errors.append(f"{task_id}: downstream stage exposes source path {path}")
+            is_allowed_source_doc = kind == STAGE_KIND_MEMORY_UPDATE and path.startswith("docs/")
+            if is_allowed_source_doc:
+                continue
+            if "json" in item:
+                payload_text = text_from_payload(item["json"])
+            else:
+                payload_text = str(item.get("text") or "")
+            leak_errors(f"{stage_id} {path}", payload_text)
+
+    leaked = [
+        marker
+        for marker in HIDDEN_MARKERS
+        if marker in visible_agent_text(task_dir) or marker in staged_agent_text(staged)
+    ]
+    if leaked:
+        errors.append(f"{task_id}: visible workspace/stages contain hidden markers {leaked}")
+
+    return True, errors
+
+
 def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     errors: list[str] = []
     task_id = task_dir.name
@@ -620,6 +786,16 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
         ]
         if leaked:
             errors.append(f"{task_id}: visible workspace/stages contain hidden markers {leaked}")
+        return errors
+
+    is_sensitive_policy, sensitive_errors = validate_sensitive_policy_task(
+        task_id,
+        task_dir,
+        staged,
+        corpus_id,
+    )
+    if is_sensitive_policy:
+        errors.extend(sensitive_errors)
         return errors
 
     for step_documents_path in sorted(
@@ -835,6 +1011,16 @@ def main() -> int:
                     f"docs={docs_count} "
                     f"checkpoints={len(checkpoints)} "
                     f"state_keys={state_key_count} service_items={rq_items}"
+                )
+            elif (task / "tests" / "expected" / "sensitive-policy.json").exists():
+                policy = load_json(task / "tests" / "expected" / "sensitive-policy.json")
+                allowed_count = len(policy.get("allowedQuestions", {}))
+                blocked_count = len(policy.get("blockedValues", []))
+                print(
+                    f"OK {task.name}: corpus={corpus_label} "
+                    f"docs={docs_count} "
+                    f"variant={policy.get('variant')} "
+                    f"allowed_questions={allowed_count} blocked_values={blocked_count}"
                 )
             else:
                 expected = load_json(task / "tests" / "expected" / "forms.json")
