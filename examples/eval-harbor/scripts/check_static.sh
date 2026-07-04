@@ -15,9 +15,15 @@ done < <(find examples/eval-harbor/scripts -maxdepth 1 -type f -name "*.py" | so
 while IFS= read -r path; do
   PYTHON_FILES+=("${path}")
 done < <(find examples/eval_harbor_agents -maxdepth 1 -type f -name "*.py" | sort)
+while IFS= read -r path; do
+  PYTHON_FILES+=("${path}")
+done < <(find examples/eval-harbor/tasks -path "*/tests/*.py" -type f | sort)
 
 echo "Compiling eval-harbor Python scripts..."
 "${PYTHON_BIN}" -m py_compile "${PYTHON_FILES[@]}"
+
+echo "Checking sensitive-policy scanner fixtures..."
+"${PYTHON_BIN}" examples/eval-harbor/scripts/check_sensitive_policy.py
 
 echo "Validating task soundness..."
 "${PYTHON_BIN}" examples/eval-harbor/scripts/validate_task_soundness.py \

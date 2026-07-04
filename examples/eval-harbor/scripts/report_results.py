@@ -8,6 +8,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from sensitive_policy import (
+    find_sensitive_policy_for_config,
+    scan_artifacts as scan_sensitive_policy_artifacts,
+    sensitive_policy_comparisons,
+)
+
 
 SCORE_PATH = Path("artifacts/logs/artifacts/score-summary.json")
 FORM_OUTPUT_ROOT = Path("artifacts/app/outputs/forms")
@@ -25,6 +31,7 @@ DISALLOWED_COMMAND_PATTERNS = [
 ]
 OUTPUT_PREFIX = "/app/outputs/"
 MEMORY_MD_PATH = "/app/memory.md"
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -230,14 +237,99 @@ def load_job_result_for_trial(trial_dir: Path) -> dict[str, Any]:
 
 
 def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
+    if row.get("taskType") == "sensitive-policy":
+        required = [
+            "reward",
+            "totalTokens",
+            "costUsd",
+            "allowedUtilityAccuracy",
+            "blockedOutputLeakage",
+            "outputRoot",
+            "outputFiles",
+        ]
+        return [key for key in required if row.get(key) is None]
     required = [
         "reward",
-        "llmStateMeanScore",
-        "llmServiceMeanScore",
         "totalTokens",
         "costUsd",
     ]
+    if row.get("taskType") == "dynamicmem":
+        required.extend(
+            [
+                "llmStateMeanScore",
+                "llmServiceMeanScore",
+            ]
+        )
     return [key for key in required if row.get(key) is None]
+
+
+def is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def is_dynamicmem_score(score: dict[str, Any]) -> bool:
+    return any(
+        key in score
+        for key in (
+            "llmJudge",
+            "missingCheckpointPredictions",
+            "stateCompletion",
+            "personalizedService",
+        )
+    )
+
+
+def report_task_type(*, sensitive_policy: dict[str, Any] | None, score: dict[str, Any]) -> str:
+    if sensitive_policy is not None:
+        return "sensitive-policy"
+    if is_dynamicmem_score(score):
+        return "dynamicmem"
+    return "generic"
+
+
+def sensitive_policy_score_errors(score: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if score.get("taskType") != "sensitive-policy":
+        errors.append("sensitive-policy score-summary taskType must be sensitive-policy")
+    for key in ("reward", "allowedUtilityAccuracy"):
+        if not is_number(score.get(key)):
+            errors.append(f"sensitive-policy score-summary {key} must be numeric")
+    if score.get("outputRoot") != "outputs":
+        errors.append("sensitive-policy score-summary outputRoot must be outputs")
+    if score.get("outputFiles") != ["permissions-report.json"]:
+        errors.append(
+            "sensitive-policy score-summary outputFiles must be "
+            "['permissions-report.json']"
+        )
+
+    leakage = score.get("blockedOutputLeakage")
+    if not isinstance(leakage, dict):
+        errors.append("sensitive-policy score-summary blockedOutputLeakage must be an object")
+    else:
+        for key in ("hitCount", "rawHitCount"):
+            if not isinstance(leakage.get(key), int) or isinstance(leakage.get(key), bool):
+                errors.append(
+                    f"sensitive-policy score-summary blockedOutputLeakage.{key} "
+                    "must be an integer"
+                )
+        if not isinstance(leakage.get("hitsByCategory"), dict):
+            errors.append(
+                "sensitive-policy score-summary blockedOutputLeakage.hitsByCategory "
+                "must be an object"
+            )
+        if not isinstance(leakage.get("hits"), list):
+            errors.append(
+                "sensitive-policy score-summary blockedOutputLeakage.hits "
+                "must be a list"
+            )
+
+    abstention = score.get("blockedAbstentionAccuracy")
+    if abstention is not None and not is_number(abstention):
+        errors.append(
+            "sensitive-policy score-summary blockedAbstentionAccuracy "
+            "must be numeric or null"
+        )
+    return errors
 
 
 def read_mcp_tools(trace_path: Path) -> list[str]:
@@ -348,7 +440,9 @@ def configured_task_path(config: dict[str, Any]) -> Path | None:
     if task_path.name == "task.toml":
         candidates.append(task_path.parent)
     if not task_path.is_absolute():
-        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+        relative_candidates = list(candidates)
+        for base_dir in (Path.cwd(), REPO_ROOT):
+            candidates.extend(base_dir / candidate for candidate in relative_candidates)
 
     for candidate in candidates:
         if candidate.is_file() and candidate.name == "task.toml":
@@ -585,7 +679,9 @@ def read_task_timeouts(config: dict[str, Any]) -> dict[str, float | None]:
     else:
         candidates.append(task_path / "task.toml")
     if not task_path.is_absolute():
-        candidates.extend(Path.cwd() / candidate for candidate in list(candidates))
+        relative_candidates = list(candidates)
+        for base_dir in (Path.cwd(), REPO_ROOT):
+            candidates.extend(base_dir / candidate for candidate in relative_candidates)
 
     for candidate in candidates:
         if not candidate.exists():
@@ -665,6 +761,36 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         artifact_root = trial_dir / "artifacts"
         score = {}
         validation_errors.append(str(error))
+
+    sensitive_task_dir, sensitive_policy = find_sensitive_policy_for_config(
+        config,
+        base_dirs=[REPO_ROOT, trial_dir, trial_dir.parent],
+    )
+    sensitive_policy_metrics = None
+    if sensitive_policy is not None:
+        validation_errors.extend(sensitive_policy_score_errors(score))
+        sensitive_policy_metrics = scan_sensitive_policy_artifacts(
+            mode=mode,
+            policy=sensitive_policy,
+            artifact_root=artifact_root,
+        )
+        catalog_exposure = sensitive_policy_metrics.get("crBlockedSlugExposure") or {}
+        if catalog_exposure.get("error"):
+            validation_errors.append(catalog_exposure["error"])
+        elif (
+            catalog_exposure.get("applicable")
+            and catalog_exposure.get("exposedCount") not in {0, None}
+        ):
+            validation_errors.append(
+                "sensitive-policy CR catalog exposes blocked slug(s): "
+                + json.dumps(catalog_exposure.get("exposedSlugs", []), sort_keys=True)
+            )
+    else:
+        raw_task_path = (config.get("task") or {}).get("path")
+        if isinstance(raw_task_path, str) and "sensitive-policy" in raw_task_path:
+            validation_errors.append(
+                f"sensitive-policy task path did not resolve: {raw_task_path}"
+            )
 
     for final_output in expected_output_paths(score, artifact_root):
         if not final_output.exists():
@@ -757,11 +883,14 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
     llm_judge = score.get("llmJudge") or {}
     llm_state = (llm_judge.get("stateCompletion") or {}).get("meanScore")
     llm_service = (llm_judge.get("personalizedService") or {}).get("meanScore")
+    task_type = report_task_type(sensitive_policy=sensitive_policy, score=score)
 
     row = {
         "mode": mode,
         "trialDir": str(trial_dir),
         "artifactRoot": str(artifact_root),
+        "taskType": task_type,
+        "sensitivePolicyTaskDir": str(sensitive_task_dir) if sensitive_task_dir else None,
         "taskName": result.get("task_name"),
         "agent": agent_label or "n/a",
         "agentVersion": agent_info.get("version"),
@@ -787,6 +916,11 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "totalTokens": usage_metrics["totalTokens"],
         "costUsd": usage_metrics["costUsd"],
         "reward": reward,
+        "allowedUtilityAccuracy": score.get("allowedUtilityAccuracy"),
+        "blockedAbstentionAccuracy": score.get("blockedAbstentionAccuracy"),
+        "blockedOutputLeakage": score.get("blockedOutputLeakage"),
+        "outputRoot": score.get("outputRoot"),
+        "outputFiles": score.get("outputFiles"),
         "fieldAccuracy": field_accuracy,
         "parseSuccess": parse_success,
         "parseFailures": score.get("parseFailures", 0 if parse_success is True else 1),
@@ -814,6 +948,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "policyViolationCount": len(policy_violations),
         "disallowedToolCalls": disallowed_tool_calls,
         "validationErrors": validation_errors,
+        "sensitivePolicy": sensitive_policy_metrics,
     }
     return row
 
@@ -922,6 +1057,12 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
             lines.append(f"- Overfill fields: `{json.dumps(row['overfillFields'])}`")
         if row["metadataErrors"]:
             lines.append(f"- Metadata errors: `{json.dumps(row['metadataErrors'])}`")
+        if row.get("sensitivePolicy"):
+            policy = row["sensitivePolicy"]
+            lines.append(
+                "- Sensitive policy: "
+                f"`{json.dumps(policy, sort_keys=True)}`"
+            )
         if row["validationErrors"]:
             lines.append(
                 f"- Validation errors: `{json.dumps(row['validationErrors'])}`"
@@ -932,16 +1073,44 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
     return "\n\n".join(sections)
 
 
+def sensitive_policy_comparison_section(rows: list[dict[str, Any]]) -> str:
+    comparisons = sensitive_policy_comparisons(rows)
+    if not comparisons:
+        return ""
+    lines = [
+        "## Sensitive Policy Comparisons",
+        "| Task | Variant | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
+        "| --- | --- | ---: | ---: | ---: |",
+    ]
+    for item in comparisons:
+        lines.append(
+            "| {task} | {variant} | {markdown:.3f} | {cr:.3f} | {delta:.3f} |".format(
+                task=item["taskId"],
+                variant=item.get("variant") or "n/a",
+                markdown=item["markdownBlockedLeakageRate"],
+                cr=item["crBlockedLeakageRate"],
+                delta=item["accessReductionVsMarkdown"],
+            )
+        )
+    return "\n".join(lines)
+
+
 def build_report(rows: list[dict[str, Any]]) -> str:
-    return "\n\n".join(
+    parts = [
+        "# Harbor Eval Report",
+        markdown_table(rows),
+    ]
+    comparison_section = sensitive_policy_comparison_section(rows)
+    if comparison_section:
+        parts.append(comparison_section)
+    parts.extend(
         [
-            "# Harbor Eval Report",
-            markdown_table(rows),
             "## Details",
             detail_sections(rows),
             "",
         ]
     )
+    return "\n\n".join(parts)
 
 
 def parse_run_spec(value: str) -> tuple[str, Path]:
@@ -988,7 +1157,10 @@ def main() -> int:
 
     rows = [summarize_run(mode, path) for mode, path in args.run]
     report = build_report(rows)
-    payload = {"runs": rows}
+    payload = {
+        "runs": rows,
+        "sensitivePolicyComparisons": sensitive_policy_comparisons(rows),
+    }
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

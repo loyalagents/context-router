@@ -14,6 +14,7 @@ from report_results import (
     command_policy_violations,
     find_trial_dir,
     find_score_path,
+    is_dynamicmem_score,
     load_json,
     missing_required_report_metrics,
     memory_policy_violations,
@@ -307,8 +308,11 @@ def validate_run_preflight(mode: str, run_path: Path) -> list[str]:
     except ValueError as error:
         score = {}
         errors.append(str(error))
+    missing_metrics = missing_required_report_metrics(summary)
+    if missing_metrics:
+        errors.append(f"missing required report metrics: {', '.join(missing_metrics)}")
     if is_dynamicmem_score(score):
-        errors.extend(dynamicmem_score_errors(score, summary))
+        errors.extend(dynamicmem_score_errors(score))
 
     config = load_json(trial_dir / "config.json")
     score_artifact_root = Path(summary.get("artifactRoot") or trial_dir / "artifacts")
@@ -331,25 +335,8 @@ def validate_run_preflight(mode: str, run_path: Path) -> list[str]:
             errors.append(f"policy violation: {rendered}")
     return errors
 
-
-def is_dynamicmem_score(score: dict[str, Any]) -> bool:
-    return any(
-        key in score
-        for key in (
-            "llmJudge",
-            "missingCheckpointPredictions",
-            "stateCompletion",
-            "personalizedService",
-        )
-    )
-
-
-def dynamicmem_score_errors(score: dict[str, Any], summary: dict[str, Any]) -> list[str]:
+def dynamicmem_score_errors(score: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    missing_metrics = missing_required_report_metrics(summary)
-    if missing_metrics:
-        errors.append(f"missing required report metrics: {', '.join(missing_metrics)}")
-
     if score.get("metadataSuccess") is not True:
         metadata_errors = score.get("metadataErrors") or []
         errors.append(f"DynamicMem metadataSuccess must be true: {metadata_errors}")
