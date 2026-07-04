@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+APP_ROOT = Path("/app")
+CURRENT_STAGE = APP_ROOT / "current_stage"
+OUTPUTS = APP_ROOT / "outputs"
+PREDICTION_PATH = OUTPUTS / "prediction.json"
+SUBMISSIONS_ROOT = OUTPUTS / "submissions"
+
+
+def load_json(path):
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def write_json(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def fail(message):
+    print(f"ERROR: {message}", file=sys.stderr)
+    return 2
+
+
+def helper_kind():
+    name = Path(sys.argv[0]).name
+    if name.endswith("submit_state"):
+        return "state"
+    if name.endswith("submit_service"):
+        return "service"
+    if len(sys.argv) >= 2 and sys.argv[1] in {"state", "service"}:
+        return sys.argv.pop(1)
+    raise SystemExit("ERROR: helper must be invoked as submit_state or submit_service")
+
+
+def current_stage():
+    path = CURRENT_STAGE / "stage.json"
+    if not path.exists():
+        raise SystemExit("ERROR: no current stage is active; run /app/next_stage first")
+    return load_json(path)
+
+
+def task_for(kind):
+    filename = "dynamicmem-state-task.json" if kind == "state" else "dynamicmem-service-task.json"
+    path = CURRENT_STAGE / filename
+    if not path.exists():
+        raise SystemExit(f"ERROR: current stage does not expose {filename}")
+    return load_json(path)
+
+
+def read_answer(path):
+    try:
+        payload = load_json(path)
+    except FileNotFoundError:
+        raise SystemExit(f"ERROR: answer file not found: {path}")
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: answer file is not valid JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise SystemExit("ERROR: answer file must contain a JSON object")
+    return payload
+
+
+def expected_state_keys(task):
+    return set(((task.get("state_completion") or {}).get("keys") or {}).keys())
+
+
+def expected_service_items(task):
+    expected = {}
+    keys = ((task.get("personalized_service") or {}).get("keys") or {})
+    for state_key, node in keys.items():
+        ids = set()
+        if isinstance(node, dict):
+            for item in node.get("items") or []:
+                if isinstance(item, dict) and item.get("qa_id") is not None:
+                    ids.add(str(item["qa_id"]))
+        expected[state_key] = ids
+    return expected
+
+
+def validate_state(payload, checkpoint_id, task):
+    allowed = {"checkpoint_id", "snapshot_state", "evidence"}
+    extra = sorted(set(payload) - allowed)
+    if extra:
+        return f"state answer has unexpected top-level keys: {extra}"
+    if payload.get("checkpoint_id") != checkpoint_id:
+        return f"expected checkpoint_id {checkpoint_id}, got {payload.get('checkpoint_id')!r}"
+    snapshot = payload.get("snapshot_state")
+    evidence = payload.get("evidence")
+    if not isinstance(snapshot, dict):
+        return "snapshot_state must be an object"
+    if evidence is not None and not isinstance(evidence, dict):
+        return "evidence must be an object when present"
+    missing = sorted(expected_state_keys(task) - set(snapshot))
+    if missing:
+        return f"snapshot_state missing required state keys: {missing[:12]}"
+    return None
+
+
+def validate_service(payload, checkpoint_id, task):
+    allowed = {"checkpoint_id", "rq3_apply_answers"}
+    extra = sorted(set(payload) - allowed)
+    if extra:
+        return f"service answer has unexpected top-level keys: {extra}"
+    if payload.get("checkpoint_id") != checkpoint_id:
+        return f"expected checkpoint_id {checkpoint_id}, got {payload.get('checkpoint_id')!r}"
+    answers = payload.get("rq3_apply_answers")
+    if not isinstance(answers, dict):
+        return "rq3_apply_answers must be an object"
+    for state_key, qa_ids in expected_service_items(task).items():
+        node = answers.get(state_key)
+        if not isinstance(node, dict):
+            return f"rq3_apply_answers missing state key {state_key}"
+        items = node.get("items")
+        if not isinstance(items, list):
+            return f"rq3_apply_answers[{state_key!r}].items must be a list"
+        actual_ids = {
+            str(item.get("qa_id") or "")
+            for item in items
+            if isinstance(item, dict)
+        }
+        missing = sorted(qa_ids - actual_ids)
+        if missing:
+            return f"rq3_apply_answers[{state_key!r}] missing qa_id(s): {missing}"
+        for item in items:
+            if not isinstance(item, dict):
+                return f"rq3_apply_answers[{state_key!r}].items must contain objects"
+            qa_id = str(item.get("qa_id") or "")
+            if qa_id in qa_ids and "answer" not in item:
+                return f"rq3_apply_answers[{state_key!r}] item {qa_id} missing answer"
+    return None
+
+
+def empty_prediction_root(task):
+    return {
+        "task_contract_version": task.get("task_contract_version"),
+        "research_frame_version": task.get("research_frame_version"),
+        "predictions": [],
+    }
+
+
+def load_prediction_root(task):
+    if not PREDICTION_PATH.exists():
+        return empty_prediction_root(task)
+    try:
+        payload = load_json(PREDICTION_PATH)
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: existing prediction.json is invalid JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise SystemExit("ERROR: existing prediction.json must contain a JSON object")
+    if not isinstance(payload.get("predictions"), list):
+        payload["predictions"] = []
+    payload.setdefault("task_contract_version", task.get("task_contract_version"))
+    payload.setdefault("research_frame_version", task.get("research_frame_version"))
+    return payload
+
+
+def checkpoint_prediction(root, checkpoint_id):
+    predictions = root.setdefault("predictions", [])
+    for item in predictions:
+        if isinstance(item, dict) and item.get("checkpoint_id") == checkpoint_id:
+            item.setdefault("snapshot_state", {})
+            item.setdefault("evidence", {})
+            item.setdefault("rq3_apply_answers", {})
+            return item
+    item = {
+        "checkpoint_id": checkpoint_id,
+        "snapshot_state": {},
+        "evidence": {},
+        "rq3_apply_answers": {},
+    }
+    predictions.append(item)
+    predictions.sort(key=lambda row: str(row.get("checkpoint_id") or ""))
+    return item
+
+
+def main():
+    kind = helper_kind()
+    answer_arg_index = 1
+    if len(sys.argv) <= answer_arg_index:
+        return fail(f"usage: /app/submit_{kind} <answer.json>")
+    answer_path = Path(sys.argv[answer_arg_index])
+    if not answer_path.is_absolute():
+        answer_path = Path.cwd() / answer_path
+
+    stage = current_stage()
+    expected_stage_kind = "state-task" if kind == "state" else "service-task"
+    if stage.get("kind") != expected_stage_kind:
+        return fail(f"submit_{kind} can only run when the current downstream task exposes the {kind} family")
+    checkpoint_id = str(stage.get("checkpointId") or "")
+    if not checkpoint_id:
+        return fail("current stage has no checkpointId")
+
+    task = task_for(kind)
+    payload = read_answer(answer_path)
+    error = (
+        validate_state(payload, checkpoint_id, task)
+        if kind == "state"
+        else validate_service(payload, checkpoint_id, task)
+    )
+    if error:
+        return fail(error)
+
+    root = load_prediction_root(task)
+    prediction = checkpoint_prediction(root, checkpoint_id)
+    if kind == "state":
+        prediction["snapshot_state"] = payload["snapshot_state"]
+        prediction["evidence"] = payload.get("evidence") or {}
+    else:
+        prediction["rq3_apply_answers"] = payload["rq3_apply_answers"]
+
+    write_json(PREDICTION_PATH, root)
+    submission_path = SUBMISSIONS_ROOT / checkpoint_id / f"{kind}.json"
+    write_json(submission_path, payload)
+    print(f"OK: accepted {kind} submission for {checkpoint_id}")
+    print(f"Updated {PREDICTION_PATH}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -20,3 +20,7 @@ tasks:
 
 extra_instruction_paths:
   - examples/eval-harbor/modes/markdown.md
+
+artifacts:
+  - source: /app/memory.md
+    destination: memory/memory.md

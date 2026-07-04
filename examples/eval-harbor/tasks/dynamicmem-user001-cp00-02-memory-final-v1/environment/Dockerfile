@@ -4,4 +4,4 @@ WORKDIR /app
 
 COPY workspace/ /app/
 
-RUN chmod +x /app/next_stage && mkdir -p /app/outputs
+RUN chmod +x /app/next_stage /app/submit_state /app/submit_service && mkdir -p /app/outputs/submissions

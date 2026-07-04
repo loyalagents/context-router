@@ -31732,21 +31732,429 @@
             },
             "output": {
               "contract": {
-                "predictions": [
-                  {
-                    "checkpoint_id": "cal_quarterly_003",
-                    "evidence": {},
-                    "rq3_apply_answers": {},
-                    "snapshot_state": {}
-                  }
-                ],
-                "research_frame_version": "rq_v2",
-                "task_contract_version": "taskabc_v2"
+                "checkpoint_id": "cal_quarterly_003",
+                "evidence": {},
+                "snapshot_state": {}
               },
               "current_checkpoint_id": "cal_quarterly_003",
-              "path": "outputs/prediction.json",
-              "preserve_existing_predictions": true,
-              "write_mode": "append_or_update_checkpoint_prediction"
+              "path": "outputs/submissions/cal_quarterly_003/state.json",
+              "retry_until_valid": true,
+              "submit_helper": "/app/submit_state"
+            },
+            "research_frame_version": "rq_v2",
+            "schemaVersion": 1,
+            "sourceDataset": "xiewenya/dynamicmem",
+            "state_completion": {
+              "keys": {
+                "habits_state:budget_review": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_d710d1d1b993",
+                  "question_text": "Infer the user's current state for habits budget review (habits_state:budget_review) using this template: {\"habits_state:budget_review\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits budget review (habits_state:budget_review) using this template: {\"habits_state:budget_review\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:budget_review"
+                },
+                "habits_state:client_technical_briefing": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_9ad6849a4586",
+                  "question_text": "Infer the user's current state for habits client technical briefing (habits_state:client_technical_briefing) using this template: {\"habits_state:client_technical_briefing\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits client technical briefing (habits_state:client_technical_briefing) using this template: {\"habits_state:client_technical_briefing\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:client_technical_briefing"
+                },
+                "habits_state:investment_transfer": {
+                  "answer_template": {
+                    "schedule": {
+                      "days_of_month": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_38e48c0e3a7b",
+                  "question_text": "Infer the user's current state for habits investment transfer (habits_state:investment_transfer) using this template: {\"habits_state:investment_transfer\": {\"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits investment transfer (habits_state:investment_transfer) using this template: {\"habits_state:investment_transfer\": {\"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:investment_transfer"
+                },
+                "habits_state:mental_health_therapy": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>",
+                      "start_date": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_f87ef0e14c34",
+                  "question_text": "Infer the user's current state for habits mental health therapy (habits_state:mental_health_therapy) using this template: {\"habits_state:mental_health_therapy\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits mental health therapy (habits_state:mental_health_therapy) using this template: {\"habits_state:mental_health_therapy\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:mental_health_therapy"
+                },
+                "habits_state:regulatory_compliance_audit": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "day_of_week": "<fill the blank>",
+                      "frequency_type": "<fill the blank>",
+                      "week_of_month": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_d91e4beca95a",
+                  "question_text": "Infer the user's current state for habits regulatory compliance audit (habits_state:regulatory_compliance_audit) using this template: {\"habits_state:regulatory_compliance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits regulatory compliance audit (habits_state:regulatory_compliance_audit) using this template: {\"habits_state:regulatory_compliance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:regulatory_compliance_audit"
+                },
+                "habits_state:rotary_breakfast_meeting": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_8aa70ced1059",
+                  "question_text": "Infer the user's current state for habits rotary breakfast meeting (habits_state:rotary_breakfast_meeting) using this template: {\"habits_state:rotary_breakfast_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits rotary breakfast meeting (habits_state:rotary_breakfast_meeting) using this template: {\"habits_state:rotary_breakfast_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:rotary_breakfast_meeting"
+                },
+                "habits_state:spouse_date_night": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_ddaed39f2ecb",
+                  "question_text": "Infer the user's current state for habits spouse date night (habits_state:spouse_date_night) using this template: {\"habits_state:spouse_date_night\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits spouse date night (habits_state:spouse_date_night) using this template: {\"habits_state:spouse_date_night\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:spouse_date_night"
+                },
+                "habits_state:weekend_woodworking_session": {
+                  "answer_template": {
+                    "location": "<fill the blank>",
+                    "schedule": {
+                      "days_of_week": [
+                        "<fill the blank>"
+                      ],
+                      "frequency_type": "<fill the blank>",
+                      "start_date": "<fill the blank>"
+                    },
+                    "timing": {
+                      "start_time": "<fill the blank>"
+                    }
+                  },
+                  "item_id": "scp_9abc8b81d24c",
+                  "question_text": "Infer the user's current state for habits weekend woodworking session (habits_state:weekend_woodworking_session) using this template: {\"habits_state:weekend_woodworking_session\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "retrieval_query": "Infer the user's current state for habits weekend woodworking session (habits_state:weekend_woodworking_session) using this template: {\"habits_state:weekend_woodworking_session\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
+                  "state_key": "habits_state:weekend_woodworking_session"
+                },
+                "preferences_state:capital_allocation": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_00b0b037e92d",
+                  "question_text": "Infer the user's current state for preferences capital allocation (preferences_state:capital_allocation) using this template: {\"preferences_state:capital_allocation\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences capital allocation (preferences_state:capital_allocation) using this template: {\"preferences_state:capital_allocation\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:capital_allocation"
+                },
+                "preferences_state:community_involvement_type": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_fa6913219986",
+                  "question_text": "Infer the user's current state for preferences community involvement type (preferences_state:community_involvement_type) using this template: {\"preferences_state:community_involvement_type\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences community involvement type (preferences_state:community_involvement_type) using this template: {\"preferences_state:community_involvement_type\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:community_involvement_type"
+                },
+                "preferences_state:fitness_philosophy": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_0220e708a3fb",
+                  "question_text": "Infer the user's current state for preferences fitness philosophy (preferences_state:fitness_philosophy) using this template: {\"preferences_state:fitness_philosophy\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences fitness philosophy (preferences_state:fitness_philosophy) using this template: {\"preferences_state:fitness_philosophy\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:fitness_philosophy"
+                },
+                "preferences_state:health_management_approach": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_21ed1211ea5b",
+                  "question_text": "Infer the user's current state for preferences health management approach (preferences_state:health_management_approach) using this template: {\"preferences_state:health_management_approach\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences health management approach (preferences_state:health_management_approach) using this template: {\"preferences_state:health_management_approach\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:health_management_approach"
+                },
+                "preferences_state:learning_modality": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_ad6e4cbdc821",
+                  "question_text": "Infer the user's current state for preferences learning modality (preferences_state:learning_modality) using this template: {\"preferences_state:learning_modality\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences learning modality (preferences_state:learning_modality) using this template: {\"preferences_state:learning_modality\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:learning_modality"
+                },
+                "preferences_state:leisure_activity_type": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_773fa7df038d",
+                  "question_text": "Infer the user's current state for preferences leisure activity type (preferences_state:leisure_activity_type) using this template: {\"preferences_state:leisure_activity_type\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences leisure activity type (preferences_state:leisure_activity_type) using this template: {\"preferences_state:leisure_activity_type\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:leisure_activity_type"
+                },
+                "preferences_state:media_content_genre": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_14231d4cd0e8",
+                  "question_text": "Infer the user's current state for preferences media content genre (preferences_state:media_content_genre) using this template: {\"preferences_state:media_content_genre\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences media content genre (preferences_state:media_content_genre) using this template: {\"preferences_state:media_content_genre\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:media_content_genre"
+                },
+                "preferences_state:shared_activity_planning": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_878cd519754a",
+                  "question_text": "Infer the user's current state for preferences shared activity planning (preferences_state:shared_activity_planning) using this template: {\"preferences_state:shared_activity_planning\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences shared activity planning (preferences_state:shared_activity_planning) using this template: {\"preferences_state:shared_activity_planning\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:shared_activity_planning"
+                },
+                "preferences_state:social_interaction_format": {
+                  "answer_template": {
+                    "statement": "<fill the blank>"
+                  },
+                  "item_id": "scp_8632e7077864",
+                  "question_text": "Infer the user's current state for preferences social interaction format (preferences_state:social_interaction_format) using this template: {\"preferences_state:social_interaction_format\": {\"statement\": \"<fill the blank>\"}}.",
+                  "retrieval_query": "Infer the user's current state for preferences social interaction format (preferences_state:social_interaction_format) using this template: {\"preferences_state:social_interaction_format\": {\"statement\": \"<fill the blank>\"}}.",
+                  "state_key": "preferences_state:social_interaction_format"
+                },
+                "user_attributes_state:community_memberships": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_204d3fba495a",
+                  "question_text": "Infer the user's current state for user attributes community memberships (user_attributes_state:community_memberships) using this template: {\"user_attributes_state:community_memberships\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes community memberships (user_attributes_state:community_memberships) using this template: {\"user_attributes_state:community_memberships\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:community_memberships"
+                },
+                "user_attributes_state:current_project_focus": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_38c4ef6ea6dc",
+                  "question_text": "Infer the user's current state for user attributes current project focus (user_attributes_state:current_project_focus) using this template: {\"user_attributes_state:current_project_focus\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes current project focus (user_attributes_state:current_project_focus) using this template: {\"user_attributes_state:current_project_focus\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:current_project_focus"
+                },
+                "user_attributes_state:family_sports_gear": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_1d3eece06b50",
+                  "question_text": "Infer the user's current state for user attributes family sports gear (user_attributes_state:family_sports_gear) using this template: {\"user_attributes_state:family_sports_gear\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes family sports gear (user_attributes_state:family_sports_gear) using this template: {\"user_attributes_state:family_sports_gear\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:family_sports_gear"
+                },
+                "user_attributes_state:home_infrastructure_assets": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_5757bad3f4f3",
+                  "question_text": "Infer the user's current state for user attributes home infrastructure assets (user_attributes_state:home_infrastructure_assets) using this template: {\"user_attributes_state:home_infrastructure_assets\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes home infrastructure assets (user_attributes_state:home_infrastructure_assets) using this template: {\"user_attributes_state:home_infrastructure_assets\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:home_infrastructure_assets"
+                },
+                "user_attributes_state:home_media_server": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_0243402adfdb",
+                  "question_text": "Infer the user's current state for user attributes home media server (user_attributes_state:home_media_server) using this template: {\"user_attributes_state:home_media_server\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes home media server (user_attributes_state:home_media_server) using this template: {\"user_attributes_state:home_media_server\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:home_media_server"
+                },
+                "user_attributes_state:industry_software_skills": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_d536e5ce32ff",
+                  "question_text": "Infer the user's current state for user attributes industry software skills (user_attributes_state:industry_software_skills) using this template: {\"user_attributes_state:industry_software_skills\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes industry software skills (user_attributes_state:industry_software_skills) using this template: {\"user_attributes_state:industry_software_skills\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:industry_software_skills"
+                },
+                "user_attributes_state:insurance_portfolio": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_c1d5e54f0a9c",
+                  "question_text": "Infer the user's current state for user attributes insurance portfolio (user_attributes_state:insurance_portfolio) using this template: {\"user_attributes_state:insurance_portfolio\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes insurance portfolio (user_attributes_state:insurance_portfolio) using this template: {\"user_attributes_state:insurance_portfolio\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:insurance_portfolio"
+                },
+                "user_attributes_state:leisure_hardware": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_035ea33b12cc",
+                  "question_text": "Infer the user's current state for user attributes leisure hardware (user_attributes_state:leisure_hardware) using this template: {\"user_attributes_state:leisure_hardware\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes leisure hardware (user_attributes_state:leisure_hardware) using this template: {\"user_attributes_state:leisure_hardware\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:leisure_hardware"
+                },
+                "user_attributes_state:main_investment_account": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_630768ad3c72",
+                  "question_text": "Infer the user's current state for user attributes main investment account (user_attributes_state:main_investment_account) using this template: {\"user_attributes_state:main_investment_account\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes main investment account (user_attributes_state:main_investment_account) using this template: {\"user_attributes_state:main_investment_account\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:main_investment_account"
+                },
+                "user_attributes_state:main_leisure_hobby": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_32c2092dcc41",
+                  "question_text": "Infer the user's current state for user attributes main leisure hobby (user_attributes_state:main_leisure_hobby) using this template: {\"user_attributes_state:main_leisure_hobby\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes main leisure hobby (user_attributes_state:main_leisure_hobby) using this template: {\"user_attributes_state:main_leisure_hobby\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:main_leisure_hobby"
+                },
+                "user_attributes_state:main_tech_tool": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_cbeafb971fc9",
+                  "question_text": "Infer the user's current state for user attributes main tech tool (user_attributes_state:main_tech_tool) using this template: {\"user_attributes_state:main_tech_tool\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes main tech tool (user_attributes_state:main_tech_tool) using this template: {\"user_attributes_state:main_tech_tool\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:main_tech_tool"
+                },
+                "user_attributes_state:primary_family_vehicle": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_d89ec57da4be",
+                  "question_text": "Infer the user's current state for user attributes primary family vehicle (user_attributes_state:primary_family_vehicle) using this template: {\"user_attributes_state:primary_family_vehicle\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary family vehicle (user_attributes_state:primary_family_vehicle) using this template: {\"user_attributes_state:primary_family_vehicle\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_family_vehicle"
+                },
+                "user_attributes_state:primary_health_focus": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_5d4e12c90e29",
+                  "question_text": "Infer the user's current state for user attributes primary health focus (user_attributes_state:primary_health_focus) using this template: {\"user_attributes_state:primary_health_focus\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary health focus (user_attributes_state:primary_health_focus) using this template: {\"user_attributes_state:primary_health_focus\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_health_focus"
+                },
+                "user_attributes_state:primary_job_role": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_b8fdbc7a0db5",
+                  "question_text": "Infer the user's current state for user attributes primary job role (user_attributes_state:primary_job_role) using this template: {\"user_attributes_state:primary_job_role\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary job role (user_attributes_state:primary_job_role) using this template: {\"user_attributes_state:primary_job_role\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_job_role"
+                },
+                "user_attributes_state:primary_residence_mortgage": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_bd1f549636bb",
+                  "question_text": "Infer the user's current state for user attributes primary residence mortgage (user_attributes_state:primary_residence_mortgage) using this template: {\"user_attributes_state:primary_residence_mortgage\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary residence mortgage (user_attributes_state:primary_residence_mortgage) using this template: {\"user_attributes_state:primary_residence_mortgage\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_residence_mortgage"
+                },
+                "user_attributes_state:primary_social_circle": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_a3b7e96cfc45",
+                  "question_text": "Infer the user's current state for user attributes primary social circle (user_attributes_state:primary_social_circle) using this template: {\"user_attributes_state:primary_social_circle\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary social circle (user_attributes_state:primary_social_circle) using this template: {\"user_attributes_state:primary_social_circle\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_social_circle"
+                },
+                "user_attributes_state:primary_workplace": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_f5ed391052f6",
+                  "question_text": "Infer the user's current state for user attributes primary workplace (user_attributes_state:primary_workplace) using this template: {\"user_attributes_state:primary_workplace\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes primary workplace (user_attributes_state:primary_workplace) using this template: {\"user_attributes_state:primary_workplace\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:primary_workplace"
+                },
+                "user_attributes_state:professional_certifications": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_02f8a1e77d97",
+                  "question_text": "Infer the user's current state for user attributes professional certifications (user_attributes_state:professional_certifications) using this template: {\"user_attributes_state:professional_certifications\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes professional certifications (user_attributes_state:professional_certifications) using this template: {\"user_attributes_state:professional_certifications\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:professional_certifications"
+                },
+                "user_attributes_state:professional_memberships": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_5fa880ec4c1a",
+                  "question_text": "Infer the user's current state for user attributes professional memberships (user_attributes_state:professional_memberships) using this template: {\"user_attributes_state:professional_memberships\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes professional memberships (user_attributes_state:professional_memberships) using this template: {\"user_attributes_state:professional_memberships\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:professional_memberships"
+                },
+                "user_attributes_state:recovery_tools": {
+                  "answer_template": "<fill the blank>",
+                  "item_id": "scp_b4feb4283f21",
+                  "question_text": "Infer the user's current state for user attributes recovery tools (user_attributes_state:recovery_tools) using this template: {\"user_attributes_state:recovery_tools\": \"<fill the blank>\"}.",
+                  "retrieval_query": "Infer the user's current state for user attributes recovery tools (user_attributes_state:recovery_tools) using this template: {\"user_attributes_state:recovery_tools\": \"<fill the blank>\"}.",
+                  "state_key": "user_attributes_state:recovery_tools"
+                }
+              },
+              "pack_authoring": "point_based_vnext",
+              "version": "v6"
+            },
+            "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
+            "task_contract_version": "taskabc_v2",
+            "userId": "user_001"
+          },
+          "path": "dynamicmem-state-task.json"
+        }
+      ],
+      "instruction": "You are working in `/app`.\n\nThis is stage 4 of 5. It is a downstream DynamicMem task stage\nfor the state family.\n\nRead:\n\n- `current_stage/dynamicmem-state-task.json`\n\nNo raw app-log documents are revealed in this stage. Use only retained memory,\nconversation context, or the memory substrate allowed by the selected eval mode.\n\nCreate a candidate JSON file under `/tmp`, for example\n`/tmp/state-answer.json`, with this exact top-level shape:\n\n```json\n{\n  \"checkpoint_id\": \"cal_quarterly_003\",\n  \"snapshot_state\": {},\n  \"evidence\": {}\n}\n```\n\nFill every key listed under `state_completion.keys` for checkpoint\n`cal_quarterly_003` as of `2024-06-30 20:00:00`. Then submit it:\n\n```bash\n/app/submit_state /tmp/state-answer.json\n```\n\nIf the helper prints `ERROR`, fix the candidate and rerun `/app/submit_state`.\nDo not run `/app/next_stage` until `/app/submit_state` prints `OK`.\n",
+      "kind": "state-task",
+      "stageId": "04-cp02-state-task",
+      "stageIndex": 4
+    },
+    {
+      "checkpointId": "cal_quarterly_003",
+      "checkpointIndex": 2,
+      "files": [
+        {
+          "json": {
+            "checkpoint": {
+              "as_of": {
+                "app_log_id": "log_00716",
+                "completed_chain_ids": [
+                  "family_close_relationships_w2_2"
+                ],
+                "domain": "Family & Close Relationships",
+                "log_index": 715,
+                "timestamp": "2024-06-30 20:00:00",
+                "window_id": "w2"
+              },
+              "checkpoint_id": "cal_quarterly_003"
+            },
+            "output": {
+              "contract": {
+                "checkpoint_id": "cal_quarterly_003",
+                "rq3_apply_answers": {}
+              },
+              "current_checkpoint_id": "cal_quarterly_003",
+              "path": "outputs/submissions/cal_quarterly_003/service.json",
+              "retry_until_valid": true,
+              "submit_helper": "/app/submit_service"
             },
             "personalized_service": {
               "keys": {
@@ -32350,388 +32758,17 @@
             "research_frame_version": "rq_v2",
             "schemaVersion": 1,
             "sourceDataset": "xiewenya/dynamicmem",
-            "state_completion": {
-              "keys": {
-                "habits_state:budget_review": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_d710d1d1b993",
-                  "question_text": "Infer the user's current state for habits budget review (habits_state:budget_review) using this template: {\"habits_state:budget_review\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits budget review (habits_state:budget_review) using this template: {\"habits_state:budget_review\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:budget_review"
-                },
-                "habits_state:client_technical_briefing": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_9ad6849a4586",
-                  "question_text": "Infer the user's current state for habits client technical briefing (habits_state:client_technical_briefing) using this template: {\"habits_state:client_technical_briefing\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits client technical briefing (habits_state:client_technical_briefing) using this template: {\"habits_state:client_technical_briefing\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:client_technical_briefing"
-                },
-                "habits_state:investment_transfer": {
-                  "answer_template": {
-                    "schedule": {
-                      "days_of_month": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_38e48c0e3a7b",
-                  "question_text": "Infer the user's current state for habits investment transfer (habits_state:investment_transfer) using this template: {\"habits_state:investment_transfer\": {\"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits investment transfer (habits_state:investment_transfer) using this template: {\"habits_state:investment_transfer\": {\"schedule\": {\"days_of_month\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:investment_transfer"
-                },
-                "habits_state:mental_health_therapy": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>",
-                      "start_date": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_f87ef0e14c34",
-                  "question_text": "Infer the user's current state for habits mental health therapy (habits_state:mental_health_therapy) using this template: {\"habits_state:mental_health_therapy\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits mental health therapy (habits_state:mental_health_therapy) using this template: {\"habits_state:mental_health_therapy\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:mental_health_therapy"
-                },
-                "habits_state:regulatory_compliance_audit": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "day_of_week": "<fill the blank>",
-                      "frequency_type": "<fill the blank>",
-                      "week_of_month": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_d91e4beca95a",
-                  "question_text": "Infer the user's current state for habits regulatory compliance audit (habits_state:regulatory_compliance_audit) using this template: {\"habits_state:regulatory_compliance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits regulatory compliance audit (habits_state:regulatory_compliance_audit) using this template: {\"habits_state:regulatory_compliance_audit\": {\"location\": \"<fill the blank>\", \"schedule\": {\"day_of_week\": \"<fill the blank>\", \"frequency_type\": \"<fill the blank>\", \"week_of_month\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:regulatory_compliance_audit"
-                },
-                "habits_state:rotary_breakfast_meeting": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_8aa70ced1059",
-                  "question_text": "Infer the user's current state for habits rotary breakfast meeting (habits_state:rotary_breakfast_meeting) using this template: {\"habits_state:rotary_breakfast_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits rotary breakfast meeting (habits_state:rotary_breakfast_meeting) using this template: {\"habits_state:rotary_breakfast_meeting\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:rotary_breakfast_meeting"
-                },
-                "habits_state:spouse_date_night": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_ddaed39f2ecb",
-                  "question_text": "Infer the user's current state for habits spouse date night (habits_state:spouse_date_night) using this template: {\"habits_state:spouse_date_night\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits spouse date night (habits_state:spouse_date_night) using this template: {\"habits_state:spouse_date_night\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:spouse_date_night"
-                },
-                "habits_state:weekend_woodworking_session": {
-                  "answer_template": {
-                    "location": "<fill the blank>",
-                    "schedule": {
-                      "days_of_week": [
-                        "<fill the blank>"
-                      ],
-                      "frequency_type": "<fill the blank>",
-                      "start_date": "<fill the blank>"
-                    },
-                    "timing": {
-                      "start_time": "<fill the blank>"
-                    }
-                  },
-                  "item_id": "scp_9abc8b81d24c",
-                  "question_text": "Infer the user's current state for habits weekend woodworking session (habits_state:weekend_woodworking_session) using this template: {\"habits_state:weekend_woodworking_session\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "retrieval_query": "Infer the user's current state for habits weekend woodworking session (habits_state:weekend_woodworking_session) using this template: {\"habits_state:weekend_woodworking_session\": {\"location\": \"<fill the blank>\", \"schedule\": {\"days_of_week\": [\"<fill the blank>\"], \"frequency_type\": \"<fill the blank>\", \"start_date\": \"<fill the blank>\"}, \"timing\": {\"start_time\": \"<fill the blank>\"}}}. Schedule date encoding: `day_of_week` and `days_of_week` use zero-based weekday indexes: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday. `day_of_month` and `days_of_month` use calendar day numbers 1-31; they are not zero-based. `week_of_month` uses ordinal week numbers within the month: 1=first, 2=second, 3=third, 4=fourth, 5=fifth.",
-                  "state_key": "habits_state:weekend_woodworking_session"
-                },
-                "preferences_state:capital_allocation": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_00b0b037e92d",
-                  "question_text": "Infer the user's current state for preferences capital allocation (preferences_state:capital_allocation) using this template: {\"preferences_state:capital_allocation\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences capital allocation (preferences_state:capital_allocation) using this template: {\"preferences_state:capital_allocation\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:capital_allocation"
-                },
-                "preferences_state:community_involvement_type": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_fa6913219986",
-                  "question_text": "Infer the user's current state for preferences community involvement type (preferences_state:community_involvement_type) using this template: {\"preferences_state:community_involvement_type\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences community involvement type (preferences_state:community_involvement_type) using this template: {\"preferences_state:community_involvement_type\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:community_involvement_type"
-                },
-                "preferences_state:fitness_philosophy": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_0220e708a3fb",
-                  "question_text": "Infer the user's current state for preferences fitness philosophy (preferences_state:fitness_philosophy) using this template: {\"preferences_state:fitness_philosophy\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences fitness philosophy (preferences_state:fitness_philosophy) using this template: {\"preferences_state:fitness_philosophy\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:fitness_philosophy"
-                },
-                "preferences_state:health_management_approach": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_21ed1211ea5b",
-                  "question_text": "Infer the user's current state for preferences health management approach (preferences_state:health_management_approach) using this template: {\"preferences_state:health_management_approach\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences health management approach (preferences_state:health_management_approach) using this template: {\"preferences_state:health_management_approach\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:health_management_approach"
-                },
-                "preferences_state:learning_modality": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_ad6e4cbdc821",
-                  "question_text": "Infer the user's current state for preferences learning modality (preferences_state:learning_modality) using this template: {\"preferences_state:learning_modality\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences learning modality (preferences_state:learning_modality) using this template: {\"preferences_state:learning_modality\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:learning_modality"
-                },
-                "preferences_state:leisure_activity_type": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_773fa7df038d",
-                  "question_text": "Infer the user's current state for preferences leisure activity type (preferences_state:leisure_activity_type) using this template: {\"preferences_state:leisure_activity_type\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences leisure activity type (preferences_state:leisure_activity_type) using this template: {\"preferences_state:leisure_activity_type\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:leisure_activity_type"
-                },
-                "preferences_state:media_content_genre": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_14231d4cd0e8",
-                  "question_text": "Infer the user's current state for preferences media content genre (preferences_state:media_content_genre) using this template: {\"preferences_state:media_content_genre\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences media content genre (preferences_state:media_content_genre) using this template: {\"preferences_state:media_content_genre\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:media_content_genre"
-                },
-                "preferences_state:shared_activity_planning": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_878cd519754a",
-                  "question_text": "Infer the user's current state for preferences shared activity planning (preferences_state:shared_activity_planning) using this template: {\"preferences_state:shared_activity_planning\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences shared activity planning (preferences_state:shared_activity_planning) using this template: {\"preferences_state:shared_activity_planning\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:shared_activity_planning"
-                },
-                "preferences_state:social_interaction_format": {
-                  "answer_template": {
-                    "statement": "<fill the blank>"
-                  },
-                  "item_id": "scp_8632e7077864",
-                  "question_text": "Infer the user's current state for preferences social interaction format (preferences_state:social_interaction_format) using this template: {\"preferences_state:social_interaction_format\": {\"statement\": \"<fill the blank>\"}}.",
-                  "retrieval_query": "Infer the user's current state for preferences social interaction format (preferences_state:social_interaction_format) using this template: {\"preferences_state:social_interaction_format\": {\"statement\": \"<fill the blank>\"}}.",
-                  "state_key": "preferences_state:social_interaction_format"
-                },
-                "user_attributes_state:community_memberships": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_204d3fba495a",
-                  "question_text": "Infer the user's current state for user attributes community memberships (user_attributes_state:community_memberships) using this template: {\"user_attributes_state:community_memberships\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes community memberships (user_attributes_state:community_memberships) using this template: {\"user_attributes_state:community_memberships\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:community_memberships"
-                },
-                "user_attributes_state:current_project_focus": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_38c4ef6ea6dc",
-                  "question_text": "Infer the user's current state for user attributes current project focus (user_attributes_state:current_project_focus) using this template: {\"user_attributes_state:current_project_focus\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes current project focus (user_attributes_state:current_project_focus) using this template: {\"user_attributes_state:current_project_focus\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:current_project_focus"
-                },
-                "user_attributes_state:family_sports_gear": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_1d3eece06b50",
-                  "question_text": "Infer the user's current state for user attributes family sports gear (user_attributes_state:family_sports_gear) using this template: {\"user_attributes_state:family_sports_gear\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes family sports gear (user_attributes_state:family_sports_gear) using this template: {\"user_attributes_state:family_sports_gear\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:family_sports_gear"
-                },
-                "user_attributes_state:home_infrastructure_assets": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_5757bad3f4f3",
-                  "question_text": "Infer the user's current state for user attributes home infrastructure assets (user_attributes_state:home_infrastructure_assets) using this template: {\"user_attributes_state:home_infrastructure_assets\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes home infrastructure assets (user_attributes_state:home_infrastructure_assets) using this template: {\"user_attributes_state:home_infrastructure_assets\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:home_infrastructure_assets"
-                },
-                "user_attributes_state:home_media_server": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_0243402adfdb",
-                  "question_text": "Infer the user's current state for user attributes home media server (user_attributes_state:home_media_server) using this template: {\"user_attributes_state:home_media_server\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes home media server (user_attributes_state:home_media_server) using this template: {\"user_attributes_state:home_media_server\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:home_media_server"
-                },
-                "user_attributes_state:industry_software_skills": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_d536e5ce32ff",
-                  "question_text": "Infer the user's current state for user attributes industry software skills (user_attributes_state:industry_software_skills) using this template: {\"user_attributes_state:industry_software_skills\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes industry software skills (user_attributes_state:industry_software_skills) using this template: {\"user_attributes_state:industry_software_skills\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:industry_software_skills"
-                },
-                "user_attributes_state:insurance_portfolio": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_c1d5e54f0a9c",
-                  "question_text": "Infer the user's current state for user attributes insurance portfolio (user_attributes_state:insurance_portfolio) using this template: {\"user_attributes_state:insurance_portfolio\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes insurance portfolio (user_attributes_state:insurance_portfolio) using this template: {\"user_attributes_state:insurance_portfolio\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:insurance_portfolio"
-                },
-                "user_attributes_state:leisure_hardware": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_035ea33b12cc",
-                  "question_text": "Infer the user's current state for user attributes leisure hardware (user_attributes_state:leisure_hardware) using this template: {\"user_attributes_state:leisure_hardware\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes leisure hardware (user_attributes_state:leisure_hardware) using this template: {\"user_attributes_state:leisure_hardware\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:leisure_hardware"
-                },
-                "user_attributes_state:main_investment_account": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_630768ad3c72",
-                  "question_text": "Infer the user's current state for user attributes main investment account (user_attributes_state:main_investment_account) using this template: {\"user_attributes_state:main_investment_account\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes main investment account (user_attributes_state:main_investment_account) using this template: {\"user_attributes_state:main_investment_account\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:main_investment_account"
-                },
-                "user_attributes_state:main_leisure_hobby": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_32c2092dcc41",
-                  "question_text": "Infer the user's current state for user attributes main leisure hobby (user_attributes_state:main_leisure_hobby) using this template: {\"user_attributes_state:main_leisure_hobby\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes main leisure hobby (user_attributes_state:main_leisure_hobby) using this template: {\"user_attributes_state:main_leisure_hobby\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:main_leisure_hobby"
-                },
-                "user_attributes_state:main_tech_tool": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_cbeafb971fc9",
-                  "question_text": "Infer the user's current state for user attributes main tech tool (user_attributes_state:main_tech_tool) using this template: {\"user_attributes_state:main_tech_tool\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes main tech tool (user_attributes_state:main_tech_tool) using this template: {\"user_attributes_state:main_tech_tool\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:main_tech_tool"
-                },
-                "user_attributes_state:primary_family_vehicle": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_d89ec57da4be",
-                  "question_text": "Infer the user's current state for user attributes primary family vehicle (user_attributes_state:primary_family_vehicle) using this template: {\"user_attributes_state:primary_family_vehicle\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary family vehicle (user_attributes_state:primary_family_vehicle) using this template: {\"user_attributes_state:primary_family_vehicle\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_family_vehicle"
-                },
-                "user_attributes_state:primary_health_focus": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_5d4e12c90e29",
-                  "question_text": "Infer the user's current state for user attributes primary health focus (user_attributes_state:primary_health_focus) using this template: {\"user_attributes_state:primary_health_focus\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary health focus (user_attributes_state:primary_health_focus) using this template: {\"user_attributes_state:primary_health_focus\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_health_focus"
-                },
-                "user_attributes_state:primary_job_role": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_b8fdbc7a0db5",
-                  "question_text": "Infer the user's current state for user attributes primary job role (user_attributes_state:primary_job_role) using this template: {\"user_attributes_state:primary_job_role\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary job role (user_attributes_state:primary_job_role) using this template: {\"user_attributes_state:primary_job_role\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_job_role"
-                },
-                "user_attributes_state:primary_residence_mortgage": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_bd1f549636bb",
-                  "question_text": "Infer the user's current state for user attributes primary residence mortgage (user_attributes_state:primary_residence_mortgage) using this template: {\"user_attributes_state:primary_residence_mortgage\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary residence mortgage (user_attributes_state:primary_residence_mortgage) using this template: {\"user_attributes_state:primary_residence_mortgage\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_residence_mortgage"
-                },
-                "user_attributes_state:primary_social_circle": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_a3b7e96cfc45",
-                  "question_text": "Infer the user's current state for user attributes primary social circle (user_attributes_state:primary_social_circle) using this template: {\"user_attributes_state:primary_social_circle\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary social circle (user_attributes_state:primary_social_circle) using this template: {\"user_attributes_state:primary_social_circle\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_social_circle"
-                },
-                "user_attributes_state:primary_workplace": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_f5ed391052f6",
-                  "question_text": "Infer the user's current state for user attributes primary workplace (user_attributes_state:primary_workplace) using this template: {\"user_attributes_state:primary_workplace\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes primary workplace (user_attributes_state:primary_workplace) using this template: {\"user_attributes_state:primary_workplace\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:primary_workplace"
-                },
-                "user_attributes_state:professional_certifications": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_02f8a1e77d97",
-                  "question_text": "Infer the user's current state for user attributes professional certifications (user_attributes_state:professional_certifications) using this template: {\"user_attributes_state:professional_certifications\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes professional certifications (user_attributes_state:professional_certifications) using this template: {\"user_attributes_state:professional_certifications\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:professional_certifications"
-                },
-                "user_attributes_state:professional_memberships": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_5fa880ec4c1a",
-                  "question_text": "Infer the user's current state for user attributes professional memberships (user_attributes_state:professional_memberships) using this template: {\"user_attributes_state:professional_memberships\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes professional memberships (user_attributes_state:professional_memberships) using this template: {\"user_attributes_state:professional_memberships\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:professional_memberships"
-                },
-                "user_attributes_state:recovery_tools": {
-                  "answer_template": "<fill the blank>",
-                  "item_id": "scp_b4feb4283f21",
-                  "question_text": "Infer the user's current state for user attributes recovery tools (user_attributes_state:recovery_tools) using this template: {\"user_attributes_state:recovery_tools\": \"<fill the blank>\"}.",
-                  "retrieval_query": "Infer the user's current state for user attributes recovery tools (user_attributes_state:recovery_tools) using this template: {\"user_attributes_state:recovery_tools\": \"<fill the blank>\"}.",
-                  "state_key": "user_attributes_state:recovery_tools"
-                }
-              },
-              "pack_authoring": "point_based_vnext",
-              "version": "v6"
-            },
             "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
             "task_contract_version": "taskabc_v2",
             "userId": "user_001"
           },
-          "path": "dynamicmem-task.json"
+          "path": "dynamicmem-service-task.json"
         }
       ],
-      "instruction": "You are working in `/app`.\n\nThis is stage 4 of 4. It is the downstream DynamicMem task\nstage.\n\nRead:\n\n- `current_stage/dynamicmem-task.json`\n\nNo raw app-log documents are revealed in this stage. Use only retained memory,\nconversation context, or the memory substrate allowed by the selected eval mode.\n\nWrite:\n\n- `outputs/prediction.json`\n\nIf `outputs/prediction.json` already exists, read it first, keep every existing\nobject in its `predictions` array, and add or replace only the prediction object\nwhose `checkpoint_id` is `cal_quarterly_003`. Never drop earlier checkpoint\npredictions.\n\nComplete both DynamicMem task families for checkpoint `cal_quarterly_003` as\nof `2024-06-30 20:00:00`:\n\n- `snapshot_state`: fill every key under `state_completion.keys`.\n- `evidence`: provide supporting evidence records per state key when available\n  from retained memory.\n- `rq3_apply_answers`: answer every item under `personalized_service.keys`.\n\nUse this exact top-level shape:\n\n```json\n{\n  \"task_contract_version\": \"taskabc_v2\",\n  \"research_frame_version\": \"rq_v2\",\n  \"predictions\": [\n    {\n      \"checkpoint_id\": \"cal_quarterly_003\",\n      \"snapshot_state\": {},\n      \"evidence\": {},\n      \"rq3_apply_answers\": {}\n    }\n  ]\n}\n```\n\nThe JSON example above shows the required object for the current checkpoint. In\nmulti-answer trajectories, the final file must contain one prediction object per\nscored checkpoint completed so far.\n\nFor `rq3_apply_answers`, use this shape per state key:\n\n```json\n{\n  \"items\": [\n    {\n      \"qa_id\": \"q1\",\n      \"service_family\": \"user_communication\",\n      \"answer\": \"...\",\n      \"evidence\": [\n        {\"app_log_id\": \"log_00001\", \"evidence_content\": \"short support\"}\n      ]\n    }\n  ]\n}\n```\n\nFor structured service items, `answer` must be an object matching the visible\n`output_template`. For `user_communication`, `answer` should be a specific\nassistant message string.\n",
-      "kind": "downstream-task",
-      "stageId": "04-cp02-downstream-task",
-      "stageIndex": 4
+      "instruction": "You are working in `/app`.\n\nThis is stage 5 of 5. It is a downstream DynamicMem task stage\nfor the personalized-service family.\n\nRead:\n\n- `current_stage/dynamicmem-service-task.json`\n\nNo raw app-log documents are revealed in this stage. Use only retained memory,\nconversation context, or the memory substrate allowed by the selected eval mode.\n\nCreate a candidate JSON file under `/tmp`, for example\n`/tmp/service-answer.json`, with this exact top-level shape:\n\n```json\n{\n  \"checkpoint_id\": \"cal_quarterly_003\",\n  \"rq3_apply_answers\": {}\n}\n```\n\nAnswer every item under `personalized_service.keys` for checkpoint\n`cal_quarterly_003` as of `2024-06-30 20:00:00`. Then submit it:\n\n```bash\n/app/submit_service /tmp/service-answer.json\n```\n\nFor `rq3_apply_answers`, use this shape per state key:\n\n```json\n{\n  \"items\": [\n    {\n      \"qa_id\": \"q1\",\n      \"service_family\": \"user_communication\",\n      \"answer\": \"...\",\n      \"evidence\": [\n        {\"app_log_id\": \"log_00001\", \"evidence_content\": \"short support\"}\n      ]\n    }\n  ]\n}\n```\n\nFor structured service items, `answer` must be an object matching the visible\n`output_template`. For `user_communication`, `answer` should be a specific\nassistant message string.\n\nIf the helper prints `ERROR`, fix the candidate and rerun `/app/submit_service`.\nDo not run `/app/next_stage` until `/app/submit_service` prints `OK`.\n",
+      "kind": "service-task",
+      "stageId": "05-cp02-service-task",
+      "stageIndex": 5
     }
   ],
   "taskId": "dynamicmem-user001-cp00-02-memory-final-v1"

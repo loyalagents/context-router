@@ -7,7 +7,8 @@ This report is for benchmark reviewers. It is hidden from the agent.
 - Harbor is only the runner.
 - Stage contract: `update-only-then-final`.
 - `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.
-- `downstream-task` stages reveal native queries without raw documents and score retained memory use.
+- Public `downstream-task` stages reveal no raw documents and score retained memory use.
+- DynamicMem internally validates the state and personalized-service task families separately.
 - Hidden expected files preserve the scored upstream checkpoint task packs.
 - Agent-visible task files remove reference answers, reference outputs, scoring points, and gold evidence ids.
 
@@ -18,7 +19,8 @@ This report is for benchmark reviewers. It is hidden from the agent.
 | 1 | memory-update | 180 | 181 | 90630 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
 | 2 | memory-update | 286 | 287 | 147930 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
 | 3 | memory-update | 250 | 251 | 133694 | Ingest new raw DynamicMem app-log delta and update retained memory only. |
-| 4 | downstream-task | 0 | 1 | 16578 | Answer the downstream DynamicMem checkpoint task using retained memory. |
+| 4 | state-task | 0 | 1 | 8566 | Answer the DynamicMem downstream state family using retained memory. |
+| 5 | service-task | 0 | 1 | 8167 | Answer the DynamicMem downstream personalized-service family using retained memory. |
 
 ## Native Task Counts
 
@@ -43,14 +45,17 @@ This report is for benchmark reviewers. It is hidden from the agent.
     "checkpointTrajectory": true,
     "customStageSchedule": false,
     "deltaRawCheckpointHistory": true,
+    "dynamicMemTaskFamilySplit": true,
     "hiddenDownstreamUntilFinalStage": true,
     "hiddenFutureCheckpoints": true,
     "interleavedDownstreamTasks": false,
     "longContextApprox70kPlus": true,
     "multiStage": true,
     "nativePersonalizedService": true,
-    "nativeStateCompletion": true
+    "nativeStateCompletion": true,
+    "splitStateAndServiceTasks": true
   },
+  "internalStagePattern": "memory-update -> memory-update -> memory-update -> state-task -> service-task",
   "migrationPolicy": "Harbor runner only; DynamicMem raw logs, task packs, prediction contract, and downstream task families are preserved.",
   "schemaVersion": 1,
   "sourceDiversity": {
@@ -124,7 +129,7 @@ This report is for benchmark reviewers. It is hidden from the agent.
       "user_attributes_state"
     ]
   },
-  "stagePattern": "memory-update -> memory-update -> memory-update -> downstream-task",
+  "stagePattern": "update-only-then-final",
   "stagePatternName": "update-only-then-final",
   "stageSchedule": "update-only-then-final",
   "stages": [
@@ -159,12 +164,22 @@ This report is for benchmark reviewers. It is hidden from the agent.
       "visibleFileCount": 251
     },
     {
-      "agentTask": "Answer the downstream DynamicMem checkpoint task using retained memory.",
-      "approxTokenCount": 16578,
-      "kind": "downstream-task",
-      "stageId": "04-cp02-downstream-task",
+      "agentTask": "Answer the DynamicMem downstream state family using retained memory.",
+      "approxTokenCount": 8566,
+      "kind": "state-task",
+      "stageId": "04-cp02-state-task",
       "stageIndex": 4,
-      "visibleCharCount": 66314,
+      "visibleCharCount": 34265,
+      "visibleDocCount": 0,
+      "visibleFileCount": 1
+    },
+    {
+      "agentTask": "Answer the DynamicMem downstream personalized-service family using retained memory.",
+      "approxTokenCount": 8167,
+      "kind": "service-task",
+      "stageId": "05-cp02-service-task",
+      "stageIndex": 5,
+      "visibleCharCount": 32669,
       "visibleDocCount": 0,
       "visibleFileCount": 1
     }
@@ -173,23 +188,26 @@ This report is for benchmark reviewers. It is hidden from the agent.
   "taskId": "dynamicmem-user001-cp00-02-memory-final-v1",
   "taskType": "dynamicmem-background-memory-trajectory",
   "totals": {
-    "approxTokenCount": 388833,
+    "approxTokenCount": 388988,
     "checkpointCount": 1,
-    "downstreamStageCount": 1,
+    "downstreamStageCount": 0,
     "memoryUpdateStageCount": 3,
     "observedRawLogCount": 716,
     "personalizedServiceItemCount": 37,
     "personalizedServiceKeyCount": 37,
     "scoredCheckpointCount": 1,
+    "serviceTaskStageCount": 1,
     "sourceApiCount": 39,
     "sourceAppCount": 16,
     "sourceCheckpointCount": 3,
-    "stageCount": 4,
+    "stageCount": 5,
     "stateCompletionKeyCount": 37,
+    "stateTaskStageCount": 1,
+    "taskStageCount": 2,
     "uniqueStateCompletionKeyCount": 37,
-    "visibleCharCount": 1555333,
+    "visibleCharCount": 1555953,
     "visibleDocCount": 716,
-    "visibleFileCount": 720
+    "visibleFileCount": 721
   },
   "trajectory": {
     "checkpointIds": [

@@ -30,7 +30,7 @@ from validate_task_soundness import (
 )
 
 
-DOWNSTREAM_KIND = "downstream-task"
+TASK_STAGE_KINDS = {"downstream-task", "state-task", "service-task"}
 STAGE_LOG_PATH = Path("artifacts/app/stage-log.jsonl")
 
 
@@ -112,16 +112,18 @@ def task_stage_contract_errors(task_dir: Path) -> list[str]:
             for item in stage.get("files", [])
             if isinstance(item, dict)
         ]
-        if stage.get("kind") == DOWNSTREAM_KIND:
+        if stage.get("kind") in TASK_STAGE_KINDS:
             if any(isinstance(path, str) and path.startswith("docs/") for path in paths):
-                errors.append(f"{task_dir.name}: downstream stage {stage_id} exposes docs/")
+                errors.append(f"{task_dir.name}: task stage {stage_id} exposes docs/")
             if "documents.json" in paths:
                 errors.append(
-                    f"{task_dir.name}: downstream stage {stage_id} exposes documents.json"
+                    f"{task_dir.name}: task stage {stage_id} exposes documents.json"
                 )
 
     difficulty = load_json_if_exists(task_dir / "tests" / "expected" / "difficulty.json")
-    expected_pattern = difficulty.get("stagePattern") if isinstance(difficulty, dict) else None
+    expected_pattern = None
+    if isinstance(difficulty, dict):
+        expected_pattern = difficulty.get("internalStagePattern") or difficulty.get("stagePattern")
     if isinstance(expected_pattern, str) and expected_pattern:
         actual_pattern = " -> ".join(actual_kinds)
         if actual_pattern != expected_pattern:
