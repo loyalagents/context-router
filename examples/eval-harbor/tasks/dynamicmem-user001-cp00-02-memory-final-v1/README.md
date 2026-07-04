@@ -44,6 +44,7 @@ python3 examples/eval-harbor/scripts/build_dynamicmem_task.py \
   --stage-pattern update-only-then-final \
   --model gpt-5.4-mini \
   --reasoning-effort high \
+  --service-tier standard \
   --codex-web-search disabled \
   --agent-timeout-sec 86400 \
   --verifier-timeout-sec 86400 \

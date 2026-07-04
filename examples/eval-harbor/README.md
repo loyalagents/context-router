@@ -9,6 +9,26 @@ continuous session, and downstream tasks later probe whether the retained memory
 is useful. Product E2E evals for backend form fill and the full product stack
 remain under `examples/eval`.
 
+## Current Handoff
+
+This harness is ready for research iterations on memory substrates:
+
+- Harbor is only the runner; task data, model, verifier, and report format stay
+  fixed across arms.
+- The public task contract is `U/T`: `U` updates memory from newly revealed
+  documents/events, and `T` probes retained memory without raw docs.
+- DynamicMem is implemented as a dataset adapter behind the shared contract.
+  Its public `T` stages are internally validated as state and
+  personalized-service task families so malformed JSON cannot silently advance.
+- The default arms are `context-only`, `markdown`, and `cr-mcp`. Additional arms
+  should plug into the same task/job/report path rather than adding a new runner.
+
+Current experiment reports are useful for debugging and task selection, but
+paper-facing claims should use repeated samples and include validation status,
+token usage, cost, model, judge model, and timeout settings. If a run has any
+parse, metadata, missing-metric, artifact, tool, or policy failure, rerun it
+instead of logging it as a valid datapoint.
+
 ## Current Arms
 
 The experimental variable is the memory substrate:
@@ -19,8 +39,10 @@ The experimental variable is the memory substrate:
 | `markdown` | `/app/memory.md` | Exactly one Markdown memory file |
 | `cr-mcp` | ContextRouter memory MCP | MCP memory only; no scratch memory files |
 
-Generated jobs use the same task files, model, reasoning effort, service tier,
-web-search policy, timeouts, verifier, and report path across arms.
+Generated jobs use the same task files, model, reasoning effort, web-search
+policy, timeouts, verifier, and report path across arms.
+Markdown runs also collect `artifacts/memory/memory.md` to make memory drift
+auditable after the run.
 
 ## Stage Tokens
 
@@ -29,25 +51,22 @@ The shared staged contract uses explicit update and probe tokens:
 | Token | Stage kind | Reveals new docs/events? | Reveals downstream task? | Scored? |
 | --- | --- | ---: | ---: | ---: |
 | `U` | `memory-update` | Yes | No | No |
-| `S` | `state-task` | No | State snapshot probe | Yes, with `A` |
-| `A` | `service-task` | No | Personalized-service probe | Yes, with `S` |
-| `T` | `downstream-task` | No | Combined legacy state+service probe | Yes |
+| `T` | `downstream-task` | No | Yes | Yes |
 
-`S`, `A`, and `T` are close-book: raw docs are not exposed in task stages. The
-answer must come from the active conversation and the arm's allowed memory
-substrate. Prefer split `S/A` schedules for new DynamicMem experiments because
-`/app/submit_state` and `/app/submit_service` validate that the current stage's
-required keys/items were submitted before the agent can advance.
+`T` stages are closed-book: raw docs are not exposed. The answer must come from
+the active conversation and the arm's allowed memory substrate. Dataset adapters
+may split a public `T` into internal verifier-safe task-family steps. For
+DynamicMem, the adapter validates the state and personalized-service families
+separately, but users still schedule only `T`.
 
 Examples:
 
 | Workflow | Meaning |
 | --- | --- |
-| `U -> S -> A` | Update memory from one checkpoint, then answer split state/service probes |
-| `U -> S -> A -> U -> S -> A` | Interleaved update/probe trajectory |
-| `U -> U -> S -> A` | Hide the downstream task until after two update stages |
-| `U -> U -> U -> U -> S -> A` | Long background-memory probe |
-| `U -> T` | Legacy combined task path |
+| `U -> T` | Update memory from one checkpoint, then answer a downstream probe |
+| `U -> T -> U -> T` | Interleaved update/probe trajectory |
+| `U -> U -> T` | Hide the downstream task until after two update stages |
+| `U -> U -> U -> U -> T` | Long background-memory probe |
 
 Each `U` stage consumes one selected checkpoint and reveals only the new delta
 logs since the previous selected checkpoint. Earlier information must be
@@ -83,7 +102,7 @@ python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user008 \
   --checkpoint-indices 0 \
-  --stage-schedule U,S,A \
+  --stage-schedule U,T \
   --model gpt-5.5 \
   --reasoning-effort medium \
   --service-tier standard \
@@ -97,47 +116,45 @@ The builder runs task and job preflight by default. It also records the selected
 model, reasoning effort, service tier, web-search policy, timeouts, source
 dataset metadata, and generated arms in the suite manifest.
 
-Codex service tier is an explicit eval parameter. The default
-`--service-tier standard` omits `service_tier` from generated job kwargs. Use
-`--service-tier priority` only for intentional Codex Fast runs, and disclose it
-with the report because it changes the experimental setting.
+Use `--service-tier priority` only when the experiment intentionally opts into
+Codex priority/fast service. The default is `standard`.
 
 Useful schedule examples:
 
 ```bash
-# user003: U(cp0) -> S(cp0) -> A(cp0) -> U(cp1) -> S(cp1) -> A(cp1)
+# user003: U(cp0) -> T(cp0) -> U(cp1) -> T(cp1)
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user003 \
   --checkpoint-indices 0-1 \
-  --stage-schedule U,S,A,U,S,A
+  --stage-schedule U,T,U,T
 
-# user008: U(cp0) -> S/A(cp0) -> U(cp1+cp2+cp3 delta) -> S/A(cp3)
+# user008: U(cp0) -> T(cp0) -> U(cp1+cp2+cp3 delta) -> T(cp3)
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user008 \
   --checkpoint-indices 0,3 \
-  --stage-schedule U,S,A,U,S,A
+  --stage-schedule U,T,U,T
 
-# user007: U(cp0) -> U(cp1) -> S(cp1) -> A(cp1)
+# user007: U(cp0) -> U(cp1) -> T(cp1)
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user007 \
   --checkpoint-indices 0-1 \
-  --stage-schedule U,U,S,A
+  --stage-schedule U,U,T
 
-# user008: U(cp0) -> U(cp1) -> U(cp2) -> U(cp3) -> S(cp3) -> A(cp3)
+# user008: U(cp0) -> U(cp1) -> U(cp2) -> U(cp3) -> T(cp3)
 python3 examples/eval-harbor/scripts/build_dataset_suite.py \
   --dataset dynamicmem \
   --source-users user008 \
   --checkpoint-indices 0-3 \
-  --stage-schedule U,U,U,U,S,A
+  --stage-schedule U,U,U,U,T
 ```
 
 `--max-users` and `--max-tasks` are suite-size caps. They do not define the
 trajectory; `--checkpoint-indices` plus `--stage-schedule` define the trajectory.
 Non-contiguous checkpoint selections are supported: for example,
-`--checkpoint-indices 0,3 --stage-schedule U,S,A,U,S,A` scores cp0 and cp3, while
+`--checkpoint-indices 0,3 --stage-schedule U,T,U,T` scores cp0 and cp3, while
 the second `U` stage reveals the chronological delta between cp0 and cp3.
 
 ## Run And Aggregate
@@ -173,8 +190,8 @@ python3 examples/eval-harbor/scripts/aggregate_resamples.py \
 
 The report summarizes reward, accuracy, state/service reward, token usage,
 cost, parse failures, metadata failures, validation failures, tool-policy
-failures, runtime, model, reasoning effort, service tier, web-search policy, and
-timeout settings. Official experiment reports must include token usage and cost. A run
+failures, runtime, model, reasoning effort, service tier, web-search policy,
+and timeout settings. Official experiment reports must include token usage and cost. A run
 with missing `inputTokens`, `outputTokens`, `totalTokens`, `costUsd`,
 `llmJudge.stateCompletion.meanScore`, or
 `llmJudge.personalizedService.meanScore` is incomplete and should be rerun rather
@@ -190,10 +207,11 @@ python3 examples/eval-harbor/scripts/report_stage_token_usage.py \
   --detail
 ```
 
-This report attributes each Codex model-call step to the visible Harbor stage:
-`memory-update` for `U`, `state-task` for `S`, `service-task` for `A`,
-`downstream-task` for legacy `T`, and `overhead` for stage reveal or
-post-stage bookkeeping. Stage token counts are exact sums from
+This report attributes each Codex model-call step to the visible Harbor stage.
+For DynamicMem, public `T` probes are reported as their internal `state-task`
+and `service-task` buckets so reviewers can distinguish reconstruction cost
+from downstream application cost. Stage reveal and post-stage bookkeeping are
+reported as `overhead`. Stage token counts are exact sums from
 `agent/trajectory.json`. Per-stage cost is named `estimatedCostUsd` because
 Codex currently exposes cost as a whole-run total, so the stage report allocates
 it proportionally by total tokens.
@@ -219,6 +237,7 @@ can also be run directly while debugging:
 
 ```bash
 python3 examples/eval-harbor/scripts/validate_eval_preflight.py \
+  --dynamicmem-source-root /path/to/dynamicmem \
   --task /tmp/cr-harbor/tasks/<task-id> \
   --job /tmp/cr-harbor/jobs/<task-id>-context-only.yaml \
   --job /tmp/cr-harbor/jobs/<task-id>-markdown.yaml \
@@ -227,7 +246,7 @@ python3 examples/eval-harbor/scripts/validate_eval_preflight.py \
 
 Run validation checks include:
 
-- task stages (`S`, `A`, and legacy `T`) do not expose raw docs or `documents.json`;
+- task stages (`T`) do not expose raw docs or `documents.json`;
 - stage logs match the expected stage order;
 - hidden paths such as `/tests`, `/data/stages.json`, and `stages/payload.json`
   are not accessed;

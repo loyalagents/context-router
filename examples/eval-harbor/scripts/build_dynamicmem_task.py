@@ -110,8 +110,6 @@ class BuildConfig:
             valid_kinds = {
                 STAGE_KIND_MEMORY_UPDATE,
                 STAGE_KIND_DOWNSTREAM_TASK,
-                STAGE_KIND_STATE_TASK,
-                STAGE_KIND_SERVICE_TASK,
             }
             invalid = [kind for kind in self.stage_schedule if kind not in valid_kinds]
             if invalid:
@@ -142,6 +140,12 @@ FALLBACK_ARM_CONFIGS = [
         "memoryMode": "markdown",
         "instructionPath": "examples/eval-harbor/modes/markdown.md",
         "compose": "staged",
+        "artifacts": [
+            {
+                "source": "/app/memory.md",
+                "destination": "memory/memory.md",
+            }
+        ],
     },
     {
         "mode": "cr-mcp",
@@ -262,14 +266,14 @@ def ensure_current_stage_complete():
         required = SUBMISSIONS_ROOT / checkpoint_id / "state.json"
         if not required.exists():
             raise SystemExit(
-                "Cannot advance: current state-task has no valid submission. "
+                "Cannot advance: current downstream state task has no valid submission. "
                 "Run `/app/submit_state <state.json>` and retry `/app/next_stage`."
             )
     elif kind == "service-task":
         required = SUBMISSIONS_ROOT / checkpoint_id / "service.json"
         if not required.exists():
             raise SystemExit(
-                "Cannot advance: current service-task has no valid submission. "
+                "Cannot advance: current downstream service task has no valid submission. "
                 "Run `/app/submit_service <service.json>` and retry `/app/next_stage`."
             )
     elif kind == "downstream-task":
@@ -538,7 +542,7 @@ def main():
     stage = current_stage()
     expected_stage_kind = "state-task" if kind == "state" else "service-task"
     if stage.get("kind") != expected_stage_kind:
-        return fail(f"submit_{kind} can only run in a {expected_stage_kind} stage, current stage is {stage.get('kind')!r}")
+        return fail(f"submit_{kind} can only run when the current downstream task exposes the {kind} family")
     checkpoint_id = str(stage.get("checkpointId") or "")
     if not checkpoint_id:
         return fail("current stage has no checkpointId")
@@ -936,6 +940,12 @@ def resolve_stage_plan(
     stage_plan: list[StagePlanItem] = []
     task_parts_by_checkpoint_id: dict[str, set[str]] = {}
 
+    def record_task_part(checkpoint_id: str, part: str) -> None:
+        parts = task_parts_by_checkpoint_id.setdefault(checkpoint_id, set())
+        if part in parts:
+            raise ValueError(f"stage schedule repeats downstream task for checkpoint: {checkpoint_id}")
+        parts.add(part)
+
     for kind in schedule:
         if kind == STAGE_KIND_MEMORY_UPDATE:
             if checkpoint_cursor >= len(stage_specs):
@@ -943,42 +953,29 @@ def resolve_stage_plan(
             spec = stage_specs[checkpoint_cursor]
             checkpoint_cursor += 1
             latest_spec = spec
-            scores_checkpoint = False
-        elif kind in {STAGE_KIND_DOWNSTREAM_TASK, STAGE_KIND_STATE_TASK, STAGE_KIND_SERVICE_TASK}:
+            stage_plan.append(StagePlanItem(kind=kind, spec=spec, scores_checkpoint=False))
+            continue
+        if kind == STAGE_KIND_DOWNSTREAM_TASK:
             if latest_spec is None:
                 raise ValueError("stage schedule cannot reveal a task stage before any U stage")
             spec = latest_spec
-            scores_checkpoint = True
-        else:
-            raise ValueError(f"unsupported stage schedule kind: {kind}")
-
-        if scores_checkpoint:
             checkpoint_id = str(spec["checkpoint"].get("checkpoint_id") or "")
-            parts = task_parts_by_checkpoint_id.setdefault(checkpoint_id, set())
-            if kind == STAGE_KIND_DOWNSTREAM_TASK:
-                if parts:
-                    raise ValueError(
-                        f"stage schedule mixes T with split S/A stages for checkpoint: {checkpoint_id}"
-                    )
-                parts.add("combined")
-            elif kind == STAGE_KIND_STATE_TASK:
-                if "combined" in parts or "state" in parts:
-                    raise ValueError(f"stage schedule repeats state task for checkpoint: {checkpoint_id}")
-                parts.add("state")
-            elif kind == STAGE_KIND_SERVICE_TASK:
-                if "combined" in parts or "service" in parts:
-                    raise ValueError(f"stage schedule repeats service task for checkpoint: {checkpoint_id}")
-                parts.add("service")
-        stage_plan.append(StagePlanItem(kind=kind, spec=spec, scores_checkpoint=scores_checkpoint))
+            record_task_part(checkpoint_id, "state")
+            record_task_part(checkpoint_id, "service")
+            stage_plan.append(StagePlanItem(kind=STAGE_KIND_STATE_TASK, spec=spec, scores_checkpoint=True))
+            stage_plan.append(StagePlanItem(kind=STAGE_KIND_SERVICE_TASK, spec=spec, scores_checkpoint=True))
+            continue
+        raise ValueError(f"unsupported stage schedule kind: {kind}")
 
     if checkpoint_cursor != len(stage_specs):
         raise ValueError("stage schedule did not consume every selected checkpoint")
     if not task_parts_by_checkpoint_id:
         raise ValueError("stage schedule must include at least one scored task stage")
     for checkpoint_id, parts in task_parts_by_checkpoint_id.items():
-        if "combined" not in parts and parts != {"state", "service"}:
+        if parts != {"state", "service"}:
             raise ValueError(
-                "split DynamicMem task stages must include both S and A for "
+                "DynamicMem downstream task stages must include both internal "
+                "state and service task families for "
                 f"checkpoint {checkpoint_id}; got {sorted(parts)}"
             )
     if latest_spec is not None:
@@ -1040,8 +1037,8 @@ def build_difficulty(
     agent_tasks = {
         STAGE_KIND_MEMORY_UPDATE: "Ingest new raw DynamicMem app-log delta and update retained memory only.",
         STAGE_KIND_DOWNSTREAM_TASK: "Answer the downstream DynamicMem checkpoint task using retained memory.",
-        STAGE_KIND_STATE_TASK: "Submit the DynamicMem state snapshot for the current checkpoint using retained memory.",
-        STAGE_KIND_SERVICE_TASK: "Submit the DynamicMem personalized-service answers for the current checkpoint using retained memory.",
+        STAGE_KIND_STATE_TASK: "Answer the DynamicMem downstream state family using retained memory.",
+        STAGE_KIND_SERVICE_TASK: "Answer the DynamicMem downstream personalized-service family using retained memory.",
     }
     for stage in stage_payload["stages"]:
         files = stage.get("files", [])
@@ -1124,7 +1121,8 @@ def build_difficulty(
             "codexAutoCompactConfigKey": "model_auto_compact_token_limit",
         },
         "stagePatternName": config.stage_contract_name,
-        "stagePattern": " -> ".join(kind_sequence),
+        "stagePattern": config.stage_contract_display,
+        "internalStagePattern": " -> ".join(kind_sequence),
         "stageSchedule": config.stage_contract_display,
         "trajectory": {
             "sourceUserDir": config.source_user_dir,
@@ -1177,7 +1175,7 @@ def build_difficulty(
             "hiddenFutureCheckpoints": True,
             "hiddenDownstreamUntilFinalStage": is_memory_final,
             "interleavedDownstreamTasks": not is_memory_final,
-            "splitStateAndServiceTasks": any(kind in {STAGE_KIND_STATE_TASK, STAGE_KIND_SERVICE_TASK} for kind in kind_sequence),
+            "dynamicMemTaskFamilySplit": any(kind in {STAGE_KIND_STATE_TASK, STAGE_KIND_SERVICE_TASK} for kind in kind_sequence),
             "nativeStateCompletion": True,
             "nativePersonalizedService": True,
             "deltaRawCheckpointHistory": True,
@@ -1258,32 +1256,31 @@ The generated stage schedule is:
 {config.stage_contract_display}
 ```
 """.rstrip()
-    stage_contract = """Stages can have four roles:
+    stage_contract = """Public stages have two roles:
 
 - `memory-update`: read only the newly revealed raw app-log delta and update the
   memory/state allowed by the selected eval mode. Do not create or modify
   `outputs/prediction.json` in these stages.
-- `downstream-task`: no source logs are revealed. Read `dynamicmem-task.json`
-  and answer both DynamicMem task families using retained memory from earlier
-  stages. This is the legacy combined `T` task.
-- `state-task`: no source logs are revealed. Read
-  `dynamicmem-state-task.json`, write a state answer JSON, and submit it with
-  `/app/submit_state`. Retry until the helper prints `OK`.
-- `service-task`: no source logs are revealed. Read
-  `dynamicmem-service-task.json`, write a service answer JSON, and submit it
-  with `/app/submit_service`. Retry until the helper prints `OK`."""
+- `downstream-task`: no source logs are revealed. Answer the visible task using
+  retained memory from earlier stages.
+
+For DynamicMem, a public `T` downstream task may be internally presented as two
+validated task-family steps. Follow the currently visible task file:
+
+- If `dynamicmem-state-task.json` is visible, write a candidate JSON under
+  `/tmp`, then run `/app/submit_state <candidate.json>`. Retry until the helper
+  prints `OK`.
+- If `dynamicmem-service-task.json` is visible, write a candidate JSON under
+  `/tmp`, then run `/app/submit_service <candidate.json>`. Retry until the
+  helper prints `OK`.
+- If legacy `dynamicmem-task.json` is visible, write `outputs/prediction.json`."""
     steps = """1. Run `/app/next_stage` to reveal the next stage.
 2. If the stage is `memory-update`, read `documents.json` and `docs/`, then
    update only the allowed memory/state.
-3. If the stage is `downstream-task`, read `dynamicmem-task.json`, then write
-   `outputs/prediction.json`.
-4. If the stage is `state-task`, read `dynamicmem-state-task.json`, write a
-   candidate JSON under `/tmp`, then run `/app/submit_state <candidate.json>`.
-   If validation fails, fix the candidate and retry until it is accepted.
-5. If the stage is `service-task`, read `dynamicmem-service-task.json`, write a
-   candidate JSON under `/tmp`, then run `/app/submit_service <candidate.json>`.
-   If validation fails, fix the candidate and retry until it is accepted.
-6. Repeat until `/app/next_stage` says no more stages are available."""
+3. If the stage is `downstream-task`, answer the visible task file from retained
+   memory only. Use `/app/submit_state` or `/app/submit_service` when the task
+   file asks for those helpers.
+4. Repeat until `/app/next_stage` says no more stages are available."""
     schedule_section = f"\n\n{schedule_block}" if schedule_block else ""
     return f"""This is a continuous-session Harbor staged-memory task backed by DynamicMem.
 
@@ -1300,10 +1297,10 @@ any other answer-key artifacts. In particular, do not read `/tests`,
 source files.
 
 Do not preserve raw stage documents for later stages by copying them into
-scratch files, summaries, caches, or hidden memory files. A downstream-task stage
-or split task stage is closed-book with respect to raw app-log documents: use
-only the currently revealed task JSON, the conversation context, and the memory
-substrate allowed by the selected eval mode.
+scratch files, summaries, caches, or hidden memory files. A downstream-task
+stage is closed-book with respect to raw app-log documents: use only the
+currently revealed task JSON, the conversation context, and the memory substrate
+allowed by the selected eval mode.
 """
 
 
@@ -1410,7 +1407,8 @@ def render_state_task_stage_instruction(step: int, total_steps: int, checkpoint:
     timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
     return f"""You are working in `/app`.
 
-This is stage {step} of {total_steps}. It is a DynamicMem state-task stage.
+This is stage {step} of {total_steps}. It is a downstream DynamicMem task stage
+for the state family.
 
 Read:
 
@@ -1447,7 +1445,8 @@ def render_service_task_stage_instruction(step: int, total_steps: int, checkpoin
     timestamp = (checkpoint.get("as_of") or {}).get("timestamp")
     return f"""You are working in `/app`.
 
-This is stage {step} of {total_steps}. It is a DynamicMem service-task stage.
+This is stage {step} of {total_steps}. It is a downstream DynamicMem task stage
+for the personalized-service family.
 
 Read:
 
@@ -2489,8 +2488,8 @@ def render_soundness_report(
         "- Harbor is only the runner.",
         f"- Stage contract: `{config.stage_contract_display}`.",
         "- `memory-update` stages reveal only raw DynamicMem app-log deltas and should not require a prediction.",
-        "- `state-task` and `service-task` stages reveal split native queries without raw documents and score retained memory use.",
-        "- `downstream-task` is retained only as the legacy combined state+service task stage.",
+        "- Public `downstream-task` stages reveal no raw documents and score retained memory use.",
+        "- DynamicMem internally validates the state and personalized-service task families separately.",
         "- Hidden expected files preserve the scored upstream checkpoint task packs.",
         "- Agent-visible task files remove reference answers, reference outputs, scoring points, and gold evidence ids.",
         "",
@@ -2651,12 +2650,11 @@ checkpoint content:
 
 - raw `app_log_large.json` entries are revealed as chronological checkpoint deltas;
 - hidden expected files store the upstream checkpoint task packs for the full trajectory;
-- split `S/A` task stages expose sanitized State Completion and Personalized
-  Service queries separately and require `/app/submit_state` or
+- public `T` stages are closed-book downstream probes;
+- DynamicMem internally exposes sanitized State Completion and Personalized
+  Service task-family files separately and requires `/app/submit_state` or
   `/app/submit_service` validation before advancing;
-- legacy `T` stages expose the combined State Completion and Personalized
-  Service task for that checkpoint;
-- accepted split submissions are merged into upstream-compatible
+- accepted downstream submissions are merged into upstream-compatible
   `outputs/prediction.json`.
 
 Source user: `{config.source_user_dir}` / `{config.source_user_id}`
@@ -2798,7 +2796,7 @@ def main() -> int:
         "--service-tier",
         default=DEFAULT_BUILD_CONFIG.service_tier,
         choices=sorted(SERVICE_TIER_CHOICES),
-        help="Codex service_tier written into Harbor job kwargs when not standard.",
+        help="Codex service_tier written into generated Harbor job kwargs when not standard.",
     )
     parser.add_argument(
         "--codex-web-search",
@@ -2840,13 +2838,16 @@ def main() -> int:
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U/S/A/T tokens, for example "
-            "'U,U,S,A' or legacy 'U,T'. When set, this overrides --stage-pattern."
+            "Custom staged trajectory using public U/T tokens, for example "
+            "'U,U,T' or 'U,T,U,T'. Dataset adapters may split T internally."
         ),
     )
     args = parser.parse_args()
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
-    stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
+    try:
+        stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
+    except ValueError as error:
+        raise SystemExit(f"ERROR {error}") from None
     task_id, corpus_id, source_user_dir, source_user_id = task_id_for_source(
         args.source_dir,
         checkpoint_indices,

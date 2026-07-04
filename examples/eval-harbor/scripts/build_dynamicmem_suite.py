@@ -345,7 +345,7 @@ def write_suite_manifest(
             "nativeInputs": ["app_log_large.json", "task_packs.json"],
             "migrationPolicy": (
                 "Harbor replaces only the runner. Each generated task adapts one "
-                "DynamicMem user checkpoint trajectory into the shared U/S/A/T staged "
+                "DynamicMem user checkpoint trajectory into the shared U/T staged "
                 "contract, preserving raw app-log deltas, state_completion_pack, "
                 "rq3_apply_service_qa, and the upstream prediction contract."
             ),
@@ -566,8 +566,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--stage-schedule",
         default=None,
         help=(
-            "Custom staged trajectory using U/S/A/T tokens, for example "
-            "'U,U,S,A' or legacy 'U,T'. When set, this overrides --stage-pattern."
+            "Custom staged trajectory using public U/T tokens, for example "
+            "'U,U,T' or 'U,T,U,T'. Dataset adapters may split T internally."
         ),
     )
     parser.add_argument("--dry-run", action="store_true")
@@ -579,7 +579,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     checkpoint_indices = parse_checkpoint_indices(args.checkpoint_indices)
-    stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
+    try:
+        stage_schedule = parse_stage_schedule(args.stage_schedule) if args.stage_schedule else None
+    except ValueError as error:
+        raise SystemExit(f"ERROR {error}") from None
     if args.codex_auto_compact_token_limit <= 0:
         raise SystemExit("ERROR --codex-auto-compact-token-limit must be positive")
     arm_configs = load_arm_configs(args.arms_config)

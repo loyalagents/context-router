@@ -10,6 +10,8 @@ APP_ROOT = Path("/app")
 CURRENT_STAGE = APP_ROOT / "current_stage"
 STAGE_LOG = APP_ROOT / "stage-log.jsonl"
 STAGE_URL = "http://stage-server:8765/next"
+PREDICTION_PATH = APP_ROOT / "outputs" / "prediction.json"
+SUBMISSIONS_ROOT = APP_ROOT / "outputs" / "submissions"
 
 
 def write_json(path, payload):
@@ -34,11 +36,78 @@ def fetch_next_stage():
         return json.loads(response.read().decode("utf-8"))
 
 
+def current_stage_metadata():
+    path = CURRENT_STAGE / "stage.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"Current stage metadata is invalid JSON: {error}") from error
+
+
+def prediction_checkpoint_ids():
+    if not PREDICTION_PATH.exists():
+        return set()
+    try:
+        payload = json.loads(PREDICTION_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()
+    predictions = payload.get("predictions") if isinstance(payload, dict) else None
+    if not isinstance(predictions, list):
+        return set()
+    return {
+        str(item.get("checkpoint_id") or "")
+        for item in predictions
+        if isinstance(item, dict)
+    }
+
+
+def ensure_current_stage_complete():
+    metadata = current_stage_metadata()
+    if not metadata:
+        return
+    kind = metadata.get("kind")
+    checkpoint_id = str(metadata.get("checkpointId") or "")
+    if not checkpoint_id:
+        return
+    if kind == "state-task":
+        required = SUBMISSIONS_ROOT / checkpoint_id / "state.json"
+        if not required.exists():
+            raise SystemExit(
+                "Cannot advance: current downstream state task has no valid submission. "
+                "Run `/app/submit_state <state.json>` and retry `/app/next_stage`."
+            )
+    elif kind == "service-task":
+        required = SUBMISSIONS_ROOT / checkpoint_id / "service.json"
+        if not required.exists():
+            raise SystemExit(
+                "Cannot advance: current downstream service task has no valid submission. "
+                "Run `/app/submit_service <service.json>` and retry `/app/next_stage`."
+            )
+    elif kind == "downstream-task":
+        if checkpoint_id not in prediction_checkpoint_ids():
+            raise SystemExit(
+                "Cannot advance: current downstream-task has no prediction for "
+                f"`{checkpoint_id}` in `/app/outputs/prediction.json`."
+            )
+
+
 def materialize_stage(stage):
     if CURRENT_STAGE.exists():
         shutil.rmtree(CURRENT_STAGE)
     CURRENT_STAGE.mkdir(parents=True, exist_ok=True)
 
+    write_json(
+        CURRENT_STAGE / "stage.json",
+        {
+            "stageId": stage["stageId"],
+            "stageIndex": stage["stageIndex"],
+            "kind": stage["kind"],
+            "checkpointId": stage.get("checkpointId"),
+            "checkpointIndex": stage.get("checkpointIndex"),
+        },
+    )
     write_text(CURRENT_STAGE / "instruction.md", stage["instruction"])
     for item in stage.get("files", []):
         rel_path = item["path"]
@@ -59,11 +128,14 @@ def materialize_stage(stage):
             "rawDocsVisible": (CURRENT_STAGE / "docs").exists(),
             "hasDocumentsJson": (CURRENT_STAGE / "documents.json").exists(),
             "hasDynamicMemTask": (CURRENT_STAGE / "dynamicmem-task.json").exists(),
+            "hasDynamicMemStateTask": (CURRENT_STAGE / "dynamicmem-state-task.json").exists(),
+            "hasDynamicMemServiceTask": (CURRENT_STAGE / "dynamicmem-service-task.json").exists(),
         }
     )
 
 
 def main():
+    ensure_current_stage_complete()
     try:
         payload = fetch_next_stage()
     except urllib.error.URLError as error:

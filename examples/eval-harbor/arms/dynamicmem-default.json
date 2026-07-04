@@ -11,7 +11,13 @@
       "mode": "markdown",
       "memoryMode": "markdown",
       "instructionPath": "examples/eval-harbor/modes/markdown.md",
-      "compose": "staged"
+      "compose": "staged",
+      "artifacts": [
+        {
+          "source": "/app/memory.md",
+          "destination": "memory/memory.md"
+        }
+      ]
     },
     {
       "mode": "cr-mcp",
