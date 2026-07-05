@@ -65,7 +65,7 @@ def score_allowed(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str
     }
 
 
-def score_nonce_absence(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str, Any]:
+def score_nonce_absence(answers: dict[str, Any], expected: dict[str, Any], memory_mode: str) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     absent = 0
     carryover_hits: list[str] = []
@@ -87,11 +87,13 @@ def score_nonce_absence(answers: dict[str, Any], expected: dict[str, Any]) -> di
         else:
             rows.append({"id": qid, "status": "wrong_nonempty", "actual": answer})
     total = len(expected.get("nonceFacts", []))
+    nonce_recovered = bool(carryover_hits)
     return {
         "total": total,
         "absent": absent,
         "accuracy": absent / total if total else 0.0,
-        "conversationCarryover": bool(carryover_hits),
+        "nonceRecovered": nonce_recovered,
+        "conversationCarryover": nonce_recovered if memory_mode == "context-only" else False,
         "carryoverHits": carryover_hits,
         "rows": rows,
     }
@@ -118,7 +120,7 @@ def main() -> int:
     metadata_success = parse_success and actual.get("taskId") == expected.get("taskId")
     answers = actual.get("answers") if isinstance(actual.get("answers"), dict) else {}
     allowed = score_allowed(answers, expected)
-    nonce_absence = score_nonce_absence(answers, expected)
+    nonce_absence = score_nonce_absence(answers, expected, MEMORY_MODE)
 
     runtime_probe: dict[str, Any] = {}
     runtime_probe_success = False
@@ -152,7 +154,7 @@ def main() -> int:
         conversation_carryover = True
 
     negative_control_required = MEMORY_MODE == "context-only"
-    nonce_policy_pass = nonce_absence["accuracy"] == 1.0 and not nonce_absence["conversationCarryover"]
+    nonce_policy_pass = nonce_absence["accuracy"] == 1.0 and not nonce_absence["nonceRecovered"]
     negative_control_pass = nonce_policy_pass and (
         not allowed["carryover"] if MEMORY_MODE == "context-only" else True
     )

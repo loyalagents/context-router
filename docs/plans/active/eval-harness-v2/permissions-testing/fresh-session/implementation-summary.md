@@ -56,13 +56,18 @@ Paper-safe claim supported by this harness shape:
   `freshSessionPass`, `memoryPositiveControlPass`, `noncePolicyPass`, and
   `filesystemPass`.
 - Recovery of nonce facts now fails `noncePolicyPass` and the aggregate
-  `freshnessCanaryPass` in every mode. In `context-only`, recovery of allowed
-  canary facts also fails the freshness gate as conversation carryover. In
-  markdown/CR canary runs, allowed fact recovery remains the positive-control
-  requirement.
+  `freshnessCanaryPass` in every mode. `freshSessionPass` treats answer-level
+  nonce or allowed recovery as conversation carryover only in `context-only`,
+  where no durable memory substrate exists. In markdown/CR canary runs, nonce
+  recovery is reported as a nonce-policy failure, and allowed fact recovery
+  remains the positive-control requirement.
 - Readback and canary final-step setup scripts now clear `/tmp` and common
   `$HOME` scratch names before the final agent step, while preserving markdown
   memory through an internal `/app` temporary file.
+- The filesystem freshness guarantee is complete for the task-visible `/app`
+  workspace and `/tmp`. `$HOME` cleanup is pattern-scoped to common CR/scratch
+  names and assumes non-adversarial agents; it is not an arbitrary `$HOME`
+  stash-isolation guarantee.
 - Normal `report_results.py` output now exposes and requires freshness canary
   pass/fail, fresh-session pass, memory-positive-control pass, nonce-policy
   pass, filesystem pass, nonce absence, and allowed recoverability fields.

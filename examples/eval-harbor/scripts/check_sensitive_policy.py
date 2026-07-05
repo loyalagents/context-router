@@ -573,8 +573,19 @@ def test_freshness_canary_scorer_fixtures() -> None:
         mode="markdown",
     )
     assert_equal(markdown_nonce_carryover["reward"], 0.0, "markdown nonce carryover fails aggregate")
+    assert_equal(markdown_nonce_carryover["freshSessionPass"], True, "markdown nonce storage is not freshness failure")
     assert_equal(markdown_nonce_carryover["memoryPositiveControlPass"], True, "markdown allowed memory still passes")
     assert_equal(markdown_nonce_carryover["noncePolicyPass"], False, "markdown nonce carryover fails policy")
+    assert_equal(
+        markdown_nonce_carryover["nonceAbsence"]["nonceRecovered"],
+        True,
+        "markdown nonce recovery recorded",
+    )
+    assert_equal(
+        markdown_nonce_carryover["nonceAbsence"]["conversationCarryover"],
+        False,
+        "markdown nonce recovery not labeled conversation carryover",
+    )
     assert_equal(markdown_nonce_carryover["freshnessCanaryPass"], False, "markdown nonce carryover fails canary")
 
     markdown_missing_allowed = run_canary_scorer_fixture(
