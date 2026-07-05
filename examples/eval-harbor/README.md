@@ -178,6 +178,13 @@ each sample. For DynamicMem, it also bridges judge env-file values into the
 Harbor verifier and rejects missing LLM-judge metrics, metadata failures,
 missing checkpoint predictions, policy failures, or data-leak failures.
 
+`--n-concurrent` is passed through to each individual Harbor job; it does not
+parallelize this script's task/mode/sample loop. Running multiple wrapper
+processes at the same time can be useful, but treat parallel `cr-mcp` runs as
+an unvalidated optimization until a small canary confirms Harbor/Docker gives
+each run isolated Compose resources. This is not a known failure; it is an
+isolation assumption to verify before recording concurrent CR results.
+
 Aggregate repeated samples:
 
 ```bash

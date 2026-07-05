@@ -201,7 +201,16 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, default=Path("/tmp/cr-harbor-dynamicmem-suite"))
     parser.add_argument("--harbor-bin", default="harbor")
     parser.add_argument("--samples", type=int, default=3)
-    parser.add_argument("--n-concurrent", type=int, default=1)
+    parser.add_argument(
+        "--n-concurrent",
+        type=int,
+        default=1,
+        help=(
+            "Pass-through Harbor job concurrency. This does not parallelize "
+            "the task/mode/sample loop. Parallel wrapper processes, especially "
+            "for cr-mcp, should be canary-tested for Docker isolation first."
+        ),
+    )
     parser.add_argument(
         "--modes",
         help="Comma-separated mode override. Defaults to arms listed in the manifest.",
