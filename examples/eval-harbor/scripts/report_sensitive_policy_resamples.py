@@ -119,6 +119,7 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     summary: dict[str, Any] = {
         "taskId": policy.get("taskId"),
         "variant": policy.get("variant"),
+        "evaluationKind": policy.get("evaluationKind"),
         "mode": rows[0].get("mode"),
         "sampleCount": len(rows),
         "rewardPasses": sum(1 for row in rows if is_perfect(row.get("reward"))),
@@ -199,6 +200,7 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "artifactRoot": row.get("artifactRoot"),
                 "reward": row.get("reward"),
                 "allowedUtilityAccuracy": row.get("allowedUtilityAccuracy"),
+                "blockedAbstentionAccuracy": row.get("blockedAbstentionAccuracy"),
                 "persistedBlockedLeakageRate": metric_rate(
                     metric_payload(row, "persistedBlockedLeakage")
                 ),
@@ -297,11 +299,14 @@ def compare_markdown_cr(rows_by_key: dict[tuple[str, str], list[dict[str, Any]]]
         cr_samples_with_leakage = 0
         pair_rows = []
         variant = None
+        evaluation_kind = None
         for sample_name in sample_names:
             markdown = markdown_rows[sample_name]
             cr_mcp = cr_rows[sample_name]
             markdown_metric = metric_payload(markdown, "persistedBlockedLeakage")
             cr_metric = metric_payload(cr_mcp, "persistedBlockedLeakage")
+            if not metric_applicable(markdown_metric) or not metric_applicable(cr_metric):
+                continue
             markdown_hit_count = metric_hit_count(markdown_metric)
             markdown_total_count = metric_total(markdown_metric)
             cr_hit_count = metric_hit_count(cr_metric)
@@ -317,6 +322,11 @@ def compare_markdown_cr(rows_by_key: dict[tuple[str, str], list[dict[str, Any]]]
             markdown_policy = markdown.get("sensitivePolicy") or {}
             cr_policy = cr_mcp.get("sensitivePolicy") or {}
             variant = variant or markdown_policy.get("variant") or cr_policy.get("variant")
+            evaluation_kind = (
+                evaluation_kind
+                or markdown_policy.get("evaluationKind")
+                or cr_policy.get("evaluationKind")
+            )
             pair_rows.append(
                 {
                     "sample": sample_name,
@@ -327,12 +337,15 @@ def compare_markdown_cr(rows_by_key: dict[tuple[str, str], list[dict[str, Any]]]
                 }
             )
 
+        if not pair_rows:
+            continue
         markdown_rate = markdown_hits / markdown_total if markdown_total else None
         cr_rate = cr_hits / cr_total if cr_total else None
         comparisons.append(
             {
                 "taskId": task_id,
                 "variant": variant,
+                "evaluationKind": evaluation_kind,
                 "samplePairs": len(sample_names),
                 "markdownBlockedLeakage": {
                     "hitCount": markdown_hits,
@@ -374,6 +387,16 @@ def fmt_fraction(numerator: int, denominator: int) -> str:
     return f"{numerator}/{denominator} ({numerator / denominator:.3f})"
 
 
+def fmt_comparison_metric(metric: dict[str, Any], sample_pairs: int) -> str:
+    rate = metric.get("rate")
+    rate_text = "n/a" if rate is None else f"{rate:.3f}"
+    return (
+        f"{metric['hitCount']}/{metric['total']} "
+        f"({rate_text}); "
+        f"{metric['samplesWithLeakage']}/{sample_pairs} samples"
+    )
+
+
 def fmt_cost(value: Any) -> str:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return f"${value:.4f}"
@@ -399,8 +422,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
         "",
         "## Arm Summary",
         "",
-        "| Task | Variant | Mode | Samples | Reward | Allowed Utility | Durable Allowed Retention | Persisted Blocked Leakage | Blocked Output Leakage | Attempted Blocked Write | CR Blocked Slug Exposure | Total Tokens | Cost | Issues |",
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Task | Evaluation / Variant | Mode | Samples | Reward | Allowed Utility | Blocked Abstention | Durable Allowed Retention | Persisted Blocked Leakage | Blocked Output Leakage | Attempted Blocked Write | CR Blocked Slug Exposure | Total Tokens | Cost | Issues |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in payload["arms"]:
         catalog = row["crBlockedSlugExposure"]
@@ -421,13 +444,21 @@ def markdown_report(payload: dict[str, Any]) -> str:
             + len(row["issues"])
         )
         lines.append(
-            "| {task} | {variant} | {mode} | {samples} | {reward} | {allowed} | {durable} | {persisted} | {output} | {attempted} | {catalog} | {tokens} | {cost} | {issues} |".format(
+            "| {task} | {variant} | {mode} | {samples} | {reward} | {allowed} | {blocked_abstention} | {durable} | {persisted} | {output} | {attempted} | {catalog} | {tokens} | {cost} | {issues} |".format(
                 task=row["taskId"],
-                variant=row.get("variant") or "n/a",
+                variant=(
+                    (row.get("evaluationKind") or "n/a")
+                    + " / "
+                    + (row.get("variant") or "n/a")
+                ),
                 mode=row["mode"],
                 samples=row["sampleCount"],
                 reward=fmt_fraction(row["rewardPasses"], row["sampleCount"]),
                 allowed=fmt_fraction(row["allowedUtilityPasses"], row["sampleCount"]),
+                blocked_abstention=fmt_fraction(
+                    row["blockedAbstentionPasses"],
+                    row["blockedAbstentionApplicableSamples"],
+                ),
                 durable=fmt_rate(row["durableAllowedRetention"]),
                 persisted=fmt_rate(row["persistedBlockedLeakage"], include_samples=True),
                 output=fmt_rate(row["blockedOutputLeakage"], include_samples=True),
@@ -444,7 +475,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
             "",
             "## Markdown vs CR",
             "",
-            "| Task | Variant | Sample Pairs | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
+            "| Task | Evaluation / Variant | Sample Pairs | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
             "| --- | --- | ---: | ---: | ---: | ---: |",
         ]
     )
@@ -453,18 +484,11 @@ def markdown_report(payload: dict[str, Any]) -> str:
         cr = item["crBlockedLeakage"]
         delta = item.get("accessReductionVsMarkdown")
         delta_text = "n/a" if delta is None else f"{delta:.3f}"
-        markdown_text = (
-            f"{markdown['hitCount']}/{markdown['total']} "
-            f"({markdown['rate']:.3f}); "
-            f"{markdown['samplesWithLeakage']}/{item['samplePairs']} samples"
-        )
-        cr_text = (
-            f"{cr['hitCount']}/{cr['total']} "
-            f"({cr['rate']:.3f}); "
-            f"{cr['samplesWithLeakage']}/{item['samplePairs']} samples"
-        )
+        markdown_text = fmt_comparison_metric(markdown, item["samplePairs"])
+        cr_text = fmt_comparison_metric(cr, item["samplePairs"])
         lines.append(
-            f"| {item['taskId']} | {item.get('variant') or 'n/a'} | "
+            f"| {item['taskId']} | "
+            f"{(item.get('evaluationKind') or 'n/a') + ' / ' + (item.get('variant') or 'n/a')} | "
             f"{item['samplePairs']} | {markdown_text} | {cr_text} | {delta_text} |"
         )
 

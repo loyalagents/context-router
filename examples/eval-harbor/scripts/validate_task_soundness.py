@@ -38,10 +38,22 @@ HIDDEN_MARKERS = [
     "gold_memory_evidence_app_log_ids",
 ]
 
+FRESHNESS_CANARY_EXPECTED_RELATIVE_PATH = Path("tests/expected/freshness-canary.json")
+
 
 def load_json(path: Path) -> Any:
     with path.open() as handle:
         return json.load(handle)
+
+
+def load_freshness_canary(task_dir: Path) -> dict[str, Any] | None:
+    path = task_dir / FRESHNESS_CANARY_EXPECTED_RELATIVE_PATH
+    if not path.exists():
+        return None
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return payload
 
 
 def visible_agent_text(task_dir: Path) -> str:
@@ -560,10 +572,15 @@ def validate_sensitive_policy_task(
     allowed_questions = policy.get("allowedQuestions")
     if not isinstance(allowed_questions, dict) or not allowed_questions:
         errors.append(f"{task_id}: sensitive-policy allowedQuestions must be a nonempty object")
+    evaluation_kind = policy.get("evaluationKind")
     if variant == "policy-aware":
         blocked_questions = policy.get("blockedQuestions")
         if not isinstance(blocked_questions, dict) or not blocked_questions:
             errors.append(f"{task_id}: policy-aware task must define blockedQuestions")
+    if evaluation_kind == "fresh-session-readback":
+        blocked_questions = policy.get("blockedQuestions")
+        if not isinstance(blocked_questions, dict) or not blocked_questions:
+            errors.append(f"{task_id}: fresh-session-readback must define blockedQuestions")
 
     blocked_records = blocked_value_records(policy)
     if not blocked_records:
@@ -618,6 +635,10 @@ def validate_sensitive_policy_task(
                 f"{task_id}: sensitive-policy catalog exposes blocked slugs "
                 f"{exposure.get('exposedSlugs')}"
             )
+
+    if evaluation_kind == "fresh-session-readback":
+        errors.extend(validate_sensitive_policy_readback_task(task_id, task_dir, policy))
+        return True, errors
 
     if staged is None:
         errors.append(f"{task_id}: sensitive-policy task must use staged reveal")
@@ -696,6 +717,199 @@ def validate_sensitive_policy_task(
     ]
     if leaked:
         errors.append(f"{task_id}: visible workspace/stages contain hidden markers {leaked}")
+
+    return True, errors
+
+
+def validate_sensitive_policy_readback_task(
+    task_id: str,
+    task_dir: Path,
+    policy: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    blocked_records = blocked_value_records(policy)
+    steps_dir = task_dir / "steps"
+    build_dir = steps_dir / "01-memory-build"
+    readback_dir = steps_dir / "02-readback"
+    task_toml = task_dir / "task.toml"
+    task_text = task_toml.read_text(encoding="utf-8", errors="ignore") if task_toml.exists() else ""
+
+    if (task_dir / "stages" / "payload.json").exists():
+        errors.append(f"{task_id}: fresh-session-readback must not use staged payload")
+    if 'multi_step_reward_strategy = "final"' not in task_text:
+        errors.append(f"{task_id}: fresh-session-readback must use final multi-step reward strategy")
+    if not build_dir.is_dir() or not readback_dir.is_dir():
+        errors.append(f"{task_id}: fresh-session-readback requires 01-memory-build and 02-readback steps")
+        return errors
+    if sorted(path.name for path in steps_dir.iterdir() if path.is_dir()) != [
+        "01-memory-build",
+        "02-readback",
+    ]:
+        errors.append(f"{task_id}: fresh-session-readback must contain exactly two ordered steps")
+
+    build_instruction = build_dir / "instruction.md"
+    if build_instruction.exists():
+        build_text = build_instruction.read_text(encoding="utf-8", errors="ignore").lower()
+        forbidden_terms = ["blocked", "forbidden", "health", "ordinary_preference", "ordinary preference"]
+        for term in forbidden_terms:
+            if term in build_text:
+                errors.append(
+                    f"{task_id}: memory-build instruction must be policy-blind; found {term!r}"
+                )
+    else:
+        errors.append(f"{task_id}: missing 01-memory-build/instruction.md")
+
+    if not (build_dir / "workdir" / "_step_docs").is_dir():
+        errors.append(f"{task_id}: memory-build step must provide _step_docs")
+    build_documents_path = build_dir / "workdir" / "_step_documents.json"
+    if not build_documents_path.exists():
+        errors.append(f"{task_id}: memory-build step must provide _step_documents.json")
+    else:
+        _, index_errors = validate_documents_index(
+            task_id,
+            build_documents_path,
+            build_dir / "workdir" / "_step_docs",
+            label=build_documents_path.relative_to(task_dir).as_posix(),
+        )
+        errors.extend(index_errors)
+    if (readback_dir / "workdir" / "_step_docs").exists():
+        errors.append(f"{task_id}: readback step must not provide _step_docs")
+    if (readback_dir / "workdir" / "_step_documents.json").exists():
+        errors.append(f"{task_id}: readback step must not provide _step_documents.json")
+    if not (readback_dir / "workdir" / "_step_permissions-task.json").exists():
+        errors.append(f"{task_id}: readback step must provide _step_permissions-task.json")
+
+    setup_path = readback_dir / "workdir" / "setup.sh"
+    if not setup_path.exists():
+        errors.append(f"{task_id}: readback step missing setup.sh")
+    else:
+        setup_text = setup_path.read_text(encoding="utf-8", errors="ignore")
+        for required in (
+            "find /app",
+            "documents.json",
+            "docs",
+            "/tmp",
+            "$HOME",
+            "_step_permissions-task.json",
+        ):
+            if required not in setup_text:
+                errors.append(
+                    f"{task_id}: readback setup.sh must actively remove prior docs/indexes "
+                    f"and materialize readback task; missing {required!r}"
+                )
+
+    readback_task_path = readback_dir / "workdir" / "_step_permissions-task.json"
+    if readback_task_path.exists():
+        readback_task = load_json(readback_task_path)
+        questions = readback_task.get("questions")
+        if not isinstance(questions, list) or not questions:
+            errors.append(f"{task_id}: readback task must define questions")
+        else:
+            for question in questions:
+                qid = question.get("id") if isinstance(question, dict) else None
+                if not isinstance(qid, str) or not qid.startswith("q") or not qid[1:].isdigit():
+                    errors.append(f"{task_id}: readback question id must be neutral qNN, got {qid!r}")
+
+    def is_allowed_blocked_value_path(relative_path: Path) -> bool:
+        return (
+            relative_path == Path("tests/expected/sensitive-policy.json")
+            or relative_path.parts[:4]
+            == ("steps", "01-memory-build", "workdir", "_step_docs")
+        )
+
+    for path in sorted(task_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(task_dir)
+        if is_allowed_blocked_value_path(relative):
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        hits = find_value_hits(text, blocked_records)
+        if hits:
+            rendered_hits = [
+                {
+                    "id": hit.get("id"),
+                    "category": hit.get("category"),
+                    "needle": hit.get("needle"),
+                }
+                for hit in hits[:5]
+            ]
+            errors.append(
+                f"{task_id}: blocked value leaked in {relative.as_posix()}: {rendered_hits}"
+            )
+
+    leaked_markers = [
+        marker
+        for marker in HIDDEN_MARKERS
+        if marker in visible_agent_text(task_dir)
+    ]
+    if leaked_markers:
+        errors.append(f"{task_id}: visible workspace/steps contain hidden markers {leaked_markers}")
+
+    return errors
+
+
+def validate_freshness_canary_task(task_id: str, task_dir: Path) -> tuple[bool, list[str]]:
+    expected = load_freshness_canary(task_dir)
+    if expected is None:
+        return False, []
+
+    errors: list[str] = []
+    if expected.get("taskId") != task_id:
+        errors.append(f"{task_id}: freshness canary taskId mismatch")
+    task_toml = task_dir / "task.toml"
+    task_text = task_toml.read_text(encoding="utf-8", errors="ignore") if task_toml.exists() else ""
+    if 'multi_step_reward_strategy = "final"' not in task_text:
+        errors.append(f"{task_id}: freshness canary must use final multi-step reward strategy")
+    if "/app/outputs/freshness-canary-report.json" not in task_text:
+        errors.append(f"{task_id}: freshness canary must collect freshness-canary-report.json")
+
+    nonce_records = expected.get("nonceFacts")
+    if not isinstance(nonce_records, list) or len(nonce_records) < 3:
+        errors.append(f"{task_id}: freshness canary must define at least three nonceFacts")
+    else:
+        for record in nonce_records:
+            value = str(record.get("value") if isinstance(record, dict) else "")
+            if len(value) < 24:
+                errors.append(f"{task_id}: nonce value is not high entropy enough")
+
+    allowed_records = expected.get("allowedFacts")
+    if not isinstance(allowed_records, list) or not allowed_records:
+        errors.append(f"{task_id}: freshness canary must define allowedFacts")
+
+    steps_dir = task_dir / "steps"
+    steps = sorted(path.name for path in steps_dir.iterdir() if path.is_dir()) if steps_dir.exists() else []
+    if steps != ["01-observe", "02-readback"]:
+        errors.append(f"{task_id}: freshness canary must contain 01-observe and 02-readback")
+    observe_documents_path = task_dir / "steps" / "01-observe" / "workdir" / "_step_documents.json"
+    if observe_documents_path.exists():
+        _, index_errors = validate_documents_index(
+            task_id,
+            observe_documents_path,
+            observe_documents_path.parent / "_step_docs",
+            label=observe_documents_path.relative_to(task_dir).as_posix(),
+        )
+        errors.extend(index_errors)
+    else:
+        errors.append(f"{task_id}: freshness canary observe step missing _step_documents.json")
+    readback_setup = task_dir / "steps" / "02-readback" / "workdir" / "setup.sh"
+    if not readback_setup.exists():
+        errors.append(f"{task_id}: freshness canary readback step missing setup.sh")
+    else:
+        setup_text = readback_setup.read_text(encoding="utf-8", errors="ignore")
+        for required in ("freshness-probe-runtime.json", "/tmp", "$HOME", "find /app"):
+            if required not in setup_text:
+                errors.append(
+                    f"{task_id}: freshness canary setup.sh missing probe guard {required!r}"
+                )
+
+    leaked = [
+        marker
+        for marker in HIDDEN_MARKERS
+        if marker in visible_agent_text(task_dir)
+    ]
+    if leaked:
+        errors.append(f"{task_id}: visible workspace/steps contain hidden markers {leaked}")
 
     return True, errors
 
@@ -796,6 +1010,14 @@ def validate_task(task_dir: Path, repo_root: Path) -> list[str]:
     )
     if is_sensitive_policy:
         errors.extend(sensitive_errors)
+        return errors
+
+    is_freshness_canary, freshness_errors = validate_freshness_canary_task(
+        task_id,
+        task_dir,
+    )
+    if is_freshness_canary:
+        errors.extend(freshness_errors)
         return errors
 
     for step_documents_path in sorted(
@@ -1021,6 +1243,15 @@ def main() -> int:
                     f"docs={docs_count} "
                     f"variant={policy.get('variant')} "
                     f"allowed_questions={allowed_count} blocked_values={blocked_count}"
+                )
+            elif (task / "tests" / "expected" / "freshness-canary.json").exists():
+                expected = load_json(task / "tests" / "expected" / "freshness-canary.json")
+                nonce_count = len(expected.get("nonceFacts", []))
+                allowed_count = len(expected.get("allowedFacts", []))
+                print(
+                    f"OK {task.name}: corpus={corpus_label} "
+                    f"docs={docs_count} "
+                    f"nonce_facts={nonce_count} allowed_facts={allowed_count}"
                 )
             else:
                 expected = load_json(task / "tests" / "expected" / "forms.json")

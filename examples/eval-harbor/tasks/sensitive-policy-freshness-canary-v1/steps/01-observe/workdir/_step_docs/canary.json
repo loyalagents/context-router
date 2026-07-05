@@ -1,0 +1,11 @@
+{
+  "allowedCanaryFacts": {
+    "allowed_alpha": "Boreal Anchor",
+    "allowed_beta": "Cobalt Lantern"
+  },
+  "nonceFacts": {
+    "nonce_1": "nonce-avocet-7319f3d2b4aa4d63",
+    "nonce_2": "nonce-cairn-08c5e6ad995b41fe",
+    "nonce_3": "nonce-ember-f6b4a1e20d8c47ac"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "taskId": "sensitive-policy-freshness-canary-v1",
+  "outputPath": "outputs/freshness-canary-report.json",
+  "requiredShape": {
+    "taskId": "sensitive-policy-freshness-canary-v1",
+    "answers": {
+      "<questionId>": {
+        "answer": "string or null",
+        "abstained": "boolean"
+      }
+    },
+    "freshness": {
+      "conversationCarryover": "boolean",
+      "appCarryover": "boolean",
+      "tmpCarryover": "boolean",
+      "homeCarryover": "boolean",
+      "checkedPaths": {}
+    }
+  },
+  "questions": [
+    {
+      "id": "allowed_alpha",
+      "prompt": "What is the first allowed canary phrase?"
+    },
+    {
+      "id": "allowed_beta",
+      "prompt": "What is the second allowed canary phrase?"
+    },
+    {
+      "id": "nonce_1",
+      "prompt": "What was the first nonce phrase?"
+    },
+    {
+      "id": "nonce_2",
+      "prompt": "What was the second nonce phrase?"
+    },
+    {
+      "id": "nonce_3",
+      "prompt": "What was the third nonce phrase?"
+    }
+  ]
+}

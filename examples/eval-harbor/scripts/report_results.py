@@ -10,6 +10,7 @@ from typing import Any
 
 from sensitive_policy import (
     find_sensitive_policy_for_config,
+    normalize_text,
     scan_artifacts as scan_sensitive_policy_artifacts,
     sensitive_policy_comparisons,
 )
@@ -247,6 +248,28 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
             "outputRoot",
             "outputFiles",
         ]
+        policy = row.get("sensitivePolicy")
+        if isinstance(policy, dict) and policy.get("evaluationKind") == "fresh-session-readback":
+            required.append("blockedAbstentionAccuracy")
+        return [key for key in required if row.get(key) is None]
+    if row.get("taskType") == "freshness-canary":
+        required = [
+            "reward",
+            "totalTokens",
+            "costUsd",
+            "freshnessCanaryPass",
+            "freshSessionPass",
+            "memoryPositiveControlPass",
+            "noncePolicyPass",
+            "filesystemPass",
+            "freshness",
+            "allowedRecoverability",
+            "nonceAbsence",
+            "outputRoot",
+            "outputFiles",
+        ]
+        if row.get("mode") == "cr-mcp":
+            required.extend(["crAllowedStoredPass", "crAllowedStorage"])
         return [key for key in required if row.get(key) is None]
     required = [
         "reward",
@@ -279,9 +302,15 @@ def is_dynamicmem_score(score: dict[str, Any]) -> bool:
     )
 
 
+def is_freshness_canary_score(score: dict[str, Any]) -> bool:
+    return score.get("taskType") == "freshness-canary"
+
+
 def report_task_type(*, sensitive_policy: dict[str, Any] | None, score: dict[str, Any]) -> str:
     if sensitive_policy is not None:
         return "sensitive-policy"
+    if is_freshness_canary_score(score):
+        return "freshness-canary"
     if is_dynamicmem_score(score):
         return "dynamicmem"
     return "generic"
@@ -328,6 +357,11 @@ def sensitive_policy_score_errors(score: dict[str, Any]) -> list[str]:
         errors.append(
             "sensitive-policy score-summary blockedAbstentionAccuracy "
             "must be numeric or null"
+        )
+    if score.get("evaluationKind") == "fresh-session-readback" and not is_number(abstention):
+        errors.append(
+            "fresh-session-readback score-summary blockedAbstentionAccuracy "
+            "must be numeric"
         )
     return errors
 
@@ -447,9 +481,95 @@ def configured_task_path(config: dict[str, Any]) -> Path | None:
     for candidate in candidates:
         if candidate.is_file() and candidate.name == "task.toml":
             return candidate.parent
-        if candidate.is_dir() and (candidate / "stages" / "payload.json").exists():
+        if candidate.is_dir() and (
+            (candidate / "stages" / "payload.json").exists()
+            or (candidate / "task.toml").exists()
+        ):
             return candidate
     return None
+
+
+def freshness_canary_expected_from_config(config: dict[str, Any]) -> dict[str, Any] | None:
+    task_path = configured_task_path(config)
+    if task_path is None:
+        return None
+    expected_path = task_path / "tests" / "expected" / "freshness-canary.json"
+    if not expected_path.exists():
+        return None
+    payload = load_json(expected_path)
+    return payload if isinstance(payload, dict) else None
+
+
+def cr_allowed_storage_metrics(
+    *,
+    mode: str,
+    expected: dict[str, Any] | None,
+    artifact_root: Path,
+) -> dict[str, Any]:
+    applicable = mode == "cr-mcp"
+    metrics: dict[str, Any] = {
+        "applicable": applicable,
+        "storedCount": 0,
+        "total": 0,
+        "accuracy": None,
+        "pass": None,
+        "rows": [],
+    }
+    if not applicable:
+        return metrics
+    if expected is None:
+        metrics["error"] = "freshness canary expected data unavailable"
+        return metrics
+
+    records = [
+        record
+        for record in expected.get("allowedFacts", [])
+        if isinstance(record, dict)
+    ]
+    metrics["total"] = len(records)
+    snapshot_path = artifact_root / "memory" / "cr-snapshot.json"
+    if not snapshot_path.exists():
+        metrics["error"] = f"missing CR snapshot: {snapshot_path}"
+        return metrics
+
+    try:
+        snapshot = load_json(snapshot_path)
+    except ValueError as error:
+        metrics["error"] = str(error)
+        return metrics
+
+    preferences = snapshot.get("preferences") if isinstance(snapshot, dict) else None
+    preferences = preferences if isinstance(preferences, dict) else {}
+    rows: list[dict[str, Any]] = []
+    stored_count = 0
+    for record in records:
+        qid = str(record.get("id") or "")
+        slug = str(record.get("slug") or "")
+        expected_value = str(record.get("value") or "")
+        entry = preferences.get(slug)
+        if not isinstance(entry, dict):
+            rows.append({"id": qid, "slug": slug, "status": "missing"})
+            continue
+        actual_value = entry.get("value")
+        if normalize_text(actual_value) == normalize_text(expected_value):
+            stored_count += 1
+            rows.append({"id": qid, "slug": slug, "status": "stored"})
+        else:
+            rows.append(
+                {
+                    "id": qid,
+                    "slug": slug,
+                    "status": "wrong",
+                    "actual": actual_value,
+                }
+            )
+
+    total = len(records)
+    metrics["storedCount"] = stored_count
+    metrics["accuracy"] = stored_count / total if total else 0.0
+    metrics["pass"] = stored_count == total
+    metrics["rows"] = rows
+    return metrics
 
 
 def expected_stage_sequence_from_config(config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -774,6 +894,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             policy=sensitive_policy,
             artifact_root=artifact_root,
         )
+        validation_errors.extend(sensitive_policy_metrics.get("artifactErrors") or [])
         catalog_exposure = sensitive_policy_metrics.get("crBlockedSlugExposure") or {}
         if catalog_exposure.get("error"):
             validation_errors.append(catalog_exposure["error"])
@@ -785,12 +906,33 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
                 "sensitive-policy CR catalog exposes blocked slug(s): "
                 + json.dumps(catalog_exposure.get("exposedSlugs", []), sort_keys=True)
             )
-    else:
+    elif not is_freshness_canary_score(score):
         raw_task_path = (config.get("task") or {}).get("path")
-        if isinstance(raw_task_path, str) and "sensitive-policy" in raw_task_path:
+        if (
+            isinstance(raw_task_path, str)
+            and "sensitive-policy" in raw_task_path
+            and "freshness-canary" not in raw_task_path
+        ):
             validation_errors.append(
                 f"sensitive-policy task path did not resolve: {raw_task_path}"
             )
+
+    freshness_expected = (
+        freshness_canary_expected_from_config(config)
+        if is_freshness_canary_score(score)
+        else None
+    )
+    cr_allowed_storage = (
+        cr_allowed_storage_metrics(
+            mode=mode,
+            expected=freshness_expected,
+            artifact_root=artifact_root,
+        )
+        if is_freshness_canary_score(score)
+        else None
+    )
+    if isinstance(cr_allowed_storage, dict) and cr_allowed_storage.get("error"):
+        validation_errors.append(str(cr_allowed_storage["error"]))
 
     for final_output in expected_output_paths(score, artifact_root):
         if not final_output.exists():
@@ -919,6 +1061,29 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "allowedUtilityAccuracy": score.get("allowedUtilityAccuracy"),
         "blockedAbstentionAccuracy": score.get("blockedAbstentionAccuracy"),
         "blockedOutputLeakage": score.get("blockedOutputLeakage"),
+        "freshnessCanaryPass": score.get("freshnessCanaryPass"),
+        "freshSessionPass": score.get("freshSessionPass"),
+        "memoryPositiveControlPass": score.get("memoryPositiveControlPass"),
+        "noncePolicyPass": score.get("noncePolicyPass"),
+        "filesystemPass": score.get("filesystemPass"),
+        "crAllowedStoredPass": (
+            cr_allowed_storage.get("pass")
+            if isinstance(cr_allowed_storage, dict)
+            and cr_allowed_storage.get("applicable")
+            else None
+        ),
+        "crAllowedStorage": cr_allowed_storage,
+        "freshness": score.get("freshness") if isinstance(score.get("freshness"), dict) else None,
+        "allowedRecoverability": (
+            score.get("allowedRecoverability")
+            if isinstance(score.get("allowedRecoverability"), dict)
+            else None
+        ),
+        "nonceAbsence": (
+            score.get("nonceAbsence")
+            if isinstance(score.get("nonceAbsence"), dict)
+            else None
+        ),
         "outputRoot": score.get("outputRoot"),
         "outputFiles": score.get("outputFiles"),
         "fieldAccuracy": field_accuracy,
@@ -1063,6 +1228,35 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
                 "- Sensitive policy: "
                 f"`{json.dumps(policy, sort_keys=True)}`"
             )
+        if row.get("taskType") == "freshness-canary":
+            lines.append(f"- Freshness canary pass: `{fmt_bool(row.get('freshnessCanaryPass'))}`")
+            lines.append(f"- Fresh session pass: `{fmt_bool(row.get('freshSessionPass'))}`")
+            lines.append(
+                f"- Memory positive control pass: `{fmt_bool(row.get('memoryPositiveControlPass'))}`"
+            )
+            lines.append(f"- Nonce policy pass: `{fmt_bool(row.get('noncePolicyPass'))}`")
+            lines.append(f"- Filesystem pass: `{fmt_bool(row.get('filesystemPass'))}`")
+            if isinstance(row.get("crAllowedStorage"), dict) and row["crAllowedStorage"].get("applicable"):
+                lines.append(f"- CR allowed stored pass: `{fmt_bool(row.get('crAllowedStoredPass'))}`")
+                lines.append(
+                    "- CR allowed storage: "
+                    f"`{json.dumps(row['crAllowedStorage'], sort_keys=True)}`"
+                )
+            if row.get("freshness"):
+                lines.append(
+                    "- Freshness: "
+                    f"`{json.dumps(row['freshness'], sort_keys=True)}`"
+                )
+            if row.get("allowedRecoverability"):
+                lines.append(
+                    "- Allowed recoverability: "
+                    f"`{json.dumps(row['allowedRecoverability'], sort_keys=True)}`"
+                )
+            if row.get("nonceAbsence"):
+                lines.append(
+                    "- Nonce absence: "
+                    f"`{json.dumps(row['nonceAbsence'], sort_keys=True)}`"
+                )
         if row["validationErrors"]:
             lines.append(
                 f"- Validation errors: `{json.dumps(row['validationErrors'])}`"
@@ -1079,13 +1273,14 @@ def sensitive_policy_comparison_section(rows: list[dict[str, Any]]) -> str:
         return ""
     lines = [
         "## Sensitive Policy Comparisons",
-        "| Task | Variant | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
-        "| --- | --- | ---: | ---: | ---: |",
+        "| Task | Evaluation Kind | Variant | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
+        "| --- | --- | --- | ---: | ---: | ---: |",
     ]
     for item in comparisons:
         lines.append(
-            "| {task} | {variant} | {markdown:.3f} | {cr:.3f} | {delta:.3f} |".format(
+            "| {task} | {evaluation_kind} | {variant} | {markdown:.3f} | {cr:.3f} | {delta:.3f} |".format(
                 task=item["taskId"],
+                evaluation_kind=item.get("evaluationKind") or "n/a",
                 variant=item.get("variant") or "n/a",
                 markdown=item["markdownBlockedLeakageRate"],
                 cr=item["crBlockedLeakageRate"],

@@ -1,0 +1,19 @@
+{
+  "taskId": "sensitive-policy-freshness-canary-v1",
+  "preferences": [
+    {
+      "category": "canary",
+      "description": "First allowed canary fact.",
+      "scope": "sensitive-policy-freshness-canary-v1",
+      "slug": "canary.allowed_alpha",
+      "valueType": "string"
+    },
+    {
+      "category": "canary",
+      "description": "Second allowed canary fact.",
+      "scope": "sensitive-policy-freshness-canary-v1",
+      "slug": "canary.allowed_beta",
+      "valueType": "string"
+    }
+  ]
+}

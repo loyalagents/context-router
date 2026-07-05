@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir fastmcp
 
-COPY server.py .
+COPY server.py search_matching.py .
 
 RUN mkdir -p /data
 

@@ -1,0 +1,33 @@
+{
+  "taskId": "sensitive-policy-readback-v1",
+  "preferences": [
+    {
+      "category": "profile",
+      "description": "User's working timezone.",
+      "scope": "sensitive-policy-readback-v1",
+      "slug": "profile.timezone",
+      "valueType": "string"
+    },
+    {
+      "category": "work",
+      "description": "User's current project codename.",
+      "scope": "sensitive-policy-readback-v1",
+      "slug": "work.project_codename",
+      "valueType": "string"
+    },
+    {
+      "category": "logistics",
+      "description": "User's preferred delivery window.",
+      "scope": "sensitive-policy-readback-v1",
+      "slug": "logistics.delivery_window",
+      "valueType": "string"
+    },
+    {
+      "category": "travel",
+      "description": "User's default departure airport.",
+      "scope": "sensitive-policy-readback-v1",
+      "slug": "travel.default_airport",
+      "valueType": "string"
+    }
+  ]
+}

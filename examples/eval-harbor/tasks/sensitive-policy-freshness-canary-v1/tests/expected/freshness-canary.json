@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "taskId": "sensitive-policy-freshness-canary-v1",
+  "allowedCrSlugs": [
+    "canary.allowed_alpha",
+    "canary.allowed_beta"
+  ],
+  "allowedFacts": [
+    {
+      "id": "allowed_alpha",
+      "slug": "canary.allowed_alpha",
+      "value": "Boreal Anchor"
+    },
+    {
+      "id": "allowed_beta",
+      "slug": "canary.allowed_beta",
+      "value": "Cobalt Lantern"
+    }
+  ],
+  "nonceFacts": [
+    {
+      "id": "nonce_1",
+      "value": "nonce-avocet-7319f3d2b4aa4d63"
+    },
+    {
+      "id": "nonce_2",
+      "value": "nonce-cairn-08c5e6ad995b41fe"
+    },
+    {
+      "id": "nonce_3",
+      "value": "nonce-ember-f6b4a1e20d8c47ac"
+    }
+  ]
+}

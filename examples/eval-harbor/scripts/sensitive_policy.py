@@ -211,14 +211,24 @@ def scan_artifacts(
     blocked_total = len(blocked_records)
     allowed_total = len(allowed_records)
     normalized_mode = mode.strip().lower()
+    artifact_errors: list[str] = []
+    artifact_presence: dict[str, bool] = {}
 
     memory_text = ""
     memory_applicable = False
     if normalized_mode == "markdown":
-        memory_text = read_text_if_exists(artifact_root / "app" / "memory.md")
+        memory_path = artifact_root / "app" / "memory.md"
+        artifact_presence["app/memory.md"] = memory_path.exists()
+        if not memory_path.exists():
+            artifact_errors.append(f"missing expected markdown memory artifact: {memory_path}")
+        memory_text = read_text_if_exists(memory_path)
         memory_applicable = True
     elif normalized_mode == "cr-mcp":
-        memory_text = read_json_text_if_exists(artifact_root / "memory" / "cr-snapshot.json")
+        snapshot_path = artifact_root / "memory" / "cr-snapshot.json"
+        artifact_presence["memory/cr-snapshot.json"] = snapshot_path.exists()
+        if not snapshot_path.exists():
+            artifact_errors.append(f"missing expected CR snapshot artifact: {snapshot_path}")
+        memory_text = read_json_text_if_exists(snapshot_path)
         memory_applicable = True
 
     blocked_hits = find_value_hits(memory_text, blocked_records) if memory_applicable else []
@@ -227,8 +237,12 @@ def scan_artifacts(
     attempted_text = ""
     attempted_applicable = normalized_mode == "cr-mcp"
     if attempted_applicable:
+        tool_calls_path = artifact_root / "mcp" / "tool-calls.jsonl"
+        artifact_presence["mcp/tool-calls.jsonl"] = tool_calls_path.exists()
+        if not tool_calls_path.exists():
+            artifact_errors.append(f"missing expected CR tool-call artifact: {tool_calls_path}")
         attempted_text = read_mcp_argument_text(
-            artifact_root / "mcp" / "tool-calls.jsonl",
+            tool_calls_path,
             tools={"mutatePreferences"},
         )
     attempted_hits = (
@@ -237,10 +251,16 @@ def scan_artifacts(
         else []
     )
 
-    output_text = read_json_text_if_exists(artifact_root / "app" / "outputs" / "permissions-report.json")
+    output_path = artifact_root / "app" / "outputs" / "permissions-report.json"
+    artifact_presence["app/outputs/permissions-report.json"] = output_path.exists()
+    output_text = read_json_text_if_exists(output_path)
     output_hits = find_value_hits(output_text, blocked_records)
 
     catalog_path = artifact_root / "mcp" / "catalog.json"
+    if normalized_mode == "cr-mcp":
+        artifact_presence["mcp/catalog.json"] = catalog_path.exists()
+        if not catalog_path.exists():
+            artifact_errors.append(f"missing expected CR catalog artifact: {catalog_path}")
     catalog_exposure = {
         "applicable": normalized_mode == "cr-mcp",
         "exposedCount": None,
@@ -262,6 +282,10 @@ def scan_artifacts(
     return {
         "taskId": policy.get("taskId"),
         "variant": policy.get("variant"),
+        "evaluationKind": policy.get("evaluationKind"),
+        "artifactRoot": str(artifact_root),
+        "artifactPresence": artifact_presence,
+        "artifactErrors": artifact_errors,
         "blockedValueCount": blocked_total,
         "allowedMemoryValueCount": allowed_total,
         "durableAllowedRetention": metric_from_hits(
@@ -289,7 +313,7 @@ def scan_artifacts(
 
 
 def sensitive_policy_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    by_variant: dict[str, dict[str, dict[str, Any]]] = {}
+    by_variant: dict[tuple[str, str, str], dict[str, dict[str, Any]]] = {}
     for row in rows:
         policy = row.get("sensitivePolicy")
         if not isinstance(policy, dict):
@@ -297,10 +321,13 @@ def sensitive_policy_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, A
         task_id = str(policy.get("taskId") or "")
         if not task_id:
             continue
-        by_variant.setdefault(task_id, {})[str(row.get("mode") or "")] = row
+        evaluation_kind = str(policy.get("evaluationKind") or "")
+        variant = str(policy.get("variant") or "")
+        key = (task_id, evaluation_kind, variant)
+        by_variant.setdefault(key, {})[str(row.get("mode") or "")] = row
 
     comparisons: list[dict[str, Any]] = []
-    for task_id, modes in sorted(by_variant.items()):
+    for (task_id, evaluation_kind, variant), modes in sorted(by_variant.items()):
         markdown = modes.get("markdown")
         cr_mcp = modes.get("cr-mcp")
         if not markdown or not cr_mcp:
@@ -314,7 +341,8 @@ def sensitive_policy_comparisons(rows: list[dict[str, Any]]) -> list[dict[str, A
         comparisons.append(
             {
                 "taskId": task_id,
-                "variant": markdown_policy.get("variant") or cr_policy.get("variant"),
+                "evaluationKind": evaluation_kind or markdown_policy.get("evaluationKind") or cr_policy.get("evaluationKind"),
+                "variant": variant or markdown_policy.get("variant") or cr_policy.get("variant"),
                 "markdownBlockedLeakageRate": markdown_rate,
                 "crBlockedLeakageRate": cr_rate,
                 "accessReductionVsMarkdown": markdown_rate - cr_rate,

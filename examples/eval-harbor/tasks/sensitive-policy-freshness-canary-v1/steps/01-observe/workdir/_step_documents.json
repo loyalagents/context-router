@@ -1,0 +1,11 @@
+{
+  "corpusId": "sensitive-policy-freshness-canary-v1-corpus",
+  "documentsRoot": "docs",
+  "documents": [
+    {
+      "path": "canary.json",
+      "kind": "freshness-canary",
+      "timestamp": "2026-02-05T12:00:00Z"
+    }
+  ]
+}
