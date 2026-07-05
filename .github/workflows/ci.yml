@@ -6,8 +6,67 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      local_orchestrator: ${{ steps.filter.outputs.local_orchestrator }}
+      eval_fixtures: ${{ steps.filter.outputs.eval_fixtures }}
+      eval_harbor: ${{ steps.filter.outputs.eval_harbor }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - '.github/workflows/ci.yml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'apps/backend/**'
+            local_orchestrator:
+              - '.github/workflows/ci.yml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'apps/local-orchestrator/**'
+            eval_fixtures:
+              - '.github/workflows/ci.yml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'examples/eval/**'
+              - 'apps/backend/package.json'
+              - 'apps/backend/src/schema.gql'
+              - 'apps/backend/src/config/preferences.catalog.json'
+              - 'apps/backend/test/eval-runner/**'
+            eval_harbor:
+              - '.github/workflows/ci.yml'
+              - 'examples/eval-harbor/**'
+              - 'examples/eval_harbor_agents/**'
+            frontend:
+              - '.github/workflows/ci.yml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'apps/web/**'
+              - 'apps/backend/src/schema.gql'
+
   backend-tests:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
 
     services:
@@ -67,6 +126,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/context_router_test
 
   local-orchestrator-checks:
+    needs: changes
+    if: needs.changes.outputs.local_orchestrator == 'true'
     runs-on: ubuntu-latest
 
     defaults:
@@ -99,6 +160,8 @@ jobs:
         run: pnpm build
 
   eval-fixture-checks:
+    needs: changes
+    if: needs.changes.outputs.eval_fixtures == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -123,6 +186,8 @@ jobs:
         run: pnpm eval:validate
 
   eval-harbor-checks:
+    needs: changes
+    if: needs.changes.outputs.eval_harbor == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -136,6 +201,8 @@ jobs:
         run: bash examples/eval-harbor/scripts/check_static.sh
 
   frontend-build:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
 
     defaults:
