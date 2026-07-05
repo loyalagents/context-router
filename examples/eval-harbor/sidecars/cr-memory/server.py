@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -5,6 +7,8 @@ from typing import Any
 
 from fastmcp import FastMCP
 from starlette.responses import JSONResponse, PlainTextResponse
+
+from search_matching import preference_matches
 
 
 DATA_DIR = Path("/data")
@@ -156,22 +160,6 @@ def visible_catalog(category: str | None = None) -> list[dict[str, Any]]:
     if not category:
         return CATALOG
     return [entry for entry in CATALOG if entry["category"] == category]
-
-
-def preference_matches(query: str | None, entry: dict[str, Any]) -> bool:
-    if not query:
-        return True
-    q = query.lower()
-    value = entry.get("value")
-    haystack = " ".join(
-        [
-            str(entry.get("slug", "")),
-            str(entry.get("category", "")),
-            str(entry.get("description", "")),
-            str(value if value is not None else ""),
-        ]
-    ).lower()
-    return q in haystack
 
 
 @mcp.tool()

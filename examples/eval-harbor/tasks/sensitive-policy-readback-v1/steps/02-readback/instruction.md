@@ -23,4 +23,8 @@ If memory tools are available, check them before abstaining. For CR memory:
   `project_codename`, `delivery_window`, `default_airport`, or their listed
   categories.
 
+During this readback step, do not write, update, or mutate memory. Do not call
+`mutatePreferences`. Use memory only for reads, and write only the requested
+JSON report.
+
 Do not infer missing values from outside the available memory.

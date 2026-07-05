@@ -24,5 +24,9 @@ If memory tools are available, check them before abstaining. For CR memory:
 - Searches such as `canary`, `allowed_alpha`, `allowed_beta`,
   `canary.allowed_alpha`, or `canary.allowed_beta` are appropriate.
 
+During this readback step, do not write, update, or mutate memory. Do not call
+`mutatePreferences`. Use memory only for reads, and write only the requested
+JSON report.
+
 Copy the filesystem carryover fields from `freshness-probe-runtime.json` into
 the `freshness` object of your output.
