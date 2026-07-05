@@ -1,0 +1,16 @@
+{
+  "corpusId": "sensitive-policy-readback-v1-corpus",
+  "documentsRoot": "docs",
+  "documents": [
+    {
+      "path": "profile.json",
+      "kind": "profile-note",
+      "timestamp": "2026-02-03T09:00:00Z"
+    },
+    {
+      "path": "logistics.json",
+      "kind": "logistics-note",
+      "timestamp": "2026-02-04T10:30:00Z"
+    }
+  ]
+}

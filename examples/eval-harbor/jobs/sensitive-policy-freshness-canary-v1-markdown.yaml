@@ -1,0 +1,20 @@
+job_name: eval-harbor-sensitive-policy-freshness-canary-v1-markdown
+n_concurrent_trials: 1
+
+environment:
+  env:
+    EVAL_MEMORY_MODE: markdown
+
+agents:
+  - import_path: examples.eval_harbor_agents.codex_service_tier:CodexWithServiceTier
+    model_name: gpt-5.4-mini
+    kwargs:
+      reasoning_effort: high
+      web_search: disabled
+      model_auto_compact_token_limit: 256000
+
+tasks:
+  - path: examples/eval-harbor/tasks/sensitive-policy-freshness-canary-v1
+
+extra_instruction_paths:
+  - examples/eval-harbor/modes/markdown.md

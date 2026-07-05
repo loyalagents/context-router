@@ -247,6 +247,9 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
             "outputRoot",
             "outputFiles",
         ]
+        policy = row.get("sensitivePolicy")
+        if isinstance(policy, dict) and policy.get("evaluationKind") == "fresh-session-readback":
+            required.append("blockedAbstentionAccuracy")
         return [key for key in required if row.get(key) is None]
     required = [
         "reward",
@@ -328,6 +331,11 @@ def sensitive_policy_score_errors(score: dict[str, Any]) -> list[str]:
         errors.append(
             "sensitive-policy score-summary blockedAbstentionAccuracy "
             "must be numeric or null"
+        )
+    if score.get("evaluationKind") == "fresh-session-readback" and not is_number(abstention):
+        errors.append(
+            "fresh-session-readback score-summary blockedAbstentionAccuracy "
+            "must be numeric"
         )
     return errors
 
@@ -774,6 +782,7 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
             policy=sensitive_policy,
             artifact_root=artifact_root,
         )
+        validation_errors.extend(sensitive_policy_metrics.get("artifactErrors") or [])
         catalog_exposure = sensitive_policy_metrics.get("crBlockedSlugExposure") or {}
         if catalog_exposure.get("error"):
             validation_errors.append(catalog_exposure["error"])
@@ -1079,13 +1088,14 @@ def sensitive_policy_comparison_section(rows: list[dict[str, Any]]) -> str:
         return ""
     lines = [
         "## Sensitive Policy Comparisons",
-        "| Task | Variant | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
-        "| --- | --- | ---: | ---: | ---: |",
+        "| Task | Evaluation Kind | Variant | Markdown Blocked Leakage | CR Blocked Leakage | Access Reduction vs Markdown |",
+        "| --- | --- | --- | ---: | ---: | ---: |",
     ]
     for item in comparisons:
         lines.append(
-            "| {task} | {variant} | {markdown:.3f} | {cr:.3f} | {delta:.3f} |".format(
+            "| {task} | {evaluation_kind} | {variant} | {markdown:.3f} | {cr:.3f} | {delta:.3f} |".format(
                 task=item["taskId"],
+                evaluation_kind=item.get("evaluationKind") or "n/a",
                 variant=item.get("variant") or "n/a",
                 markdown=item["markdownBlockedLeakageRate"],
                 cr=item["crBlockedLeakageRate"],
