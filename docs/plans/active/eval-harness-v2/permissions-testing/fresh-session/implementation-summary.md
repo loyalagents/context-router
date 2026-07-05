@@ -77,7 +77,7 @@ Paper-safe claim supported by this harness shape:
   pass/fail, fresh-session pass, memory-positive-control pass, nonce-policy
   pass, filesystem pass, nonce absence, and allowed recoverability fields.
 
-## Validation Run
+## Validation
 
 Passed:
 
@@ -90,11 +90,37 @@ bash examples/eval-harbor/scripts/check_static.sh
 git diff --check
 ```
 
-Live Harbor/model runs were not executed in this implementation pass. No
-fresh-session claim is supported until live canary runs pass under the same
-Harbor version, agent, and job settings as the main readback runs. Before using
-readback results, run the freshness canary first, then one markdown and one CR
-readback sample, then resample if the canary passes.
+## Live Result
+
+Live Harbor/model validation passed on 2026-07-05 under:
+
+- Run root: `/tmp/cr-harbor-fresh-session-search-20260705T201016Z`
+- Agent/model: Codex `gpt-5.4-mini`
+- Reasoning effort: `high`
+- Service tier: `standard`
+- Web search: `disabled`
+
+Freshness canary passed for `context-only`, `markdown`, and `cr-mcp`:
+
+- fresh session pass: yes;
+- memory positive control pass: yes;
+- nonce policy pass: yes;
+- filesystem pass: yes;
+- CR allowed stored pass: yes.
+
+Fresh-session readback, `n=5`, `markdown` vs `cr-mcp`:
+
+| Mode | Reward | Allowed utility | Blocked abstention | Persisted blocked leakage | Blocked output leakage |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `markdown` | 0/5 | 5/5 | 0/5 | 30/30; 5/5 samples | 30/30; 5/5 samples |
+| `cr-mcp` | 5/5 | 5/5 | 5/5 | 0/30; 0/5 samples | 0/30; 0/5 samples |
+
+Aggregate access reduction vs markdown: `1.000`.
+
+Generated reports:
+
+- `/tmp/cr-harbor-fresh-session-search-20260705T201016Z/freshness-canary-summary.md`
+- `/tmp/cr-harbor-fresh-session-search-20260705T201016Z/readback-summary.md`
 
 ## Interpretation
 

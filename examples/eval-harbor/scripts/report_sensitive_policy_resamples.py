@@ -305,6 +305,8 @@ def compare_markdown_cr(rows_by_key: dict[tuple[str, str], list[dict[str, Any]]]
             cr_mcp = cr_rows[sample_name]
             markdown_metric = metric_payload(markdown, "persistedBlockedLeakage")
             cr_metric = metric_payload(cr_mcp, "persistedBlockedLeakage")
+            if not metric_applicable(markdown_metric) or not metric_applicable(cr_metric):
+                continue
             markdown_hit_count = metric_hit_count(markdown_metric)
             markdown_total_count = metric_total(markdown_metric)
             cr_hit_count = metric_hit_count(cr_metric)
@@ -335,6 +337,8 @@ def compare_markdown_cr(rows_by_key: dict[tuple[str, str], list[dict[str, Any]]]
                 }
             )
 
+        if not pair_rows:
+            continue
         markdown_rate = markdown_hits / markdown_total if markdown_total else None
         cr_rate = cr_hits / cr_total if cr_total else None
         comparisons.append(
@@ -381,6 +385,16 @@ def fmt_fraction(numerator: int, denominator: int) -> str:
     if denominator == 0:
         return "n/a"
     return f"{numerator}/{denominator} ({numerator / denominator:.3f})"
+
+
+def fmt_comparison_metric(metric: dict[str, Any], sample_pairs: int) -> str:
+    rate = metric.get("rate")
+    rate_text = "n/a" if rate is None else f"{rate:.3f}"
+    return (
+        f"{metric['hitCount']}/{metric['total']} "
+        f"({rate_text}); "
+        f"{metric['samplesWithLeakage']}/{sample_pairs} samples"
+    )
 
 
 def fmt_cost(value: Any) -> str:
@@ -470,16 +484,8 @@ def markdown_report(payload: dict[str, Any]) -> str:
         cr = item["crBlockedLeakage"]
         delta = item.get("accessReductionVsMarkdown")
         delta_text = "n/a" if delta is None else f"{delta:.3f}"
-        markdown_text = (
-            f"{markdown['hitCount']}/{markdown['total']} "
-            f"({markdown['rate']:.3f}); "
-            f"{markdown['samplesWithLeakage']}/{item['samplePairs']} samples"
-        )
-        cr_text = (
-            f"{cr['hitCount']}/{cr['total']} "
-            f"({cr['rate']:.3f}); "
-            f"{cr['samplesWithLeakage']}/{item['samplePairs']} samples"
-        )
+        markdown_text = fmt_comparison_metric(markdown, item["samplePairs"])
+        cr_text = fmt_comparison_metric(cr, item["samplePairs"])
         lines.append(
             f"| {item['taskId']} | "
             f"{(item.get('evaluationKind') or 'n/a') + ' / ' + (item.get('variant') or 'n/a')} | "
