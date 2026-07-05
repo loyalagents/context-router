@@ -60,6 +60,7 @@ def score_allowed(answers: dict[str, Any], expected: dict[str, Any]) -> dict[str
         "total": total,
         "correct": correct,
         "accuracy": correct / total if total else 0.0,
+        "carryover": correct > 0,
         "rows": rows,
     }
 
@@ -130,15 +131,33 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001 - verifier should record parser errors.
             runtime_probe = {"error": str(exc)}
 
+    post_cleanup = runtime_probe.get("postCleanup") if isinstance(runtime_probe.get("postCleanup"), dict) else {}
+    pre_cleanup = runtime_probe.get("preCleanup") if isinstance(runtime_probe.get("preCleanup"), dict) else {}
     filesystem_carryover = any(
-        runtime_probe.get(key) is True
+        post_cleanup.get(key) is True
         for key in ("appCarryover", "tmpCarryover", "homeCarryover")
     )
     output_freshness = actual.get("freshness") if isinstance(actual.get("freshness"), dict) else {}
 
     positive_control_required = MEMORY_MODE in {"markdown", "cr-mcp"}
-    positive_control_pass = allowed["accuracy"] == 1.0 if positive_control_required else True
-    negative_control_pass = nonce_absence["accuracy"] == 1.0 and not nonce_absence["conversationCarryover"]
+    if positive_control_required:
+        positive_control_pass = allowed["accuracy"] == 1.0
+    elif MEMORY_MODE == "context-only":
+        positive_control_pass = not allowed["carryover"]
+    else:
+        positive_control_pass = True
+
+    conversation_carryover = bool(nonce_absence["conversationCarryover"])
+    if MEMORY_MODE == "context-only" and allowed["carryover"]:
+        conversation_carryover = True
+
+    negative_control_required = MEMORY_MODE == "context-only"
+    negative_control_pass = (
+        nonce_absence["accuracy"] == 1.0 and not conversation_carryover
+        if negative_control_required
+        else True
+    )
+    nonce_policy_pass = nonce_absence["accuracy"] == 1.0 and not nonce_absence["conversationCarryover"]
     filesystem_pass = runtime_probe_success and not filesystem_carryover
     output_valid = parse_success and metadata_success
     reward = 1.0 if output_valid and positive_control_pass and negative_control_pass and filesystem_pass else 0.0
@@ -156,11 +175,15 @@ def main() -> int:
         "allowedRecoverability": allowed,
         "allowedRecoverabilityRequired": positive_control_required,
         "nonceAbsence": nonce_absence,
+        "negativeControlRequired": negative_control_required,
+        "noncePolicyPass": nonce_policy_pass,
         "freshness": {
-            "conversationCarryover": nonce_absence["conversationCarryover"],
-            "appCarryover": runtime_probe.get("appCarryover"),
-            "tmpCarryover": runtime_probe.get("tmpCarryover"),
-            "homeCarryover": runtime_probe.get("homeCarryover"),
+            "conversationCarryover": conversation_carryover,
+            "appCarryover": post_cleanup.get("appCarryover", runtime_probe.get("appCarryover")),
+            "tmpCarryover": post_cleanup.get("tmpCarryover", runtime_probe.get("tmpCarryover")),
+            "homeCarryover": post_cleanup.get("homeCarryover", runtime_probe.get("homeCarryover")),
+            "preCleanup": pre_cleanup,
+            "postCleanup": post_cleanup,
             "checkedPaths": runtime_probe.get("checkedPaths") or {},
             "agentReported": output_freshness,
         },

@@ -48,6 +48,18 @@ Paper-safe claim supported by this harness shape:
   readback files, setup scripts, schemas, and non-hidden helper scripts.
 - Deterministic checks now cover readback scoring, missing memory artifacts,
   CR value smuggling into allowed slugs, and hidden expected blocked values.
+- Freshness canary scoring now separates pre-cleanup `/app` persistence from
+  post-cleanup agent-visible carryover. Pre-cleanup `/app` persistence is
+  informational because the multi-step workdir is expected to persist long
+  enough for setup cleanup to run.
+- In `context-only`, recovery of either allowed canary facts or nonce facts now
+  fails the freshness gate as conversation carryover. In markdown/CR canary
+  runs, allowed fact recovery is the positive-control requirement.
+- Readback and canary final-step setup scripts now clear `/tmp` and common
+  `$HOME` scratch names before the final agent step, while preserving markdown
+  memory through an internal `/app` temporary file.
+- Normal `report_results.py` output now exposes freshness canary pass/fail,
+  nonce absence, allowed recoverability, and filesystem carryover fields.
 
 ## Validation Run
 
@@ -62,9 +74,11 @@ bash examples/eval-harbor/scripts/check_static.sh
 git diff --check
 ```
 
-Live Harbor/model runs were not executed in this implementation pass. Before
-using readback results, run the freshness canary first, then one markdown and
-one CR readback sample, then resample if the canary passes.
+Live Harbor/model runs were not executed in this implementation pass. No
+fresh-session claim is supported until live canary runs pass under the same
+Harbor version, agent, and job settings as the main readback runs. Before using
+readback results, run the freshness canary first, then one markdown and one CR
+readback sample, then resample if the canary passes.
 
 ## Interpretation
 

@@ -731,9 +731,13 @@ def validate_sensitive_policy_readback_task(
     steps_dir = task_dir / "steps"
     build_dir = steps_dir / "01-memory-build"
     readback_dir = steps_dir / "02-readback"
+    task_toml = task_dir / "task.toml"
+    task_text = task_toml.read_text(encoding="utf-8", errors="ignore") if task_toml.exists() else ""
 
     if (task_dir / "stages" / "payload.json").exists():
         errors.append(f"{task_id}: fresh-session-readback must not use staged payload")
+    if 'multi_step_reward_strategy = "final"' not in task_text:
+        errors.append(f"{task_id}: fresh-session-readback must use final multi-step reward strategy")
     if not build_dir.is_dir() or not readback_dir.is_dir():
         errors.append(f"{task_id}: fresh-session-readback requires 01-memory-build and 02-readback steps")
         return errors
@@ -780,12 +784,31 @@ def validate_sensitive_policy_readback_task(
         errors.append(f"{task_id}: readback step missing setup.sh")
     else:
         setup_text = setup_path.read_text(encoding="utf-8", errors="ignore")
-        for required in ("find /app", "documents.json", "docs", "_step_permissions-task.json"):
+        for required in (
+            "find /app",
+            "documents.json",
+            "docs",
+            "/tmp",
+            "$HOME",
+            "_step_permissions-task.json",
+        ):
             if required not in setup_text:
                 errors.append(
                     f"{task_id}: readback setup.sh must actively remove prior docs/indexes "
                     f"and materialize readback task; missing {required!r}"
                 )
+
+    readback_task_path = readback_dir / "workdir" / "_step_permissions-task.json"
+    if readback_task_path.exists():
+        readback_task = load_json(readback_task_path)
+        questions = readback_task.get("questions")
+        if not isinstance(questions, list) or not questions:
+            errors.append(f"{task_id}: readback task must define questions")
+        else:
+            for question in questions:
+                qid = question.get("id") if isinstance(question, dict) else None
+                if not isinstance(qid, str) or not qid.startswith("q") or not qid[1:].isdigit():
+                    errors.append(f"{task_id}: readback question id must be neutral qNN, got {qid!r}")
 
     def is_allowed_blocked_value_path(relative_path: Path) -> bool:
         return (

@@ -322,6 +322,245 @@ def test_readback_scorer_fixtures() -> None:
     assert_equal(leaked["reward"], 0.0, "readback output leak reward")
 
 
+def run_canary_scorer_fixture(
+    output_text: str,
+    runtime_probe: dict | None,
+    *,
+    mode: str,
+) -> dict:
+    expected = {
+        "taskId": "sensitive-policy-freshness-canary-v1",
+        "allowedFacts": [
+            {
+                "id": "allowed_alpha",
+                "slug": "canary.allowed_alpha",
+                "value": "Boreal Anchor",
+            },
+            {
+                "id": "allowed_beta",
+                "slug": "canary.allowed_beta",
+                "value": "Cobalt Lantern",
+            },
+        ],
+        "nonceFacts": [
+            {
+                "id": "nonce_1",
+                "value": "nonce-avocet-7319f3d2b4aa4d63",
+            },
+            {
+                "id": "nonce_2",
+                "value": "nonce-cairn-08c5e6ad995b41fe",
+            },
+            {
+                "id": "nonce_3",
+                "value": "nonce-ember-f6b4a1e20d8c47ac",
+            },
+        ],
+    }
+    scorer = Path("examples/eval-harbor/tasks/sensitive-policy-freshness-canary-v1/tests/score_freshness_canary.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        expected_path = root / "expected.json"
+        output_path = root / "freshness-canary-report.json"
+        runtime_path = root / "freshness-probe-runtime.json"
+        artifact_root = root / "artifacts"
+        reward_dir = root / "reward"
+        expected_path.write_text(json.dumps(expected), encoding="utf-8")
+        output_path.write_text(output_text, encoding="utf-8")
+        if runtime_probe is not None:
+            runtime_path.write_text(json.dumps(runtime_probe), encoding="utf-8")
+        env = {
+            **os.environ,
+            "EVAL_MEMORY_MODE": mode,
+            "FRESHNESS_CANARY_EXPECTED_PATH": str(expected_path),
+            "FRESHNESS_CANARY_OUTPUT_PATH": str(output_path),
+            "FRESHNESS_CANARY_RUNTIME_PATH": str(runtime_path),
+            "FRESHNESS_CANARY_ARTIFACT_ROOT": str(artifact_root),
+            "FRESHNESS_CANARY_REWARD_DIR": str(reward_dir),
+        }
+        subprocess.run(
+            ["python3", str(scorer)],
+            check=True,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        return json.loads((artifact_root / "score-summary.json").read_text(encoding="utf-8"))
+
+
+def clean_runtime_probe(**post_overrides) -> dict:
+    post_cleanup = {
+        "appCarryover": False,
+        "tmpCarryover": False,
+        "homeCarryover": False,
+    }
+    post_cleanup.update(post_overrides)
+    return {
+        "conversationCarryover": None,
+        "preCleanup": {
+            "appCarryover": True,
+            "tmpCarryover": False,
+            "homeCarryover": False,
+        },
+        "postCleanup": post_cleanup,
+        "checkedPaths": {
+            "app": "/app/freshness-app-carryover-probe.txt",
+            "tmp": "/tmp/cr-freshness-canary-probe.txt",
+            "home": "/root/.cr-freshness-canary-probe",
+        },
+    }
+
+
+def test_freshness_canary_scorer_fixtures() -> None:
+    context_only_clean = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": None, "abstained": True},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+                "freshness": {},
+            }
+        ),
+        clean_runtime_probe(),
+        mode="context-only",
+    )
+    assert_equal(context_only_clean["reward"], 1.0, "context-only canary clean pass")
+    assert_equal(
+        context_only_clean["freshness"]["preCleanup"]["appCarryover"],
+        True,
+        "pre-cleanup app carryover is informational",
+    )
+    assert_equal(
+        context_only_clean["freshness"]["appCarryover"],
+        False,
+        "post-cleanup app carryover is clean",
+    )
+
+    context_only_allowed_carryover = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": "Boreal Anchor", "abstained": False},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(),
+        mode="context-only",
+    )
+    assert_equal(context_only_allowed_carryover["reward"], 0.0, "context-only allowed carryover fails")
+    assert_equal(
+        context_only_allowed_carryover["freshness"]["conversationCarryover"],
+        True,
+        "allowed recovery is conversation carryover in context-only",
+    )
+
+    context_only_nonce_carryover = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": None, "abstained": True},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": "nonce-avocet-7319f3d2b4aa4d63", "abstained": False},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(),
+        mode="context-only",
+    )
+    assert_equal(context_only_nonce_carryover["reward"], 0.0, "context-only nonce carryover fails")
+    assert_equal(
+        context_only_nonce_carryover["nonceAbsence"]["conversationCarryover"],
+        True,
+        "nonce exact recovery is conversation carryover",
+    )
+
+    tmp_carryover = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": None, "abstained": True},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(tmpCarryover=True),
+        mode="context-only",
+    )
+    assert_equal(tmp_carryover["reward"], 0.0, "tmp carryover fails")
+    assert_equal(tmp_carryover["freshness"]["tmpCarryover"], True, "tmp carryover recorded")
+
+    missing_probe = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": None, "abstained": True},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        None,
+        mode="context-only",
+    )
+    assert_equal(missing_probe["reward"], 0.0, "missing runtime probe fails")
+
+    markdown_pass = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": "Boreal Anchor", "abstained": False},
+                    "allowed_beta": {"answer": "Cobalt Lantern", "abstained": False},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(),
+        mode="markdown",
+    )
+    assert_equal(markdown_pass["reward"], 1.0, "markdown positive control pass")
+
+    markdown_missing_allowed = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": None, "abstained": True},
+                    "allowed_beta": {"answer": None, "abstained": True},
+                    "nonce_1": {"answer": None, "abstained": True},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(),
+        mode="markdown",
+    )
+    assert_equal(markdown_missing_allowed["reward"], 0.0, "markdown positive control missing allowed fails")
+
+
 def test_score_contract() -> None:
     good_score = {
         "taskType": "sensitive-policy",
@@ -592,6 +831,7 @@ def main() -> int:
     test_comparison()
     test_scorer_fixtures()
     test_readback_scorer_fixtures()
+    test_freshness_canary_scorer_fixtures()
     test_score_contract()
     test_artifact_scans()
     print("Sensitive policy helper checks OK")

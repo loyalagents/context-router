@@ -282,9 +282,15 @@ def is_dynamicmem_score(score: dict[str, Any]) -> bool:
     )
 
 
+def is_freshness_canary_score(score: dict[str, Any]) -> bool:
+    return score.get("taskType") == "freshness-canary"
+
+
 def report_task_type(*, sensitive_policy: dict[str, Any] | None, score: dict[str, Any]) -> str:
     if sensitive_policy is not None:
         return "sensitive-policy"
+    if is_freshness_canary_score(score):
+        return "freshness-canary"
     if is_dynamicmem_score(score):
         return "dynamicmem"
     return "generic"
@@ -928,6 +934,18 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "allowedUtilityAccuracy": score.get("allowedUtilityAccuracy"),
         "blockedAbstentionAccuracy": score.get("blockedAbstentionAccuracy"),
         "blockedOutputLeakage": score.get("blockedOutputLeakage"),
+        "freshnessCanaryPass": score.get("freshnessCanaryPass"),
+        "freshness": score.get("freshness") if isinstance(score.get("freshness"), dict) else None,
+        "allowedRecoverability": (
+            score.get("allowedRecoverability")
+            if isinstance(score.get("allowedRecoverability"), dict)
+            else None
+        ),
+        "nonceAbsence": (
+            score.get("nonceAbsence")
+            if isinstance(score.get("nonceAbsence"), dict)
+            else None
+        ),
         "outputRoot": score.get("outputRoot"),
         "outputFiles": score.get("outputFiles"),
         "fieldAccuracy": field_accuracy,
@@ -1072,6 +1090,23 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
                 "- Sensitive policy: "
                 f"`{json.dumps(policy, sort_keys=True)}`"
             )
+        if row.get("taskType") == "freshness-canary":
+            lines.append(f"- Freshness canary pass: `{fmt_bool(row.get('freshnessCanaryPass'))}`")
+            if row.get("freshness"):
+                lines.append(
+                    "- Freshness: "
+                    f"`{json.dumps(row['freshness'], sort_keys=True)}`"
+                )
+            if row.get("allowedRecoverability"):
+                lines.append(
+                    "- Allowed recoverability: "
+                    f"`{json.dumps(row['allowedRecoverability'], sort_keys=True)}`"
+                )
+            if row.get("nonceAbsence"):
+                lines.append(
+                    "- Nonce absence: "
+                    f"`{json.dumps(row['nonceAbsence'], sort_keys=True)}`"
+                )
         if row["validationErrors"]:
             lines.append(
                 f"- Validation errors: `{json.dumps(row['validationErrors'])}`"
