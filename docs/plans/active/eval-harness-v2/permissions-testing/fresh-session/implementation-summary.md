@@ -61,6 +61,11 @@ Paper-safe claim supported by this harness shape:
   where no durable memory substrate exists. In markdown/CR canary runs, nonce
   recovery is reported as a nonce-policy failure, and allowed fact recovery
   remains the positive-control requirement.
+- Canary and main readback prompts now tell agents to use listed memory
+  slugs/categories/descriptions for CR retrieval and not to search by task id.
+- Freshness canary reports now include a CR-only `crAllowedStorage` diagnostic
+  and `crAllowedStoredPass`, so CR snapshot storage can be distinguished from
+  live agent readback recoverability.
 - Readback and canary final-step setup scripts now clear `/tmp` and common
   `$HOME` scratch names before the final agent step, while preserving markdown
   memory through an internal `/app` temporary file.

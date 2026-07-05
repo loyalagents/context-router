@@ -16,7 +16,9 @@ from sensitive_policy import (
     sensitive_policy_comparisons,
 )
 from report_results import (
+    cr_allowed_storage_metrics,
     missing_required_report_metrics,
+    report_task_type,
     sensitive_policy_score_errors,
 )
 
@@ -706,6 +708,30 @@ def test_score_contract() -> None:
         "outputFiles",
     }
     assert_equal(missing_freshness, expected_missing_freshness, "missing freshness canary report metrics")
+    assert_equal(
+        report_task_type(sensitive_policy=None, score=freshness_row),
+        "freshness-canary",
+        "freshness canary report task type",
+    )
+    cr_freshness_row = {
+        **freshness_row,
+        "mode": "cr-mcp",
+        "crAllowedStoredPass": True,
+        "crAllowedStorage": {"applicable": True, "pass": True},
+    }
+    assert_equal(
+        missing_required_report_metrics(cr_freshness_row),
+        [],
+        "good CR freshness canary report metrics",
+    )
+    missing_cr_freshness = set(
+        missing_required_report_metrics({**freshness_row, "mode": "cr-mcp"})
+    )
+    assert_equal(
+        missing_cr_freshness,
+        {"crAllowedStoredPass", "crAllowedStorage"},
+        "missing CR freshness canary storage metrics",
+    )
 
     generic_row = {
         "taskType": "generic",
@@ -910,6 +936,80 @@ def test_artifact_scans() -> None:
         )
 
 
+def test_cr_allowed_storage_metric() -> None:
+    expected = {
+        "allowedFacts": [
+            {
+                "id": "allowed_alpha",
+                "slug": "canary.allowed_alpha",
+                "value": "Boreal Anchor",
+            },
+            {
+                "id": "allowed_beta",
+                "slug": "canary.allowed_beta",
+                "value": "Cobalt Lantern",
+            },
+        ]
+    }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        artifact_root = Path(tmp)
+        (artifact_root / "memory").mkdir()
+        (artifact_root / "memory" / "cr-snapshot.json").write_text(
+            json.dumps(
+                {
+                    "preferences": {
+                        "canary.allowed_alpha": {
+                            "slug": "canary.allowed_alpha",
+                            "value": "Boreal Anchor",
+                        },
+                        "canary.allowed_beta": {
+                            "slug": "canary.allowed_beta",
+                            "value": "Cobalt Lantern",
+                        },
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        metrics = cr_allowed_storage_metrics(
+            mode="cr-mcp",
+            expected=expected,
+            artifact_root=artifact_root,
+        )
+        assert_equal(metrics["pass"], True, "CR allowed storage pass")
+        assert_equal(metrics["storedCount"], 2, "CR allowed storage count")
+        assert_equal(metrics["accuracy"], 1.0, "CR allowed storage accuracy")
+
+        (artifact_root / "memory" / "cr-snapshot.json").write_text(
+            json.dumps(
+                {
+                    "preferences": {
+                        "canary.allowed_alpha": {
+                            "slug": "canary.allowed_alpha",
+                            "value": "Boreal Anchor",
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        missing_metrics = cr_allowed_storage_metrics(
+            mode="cr-mcp",
+            expected=expected,
+            artifact_root=artifact_root,
+        )
+        assert_equal(missing_metrics["pass"], False, "missing CR allowed storage fails")
+        assert_equal(missing_metrics["storedCount"], 1, "missing CR allowed storage count")
+
+        non_cr_metrics = cr_allowed_storage_metrics(
+            mode="markdown",
+            expected=expected,
+            artifact_root=artifact_root,
+        )
+        assert_equal(non_cr_metrics["applicable"], False, "CR storage metric is CR-only")
+
+
 def main() -> int:
     test_blocked_scanner()
     test_comparison()
@@ -918,6 +1018,7 @@ def main() -> int:
     test_freshness_canary_scorer_fixtures()
     test_score_contract()
     test_artifact_scans()
+    test_cr_allowed_storage_metric()
     print("Sensitive policy helper checks OK")
     return 0
 
