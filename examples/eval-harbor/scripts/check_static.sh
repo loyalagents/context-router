@@ -25,9 +25,22 @@ echo "Compiling eval-harbor Python scripts..."
 echo "Checking sensitive-policy scanner fixtures..."
 "${PYTHON_BIN}" examples/eval-harbor/scripts/check_sensitive_policy.py
 
+echo "Running eval-harbor unit tests..."
+PYTHONPATH="examples/eval-harbor/scripts${PYTHONPATH:+:${PYTHONPATH}}" \
+  "${PYTHON_BIN}" -m unittest discover \
+    -s examples/eval-harbor/tests \
+    -p "test_*.py"
+
 echo "Validating task soundness..."
 "${PYTHON_BIN}" examples/eval-harbor/scripts/validate_task_soundness.py \
   examples/eval-harbor/tasks/*
+
+echo "Validating Harbor job configs..."
+JOB_ARGS=()
+while IFS= read -r path; do
+  JOB_ARGS+=(--job "${path}")
+done < <(find examples/eval-harbor/jobs -maxdepth 1 -type f -name "*.yaml" | sort)
+"${PYTHON_BIN}" examples/eval-harbor/scripts/validate_eval_preflight.py "${JOB_ARGS[@]}"
 
 echo "Parsing eval-harbor JSON files..."
 "${PYTHON_BIN}" - <<'PY'
