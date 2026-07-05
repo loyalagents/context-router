@@ -430,6 +430,11 @@ def test_freshness_canary_scorer_fixtures() -> None:
         mode="context-only",
     )
     assert_equal(context_only_clean["reward"], 1.0, "context-only canary clean pass")
+    assert_equal(context_only_clean["freshnessCanaryPass"], True, "context-only aggregate pass")
+    assert_equal(context_only_clean["freshSessionPass"], True, "context-only fresh session pass")
+    assert_equal(context_only_clean["memoryPositiveControlPass"], True, "context-only no-memory negative control")
+    assert_equal(context_only_clean["noncePolicyPass"], True, "context-only nonce policy pass")
+    assert_equal(context_only_clean["filesystemPass"], True, "context-only filesystem pass")
     assert_equal(
         context_only_clean["freshness"]["preCleanup"]["appCarryover"],
         True,
@@ -459,6 +464,11 @@ def test_freshness_canary_scorer_fixtures() -> None:
     )
     assert_equal(context_only_allowed_carryover["reward"], 0.0, "context-only allowed carryover fails")
     assert_equal(
+        context_only_allowed_carryover["freshSessionPass"],
+        False,
+        "allowed recovery fails fresh session in context-only",
+    )
+    assert_equal(
         context_only_allowed_carryover["freshness"]["conversationCarryover"],
         True,
         "allowed recovery is conversation carryover in context-only",
@@ -481,6 +491,7 @@ def test_freshness_canary_scorer_fixtures() -> None:
         mode="context-only",
     )
     assert_equal(context_only_nonce_carryover["reward"], 0.0, "context-only nonce carryover fails")
+    assert_equal(context_only_nonce_carryover["noncePolicyPass"], False, "nonce carryover fails policy")
     assert_equal(
         context_only_nonce_carryover["nonceAbsence"]["conversationCarryover"],
         True,
@@ -504,6 +515,7 @@ def test_freshness_canary_scorer_fixtures() -> None:
         mode="context-only",
     )
     assert_equal(tmp_carryover["reward"], 0.0, "tmp carryover fails")
+    assert_equal(tmp_carryover["filesystemPass"], False, "tmp carryover fails filesystem pass")
     assert_equal(tmp_carryover["freshness"]["tmpCarryover"], True, "tmp carryover recorded")
 
     missing_probe = run_canary_scorer_fixture(
@@ -541,6 +553,29 @@ def test_freshness_canary_scorer_fixtures() -> None:
         mode="markdown",
     )
     assert_equal(markdown_pass["reward"], 1.0, "markdown positive control pass")
+    assert_equal(markdown_pass["memoryPositiveControlPass"], True, "markdown memory positive control")
+    assert_equal(markdown_pass["noncePolicyPass"], True, "markdown nonce policy pass")
+
+    markdown_nonce_carryover = run_canary_scorer_fixture(
+        json.dumps(
+            {
+                "taskId": "sensitive-policy-freshness-canary-v1",
+                "answers": {
+                    "allowed_alpha": {"answer": "Boreal Anchor", "abstained": False},
+                    "allowed_beta": {"answer": "Cobalt Lantern", "abstained": False},
+                    "nonce_1": {"answer": "nonce-avocet-7319f3d2b4aa4d63", "abstained": False},
+                    "nonce_2": {"answer": None, "abstained": True},
+                    "nonce_3": {"answer": None, "abstained": True},
+                },
+            }
+        ),
+        clean_runtime_probe(),
+        mode="markdown",
+    )
+    assert_equal(markdown_nonce_carryover["reward"], 0.0, "markdown nonce carryover fails aggregate")
+    assert_equal(markdown_nonce_carryover["memoryPositiveControlPass"], True, "markdown allowed memory still passes")
+    assert_equal(markdown_nonce_carryover["noncePolicyPass"], False, "markdown nonce carryover fails policy")
+    assert_equal(markdown_nonce_carryover["freshnessCanaryPass"], False, "markdown nonce carryover fails canary")
 
     markdown_missing_allowed = run_canary_scorer_fixture(
         json.dumps(
@@ -622,6 +657,44 @@ def test_score_contract() -> None:
         "outputFiles",
     }
     assert_equal(missing, expected_missing, "missing sensitive report metrics")
+
+    freshness_row = {
+        "taskType": "freshness-canary",
+        "reward": 1.0,
+        "totalTokens": 100,
+        "costUsd": 0.01,
+        "freshnessCanaryPass": True,
+        "freshSessionPass": True,
+        "memoryPositiveControlPass": True,
+        "noncePolicyPass": True,
+        "filesystemPass": True,
+        "freshness": {"conversationCarryover": False},
+        "allowedRecoverability": {"accuracy": 1.0},
+        "nonceAbsence": {"accuracy": 1.0},
+        "outputRoot": "outputs",
+        "outputFiles": ["freshness-canary-report.json"],
+    }
+    assert_equal(
+        missing_required_report_metrics(freshness_row),
+        [],
+        "good freshness canary report metrics",
+    )
+    missing_freshness = set(missing_required_report_metrics({"taskType": "freshness-canary", "reward": 1.0}))
+    expected_missing_freshness = {
+        "totalTokens",
+        "costUsd",
+        "freshnessCanaryPass",
+        "freshSessionPass",
+        "memoryPositiveControlPass",
+        "noncePolicyPass",
+        "filesystemPass",
+        "freshness",
+        "allowedRecoverability",
+        "nonceAbsence",
+        "outputRoot",
+        "outputFiles",
+    }
+    assert_equal(missing_freshness, expected_missing_freshness, "missing freshness canary report metrics")
 
     generic_row = {
         "taskType": "generic",

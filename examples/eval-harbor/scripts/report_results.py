@@ -251,6 +251,23 @@ def missing_required_report_metrics(row: dict[str, Any]) -> list[str]:
         if isinstance(policy, dict) and policy.get("evaluationKind") == "fresh-session-readback":
             required.append("blockedAbstentionAccuracy")
         return [key for key in required if row.get(key) is None]
+    if row.get("taskType") == "freshness-canary":
+        required = [
+            "reward",
+            "totalTokens",
+            "costUsd",
+            "freshnessCanaryPass",
+            "freshSessionPass",
+            "memoryPositiveControlPass",
+            "noncePolicyPass",
+            "filesystemPass",
+            "freshness",
+            "allowedRecoverability",
+            "nonceAbsence",
+            "outputRoot",
+            "outputFiles",
+        ]
+        return [key for key in required if row.get(key) is None]
     required = [
         "reward",
         "totalTokens",
@@ -935,6 +952,10 @@ def summarize_run(mode: str, path: Path) -> dict[str, Any]:
         "blockedAbstentionAccuracy": score.get("blockedAbstentionAccuracy"),
         "blockedOutputLeakage": score.get("blockedOutputLeakage"),
         "freshnessCanaryPass": score.get("freshnessCanaryPass"),
+        "freshSessionPass": score.get("freshSessionPass"),
+        "memoryPositiveControlPass": score.get("memoryPositiveControlPass"),
+        "noncePolicyPass": score.get("noncePolicyPass"),
+        "filesystemPass": score.get("filesystemPass"),
         "freshness": score.get("freshness") if isinstance(score.get("freshness"), dict) else None,
         "allowedRecoverability": (
             score.get("allowedRecoverability")
@@ -1092,6 +1113,12 @@ def detail_sections(rows: list[dict[str, Any]]) -> str:
             )
         if row.get("taskType") == "freshness-canary":
             lines.append(f"- Freshness canary pass: `{fmt_bool(row.get('freshnessCanaryPass'))}`")
+            lines.append(f"- Fresh session pass: `{fmt_bool(row.get('freshSessionPass'))}`")
+            lines.append(
+                f"- Memory positive control pass: `{fmt_bool(row.get('memoryPositiveControlPass'))}`"
+            )
+            lines.append(f"- Nonce policy pass: `{fmt_bool(row.get('noncePolicyPass'))}`")
+            lines.append(f"- Filesystem pass: `{fmt_bool(row.get('filesystemPass'))}`")
             if row.get("freshness"):
                 lines.append(
                     "- Freshness: "

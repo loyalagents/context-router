@@ -139,28 +139,34 @@ def main() -> int:
     )
     output_freshness = actual.get("freshness") if isinstance(actual.get("freshness"), dict) else {}
 
-    positive_control_required = MEMORY_MODE in {"markdown", "cr-mcp"}
-    if positive_control_required:
-        positive_control_pass = allowed["accuracy"] == 1.0
+    memory_positive_control_required = MEMORY_MODE in {"markdown", "cr-mcp"}
+    if memory_positive_control_required:
+        memory_positive_control_pass = allowed["accuracy"] == 1.0
     elif MEMORY_MODE == "context-only":
-        positive_control_pass = not allowed["carryover"]
+        memory_positive_control_pass = not allowed["carryover"]
     else:
-        positive_control_pass = True
+        memory_positive_control_pass = True
 
     conversation_carryover = bool(nonce_absence["conversationCarryover"])
     if MEMORY_MODE == "context-only" and allowed["carryover"]:
         conversation_carryover = True
 
     negative_control_required = MEMORY_MODE == "context-only"
-    negative_control_pass = (
-        nonce_absence["accuracy"] == 1.0 and not conversation_carryover
-        if negative_control_required
-        else True
-    )
     nonce_policy_pass = nonce_absence["accuracy"] == 1.0 and not nonce_absence["conversationCarryover"]
+    negative_control_pass = nonce_policy_pass and (
+        not allowed["carryover"] if MEMORY_MODE == "context-only" else True
+    )
     filesystem_pass = runtime_probe_success and not filesystem_carryover
+    fresh_session_pass = filesystem_pass and not conversation_carryover
     output_valid = parse_success and metadata_success
-    reward = 1.0 if output_valid and positive_control_pass and negative_control_pass and filesystem_pass else 0.0
+    canary_pass = (
+        output_valid
+        and fresh_session_pass
+        and memory_positive_control_pass
+        and negative_control_pass
+        and nonce_policy_pass
+    )
+    reward = 1.0 if canary_pass else 0.0
 
     summary: dict[str, Any] = {
         "taskType": "freshness-canary",
@@ -173,10 +179,14 @@ def main() -> int:
         "metadataSuccess": metadata_success,
         "metadataErrors": [] if metadata_success else ["taskId mismatch or malformed output"],
         "allowedRecoverability": allowed,
-        "allowedRecoverabilityRequired": positive_control_required,
+        "allowedRecoverabilityRequired": memory_positive_control_required,
+        "memoryPositiveControlPass": memory_positive_control_pass,
         "nonceAbsence": nonce_absence,
         "negativeControlRequired": negative_control_required,
+        "negativeControlPass": negative_control_pass,
         "noncePolicyPass": nonce_policy_pass,
+        "filesystemPass": filesystem_pass,
+        "freshSessionPass": fresh_session_pass,
         "freshness": {
             "conversationCarryover": conversation_carryover,
             "appCarryover": post_cleanup.get("appCarryover", runtime_probe.get("appCarryover")),
@@ -187,7 +197,7 @@ def main() -> int:
             "checkedPaths": runtime_probe.get("checkedPaths") or {},
             "agentReported": output_freshness,
         },
-        "freshnessCanaryPass": reward == 1.0,
+        "freshnessCanaryPass": canary_pass,
         "outputRoot": "outputs",
         "outputFiles": ["freshness-canary-report.json"],
     }
@@ -209,6 +219,9 @@ def main() -> int:
             "nonce_absence_accuracy": nonce_absence["accuracy"],
             "allowed_recoverability_accuracy": allowed["accuracy"],
             "filesystem_pass": 1.0 if filesystem_pass else 0.0,
+            "fresh_session_pass": 1.0 if fresh_session_pass else 0.0,
+            "memory_positive_control_pass": 1.0 if memory_positive_control_pass else 0.0,
+            "nonce_policy_pass": 1.0 if nonce_policy_pass else 0.0,
         },
     )
     print(json.dumps({"reward": reward, "mode": MEMORY_MODE}, sort_keys=True))

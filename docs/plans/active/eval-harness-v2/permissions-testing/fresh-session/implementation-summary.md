@@ -52,14 +52,20 @@ Paper-safe claim supported by this harness shape:
   post-cleanup agent-visible carryover. Pre-cleanup `/app` persistence is
   informational because the multi-step workdir is expected to persist long
   enough for setup cleanup to run.
-- In `context-only`, recovery of either allowed canary facts or nonce facts now
-  fails the freshness gate as conversation carryover. In markdown/CR canary
-  runs, allowed fact recovery is the positive-control requirement.
+- Freshness canary scoring now exposes separate aggregate booleans for
+  `freshSessionPass`, `memoryPositiveControlPass`, `noncePolicyPass`, and
+  `filesystemPass`.
+- Recovery of nonce facts now fails `noncePolicyPass` and the aggregate
+  `freshnessCanaryPass` in every mode. In `context-only`, recovery of allowed
+  canary facts also fails the freshness gate as conversation carryover. In
+  markdown/CR canary runs, allowed fact recovery remains the positive-control
+  requirement.
 - Readback and canary final-step setup scripts now clear `/tmp` and common
   `$HOME` scratch names before the final agent step, while preserving markdown
   memory through an internal `/app` temporary file.
-- Normal `report_results.py` output now exposes freshness canary pass/fail,
-  nonce absence, allowed recoverability, and filesystem carryover fields.
+- Normal `report_results.py` output now exposes and requires freshness canary
+  pass/fail, fresh-session pass, memory-positive-control pass, nonce-policy
+  pass, filesystem pass, nonce absence, and allowed recoverability fields.
 
 ## Validation Run
 
