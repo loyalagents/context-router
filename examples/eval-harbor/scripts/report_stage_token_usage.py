@@ -5,9 +5,11 @@ This is an artifact-only reporter. It reads Codex trajectory files and Harbor
 stage logs from completed runs, then attributes each model-call step to the
 stage that was visible at the start of that step.
 
-Token counts are exact values from `agent/trajectory.json`. Cost is only exposed
-by Codex as a whole-run total, so per-stage cost is estimated in proportion to
-total tokens and is reported as `estimatedCostUsd`.
+Token counts are exact values from `agent/trajectory.json`. For single-trajectory
+staged runs, cost is only exposed by Codex as a whole-run total, so per-stage
+cost is estimated in proportion to total tokens and is reported as
+`estimatedCostUsd`. For Harbor multi-step runs, per-step cost is read from each
+step trajectory when available.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ from typing import Any
 
 TRAJECTORY_PATH = Path("agent/trajectory.json")
 STAGE_LOG_PATH = Path("artifacts/app/stage-log.jsonl")
+STEPS_PATH = Path("steps")
 
 
 @dataclass
@@ -195,6 +198,11 @@ def clone_bucket_meta(bucket: Bucket) -> Bucket:
     )
 
 
+def step_bucket_kind(step_name: str) -> str:
+    stripped = re.sub(r"^\d+[-_]+", "", step_name)
+    return stripped or step_name
+
+
 def derive_context(trial_dir: Path, root: Path) -> dict[str, str]:
     sample_dir = next(
         (parent for parent in trial_dir.parents if parent.name.startswith("sample-")),
@@ -219,14 +227,43 @@ def derive_context(trial_dir: Path, root: Path) -> dict[str, str]:
     }
 
 
+def is_staged_trial_dir(path: Path) -> bool:
+    return (path / TRAJECTORY_PATH).exists() and (path / STAGE_LOG_PATH).exists()
+
+
+def step_trajectory_paths(trial_dir: Path) -> list[Path]:
+    return sorted((trial_dir / STEPS_PATH).glob(f"*/{TRAJECTORY_PATH}"))
+
+
+def is_multi_step_trial_dir(path: Path) -> bool:
+    return bool(step_trajectory_paths(path))
+
+
+def multi_step_trial_dir_for_trajectory(path: Path) -> Path | None:
+    if path.name != "trajectory.json":
+        return None
+    if path.parent.name != "agent":
+        return None
+    step_dir = path.parent.parent
+    if step_dir.parent.name != STEPS_PATH.name:
+        return None
+    return step_dir.parent.parent
+
+
 def find_trial_dirs(root: Path) -> list[Path]:
-    if (root / TRAJECTORY_PATH).exists() and (root / STAGE_LOG_PATH).exists():
+    if is_staged_trial_dir(root) or is_multi_step_trial_dir(root):
         return [root]
-    return sorted(
-        path.parent.parent
-        for path in root.rglob(str(TRAJECTORY_PATH))
-        if (path.parent.parent / STAGE_LOG_PATH).exists()
-    )
+    trial_dirs: set[Path] = set()
+    for path in root.rglob(str(TRAJECTORY_PATH)):
+        staged_candidate = path.parent.parent
+        if is_staged_trial_dir(staged_candidate):
+            trial_dirs.add(staged_candidate)
+            continue
+
+        multi_step_candidate = multi_step_trial_dir_for_trajectory(path)
+        if multi_step_candidate is not None and is_multi_step_trial_dir(multi_step_candidate):
+            trial_dirs.add(multi_step_candidate)
+    return sorted(trial_dirs)
 
 
 def allocate_cost(buckets: list[Bucket], total_cost_usd: float | None) -> None:
@@ -280,7 +317,7 @@ def validate_totals(trajectory: dict[str, Any], buckets: list[Bucket]) -> list[s
     return warnings
 
 
-def analyze_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
+def analyze_staged_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
     trajectory = load_json(trial_dir / TRAJECTORY_PATH)
     stages = stage_entries(load_stage_log(trial_dir / STAGE_LOG_PATH))
     context = derive_context(trial_dir, root)
@@ -355,6 +392,7 @@ def analyze_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
 
     return {
         **context,
+        "layout": "staged",
         "model": next(
             (
                 step.get("model_name")
@@ -372,17 +410,99 @@ def analyze_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
     }
 
 
+def usage_from_trajectory(trajectory: dict[str, Any]) -> Usage:
+    usage = Usage()
+    steps = trajectory.get("steps")
+    if not isinstance(steps, list):
+        return usage
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        step_usage = usage_from_step(step)
+        if step_usage is not None:
+            usage.add(step_usage)
+    return usage
+
+
+def model_from_trajectory(trajectory: dict[str, Any]) -> str | None:
+    steps = trajectory.get("steps")
+    if not isinstance(steps, list):
+        return None
+    return next(
+        (
+            step.get("model_name")
+            for step in steps
+            if isinstance(step, dict) and isinstance(step.get("model_name"), str)
+        ),
+        None,
+    )
+
+
+def analyze_multi_step_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
+    context = derive_context(trial_dir, root)
+    buckets: list[Bucket] = []
+    warnings: list[str] = []
+    total_cost_usd = 0.0
+    has_cost = False
+    model: str | None = None
+
+    for trajectory_path in step_trajectory_paths(trial_dir):
+        step_dir = trajectory_path.parent.parent
+        trajectory = load_json(trajectory_path)
+        bucket = Bucket(
+            bucket_id=step_dir.name,
+            bucket_kind=step_bucket_kind(step_dir.name),
+            stage_id=step_dir.name,
+        )
+        bucket.usage.add(usage_from_trajectory(trajectory))
+        step_cost = final_cost(trajectory)
+        bucket.usage.estimated_cost_usd = step_cost
+        if step_cost is not None:
+            total_cost_usd += step_cost
+            has_cost = True
+        warnings.extend(
+            f"{step_dir.name}: {warning}"
+            for warning in validate_totals(trajectory, [bucket])
+        )
+        if model is None:
+            model = model_from_trajectory(trajectory)
+        buckets.append(bucket)
+
+    return {
+        **context,
+        "layout": "multi-step",
+        "model": model,
+        "totalCostUsd": total_cost_usd if has_cost else None,
+        "nextStageCalls": 0,
+        "revealedStages": 0,
+        "stageLogStages": 0,
+        "stepCount": len(buckets),
+        "warnings": warnings,
+        "buckets": [bucket.as_dict() for bucket in buckets],
+    }
+
+
+def analyze_trial(trial_dir: Path, root: Path) -> dict[str, Any]:
+    if is_staged_trial_dir(trial_dir):
+        return analyze_staged_trial(trial_dir, root)
+    if is_multi_step_trial_dir(trial_dir):
+        return analyze_multi_step_trial(trial_dir, root)
+    raise ValueError(f"unsupported Harbor trial layout: {trial_dir}")
+
+
 def build_report(root: Path) -> dict[str, Any]:
     trial_dirs = find_trial_dirs(root)
     if not trial_dirs:
-        raise ValueError(f"no completed staged Harbor trials found under {root}")
+        raise ValueError(f"no completed staged or multi-step Harbor trials found under {root}")
     trials = [analyze_trial(trial_dir, root) for trial_dir in trial_dirs]
     return {
         "schemaVersion": 1,
         "root": str(root),
         "note": (
             "Stage token counts are exact sums from agent/trajectory.json step metrics. "
-            "estimatedCostUsd is proportional allocation from the whole-run Codex cost."
+            "For staged runs, estimatedCostUsd is proportional allocation from the "
+            "whole-run Codex cost. For multi-step runs, estimatedCostUsd is read "
+            "from each step trajectory when available."
         ),
         "trials": trials,
         "aggregateByTaskModeKind": aggregate_by_task_mode_kind(trials),

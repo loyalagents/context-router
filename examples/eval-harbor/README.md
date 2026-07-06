@@ -219,9 +219,10 @@ For DynamicMem, public `T` probes are reported as their internal `state-task`
 and `service-task` buckets so reviewers can distinguish reconstruction cost
 from downstream application cost. Stage reveal and post-stage bookkeeping are
 reported as `overhead`. Stage token counts are exact sums from
-`agent/trajectory.json`. Per-stage cost is named `estimatedCostUsd` because
-Codex currently exposes cost as a whole-run total, so the stage report allocates
-it proportionally by total tokens.
+`agent/trajectory.json`. For single-trajectory staged runs, per-stage cost is
+named `estimatedCostUsd` because Codex exposes cost as a whole-run total, so the
+stage report allocates it proportionally by total tokens. For Harbor multi-step
+runs, the report uses each step trajectory's own cost when available.
 
 DynamicMem metric meanings:
 
