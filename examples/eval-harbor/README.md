@@ -224,6 +224,23 @@ named `estimatedCostUsd` because Codex exposes cost as a whole-run total, so the
 stage report allocates it proportionally by total tokens. For Harbor multi-step
 runs, the report uses each step trajectory's own cost when available.
 
+Inspect CR-specific token overhead:
+
+```bash
+python3 examples/eval-harbor/scripts/report_cr_overhead.py \
+  /tmp/cr-harbor/runs \
+  --json-out /tmp/cr-harbor/cr-overhead.json \
+  --md-out /tmp/cr-harbor/cr-overhead.md \
+  --detail
+```
+
+This report combines exact stage token totals with CR MCP tool-call counts and
+payload sizes to show whether overhead is coming from more calls, larger
+outputs, or stage-specific model work. CR tool payload token counts are
+approximate byte/4 estimates; stage token totals remain exact sums from Codex
+trajectories. With `--detail`, it also shows model-call deltas and the model
+call immediately following each CR tool interaction.
+
 DynamicMem metric meanings:
 
 | Metric | Meaning |
