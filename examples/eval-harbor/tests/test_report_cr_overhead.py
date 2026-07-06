@@ -138,6 +138,7 @@ class CrOverheadReportTests(unittest.TestCase):
                             total_tokens=50,
                             call_id="call-search",
                         ),
+                        model_step(total_tokens=60),
                     ],
                     cost=0.15,
                 ),
@@ -165,7 +166,7 @@ class CrOverheadReportTests(unittest.TestCase):
         }
         self.assertEqual(stage_rows[("cr-mcp", "overhead")]["totalTokens"], 10)
         self.assertEqual(stage_rows[("cr-mcp", "memory-update")]["totalTokens"], 90)
-        self.assertEqual(stage_rows[("cr-mcp", "downstream-task")]["totalTokens"], 50)
+        self.assertEqual(stage_rows[("cr-mcp", "downstream-task")]["totalTokens"], 110)
 
         tool_rows = {
             (row["stage"], row["tool"]): row for row in report["crToolRows"]
@@ -180,6 +181,17 @@ class CrOverheadReportTests(unittest.TestCase):
         )
         self.assertEqual(report["mcpTraceSummaryCounts"]["missingTraceFiles"], 1)
         self.assertFalse(report["warnings"])
+        followups = {
+            (row["stage"], row["tools"]): row for row in report["crToolFollowupRows"]
+        }
+        self.assertEqual(
+            followups[("downstream-task", "searchPreferences")]["nextModelTotalTokens"],
+            60,
+        )
+        self.assertEqual(
+            followups[("downstream-task", "searchPreferences")]["modelTotalTokens"],
+            50,
+        )
 
     def test_multi_step_trial_groups_tools_by_step_bucket(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -273,6 +285,12 @@ class CrOverheadReportTests(unittest.TestCase):
             "sample-02",
             {row["sample"] for row in report["matchedCrVsMarkdownDeltas"]},
         )
+        call_deltas = {row["stage"]: row for row in report["modelCallDeltaRows"]}
+        self.assertEqual(call_deltas["memory-update"]["crModelCalls"], 1)
+        self.assertEqual(call_deltas["memory-update"]["markdownModelCalls"], 1)
+        self.assertEqual(call_deltas["memory-update"]["deltaModelCalls"], 0)
+        self.assertEqual(call_deltas["memory-update"]["crTokensPerCall"], 150)
+        self.assertEqual(call_deltas["memory-update"]["markdownTokensPerCall"], 100)
 
     def test_malformed_optional_mcp_trace_warns_but_uses_trajectory_data(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

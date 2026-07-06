@@ -13,7 +13,7 @@ import json
 import math
 import re
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,6 +37,7 @@ from report_stage_token_usage import (
     stage_entries,
     step_bucket_kind,
     step_trajectory_paths,
+    usage_from_step,
 )
 
 
@@ -362,6 +363,175 @@ def analyze_multi_step_cr_tools(trial_dir: Path, root: Path) -> list[dict[str, A
     return finalize_tool_rows(rows)
 
 
+def summarize_tools(calls: list[dict[str, Any]]) -> str:
+    counts: Counter[str] = Counter()
+    for call in calls:
+        name = tool_name(call)
+        if name is not None:
+            counts[name] += 1
+    return ", ".join(
+        f"{name}x{count}" if count > 1 else name
+        for name, count in sorted(counts.items())
+    )
+
+
+def next_model_usage(
+    steps: list[Any],
+    step_index: int,
+) -> tuple[int | None, Any | None]:
+    for next_index in range(step_index + 1, len(steps)):
+        step = steps[next_index]
+        if not isinstance(step, dict):
+            continue
+        usage = usage_from_step(step)
+        if usage is not None:
+            return next_index, usage
+    return None, None
+
+
+def followup_row_for_step(
+    *,
+    context: dict[str, str],
+    layout: str,
+    bucket: Bucket,
+    steps: list[Any],
+    step_index: int,
+    step: dict[str, Any],
+) -> dict[str, Any] | None:
+    calls = cr_tool_calls(step)
+    if not calls:
+        return None
+
+    argument_bytes = 0
+    output_bytes = 0
+    for call in calls:
+        argument_bytes += compact_json_bytes(call.get("arguments", {}))
+        output_bytes += len(output_text_for_call(step, call, len(calls)).encode("utf-8"))
+
+    usage = usage_from_step(step)
+    next_index, next_usage = next_model_usage(steps, step_index)
+    return {
+        "taskId": context["taskId"],
+        "sample": context["sample"],
+        "arm": context["mode"],
+        "mode": context["mode"],
+        "layout": layout,
+        "trialDir": context["trialDir"],
+        "relativeTrialDir": context["relativeTrialDir"],
+        "bucketId": bucket.bucket_id,
+        "stage": bucket.bucket_kind,
+        "stepIndex": step_index,
+        "tools": summarize_tools(calls),
+        "toolCalls": len(calls),
+        "argumentBytes": argument_bytes,
+        "outputBytes": output_bytes,
+        "approxArgumentTokens": math.ceil(argument_bytes / APPROX_BYTES_PER_TOKEN),
+        "approxOutputTokens": math.ceil(output_bytes / APPROX_BYTES_PER_TOKEN),
+        "modelInputTokens": usage.input_tokens if usage is not None else None,
+        "modelOutputTokens": usage.output_tokens if usage is not None else None,
+        "modelTotalTokens": usage.total_tokens if usage is not None else None,
+        "nextModelStepIndex": next_index,
+        "nextModelInputTokens": next_usage.input_tokens if next_usage is not None else None,
+        "nextModelOutputTokens": next_usage.output_tokens if next_usage is not None else None,
+        "nextModelTotalTokens": next_usage.total_tokens if next_usage is not None else None,
+    }
+
+
+def analyze_staged_cr_tool_followups(trial_dir: Path, root: Path) -> list[dict[str, Any]]:
+    trajectory = load_json(trial_dir / TRAJECTORY_PATH)
+    stages = stage_entries(load_stage_log(trial_dir / STAGE_LOG_PATH))
+    context = derive_context(trial_dir, root)
+
+    pre_stage = Bucket(bucket_id="pre-stage", bucket_kind="overhead")
+    post_stage = Bucket(bucket_id="post-stage", bucket_kind="overhead")
+    current = pre_stage
+    revealed_count = 0
+    rows: list[dict[str, Any]] = []
+
+    steps = trajectory.get("steps")
+    if not isinstance(steps, list):
+        raise ValueError(f"trajectory has no steps array: {trial_dir / TRAJECTORY_PATH}")
+
+    for step_index, step in enumerate(steps):
+        if not isinstance(step, dict):
+            continue
+        row = followup_row_for_step(
+            context=context,
+            layout="staged",
+            bucket=current,
+            steps=steps,
+            step_index=step_index,
+            step=step,
+        )
+        if row is not None:
+            rows.append(row)
+        if not is_next_stage_call(step):
+            continue
+        text = observation_text(step)
+        reveals = len(re.findall(r"Revealed stage\s+\d+", text))
+        if reveals == 0 and "done" in text.lower():
+            current = post_stage
+            continue
+        for _ in range(reveals):
+            if revealed_count < len(stages):
+                current = bucket_from_stage(stages[revealed_count])
+            else:
+                current = Bucket(
+                    bucket_id=f"unknown-stage-{revealed_count + 1}",
+                    bucket_kind="unknown-stage",
+                    stage_index=revealed_count + 1,
+                )
+            revealed_count += 1
+    return rows
+
+
+def analyze_multi_step_cr_tool_followups(trial_dir: Path, root: Path) -> list[dict[str, Any]]:
+    context = derive_context(trial_dir, root)
+    rows: list[dict[str, Any]] = []
+    for trajectory_path in step_trajectory_paths(trial_dir):
+        step_dir = trajectory_path.parent.parent
+        trajectory = load_json(trajectory_path)
+        bucket = Bucket(
+            bucket_id=step_dir.name,
+            bucket_kind=step_bucket_kind(step_dir.name),
+            stage_id=step_dir.name,
+        )
+        steps = trajectory.get("steps")
+        if not isinstance(steps, list):
+            raise ValueError(f"trajectory has no steps array: {trajectory_path}")
+        for step_index, step in enumerate(steps):
+            if not isinstance(step, dict):
+                continue
+            row = followup_row_for_step(
+                context=context,
+                layout="multi-step",
+                bucket=bucket,
+                steps=steps,
+                step_index=step_index,
+                step=step,
+            )
+            if row is not None:
+                rows.append(row)
+    return sorted(
+        rows,
+        key=lambda row: (
+            row["taskId"],
+            row["sample"],
+            row["arm"],
+            row["bucketId"],
+            row["stepIndex"],
+        ),
+    )
+
+
+def analyze_trial_cr_tool_followups(trial_dir: Path, root: Path) -> list[dict[str, Any]]:
+    if is_staged_trial_dir(trial_dir):
+        return analyze_staged_cr_tool_followups(trial_dir, root)
+    if is_multi_step_trial_dir(trial_dir):
+        return analyze_multi_step_cr_tool_followups(trial_dir, root)
+    raise ValueError(f"unsupported Harbor trial layout: {trial_dir}")
+
+
 def finalize_tool_rows(
     rows: dict[tuple[str, str, str, str, str, str], dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -637,6 +807,49 @@ def matched_cr_vs_markdown_deltas(stage_rows: list[dict[str, Any]]) -> list[dict
     return sorted(deltas, key=lambda row: (row["taskId"], row["sample"], row["stage"], row["crArm"]))
 
 
+def model_call_delta_rows(stage_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    index = {
+        (row["taskId"], row["sample"], row["stage"], row["arm"]): row
+        for row in stage_rows
+    }
+    rows: list[dict[str, Any]] = []
+    for row in stage_rows:
+        if not is_cr_arm(row["arm"]):
+            continue
+        markdown = index.get((row["taskId"], row["sample"], row["stage"], "markdown"))
+        if markdown is None:
+            continue
+        cr_tokens = int(row.get("totalTokens") or 0)
+        markdown_tokens = int(markdown.get("totalTokens") or 0)
+        cr_calls = int(row.get("modelCalls") or 0)
+        markdown_calls = int(markdown.get("modelCalls") or 0)
+        cr_tokens_per_call = cr_tokens / cr_calls if cr_calls > 0 else None
+        markdown_tokens_per_call = (
+            markdown_tokens / markdown_calls if markdown_calls > 0 else None
+        )
+        rows.append(
+            {
+                "taskId": row["taskId"],
+                "sample": row["sample"],
+                "stage": row["stage"],
+                "crArm": row["arm"],
+                "crModelCalls": cr_calls,
+                "markdownModelCalls": markdown_calls,
+                "deltaModelCalls": cr_calls - markdown_calls,
+                "crTokensPerCall": cr_tokens_per_call,
+                "markdownTokensPerCall": markdown_tokens_per_call,
+                "deltaTokensPerCall": (
+                    cr_tokens_per_call - markdown_tokens_per_call
+                    if cr_tokens_per_call is not None
+                    and markdown_tokens_per_call is not None
+                    else None
+                ),
+                "deltaTokens": cr_tokens - markdown_tokens,
+            }
+        )
+    return sorted(rows, key=lambda row: (row["taskId"], row["sample"], row["stage"], row["crArm"]))
+
+
 def is_downstream_stage(stage: str) -> bool:
     normalized = stage.lower()
     return (
@@ -740,8 +953,10 @@ def build_report(root: Path) -> dict[str, Any]:
     stage_rows, stage_bucket_rows, stage_warnings = aggregate_stage_token_rows(stage_report)
 
     tool_bucket_rows: list[dict[str, Any]] = []
+    tool_followup_rows: list[dict[str, Any]] = []
     for trial_dir in trial_dirs:
         tool_bucket_rows.extend(analyze_trial_cr_tools(trial_dir, root))
+        tool_followup_rows.extend(analyze_trial_cr_tool_followups(trial_dir, root))
     tool_rows = aggregate_tool_rows(tool_bucket_rows)
 
     trace_summaries, trace_warnings = collect_mcp_trace_summaries(root, trial_dirs)
@@ -759,7 +974,9 @@ def build_report(root: Path) -> dict[str, Any]:
         "stageTokenBucketRows": stage_bucket_rows,
         "crToolRows": tool_rows,
         "crToolBucketRows": tool_bucket_rows,
+        "crToolFollowupRows": tool_followup_rows,
         "matchedCrVsMarkdownDeltas": matched_cr_vs_markdown_deltas(stage_rows),
+        "modelCallDeltaRows": model_call_delta_rows(stage_rows),
         "diagnosisFlags": diagnosis_flags(tool_bucket_rows),
         "mcpTraceSummaries": trace_summaries,
         "mcpTraceSummaryCounts": trace_summary_counts(trace_summaries),
@@ -772,6 +989,8 @@ def format_value(key: str, value: Any) -> str:
         return "n/a"
     if key == "ratio":
         return f"{float(value):.2f}x"
+    if key.endswith("TokensPerCall"):
+        return fmt_int(round(float(value)))
     if key.endswith("CostUsd") or key == "cost":
         return fmt_cost(value)
     if (
@@ -781,10 +1000,16 @@ def format_value(key: str, value: Any) -> str:
         in {
             "calls",
             "modelCalls",
+            "crModelCalls",
+            "markdownModelCalls",
+            "deltaModelCalls",
             "successes",
             "errors",
             "mutated",
             "resultCount",
+            "stepIndex",
+            "nextModelStepIndex",
+            "toolCalls",
             "deltaTokens",
             "crTotalTokens",
             "markdownTotalTokens",
@@ -874,6 +1099,24 @@ def markdown_report(report: dict[str, Any], *, include_detail: bool) -> str:
             ],
         )
     )
+    lines.extend(["", "## Model Call Delta Summary", ""])
+    lines.extend(
+        markdown_table(
+            report["modelCallDeltaRows"],
+            [
+                ("Task", "taskId"),
+                ("Sample", "sample"),
+                ("Stage", "stage"),
+                ("CR Calls", "crModelCalls"),
+                ("Markdown Calls", "markdownModelCalls"),
+                ("Delta Calls", "deltaModelCalls"),
+                ("CR Tok/Call", "crTokensPerCall"),
+                ("Markdown Tok/Call", "markdownTokensPerCall"),
+                ("Delta Tok/Call", "deltaTokensPerCall"),
+                ("Delta Tokens", "deltaTokens"),
+            ],
+        )
+    )
     lines.extend(["", "## Diagnosis Flags", ""])
     if report["diagnosisFlags"]:
         lines.extend(
@@ -903,6 +1146,26 @@ def markdown_report(report: dict[str, Any], *, include_detail: bool) -> str:
         )
 
     if include_detail:
+        lines.extend(["", "## CR Tool Follow-up Model Calls", ""])
+        lines.extend(
+            markdown_table(
+                report["crToolFollowupRows"],
+                [
+                    ("Task", "taskId"),
+                    ("Sample", "sample"),
+                    ("Bucket Id", "bucketId"),
+                    ("Stage", "stage"),
+                    ("Step", "stepIndex"),
+                    ("Tools", "tools"),
+                    ("Tool Calls", "toolCalls"),
+                    ("Tool Out Tok", "approxOutputTokens"),
+                    ("Model Tok", "modelTotalTokens"),
+                    ("Next Step", "nextModelStepIndex"),
+                    ("Next Model Input", "nextModelInputTokens"),
+                    ("Next Model Tok", "nextModelTotalTokens"),
+                ],
+            )
+        )
         lines.extend(["", "## Detailed CR Tool Buckets", ""])
         lines.extend(
             markdown_table(
