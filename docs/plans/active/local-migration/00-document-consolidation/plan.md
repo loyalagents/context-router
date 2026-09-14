@@ -1,6 +1,6 @@
 # Step 00A: Documentation Inventory And Classification
 
-- Status: implementation complete — draft PR pending
+- Status: ready for human review
 - Program step: `00-document-consolidation`, PR 00A
 - Target branch: `main`
 - Planning base commit: `c284ce3f07bc5414edf0ccc1e68d51a8e10a2013`
@@ -16,7 +16,7 @@
   were resolved and re-reviewed
 - Final PR reviewers: `/root/00a_plan_process_review` (Approved),
   `/root/00a_plan_inventory_review` (Approved)
-- Implementation PR: pending
+- Implementation PR: [#153](https://github.com/loyalagents/context-router/pull/153)
 - Supported mode after merge: existing hosted composition remains unchanged;
   every legacy planning document has an approved disposition, CI rejects new
   Markdown-link violations against a pinned baseline, and strict checking is

@@ -1,6 +1,7 @@
 # Step 00 Documentation Disposition Inventory
 
-- Status: complete — 88 independently reviewed rows; draft PR pending
+- Status: complete — 88 independently reviewed rows in PR
+  [#153](https://github.com/loyalagents/context-router/pull/153)
 - Inventory base commit: `c284ce3f07bc5414edf0ccc1e68d51a8e10a2013`
 - Inventory scope: tracked legacy planning Markdown, excluding
   `docs/plans/active/local-migration/**`
