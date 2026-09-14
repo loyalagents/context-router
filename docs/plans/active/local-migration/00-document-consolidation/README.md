@@ -1,10 +1,10 @@
 # Step 00: Document Consolidation
 
-- Status: ready for planning
-- Outcome owner: unassigned
+- Status: in progress — PR 00A implementation complete; draft PR pending
+- Outcome owner: primary Codex agent (`/root`)
 - Target branch: `main`
 - Expected change classification: `local-only` documentation/docs tooling
-- Last reviewed: 2026-09-13
+- Last reviewed: 2026-09-14
 
 ## Outcome
 
@@ -82,7 +82,9 @@ belongs to Step 01, not this cleanup step.
 - Creating a historical archive directory.
 - Preserving implementation diaries solely because they may be interesting.
 - Deleting an unresolved idea without assigning it a disposition and reviewer.
-- Changing application code, dependencies, CI, deployment, or environment files.
+- Changing application code, dependencies, deployment, or environment files.
+- Changing CI except for the isolated documentation-validation job required by
+  PR 00A.
 
 ## Disposition Vocabulary
 
@@ -106,8 +108,8 @@ The destination kind is recorded separately as `ACTIVE_PLAN`,
 | Final disposition | Allowed destination kind | Path rule |
 | --- | --- | --- |
 | `KEEP_ACTIVE` | `ACTIVE_PLAN` | Existing source path |
-| `REHOME_ACTIVE` | `ACTIVE_PLAN` | Different exact active-plan path |
-| `DISTILL_AND_DELETE` | `MIGRATION_CONTROL`, `CURRENT`, `USEFUL`, or `PACKAGE_DOCS` | Exact existing path and section when applicable |
+| `REHOME_ACTIVE` | `ACTIVE_PLAN` | Different exact active-plan path; it may be created in 00B |
+| `DISTILL_AND_DELETE` | `MIGRATION_CONTROL`, `CURRENT`, `USEFUL`, or `PACKAGE_DOCS` | Exact existing or proposed 00B path and section; it must exist before deletion |
 | `DELETE` | `NONE` | Destination remains empty |
 
 For `MIGRATION_CONTROL`, the row must name an existing file and section anchor,
@@ -124,8 +126,15 @@ compact control document, keep or rehome the active plan until its step begins.
 - Record the branch's full base commit and populate `inventory.md` with every
   file returned by the legacy-set command at that commit.
 - Review the evidence, disposition, and destination for every row.
-- Establish one exact, repository-wide Markdown-link validation command. A
-  dependency-free script may be added if the repository has no suitable check.
+- Add dependency-free, tested inventory and repository-wide Markdown-link
+  validators. Check in a temporary hash-based baseline for existing link
+  violations; baseline mode must reject every new or changed violation. Only
+  base-independent lexical violations may be baselined, so a missing or changed
+  target can never be excused using the current worktree's filesystem state.
+- Add a documentation-only CI job that runs on every workflow push/PR, because a
+  code or example rename can break a Markdown link. It runs both validator
+  suites, validates the inventory, and checks links against the temporary
+  baseline without forcing unrelated runtime jobs to run.
 - Do not delete or move existing planning documents.
 
 ### PR 00B: Distill canonical information
@@ -147,8 +156,10 @@ This may be split by topic when smaller PRs are materially easier to verify.
   exists before removing the Step 00 README, so startup links remain valid. The
   assigned Step 01 branch owner is its sole writer. If Step 01 began after 00A,
   00C verifies that owned file but does not edit it without coordination.
-- Delete this detailed step directory, including `plan.md`, `inventory.md`, and
-  this README, once its lasting results are recorded. Git remains the archive.
+- Delete this detailed step directory, including `plan.md`, `inventory.md`, the
+  temporary link baseline, and this README once its lasting results are recorded.
+  Switch the documentation CI job to strict link mode in the same PR. Git
+  remains the archive.
 
 The migration index, orchestration, decision log, step template, and interface
 track remain only while the migration program is active. Program closeout must
@@ -167,6 +178,10 @@ distill any lasting behavior and remove the remaining active planning tree.
   in the repository, not only `docs/plans/`, and reports no broken local target.
   It rejects `file://` and machine-specific absolute link targets instead of
   treating a path as valid merely because it exists on the reviewer's machine.
+- Before 00C, CI baseline mode may allow only the reviewed set that existed at
+  the 00A base commit and only for base-independent lexical reasons; it must
+  fail on every new or mutated violation. PR 00C removes the baseline and makes
+  strict zero-violation mode the CI gate.
 - `git diff --check` passes.
 - An independent reviewer verifies every `DELETE` and `DISTILL_AND_DELETE` row.
 - A new agent can understand the remaining active work without reading deleted

@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "baseCommit": "c284ce3f07bc5414edf0ccc1e68d51a8e10a2013",
+  "findingCount": 27,
+  "countsByReason": {
+    "absolute-posix-target": 27
+  },
+  "entries": [
+    {
+      "hash": "07bf736d0ae21a41533788249cc29a125d299d22d8d35cb1e2716af9b8c0e7d2",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "08c0554fffc9df01289f134b14f3c39b75fbe6d6f231c9c0790fc1c831341082",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "093b43280014158c2c21a790d51f8b55eb84981cb96bc805f84da5f421db7d4f",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "1635820145e27d6c3487549e020c0bb1e2c089052af9fe93b4cdf374c6615317",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "2deb2f6745ba043058a49b2fb86d66a01e78a498f520cb7f9439631d895413ee",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "442c6ac8b5b366ca001785b90b170311e2497b20f2520c288c160c41d7596ea5",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "48301cddf7c6539e2646be2b63849906e2cc8895914feca90d8632e1cc0f3a4a",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "4b27619d273ffc51e5093303e34b0d09122c24d29a0f12281c09f02e9b209902",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "51bbf3ef6db3f1507b4ca177c915fd8b79507652eb7c3916c9c0b04851a41421",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "5816fe5993bace7d14d7477add6003bfa3f063616add90a9d8eae31fb13186d8",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "5d33efba93ab68e75be3210c5fa4cf0e66e627fa18bb7b488cc2530680050f1e",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "5e8c56b61ab2aba6d1d9af6008f38ce328a9283a3dcda81d6926e2ffacec9e33",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "71f7e00094e1b977b995f690af3a7374ab8e458daad8914524992912ba946789",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "80afa255f644729281eedfde055866be75c507a29c0651bba3467e6f79f0591f",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "87aece55a2d038bc1aff30d52f3f2ac36849b493a6978e9cfe11482286fe42e6",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "921cd84d0106ee4959b9cb1fe7a0fbaa003ef02121c366e5a22d7ed5eaa7c82c",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "a840fe5fb377512f7cae1c9a86f5c7091caf0920e55ae181fa5b572d2131744f",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "cbdf3023c2856a1ef7c123eb48a6e3843e81c996d21b1384ff5904cfcd801c46",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "ce4eee9ea3c6e948dd4f111284459cccac722df144be0c56ed37668d11e2b985",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "d05353cdb7a4b9ff448db11f1534b727cba7adabcb82c610a0b8077a648db91a",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "d600ff3bc1138c6e524146bac134baf1a8a0d573ae7d563fe077145f082785cd",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "e9e5a25f7da79fd65208d708b9257a0a419dccf8763ce73639f94941608050e1",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "f1ae8a6aa3c3fc9bd5e7b1c0ae442aad47f9201fd135b16f683493c3192a9d10",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "f29ed4be5e510bd130717e858af97aa87d67064df2e2280b681578cd05d71b15",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "f38a77f0cd210547dddbd94c2afd7d0e552ef15906db22a88461354ade07353f",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "f93a113ce88d09956b0a94f7c48a720aeba3e14bc3f6b8eeb8db2722ec0c6847",
+      "source": "docs/plans/active/preference-extraction/audit-log/read-api/implementation-plan.md",
+      "reason": "absolute-posix-target"
+    },
+    {
+      "hash": "fe5fbab79afb1d07e2a3e6546cf1c9766304ceb56d0c4933cd89c67f721a509d",
+      "source": "docs/plans/active/preference-extraction/audit-log/initial-implementation/implementation-summary.md",
+      "reason": "absolute-posix-target"
+    }
+  ]
+}
