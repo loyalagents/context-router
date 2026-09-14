@@ -1,6 +1,6 @@
 # Step 00A: Documentation Inventory And Classification
 
-- Status: ready for human review
+- Status: merged — PR [#153](https://github.com/loyalagents/context-router/pull/153)
 - Program step: `00-document-consolidation`, PR 00A
 - Target branch: `main`
 - Planning base commit: `c284ce3f07bc5414edf0ccc1e68d51a8e10a2013`
@@ -26,7 +26,7 @@
 | PR/checkpoint | Branch and base | Sole writer | Reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
 | 00A inventory | `codex/local-migration-00a-inventory` from `c284ce3f07bc5414edf0ccc1e68d51a8e10a2013` | `/root` | Independent agents named in the inventory | Hosted composition unchanged; reviewed cleanup map and link checker available |
-| 00B distillation | Separate branch after 00A | Assigned when activated | Independent plan and implementation reviewers | Canonical facts preserved while source plans remain for comparison |
+| 00B distillation | `codex/local-migration-00b-distillation` from merged 00A | `/root` | `/root/00b_current_docs_analysis`, `/root/00b_eval_docs_analysis`, and `/root/00b_active_migration_analysis` | Canonical facts preserved while source plans remain for comparison |
 | 00C removal | Separate branch after required 00B work | Assigned when activated | Independent plan and deletion reviewers | Obsolete plans removed; remaining active set and all Markdown links valid |
 
 ## Outcome

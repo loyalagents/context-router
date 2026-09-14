@@ -1,13 +1,14 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `00-document-consolidation` is ready for planning
+- Current step: `00-document-consolidation` — PR 00A merged; PR 00B distillation
+  is in progress
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-13
+- Last reviewed: 2026-09-14
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -92,10 +93,41 @@ rather than encode storage, identity, or model behavior themselves.
   capability/static-target/database-grant layering, response/log redaction
   invariants, AI's propose-and-narrow boundary, and local-orchestrator manifest
   v3, correlation, dry-run, and partial-apply reconciliation semantics.
+- For the local orchestrator, Step 01 decides whether it is a product surface or
+  developer tooling. The matrix must classify its remote analyze/apply and
+  command-filter dependencies; MIME, hidden-file, and failure policies;
+  manifest-v3, dry-run, correlation, and partial-reconciliation contracts; and
+  the still-open dedupe/resume, retry/pacing, run-history, and definition-aware
+  writer ideas. It must not retain those ideas merely because they appeared in
+  a hosted-era TODO.
+- Step 01 treats the seven `profile.*` fields as ordinary memory while deciding
+  whether the local product needs more core profile fields, bulk import/export,
+  account-to-contact copying, or different grant/sensitivity treatment. It also
+  classifies Search Lab, demo fixtures, and all reset modes, including user
+  isolation, destructive semantics, confirmation, and repeatable synthetic
+  smoke data.
+- Step 01 separately classifies mutation audit history, MCP access history,
+  history UI, and rollback. Retained behavior must preserve mutation-plus-audit
+  atomicity, value versus actor provenance, correlation, response/log
+  redaction, and safe handling of intervening writes. The step decides request-
+  versus-object granularity, authentication-failure coverage, retention and
+  deletion, archived-definition sensitivity/masking, workflow/system/import
+  attribution, and whether rollback belongs in the local product. Hosted-row
+  backfill is unnecessary because local installations start fresh.
+- Step 01 classifies document upload and form fill as separate capabilities.
+  Application-level raw-file non-retention remains the default unless a later
+  step first defines storage location, retention/deletion, access, audit, and
+  sensitive-field handling. This does not imply that a configured remote model
+  provider has no retention policy. The matrix also covers
+  draft/review/confirmation UX, partial or existing-value conflicts, supported
+  formats and OCR, retry behavior, and upload abuse controls.
 - Step 02 includes an early packaging feasibility spike covering supported OSes,
   process topology, application data locations, native database dependencies,
   signing, distribution, and clean restart. Packaging is validated incrementally
   rather than deferred entirely to the final packaging step.
+- As part of that spike, Step 02 selects and pins the supported Node.js and
+  package-manager contract. Node 20 with pnpm 10.24 is current evidence; Node 22
+  is an option to evaluate, not an accepted decision.
 - Step 03 keeps a stable human principal separate from MCP client identity and
   grants. It must resolve the current email-centered user shape, local credential
   storage, and stability across restarts instead of merely bypassing Auth0.
@@ -108,6 +140,15 @@ rather than encode storage, identity, or model behavior themselves.
   Local HTTP/MCP planning must address hostile local applications, browser CSRF,
   DNS rebinding, and Host/Origin validation; loopback binding alone is not an
   authentication design.
+- Step 07 baselines all six current `mutatePreferences` operations and the
+  capability/static-target/database-grant layers before changing local MCP. It
+  decides whether combined define-and-set needs one atomic operation, how
+  responses expose partial/no-op behavior, whether definition shape changes or
+  restores are safe, how rollback interacts with audit, what descriptor/output
+  compatibility local clients need, how much request/object detail access logs
+  retain, and which explicit scopes survive local identity. It also decides
+  whether a client may narrow its own authority for one call or session without
+  mutating persisted grants.
 
 ## Branch And Change Policy
 
@@ -215,7 +256,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
-| `00-document-consolidation` | Ready for planning | Classify legacy plans, distill durable knowledge, remove obsolete planning material, and leave one trustworthy planning set. | Hosted branch/tag preservation |
+| `00-document-consolidation` | In progress — 00A merged, 00B active | Classify legacy plans, distill durable knowledge, remove obsolete planning material, and leave one trustworthy planning set. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Not started | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 PR 00A |
 | `02-composition-boundaries` | Not started | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
