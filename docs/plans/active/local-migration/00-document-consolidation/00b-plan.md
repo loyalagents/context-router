@@ -1,6 +1,6 @@
 # Step 00B: Distill Canonical Information
 
-- Status: implementation complete; draft PR creation pending
+- Status: ready for human review
 - Program step: `00-document-consolidation`, PR 00B
 - Target branch: `main`
 - Planning base commit: `01e9506708c8692324943ea111b05a8f57da45e0`
@@ -18,7 +18,7 @@
 - Final implementation reviewers: `/root/00b_current_docs_analysis` (Approved),
   `/root/00b_eval_docs_analysis` (Approved),
   `/root/00b_active_migration_analysis` (Approved)
-- Implementation PR: pending
+- Implementation PR: [#154](https://github.com/loyalagents/context-router/pull/154)
 - Supported mode after merge: the existing hosted composition remains
   unchanged; all 35 approved 00B distillations and rehomes have canonical
   destinations while their legacy sources remain available for 00C comparison

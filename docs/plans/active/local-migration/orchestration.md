@@ -1,8 +1,9 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `00-document-consolidation` — PR 00A merged; PR 00B distillation
-  is in progress
+- Current step: `00-document-consolidation` — PR 00A merged; PR 00B
+  [#154](https://github.com/loyalagents/context-router/pull/154) is ready for
+  human review
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -256,7 +257,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
-| `00-document-consolidation` | In progress — 00A merged, 00B active | Classify legacy plans, distill durable knowledge, remove obsolete planning material, and leave one trustworthy planning set. | Hosted branch/tag preservation |
+| `00-document-consolidation` | In progress — 00A merged, 00B [#154](https://github.com/loyalagents/context-router/pull/154) ready for human review | Classify legacy plans, distill durable knowledge, remove obsolete planning material, and leave one trustworthy planning set. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Not started | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 PR 00A |
 | `02-composition-boundaries` | Not started | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |

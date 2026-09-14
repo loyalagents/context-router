@@ -1,7 +1,8 @@
 # Step 00: Document Consolidation
 
 - Status: in progress — PR 00A [#153](https://github.com/loyalagents/context-router/pull/153)
-  merged; PR 00B implementation complete and draft PR creation pending
+  merged; PR 00B [#154](https://github.com/loyalagents/context-router/pull/154)
+  ready for human review
 - Outcome owner: primary Codex agent (`/root`)
 - Target branch: `main`
 - Expected change classification: `local-only` documentation/docs tooling

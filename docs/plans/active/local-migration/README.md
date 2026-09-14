@@ -1,8 +1,9 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `00-document-consolidation` — PR 00A merged; PR 00B distillation
-  is in progress
+- Current step: `00-document-consolidation` — PR 00A merged; PR 00B
+  [#154](https://github.com/loyalagents/context-router/pull/154) is ready for
+  human review
 - Last reviewed: 2026-09-14
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
