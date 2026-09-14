@@ -16,6 +16,9 @@ If you are orienting yourself in the repo:
 
 For docs writing rules, see [`docs/README.md`](docs/README.md).
 
+For local-first migration work, start with
+[`docs/plans/active/local-migration/orchestration.md`](docs/plans/active/local-migration/orchestration.md).
+
 ## How The Repo Works
 
 The main request flow looks like this:
