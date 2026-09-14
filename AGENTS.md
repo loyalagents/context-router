@@ -23,3 +23,11 @@ When making plans for backend work:
 
 - Use checkpoints.
 - Each checkpoint should end at a place where tests can run and progress can be reported clearly.
+
+When working on the local-first migration:
+
+- Read `docs/plans/active/local-migration/orchestration.md`,
+  `docs/plans/active/local-migration/decision-log.md`, and the active step's
+  `README.md` before planning or implementation.
+- Follow the planning, independent-review, branch, and closeout gates in the
+  orchestration document.
