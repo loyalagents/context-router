@@ -1,6 +1,7 @@
 # Step 00: Document Consolidation
 
 - Status: in progress — PR 00A [#153](https://github.com/loyalagents/context-router/pull/153)
+  merged; PR 00B [#154](https://github.com/loyalagents/context-router/pull/154)
   ready for human review
 - Outcome owner: primary Codex agent (`/root`)
 - Target branch: `main`
@@ -188,9 +189,10 @@ distill any lasting behavior and remove the remaining active planning tree.
 - A new agent can understand the remaining active work without reading deleted
   implementation histories.
 
-## Step Start
+## Current Work
 
-The next planning agent should copy `../step-template.md` to `plan.md`, regenerate
-the document counts from a recorded full base SHA, populate `inventory.md`, and
-propose the PR 00A review plan. No existing planning document should be deleted
-during that planning turn.
+PR 00B follows [`00b-plan.md`](00b-plan.md). It creates all approved canonical
+destinations while leaving every legacy source unchanged for reviewer
+comparison. PR 00C begins from `main` only after 00B lands; it removes the
+approved legacy sources, repairs remaining links, switches link validation to
+strict mode, and completes the Step 00 closeout.

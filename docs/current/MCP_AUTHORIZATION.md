@@ -2,8 +2,12 @@
 
 - Status: current
 - Read when: changing MCP auth, client policy, permission grants, or MCP tool access
-- Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/modules/permission-grant/**`, `apps/backend/test/e2e/mcp.e2e-spec.ts`, `apps/backend/test/e2e/permission-grants.e2e-spec.ts`
-- Last reviewed: 2026-04-22
+- Source of truth: `apps/backend/src/mcp/**`,
+  `apps/backend/src/modules/permission-grant/**`,
+  `apps/backend/test/e2e/mcp.e2e-spec.ts`,
+  `apps/backend/test/e2e/permission-grants.e2e-spec.ts`, and
+  `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
+- Last reviewed: 2026-09-14
 
 ## Components
 
@@ -70,12 +74,31 @@ Important tools and resources:
 
 ## Read Tool Result Contract
 
-Read-only MCP tools return the same machine-readable payload in two places:
+These five read-only tools advertise an object `outputSchema`:
+
+- `listPreferenceSlugs`
+- `searchPreferences`
+- `smartSearchPreferences`
+- `listPermissionGrants`
+- `consolidateSchema`
+
+On success, each returns a canonical object with `success: true` in two places:
 
 - `structuredContent` is the preferred structured result for clients that support it.
 - `content[0].text` is serialized JSON of the same payload for MCP clients that only surface text content blocks.
 
-Access logs remain sanitized. They store request metadata and response counts, not returned preference values or full response bodies.
+Handler failures set `isError: true` and return the same
+`{ success: false, error }` object through both result locations. Clients that
+support structured results should prefer `structuredContent`; parsing the JSON
+text remains a compatibility path.
+
+Access logs remain sanitized. They store request metadata and response counts,
+not returned preference values or full response bodies.
+
+`listPermissionGrants` is scoped to the calling client bucket. Grant mutation
+stays in GraphQL and the web dashboard.
+
+## Mutation Tool Result Contract
 
 `mutatePreferences` is the single MCP mutation tool. It supports:
 
@@ -86,11 +109,44 @@ Access logs remain sanitized. They store request metadata and response counts, n
 - `UPDATE_DEFINITION` requiring `DEFINE`
 - `ARCHIVE_DEFINITION` requiring `DEFINE`
 
-`listPermissionGrants` is read-only and scoped to the calling client bucket. Grant mutation stays in GraphQL and the web dashboard.
+The mutation tool intentionally has a different result contract from the five
+read tools. It currently advertises no `outputSchema` and returns no
+`structuredContent`; its result envelope is JSON serialized only in
+`content[0].text`.
+
+Preference `value` input is itself a JSON-encoded string, such as
+`"\"concise\""`, `"[\"nuts\"]"`, or `"true"`. Optional `evidence` is the
+opposite: callers pass a structured, non-null, non-array object and must not
+JSON-encode it.
+
+A successful changed result includes `success: true`, `changed: true`, the
+operation, required permission, target, relevant preference or definition, and
+audit provenance containing MCP origin, client key, and correlation id. A
+failure includes `success: false`, `changed: false`, a stable code and error,
+required permission, and target; the MCP result sets `isError: true`.
+
+Suggestion suppression is an explicit successful no-op:
+
+```json
+{
+  "success": true,
+  "changed": false,
+  "code": "SUGGESTION_SUPPRESSED",
+  "preference": null
+}
+```
+
+It creates an MCP access event but no domain mutation audit event. Validation
+and authorization failures likewise create no domain audit event. Current MCP
+active writes use `sourceType: INFERRED`.
 
 ## MCP Access Logging
 
-Read-only tools and resource reads are logged as before. `mutatePreferences` opts into always-on access logging, so every mutation-tool attempt creates an `McpAccessEvent` row for success, permission denial, validation error, and handler error.
+Read-only tools and resource reads are logged as before. `mutatePreferences`
+opts into always-on access logging, so every mutation-tool attempt that reaches
+MCP dispatch creates an `McpAccessEvent` row for success, permission denial,
+validation error, and handler error. Authentication failures rejected before
+dispatch are outside this log.
 
 Mutation access-log metadata is sanitized. It stores operation, target slug when available, required permission, outcome, error code, and safe object ids/counts; it does not store raw preference values, raw evidence, or full returned objects.
 

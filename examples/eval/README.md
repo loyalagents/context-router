@@ -268,7 +268,9 @@ pnpm eval:e2e-mcp-packet \
   --document-order relevant-last
 ```
 
-Run the no-storage direct packet baseline over the same dossier:
+Run the generic direct packet path over the same dossier. Its default
+`local-fact-fill` mode is the historical no-storage diagnostic; the canonical
+backend comparison mode is described below:
 
 ```bash
 pnpm eval:direct-open-schema-packet \
@@ -279,6 +281,73 @@ pnpm eval:direct-open-schema-packet \
   --document-order relevant-last \
   --max-evidence-chars 1000000
 ```
+
+## Claude Code Direct Packet Baseline
+
+`pnpm eval:claude-code-direct-packet` measures a no-MCP, no-backend-memory
+Claude Code extraction over one shared packet. The restriction applies to the
+model's extraction inputs. It is not a no-backend end-to-end mode when
+`--fill-mode backend` is selected.
+
+The wrapper fixes the provider to `claude-code`. A model is required and is
+resolved in this order: `--model`, `EVAL_CLAUDE_CODE_MODEL`, then `EVAL_MODEL`.
+Optional `--thinking-mode` accepts `default`, `low`, `medium`, `high`, `xhigh`,
+or `max`; `default` omits the Claude `--effort` flag. Artifacts record whether
+model/thinking settings came from the CLI, environment, or defaults, and record
+`budget: null` because this runner has no numeric thinking-budget control.
+
+For extraction, the harness creates a copied document-only workspace and a safe
+`documents.json` index. Claude Code runs with `Read`, `Glob`, and `Grep` only, a
+strict empty MCP configuration, project-only settings, safe mode, disabled slash
+commands, no session persistence, and a no-backend/no-answer-key guard in the
+actual prompt. These are tool and configuration restrictions, not an operating-
+system or filesystem sandbox. Run only synthetic fixtures on a controlled
+machine.
+
+The generic runner defaults to `--fill-mode local-fact-fill`, which fills from
+the extracted facts without backend memory and remains useful as a historical
+diagnostic. Use `--fill-mode backend` for the canonical direct-versus-MCP
+comparison. Only after extraction completes, that mode materializes the
+synthetic memory through GraphQL, exports the resulting memory, and calls the
+same backend form-fill endpoint as the MCP packet path. It requires an
+authenticated backend, mutates that backend user, and may call the backend's
+configured model. Use a dedicated eval database/user. `--reset-memory` clears
+that user's current memory before materialization.
+
+Example canonical comparison run:
+
+```bash
+export EVAL_BACKEND_URL=http://127.0.0.1:3000
+export EVAL_GRAPHQL_URL=http://127.0.0.1:3000/graphql
+export EVAL_AUTH_TOKEN=<dedicated-eval-user-token>
+
+pnpm eval:claude-code-direct-packet \
+  --user maya-chen-newhire \
+  --corpus packet-hard-required-v4 \
+  --scenarios maya-chen-newhire-i9-packet-hard-required-v4,maya-chen-newhire-fw4-packet-hard-required-v4,maya-chen-newhire-direct-deposit-packet-hard-required-v4 \
+  --artifacts-root /tmp/maya-required-v4-claude-direct \
+  --model <claude-model> \
+  --thinking-mode high \
+  --fill-mode backend \
+  --reset-memory
+```
+
+Claude Code and the currently configured backend model can be hosted providers,
+so this opt-in command can transmit synthetic fixture content outside the
+machine. It is not part of the offline product path.
+
+Stable root artifacts include `packet-evaluation-run.json`, the extraction
+prompt/response/transcript, parsed extraction, and
+`synthetic-memory-snapshot.json`. Backend fill mode also writes
+`memory-materialization-report.json`, a post-materialization memory snapshot,
+and per-scenario form-fill responses and score artifacts. A contract or stage
+failure still finalizes the packet report with `status: fail`, `endedAt`, and
+`failureStage`.
+
+The runner is implemented and unit-tested, but the matched v4 Claude Code
+direct-versus-MCP live acceptance run remains pending. Require matching model,
+thinking, document order/window, backend-fill settings, and repeated runs before
+interpreting a delta.
 
 Packet document order modes are `canonical`, `reverse`, `seeded-random`,
 `relevant-first`, and `relevant-last`. Use `--document-order-seed <seed>` for

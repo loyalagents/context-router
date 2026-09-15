@@ -36,6 +36,62 @@ rather than only backend/model quality changes.
 - Once a scenario exists, runner-owned snapshots under `expected/` change only
   through `pnpm eval:run --scenario <scenarioId> --update-snapshots`.
 
+## Packet Benchmark Families
+
+Keep packet baselines small, versioned, and immutable. A hardening pass creates
+a new family/version id; it does not rewrite the baseline it is meant to compare
+against. Separate families make a failure attributable to volume, ownership,
+staleness, evidence resolution, form behavior, or scoring instead of combining
+all causes in one mega-corpus.
+
+The current Maya Chen packet families all use the I-9, federal W-4, and SF 1199A
+direct-deposit scenarios. Their committed validation reports have `status:
+pass`:
+
+| Corpus | Documents | Use it to ask |
+| --- | ---: | --- |
+| `packet-small` | 8 | Does the shared-dossier packet plumbing work end to end? |
+| `packet-medium` | 30 | How does the ordinary shared dossier behave before focused hardening? |
+| `packet-hard-volume-v1` | 100 | Do runner caps, evidence windows, and document-order controls work under long but relatively easy noise? |
+| `packet-hard-volume-v2` | 100 | Can the system resist realistic near-miss and operational distractors under volume/order pressure? |
+| `packet-hard-ownership-v1` | 35 | Are other-person, contact, manager, sample, or institution facts kept out of Maya's memory and forms? |
+| `packet-hard-conflict-v1` | 35 | Do current and higher-authority sources beat stale, draft, or lower-authority values? |
+| `packet-hard-required-v4` | 38 | Can scored values be resolved through deliberately multi-hop evidence after easy proof paths are removed? |
+
+Versions `packet-hard-required-v1` through `v4` remain available for progression
+analysis; v4 is the current required-evidence choice. Volume v1 remains useful
+for length/order smoke tests, while volume v2 is the preferred realistic noise
+benchmark.
+
+Read packet results in this order:
+
+1. Confirm the runner completed and every required artifact/validation gate is
+   present.
+2. Read form outcomes: known-field correctness, abstention correctness, and
+   overfill count.
+3. Read whether every expected value exists somewhere usable in active memory.
+4. Read strict memory-shape recovery.
+5. Inspect the family-specific signal: ownership leakage, stale/conflict wins,
+   unresolved codes, missing evidence, or order/window effects.
+
+Do not over-interpret a strict shape miss when form results and value presence
+are clean. A composite address or alias can preserve the usable value without
+matching the stricter row shape.
+
+Use volume v2 for present volume/noise comparisons. Start with `canonical` and
+`relevant-last`; add a stable `seeded-random` order or `reverse` only when order
+pressure is the question. Compare runs with the same document set, evidence
+window, provider/model settings, and fill path.
+
+Combine families only after their individual signals are interpretable. Give a
+combination a new label such as `packet-hard-volume-required-v1`; never mutate
+volume v2, required v4, or another existing baseline in place.
+
+Fixture validation proves schema/reference/corpus-truth constraints, not model
+quality. A passing run may still report reviewed non-blocking warnings, and a
+passing committed validation report is not evidence that an extraction model
+handled the packet correctly.
+
 ## Adding A User
 
 Create a profile skeleton from an existing field map:
@@ -313,17 +369,16 @@ the backend test database. See the "Automated Smoke Check" section in
 - Runner hydration is deterministic and service-based. It reads `profile.yaml`
   and generated seed preferences, then writes active preferences directly for
   the local backend harness.
-- Corpus documents are validated for coverage but are not ingested through the
-  document-analysis path.
-- `eval:test`, `eval:validate`, `eval:verify`, and `eval:run` do not make real
-  LLM calls. `eval:generate` is the local maintainer command that calls Vertex
-  AI to draft realistic committed fixture documents.
+- The deterministic `eval:run` path does not ingest corpus documents. Live
+  known-schema and MCP packet paths do ingest documents, and direct packet paths
+  perform model extraction before filling.
+- `eval:test`, `eval:validate`, `eval:verify`, and deterministic `eval:run` do
+  not make real model calls. Generation and live/direct/MCP evaluation commands
+  can call configured hosted providers and must be treated as explicit opt-in
+  operations.
 - No UI or browser automation.
-- Only `filled-form` snapshots exist today.
-- Only I-9 has a field map today.
-- I-9 citizenship and alternative-procedure checkboxes are a named future
-  hardening task because current generated field metadata does not expose
-  reliable labels.
+- The deterministic runner currently owns only `filled-form` snapshots.
+- Field maps currently exist for I-9, federal W-4, and SF 1199A direct deposit.
 
 Current repeatability coverage uses two I-9 users against the same form map:
 Elena Marquez as a U.S. citizen profile and Samir Desai as a lawful permanent

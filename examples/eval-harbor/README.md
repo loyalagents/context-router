@@ -292,6 +292,7 @@ Run validation checks include:
 | `scripts/aggregate_resamples.py` | Multi-sample report aggregation |
 | `scripts/report_stage_token_usage.py` | Token distribution by staged phase |
 | `scripts/validate_eval_preflight.py` | Task, job, and run policy checks |
+| [`PERMISSIONS_EVAL.md`](PERMISSIONS_EVAL.md) | Sensitive-policy experiment contracts, claim boundaries, and recorded results |
 | `modes/` | Per-arm agent instructions |
 | `arms/dynamicmem-default.json` | Default arm definitions |
 
