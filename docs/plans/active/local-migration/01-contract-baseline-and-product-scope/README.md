@@ -1,14 +1,14 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: Checkpoint 1 complete — Checkpoint 2 in progress
+- Status: implementation complete and independently approved — final
+  committed-tree validation and PR preparation in progress
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: implement the atomic
-  [`plan.md`](plan.md#checkpoint-2-aggregate-gate-and-clean-process-restart)
-  aggregate gate and clean-process restart checkpoint as the sole writer
+- Concrete next action: commit the approved implementation, rerun the exact-tree
+  gate, and prepare the PR for human review; do not merge automatically
 - Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
   first
 - Depends on: completed Step 00 PRs
@@ -17,7 +17,7 @@
   [#155](https://github.com/loyalagents/context-router/pull/155)
 - Supported mode during planning: the existing hosted
   NestJS/PostgreSQL/Auth0/Vertex and Next.js composition remains supported
-- Last updated: 2026-09-14
+- Last updated: 2026-09-15
 
 ## Outcome
 
@@ -33,7 +33,8 @@ testing/security/privacy reviewers after every finding was resolved. The
 approved [`plan.md`](plan.md) governs implementation; material deviations pause
 the affected checkpoint for renewed review.
 
-Checkpoint 1 added the versioned capability/outbound/package registry, complete
+Checkpoint 1 added the versioned capability/outbound/package registry, an exact
+automatically refreshed public-reference and outbound-sink census, complete
 semantic GraphQL and MCP fixtures, HTTP contracts, all 19 catalog semantics and
 seed edge characterization, the strict developer-orchestrator manifest-v3
 schema, and the canonical current-state baseline. Its focused checker, backend
@@ -41,6 +42,21 @@ unit/integration/e2e, orchestrator, Markdown-link, and whitespace validations
 passed without changing a public schema or runtime handler. Evidence collection
 corrected a prose count from 14 to the schema-derived 15 mutations; scope and
 implementation were unchanged.
+
+Checkpoint 2 added the single authoritative `pnpm migration:gate` command, its
+strict 11-phase lifecycle manifest, a dedicated CI workflow, safe isolated test
+database lifecycle, disposable-workspace and merge-base checks, and
+`pnpm migration:smoke:restart`. The smoke probes the built Next.js support routes
+and runs two real production backend processes on loopback with an ephemeral
+HTTPS OIDC/JWKS fixture and signed read-only M2M token, then compares the
+complete 19-definition catalog and stable principal through restart. After the
+final security and lifecycle remediations on 2026-09-15, the focused migration
+suite passed 128/128 tests and the post-remediation aggregate gate passed all 11
+phases in 232.541 seconds, including its 35.555-second clean-restart phase, using
+Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The run
+preserved caller generated paths and removed its exact generated database and
+fallback container. CI pnpm 9 evidence remains pending until the PR workflow
+runs and must not be inferred from this local result.
 
 ## Required Reading
 

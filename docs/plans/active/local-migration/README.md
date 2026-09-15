@@ -1,30 +1,35 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `01-contract-baseline-and-product-scope` — ready for planning
-- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
-  writer is assigned
-- Concrete next action: create `codex/local-migration-01-contract-baseline`,
-  write `01-contract-baseline-and-product-scope/plan.md` from the template, and
-  obtain independent plan review before implementation
-- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
-- Last reviewed: 2026-09-14
+- Current step: `01-contract-baseline-and-product-scope` — implementation
+  complete and independently approved; committed-tree validation and PR
+  preparation in progress
+- Outcome owner and sole writer: `/root` on
+  `codex/local-migration-01-contract-baseline`
+- Concrete next action: commit the approved Step 01 implementation, rerun the
+  exact-tree Local Migration Baseline Gate, prepare its PR for human review,
+  and start Step 02 planning from its activation charter only after Step 01
+  merges
+- Review date: 2026-10-14 or Step 01 human review, whichever comes first
+- Last reviewed: 2026-09-15
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Start Step 01
+## Close Step 01 And Start Step 02
 
-1. Read the orchestration, decision log, and
-   [`01-contract-baseline-and-product-scope/README.md`](01-contract-baseline-and-product-scope/README.md).
-2. Create the assigned Step 01 branch from `main` after Step 00 PR
-   [#155](https://github.com/loyalagents/context-router/pull/155) merges.
-3. Copy [`step-template.md`](step-template.md) to the Step 01 directory as
-   `plan.md`, record the exact base commit and ownership, and plan PR-sized
-   checkpoints.
-4. Obtain independent architecture, compatibility, testing, and
-   security/privacy review; resolve every finding before implementation.
+1. Read the orchestration, decision log, and the Step 01
+   [`plan.md`](01-contract-baseline-and-product-scope/plan.md).
+2. Run `pnpm migration:gate` with a validated full-history merge base and safe
+   loopback PostgreSQL 15 administration connection; do not substitute a list
+   of partial commands for the aggregate result.
+3. Complete fresh read-only implementation review, resolve every finding as the
+   sole writer, and leave the PR unmerged for human review.
+4. After Step 01 merges, read the
+   [`02-composition-boundaries` activation charter](02-composition-boundaries/README.md),
+   create its assigned branch from `main`, copy [`step-template.md`](step-template.md)
+   to `plan.md`, and obtain independent plan review before implementation.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

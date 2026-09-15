@@ -7,6 +7,7 @@ import { McpClientRegistry } from "../../src/mcp/auth/mcp-client-registry.servic
 import { McpAuthGuard } from "../../src/mcp/auth/mcp-auth.guard";
 import { OAuthMetadataController } from "../../src/mcp/auth/oauth-metadata.controller";
 import { DcrShimController } from "../../src/mcp/auth/dcr-shim.controller";
+import { DcrRateLimitGuard } from "../../src/mcp/auth/dcr-rate-limit.guard";
 import { PreferenceListTool } from "../../src/mcp/tools/preference-list.tool";
 import { PreferenceSearchTool } from "../../src/mcp/tools/preference-search.tool";
 import { PreferenceMutateTool } from "../../src/mcp/tools/preference-mutate.tool";
@@ -64,7 +65,12 @@ function normalizeDcrError(error: unknown) {
 
 export function collectMcpContractBaseline() {
   const originalEnv = process.env;
-  process.env = { ...originalEnv, ...TEST_ENV };
+  const contractEnvironment: NodeJS.ProcessEnv = {
+    ...originalEnv,
+    ...TEST_ENV,
+  };
+  delete contractEnvironment.MCP_OAUTH_REGISTER_RATE_LIMIT;
+  process.env = contractEnvironment;
   try {
     const config = mcpConfig();
     const values: Record<string, unknown> = {
@@ -191,6 +197,52 @@ export function collectMcpContractBaseline() {
         dcrCases[name] = normalizeDcrError(error);
       }
     }
+    const missingClientDcr = new DcrShimController({
+      resolveForDcr: () => ({
+        status: "ok",
+        client: { key: "claude", oauth: { redirectUris: [] } },
+      }),
+    } as unknown as McpClientRegistry);
+    try {
+      missingClientDcr.registerClient(
+        { redirect_uris: ["http://localhost:8081/callback"] },
+        request,
+      );
+    } catch (error) {
+      dcrCases.missingConfiguredClientId = normalizeDcrError(error);
+    }
+
+    const originalDateNow = Date.now;
+    const rateLimitGuard = new DcrRateLimitGuard(
+      makeConfigService({
+        "mcp.oauth.rateLimit.windowMs": config.oauth.rateLimit.windowMs,
+        "mcp.oauth.rateLimit.maxRequests": config.oauth.rateLimit.maxRequests,
+      }),
+    );
+    const rateLimitContext = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers: { "x-forwarded-for": "192.0.2.10" },
+          ip: "127.0.0.1",
+          socket: {},
+        }),
+      }),
+    } as never;
+    try {
+      Date.now = () => 1_000;
+      for (
+        let attempt = 0;
+        attempt <= config.oauth.rateLimit.maxRequests;
+        attempt += 1
+      ) {
+        rateLimitGuard.canActivate(rateLimitContext);
+      }
+    } catch (error) {
+      dcrCases.rateLimit = normalizeDcrError(error);
+    } finally {
+      Date.now = originalDateNow;
+      rateLimitGuard.onModuleDestroy();
+    }
 
     const guard = new McpAuthGuard(configService, undefined as never);
     const missing = challengeResponse();
@@ -213,6 +265,23 @@ export function collectMcpContractBaseline() {
     );
 
     return {
+      runtimeEvidence: [
+        {
+          surface: "backend-mcp-e2e",
+          path: "apps/backend/test/e2e/mcp.e2e-spec.ts",
+          cases: [
+            "should exactly match full-scope runtime tool and resource descriptors to the fixture",
+            "should allow SUGGEST_PREFERENCE for codex and preserve the text-only result envelope",
+          ],
+        },
+        {
+          surface: "backend-mcp-permission-grants-e2e",
+          path: "apps/backend/test/e2e/permission-grants.e2e-spec.ts",
+          cases: [
+            "scopes listPermissionGrants to the calling client key and preserves matching structured/text envelopes",
+          ],
+        },
+      ],
       server: {
         identity: server._serverInfo,
         instructions: server._instructions,
@@ -274,6 +343,7 @@ export function collectMcpContractBaseline() {
       },
       dcr: {
         path: "/oauth/register",
+        rateLimit: config.oauth.rateLimit,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",

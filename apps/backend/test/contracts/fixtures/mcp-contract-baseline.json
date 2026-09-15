@@ -1,4 +1,21 @@
 {
+  "runtimeEvidence": [
+    {
+      "surface": "backend-mcp-e2e",
+      "path": "apps/backend/test/e2e/mcp.e2e-spec.ts",
+      "cases": [
+        "should exactly match full-scope runtime tool and resource descriptors to the fixture",
+        "should allow SUGGEST_PREFERENCE for codex and preserve the text-only result envelope"
+      ]
+    },
+    {
+      "surface": "backend-mcp-permission-grants-e2e",
+      "path": "apps/backend/test/e2e/permission-grants.e2e-spec.ts",
+      "cases": [
+        "scopes listPermissionGrants to the calling client key and preserves matching structured/text envelopes"
+      ]
+    }
+  ],
   "server": {
     "identity": {
       "name": "context-router-mcp",
@@ -831,6 +848,10 @@
   },
   "dcr": {
     "path": "/oauth/register",
+    "rateLimit": {
+      "windowMs": 60000,
+      "maxRequests": 30
+    },
     "headers": {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
@@ -900,6 +921,20 @@
         "body": {
           "error": "invalid_redirect_uri",
           "error_description": "All requested redirect_uris must belong to the same supported MCP client."
+        }
+      },
+      "missingConfiguredClientId": {
+        "status": 500,
+        "body": {
+          "error": "server_error",
+          "error_description": "OAuth client registration is not configured"
+        }
+      },
+      "rateLimit": {
+        "status": 429,
+        "body": {
+          "error": "too_many_requests",
+          "error_description": "Rate limit exceeded. Try again in 60 seconds."
         }
       }
     }

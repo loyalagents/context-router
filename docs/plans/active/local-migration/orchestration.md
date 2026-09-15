@@ -1,20 +1,22 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `01-contract-baseline-and-product-scope` — Checkpoint 1 complete,
-  Checkpoint 2 in progress
+- Current step: `01-contract-baseline-and-product-scope` — implementation
+  complete and independently approved; committed-tree validation and PR
+  preparation in progress
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
-- Concrete next action: implement the approved Step 01
-  [aggregate gate and clean-process restart checkpoint](01-contract-baseline-and-product-scope/plan.md#checkpoint-2-aggregate-gate-and-clean-process-restart),
-  then run its root smoke and aggregate command
-- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
+- Concrete next action: commit Step 01's approved implementation, rerun final
+  exact-tree aggregate validation, and prepare the human-review PR without
+  automatic merge; after it merges, begin the activated
+  [Step 02 planning charter](02-composition-boundaries/README.md)
+- Review date: 2026-10-14 or Step 01 human review, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-15
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -263,8 +265,8 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
-| `01-contract-baseline-and-product-scope` | Approved plan; implementation in progress — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
-| `02-composition-boundaries` | Not started | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 |
+| `01-contract-baseline-and-product-scope` | Implementation complete and independently approved; committed-tree validation/PR pending — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
+| `02-composition-boundaries` | Activated for planning after Step 01 merges — [charter](02-composition-boundaries/README.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
 | `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and make restart/recovery explicit. | Step 04 |

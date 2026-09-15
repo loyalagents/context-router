@@ -2,7 +2,7 @@
   "version": 1,
   "title": "Local migration hosted-contract baseline",
   "planningBase": "9b56d38fde927d4e643af89ba45665a439613939",
-  "supportedMode": "hosted",
+  "supportedMode": "hosted-baseline",
   "contractClasses": [
     "preserved-contract",
     "observed-not-promised",
@@ -50,6 +50,23 @@
       ],
       "evidence": [
         "apps/backend/test/e2e/preferences.e2e-spec.ts"
+      ]
+    },
+    {
+      "id": "location-entity-lifecycle",
+      "label": "User-owned location CRUD, type filtering, validation, and preference cascade semantics",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/test/e2e/locations.e2e-spec.ts",
+        "apps/backend/src/modules/preferences/location/location.service.ts",
+        "apps/backend/src/modules/preferences/location/location.repository.ts",
+        "apps/backend/prisma/schema.prisma"
       ]
     },
     {
@@ -220,6 +237,33 @@
       ],
       "evidence": [
         "apps/backend/src/mcp/tools/preference-search.tool.ts"
+      ]
+    },
+    {
+      "id": "schema-consolidation-advisory",
+      "label": "Read-only schema consolidation proposals with scoped definitions and validated slugs",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "05",
+        "06",
+        "07"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow.spec.ts",
+        "apps/backend/test/e2e/workflows.e2e-spec.ts"
+      ]
+    },
+    {
+      "id": "schema-consolidation-hosted-model",
+      "label": "Hosted structured-model inference for schema consolidation",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "06"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow.ts"
       ]
     },
     {
@@ -541,7 +585,15 @@
   "outboundCalls": [
     {
       "id": "postgresql",
-      "source": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
+          "fingerprints": [
+            "process.env.DATABASE_URL",
+            "new PrismaPg(new Pool({ connectionString: databaseUrl })"
+          ]
+        }
+      ],
       "destination": "DATABASE_URL",
       "payload": "all durable application state and queries",
       "defaultRuntime": true,
@@ -553,7 +605,16 @@
     },
     {
       "id": "auth0-management",
-      "source": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
+          "fingerprints": [
+            "new ManagementClient({",
+            "this.managementClient.users.get(auth0UserId)",
+            "this.managementClient.users.update("
+          ]
+        }
+      ],
       "destination": "AUTH0_DOMAIN management API",
       "payload": "identity profile and metadata",
       "defaultRuntime": true,
@@ -563,8 +624,42 @@
       ]
     },
     {
+      "id": "auth0-authentication-client",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
+          "fingerprints": [
+            "new AuthenticationClient({",
+            "getAuthClient(): AuthenticationClient"
+          ]
+        }
+      ],
+      "destination": "AUTH0_DOMAIN authentication API",
+      "payload": "client credentials and authentication requests made by callers of the exposed SDK client",
+      "defaultRuntime": true,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "03"
+      ]
+    },
+    {
       "id": "auth0-jwks",
-      "source": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
+      "sources": [
+        {
+          "path": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
+          "fingerprints": [
+            "passportJwtSecret({",
+            "jwksUri: `https://${auth0Domain}/.well-known/jwks.json`"
+          ]
+        },
+        {
+          "path": "apps/backend/src/mcp/auth/mcp-auth.guard.ts",
+          "fingerprints": [
+            "new JwksClient({",
+            "this.jwksClient.getSigningKey(header.kid)"
+          ]
+        }
+      ],
       "destination": "AUTH0_DOMAIN JWKS",
       "payload": "key retrieval metadata",
       "defaultRuntime": true,
@@ -576,7 +671,15 @@
     },
     {
       "id": "vertex",
-      "source": "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts",
+          "fingerprints": [
+            "new VertexAI({",
+            "this.model.generateContent(request)"
+          ]
+        }
+      ],
       "destination": "Google Vertex API and credential endpoints",
       "payload": "prompts, documents, form metadata, preferences, and retries",
       "defaultRuntime": true,
@@ -586,8 +689,148 @@
       ]
     },
     {
+      "id": "web-auth0-sdk",
+      "sources": [
+        {
+          "path": "apps/web/lib/auth0.ts",
+          "fingerprints": [
+            "new Auth0Client({",
+            "domain: process.env.AUTH0_DOMAIN!",
+            "authorizationParameters:"
+          ]
+        },
+        {
+          "path": "apps/web/middleware.ts",
+          "fingerprints": [
+            "return await auth0.middleware(request);"
+          ]
+        }
+      ],
+      "destination": "Auth0 OAuth, session, and token endpoints",
+      "payload": "browser identity, cookies and session state, authorization codes, and tokens",
+      "defaultRuntime": true,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "03",
+        "08"
+      ]
+    },
+    {
       "id": "web-backend",
-      "source": "apps/web/lib/graphql-client.ts",
+      "sources": [
+        {
+          "path": "apps/web/lib/apollo-client.ts",
+          "fingerprints": [
+            "new HttpLink({",
+            "process.env.NEXT_PUBLIC_GRAPHQL_URL || \"http://localhost:3000/graphql\""
+          ]
+        },
+        {
+          "path": "apps/web/lib/apollo-wrapper.tsx",
+          "fingerprints": [
+            "new HttpLink({",
+            "process.env.NEXT_PUBLIC_GRAPHQL_URL || \"http://localhost:3000/graphql\""
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+          "fingerprints": [
+            "fetch(`${backendUrl}/api/preferences/analysis`, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+          "fingerprints": [
+            "fetch(`${backendUrl}/api/form-fill/pdf`, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+          "fingerprints": [
+            "fetch(GRAPHQL_ENDPOINT, {",
+            "query: MCP_ACCESS_HISTORY_QUERY"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+          "fingerprints": [
+            "fetch(GRAPHQL_ENDPOINT, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
+          "fingerprints": [
+            "fetch(GRAPHQL_ENDPOINT, {",
+            "query: AUDIT_HISTORY_QUERY"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
+          "fingerprints": [
+            "const createResponse = await fetch(graphqlUrl, {",
+            "const setResponse = await fetch(graphqlUrl, {"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
+          "fingerprints": [
+            "link: new HttpLink({",
+            "uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql'"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+          "fingerprints": [
+            "const response = await fetch(graphqlUrl, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+          "fingerprints": [
+            "fetch(GRAPHQL_ENDPOINT, {",
+            "Authorization: `Bearer ${accessToken}`"
+          ]
+        }
+      ],
       "destination": "configured backend GraphQL and REST URLs",
       "payload": "bearer token and user requests/data",
       "defaultRuntime": true,
@@ -598,7 +841,22 @@
     },
     {
       "id": "orchestrator-backend",
-      "source": "apps/local-orchestrator/src/server/analysis-client.ts",
+      "sources": [
+        {
+          "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+          "fingerprints": [
+            "new URL('/api/preferences/analysis', this.options.backendUrl)",
+            "Authorization: `Bearer ${this.options.token}`"
+          ]
+        },
+        {
+          "path": "apps/local-orchestrator/src/server/apply-client.ts",
+          "fingerprints": [
+            "new URL('/graphql', this.options.backendUrl)",
+            "query: APPLY_SUGGESTIONS_MUTATION"
+          ]
+        }
+      ],
       "destination": "operator-supplied backend URL",
       "payload": "bearer token, complete files, suggestions, and evidence",
       "defaultRuntime": false,
@@ -609,7 +867,34 @@
     },
     {
       "id": "orchestrator-provider-cli",
-      "source": "apps/local-orchestrator/src/ai/command-adapter.ts",
+      "sources": [
+        {
+          "path": "apps/local-orchestrator/src/ai/command-adapter.ts",
+          "fingerprints": [
+            "spawn(command, commandArgs, {",
+            "child.stdin.end(input)"
+          ]
+        },
+        {
+          "path": "apps/local-orchestrator/scripts/claude-filter.mjs",
+          "fingerprints": [
+            "runProviderCommand('claude', args, prompt)"
+          ]
+        },
+        {
+          "path": "apps/local-orchestrator/scripts/codex-filter.mjs",
+          "fingerprints": [
+            "runProviderCommand('codex', args, prompt)"
+          ]
+        },
+        {
+          "path": "apps/local-orchestrator/scripts/filter-common.mjs",
+          "fingerprints": [
+            "const child = spawn(command, args, {",
+            "env: process.env"
+          ]
+        }
+      ],
       "destination": "operator command including hosted Claude/Codex wrappers",
       "payload": "inherited process environment, previews, suggestions, and values",
       "defaultRuntime": false,
@@ -620,13 +905,286 @@
     },
     {
       "id": "live-evaluation-providers",
-      "source": "examples/eval/scripts/generate.mjs",
-      "destination": "Vertex, Claude, Codex, OpenRouter, Hugging Face, or remote APIs",
+      "sources": [
+        {
+          "path": "examples/eval/scripts/generate.mjs",
+          "fingerprints": [
+            "new VertexAI({",
+            "generativeModel.generateContent({"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/claude-code-cli.mjs",
+          "fingerprints": [
+            "command = 'claude'",
+            "spawn(command, args, {"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/ingestor/client.mjs",
+          "fingerprints": [
+            "fetchImpl(graphqlUrl, {",
+            "fetchImpl(`${trimTrailingSlash(backendUrl)}/api/preferences/analysis`, {"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/fill-form.mjs",
+          "fingerprints": [
+            "new URL('/api/form-fill/pdf', backendUrl).toString()",
+            "fetchImpl(endpoint, {"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/exporter/client.mjs",
+          "fingerprints": [
+            "fetchImpl(graphqlUrl, {",
+            "authorization: `Bearer ${authToken}`"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/memory-snapshot/client.mjs",
+          "fingerprints": [
+            "fetchImpl(graphqlUrl, {",
+            "authorization: `Bearer ${authToken}`"
+          ]
+        },
+        {
+          "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+          "fingerprints": [
+            "spawn(invocation.file, invocation.args, {",
+            "mcp__${options.mcpServer}__*"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/dataset_sources.py",
+          "fingerprints": [
+            "DYNAMICMEM_DATASET_ID = \"xiewenya/dynamicmem\"",
+            "snapshot_download(",
+            "subprocess.run(",
+            "\"download\""
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+          "fingerprints": [
+            "STAGE_URL = \"http://stage-server:8765/next\"",
+            "urllib.request.urlopen(request, timeout=LLM_JUDGE_TIMEOUT_SEC)"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py",
+          "fingerprints": [
+            "DEFAULT_LLM_JUDGE_BASE_URL = \"https://openrouter.ai/api/v1\"",
+            "urllib.request.urlopen(request"
+          ]
+        }
+      ],
+      "destination": "Vertex, Claude, OpenRouter, Hugging Face, remote GraphQL/MCP, or operator-configured APIs",
       "payload": "synthetic fixtures, prompts, values, and operator tokens",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
         "06"
+      ]
+    },
+    {
+      "id": "harbor-bootstrap-and-live",
+      "sources": [
+        {
+          "path": "package.json",
+          "fingerprints": [
+            "\"eval-harbor:bootstrap\"",
+            "\"eval-harbor:smoke\"",
+            "\"eval-harbor:dynamicmem\""
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/bootstrap_runner.sh",
+          "fingerprints": [
+            "-m pip install --upgrade pip",
+            "-m pip install -r"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/run_smoke.sh",
+          "fingerprints": [
+            "docker info",
+            "\"${HARBOR_BIN}\" run"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+          "fingerprints": [
+            "docker info",
+            "\"${HARBOR_BIN}\" run"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/run_harbor_resamples.py",
+          "fingerprints": [
+            "subprocess.run(command, check=True)",
+            "args.harbor_bin",
+            "\"run\""
+          ]
+        }
+      ],
+      "destination": "Python package indexes, the Docker daemon, Harbor runtime, and configured evaluation agents/providers",
+      "payload": "dependency names, checked-in task/job configuration, inherited provider credentials and environment, evaluation prompts/results, and container/image metadata",
+      "defaultRuntime": false,
+      "disposition": "DEFER",
+      "ownerSteps": [
+        "02",
+        "06",
+        "09"
+      ],
+      "acceptanceQuestion": "Which offline installation and opt-in live-evaluation policy is acceptable for the local product and developer tooling?"
+    },
+    {
+      "id": "web-chat-support-call",
+      "sources": [
+        {
+          "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+          "fingerprints": [
+            "fetch('/api/chat', {",
+            "method: 'POST'"
+          ]
+        }
+      ],
+      "destination": "same-origin /api/chat support route, then the configured backend GraphQL API",
+      "payload": "browser session, bearer token, and user chat message",
+      "defaultRuntime": true,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "08"
+      ]
+    },
+    {
+      "id": "local-evaluation-subprocess",
+      "sources": [
+        {
+          "path": "examples/eval/scripts/eval-runner/backend.mjs",
+          "fingerprints": [
+            "const child = spawnProcess(",
+            "test/eval-runner/harness.ts"
+          ]
+        },
+        {
+          "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+          "fingerprints": [
+            "subprocess.run(",
+            "[\"python3\", str(scorer)]",
+            "env=env"
+          ]
+        }
+      ],
+      "destination": "repository-local backend evaluation harness and checked-in scorer subprocesses",
+      "payload": "synthetic run plans/fixtures, inherited environment, and temporary input/output paths",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
+      ]
+    },
+    {
+      "id": "auth0-test-token-scripts",
+      "sources": [
+        {
+          "path": "get-test-token.sh",
+          "fingerprints": [
+            "https://${AUTH0_DOMAIN}/oauth/token",
+            "client_secret"
+          ]
+        },
+        {
+          "path": "test-graphql.sh",
+          "fingerprints": [
+            "https://${AUTH0_DOMAIN}/oauth/token",
+            "grant_type"
+          ]
+        },
+        {
+          "path": "test-vertex-ai.sh",
+          "fingerprints": [
+            "TOKEN=$(./get-test-token.sh)",
+            "Authorization: Bearer $TOKEN"
+          ]
+        }
+      ],
+      "destination": "AUTH0_DOMAIN OAuth token endpoint",
+      "payload": "client ID, client secret, audience, and returned bearer token",
+      "defaultRuntime": false,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "03"
+      ]
+    },
+    {
+      "id": "operator-shell-backend-probes",
+      "sources": [
+        {
+          "path": "test-auth.sh",
+          "fingerprints": [
+            "API_URL=${API_URL:-http://localhost:3000/graphql}",
+            "Authorization: Bearer $TOKEN"
+          ]
+        },
+        {
+          "path": "test-document-upload.sh",
+          "fingerprints": [
+            "$BACKEND_URL/api/preferences/analysis",
+            "Authorization: Bearer $TOKEN"
+          ]
+        },
+        {
+          "path": "test-graphql.sh",
+          "fingerprints": [
+            "http://localhost:3000/graphql",
+            "Authorization: Bearer $TOKEN"
+          ]
+        },
+        {
+          "path": "test-vertex-ai.sh",
+          "fingerprints": [
+            "http://localhost:3000/graphql",
+            "askVertexAI"
+          ]
+        }
+      ],
+      "destination": "operator-configured or loopback hosted backend HTTP routes",
+      "payload": "bearer tokens, GraphQL operations, and illustrative document/preferences data",
+      "defaultRuntime": false,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "03",
+        "06",
+        "08"
+      ]
+    },
+    {
+      "id": "migration-gate-loopback-probes",
+      "sources": [
+        {
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "fingerprints": [
+            "net.connect({ host, port })",
+            "spawn(process.execPath, [\"dist/src/main.js\"]",
+            "const response = await fetch(url, { ...options, signal })"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/web-support-smoke.mjs",
+          "fingerprints": [
+            "const response = await fetch(url, {",
+            "redirect: \"manual\""
+          ]
+        }
+      ],
+      "destination": "ephemeral loopback-only backend, JWKS fixture, and web support-route smoke processes",
+      "payload": "synthetic signed token, contract probes, and public fixture data only",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "01"
       ]
     }
   ],
@@ -673,73 +1231,497 @@
     {
       "path": "test-auth.sh",
       "kind": "query",
-      "operation": "Query.me",
+      "operation": "TestAuthMe",
       "rootFields": [
         "me"
+      ],
+      "document": "query TestAuthMe { me { userId email } }",
+      "sourceFingerprints": [
+        "me { userId email"
       ]
     },
     {
       "path": "test-auth.sh",
       "kind": "query",
-      "operation": "Query.user",
+      "operation": "TestAuthUser",
       "rootFields": [
         "user"
+      ],
+      "document": "query TestAuthUser($id: ID!) { user(id: $id) { userId email } }",
+      "sourceFingerprints": [
+        "user(id:"
       ]
     },
     {
       "path": "test-auth.sh",
       "kind": "query",
-      "operation": "Query.activePreferences",
+      "operation": "TestAuthActivePreferences",
       "rootFields": [
         "activePreferences"
+      ],
+      "document": "query TestAuthActivePreferences { activePreferences { id slug value } }",
+      "sourceFingerprints": [
+        "activePreferences { id slug value }"
       ]
     },
     {
       "path": "test-graphql.sh",
       "kind": "query",
-      "operation": "Query.me",
+      "operation": "TestGraphqlMe",
       "rootFields": [
         "me"
+      ],
+      "document": "query TestGraphqlMe { me { userId email createdAt updatedAt } }",
+      "sourceFingerprints": [
+        "me { userId email createdAt updatedAt }"
       ]
     },
     {
       "path": "test-graphql.sh",
       "kind": "query",
-      "operation": "Query.user",
+      "operation": "TestGraphqlUser",
       "rootFields": [
         "user"
+      ],
+      "document": "query TestGraphqlUser($id: ID!) { user(id: $id) { userId email createdAt updatedAt } }",
+      "sourceFingerprints": [
+        "user(id:"
       ]
     },
     {
       "path": "test-graphql.sh",
       "kind": "query",
-      "operation": "Query.activePreferences",
+      "operation": "TestGraphqlActivePreferences",
       "rootFields": [
         "activePreferences"
+      ],
+      "document": "query TestGraphqlActivePreferences { activePreferences { id slug value } }",
+      "sourceFingerprints": [
+        "activePreferences { id slug value }"
       ]
     },
     {
       "path": "test-vertex-ai.sh",
       "kind": "query",
-      "operation": "Query.askVertexAI",
+      "operation": "TestVertexAi",
       "rootFields": [
         "askVertexAI"
+      ],
+      "document": "query TestVertexAi { askVertexAI(message: \"What is 2+2?\") }",
+      "sourceFingerprints": [
+        "askVertexAI(message:"
       ]
     },
     {
       "path": "docs/useful/local-orchestrator-commands.md",
       "kind": "query",
-      "operation": "Query.me",
+      "operation": "OperatorCurrentUser",
       "rootFields": [
         "me"
+      ],
+      "document": "query OperatorCurrentUser { me { userId email } }",
+      "sourceFingerprints": [
+        "query { me { userId email } }"
       ]
     },
     {
       "path": "docs/useful/local-orchestrator-commands.md",
       "kind": "query",
-      "operation": "Query.activePreferences",
+      "operation": "OperatorActivePreferences",
       "rootFields": [
         "activePreferences"
+      ],
+      "document": "query OperatorActivePreferences { activePreferences { id slug value status sourceType } }",
+      "sourceFingerprints": [
+        "query { activePreferences { id slug value status sourceType } }"
+      ]
+    }
+  ],
+  "fingerprintConsumers": [
+    {
+      "id": "web-document-analysis-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+      "method": "POST",
+      "route": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "/api/preferences/analysis",
+        "method: 'POST'",
+        "Authorization: `Bearer ${accessToken}`"
+      ]
+    },
+    {
+      "id": "web-form-fill-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+      "method": "POST",
+      "route": "/api/form-fill/pdf",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "/api/form-fill/pdf",
+        "method: 'POST'",
+        "Authorization: `Bearer ${accessToken}`"
+      ]
+    },
+    {
+      "id": "orchestrator-analysis-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+      "method": "POST",
+      "route": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "new URL('/api/preferences/analysis'",
+        "method: 'POST'",
+        "Authorization: `Bearer ${this.options.token}`"
+      ]
+    },
+    {
+      "id": "orchestrator-graphql-apply",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "apps/local-orchestrator/src/server/apply-client.ts",
+      "method": "POST",
+      "route": "/graphql",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "new URL('/graphql'",
+        "APPLY_SUGGESTIONS_MUTATION",
+        "Authorization: `Bearer ${this.options.token}`"
+      ]
+    },
+    {
+      "id": "eval-analysis-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "examples/eval/scripts/ingestor/client.mjs",
+      "method": "POST",
+      "route": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "/api/preferences/analysis",
+        "fetchImpl",
+        "authorization: `Bearer ${authToken}`"
+      ]
+    },
+    {
+      "id": "eval-form-fill-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "examples/eval/scripts/fill-form.mjs",
+      "method": "POST",
+      "route": "/api/form-fill/pdf",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "new URL('/api/form-fill/pdf'",
+        "fetchImpl(endpoint",
+        "authorization: `Bearer ${authToken}`"
+      ]
+    },
+    {
+      "id": "shell-document-analysis-upload",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "test-document-upload.sh",
+      "method": "POST",
+      "route": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "fingerprints": [
+        "$BACKEND_URL/api/preferences/analysis",
+        "Authorization: Bearer $TOKEN",
+        "-F \"file=@$TEST_FILE;type=text/plain\""
+      ]
+    },
+    {
+      "id": "external-graphql-consumers",
+      "contract": "http",
+      "kind": "external-unknown",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "external-unknown",
+      "access": "graphql-schema-dependent",
+      "method": "POST",
+      "route": "/graphql",
+      "affectedContracts": [
+        "http",
+        "graphql",
+        "catalog",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown external GraphQL clients are assumed to exist."
+      ]
+    },
+    {
+      "id": "external-health-monitors",
+      "contract": "http",
+      "kind": "external-unknown",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "external-monitor",
+      "access": "public-readiness",
+      "method": "GET",
+      "route": "/health",
+      "affectedContracts": [
+        "http",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown external health monitors are assumed to call `GET /health`."
+      ]
+    },
+    {
+      "id": "external-document-analysis-clients",
+      "contract": "http",
+      "kind": "external-unknown",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "external-unknown",
+      "access": "bearer-user-upload-contract",
+      "method": "POST",
+      "route": "/api/preferences/analysis",
+      "affectedContracts": [
+        "http",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown external REST upload clients are assumed to call `POST /api/preferences/analysis` and `POST /api/form-fill/pdf`."
+      ]
+    },
+    {
+      "id": "external-form-fill-clients",
+      "contract": "http",
+      "kind": "external-unknown",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "external-unknown",
+      "access": "bearer-user-upload-contract",
+      "method": "POST",
+      "route": "/api/form-fill/pdf",
+      "affectedContracts": [
+        "http",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown external REST upload clients are assumed to call `POST /api/preferences/analysis` and `POST /api/form-fill/pdf`."
+      ]
+    },
+    {
+      "id": "web-chat-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+      "method": "POST",
+      "route": "/api/chat",
+      "fingerprints": [
+        "fetch('/api/chat'",
+        "method: 'POST'"
+      ]
+    },
+    {
+      "id": "web-debug-token-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "method": "GET",
+      "route": "/api/debug/token",
+      "fingerprints": [
+        "http://localhost:3002/api/debug/token?format=json"
+      ]
+    },
+    {
+      "id": "web-auth-login-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "apps/web/app/page.tsx",
+      "method": "GET",
+      "route": "/auth/*",
+      "fingerprints": [
+        "href=\"/auth/login\""
+      ]
+    },
+    {
+      "id": "web-auth-logout-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "apps/web/app/dashboard/page.tsx",
+      "method": "GET",
+      "route": "/auth/*",
+      "fingerprints": [
+        "href=\"/auth/logout\""
+      ]
+    },
+    {
+      "id": "health-shell-auth",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "test-auth.sh",
+      "method": "GET",
+      "route": "/health",
+      "fingerprints": [
+        "curl -s http://localhost:3000/health | jq '.'"
+      ]
+    },
+    {
+      "id": "health-shell-graphql",
+      "contract": "http",
+      "kind": "http-route",
+      "path": "test-graphql.sh",
+      "method": "GET",
+      "route": "/health",
+      "fingerprints": [
+        "curl -s http://localhost:3000/health | jq '.'"
+      ]
+    },
+    {
+      "id": "mcp-http-setup",
+      "contract": "mcp",
+      "kind": "mcp-transport",
+      "path": "docs/useful/MCP_LOCAL_SETUP.md",
+      "method": "POST",
+      "route": "/mcp",
+      "fingerprints": [
+        "POST /mcp",
+        "http://localhost:3000/mcp"
+      ]
+    },
+    {
+      "id": "mcp-claude-auth-setup",
+      "contract": "mcp",
+      "kind": "mcp-auth",
+      "path": "docs/useful/MCP_LOCAL_SETUP.md",
+      "clientClass": "claude",
+      "access": "all-six-tools-and-schema",
+      "affectedContracts": [
+        "mcp",
+        "graphql",
+        "catalog",
+        "registry"
+      ],
+      "fingerprints": [
+        "--callback-port 8081",
+        "http://localhost:3000/mcp"
+      ]
+    },
+    {
+      "id": "mcp-codex-auth-setup",
+      "contract": "mcp",
+      "kind": "mcp-auth",
+      "path": "docs/useful/MCP_LOCAL_SETUP.md",
+      "clientClass": "codex",
+      "access": "all-six-tools-and-schema",
+      "affectedContracts": [
+        "mcp",
+        "graphql",
+        "catalog",
+        "registry"
+      ],
+      "fingerprints": [
+        "codex mcp login context-router-local",
+        "--url http://localhost:3000/mcp"
+      ]
+    },
+    {
+      "id": "eval-mcp-tool-wildcard",
+      "contract": "mcp",
+      "kind": "mcp-transport",
+      "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+      "method": "POST",
+      "route": "/mcp",
+      "fingerprints": [
+        "mcp__${options.mcpServer}__*",
+        "--strict-mcp-config"
+      ]
+    },
+    {
+      "id": "harbor-mcp-list-slugs",
+      "contract": "mcp",
+      "kind": "mcp-tool",
+      "path": "examples/eval-harbor/modes/cr-mcp.md",
+      "tool": "listPreferenceSlugs",
+      "fingerprints": [
+        "Call `listPreferenceSlugs`",
+        "exact slugs returned by `listPreferenceSlugs`"
+      ]
+    },
+    {
+      "id": "harbor-mcp-mutate-preferences",
+      "contract": "mcp",
+      "kind": "mcp-tool",
+      "path": "examples/eval-harbor/modes/cr-mcp.md",
+      "tool": "mutatePreferences",
+      "fingerprints": [
+        "Call `mutatePreferences`",
+        "state has been written with `mutatePreferences`"
+      ]
+    },
+    {
+      "id": "restart-smoke-mcp-list-slugs",
+      "contract": "mcp",
+      "kind": "mcp-tool",
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "tool": "listPreferenceSlugs",
+      "fingerprints": [
+        "params: { name: \"listPreferenceSlugs\", arguments: {} }"
+      ]
+    },
+    {
+      "id": "mcp-fallback-auth-class",
+      "contract": "mcp",
+      "kind": "mcp-auth",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "fallback",
+      "access": "five-read-tools-and-schema",
+      "affectedContracts": [
+        "mcp",
+        "graphql",
+        "catalog",
+        "registry"
+      ],
+      "fingerprints": [
+        "read-narrowed recognized client can see the five read tools."
+      ]
+    },
+    {
+      "id": "mcp-unknown-auth-class",
+      "contract": "mcp",
+      "kind": "mcp-auth",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "unknown",
+      "access": "zero-tools-zero-resources",
+      "affectedContracts": [
+        "mcp",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown clients",
+        "see no tools or resources."
+      ]
+    },
+    {
+      "id": "mcp-graphql-schema-resource",
+      "contract": "mcp",
+      "kind": "mcp-resource",
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "resource": "schema://graphql",
+      "fingerprints": [
+        "params: { uri: \"schema://graphql\" }"
+      ]
+    },
+    {
+      "id": "mcp-external-unknown",
+      "contract": "mcp",
+      "kind": "external-unknown",
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "clientClass": "external-unknown",
+      "access": "zero-tools-zero-resources",
+      "affectedContracts": [
+        "mcp",
+        "registry"
+      ],
+      "fingerprints": [
+        "Unknown clients",
+        "see no tools or resources."
       ]
     }
   ],
@@ -1080,6 +2062,1062 @@
         "me",
         "suggestedPreferences"
       ]
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "kind": "query",
+      "operation": "HostedBaselineCatalog",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "kind": "query",
+      "operation": "HostedBaselineGuardedCatalog",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "kind": "query",
+      "operation": "HostedBaselinePrincipal",
+      "rootFields": [
+        "me"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "kind": "query",
+      "operation": "HostedBaselinePublic",
+      "rootFields": [
+        "__typename"
+      ]
+    }
+  ],
+  "contractReferences": [
+    {
+      "path": "apps/backend/.env.example",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/oauth/register"
+    },
+    {
+      "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "apps/local-orchestrator/src/server/apply-client.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/.env.example",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/chat"
+    },
+    {
+      "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "apps/web/app/dashboard/form-fill/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/debug/token"
+    },
+    {
+      "path": "apps/web/app/dashboard/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "apps/web/app/page.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/codegen.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/lib/apollo-client.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/lib/apollo-wrapper.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/current/AUDIT_AND_ACCESS_HISTORY.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "docs/current/DOCUMENT_ANALYSIS.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "docs/current/FORM_FILL.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "mcp",
+      "kind": "resource",
+      "reference": "schema://graphql"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "resource",
+      "reference": "schema://graphql"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "consolidateSchema"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPermissionGrants"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "docs/current/MCP_AUTHORIZATION.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "docs/current/PREFERENCE_SCHEMA.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "consolidateSchema"
+    },
+    {
+      "path": "docs/current/PREFERENCE_SCHEMA.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "docs/current/PREFERENCE_SCHEMA.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "docs/current/PREFERENCE_SCHEMA.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "docs/current/WORKFLOWS.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "consolidateSchema"
+    },
+    {
+      "path": "docs/current/WORKFLOWS.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "docs/IMPORTANT/CURRENT_STATE.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "consolidateSchema"
+    },
+    {
+      "path": "docs/IMPORTANT/CURRENT_STATE.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "docs/plans/active/local-migration/orchestration.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "docs/useful/CLOUD_RUN_DEPLOY.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/debug/token"
+    },
+    {
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/useful/MCP_LOCAL_SETUP.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "examples/eval-harbor/modes/cr-mcp.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "examples/eval-harbor/modes/cr-mcp.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "examples/eval-harbor/modes/cr-mcp.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "examples/eval-harbor/scripts/sensitive_policy.py",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "examples/eval/README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "examples/eval/README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/claude-code-direct-packet.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/direct-open-schema-packet.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/e2e-known-schema.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/e2e-mcp-packet.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/export-memory-snapshot.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/export-stored-preferences.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/fill-form.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "examples/eval/scripts/ingest-documents.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/client.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "examples/simple-eval-example-1/intermediary-files/json-mime-smoke.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "get-test-token.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "README.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/.well-known/oauth-authorization-server"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/.well-known/oauth-authorization-server/mcp"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/.well-known/oauth-protected-resource"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/.well-known/oauth-protected-resource/mcp"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/oauth/register"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "mcp",
+      "kind": "resource",
+      "reference": "schema://graphql"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/chat"
+    },
+    {
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/debug/token"
+    },
+    {
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "test-auth.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "test-auth.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "test-document-upload.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "test-graphql.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "test-graphql.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "test-vertex-ai.sh",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    }
+  ],
+  "outboundSinkInventory": [
+    {
+      "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
+      "sinks": {
+        "auth0-authentication": 1,
+        "auth0-management": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
+      "sinks": {
+        "postgresql": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts",
+      "sinks": {
+        "vertex-ai": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/mcp/auth/mcp-auth.guard.ts",
+      "sinks": {
+        "auth0-jwks": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
+      "sinks": {
+        "auth0-jwks": 1
+      }
+    },
+    {
+      "path": "apps/local-orchestrator/scripts/filter-common.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/local-orchestrator/src/ai/command-adapter.ts",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/local-orchestrator/src/server/apply-client.ts",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
+      "sinks": {
+        "fetch": 2
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
+      "sinks": {
+        "fetch": 2
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
+      "sinks": {
+        "fetch": 2
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
+      "sinks": {
+        "apollo-http-link": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "sinks": {
+        "fetch": 4
+      }
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/lib/apollo-client.ts",
+      "sinks": {
+        "apollo-http-link": 1
+      }
+    },
+    {
+      "path": "apps/web/lib/apollo-wrapper.tsx",
+      "sinks": {
+        "apollo-http-link": 1
+      }
+    },
+    {
+      "path": "apps/web/lib/auth0.ts",
+      "sinks": {
+        "auth0-browser": 1
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/bootstrap_runner.sh",
+      "sinks": {
+        "pip-install": 2
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+      "sinks": {
+        "python-urlopen": 5
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+      "sinks": {
+        "python-subprocess": 2
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/dataset_sources.py",
+      "sinks": {
+        "huggingface-download": 1,
+        "python-subprocess": 1
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+      "sinks": {
+        "docker": 1,
+        "harbor": 1
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/run_harbor_resamples.py",
+      "sinks": {
+        "python-subprocess": 1
+      }
+    },
+    {
+      "path": "examples/eval-harbor/scripts/run_smoke.sh",
+      "sinks": {
+        "docker": 1,
+        "harbor": 1
+      }
+    },
+    {
+      "path": "examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py",
+      "sinks": {
+        "python-urlopen": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/claude-code-cli.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/eval-runner/backend.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/exporter/client.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/fill-form.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/generate.mjs",
+      "sinks": {
+        "vertex-ai": 1
+      }
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/client.mjs",
+      "sinks": {
+        "fetch": 2
+      }
+    },
+    {
+      "path": "examples/eval/scripts/memory-snapshot/client.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "get-test-token.sh",
+      "sinks": {
+        "curl": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/restart-smoke.mjs",
+      "sinks": {
+        "fetch": 1,
+        "net-connect": 1,
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "test-auth.sh",
+      "sinks": {
+        "curl": 5
+      }
+    },
+    {
+      "path": "test-document-upload.sh",
+      "sinks": {
+        "curl": 1
+      }
+    },
+    {
+      "path": "test-graphql.sh",
+      "sinks": {
+        "curl": 5
+      }
+    },
+    {
+      "path": "test-vertex-ai.sh",
+      "sinks": {
+        "curl": 1
+      }
     }
   ]
 }

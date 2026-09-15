@@ -3,18 +3,23 @@
 import { createHash, randomBytes } from "node:crypto";
 import { promises as dns } from "node:dns";
 import {
+  chmod,
   copyFile,
   lstat,
+  mkdtemp,
   mkdir,
+  open,
   readFile,
   readdir,
   readlink,
   realpath,
+  rename,
+  rm,
   stat,
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { createWriteStream } from "node:fs";
+import { constants as fsConstants, createWriteStream } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -23,6 +28,41 @@ const DATABASE_NAME_PATTERN = /^context_router_[a-f0-9]{8,64}_test$/;
 const FULL_SHA_PATTERN = /^[a-f0-9]{40}$/;
 const LIVE_PROVIDER_PATTERN =
   /(?:--provider(?:=|\s+)(?:vertex|claude|codex|openrouter)|\blive[-_:]|eval-harbor:smoke|run_smoke|bootstrap_runner|docker\s+pull|pnpm\s+install|npm\s+install)/i;
+const APPROVED_HOSTED_COMMANDS = new Map([
+  ["contract-baseline", [
+    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs"],
+    ["node", "scripts/local-migration/check-contract-baseline.mjs"],
+  ]],
+  ["documentation", [
+    ["node", "--test", "scripts/check-markdown-links.test.mjs"],
+    ["node", "scripts/check-markdown-links.mjs"],
+  ]],
+  ["backend-unit-build", [
+    ["pnpm", "--filter", "backend", "prisma:generate"],
+    ["pnpm", "--filter", "backend", "typecheck:seed"],
+    ["pnpm", "--filter", "backend", "build"],
+    ["pnpm", "--filter", "backend", "test:unit"],
+  ]],
+  ["backend-database", [
+    ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],
+    ["pnpm", "--filter", "backend", "test:integration"],
+    ["pnpm", "--filter", "backend", "test:e2e:tests-only"],
+  ]],
+  ["local-orchestrator", [
+    ["pnpm", "--filter", "local-orchestrator", "test"],
+    ["pnpm", "--filter", "local-orchestrator", "lint"],
+    ["pnpm", "--filter", "local-orchestrator", "build"],
+  ]],
+  ["eval-fixtures", [["pnpm", "eval:verify"]]],
+  ["eval-deterministic-scenarios", [
+    ["pnpm", "eval:run", "--scenario", "samir-desai-i9-template-smoke"],
+    ["pnpm", "eval:run", "--scenario", "elena-marquez-i9-template-smoke"],
+  ]],
+  ["web-production-build", [["pnpm", "--filter", "web", "build"]]],
+  ["harbor-static", [["bash", "examples/eval-harbor/scripts/check_static.sh"]]],
+  ["restart-smoke", [["node", "scripts/local-migration/restart-smoke.mjs"]]],
+  ["repository-integrity", [["node", "scripts/local-migration/check-generated-integrity.mjs"]]],
+]);
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -31,8 +71,12 @@ function escapeRegExp(value) {
 export function redactSecrets(value, canaries = []) {
   let redacted = String(value ?? "");
   redacted = redacted.replace(
-    /(postgres(?:ql)?:\/\/)([^\s/@]+(?::[^\s/@]*)?)@/gi,
+    /\b([a-z][a-z0-9+.-]*:\/\/)([^\s/@?#]+(?::[^\s/@?#]*)?)@/gi,
     "$1<redacted>@",
+  );
+  redacted = redacted.replace(
+    /([?&](?:access[_-]?token|api[_-]?key|authorization|client[_-]?secret|password|token)=)[^&#\s]*/gi,
+    "$1<redacted>",
   );
   redacted = redacted.replace(
     /\b(Authorization\s*:\s*)Bearer\s+[^\s,"']+/gi,
@@ -44,7 +88,7 @@ export function redactSecrets(value, canaries = []) {
     "<redacted-jwt>",
   );
   redacted = redacted.replace(
-    /\b([A-Z][A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|API_KEY)[A-Z0-9_]*\s*=\s*)[^\s]+/g,
+    /\b([A-Z_][A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|API_KEY)[A-Z0-9_]*\s*=\s*)[^\s]+/gi,
     "$1<redacted>",
   );
   for (const canary of canaries) {
@@ -132,11 +176,10 @@ function sanitizedEndpoint(parsed) {
   return clone.toString();
 }
 
-export async function assertSafePostgresEndpoint(
+export async function validatePostgresEndpointBeforeConnect(
   rawUrl,
   {
     lookup = (hostname) => dns.lookup(hostname, { all: true, verbatim: true }),
-    inspectPeer,
   } = {},
 ) {
   let parsed;
@@ -151,20 +194,31 @@ export async function assertSafePostgresEndpoint(
   if (parsed.searchParams.has("schema")) {
     throw new Error("PostgreSQL schema parameter is forbidden; the gate requires an isolated database public schema");
   }
+  for (const parameter of ["host", "port"]) {
+    if (parsed.searchParams.getAll(parameter).length > 1) {
+      throw new Error(`duplicate PostgreSQL ${parameter} parameter is forbidden`);
+    }
+  }
 
   const unixSocket = parsed.searchParams.get("host");
   if (unixSocket) {
     if (!path.isAbsolute(unixSocket) || unixSocket.includes("\0")) {
       throw new Error("PostgreSQL Unix socket host must be an absolute local path");
     }
-    const peer = inspectPeer ? await inspectPeer(rawUrl) : null;
-    if (peer) {
-      throw new Error("PostgreSQL Unix socket inspection unexpectedly reported a TCP peer");
-    }
-    return { parsed, hostname: parsed.hostname, unixSocket, endpoint: sanitizedEndpoint(parsed) };
+    const normalized = new URL(parsed);
+    normalized.searchParams.delete("host");
+    normalized.searchParams.set("host", unixSocket);
+    return {
+      parsed,
+      hostname: parsed.hostname,
+      unixSocket,
+      addresses: [],
+      endpoint: sanitizedEndpoint(parsed),
+      normalizedConnectionString: normalized.toString(),
+    };
   }
 
-  const hostname = parsed.hostname;
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
   if (!hostname) throw new Error("PostgreSQL administration URL has no host");
   const addresses = net.isIP(hostname)
     ? [{ address: hostname, family: net.isIP(hostname) }]
@@ -176,16 +230,56 @@ export async function assertSafePostgresEndpoint(
       `refusing PostgreSQL endpoint with non-loopback DNS address ${unsafe.address}: ${sanitizedEndpoint(parsed)}`,
     );
   }
+  return {
+    parsed,
+    hostname,
+    unixSocket: null,
+    addresses,
+    endpoint: sanitizedEndpoint(parsed),
+  };
+}
+
+export function pinPostgresConnectionString(rawUrl, endpoint) {
+  if (endpoint.unixSocket) return endpoint.normalizedConnectionString;
+  const address = endpoint.addresses?.[0]?.address;
+  if (!isLoopbackAddress(address)) {
+    throw new Error("cannot pin PostgreSQL connection without a validated loopback address");
+  }
+  const parsed = new URL(rawUrl);
+  parsed.hostname = net.isIP(address) === 6 ? `[${address}]` : address;
+  return parsed.toString();
+}
+
+export function assertConnectedPostgresPeer(endpoint, peerAddress) {
+  if (endpoint.unixSocket) {
+    if (peerAddress) {
+      throw new Error("PostgreSQL Unix socket inspection unexpectedly reported a TCP peer");
+    }
+    return;
+  }
+  if (!isLoopbackAddress(peerAddress)) {
+    throw new Error(
+      `connected PostgreSQL peer is not loopback (${peerAddress ?? "unknown"}): ${endpoint.endpoint}`,
+    );
+  }
+}
+
+export async function assertSafePostgresEndpoint(
+  rawUrl,
+  {
+    lookup = (hostname) => dns.lookup(hostname, { all: true, verbatim: true }),
+    inspectPeer,
+  } = {},
+) {
+  const endpoint = await validatePostgresEndpointBeforeConnect(rawUrl, {
+    lookup,
+  });
   if (!inspectPeer) {
     throw new Error("PostgreSQL endpoint safety requires inspection of the connected socket peer");
   }
   const peerAddress = await inspectPeer(rawUrl);
-  if (!isLoopbackAddress(peerAddress)) {
-    throw new Error(
-      `connected PostgreSQL peer is not loopback (${peerAddress ?? "unknown"}): ${sanitizedEndpoint(parsed)}`,
-    );
-  }
-  return { parsed, hostname, unixSocket: null, endpoint: sanitizedEndpoint(parsed) };
+  assertConnectedPostgresPeer(endpoint, peerAddress);
+  return endpoint;
 }
 
 export async function assertServerVerifiedTestDatabase(
@@ -210,6 +304,10 @@ export async function validateMergeBase(candidate, git) {
   if (/^0+$/.test(baseSha)) {
     throw new Error("migration gate base must not be an all-zero SHA");
   }
+  const shallow = await git(["rev-parse", "--is-shallow-repository"]);
+  if (shallow.exitCode !== 0 || String(shallow.stdout).trim() !== "false") {
+    throw new Error("migration gate requires complete, non-shallow Git history");
+  }
   const available = await git(["cat-file", "-e", `${baseSha}^{commit}`]);
   if (available.exitCode !== 0) {
     throw new Error(`migration gate base ${baseSha} is not available as a commit; fetch full history first`);
@@ -221,7 +319,10 @@ export async function validateMergeBase(candidate, git) {
   return baseSha;
 }
 
-export function validatePhaseManifest(manifest) {
+export function validatePhaseManifest(
+  manifest,
+  { decisionExists = () => false } = {},
+) {
   const errors = [];
   if (manifest?.schemaVersion !== 1) errors.push("phase manifest schemaVersion must be 1");
   if (!Array.isArray(manifest?.supportedModes) || !manifest.supportedModes.length) {
@@ -232,9 +333,65 @@ export function validatePhaseManifest(manifest) {
     return errors;
   }
   const ids = new Set();
-  const supportedModes = new Set(manifest.supportedModes ?? []);
+  const supportedModeRecords = Array.isArray(manifest.supportedModes)
+    ? manifest.supportedModes
+    : [];
+  const supportedModes = new Set();
+  const activeModes = new Set();
+  const modesById = new Map();
+  for (const mode of supportedModeRecords) {
+    if (!mode?.id) {
+      errors.push("supported mode lacks an id");
+      continue;
+    }
+    if (supportedModes.has(mode.id)) {
+      errors.push(`duplicate supported mode ${mode.id}`);
+      continue;
+    }
+    supportedModes.add(mode.id);
+    modesById.set(mode.id, mode);
+    if (!new Set(["active", "retired"]).has(mode.status)) {
+      errors.push(`supported mode ${mode.id} has invalid lifecycle status`);
+    } else if (mode.status === "active") {
+      activeModes.add(mode.id);
+    }
+    if (!Array.isArray(mode.successorModes)) {
+      errors.push(`supported mode ${mode.id} lacks successor mode metadata`);
+    } else if (mode.status === "active" && mode.successorModes.length) {
+      errors.push(`active supported mode ${mode.id} must not declare successor modes`);
+    } else if (
+      mode.status === "retired" &&
+      mode.successorModes.length !== 1
+    ) {
+      errors.push(`retired supported mode ${mode.id} requires exactly one active successor mode`);
+    }
+  }
+  for (const mode of supportedModeRecords) {
+    if (!mode?.id || mode.status !== "retired") continue;
+    for (const successorId of mode.successorModes ?? []) {
+      const successor = modesById.get(successorId);
+      if (!successor || successor.status !== "active") {
+        errors.push(
+          `retired supported mode ${mode.id} has invalid active successor ${successorId}`,
+        );
+      }
+    }
+  }
+  const coreEvidenceClasses = new Set([
+    "contract",
+    "build",
+    "state",
+    "restart",
+    "integrity",
+  ]);
+  const decisionEvidenceClasses = new Set([
+    "documentation",
+    "tooling",
+    "evaluation",
+    "research",
+  ]);
   const roadmapOwners = new Set(
-    Array.from({ length: 10 }, (_, index) => String(index + 1).padStart(2, "0")),
+    Array.from({ length: 11 }, (_, index) => String(index + 1).padStart(2, "0")),
   );
   for (const [index, phase] of manifest.phases.entries()) {
     if (!phase.id || ids.has(phase.id)) errors.push(`phase ${index + 1} has a missing or duplicate id`);
@@ -245,14 +402,18 @@ export function validatePhaseManifest(manifest) {
     if (!Number.isInteger(phase.timeoutMs) || phase.timeoutMs <= 0) errors.push(`phase ${phase.id ?? index + 1} has an invalid timeout`);
     if (!Array.isArray(phase.modes) || !phase.modes.length) errors.push(`phase ${phase.id ?? index + 1} has no supported mode`);
     for (const mode of phase.modes ?? []) {
-      if (!supportedModes.has(mode)) errors.push(`phase ${phase.id ?? index + 1} references unknown mode ${mode}`);
+      if (!supportedModes.has(mode)) {
+        errors.push(`phase ${phase.id ?? index + 1} references unknown mode ${mode}`);
+      } else if (phase.status === "active" && !activeModes.has(mode)) {
+        errors.push(`active phase ${phase.id ?? index + 1} references non-active mode ${mode}`);
+      }
     }
     if (!Array.isArray(phase.predecessors)) errors.push(`phase ${phase.id ?? index + 1} lacks predecessor metadata`);
+    if (!Array.isArray(phase.evidenceClasses) || !phase.evidenceClasses.length) errors.push(`phase ${phase.id ?? index + 1} lacks evidence classes`);
     if (!Array.isArray(phase.replacementEvidence)) errors.push(`phase ${phase.id ?? index + 1} lacks replacement evidence metadata`);
     if (phase.status === "retired" && !phase.replacementEvidence?.length) errors.push(`retired phase ${phase.id ?? index + 1} requires replacement evidence`);
-    for (const evidence of phase.replacementEvidence ?? []) {
-      if (typeof evidence !== "string" || !evidence.trim()) errors.push(`phase ${phase.id ?? index + 1} has invalid replacement evidence`);
-    }
+    if (phase.status === "active" && phase.replacementEvidence?.length) errors.push(`active phase ${phase.id ?? index + 1} must not declare replacement evidence`);
+    if (phase.kind === "restart-smoke" && !phase.evidenceClasses?.includes("restart")) errors.push(`restart smoke ${phase.id ?? index + 1} must provide restart evidence`);
     if (!phase.retirementCondition) errors.push(`phase ${phase.id ?? index + 1} lacks a retirement condition`);
     if (!Array.isArray(phase.commands) || !phase.commands.length) errors.push(`phase ${phase.id ?? index + 1} has no commands`);
     for (const command of phase.commands ?? []) {
@@ -262,24 +423,478 @@ export function validatePhaseManifest(manifest) {
       }
     }
   }
+  const phasesById = new Map(
+    manifest.phases.map((phase) => [phase.id, phase]),
+  );
   for (const [index, phase] of manifest.phases.entries()) {
     for (const predecessor of phase.predecessors ?? []) {
       const predecessorIndex = manifest.phases.findIndex((item) => item.id === predecessor);
       if (predecessorIndex < 0 || predecessorIndex >= index) {
         errors.push(`phase ${phase.id} has an invalid predecessor ${predecessor}`);
+      } else if (
+        phase.status === "active" &&
+        manifest.phases[predecessorIndex].status !== "active"
+      ) {
+        errors.push(`active phase ${phase.id} has retired predecessor ${predecessor}`);
+      }
+    }
+    const coveredPairs = new Set();
+    for (const evidence of phase.replacementEvidence ?? []) {
+      if (evidence?.kind === "phase") {
+        const successor = phasesById.get(evidence.phaseId);
+        const modesCoveredBySuccessor = (evidence.coveredModes ?? []).every(
+          (mode) => {
+            const modeRecord = modesById.get(mode);
+            if (!modeRecord) return false;
+            const requiredSuccessorModes =
+              modeRecord.status === "retired"
+                ? modeRecord.successorModes ?? []
+                : [mode];
+            return requiredSuccessorModes.some(
+              (successorMode) =>
+                activeModes.has(successorMode) &&
+                successor?.modes?.includes(successorMode),
+            );
+          },
+        );
+        const valid =
+          successor &&
+          successor.status === "active" &&
+          modesCoveredBySuccessor &&
+          (evidence.evidenceClasses ?? []).every((evidenceClass) =>
+            successor.evidenceClasses?.includes(evidenceClass),
+          );
+        if (!valid) {
+          errors.push(`phase ${phase.id} has invalid or unresolved replacement evidence`);
+          continue;
+        }
+      } else if (evidence?.kind === "decision") {
+        const validClasses = (evidence.evidenceClasses ?? []).every(
+          (evidenceClass) => decisionEvidenceClasses.has(evidenceClass),
+        );
+        const validModes = (evidence.coveredModes ?? []).every((mode) =>
+          supportedModes.has(mode),
+        );
+        if (
+          !validClasses ||
+          !validModes ||
+          !decisionExists(evidence.path, evidence.decisionId)
+        ) {
+          errors.push(`phase ${phase.id} has invalid or unresolved decision evidence`);
+          continue;
+        }
+      } else {
+        errors.push(`phase ${phase.id} has invalid replacement evidence`);
+        continue;
+      }
+      for (const mode of evidence.coveredModes ?? []) {
+        for (const evidenceClass of evidence.evidenceClasses ?? []) {
+          coveredPairs.add(`${mode}\0${evidenceClass}`);
+        }
+      }
+    }
+    if (phase.status === "retired") {
+      for (const mode of phase.modes ?? []) {
+        for (const evidenceClass of phase.evidenceClasses ?? []) {
+          if (!coveredPairs.has(`${mode}\0${evidenceClass}`)) {
+            errors.push(
+              `retired phase ${phase.id} lacks replacement evidence for ${mode}/${evidenceClass}`,
+            );
+          }
+        }
       }
     }
   }
-  for (const mode of manifest.supportedModes ?? []) {
+  for (const mode of supportedModeRecords) {
+    if (!mode?.id) continue;
+    for (const required of coreEvidenceClasses) {
+      if (!(mode.requiredEvidenceClasses ?? []).includes(required)) {
+        errors.push(`supported mode ${mode.id} omits required ${required} evidence class`);
+      }
+    }
+    if (mode.status !== "active") continue;
+    const availableEvidence = new Set(
+      manifest.phases
+        .filter(
+          (phase) =>
+            phase.status === "active" && phase.modes?.includes(mode.id),
+        )
+        .flatMap((phase) => phase.evidenceClasses ?? []),
+    );
+    for (const required of mode.requiredEvidenceClasses ?? []) {
+      if (!availableEvidence.has(required)) {
+        errors.push(`supported mode ${mode.id} has no active ${required} evidence`);
+      }
+    }
     const hasSmoke = manifest.phases.some(
       (phase) =>
         phase.status === "active" &&
         phase.kind === "restart-smoke" &&
-        phase.modes?.includes(mode),
+        phase.modes?.includes(mode.id),
     );
-    if (!hasSmoke) errors.push(`supported mode ${mode} has no restart smoke`);
+    if (!hasSmoke) errors.push(`supported mode ${mode.id} has no restart smoke`);
   }
   return [...new Set(errors)];
+}
+
+function acceptedDecisionStatus(content, decisionId) {
+  const heading = new RegExp(
+    `^### ${decisionId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:.*$`,
+    "m",
+  );
+  const match = heading.exec(content);
+  if (!match) return false;
+  const sectionStart = match.index + match[0].length;
+  const remainder = content.slice(sectionStart);
+  const nextDecision = remainder.search(/^### LM-[0-9]{3}:/m);
+  const section = nextDecision < 0 ? remainder : remainder.slice(0, nextDecision);
+  return /^- Status:\s*Accepted\s*$/m.test(section);
+}
+
+export async function loadAcceptedDecisionEvidence(repositoryRoot, manifest) {
+  const repositoryReal = await realpath(repositoryRoot);
+  const statuses = new Map();
+  const decisionEvidence = (manifest.phases ?? [])
+    .flatMap((phase) => phase.replacementEvidence ?? [])
+    .filter((evidence) => evidence?.kind === "decision");
+  for (const evidence of decisionEvidence) {
+    assertSafeRelativePath(evidence.path);
+    const candidate = path.resolve(repositoryReal, evidence.path);
+    if (!pathIsWithin(repositoryReal, candidate)) {
+      throw new Error(`decision evidence escapes repository: ${evidence.path}`);
+    }
+    const info = await lstat(candidate).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (!info || !info.isFile() || info.isSymbolicLink()) {
+      throw new Error(
+        `decision evidence must be an existing regular repository file: ${evidence.path}`,
+      );
+    }
+    const candidateReal = await realpath(candidate);
+    if (!pathIsWithin(repositoryReal, candidateReal)) {
+      throw new Error(`decision evidence escapes repository: ${evidence.path}`);
+    }
+    const content = await readFile(candidateReal, "utf8");
+    statuses.set(
+      `${evidence.path}\0${evidence.decisionId}`,
+      acceptedDecisionStatus(content, evidence.decisionId),
+    );
+  }
+  return (evidencePath, decisionId) =>
+    statuses.get(`${evidencePath}\0${decisionId}`) === true;
+}
+
+export function validateApprovedPhaseCommands(manifest) {
+  const errors = [];
+  const supportedModeIds = (manifest.supportedModes ?? []).map((mode) => mode?.id);
+  if (!jsonArrayEqual(supportedModeIds, ["hosted-baseline"])) {
+    errors.push("version-one command policy supports exactly hosted-baseline");
+  }
+  const activePhases = (manifest.phases ?? []).filter(
+    (phase) => phase.status === "active",
+  );
+  const hostedPhases = (manifest.phases ?? []).filter(
+    (phase) =>
+      phase.status === "active" && phase.modes?.includes("hosted-baseline"),
+  );
+  const hostedIds = hostedPhases.map((phase) => phase.id);
+  if (!jsonArrayEqual(hostedIds, [...APPROVED_HOSTED_COMMANDS.keys()])) {
+    errors.push("hosted-baseline phase set/order differs from the approved command policy");
+  }
+  if (!jsonArrayEqual(activePhases.map((phase) => phase.id), hostedIds)) {
+    errors.push("active phase exists outside the approved hosted-baseline command policy");
+  }
+  for (const phase of hostedPhases) {
+    const actual = (phase.commands ?? []).map((command) => command.argv);
+    const expected = APPROVED_HOSTED_COMMANDS.get(phase.id);
+    if (!expected || !jsonArrayEqual(actual, expected)) {
+      errors.push(`phase ${phase.id} command matrix differs from approved policy`);
+    }
+  }
+  for (const phase of manifest.phases ?? []) {
+    for (const command of phase.commands ?? []) {
+      const argv = command.argv ?? [];
+      if (
+        (["sh", "bash", "zsh"].includes(argv[0]) && argv[1] === "-c") ||
+        (argv[0] === "node" && new Set(["-e", "--eval", "-p", "--print"]).has(argv[1]))
+      ) {
+        errors.push(`phase ${phase.id} contains prohibited shell/eval indirection`);
+      }
+    }
+  }
+  return [...new Set(errors)];
+}
+
+function jsonArrayEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+export class GateCancellationError extends Error {
+  constructor(signalName) {
+    super(`received ${signalName}`);
+    this.name = "GateCancellationError";
+    this.signal = signalName;
+    this.exitCode = signalName === "SIGINT" ? 130 : 143;
+  }
+}
+
+export function createSignalAbortController(processLike = process) {
+  const controller = new AbortController();
+  const listeners = new Map();
+  for (const signalName of ["SIGINT", "SIGTERM"]) {
+    const listener = () => {
+      if (!controller.signal.aborted) {
+        controller.abort(new GateCancellationError(signalName));
+      }
+    };
+    listeners.set(signalName, listener);
+    processLike.on(signalName, listener);
+  }
+  return {
+    signal: controller.signal,
+    dispose() {
+      for (const [signalName, listener] of listeners) {
+        processLike.off(signalName, listener);
+      }
+      listeners.clear();
+    },
+  };
+}
+
+export function buildPhaseEnvironment(base, phaseId, values) {
+  const productionBuildCommands = new Set([
+    JSON.stringify(["pnpm", "--filter", "backend", "build"]),
+    JSON.stringify(["pnpm", "--filter", "web", "build"]),
+  ]);
+  const environment = {
+    ...base,
+    NODE_ENV: productionBuildCommands.has(JSON.stringify(values.commandArgv ?? []))
+      ? "production"
+      : "test",
+  };
+  if (phaseId === "contract-baseline" && values.exposeBaseArtifacts) {
+    environment.MIGRATION_GATE_BASE_SHA = values.baseSha;
+    environment.MIGRATION_GATE_BASELINE_DIR = values.baseDirectory;
+    environment.MIGRATION_GATE_BASELINE_MANIFEST_SHA256 =
+      values.baseManifestSha256;
+  }
+  if (
+    new Set([
+      "backend-unit-build",
+      "backend-database",
+      "eval-deterministic-scenarios",
+    ]).has(phaseId)
+  ) {
+    environment.DATABASE_URL = values.databaseUrl;
+  }
+  if (phaseId === "restart-smoke") {
+    environment.MIGRATION_TEST_ADMIN_URL = values.administrationUrl;
+    environment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR = path.join(
+      values.diagnosticsDirectory,
+      "restart-smoke",
+    );
+  }
+  if (phaseId === "harbor-static") {
+    environment.PYTHON_BIN = values.pythonBin;
+    environment.PYTHONPYCACHEPREFIX = values.pythonCacheDirectory;
+  }
+  if (phaseId === "repository-integrity") {
+    environment.MIGRATION_GATE_TRACKED_SDL_SHA256 = values.trackedSdlSha256;
+    environment.MIGRATION_GATE_DIAGNOSTICS_DIR = values.diagnosticsDirectory;
+  }
+  return environment;
+}
+
+export function buildIsolatedGitEnvironment(source, temporaryHome) {
+  const passThrough = ["PATH", "TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL"];
+  return {
+    ...Object.fromEntries(
+      passThrough.flatMap((key) =>
+        source[key] === undefined ? [] : [[key, source[key]]],
+      ),
+    ),
+    HOME: temporaryHome,
+    XDG_CONFIG_HOME: path.join(temporaryHome, ".config"),
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_TERMINAL_PROMPT: "0",
+  };
+}
+
+export function buildIsolatedGateEnvironment(
+  source,
+  temporaryHome,
+  corepackHome,
+) {
+  if (!path.isAbsolute(temporaryHome) || !path.isAbsolute(corepackHome)) {
+    throw new Error("gate HOME and Corepack cache must be absolute disposable paths");
+  }
+  const passThrough = [
+    "PATH",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "LANG",
+    "LC_ALL",
+    "SHELL",
+    "TERM",
+    "COLORTERM",
+  ];
+  const environment = Object.fromEntries(
+    passThrough.flatMap((key) =>
+      source[key] === undefined ? [] : [[key, source[key]]],
+    ),
+  );
+  return {
+    ...environment,
+    HOME: temporaryHome,
+    XDG_CONFIG_HOME: path.join(temporaryHome, ".config"),
+    XDG_CACHE_HOME: path.join(temporaryHome, ".cache"),
+    CI: "1",
+    NODE_ENV: "test",
+    NEXT_TELEMETRY_DISABLED: "1",
+    PRISMA_HIDE_UPDATE_MESSAGE: "1",
+    COREPACK_HOME: corepackHome,
+    COREPACK_DEFAULT_TO_LATEST: "0",
+    COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+    COREPACK_ENABLE_NETWORK: "0",
+    DO_NOT_TRACK: "1",
+    NO_COLOR: "1",
+    GRAPHQL_PLAYGROUND: "false",
+    GRAPHQL_DEBUG: "false",
+    CORS_ORIGIN: "http://localhost:3001",
+    MCP_HTTP_ALLOWED_ORIGINS: "http://localhost:3001",
+    GCP_PROJECT_ID: "migration-gate-deny-provider",
+    GOOGLE_CLOUD_PROJECT: "migration-gate-deny-provider",
+    VERTEX_REGION: "us-central1",
+    VERTEX_MODEL_ID: "migration-gate-no-live-model",
+    METADATA_SERVER_DETECTION: "none",
+    DOC_UPLOAD_MAX_BYTES: "10485760",
+    DOC_UPLOAD_MAX_SUGGESTIONS: "25",
+    MCP_SERVER_URL: "http://127.0.0.1:3001",
+    MCP_RESOURCE: "http://127.0.0.1:3001/mcp",
+    MCP_HTTP_ENABLED: "true",
+    MCP_HTTP_REQUIRE_AUTH: "true",
+    MCP_STDIO_ENABLED: "false",
+    MCP_TOOLS_PREFERENCES_ENABLED: "true",
+    MCP_RESOURCES_SCHEMA_ENABLED: "true",
+    AUTH0_DOMAIN: "migration-gate.invalid",
+    AUTH0_ISSUER: "https://migration-gate.invalid/",
+    AUTH0_AUDIENCE: "urn:context-router:migration-gate",
+    AUTH0_CLIENT_ID: "migration-gate-client",
+    AUTH0_CLIENT_SECRET: "synthetic-migration-gate-secret",
+    AUTH0_MCP_CLAUDE_CLIENT_ID: "migration-gate-claude",
+    AUTH0_MCP_CODEX_CLIENT_ID: "migration-gate-codex",
+    AUTH0_MCP_FALLBACK_CLIENT_ID: "migration-gate-fallback",
+    AUTH0_MCP_PUBLIC_CLIENT_ID: "migration-gate-fallback",
+  };
+}
+
+export function gitWithoutHooks(args) {
+  return [
+    "git",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "init.templateDir=",
+    ...args,
+  ];
+}
+
+export function combineFailures(primaryError, secondaryErrors = [], context = "operation") {
+  const secondary = secondaryErrors.filter(Boolean);
+  if (!primaryError && !secondary.length) return null;
+  if (primaryError && !secondary.length) return primaryError;
+  const combined = new Error(
+    [
+      primaryError?.message,
+      ...secondary.map((error) => `${context} cleanup/diagnostics failed: ${error.message}`),
+    ]
+      .filter(Boolean)
+      .join("; "),
+    { cause: primaryError ?? secondary[0] },
+  );
+  combined.primaryError = primaryError ?? null;
+  combined.secondaryErrors = secondary;
+  combined.exitCode = primaryError?.exitCode ?? secondary[0]?.exitCode ?? 1;
+  combined.signal = primaryError?.signal ?? secondary[0]?.signal ?? null;
+  combined.phase = primaryError?.phase ?? null;
+  return combined;
+}
+
+export async function createResourceLifecycleJournal(
+  diagnosticsDirectory,
+  { canaries = [], filename = "resource-lifecycle.json" } = {},
+) {
+  const filePath = path.join(diagnosticsDirectory, filename);
+  const state = {
+    schemaVersion: 1,
+    status: "running",
+    startedAt: new Date().toISOString(),
+    resources: [],
+  };
+  const persist = () => writeSanitizedJson(filePath, state, canaries);
+  await persist();
+  const resource = (id) => {
+    const found = state.resources.find((item) => item.id === id);
+    if (!found) throw new Error(`unknown lifecycle resource ${id}`);
+    return found;
+  };
+  return {
+    filePath,
+    state,
+    addCanary(value) {
+      if (value && !canaries.includes(value)) canaries.push(value);
+    },
+    async acquiring(record) {
+      if (!record?.id || state.resources.some((item) => item.id === record.id)) {
+        throw new Error(
+          `duplicate or missing lifecycle resource id: ${record?.id ?? "<missing>"}`,
+        );
+      }
+      state.resources.push({
+        ...record,
+        status: "acquiring",
+        cleanup: { status: "pending" },
+      });
+      await persist();
+    },
+    async acquired(recordOrId, updates = {}) {
+      if (typeof recordOrId !== "string") {
+        await this.acquiring(recordOrId);
+        return this.acquired(recordOrId.id);
+      }
+      const record = resource(recordOrId);
+      const previousIdentity = record.identity;
+      Object.assign(record, updates);
+      if (updates.identity) {
+        record.identity = { ...previousIdentity, ...updates.identity };
+      }
+      record.status = "acquired";
+      record.acquiredAt = new Date().toISOString();
+      await persist();
+    },
+    async cleanupFinished(id, { status = "removed", error } = {}) {
+      const record = resource(id);
+      record.cleanup = {
+        status,
+        finishedAt: new Date().toISOString(),
+        ...(error
+          ? { error: redactSecrets(error.message ?? error, canaries) }
+          : {}),
+      };
+      record.recoveryRequired = status === "failed";
+      await persist();
+    },
+    async finish(status, error) {
+      state.status = status;
+      state.finishedAt = new Date().toISOString();
+      if (error) state.error = redactSecrets(error.message ?? error, canaries);
+      await persist();
+    },
+  };
 }
 
 export async function runPhaseSequence(
@@ -324,25 +939,24 @@ export async function runPhaseSequence(
       break;
     }
   }
-  await onSummary(results);
+  let summaryError;
+  try {
+    await onSummary(results);
+  } catch (error) {
+    summaryError = error;
+  }
   let cleanupError;
   try {
     await onCleanup();
   } catch (error) {
     cleanupError = error;
   }
-  if (primaryError && cleanupError) {
-    const combined = new Error(
-      `${primaryError.message}; cleanup failure: ${redactSecrets(cleanupError.message)}`,
-      { cause: primaryError },
-    );
-    combined.phase = primaryError.phase;
-    combined.exitCode = primaryError.exitCode;
-    combined.cleanupError = cleanupError;
-    throw combined;
-  }
-  if (primaryError) throw primaryError;
-  if (cleanupError) throw cleanupError;
+  const combined = combineFailures(
+    primaryError,
+    [summaryError, cleanupError],
+    "phase sequence",
+  );
+  if (combined) throw combined;
   return results;
 }
 
@@ -355,19 +969,27 @@ export async function runCommand(
     logPath,
     canaries = [],
     echo = false,
+    signal,
+    terminationGraceMs = 5_000,
+    closeDeadlineMs = 2_000,
+    prepareLogDirectory = (directory) => mkdir(directory, { recursive: true }),
+    createLogStream = (filePath) =>
+      createWriteStream(filePath, { flags: "w", mode: 0o600 }),
+    spawnProcess = spawn,
   } = {},
 ) {
   if (!Array.isArray(argv) || !argv.length) throw new Error("command argv is empty");
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new Error("command timeout must be positive");
-  if (logPath) await mkdir(path.dirname(logPath), { recursive: true });
-  const logStream = logPath
-    ? createWriteStream(logPath, { flags: "w", mode: 0o600 })
-    : null;
+  let child;
+  let logStream;
+  let logFailure;
   const tail = [];
   let tailLength = 0;
   const write = (source) => (chunk) => {
     const tagged = `[${source}] ${chunk}`;
-    logStream?.write(tagged);
+    if (logStream && !logStream.destroyed && !logFailure) {
+      logStream.write(tagged);
+    }
     if (echo) process.stdout.write(tagged);
     const bounded = tagged.slice(-16_384);
     tail.push(bounded);
@@ -378,82 +1000,222 @@ export async function runCommand(
   };
   const stdout = createStreamingRedactor(write("stdout"), canaries);
   const stderr = createStreamingRedactor(write("stderr"), canaries);
-  const child = spawn(argv[0], argv.slice(1), {
-    cwd,
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-    detached: process.platform !== "win32",
-  });
-  child.stdout.setEncoding("utf8");
-  child.stderr.setEncoding("utf8");
-  child.stdout.on("data", (chunk) => stdout.write(chunk));
-  child.stderr.on("data", (chunk) => stderr.write(chunk));
-
-  let timedOut = false;
+  let terminationReason = null;
+  let terminationStarted = false;
   let forceTimeout;
-  const signalProcessTree = (signal) => {
+  let closeTimeout;
+  let resolveHardDeadline;
+  const signalProcessTree = (signalName) => {
+    if (!child) return;
     if (process.platform !== "win32" && child.pid) {
       try {
-        process.kill(-child.pid, signal);
+        process.kill(-child.pid, signalName);
         return;
       } catch {}
     }
-    child.kill(signal);
+    child.kill(signalName);
   };
-  const timeout = setTimeout(() => {
-    timedOut = true;
+  const startTermination = () => {
+    if (!child || terminationStarted) return;
+    terminationStarted = true;
     signalProcessTree("SIGTERM");
-    forceTimeout = setTimeout(() => signalProcessTree("SIGKILL"), 2_000);
+    forceTimeout = setTimeout(() => {
+      signalProcessTree("SIGKILL");
+      closeTimeout = setTimeout(() => resolveHardDeadline?.(), closeDeadlineMs);
+      closeTimeout.unref();
+    }, terminationGraceMs);
     forceTimeout.unref();
-  }, timeoutMs);
-  timeout.unref();
+  };
+  const terminate = (reason) => {
+    if (!terminationReason) terminationReason = reason;
+    startTermination();
+  };
+  const abortListener = () => {
+    terminate({
+      kind: "abort",
+      reason: signal.reason ?? new Error("command aborted"),
+    });
+  };
+  signal?.addEventListener("abort", abortListener, { once: true });
 
   let result;
+  let timeout;
   try {
-    result = await new Promise((resolve, reject) => {
-      child.once("error", reject);
-      child.once("close", (exitCode, signal) => resolve({ exitCode, signal }));
+    if (signal?.aborted) throw signal.reason ?? new Error("command aborted");
+    if (logPath) {
+      await prepareLogDirectory(path.dirname(logPath));
+      if (signal?.aborted) throw signal.reason ?? new Error("command aborted");
+      logStream = createLogStream(logPath);
+      logStream.on("error", (error) => {
+        logFailure ??= error;
+        terminate({ kind: "log", reason: error });
+      });
+    }
+    if (signal?.aborted) throw signal.reason ?? new Error("command aborted");
+    child = spawnProcess(argv[0], argv.slice(1), {
+      cwd,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: process.platform !== "win32",
     });
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => stdout.write(chunk));
+    child.stderr.on("data", (chunk) => stderr.write(chunk));
+    if (terminationReason) startTermination();
+    timeout = setTimeout(
+      () => terminate({ kind: "timeout" }),
+      timeoutMs,
+    );
+    timeout.unref();
+    const childSettlement = new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("close", (exitCode, childSignal) =>
+        resolve({ exitCode, signal: childSignal, closeDeadlineExceeded: false }),
+      );
+    });
+    const hardDeadline = new Promise((resolve) => {
+      resolveHardDeadline = () =>
+        resolve({
+          exitCode: null,
+          signal: "SIGKILL",
+          closeDeadlineExceeded: true,
+        });
+    });
+    result = await Promise.race([childSettlement, hardDeadline]);
+    if (terminationReason && process.platform !== "win32") {
+      // The leader may close before descendants. A final group kill prevents a
+      // detached grandchild from escaping the bounded command lifecycle.
+      signalProcessTree("SIGKILL");
+    }
   } finally {
-    clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout);
     if (forceTimeout) clearTimeout(forceTimeout);
+    if (closeTimeout) clearTimeout(closeTimeout);
+    signal?.removeEventListener("abort", abortListener);
+    if (result?.closeDeadlineExceeded) {
+      child.stdout.destroy();
+      child.stderr.destroy();
+    }
     stdout.end();
     stderr.end();
     if (logStream) {
-      await new Promise((resolve) => logStream.end(resolve));
+      await new Promise((resolve) => {
+        if (logStream.destroyed) {
+          resolve();
+          return;
+        }
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(deadline);
+          resolve();
+        };
+        const deadline = setTimeout(() => {
+          logFailure ??= new Error("diagnostic log did not close within 2000ms");
+          logStream.destroy();
+          finish();
+        }, 2_000);
+        logStream.once("finish", finish);
+        logStream.once("close", finish);
+        logStream.end();
+      });
     }
   }
 
-  if (timedOut) {
+  let commandError;
+  let logError;
+  if (logFailure || terminationReason?.kind === "log") {
+    logError = new Error(
+      `diagnostic log failed for command ${redactSecrets(argv.join(" "), canaries)}: ${redactSecrets(logFailure?.message ?? terminationReason.reason?.message ?? "unknown log error", canaries)}`,
+      { cause: logFailure ?? terminationReason.reason },
+    );
+    logError.exitCode = 1;
+    logError.signal = result?.signal ?? null;
+    logError.outputTail = tail.join("");
+  }
+  if (terminationReason?.kind === "timeout") {
     const error = new Error(
       `command timed out after ${timeoutMs}ms: ${redactSecrets(argv.join(" "), canaries)}`,
     );
     error.exitCode = 124;
-    error.signal = result.signal;
+    error.signal = result?.signal ?? null;
     error.outputTail = tail.join("");
-    throw error;
+    commandError = error;
   }
-  if (result.exitCode !== 0) {
+  if (terminationReason?.kind === "abort") {
+    const reason = terminationReason.reason;
+    const error = new Error(
+      `command aborted: ${redactSecrets(reason?.message ?? reason, canaries)}: ${redactSecrets(argv.join(" "), canaries)}`,
+      { cause: reason instanceof Error ? reason : undefined },
+    );
+    error.exitCode = reason?.exitCode ??
+      (reason?.message?.includes("SIGINT") ? 130 : 143);
+    error.signal = reason?.signal ??
+      reason?.message?.match(/SIG(?:INT|TERM)/)?.[0] ?? null;
+    error.outputTail = tail.join("");
+    commandError = error;
+  }
+  if (!commandError && result.exitCode !== 0) {
     const error = new Error(
       `command exited ${result.exitCode ?? `on ${result.signal}`}: ${redactSecrets(argv.join(" "), canaries)}`,
     );
     error.exitCode = result.exitCode ?? 1;
     error.signal = result.signal;
     error.outputTail = tail.join("");
-    throw error;
+    commandError = error;
   }
+  const combined = combineFailures(commandError, [logError], "command");
+  if (combined) throw combined;
   return { ...result, outputTail: tail.join("") };
 }
 
 function assertSafeRelativePath(relativePath) {
+  const parts = typeof relativePath === "string"
+    ? relativePath.split("/")
+    : [];
   if (
+    typeof relativePath !== "string" ||
     !relativePath ||
     path.isAbsolute(relativePath) ||
-    relativePath.split(/[\\/]/).includes("..") ||
-    relativePath.includes("\0")
+    path.win32.isAbsolute(relativePath) ||
+    relativePath.includes("\\") ||
+    parts.some((part) => !part || part === "." || part === "..") ||
+    relativePath.includes("\0") ||
+    path.posix.normalize(relativePath) !== relativePath
   ) {
     throw new Error(`unsafe workspace path: ${relativePath}`);
   }
+}
+
+export async function resolveOwnedArtifactPath(root, relativePath) {
+  assertSafeRelativePath(relativePath);
+  const rootReal = await realpath(root);
+  const candidate = path.resolve(rootReal, relativePath);
+  if (!pathIsWithin(rootReal, candidate)) {
+    throw new Error(`unsafe owned artifact path: ${relativePath}`);
+  }
+  let current = rootReal;
+  for (const segment of relativePath.split(/[\\/]/).slice(0, -1)) {
+    current = path.join(current, segment);
+    const info = await lstat(current).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (info?.isSymbolicLink() || (info && !info.isDirectory())) {
+      throw new Error(`owned artifact parent is not a safe directory: ${relativePath}`);
+    }
+    if (!info) break;
+  }
+  const destination = await lstat(candidate).catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (destination) {
+    throw new Error(`owned artifact destination already exists: ${relativePath}`);
+  }
+  return candidate;
 }
 
 export async function copyWorkspaceFiles(sourceRoot, targetRoot, files) {
@@ -469,6 +1231,9 @@ export async function copyWorkspaceFiles(sourceRoot, targetRoot, files) {
     await mkdir(path.dirname(targetPath), { recursive: true });
     if (sourceInfo.isSymbolicLink()) {
       const linkTarget = await readlink(sourcePath);
+      if (path.isAbsolute(linkTarget)) {
+        throw new Error(`absolute workspace symlink is forbidden: ${relativePath}`);
+      }
       const resolvedTarget = await realpath(sourcePath);
       const resolvedRoot = await realpath(sourceRoot);
       if (
@@ -537,9 +1302,68 @@ export async function assertCallerIntegrity(snapshot) {
   if (changed.length) throw new Error(`caller path changed during disposable gate: ${changed.join(", ")}`);
 }
 
-export async function linkDependencyTrees(sourceRoot, targetRoot, relativeRoots) {
+function pathIsWithin(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+async function cloneDirectoryIsolated(source, target, allowedSourceRoot, signal) {
+  await mkdir(target, { recursive: true });
+  for (const name of (await readdir(source)).sort()) {
+    if (signal?.aborted) throw signal.reason ?? new Error("dependency clone aborted");
+    const sourcePath = path.join(source, name);
+    const targetPath = path.join(target, name);
+    const info = await lstat(sourcePath);
+    if (info.isDirectory()) {
+      await cloneDirectoryIsolated(sourcePath, targetPath, allowedSourceRoot, signal);
+    } else if (info.isFile()) {
+      await copyFile(sourcePath, targetPath, fsConstants.COPYFILE_FICLONE);
+    } else if (info.isSymbolicLink()) {
+      const linkTarget = await readlink(sourcePath);
+      if (path.isAbsolute(linkTarget)) {
+        throw new Error(`absolute dependency symlink is forbidden: ${sourcePath}`);
+      }
+      const resolved = path.resolve(path.dirname(sourcePath), linkTarget);
+      if (!pathIsWithin(allowedSourceRoot, resolved)) {
+        throw new Error(`dependency symlink escapes the repository: ${sourcePath}`);
+      }
+      await symlink(linkTarget, targetPath);
+    } else {
+      throw new Error(`unsupported dependency entry: ${sourcePath}`);
+    }
+  }
+}
+
+export async function cloneCorepackCache(source, target, { signal } = {}) {
+  const sourceRoot = await realpath(source).catch(() => null);
+  if (!sourceRoot) {
+    throw new Error(
+      `offline migration gate requires an existing Corepack cache: ${source}`,
+    );
+  }
+  const pnpmRoot = path.join(sourceRoot, "v1", "pnpm");
+  const versions = await readdir(pnpmRoot, { withFileTypes: true }).catch(
+    () => [],
+  );
+  const cachedPnpmVersions = versions.filter((entry) => entry.isDirectory());
+  if (!cachedPnpmVersions.length) {
+    throw new Error(
+      `offline migration gate requires a cached pnpm distribution under ${pnpmRoot}`,
+    );
+  }
+  await cloneDirectoryIsolated(sourceRoot, target, sourceRoot, signal);
+  return cachedPnpmVersions.map((entry) => entry.name).sort();
+}
+
+export async function cloneDependencyTrees(
+  sourceRoot,
+  targetRoot,
+  relativeRoots,
+  { signal } = {},
+) {
+  const allowedSourceRoot = await realpath(sourceRoot);
   for (const relativeRoot of relativeRoots) {
-    const source = path.join(sourceRoot, relativeRoot, "node_modules");
+    const source = path.join(allowedSourceRoot, relativeRoot, "node_modules");
     try {
       const info = await stat(source);
       if (!info.isDirectory()) continue;
@@ -548,7 +1372,19 @@ export async function linkDependencyTrees(sourceRoot, targetRoot, relativeRoots)
     }
     const target = path.join(targetRoot, relativeRoot, "node_modules");
     await mkdir(path.dirname(target), { recursive: true });
-    await symlink(await realpath(source), target, "dir");
+    await cloneDirectoryIsolated(source, target, allowedSourceRoot, signal);
+  }
+}
+
+export async function prepareOwnedTemporaryDirectory(prefix, prepare) {
+  const directory = await mkdtemp(prefix);
+  await chmod(directory, 0o700);
+  try {
+    const value = await prepare(directory);
+    return { directory, value };
+  } catch (error) {
+    await rm(directory, { recursive: true, force: true });
+    throw error;
   }
 }
 
@@ -561,9 +1397,23 @@ export function buildDatabaseUrl(administrationUrl, databaseName) {
 }
 
 export async function writeSanitizedJson(filePath, value, canaries = []) {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `${redactSecrets(JSON.stringify(value, null, 2), canaries)}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-  });
+  const directory = path.dirname(filePath);
+  await mkdir(directory, { recursive: true });
+  const content = `${redactSecrets(JSON.stringify(value, null, 2), canaries)}\n`;
+  const temporaryPath = path.join(
+    directory,
+    `.${path.basename(filePath)}.tmp-${process.pid}-${randomBytes(8).toString("hex")}`,
+  );
+  let handle;
+  try {
+    handle = await open(temporaryPath, "wx", 0o600);
+    await handle.writeFile(content, { encoding: "utf8" });
+    await handle.sync();
+    await handle.close();
+    handle = null;
+    await rename(temporaryPath, filePath);
+  } finally {
+    await handle?.close().catch(() => {});
+    await rm(temporaryPath, { force: true }).catch(() => {});
+  }
 }

@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Seed offline pnpm runtime for the disposable gate
+        run: corepack prepare pnpm@9 --activate
+
       - name: Run the Local Migration Baseline Gate
         run: pnpm migration:gate
         env:

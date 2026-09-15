@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   assertCallerIntegrity,
   captureCallerIntegrity,
+  createSignalAbortController,
   runCommand,
 } from "./gate-runner.mjs";
 
@@ -25,7 +26,7 @@ async function sha256(filePath) {
   return createHash("sha256").update(await readFile(filePath)).digest("hex");
 }
 
-async function main() {
+async function main(signal) {
   const expectedSchemaHash = process.env.MIGRATION_GATE_TRACKED_SDL_SHA256;
   if (!expectedSchemaHash || !/^[a-f0-9]{64}$/.test(expectedSchemaHash)) {
     throw new Error("MIGRATION_GATE_TRACKED_SDL_SHA256 is missing or invalid");
@@ -39,12 +40,18 @@ async function main() {
     env: process.env,
     timeoutMs: 180_000,
     logPath: path.join(diagnosticsDirectory, "integrity-prisma-regenerate.log"),
+    signal,
+    terminationGraceMs: 1_000,
+    closeDeadlineMs: 1_000,
   });
   await runCommand(["pnpm", "--filter", "web", "codegen"], {
     cwd: repositoryRoot,
     env: process.env,
     timeoutMs: 180_000,
     logPath: path.join(diagnosticsDirectory, "integrity-web-regenerate.log"),
+    signal,
+    terminationGraceMs: 1_000,
+    closeDeadlineMs: 1_000,
   });
   await assertCallerIntegrity(generatedBefore);
   if ((await sha256(schemaPath)) !== expectedSchemaHash) {
@@ -54,18 +61,27 @@ async function main() {
     cwd: repositoryRoot,
     timeoutMs: 30_000,
     logPath: path.join(diagnosticsDirectory, "integrity-worktree-whitespace.log"),
+    signal,
+    terminationGraceMs: 1_000,
+    closeDeadlineMs: 1_000,
   });
   await runCommand(["git", "diff", "--cached", "--check"], {
     cwd: repositoryRoot,
     timeoutMs: 30_000,
     logPath: path.join(diagnosticsDirectory, "integrity-index-whitespace.log"),
+    signal,
+    terminationGraceMs: 1_000,
+    closeDeadlineMs: 1_000,
   });
   console.log("generated-integrity: ok; tracked SDL stable and ignored clients deterministic");
 }
 
+const cancellation = createSignalAbortController();
 try {
-  await main();
+  await main(cancellation.signal);
 } catch (error) {
   console.error(`generated-integrity: ${error.message}`);
-  process.exitCode = 1;
+  process.exitCode = error.exitCode ?? cancellation.signal.reason?.exitCode ?? 1;
+} finally {
+  cancellation.dispose();
 }

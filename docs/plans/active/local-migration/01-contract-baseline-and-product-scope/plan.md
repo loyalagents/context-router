@@ -1,6 +1,6 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Document status: approved for implementation
+- Document status: implementation complete; final review in progress
 - Program step: `01-contract-baseline-and-product-scope`
 - Target branch: `main`
 - Planning base commit: `9b56d38fde927d4e643af89ba45665a439613939`
@@ -13,8 +13,9 @@
 - Read-only discovery reviewers: `/root/discovery_contracts`, `/root/discovery_runtime_security`, `/root/discovery_tests_tooling`
 - Plan reviewers: `/root/plan_review_architecture`, `/root/plan_review_compatibility`, `/root/plan_review_test_security` (fresh, read-only, explicitly approved)
 - Implementation PR: one PR from `codex/local-migration-01-contract-baseline`, organized as the three independently runnable checkpoints below
+- Checkpoint commits: plan gate `d3536c7`, executable registry `bc183ae`, aggregate gate/restart `64342cc`
 - Supported mode after every checkpoint: the existing hosted NestJS/PostgreSQL/Auth0/Vertex and Next.js composition; no local preview becomes supported in this step
-- Last updated: 2026-09-14
+- Last updated: 2026-09-15
 
 ## Outcome
 
@@ -163,6 +164,7 @@ decision. A `DEFER` row always has a decision owner and acceptance question.
 | --- | --- | --- | --- |
 | Preference definition lifecycle: global catalog plus user-owned create/update/archive/export, validation metadata, namespaces and scopes; definition service/e2e and `docs/current/PREFERENCE_SCHEMA.md` | **RETAIN** domain meaning; **REPLACE** direct Prisma implementation. User-defined memory remains core product behavior. | Current GraphQL shapes remain during migration. Steps 04–05 run shared contracts for ownership, uniqueness, archive visibility, type/options/scope changes, and catalog order; Step 08 keeps edit/export UI. Unsafe shape changes with existing values must reject or migrate explicitly. | Steps 04–05 and 08; local state, atomic transactions, no required egress. |
 | Preference values: active/suggested/rejected lifecycle, delete suppression, validation/canonicalization, global/location precedence; preference/location suites and current docs | **RETAIN** exactly as application behavior; **REPLACE** storage adapter. | Contract suite must cover status transitions, tombstones, array/number/date normalization, location merge and isolation before accepting a new adapter. Existing GraphQL stays compatible through Steps 07–08. | Steps 04–05, consumers web/MCP/orchestrator/eval; local sensitive state, no intrinsic egress. |
+| Location entities: user-owned create/read/list/type-filter/update/delete, `HOME|WORK|OTHER`, nonempty create fields, newest-first lists, and cascading removal of location-scoped preferences; location e2e, service/repository implementation, and Prisma relation | **RETAIN** the location domain behavior and ownership boundary; **REPLACE** direct Prisma storage. Addresses are sensitive local memory, not account identity. | Current GraphQL shapes remain during migration. The current e2e proves CRUD/filter/input behavior while service/repository/Prisma sources establish ownership, ordering, and cascade; Steps 04–05 must turn all of those into cross-adapter behavioral tests, including cross-user read/update/delete denial and preference cascade, before accepting a new adapter. Step 08 preserves client compatibility and may add a location UI only through a separately scoped product decision; none exists today. | Steps 04–05/08; sensitive address state, transactional cascade, no intrinsic egress. |
 | Seven `profile.*` global slugs in the catalog and profile UI | **RETAIN** as ordinary memory; add no mandatory fixed profile fields in the initial local product. | Registry pins the seven slugs and current `profile.email` sensitivity. Step 08 preserves editable profile behavior; no account field is silently treated as profile memory. | Steps 04–05/08; potentially sensitive local values. |
 | Auth0 login currently copies available name/email claims into four profile values after first account creation | **REPLACE**, not a provider-independent contract. Local first run/profile editing supplies memory explicitly; no continuous account-to-contact copying. | Hosted behavior remains until Step 03/08 additive migration. Tests distinguish account identity fields from memory and prevent unverified-email linking. | Steps 03 and 08; removes identity-provider egress and implicit personal-data copying. |
 | Definition-schema export | **RETAIN** as user portability/developer inspection. | Preserve GraphQL export through Step 08; Step 09 documents a local file export and compatibility format. | Steps 08–09; export is an explicit local user action and may contain sensitive schema metadata. |
@@ -174,6 +176,7 @@ decision. A `DEFER` row always has a decision owner and acceptance question.
 | Supported analysis formats: text, Markdown, JSON, YAML, text-extractable PDF, PNG/JPEG plus config-file coercion in tooling | **RETAIN** text/Markdown/JSON/YAML/text-PDF product inputs. **DEFER** image OCR/vision support to Step 06's model capability decision. Tool-only config/MIME behavior is not a product promise. | Step 08 adds magic/type, pre-read size, cancellation, concurrency and secret-file consent tests. Step 06 must explicitly enable or reject image inputs with truthful UI before merge. | Steps 06/08; file privacy and resource-abuse boundary. |
 | PDF AcroForm filling supports text/checkbox/radio/dropdown/single-list, field-policy v1, editable output, and summary | **RETAIN** supported field semantics and editable artifact; **REPLACE** remote inference and silent overwrite/opaque partial outcomes. Scanned/flattened PDF OCR is not a current feature and is **REMOVE** from initial scope. | Steps 06/08 preserve REST during migration, run local inference, default to review/preserve-existing unless policy says overwrite, and report per-field outcomes. | Steps 06/08; raw PDF stays local, only explicitly selected local/opt-in provider sees minimized facts. |
 | Literal preference search plus AI slug proposal validated/narrowed against local schema | **RETAIN** literal search and propose-and-narrow invariant; **REPLACE** provider. | Step 06 runs local model proposal; Step 08 moves useful search into the product UI and capability-gates AI. | Steps 06/08; schema metadata only for AI search, zero default egress. |
+| Read-only `consolidateSchema`: defaults to personal definitions, can include grant-filtered global definitions, short-circuits below two definitions, sends definition metadata—not stored values—to structured AI, rejects protected `profile.*`, hallucinated/repeated slugs, undersized groups, and invalid recommendations, and returns advisory groups without mutation; workflow unit/e2e suites | **RETAIN** the scoped, non-mutating advisory/propose-then-validate behavior; **REPLACE** the hosted structured-model implementation. It is a distinct workflow, not merely a retained MCP name. | Steps 05–07 preserve personal-default scope, authorization filtering, protected-schema exclusions, validation of every model-returned slug/recommendation, and the no-write invariant. Step 06 supplies a local-default model or capability-gates the tool; Step 07 preserves the MCP descriptor/envelope while consumers migrate. | Steps 05/06/07; definition descriptions/options/ownership metadata may reach the selected model, but preference values do not; zero default remote egress after Step 06. |
 | Search Lab is a demo/diagnostic page, and Test AI Chat exposes generic `askVertexAI` | **REMOVE** both from the shipped local navigation/product. They do not define core memory workflows. | GraphQL `askVertexAI`, `/api/chat`, and pages remain during LM-008 compatibility window, are deprecated/migrated in Steps 06/08, and are removed only with release/config guidance. | Steps 06/08; removes generic prompt/data egress surface. |
 | Core UI pages: dashboard, profile, preferences, schema, form fill, history, permissions | **RETAIN** user outcomes; **REPLACE** hosted Auth0/API composition with local UI adapters. | Step 08 proves non-AI pages without Auth0/remote services, capability-gates AI pages, and preserves relevant GraphQL during consumer migration. | Step 08; browser local-service Host/Origin/CSRF boundaries. |
 | Authenticated `/api/debug/token` and dashboard link expose a full bearer token | **REMOVE** from shipped product; do not replace with another raw-token display. | Keep only until Step 03/08 provide bounded local connector/pairing setup and migrate operator docs; then remove with LM-008 evidence. | Steps 03/08; critical credential exposure removed. |
@@ -199,7 +202,7 @@ suites; the registry links rather than duplicates every type definition.
 | Interface | Step 01 decision and observed baseline | Consumers, compatibility window, and removal guidance |
 | --- | --- | --- |
 | `GET /health` | **RETAIN** `{status:"ok",timestamp}` readiness surface; Step 02 may add readiness detail additively. | Operators, Docker, smoke scripts, external monitors. Preserve through the program; document any future versioning. |
-| `POST /graphql` | **RETAIN during migration** the complete normalized semantic SDL: every type/field, argument/default, list/non-null wrapper, enum value, input/output field, interface/union, scalar and deprecation; current roots include the listed 15 queries and 15 mutations, with no subscriptions. `me` is the retained current-principal outcome; `user(id)` is currently self-only and planned for later removal. | Every named web/orchestrator/eval operation is validated against the schema and mapped by path; MCP exposes the same SDL resource; unknown external clients remain. Fields remain until each owning Step 03–08 checkpoint expands/migrates/removes under LM-008. Semantic diff classifies additive/deprecation versus breaking changes, and generated artifacts have one owner. |
+| `POST /graphql` | **RETAIN during migration** the complete normalized semantic SDL: every type/field, argument/default, list/non-null wrapper, enum value, input/output field including `@oneOf`, interface/union, scalar, deprecation and custom directive application; description copy is separately fingerprinted. Current roots include the listed 15 queries and 15 mutations, with no subscriptions. `me` is the retained current-principal outcome; `user(id)` is currently self-only and planned for later removal. | Every named web/orchestrator/eval operation is validated against the schema and mapped by stable path/operation/root-field identity; MCP exposes the same SDL resource; unknown external clients remain. Fields remain until each owning Step 03–08 checkpoint expands/migrates/removes under LM-008. Semantic diff classifies additive/deprecation versus breaking changes, and generated artifacts have one owner. |
 | `POST /api/preferences/analysis` | **RETAIN route/payload during migration; REPLACE provider/implementation**. Multipart, 10 MiB default, documented MIME set; application errors include `success`, `no_matches`, `parse_error`, `ai_error` in HTTP-success envelopes. | Web document UI, orchestrator, eval/live callers, unknown external clients. Step 06/08 add provider-neutral/local path before deprecation; removal requires version/release guidance. |
 | `POST /api/form-fill/pdf` | **RETAIN route/payload during migration; REPLACE provider/implementation**. Multipart PDF plus optional JSON field-policy v1; base64 PDF and `success|partial|no_fillable_fields|unsupported_format|failed` summary. | Web form UI, eval scripts, unknown external clients. Step 06/08 preserve or version before incompatible field outcome semantics. |
 | `POST /mcp`, `GET /mcp` | **RETAIN current HTTP compatibility**: stateless Streamable HTTP JSON response; GET is 405 with `Allow: POST`; disabled HTTP reports 503. **REPLACE** hosted auth/transport default in Step 07. | Claude/Codex/other MCP clients and config docs. Step 07 chooses HTTP/stdio mix, expands first, migrates setup docs, and publishes a compatibility window before any path removal. |
@@ -263,7 +266,9 @@ surface rather than turning the high-level registry into an unreadable payload
 dump:
 
 - a normalized GraphQL semantic signature containing every type, field,
-  argument/default, null/list wrapper, input/output, enum and deprecation;
+  argument/default, null/list wrapper, input/output (including `@oneOf`), enum,
+  deprecation, and ordered custom directive application, plus a separate
+  description-copy fingerprint;
 - an HTTP contract fixture covering method/path/content type, multipart fields,
   auth class, success status/envelope, expected application-error status/envelope
   and important headers for health, GraphQL, analysis, form fill, MCP and
@@ -285,12 +290,31 @@ against focused e2e characterization; compares full MCP descriptors and
 capability/scope visibility; verifies all catalog semantics; and checks the six
 MCP mutations, manifest-v3 schema/version and package classifications.
 
-The checker also compares a changed public fixture with its merge-base form.
+The checker also derives exact public-reference and outbound-sink maps from the
+current product, operator/runbook, orchestration, evaluation, and smoke source
+trees. It fails on missing or stale references, changed sink kinds/counts, or a
+sink path without a reviewed outbound-boundary classification and live source
+fingerprints. It then compares a changed public fixture with its merge-base form.
 GraphQL changes are classified as additive, deprecation, or breaking using
 semantic—not textual—types. HTTP/MCP descriptor removals or incompatible
 request/response changes are breaking. A breaking diff fails unless the same PR
-contains a registry migration record naming consumers, additive replacement,
-bounded compatibility window, guidance and rollback. A manifest-v3 schema
+contains a registry migration record naming consumers by stable identity and
+exact path, additive replacement, bounded compatibility window, guidance and
+rollback. Consumer IDs include fingerprint-row IDs, GraphQL
+path/kind/operation/root-field tuples, and public-reference tuples; the checker
+unions prior/current identities and reports every missing or mismatched entry.
+Named and inline root fragments are resolved transitively and cycle-safely, and
+the clean-restart GraphQL probes are named census members. Unknown external
+route/MCP classifications, known MCP auth/config GraphQL/catalog affinities,
+and client callback buckets are set-normalized protected registry facts, so
+they cannot be erased in a preparatory PR. Existing-route HTTP constraints,
+response domains, and accepted upload MIME changes; new MCP client/visibility
+buckets; existing-client capabilities, target rules, redirects and visibility;
+OAuth/DCR/challenge metadata; tool/resource authority and tool task-execution
+metadata; constraining input-schema arrays; and output-schema domain changes
+fail closed into reviewed evolution. Explicitly proven input widenings remain
+additive; existing GraphQL enum, union, and interface possible-type widenings
+also require review as output-domain changes. A manifest-v3 schema
 shape change fails unless its literal/versioned filename is bumped; descriptive
 copy changes are reported separately and do not masquerade as value-contract
 breaks. Seed integration characterization covers catalog-attribute update,
@@ -333,7 +357,9 @@ service correctly reports its container-side bridge address even when its host
 publication is loopback-only. `current_database()` remains the independent
 destructive-target check. Remote hostnames, mixed loopback/non-loopback DNS
 results, URL userinfo in diagnostics, and any non-loopback client peer are
-rejected. Focused tests cover IPv4/IPv6, localhost resolution, Unix sockets,
+rejected. Duplicate `host`/`port` routing parameters are rejected before client
+construction, and a validated Unix-socket URL is reconstructed from its single
+canonical routing value. Focused tests cover IPv4/IPv6, localhost resolution, Unix sockets,
 remote/mixed names and addresses, a loopback-published container, and redacted
 refusal messages. There is no “allow remote” gate escape hatch. A pre-existing
 loopback tunnel to a remote database cannot be distinguished at this boundary;
@@ -342,9 +368,12 @@ Step 09's packaged-runtime socket audit owns physical-egress proof.
 
 Before running phases, the runner copies all tracked and non-ignored working
 files into a unique disposable workspace while excluding `.git`, ignored
-secrets, dependency trees, and build outputs; it links the already-installed
-workspace dependency trees read-only. All generators, builds, tests, eval
-artifacts and process smokes run in that copy. Tracked generated SDL is hashed
+secrets, dependency trees, and build outputs. It clones each already-installed
+workspace dependency tree and the Corepack cache into private workspace-owned
+copies, using copy-on-write file cloning where supported, and never invokes an
+installer. All generators, builds, tests, eval artifacts and process smokes run
+in that copy without a write path back through shared dependencies. Tracked
+generated SDL is hashed
 before and after its generator/process phases and compared byte-for-byte.
 Ignored Prisma/web clients are disposable products created only in the copy;
 their required entry points are checked and repeated codegen output is hashed
@@ -368,7 +397,9 @@ absent base fixtures only when the current registry declares version 1 and the
 merge-base predates this file; all later missing base artifacts fail.
 
 `scripts/local-migration/gate-phases.json` is the checked-in lifecycle manifest.
-Each phase declares its current supported-mode applicability, owning roadmap
+Each supported mode declares active/retired status and zero or one active
+successor; the initial hosted baseline is active with no successor. Each phase
+declares its current supported-mode applicability, owning roadmap
 step, required predecessor/replacement evidence, and retirement condition.
 Later steps keep the root `pnpm migration:gate` command stable: a PR adds the
 replacement mode proof before, or atomically with, retiring a hosted-only phase.
@@ -379,13 +410,15 @@ Required phases, in order:
 
 1. contract-checker tests and registry check;
 2. Markdown-validator tests and repository-link validation;
-3. Prisma generate, seed typecheck, backend production build, and backend unit;
+3. Prisma generate, seed typecheck, backend production build under
+   `NODE_ENV=production`, and backend unit under `NODE_ENV=test`;
 4. unique-database migrations, backend integration, and backend e2e tests;
 5. local-orchestrator test, non-mutating typecheck/lint, and build;
 6. `pnpm eval:verify`;
 7. deterministic `samir-desai-i9-template-smoke` and
    `elena-marquez-i9-template-smoke` eval runs against the same isolated database;
-8. web production codegen/build with `NEXT_TELEMETRY_DISABLED=1`;
+8. web production codegen/build under `NODE_ENV=production` with
+   `NEXT_TELEMETRY_DISABLED=1`;
 9. eval-harbor static checks under the available Python 3.12 contract;
 10. the clean-restart smoke below against a second unique database; and
 11. caller-worktree `git diff --check`, disposable-workspace tracked-SDL
@@ -400,10 +433,27 @@ runtime. Initial budget is 15 minutes warm / 25 minutes cold after dependencies
 and the DB image are installed; Checkpoint 2 records measured local and CI
 runtimes rather than presenting discovery estimates as facts.
 
+Database and automatic-container acquisition write their generated identity,
+independent per-run ownership nonce, and exact recovery action to an atomic
+mode-`0600` lifecycle journal before the create/start attempt. A generated
+database receives the nonce in its ownership comment; cleanup rechecks both its
+server identity and comment immediately before `DROP`, and never drops a known
+name conflict or unverified database. The Docker fallback writes the independent
+nonce as a label, verifies it before every cleanup, and removes only the
+immutable container ID returned by that inspection rather than the mutable
+name. Journal replacement uses a private same-directory file, flush, and atomic
+rename. Phase scripts that spawn their own command groups install explicit
+SIGINT/SIGTERM forwarding; real nested-child regressions prove cancellation
+does not strand the managed process, while the aggregate parent grants the
+restart smoke more time than its cumulative bounded cleanup budget.
+
 Add `.github/workflows/local-migration-baseline.yml`, not the concurrently owned
-`ci.yml`. It uses Node 20, the repository's currently CI-supported pnpm 9,
-Python 3.12, and a PostgreSQL 15 service, installs with frozen lockfile, then
-runs only `pnpm migration:gate`. Checkout uses full history and the workflow
+`ci.yml`. It selects Node 20, the repository's currently CI-supported pnpm 9,
+Python 3.12, and a PostgreSQL 15 service, installs with frozen lockfile, seeds an
+offline Corepack pnpm-9 cache for the disposable workspace, then runs only
+`pnpm migration:gate`. The gate itself enforces Python 3.12 and safe
+database topology/targeting while recording, not pinning, the observed Node,
+pnpm, and PostgreSQL versions. Checkout uses full history and the workflow
 passes the validated PR-base or push-before SHA; a zero/missing push-before SHA
 fails with an actionable message rather than weakening comparison. Step 02 owns
 version selection/pinning. A later CI optimization may consolidate workflows
@@ -419,16 +469,20 @@ migrations into `public`, runs the real catalog seed twice, and asserts the exac
 active global catalog without duplicate slugs. A failing backend unit test first
 characterizes listener argument resolution; the smallest implementation makes
 `main.ts` pass an explicit host only when `APP_HOST` is set, preserving the
-current hosted default when it is absent. The smoke builds once, then starts the
-actual build artifact, `node dist/src/main.js`, twice with
+current hosted default when it is absent. The smoke builds the backend and web
+app once each. It starts the built Next.js app on `127.0.0.1`, proves the
+unauthenticated `/api/chat` and `/api/debug/token` envelopes, and follows
+`/auth/login` only as far as an ephemeral loopback OIDC discovery endpoint. It
+then starts the actual backend build artifact, `node dist/src/main.js`, twice with
 `APP_HOST=127.0.0.1` on a dynamically selected port against the same database.
 Checkpoint 2 confirmed this repository's current TypeScript output path from a
 clean production build; the hosted package's stale `start:prod` shortcut is not
 used as restart evidence and remains outside this behavior-preserving step.
 
-A loopback-only HTTPS JWKS fixture supplies an ephemeral RSA key and a short-
-lived synthetic M2M token. The backend child alone trusts that generated test
-certificate; the fixture URL and token are never printed or persisted. The M2M
+A loopback-only HTTPS OIDC/JWKS fixture supplies an ephemeral RSA key and a
+short-lived synthetic M2M token. Only the isolated web probe and backend child
+trust that generated test certificate; the fixture URL and token are never
+printed or persisted. The M2M
 path avoids Auth0 Management API calls, while still exercising the production
 JWT strategy and real GraphQL guard. Each generation must, within a bounded
 timeout:
@@ -438,8 +492,9 @@ timeout:
 - return the exact active global `preferenceCatalog` through the real GraphQL
   process when called with the synthetic bearer token;
 - return the characterized unauthenticated GraphQL and MCP challenge shapes;
-- return exact OAuth protected-resource/authorization-server metadata and one
-  allowed plus one denied DCR response without contacting Auth0;
+- return exact OAuth protected-resource/authorization-server metadata and
+  allowed, empty, invalid, mixed, and denied DCR responses with their exact
+  headers without contacting Auth0;
 - return the characterized `GET /mcp` 405 and `Allow: POST`, then authenticate
   `POST /mcp` through the independent MCP verifier and execute `initialize`,
   read-scoped `tools/list`, `resources/list`, `resources/read` for
@@ -455,7 +510,22 @@ in addition to confirming loopback success. Unit and failure-injection coverage
 proves `APP_HOST` reaches `app.listen`, unexpected early exits close the JWKS and
 database resources, and the unset option keeps the prior hosted call shape.
 
-The harness requests termination with SIGTERM, waits a bounded interval, and
+The harness records each owned resource in a private mode-`0600` lifecycle
+journal with exact recovery guidance before or as the resource is acquired; the
+web subprobe links its own journal for its reserved loopback port, in-process
+Next app, and private temporary home. Its listener binds port `0` before Next
+preparation, so no released-port race exists. Before loading Next, it snapshots
+the caller environment, removes every inherited key, installs only the explicit
+smoke allowlist and synthetic credentials, and restores the exact snapshot
+after bounded Next/listener cleanup. Cancellation waits for listener
+acquisition to settle before cleanup, and pending Next preparation must settle
+or hit its own bound before environment/home teardown. Listener, Next,
+environment, and home cleanup are independently bounded/attempted and preserve
+the primary plus all cleanup failures. The parent command grants the web child
+more SIGTERM grace than the sum of those bounded cleanup stages.
+SIGINT/SIGTERM cancel the active command tree and still enter bounded cleanup.
+The harness requests backend termination with SIGTERM, waits a bounded interval,
+then waits for the process `close` event before finalizing redactors/logs, and
 records whether the current production process exited cleanly. Because
 `main.ts` has no shutdown hooks today, it uses a scoped SIGKILL fallback rather
 than claiming graceful application shutdown. The database remains. The second
@@ -545,6 +615,26 @@ Reportable result: local and CI callers share one complete deterministic gate;
 the real hosted backend is loopback-confined for the smoke and survives restart
 against isolated application-readable state.
 
+Final Checkpoint 2 remediation evidence on 2026-09-15: the focused
+local-migration suite passed 128/128 tests and the post-remediation LMBG passed
+all 11 phases in 232.541 seconds, including its 35.555-second clean-restart
+phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The passing
+aggregate run removed its generated database and fallback container and
+preserved the caller's tracked SDL and ignored generated paths. CI pnpm 9
+evidence is intentionally pending the PR workflow.
+
+The first Checkpoint 2 aggregate run also exposed two stale deterministic I-9
+expectation snapshots. Only
+`examples/eval/scenarios/samir-desai-i9-template-smoke/expected/filled-form.json`
+and
+`examples/eval/scenarios/elena-marquez-i9-template-smoke/expected/filled-form.json`
+were updated, from Git blobs `302a159` to `2e55255` and `3280ae7` to `f970563`
+respectively, to include the already-canonical personal-email field-map note.
+No scenario input, expected action/value, scorer, runtime behavior, or test
+threshold changed. The affected deterministic scenarios and complete gate were
+rerun. This is an explicitly recorded derived-expectation correction discovered
+by the new gate, not a relaxation of tests or a public-contract change.
+
 ### Checkpoint 3: Integration review and closeout
 
 1. Update canonical docs, this README, orchestration, and the PR description
@@ -617,6 +707,15 @@ records current exposure separately from retained invariants and later owners.
 - The future stable human principal must remain separate from MCP client/grant
   identity. Unverified email cannot link accounts. Current absent-scope MCP
   expansion is compatibility evidence, not the local issuance design.
+- DCR rejection logging currently includes complete untrusted redirect-URI
+  arrays and therefore can expose query-string secrets or personal data. Step
+  07 must replace it with redacted origin/class/outcome logging before local
+  transport ships; Step 01 records the risk without changing hosted behavior.
+- Current provider/extraction/identity/upload logs can include prompt prefixes,
+  old/new preference values, subject/email, filenames, and user IDs. Steps 06,
+  08, and 09 must route those through centralized value-aware redaction and
+  safe logging; Step 01 records the active boundary without altering hosted
+  output.
 - The gate uses obviously synthetic DB credentials and data in a random test
   `_test` database. It rejects non-test database names both syntactically and
   through `current_database()`, prints no URL/password/token or
@@ -679,6 +778,18 @@ table records explicit approval. Discovery reports do not count as approvals.
 | Architecture, scope, maintainability | `/root/plan_review_architecture` | Replaced unsafe schema isolation with a unique database; added application-level restart reads, disposable generated-output workspace, phase lifecycle rules, mandatory Step 09 cleanup, atomic gate activation, explicit bind/base handling, and corrected stale artifact wording. | **APPROVED** 2026-09-14; no remaining findings |
 | Public compatibility and consumers | `/root/plan_review_compatibility` | Added semantic GraphQL/HTTP fixtures, complete MCP/auth/OAuth/DCR coverage and signed smoke calls, all catalog semantics, version-gated manifest fixtures, exact consumer/external-client mapping, and explicit `me`/`user(id)` evolution. | **APPROVED AND REAFFIRMED** 2026-09-14; no remaining findings |
 | Testing, security and privacy | `/root/plan_review_test_security` | Combined incomplete gate/smoke checkpoints; added opt-in loopback binding and non-loopback negatives, validated merge-base propagation, loopback-only DB client-peer checks, container-safe locality, and bounded shutdown claims. | **APPROVED AND REAFFIRMED** 2026-09-14; no remaining findings |
+
+## Implementation Review Gate
+
+Checkpoint 3 is blocked until fresh read-only reviews compare the complete
+base-to-HEAD diff and validation evidence with this approved plan. The sole
+writer resolves every finding and records explicit final approval here.
+
+| Review dimension | Reviewer | Findings resolution | Approval |
+| --- | --- | --- | --- |
+| Architecture, scope and maintainability | `/root/final_architecture_scope` | Reconciled canonical counts; made restart GraphQL probes named, fragment-aware consumers; derived MCP schema/catalog affinities from actual visibility; and kept the implementation within the two approved checkpoints. No remaining semantic, architecture, scope, or maintainability finding. | **APPROVED AND REAFFIRMED** 2026-09-15; no remaining findings |
+| Public compatibility and consumers | `/root/final_compatibility_testing` | Closed fail-open GraphQL, HTTP, MCP, OAuth/DCR/challenge, client-visibility, authority, task-execution, output-domain, and accepted-MIME evolution cases; protected both sides of consumer transitions; and tied real HTTP/MCP descriptors and upload enforcement to executable e2e evidence. No remaining compatibility or consumer finding. | **APPROVED** 2026-09-15; no remaining findings |
+| Testing, security and privacy | `/root/final_compatibility_testing` | Added environment replacement/restoration, manifest-producer validation, private atomic journals, loopback/peer checks, independent database/container ownership, immutable-ID cleanup, cancellation-safe acquisition, merge-base artifact hashing, and real unsupported-upload rejection coverage. No remaining testing, security, privacy, or CI-equivalence finding outside the remote workflow result. | **APPROVED** 2026-09-15; no remaining findings |
 
 ## Exit Criteria
 

@@ -1,6 +1,13 @@
 {
   "schemaVersion": 1,
-  "supportedModes": ["hosted-baseline"],
+  "supportedModes": [
+    {
+      "id": "hosted-baseline",
+      "status": "active",
+      "successorModes": [],
+      "requiredEvidenceClasses": ["contract", "build", "state", "restart", "integrity"]
+    }
+  ],
   "phases": [
     {
       "id": "contract-baseline",
@@ -9,6 +16,7 @@
       "status": "active",
       "timeoutMs": 120000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["contract"],
       "predecessors": [],
       "replacementEvidence": [],
       "retirementCondition": "Retire only after every supported successor mode passes equivalent public-contract checks.",
@@ -21,7 +29,9 @@
             "scripts/local-migration/check-contract-baseline.test.mjs",
             "scripts/local-migration/gate-runner.test.mjs",
             "scripts/local-migration/gate-phases.test.mjs",
-            "scripts/local-migration/restart-smoke.test.mjs"
+            "scripts/local-migration/restart-smoke.test.mjs",
+            "scripts/local-migration/test-database.test.mjs",
+            "scripts/local-migration/web-support-smoke.test.mjs"
           ]
         },
         { "argv": ["node", "scripts/local-migration/check-contract-baseline.mjs"] }
@@ -34,6 +44,7 @@
       "status": "active",
       "timeoutMs": 120000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["documentation"],
       "predecessors": ["contract-baseline"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only when a reviewed replacement validates all canonical repository documentation.",
@@ -50,6 +61,7 @@
       "status": "active",
       "timeoutMs": 600000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["build"],
       "predecessors": ["documentation"],
       "replacementEvidence": [],
       "retirementCondition": "Retire a hosted build or unit proof only after its replacement implementation and tests land atomically.",
@@ -68,6 +80,7 @@
       "status": "active",
       "timeoutMs": 900000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["state"],
       "predecessors": ["backend-unit-build"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only after the replacement store passes the shared integration and end-to-end contracts.",
@@ -85,6 +98,7 @@
       "status": "active",
       "timeoutMs": 300000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["tooling"],
       "predecessors": ["backend-database"],
       "replacementEvidence": [],
       "retirementCondition": "Retire with the Step 09 developer-tool decision and explicit consumer migration evidence.",
@@ -102,6 +116,7 @@
       "status": "active",
       "timeoutMs": 300000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["evaluation"],
       "predecessors": ["local-orchestrator"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only after deterministic replacement fixtures cover the same migration contracts.",
@@ -115,6 +130,7 @@
       "status": "active",
       "timeoutMs": 600000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["evaluation", "state"],
       "predecessors": ["eval-fixtures"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only after successor deterministic scenarios prove equivalent stored-state behavior.",
@@ -131,6 +147,7 @@
       "status": "active",
       "timeoutMs": 600000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["build"],
       "predecessors": ["eval-deterministic-scenarios"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only when the replacement product UI has an equivalent production build proof.",
@@ -144,6 +161,7 @@
       "status": "active",
       "timeoutMs": 300000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["research"],
       "predecessors": ["web-production-build"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only through the Step 06 research-tool decision with static-fixture replacement evidence.",
@@ -157,6 +175,7 @@
       "status": "active",
       "timeoutMs": 600000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["restart"],
       "predecessors": ["harbor-static"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only after a passing clean-restart smoke exists for every replacement supported mode.",
@@ -170,6 +189,7 @@
       "status": "active",
       "timeoutMs": 300000,
       "modes": ["hosted-baseline"],
+      "evidenceClasses": ["integrity"],
       "predecessors": ["restart-smoke"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only when the stable aggregate gate preserves equivalent caller and generation integrity proof.",
