@@ -1,12 +1,14 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `01-contract-baseline-and-product-scope` — ready for planning
-- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
-  writer is assigned
-- Concrete next action: create `codex/local-migration-01-contract-baseline`,
-  write and independently review the Step 01 plan, then begin only its first
-  approved implementation checkpoint
+- Current step: `01-contract-baseline-and-product-scope` — approved plan,
+  implementation in progress
+- Outcome owner and sole writer: `/root` on
+  `codex/local-migration-01-contract-baseline`
+- Concrete next action: implement the approved Step 01
+  [contract-registry checkpoint](01-contract-baseline-and-product-scope/plan.md#checkpoint-1-executable-contract-registry),
+  run its targeted validation, then proceed to the aggregate gate/restart
+  checkpoint
 - Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
@@ -262,7 +264,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
-| `01-contract-baseline-and-product-scope` | Ready for planning — [activation charter](01-contract-baseline-and-product-scope/README.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
+| `01-contract-baseline-and-product-scope` | Approved plan; implementation in progress — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
 | `02-composition-boundaries` | Not started | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |

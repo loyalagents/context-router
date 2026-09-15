@@ -1,16 +1,17 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: ready for planning
-- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
-  writer is assigned
+- Status: plan approved — implementation in progress
+- Outcome owner and sole writer: `/root` on
+  `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: create `codex/local-migration-01-contract-baseline`
-  from `main`, copy `../step-template.md` to `plan.md`, and obtain independent
-  architecture, compatibility, test, and security/privacy review before
-  implementation
-- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
+- Concrete next action: implement
+  [`plan.md`](plan.md#checkpoint-1-executable-contract-registry) Checkpoint 1 as
+  the sole writer, then run its targeted contract validation before starting
+  the aggregate gate/restart checkpoint
+- Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
+  first
 - Depends on: completed Step 00 PRs
   [#153](https://github.com/loyalagents/context-router/pull/153),
   [#154](https://github.com/loyalagents/context-router/pull/154), and
@@ -27,8 +28,11 @@ must retain, replace, intentionally remove, or defer; names the observable
 acceptance evidence for each decision; and establishes one aggregate gate that
 proves a checkpoint has not left the supported application between two modes.
 
-This README activates planning only. The Step 01 planning agent must produce an
-independently reviewed `plan.md` before changing application behavior.
+The Step 01 plan was independently approved on 2026-09-14 by fresh read-only
+architecture/scope/maintainability, compatibility/contracts, and
+testing/security/privacy reviewers after every finding was resolved. The
+approved [`plan.md`](plan.md) governs implementation; material deviations pause
+the affected checkpoint for renewed review.
 
 ## Required Reading
 
