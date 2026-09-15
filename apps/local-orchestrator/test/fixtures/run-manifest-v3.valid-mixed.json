@@ -1,0 +1,164 @@
+{
+  "version": 3,
+  "startedAt": "2026-01-01T00:00:00.000Z",
+  "finishedAt": "2026-01-01T00:00:02.000Z",
+  "config": {
+    "folder": "/tmp/import",
+    "backendUrl": "http://127.0.0.1:3000",
+    "apply": true,
+    "concurrency": 2,
+    "includeHidden": false,
+    "aiFilter": {
+      "enabled": false,
+      "stage": null,
+      "adapter": null,
+      "command": null,
+      "commandArgs": null,
+      "goal": null,
+      "timeoutMs": null,
+      "promptVersion": null,
+      "failurePolicy": null
+    }
+  },
+  "hiddenEntriesSkipped": 1,
+  "files": [
+    {
+      "path": "/tmp/import/preferences.txt",
+      "relativePath": "preferences.txt",
+      "sizeBytes": 12,
+      "extension": ".txt",
+      "originalMimeType": "text/plain",
+      "uploadMimeType": "text/plain",
+      "file": {
+        "path": "/tmp/import/preferences.txt",
+        "relativePath": "preferences.txt",
+        "sizeBytes": 12,
+        "extension": ".txt",
+        "originalMimeType": "text/plain",
+        "uploadMimeType": "text/plain",
+        "uploadFileName": "preferences.txt",
+        "coercedToPlainText": false
+      },
+      "discovery": {"action": "analyze", "reason": "supported_extension"},
+      "fileFilter": {"action": "analyze", "reason": "passthrough", "score": 1, "source": "passthrough"},
+      "analysis": {
+        "attempted": true,
+        "status": "success",
+        "analysisId": "analysis-1",
+        "documentSummary": "Two preferences",
+        "suggestions": [
+          {
+            "id": "analysis-1:candidate:1",
+            "slug": "system.response_tone",
+            "operation": "CREATE",
+            "newValue": "concise",
+            "confidence": 0.9,
+            "sourceSnippet": "be concise"
+          },
+          {
+            "id": "analysis-1:candidate:2",
+            "slug": "travel.seat_preference",
+            "operation": "CREATE",
+            "newValue": "window",
+            "confidence": 0.8,
+            "sourceSnippet": "window seat"
+          }
+        ],
+        "filteredSuggestions": [
+          {
+            "id": "analysis-1:filtered:1",
+            "slug": "custom.unknown",
+            "operation": "CREATE",
+            "newValue": "x",
+            "confidence": 0.1,
+            "sourceSnippet": "unknown",
+            "filterReason": "UNKNOWN_SLUG"
+          }
+        ],
+        "filteredCount": 1
+      },
+      "suggestionDecisions": [
+        {"suggestionId": "analysis-1:candidate:1", "action": "apply", "reason": "passthrough", "score": 0.9, "source": "passthrough"},
+        {"suggestionId": "analysis-1:candidate:2", "action": "apply", "reason": "passthrough", "score": 0.8, "source": "passthrough"}
+      ],
+      "apply": {
+        "analysisId": "analysis-1",
+        "requestedCount": 2,
+        "appliedCount": 1,
+        "matchedSuggestionIds": ["analysis-1:candidate:1"],
+        "unmatchedSuggestionIds": ["analysis-1:candidate:2"],
+        "ambiguousSuggestionIds": [],
+        "appliedPreferences": [
+          {"id": "preference-1", "slug": "system.response_tone", "value": "concise", "status": "ACTIVE", "sourceType": "INFERRED"}
+        ]
+      }
+    },
+    {
+      "path": "/tmp/import/error.md",
+      "relativePath": "error.md",
+      "sizeBytes": 5,
+      "extension": ".md",
+      "originalMimeType": "text/markdown",
+      "uploadMimeType": "text/markdown",
+      "file": {
+        "path": "/tmp/import/error.md",
+        "relativePath": "error.md",
+        "sizeBytes": 5,
+        "extension": ".md",
+        "originalMimeType": "text/markdown",
+        "uploadMimeType": "text/markdown",
+        "uploadFileName": "error.md",
+        "coercedToPlainText": false
+      },
+      "discovery": {"action": "analyze", "reason": "supported_extension"},
+      "fileFilter": {"action": "analyze", "reason": "passthrough", "score": 1, "source": "passthrough"},
+      "analysis": {
+        "attempted": true,
+        "status": "request_error",
+        "suggestions": [],
+        "filteredSuggestions": [],
+        "filteredCount": 0,
+        "error": {"kind": "http", "message": "backend unavailable", "statusCode": 503}
+      }
+    },
+    {
+      "path": "/tmp/import/skip.docx",
+      "relativePath": "skip.docx",
+      "sizeBytes": 4,
+      "extension": ".docx",
+      "originalMimeType": null,
+      "uploadMimeType": null,
+      "discovery": {"action": "skip", "reason": "unsupported_extension", "details": "Unsupported extension"}
+    }
+  ],
+  "summary": {
+    "discoveredVisibleFiles": 3,
+    "hiddenEntriesSkipped": 1,
+    "unsupportedFilesSkipped": 1,
+    "skippedByFileFilter": 0,
+    "analysisAttempted": 2,
+    "analysisSucceeded": 1,
+    "analysisNoMatches": 0,
+    "analysisParseErrors": 0,
+    "analysisAiErrors": 0,
+    "analysisRequestErrors": 1,
+    "backendFilteredSuggestions": 1,
+    "validSuggestionsFound": 2,
+    "suggestionsAccepted": 2,
+    "suggestionsSkippedByFilter": 0,
+    "applyRequested": 2,
+    "applyMatched": 1,
+    "applyUnmatched": 1,
+    "applyAmbiguous": 0,
+    "aiFilesEvaluated": 0,
+    "aiFilesSkipped": 0,
+    "aiFilesBypassed": 0,
+    "aiSuggestionsAccepted": 0,
+    "aiSuggestionsSkipped": 0,
+    "fallbackSuggestionsAccepted": 0,
+    "aiAdapterFailures": 0,
+    "aiApplySkippedFiles": 0,
+    "degradedByAiFallback": false,
+    "hasFailures": true
+  }
+}

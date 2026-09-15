@@ -23,18 +23,21 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
   location: PreferenceScope.LOCATION,
 };
 
-export async function seedPreferenceDefinitions() {
+export async function seedPreferenceDefinitions(
+  client: Pick<PrismaClient, "preferenceDefinition"> = prisma,
+  catalog: Readonly<Record<string, PreferenceDefinition>> = PREFERENCE_CATALOG,
+) {
   console.log("Seeding preference definitions...");
 
-  for (const [slug, def] of Object.entries(PREFERENCE_CATALOG)) {
+  for (const [slug, def] of Object.entries(catalog)) {
     const catalogDef = def as PreferenceDefinition;
 
-    const existing = await prisma.preferenceDefinition.findFirst({
+    const existing = await client.preferenceDefinition.findFirst({
       where: { namespace: "GLOBAL", slug, archivedAt: null },
     });
 
     if (existing) {
-      await prisma.preferenceDefinition.update({
+      await client.preferenceDefinition.update({
         where: { id: existing.id },
         data: {
           displayName: catalogDef.displayName ?? null,
@@ -48,7 +51,7 @@ export async function seedPreferenceDefinitions() {
       });
     } else {
       // Warn if any active user defs share this slug (slug collision — allowed, user wins)
-      const collidingCount = await prisma.preferenceDefinition.count({
+      const collidingCount = await client.preferenceDefinition.count({
         where: { namespace: { not: "GLOBAL" }, slug, archivedAt: null },
       });
       if (collidingCount > 0) {
@@ -57,7 +60,7 @@ export async function seedPreferenceDefinitions() {
         );
       }
 
-      await prisma.preferenceDefinition.create({
+      await client.preferenceDefinition.create({
         data: {
           namespace: "GLOBAL",
           slug,
@@ -74,9 +77,7 @@ export async function seedPreferenceDefinitions() {
     }
   }
 
-  console.log(
-    `Seeded ${Object.keys(PREFERENCE_CATALOG).length} preference definitions`,
-  );
+  console.log(`Seeded ${Object.keys(catalog).length} preference definitions`);
 }
 
 async function main() {

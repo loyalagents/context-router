@@ -1,14 +1,13 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `01-contract-baseline-and-product-scope` — approved plan,
-  implementation in progress
+- Current step: `01-contract-baseline-and-product-scope` — Checkpoint 1 complete,
+  Checkpoint 2 in progress
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
 - Concrete next action: implement the approved Step 01
-  [contract-registry checkpoint](01-contract-baseline-and-product-scope/plan.md#checkpoint-1-executable-contract-registry),
-  run its targeted validation, then proceed to the aggregate gate/restart
-  checkpoint
+  [aggregate gate and clean-process restart checkpoint](01-contract-baseline-and-product-scope/plan.md#checkpoint-2-aggregate-gate-and-clean-process-restart),
+  then run its root smoke and aggregate command
 - Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`

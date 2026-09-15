@@ -1,15 +1,14 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: plan approved — implementation in progress
+- Status: Checkpoint 1 complete — Checkpoint 2 in progress
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: implement
-  [`plan.md`](plan.md#checkpoint-1-executable-contract-registry) Checkpoint 1 as
-  the sole writer, then run its targeted contract validation before starting
-  the aggregate gate/restart checkpoint
+- Concrete next action: implement the atomic
+  [`plan.md`](plan.md#checkpoint-2-aggregate-gate-and-clean-process-restart)
+  aggregate gate and clean-process restart checkpoint as the sole writer
 - Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
   first
 - Depends on: completed Step 00 PRs
@@ -33,6 +32,15 @@ architecture/scope/maintainability, compatibility/contracts, and
 testing/security/privacy reviewers after every finding was resolved. The
 approved [`plan.md`](plan.md) governs implementation; material deviations pause
 the affected checkpoint for renewed review.
+
+Checkpoint 1 added the versioned capability/outbound/package registry, complete
+semantic GraphQL and MCP fixtures, HTTP contracts, all 19 catalog semantics and
+seed edge characterization, the strict developer-orchestrator manifest-v3
+schema, and the canonical current-state baseline. Its focused checker, backend
+unit/integration/e2e, orchestrator, Markdown-link, and whitespace validations
+passed without changing a public schema or runtime handler. Evidence collection
+corrected a prose count from 14 to the schema-derived 15 mutations; scope and
+implementation were unchanged.
 
 ## Required Reading
 

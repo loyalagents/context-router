@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "routes": {
+    "health": {
+      "method": "GET",
+      "path": "/health",
+      "auth": "none",
+      "success": {
+        "status": 200,
+        "contentType": "application/json",
+        "required": ["status", "timestamp"],
+        "constants": {"status": "ok"},
+        "formats": {"timestamp": "date-time"}
+      }
+    },
+    "graphql": {
+      "method": "POST",
+      "path": "/graphql",
+      "contentType": "application/json",
+      "request": {
+        "required": ["query"],
+        "optional": ["variables", "operationName"]
+      },
+      "success": {"status": 200, "required": ["data"]},
+      "applicationError": {
+        "status": 200,
+        "required": ["errors"],
+        "errorRequired": ["message"]
+      },
+      "publicProbe": {"query": "{ __typename }", "root": "Query"},
+      "catalogAnonymousAccess": "observed-not-promised-class-guard-rejects"
+    },
+    "documentAnalysis": {
+      "method": "POST",
+      "path": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "contentType": "multipart/form-data",
+      "multipart": {"required": ["file"], "optional": []},
+      "maxFileSizeBytes": 10485760,
+      "allowedMimeTypes": [
+        "text/plain",
+        "text/markdown",
+        "application/json",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/yaml",
+        "text/yaml",
+        "application/x-yaml"
+      ],
+      "success": {
+        "status": 201,
+        "required": [
+          "analysisId",
+          "suggestions",
+          "filteredSuggestions",
+          "status",
+          "filteredCount"
+        ],
+        "optionalNullable": ["documentSummary", "statusReason"],
+        "statuses": ["success", "no_matches", "parse_error", "ai_error"]
+      },
+      "errors": {
+        "missingOrInvalidUpload": {"status": 400, "required": ["statusCode", "message", "error"]},
+        "missingBearer": {"status": 401, "required": ["statusCode", "message"]},
+        "oversizedMultipart": {"status": 413, "required": ["statusCode", "message"]}
+      }
+    },
+    "formFill": {
+      "method": "POST",
+      "path": "/api/form-fill/pdf",
+      "auth": "bearer-user",
+      "contentType": "multipart/form-data",
+      "multipart": {"required": ["file"], "optional": ["fieldPolicies"]},
+      "fieldPolicies": {"encoding": "JSON string", "schemaVersion": 1},
+      "maxFileSizeBytes": 10485760,
+      "allowedMimeTypes": ["application/pdf"],
+      "success": {
+        "status": 201,
+        "required": [
+          "fillId",
+          "status",
+          "originalFilename",
+          "outputFilename",
+          "outputMimeType",
+          "filledPdfBase64",
+          "summary"
+        ],
+        "statuses": ["success", "partial", "no_fillable_fields", "unsupported_format", "failed"],
+        "outputMimeType": "application/pdf",
+        "summaryRequired": [
+          "totalFields",
+          "filledCount",
+          "skippedCount",
+          "filledFields",
+          "skippedFields",
+          "warnings"
+        ]
+      },
+      "errors": {
+        "missingInvalidOrPolicy": {"status": 400, "required": ["statusCode", "message", "error"]},
+        "missingBearer": {"status": 401, "required": ["statusCode", "message"]},
+        "oversizedMultipart": {"status": 413, "required": ["statusCode", "message"]}
+      }
+    },
+    "mcpPost": {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "bearer-mcp",
+      "contentType": "application/json",
+      "accept": "application/json, text/event-stream",
+      "request": {"protocol": "JSON-RPC 2.0"},
+      "success": {"status": 200, "contentType": "application/json"},
+      "disabled": {"status": 503, "body": {"error": "MCP HTTP transport is disabled"}}
+    },
+    "mcpGet": {
+      "method": "GET",
+      "path": "/mcp",
+      "auth": "none",
+      "response": {
+        "status": 405,
+        "headers": {"Allow": "POST"},
+        "body": {"error": "Method Not Allowed"}
+      }
+    },
+    "oauthMetadata": {
+      "method": "GET",
+      "paths": [
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/.well-known/oauth-authorization-server",
+        "/.well-known/oauth-authorization-server/mcp"
+      ],
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    "dcr": {
+      "method": "POST",
+      "path": "/oauth/register",
+      "auth": "none",
+      "contentType": "application/json",
+      "success": {
+        "status": 201,
+        "required": [
+          "client_id",
+          "token_endpoint_auth_method",
+          "grant_types",
+          "response_types",
+          "redirect_uris"
+        ]
+      },
+      "errors": {
+        "emptyInvalidOrMixedRedirect": {"status": 400, "required": ["error", "error_description"]},
+        "missingConfiguredClientId": {"status": 500, "required": ["error", "error_description"]},
+        "rateLimit": {"status": 429}
+      },
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Cache-Control": "no-store"
+      }
+    }
+  },
+  "supportRoutes": [
+    {"path": "/api/chat", "class": "planned-removal"},
+    {"path": "/api/debug/token", "class": "planned-removal"},
+    {"path": "/auth/*", "class": "planned-removal"}
+  ]
+}

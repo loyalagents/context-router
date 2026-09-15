@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "startedAt": "x",
+  "finishedAt": "x",
+  "config": {"folder":"x","backendUrl":"http://127.0.0.1","apply":false,"concurrency":1,"includeHidden":false,"aiFilter":{"enabled":false,"stage":null,"adapter":null,"command":null,"commandArgs":null,"goal":null,"timeoutMs":null,"promptVersion":null,"failurePolicy":null}},
+  "hiddenEntriesSkipped": 0,
+  "files": [{"path":"x","relativePath":"x","discovery":{"action":"analyze","reason":"test"},"analysis":{"attempted":true,"status":"success","suggestions":[],"filteredSuggestions":[],"filteredCount":0}}],
+  "summary": {"discoveredVisibleFiles":0,"hiddenEntriesSkipped":0,"unsupportedFilesSkipped":0,"skippedByFileFilter":0,"analysisAttempted":0,"analysisSucceeded":0,"analysisNoMatches":0,"analysisParseErrors":0,"analysisAiErrors":0,"analysisRequestErrors":0,"backendFilteredSuggestions":0,"validSuggestionsFound":0,"suggestionsAccepted":0,"suggestionsSkippedByFilter":0,"applyRequested":0,"applyMatched":0,"applyUnmatched":0,"applyAmbiguous":0,"aiFilesEvaluated":0,"aiFilesSkipped":0,"aiFilesBypassed":0,"aiSuggestionsAccepted":0,"aiSuggestionsSkipped":0,"fallbackSuggestionsAccepted":0,"aiAdapterFailures":0,"aiApplySkippedFiles":0,"degradedByAiFallback":false,"hasFailures":false}
+}

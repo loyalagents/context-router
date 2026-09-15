@@ -1,0 +1,1084 @@
+{
+  "version": 1,
+  "title": "Local migration hosted-contract baseline",
+  "planningBase": "9b56d38fde927d4e643af89ba45665a439613939",
+  "supportedMode": "hosted",
+  "contractClasses": [
+    "preserved-contract",
+    "observed-not-promised",
+    "planned-removal"
+  ],
+  "capabilities": [
+    {
+      "id": "preference-definition-domain",
+      "label": "Preference definition lifecycle and schema export",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/schema.gql",
+        "docs/current/PREFERENCE_SCHEMA.md"
+      ]
+    },
+    {
+      "id": "prisma-definition-storage",
+      "label": "Prisma/PostgreSQL definition storage",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "04",
+        "05"
+      ],
+      "evidence": [
+        "apps/backend/prisma/schema.prisma"
+      ]
+    },
+    {
+      "id": "preference-value-lifecycle",
+      "label": "Active, suggested, rejected, deleted, global, and location value semantics",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/test/e2e/preferences.e2e-spec.ts"
+      ]
+    },
+    {
+      "id": "profile-memory-slugs",
+      "label": "Seven profile memory slugs",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/config/preferences.catalog.json"
+      ]
+    },
+    {
+      "id": "auth0-profile-copy",
+      "label": "First-login Auth0 claims copied into profile memory",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "03",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/auth/auth.service.ts"
+      ]
+    },
+    {
+      "id": "product-bulk-import-export",
+      "label": "Product bulk value import/export",
+      "disposition": "DEFER",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "09"
+      ],
+      "acceptanceQuestion": "After backup and restore are defined, is a separate consented versioned conflict-aware bulk data format still needed?",
+      "evidence": [
+        "apps/local-orchestrator/README.md"
+      ]
+    },
+    {
+      "id": "mutation-audit-provenance",
+      "label": "Atomic mutation audit provenance and history",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05",
+        "08"
+      ],
+      "evidence": [
+        "docs/current/AUDIT_AND_ACCESS_HISTORY.md"
+      ]
+    },
+    {
+      "id": "indefinite-history-retention",
+      "label": "Undefined indefinite history retention",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "08",
+        "09"
+      ],
+      "evidence": [
+        "docs/current/AUDIT_AND_ACCESS_HISTORY.md"
+      ]
+    },
+    {
+      "id": "record-level-history-rollback",
+      "label": "Record-level history rollback",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "08",
+        "09"
+      ],
+      "evidence": [
+        "docs/plans/active/local-migration/decision-log.md"
+      ]
+    },
+    {
+      "id": "mcp-access-history-minimum",
+      "label": "Value-free request-level MCP access history",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "07",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/test/e2e/mcp-access-log.e2e-spec.ts"
+      ]
+    },
+    {
+      "id": "document-proposal-review",
+      "label": "Document proposal before explicit preference application",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "06",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts"
+      ]
+    },
+    {
+      "id": "vertex-document-analysis",
+      "label": "Vertex-backed document analysis",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "06"
+      ],
+      "evidence": [
+        "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts"
+      ]
+    },
+    {
+      "id": "image-import-capability",
+      "label": "PNG/JPEG OCR or vision import",
+      "disposition": "DEFER",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "06"
+      ],
+      "acceptanceQuestion": "Can the selected local model safely and truthfully support image inputs within resource and privacy limits?",
+      "evidence": [
+        "apps/backend/src/config/document-upload.config.ts"
+      ]
+    },
+    {
+      "id": "pdf-acroform-fill",
+      "label": "Editable PDF AcroForm filling and per-field summary",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "06",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/preferences/form-fill/form-fill.types.ts"
+      ]
+    },
+    {
+      "id": "scanned-pdf-ocr",
+      "label": "Scanned or flattened PDF OCR",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "06",
+        "08"
+      ],
+      "evidence": [
+        "docs/current/FORM_FILL.md"
+      ]
+    },
+    {
+      "id": "preference-search-invariant",
+      "label": "Literal search and AI propose-then-narrow search",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "06",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/mcp/tools/preference-search.tool.ts"
+      ]
+    },
+    {
+      "id": "search-lab-and-test-chat",
+      "label": "Search Lab and generic Vertex test chat",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "06",
+        "08"
+      ],
+      "evidence": [
+        "apps/web/app/dashboard/search-lab/page.tsx",
+        "apps/web/app/api/chat/route.ts"
+      ]
+    },
+    {
+      "id": "core-ui-outcomes",
+      "label": "Dashboard, profile, preferences, schema, form, history, and permissions outcomes",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "08"
+      ],
+      "evidence": [
+        "apps/web/app/dashboard"
+      ]
+    },
+    {
+      "id": "debug-token-route",
+      "label": "Raw bearer-token debug route and dashboard link",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "03",
+        "08"
+      ],
+      "evidence": [
+        "apps/web/app/api/debug/token/route.ts"
+      ]
+    },
+    {
+      "id": "clear-memory",
+      "label": "User-scoped clear-memory outcome",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "08",
+        "09"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/reset/user-data-reset.service.ts"
+      ]
+    },
+    {
+      "id": "demo-full-reset-product-modes",
+      "label": "Demo-data and full-user-data product reset modes",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "04",
+        "08",
+        "09"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/reset/reset.resolver.ts"
+      ]
+    },
+    {
+      "id": "catalog-semantics",
+      "label": "Exact 19-slug core catalog and idempotent initialization",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "04",
+        "05"
+      ],
+      "evidence": [
+        "apps/backend/src/config/preferences.catalog.json"
+      ]
+    },
+    {
+      "id": "sample-production-users",
+      "label": "Sample users created by production seed",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "04"
+      ],
+      "evidence": [
+        "apps/backend/prisma/seed.ts"
+      ]
+    },
+    {
+      "id": "provider-neutral-principal",
+      "label": "Stable provider-neutral principal distinct from MCP client identity",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "03",
+        "07"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/auth/auth.service.ts"
+      ]
+    },
+    {
+      "id": "graphql-me",
+      "label": "Current-principal GraphQL me query",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "03",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/schema.gql"
+      ]
+    },
+    {
+      "id": "graphql-user-id",
+      "label": "Redundant self-only GraphQL user(id) query",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "03",
+        "08"
+      ],
+      "evidence": [
+        "apps/backend/src/modules/user/user.resolver.ts"
+      ]
+    },
+    {
+      "id": "mcp-layered-authorization",
+      "label": "MCP client maxima, token narrowing, target rules, and database denies",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "07"
+      ],
+      "evidence": [
+        "apps/backend/src/mcp/auth/mcp-authorization.service.ts"
+      ]
+    },
+    {
+      "id": "mcp-absent-scope-max-authority",
+      "label": "Absent or unrecognized scope restores configured client maximum",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "07"
+      ],
+      "evidence": [
+        "apps/backend/src/mcp/types/mcp-authorization.types.ts"
+      ]
+    },
+    {
+      "id": "local-orchestrator-product",
+      "label": "Remote analyze/apply orchestrator as installed product",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "09"
+      ],
+      "evidence": [
+        "apps/local-orchestrator/README.md"
+      ]
+    },
+    {
+      "id": "local-orchestrator-temporary-tooling",
+      "label": "Orchestrator manifest v3 and current failure/reconciliation semantics",
+      "disposition": "RETAIN",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "09"
+      ],
+      "evidence": [
+        "apps/local-orchestrator/src/types.ts"
+      ]
+    },
+    {
+      "id": "orchestrator-hosted-filters",
+      "label": "Arbitrary command and hosted Claude/Codex filters",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "09"
+      ],
+      "evidence": [
+        "apps/local-orchestrator/src/ai/command-adapter.ts"
+      ]
+    },
+    {
+      "id": "eval-deterministic-tooling",
+      "label": "Deterministic eval fixtures and runners",
+      "disposition": "RETAIN",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09"
+      ],
+      "evidence": [
+        "examples/eval/README.md"
+      ]
+    },
+    {
+      "id": "live-harbor-comparison",
+      "label": "Live Harbor/provider model comparison",
+      "disposition": "DEFER",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "06"
+      ],
+      "acceptanceQuestion": "Is an opt-in live research run needed to support the local model selection after deterministic evaluation passes?",
+      "evidence": [
+        "examples/eval-harbor/README.md"
+      ]
+    },
+    {
+      "id": "hosted-deployment-workflow",
+      "label": "Cloud Run, Vercel/Auth0, and hosted operator workflow on main",
+      "disposition": "REMOVE",
+      "contractClass": "planned-removal",
+      "ownerSteps": [
+        "09"
+      ],
+      "evidence": [
+        "docs/useful/CLOUD_RUN_DEPLOY.md"
+      ]
+    },
+    {
+      "id": "no-product-telemetry",
+      "label": "No application telemetry by default",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "09"
+      ],
+      "evidence": [
+        "docs/plans/active/local-migration/decision-log.md"
+      ]
+    },
+    {
+      "id": "transitive-offline-audit",
+      "label": "Transitive update-check and telemetry offline audit",
+      "disposition": "DEFER",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "09"
+      ],
+      "acceptanceQuestion": "Which packaged dependencies attempt network access after installation, and which checks must be disabled or disclosed?",
+      "evidence": [
+        "docs/plans/active/local-migration/orchestration.md"
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "path": "apps/backend",
+      "role": "hosted-product",
+      "migrationOwner": "02-07"
+    },
+    {
+      "path": "apps/web",
+      "role": "hosted-product",
+      "migrationOwner": "08"
+    },
+    {
+      "path": "apps/local-orchestrator",
+      "role": "temporary-developer-tooling",
+      "migrationOwner": "09"
+    },
+    {
+      "path": "examples/eval",
+      "role": "developer-evaluation-tooling",
+      "migrationOwner": "all"
+    },
+    {
+      "path": "examples/eval-harbor",
+      "role": "research-tooling",
+      "migrationOwner": "06"
+    }
+  ],
+  "contracts": {
+    "graphql": {
+      "class": "preserved-contract",
+      "fixture": "apps/backend/test/contracts/fixtures/graphql-schema.semantic.json",
+      "source": "apps/backend/src/schema.gql"
+    },
+    "http": {
+      "class": "preserved-contract",
+      "fixture": "apps/backend/test/contracts/fixtures/http-contracts.v1.json"
+    },
+    "mcp": {
+      "class": "preserved-contract",
+      "fixture": "apps/backend/test/contracts/fixtures/mcp-contract-baseline.json"
+    },
+    "catalog": {
+      "class": "preserved-contract",
+      "fixture": "apps/backend/test/contracts/fixtures/preference-catalog.v1.json",
+      "source": "apps/backend/src/config/preferences.catalog.json",
+      "copyFingerprint": "sha256:42c01ee95658be04340b9c64109d0683f0e8df0eadf81da54349152250d27832"
+    },
+    "manifest": {
+      "class": "observed-not-promised",
+      "fixture": "apps/local-orchestrator/test/fixtures/run-manifest-v3.valid-mixed.json",
+      "schema": "apps/local-orchestrator/contracts/run-manifest-v3.schema.json",
+      "version": 3
+    }
+  },
+  "outboundCalls": [
+    {
+      "id": "postgresql",
+      "source": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
+      "destination": "DATABASE_URL",
+      "payload": "all durable application state and queries",
+      "defaultRuntime": true,
+      "disposition": "REPLACE",
+      "ownerSteps": [
+        "04",
+        "05"
+      ]
+    },
+    {
+      "id": "auth0-management",
+      "source": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
+      "destination": "AUTH0_DOMAIN management API",
+      "payload": "identity profile and metadata",
+      "defaultRuntime": true,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "03"
+      ]
+    },
+    {
+      "id": "auth0-jwks",
+      "source": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
+      "destination": "AUTH0_DOMAIN JWKS",
+      "payload": "key retrieval metadata",
+      "defaultRuntime": true,
+      "disposition": "REPLACE",
+      "ownerSteps": [
+        "03",
+        "07"
+      ]
+    },
+    {
+      "id": "vertex",
+      "source": "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts",
+      "destination": "Google Vertex API and credential endpoints",
+      "payload": "prompts, documents, form metadata, preferences, and retries",
+      "defaultRuntime": true,
+      "disposition": "REPLACE",
+      "ownerSteps": [
+        "06"
+      ]
+    },
+    {
+      "id": "web-backend",
+      "source": "apps/web/lib/graphql-client.ts",
+      "destination": "configured backend GraphQL and REST URLs",
+      "payload": "bearer token and user requests/data",
+      "defaultRuntime": true,
+      "disposition": "REPLACE",
+      "ownerSteps": [
+        "08"
+      ]
+    },
+    {
+      "id": "orchestrator-backend",
+      "source": "apps/local-orchestrator/src/server/analysis-client.ts",
+      "destination": "operator-supplied backend URL",
+      "payload": "bearer token, complete files, suggestions, and evidence",
+      "defaultRuntime": false,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "orchestrator-provider-cli",
+      "source": "apps/local-orchestrator/src/ai/command-adapter.ts",
+      "destination": "operator command including hosted Claude/Codex wrappers",
+      "payload": "inherited process environment, previews, suggestions, and values",
+      "defaultRuntime": false,
+      "disposition": "REMOVE",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "live-evaluation-providers",
+      "source": "examples/eval/scripts/generate.mjs",
+      "destination": "Vertex, Claude, Codex, OpenRouter, Hugging Face, or remote APIs",
+      "payload": "synthetic fixtures, prompts, values, and operator tokens",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
+      ]
+    }
+  ],
+  "externalClients": [
+    {
+      "bucket": "claude",
+      "callbacks": [
+        "https://claude.ai/api/mcp/auth_callback",
+        "https://claude.com/api/mcp/auth_callback",
+        "https://claude.ai/oauth/callback",
+        "https://claude.com/oauth/callback",
+        "https://claude.ai/api/oauth/callback",
+        "https://claude.com/api/oauth/callback",
+        "http://localhost:8081/callback"
+      ]
+    },
+    {
+      "bucket": "codex",
+      "callbacks": [
+        "http://127.0.0.1:8082/callback"
+      ]
+    },
+    {
+      "bucket": "fallback",
+      "callbacks": [
+        "https://chatgpt.com/connector_platform_oauth_redirect",
+        "https://platform.openai.com/apps-manage/oauth"
+      ]
+    },
+    {
+      "bucket": "unknown",
+      "callbacks": []
+    }
+  ],
+  "observedNotPromised": [
+    "Production anonymous preferenceCatalog behavior is unresolved because class and method guards conflict and e2e replaces both.",
+    "MCP_HTTP_PATH, MCP_HTTP_REQUIRE_AUTH=false, and MCP_STDIO_ENABLED=true are configuration-shaped non-capabilities.",
+    "Absent, empty, or wholly unrecognized MCP preference scopes restore a recognized client's configured maximum.",
+    "Orchestrator dry-run still reads and uploads documents and can call hosted providers.",
+    "Orchestrator analysis and apply clients accept some HTTP-success JSON values that do not satisfy their declared contract.",
+    "The production listener does not specify a hostname unless the Step 01 opt-in APP_HOST smoke setting is used."
+  ],
+  "dynamicConsumers": [
+    {
+      "path": "test-auth.sh",
+      "kind": "query",
+      "operation": "Query.me",
+      "rootFields": [
+        "me"
+      ]
+    },
+    {
+      "path": "test-auth.sh",
+      "kind": "query",
+      "operation": "Query.user",
+      "rootFields": [
+        "user"
+      ]
+    },
+    {
+      "path": "test-auth.sh",
+      "kind": "query",
+      "operation": "Query.activePreferences",
+      "rootFields": [
+        "activePreferences"
+      ]
+    },
+    {
+      "path": "test-graphql.sh",
+      "kind": "query",
+      "operation": "Query.me",
+      "rootFields": [
+        "me"
+      ]
+    },
+    {
+      "path": "test-graphql.sh",
+      "kind": "query",
+      "operation": "Query.user",
+      "rootFields": [
+        "user"
+      ]
+    },
+    {
+      "path": "test-graphql.sh",
+      "kind": "query",
+      "operation": "Query.activePreferences",
+      "rootFields": [
+        "activePreferences"
+      ]
+    },
+    {
+      "path": "test-vertex-ai.sh",
+      "kind": "query",
+      "operation": "Query.askVertexAI",
+      "rootFields": [
+        "askVertexAI"
+      ]
+    },
+    {
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "kind": "query",
+      "operation": "Query.me",
+      "rootFields": [
+        "me"
+      ]
+    },
+    {
+      "path": "docs/useful/local-orchestrator-commands.md",
+      "kind": "query",
+      "operation": "Query.activePreferences",
+      "rootFields": [
+        "activePreferences"
+      ]
+    }
+  ],
+  "consumers": [
+    {
+      "path": "apps/local-orchestrator/src/server/apply-client.ts",
+      "kind": "mutation",
+      "operation": "ApplyPreferenceSuggestions",
+      "rootFields": [
+        "applyPreferenceSuggestions"
+      ]
+    },
+    {
+      "path": "apps/web/app/api/chat/route.ts",
+      "kind": "query",
+      "operation": "AskVertexAI",
+      "rootFields": [
+        "askVertexAI"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "kind": "query",
+      "operation": "McpAccessHistoryForTab",
+      "rootFields": [
+        "mcpAccessHistory"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/history/page.tsx",
+      "kind": "query",
+      "operation": "PreferenceCatalogForAuditHistoryPage",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/page.tsx",
+      "kind": "query",
+      "operation": "DashboardPageData",
+      "rootFields": [
+        "activePreferences",
+        "me"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/page.tsx",
+      "kind": "query",
+      "operation": "MyPermissionGrants",
+      "rootFields": [
+        "myPermissionGrants"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+      "kind": "mutation",
+      "operation": "RemovePermissionGrant",
+      "rootFields": [
+        "removePermissionGrant"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+      "kind": "mutation",
+      "operation": "SetPermissionGrant",
+      "rootFields": [
+        "setPermissionGrant"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
+      "kind": "query",
+      "operation": "MyPermissionGrants",
+      "rootFields": [
+        "myPermissionGrants"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
+      "kind": "query",
+      "operation": "PreferenceAuditHistoryForTab",
+      "rootFields": [
+        "preferenceAuditHistory"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
+      "kind": "mutation",
+      "operation": "CreatePreferenceDefinition",
+      "rootFields": [
+        "createPreferenceDefinition"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
+      "kind": "mutation",
+      "operation": "SetPreference",
+      "rootFields": [
+        "setPreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
+      "kind": "mutation",
+      "operation": "ResetMyMemory",
+      "rootFields": [
+        "resetMyMemory"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
+      "kind": "mutation",
+      "operation": "DeletePreference",
+      "rootFields": [
+        "deletePreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
+      "kind": "mutation",
+      "operation": "SetPreference",
+      "rootFields": [
+        "setPreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
+      "kind": "mutation",
+      "operation": "AcceptSuggestedPreference",
+      "rootFields": [
+        "acceptSuggestedPreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
+      "kind": "mutation",
+      "operation": "RejectSuggestedPreference",
+      "rootFields": [
+        "rejectSuggestedPreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
+      "kind": "mutation",
+      "operation": "ApplyPreferenceSuggestions",
+      "rootFields": [
+        "applyPreferenceSuggestions"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/page.tsx",
+      "kind": "query",
+      "operation": "ActivePreferences",
+      "rootFields": [
+        "activePreferences"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/page.tsx",
+      "kind": "query",
+      "operation": "PreferenceCatalogForPreferencesPage",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/page.tsx",
+      "kind": "query",
+      "operation": "SuggestedPreferences",
+      "rootFields": [
+        "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/page.tsx",
+      "kind": "query",
+      "operation": "ProfilePageData",
+      "rootFields": [
+        "activePreferences",
+        "me"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
+      "kind": "mutation",
+      "operation": "DeleteProfilePreference",
+      "rootFields": [
+        "deletePreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
+      "kind": "mutation",
+      "operation": "SetProfilePreference",
+      "rootFields": [
+        "setPreference"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/page.tsx",
+      "kind": "query",
+      "operation": "PreferenceCatalog",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "kind": "mutation",
+      "operation": "ArchivePreferenceDefinition",
+      "rootFields": [
+        "archivePreferenceDefinition"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "kind": "mutation",
+      "operation": "CreatePreferenceDefinition",
+      "rootFields": [
+        "createPreferenceDefinition"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "kind": "mutation",
+      "operation": "UpdatePreferenceDefinition",
+      "rootFields": [
+        "updatePreferenceDefinition"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
+      "kind": "query",
+      "operation": "ExportPreferenceSchema",
+      "rootFields": [
+        "exportPreferenceSchema"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/page.tsx",
+      "kind": "query",
+      "operation": "SearchLabData",
+      "rootFields": [
+        "activePreferences",
+        "preferenceCatalog",
+        "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+      "kind": "query",
+      "operation": "SmartSearchPreferences",
+      "rootFields": [
+        "smartSearchPreferences"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/exporter/query.mjs",
+      "kind": "query",
+      "operation": "EvalStoredPreferencesExport",
+      "rootFields": [
+        "activePreferences",
+        "me",
+        "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorAcceptSuggestedPreference",
+      "rootFields": [
+        "acceptSuggestedPreference"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorApplySuggestions",
+      "rootFields": [
+        "applyPreferenceSuggestions"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorCreateDefinition",
+      "rootFields": [
+        "createPreferenceDefinition"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorResetMemory",
+      "rootFields": [
+        "resetMyMemory"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorSetPreference",
+      "rootFields": [
+        "setPreference"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "mutation",
+      "operation": "EvalIngestorSuggestPreference",
+      "rootFields": [
+        "suggestPreference"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "query",
+      "operation": "EvalIngestorMe",
+      "rootFields": [
+        "me"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/ingestor/query.mjs",
+      "kind": "query",
+      "operation": "EvalIngestorPreferenceSchema",
+      "rootFields": [
+        "exportPreferenceSchema"
+      ]
+    },
+    {
+      "path": "examples/eval/scripts/memory-snapshot/query.mjs",
+      "kind": "query",
+      "operation": "EvalMemorySnapshotExport",
+      "rootFields": [
+        "activePreferences",
+        "exportPreferenceSchema",
+        "me",
+        "suggestedPreferences"
+      ]
+    }
+  ]
+}

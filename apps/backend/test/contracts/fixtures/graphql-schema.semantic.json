@@ -1,0 +1,1878 @@
+{
+  "roots": {
+    "query": "Query",
+    "mutation": "Mutation",
+    "subscription": null
+  },
+  "types": {
+    "ApplyPreferenceSuggestionInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "confidence": {
+          "type": "Float",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "evidence": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "newValue": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "operation": {
+          "type": "PreferenceOperation!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "suggestionId": {
+          "type": "ID!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "AuditActorType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "IMPORT",
+          "deprecationReason": null
+        },
+        {
+          "name": "MCP_CLIENT",
+          "deprecationReason": null
+        },
+        {
+          "name": "SYSTEM",
+          "deprecationReason": null
+        },
+        {
+          "name": "USER",
+          "deprecationReason": null
+        },
+        {
+          "name": "WORKFLOW",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "AuditEventType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DEFINITION_ARCHIVED",
+          "deprecationReason": null
+        },
+        {
+          "name": "DEFINITION_CREATED",
+          "deprecationReason": null
+        },
+        {
+          "name": "DEFINITION_UPDATED",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_DELETED",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_SET",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_SUGGESTED_UPSERTED",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_SUGGESTION_ACCEPTED",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_SUGGESTION_REJECTED",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCES_RESET",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "AuditOrigin": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DOCUMENT_ANALYSIS",
+          "deprecationReason": null
+        },
+        {
+          "name": "GRAPHQL",
+          "deprecationReason": null
+        },
+        {
+          "name": "MCP",
+          "deprecationReason": null
+        },
+        {
+          "name": "SYSTEM",
+          "deprecationReason": null
+        },
+        {
+          "name": "WORKFLOW",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "AuditTargetType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "PREFERENCE",
+          "deprecationReason": null
+        },
+        {
+          "name": "PREFERENCE_DEFINITION",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "Boolean": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "CreateLocationInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "address": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "label": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "type": {
+          "type": "LocationType!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "CreatePreferenceDefinitionInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "description": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "displayName": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "isCore": {
+          "type": "Boolean",
+          "hasDefault": true,
+          "defaultValue": "false",
+          "deprecationReason": null
+        },
+        "isSensitive": {
+          "type": "Boolean",
+          "hasDefault": true,
+          "defaultValue": "false",
+          "deprecationReason": null
+        },
+        "options": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "scope": {
+          "type": "PreferenceScope!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "valueType": {
+          "type": "PreferenceValueType!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "DateTime": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "ExportSchemaScope": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "ALL",
+          "deprecationReason": null
+        },
+        {
+          "name": "GLOBAL",
+          "deprecationReason": null
+        },
+        {
+          "name": "PERSONAL",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "FilteredSuggestion": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "category": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "confidence": {
+          "type": "Float!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "description": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "filterDetails": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "filterReason": {
+          "type": "FilterReason!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "newValue": {
+          "type": "JSON!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "oldValue": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "operation": {
+          "type": "PreferenceOperation!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "sourceMeta": {
+          "type": "SourceMeta",
+          "args": [],
+          "deprecationReason": null
+        },
+        "sourceSnippet": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "wasCorrected": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "FilterReason": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DUPLICATE_KEY",
+          "deprecationReason": null
+        },
+        {
+          "name": "MISSING_FIELDS",
+          "deprecationReason": null
+        },
+        {
+          "name": "NO_CHANGE",
+          "deprecationReason": null
+        },
+        {
+          "name": "UNKNOWN_SLUG",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "Float": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "GrantAction": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DEFINE",
+          "deprecationReason": null
+        },
+        {
+          "name": "READ",
+          "deprecationReason": null
+        },
+        {
+          "name": "SUGGEST",
+          "deprecationReason": null
+        },
+        {
+          "name": "WRITE",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "GrantEffect": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "ALLOW",
+          "deprecationReason": null
+        },
+        {
+          "name": "DENY",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "ID": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "Int": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "JSON": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "Location": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "address": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "createdAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "label": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "locationId": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "type": {
+          "type": "LocationType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "updatedAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "userId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "LocationType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "HOME",
+          "deprecationReason": null
+        },
+        {
+          "name": "OTHER",
+          "deprecationReason": null
+        },
+        {
+          "name": "WORK",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "MatchedPreferenceDefinition": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "category": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "description": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "McpAccessEvent": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "clientKey": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "correlationId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "errorMetadata": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "latencyMs": {
+          "type": "Float!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "occurredAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "operationName": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "outcome": {
+          "type": "McpAccessOutcome!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "requestMetadata": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "responseMetadata": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "surface": {
+          "type": "McpAccessSurface!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "userId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "McpAccessHistoryInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "after": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "clientKey": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "correlationId": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "first": {
+          "type": "Int",
+          "hasDefault": true,
+          "defaultValue": "20",
+          "deprecationReason": null
+        },
+        "occurredFrom": {
+          "type": "DateTime",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "occurredTo": {
+          "type": "DateTime",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "operationName": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "outcome": {
+          "type": "McpAccessOutcome",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "surface": {
+          "type": "McpAccessSurface",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "McpAccessHistoryPage": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "hasNextPage": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "items": {
+          "type": "[McpAccessEvent!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "nextCursor": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "McpAccessOutcome": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DENY",
+          "deprecationReason": null
+        },
+        {
+          "name": "ERROR",
+          "deprecationReason": null
+        },
+        {
+          "name": "SUCCESS",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "McpAccessSurface": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "RESOURCES_READ",
+          "deprecationReason": null
+        },
+        {
+          "name": "TOOLS_CALL",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "Mutation": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "acceptSuggestedPreference": {
+          "type": "Preference!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "applyPreferenceSuggestions": {
+          "type": "[Preference!]!",
+          "args": [
+            {
+              "name": "analysisId",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            },
+            {
+              "name": "input",
+              "type": "[ApplyPreferenceSuggestionInput!]!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "archivePreferenceDefinition": {
+          "type": "PreferenceDefinition!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "createLocation": {
+          "type": "Location!",
+          "args": [
+            {
+              "name": "data",
+              "type": "CreateLocationInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "createPreferenceDefinition": {
+          "type": "PreferenceDefinition!",
+          "args": [
+            {
+              "name": "input",
+              "type": "CreatePreferenceDefinitionInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "deleteLocation": {
+          "type": "Location!",
+          "args": [
+            {
+              "name": "locationId",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "deletePreference": {
+          "type": "Preference!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "rejectSuggestedPreference": {
+          "type": "Boolean!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "removePermissionGrant": {
+          "type": "Boolean!",
+          "args": [
+            {
+              "name": "action",
+              "type": "GrantAction!",
+              "hasDefault": false,
+              "defaultValue": null
+            },
+            {
+              "name": "clientKey",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            },
+            {
+              "name": "target",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "resetMyMemory": {
+          "type": "ResetMyMemoryPayload!",
+          "args": [
+            {
+              "name": "mode",
+              "type": "ResetMemoryMode!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "setPermissionGrant": {
+          "type": "PermissionGrant!",
+          "args": [
+            {
+              "name": "input",
+              "type": "SetPermissionGrantInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "setPreference": {
+          "type": "Preference!",
+          "args": [
+            {
+              "name": "input",
+              "type": "SetPreferenceInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "suggestPreference": {
+          "type": "Preference",
+          "args": [
+            {
+              "name": "input",
+              "type": "SuggestPreferenceInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "updateLocation": {
+          "type": "Location!",
+          "args": [
+            {
+              "name": "data",
+              "type": "UpdateLocationInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            },
+            {
+              "name": "locationId",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "updatePreferenceDefinition": {
+          "type": "PreferenceDefinition!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            },
+            {
+              "name": "input",
+              "type": "UpdatePreferenceDefinitionInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PermissionGrant": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "action": {
+          "type": "GrantAction!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "clientKey": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "createdAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "effect": {
+          "type": "GrantEffect!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "target": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "updatedAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "Preference": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "category": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "confidence": {
+          "type": "Float",
+          "args": [],
+          "deprecationReason": null
+        },
+        "createdAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "definitionId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "description": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "evidence": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "lastModifiedBy": {
+          "type": "PreferenceAttribution",
+          "args": [],
+          "deprecationReason": null
+        },
+        "locationId": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "sourceType": {
+          "type": "SourceType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "status": {
+          "type": "PreferenceStatus!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "updatedAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "userId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "value": {
+          "type": "JSON!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceAttribution": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "actorClientKey": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "actorType": {
+          "type": "AuditActorType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "origin": {
+          "type": "AuditOrigin!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceAuditEvent": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "actorClientKey": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "actorType": {
+          "type": "AuditActorType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "afterState": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "beforeState": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "correlationId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "eventType": {
+          "type": "AuditEventType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "metadata": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "occurredAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "origin": {
+          "type": "AuditOrigin!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "subjectSlug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "targetId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "targetType": {
+          "type": "AuditTargetType!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "userId": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceAuditHistoryInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "actorClientKey": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "after": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "correlationId": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "eventType": {
+          "type": "AuditEventType",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "first": {
+          "type": "Int",
+          "hasDefault": true,
+          "defaultValue": "20",
+          "deprecationReason": null
+        },
+        "occurredFrom": {
+          "type": "DateTime",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "occurredTo": {
+          "type": "DateTime",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "origin": {
+          "type": "AuditOrigin",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "subjectSlug": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "targetType": {
+          "type": "AuditTargetType",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceAuditHistoryPage": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "hasNextPage": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "items": {
+          "type": "[PreferenceAuditEvent!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "nextCursor": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceDefinition": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "archivedAt": {
+          "type": "DateTime",
+          "args": [],
+          "deprecationReason": null
+        },
+        "category": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "description": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "displayName": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "isCore": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "isSensitive": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "namespace": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "options": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "ownerUserId": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "scope": {
+          "type": "PreferenceScope!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "valueType": {
+          "type": "PreferenceValueType!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceOperation": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "CREATE",
+          "deprecationReason": null
+        },
+        {
+          "name": "UPDATE",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "PreferenceScope": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "GLOBAL",
+          "deprecationReason": null
+        },
+        {
+          "name": "LOCATION",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "PreferenceStatus": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "ACTIVE",
+          "deprecationReason": null
+        },
+        {
+          "name": "REJECTED",
+          "deprecationReason": null
+        },
+        {
+          "name": "SUGGESTED",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "PreferenceSuggestion": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "category": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "confidence": {
+          "type": "Float!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "description": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "id": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "newValue": {
+          "type": "JSON!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "oldValue": {
+          "type": "JSON",
+          "args": [],
+          "deprecationReason": null
+        },
+        "operation": {
+          "type": "PreferenceOperation!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "sourceMeta": {
+          "type": "SourceMeta",
+          "args": [],
+          "deprecationReason": null
+        },
+        "sourceSnippet": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "wasCorrected": {
+          "type": "Boolean!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "PreferenceValueType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "ARRAY",
+          "deprecationReason": null
+        },
+        {
+          "name": "BOOLEAN",
+          "deprecationReason": null
+        },
+        {
+          "name": "ENUM",
+          "deprecationReason": null
+        },
+        {
+          "name": "STRING",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "Query": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "activePreferences": {
+          "type": "[Preference!]!",
+          "args": [
+            {
+              "name": "locationId",
+              "type": "ID",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "askVertexAI": {
+          "type": "String!",
+          "args": [
+            {
+              "name": "message",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "exportPreferenceSchema": {
+          "type": "[PreferenceDefinition!]!",
+          "args": [
+            {
+              "name": "scope",
+              "type": "ExportSchemaScope!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "location": {
+          "type": "Location!",
+          "args": [
+            {
+              "name": "locationId",
+              "type": "String!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "locations": {
+          "type": "[Location!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "locationsByType": {
+          "type": "[Location!]!",
+          "args": [
+            {
+              "name": "type",
+              "type": "LocationType!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "mcpAccessHistory": {
+          "type": "McpAccessHistoryPage!",
+          "args": [
+            {
+              "name": "input",
+              "type": "McpAccessHistoryInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "me": {
+          "type": "User!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "myPermissionGrants": {
+          "type": "[PermissionGrant!]!",
+          "args": [
+            {
+              "name": "clientKey",
+              "type": "String",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "preference": {
+          "type": "Preference!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "preferenceAuditHistory": {
+          "type": "PreferenceAuditHistoryPage!",
+          "args": [
+            {
+              "name": "input",
+              "type": "PreferenceAuditHistoryInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "preferenceCatalog": {
+          "type": "[PreferenceDefinition!]!",
+          "args": [
+            {
+              "name": "category",
+              "type": "String",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "smartSearchPreferences": {
+          "type": "SmartPreferenceSearchResult!",
+          "args": [
+            {
+              "name": "input",
+              "type": "SmartPreferenceSearchInput!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "suggestedPreferences": {
+          "type": "[Preference!]!",
+          "args": [
+            {
+              "name": "locationId",
+              "type": "ID",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        },
+        "user": {
+          "type": "User!",
+          "args": [
+            {
+              "name": "id",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null
+            }
+          ],
+          "deprecationReason": null
+        }
+      }
+    },
+    "ResetMemoryMode": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "DEMO_DATA",
+          "deprecationReason": null
+        },
+        {
+          "name": "FULL_USER_DATA",
+          "deprecationReason": null
+        },
+        {
+          "name": "MEMORY_ONLY",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "ResetMyMemoryPayload": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "locationsDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "mcpAccessEventsDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "mode": {
+          "type": "ResetMemoryMode!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "permissionGrantsDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "preferenceAuditEventsDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "preferenceDefinitionsDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "preferencesDeleted": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "SetPermissionGrantInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "action": {
+          "type": "GrantAction!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "clientKey": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "effect": {
+          "type": "GrantEffect!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "target": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "SetPreferenceInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "locationId": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "value": {
+          "type": "JSON!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "SmartPreferenceSearchInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "includeSuggestions": {
+          "type": "Boolean",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "locationId": {
+          "type": "ID",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "query": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "SmartPreferenceSearchResult": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "matchedActivePreferences": {
+          "type": "[Preference!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "matchedDefinitions": {
+          "type": "[MatchedPreferenceDefinition!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "matchedSuggestedPreferences": {
+          "type": "[Preference!]!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "queryInterpretation": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "SourceMeta": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "filename": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null
+        },
+        "line": {
+          "type": "Float",
+          "args": [],
+          "deprecationReason": null
+        },
+        "page": {
+          "type": "Float",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    },
+    "SourceType": {
+      "kind": "ENUM",
+      "values": [
+        {
+          "name": "IMPORTED",
+          "deprecationReason": null
+        },
+        {
+          "name": "INFERRED",
+          "deprecationReason": null
+        },
+        {
+          "name": "SYSTEM",
+          "deprecationReason": null
+        },
+        {
+          "name": "USER",
+          "deprecationReason": null
+        }
+      ]
+    },
+    "String": {
+      "kind": "SCALAR",
+      "specifiedByURL": null
+    },
+    "SuggestPreferenceInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "confidence": {
+          "type": "Float!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "evidence": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "locationId": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "slug": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "value": {
+          "type": "JSON!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "UpdateLocationInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "address": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "label": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "type": {
+          "type": "LocationType",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "UpdatePreferenceDefinitionInput": {
+      "kind": "INPUT_OBJECT",
+      "inputFields": {
+        "description": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "displayName": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "isCore": {
+          "type": "Boolean",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "isSensitive": {
+          "type": "Boolean",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "options": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "scope": {
+          "type": "PreferenceScope",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        },
+        "valueType": {
+          "type": "PreferenceValueType",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null
+        }
+      }
+    },
+    "User": {
+      "kind": "OBJECT",
+      "interfaces": [],
+      "fields": {
+        "createdAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "email": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "updatedAt": {
+          "type": "DateTime!",
+          "args": [],
+          "deprecationReason": null
+        },
+        "userId": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null
+        }
+      }
+    }
+  },
+  "directives": {}
+}

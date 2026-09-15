@@ -1,0 +1,1007 @@
+{
+  "server": {
+    "identity": {
+      "name": "context-router-mcp",
+      "version": "2.0.1"
+    },
+    "instructions": "Available tools vary by permissions. Use searchPreferences for known slugs/categories or all active preferences. Use smartSearchPreferences to map a natural-language task to relevant preference slugs. Use listPreferenceSlugs for schema discovery only. Use listPermissionGrants when grants may hide results. schema://graphql is for API introspection only.",
+    "capabilities": {
+      "tools": {},
+      "resources": {}
+    },
+    "transport": {
+      "path": "/mcp",
+      "post": {
+        "auth": "required",
+        "responseMode": "json",
+        "stateless": true
+      },
+      "get": {
+        "status": 405,
+        "allow": "POST",
+        "body": {
+          "error": "Method Not Allowed"
+        }
+      },
+      "disabledPost": {
+        "status": 503,
+        "body": {
+          "error": "MCP HTTP transport is disabled"
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "descriptor": {
+        "name": "listPreferenceSlugs",
+        "description": "List visible preference definitions from the catalog. Use this for schema discovery only, not stored user values. Returns slug, category, description, valueType, and scope for each visible preference definition.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional: filter by category (e.g., \"food\", \"system\", \"dev\")"
+            }
+          }
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "success"
+          ],
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "count": {
+              "type": "integer"
+            },
+            "preferences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "valueType": {
+                    "type": "string"
+                  },
+                  "options": {},
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "requiresAuth": false,
+      "accessLogPolicy": null,
+      "resultEnvelope": "structuredContent-and-matching-json-text"
+    },
+    {
+      "descriptor": {
+        "name": "searchPreferences",
+        "description": "Retrieve stored user preferences using literal catalog matching. Omit query to return all active preferences for the user; provide query to filter by slug prefix, category, or definition description keyword. This is not semantic search.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search by slug prefix, category, or description keyword"
+            },
+            "locationId": {
+              "type": "string",
+              "description": "Include preferences for this location (merged with global)"
+            },
+            "includeSuggestions": {
+              "type": "boolean",
+              "description": "If true, also return SUGGESTED preferences (inbox)"
+            }
+          }
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "success"
+          ],
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            },
+            "active": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "preferences": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "value": {},
+                      "status": {
+                        "type": "string"
+                      },
+                      "sourceType": {
+                        "type": "string"
+                      },
+                      "confidence": {
+                        "type": "number"
+                      },
+                      "locationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "suggested": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "preferences": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "value": {},
+                      "status": {
+                        "type": "string"
+                      },
+                      "sourceType": {
+                        "type": "string"
+                      },
+                      "confidence": {
+                        "type": "number"
+                      },
+                      "locationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "requiresAuth": true,
+      "accessLogPolicy": null,
+      "resultEnvelope": "structuredContent-and-matching-json-text"
+    },
+    {
+      "descriptor": {
+        "name": "smartSearchPreferences",
+        "description": "Map a natural-language task to relevant preference slugs, then return matching stored active or suggested preferences for the authenticated user. Use this when you do not know which slugs matter; it is not product search or web search.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Natural language query describing what you are looking for"
+            },
+            "locationId": {
+              "type": "string",
+              "description": "Include preferences for this location (merged with global)"
+            },
+            "includeSuggestions": {
+              "type": "boolean",
+              "description": "If true, also return SUGGESTED preferences (inbox)"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "success"
+          ],
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            },
+            "matchedDefinitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "matchedActivePreferences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "value": {},
+                  "status": {
+                    "type": "string"
+                  },
+                  "sourceType": {
+                    "type": "string"
+                  },
+                  "confidence": {
+                    "type": "number"
+                  },
+                  "locationId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "matchedSuggestedPreferences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "value": {},
+                  "status": {
+                    "type": "string"
+                  },
+                  "sourceType": {
+                    "type": "string"
+                  },
+                  "confidence": {
+                    "type": "number"
+                  },
+                  "locationId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "queryInterpretation": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "requiresAuth": true,
+      "accessLogPolicy": null,
+      "resultEnvelope": "structuredContent-and-matching-json-text"
+    },
+    {
+      "descriptor": {
+        "name": "consolidateSchema",
+        "description": "Analyze visible preference definitions for duplicate or overlapping schema entries. Advisory schema analysis only; it does not retrieve stored preference values or make changes.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "type": "string",
+              "enum": [
+                "PERSONAL",
+                "ALL"
+              ],
+              "description": "PERSONAL to analyze only your definitions, ALL to include global definitions too. Defaults to PERSONAL."
+            }
+          }
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "success"
+          ],
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            },
+            "totalDefinitionsAnalyzed": {
+              "type": "integer"
+            },
+            "consolidationGroups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slugs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "suggestion": {
+                    "type": "string"
+                  },
+                  "recommendedSlug": {
+                    "type": "string"
+                  },
+                  "slugScopes": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "requiresAuth": true,
+      "accessLogPolicy": null,
+      "resultEnvelope": "structuredContent-and-matching-json-text"
+    },
+    {
+      "descriptor": {
+        "name": "listPermissionGrants",
+        "description": "List permission grants for the calling MCP client only. Use this when expected preference or schema results may be hidden by MCP grant filtering.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "success"
+          ],
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            },
+            "grants": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "clientKey": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "effect": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string"
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "requiresAuth": true,
+      "accessLogPolicy": null,
+      "resultEnvelope": "structuredContent-and-matching-json-text"
+    },
+    {
+      "descriptor": {
+        "name": "mutatePreferences",
+        "description": "Mutate the authenticated user preference system. Use exactly one operation per call.\nSUGGEST_PREFERENCE requires SUGGEST and preference.slug, preference.value as a JSON string, and preference.confidence. Use it to create a reviewable suggestion.\nSET_PREFERENCE requires WRITE and preference.slug plus preference.value as a JSON string. Optional preference.confidence and structured preference.evidence are recorded as MCP write provenance.\nCREATE_DEFINITION requires DEFINE and definition.slug, definition.description, definition.valueType, and definition.scope. Use it for a user-owned slug that does not exist yet.\nUPDATE_DEFINITION requires DEFINE and definition.id or definition.slug plus the fields to change. Only active user-owned definitions can be updated.\nARCHIVE_DEFINITION requires DEFINE and definition.id or definition.slug. Only active user-owned definitions can be archived.\nDELETE_PREFERENCE requires WRITE and preference.id. The tool resolves the preference slug before authorizing the delete.\nDo not JSON-encode preference.evidence; pass it as a structured object.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "SUGGEST_PREFERENCE",
+                "SET_PREFERENCE",
+                "CREATE_DEFINITION",
+                "UPDATE_DEFINITION",
+                "ARCHIVE_DEFINITION",
+                "DELETE_PREFERENCE"
+              ],
+              "description": "Mutation operation to perform."
+            },
+            "preference": {
+              "type": "object",
+              "description": "Preference payload for SUGGEST_PREFERENCE, SET_PREFERENCE, and DELETE_PREFERENCE.",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Preference id. Required for DELETE_PREFERENCE."
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Preference slug. Required for SUGGEST_PREFERENCE and SET_PREFERENCE."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "Preference value as a JSON string. Examples: '[\"nuts\"]', '\"concise\"', 'true'."
+                },
+                "locationId": {
+                  "type": "string",
+                  "description": "Optional location id for location-scoped preferences."
+                },
+                "confidence": {
+                  "type": "number",
+                  "description": "Confidence between 0 and 1. Required for SUGGEST_PREFERENCE and optional for SET_PREFERENCE."
+                },
+                "evidence": {
+                  "type": "object",
+                  "description": "Optional structured evidence object. Do not JSON-encode this field."
+                }
+              }
+            },
+            "definition": {
+              "type": "object",
+              "description": "Definition payload for CREATE_DEFINITION, UPDATE_DEFINITION, and ARCHIVE_DEFINITION.",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Definition id. Required for id-based UPDATE_DEFINITION or ARCHIVE_DEFINITION."
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "Definition slug. Required for CREATE_DEFINITION, or for slug-based update/archive."
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "valueType": {
+                  "type": "string",
+                  "enum": [
+                    "STRING",
+                    "BOOLEAN",
+                    "ENUM",
+                    "ARRAY"
+                  ]
+                },
+                "scope": {
+                  "type": "string",
+                  "enum": [
+                    "GLOBAL",
+                    "LOCATION"
+                  ]
+                },
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Required for ENUM definitions."
+                },
+                "isSensitive": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "required": [
+            "operation"
+          ]
+        },
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        }
+      },
+      "requiredAccess": [
+        {
+          "resource": "preferences",
+          "action": "suggest"
+        },
+        {
+          "resource": "preferences",
+          "action": "write"
+        },
+        {
+          "resource": "preferences",
+          "action": "define"
+        }
+      ],
+      "requiresAuth": true,
+      "accessLogPolicy": "always",
+      "resultEnvelope": "text-only"
+    }
+  ],
+  "resources": [
+    {
+      "descriptor": {
+        "uri": "schema://graphql",
+        "name": "GraphQL Schema",
+        "description": "GraphQL schema for the Context Router API. Use this for API introspection and direct GraphQL integration, not for preference lookup; use searchPreferences or smartSearchPreferences for preference retrieval.",
+        "mimeType": "text/plain"
+      },
+      "requiredAccess": {
+        "resource": "preferences",
+        "action": "read"
+      },
+      "readEnvelope": {
+        "contents": [
+          {
+            "uri": "schema://graphql",
+            "mimeType": "text/plain",
+            "text": "<schema-sdl>"
+          }
+        ]
+      }
+    }
+  ],
+  "visibility": {
+    "claude": {
+      "tools": [
+        "listPreferenceSlugs",
+        "searchPreferences",
+        "smartSearchPreferences",
+        "consolidateSchema",
+        "listPermissionGrants",
+        "mutatePreferences"
+      ],
+      "resources": [
+        "schema://graphql"
+      ]
+    },
+    "codex": {
+      "tools": [
+        "listPreferenceSlugs",
+        "searchPreferences",
+        "smartSearchPreferences",
+        "consolidateSchema",
+        "listPermissionGrants",
+        "mutatePreferences"
+      ],
+      "resources": [
+        "schema://graphql"
+      ]
+    },
+    "fallback": {
+      "tools": [
+        "listPreferenceSlugs",
+        "searchPreferences",
+        "smartSearchPreferences",
+        "consolidateSchema",
+        "listPermissionGrants"
+      ],
+      "resources": [
+        "schema://graphql"
+      ]
+    },
+    "unknown": {
+      "tools": [],
+      "resources": []
+    },
+    "claude-read-scope": {
+      "tools": [
+        "listPreferenceSlugs",
+        "searchPreferences",
+        "smartSearchPreferences",
+        "consolidateSchema",
+        "listPermissionGrants"
+      ],
+      "resources": [
+        "schema://graphql"
+      ]
+    }
+  },
+  "oauth": {
+    "protectedResourcePaths": [
+      "/.well-known/oauth-protected-resource",
+      "/.well-known/oauth-protected-resource/mcp"
+    ],
+    "authorizationServerPaths": [
+      "/.well-known/oauth-authorization-server",
+      "/.well-known/oauth-authorization-server/mcp"
+    ],
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "public, max-age=3600"
+    },
+    "protectedResource": {
+      "resource": "http://127.0.0.1:3001/mcp",
+      "authorization_servers": [
+        "http://127.0.0.1:3001"
+      ],
+      "scopes_supported": [
+        "preferences:read",
+        "preferences:suggest",
+        "preferences:write",
+        "preferences:define",
+        "offline_access"
+      ]
+    },
+    "authorizationServer": {
+      "issuer": "http://127.0.0.1:3001",
+      "authorization_endpoint": "https://baseline.invalid/authorize?audience=https%3A%2F%2Fbaseline.invalid%2Fapi",
+      "token_endpoint": "https://baseline.invalid/oauth/token",
+      "jwks_uri": "https://baseline.invalid/.well-known/jwks.json",
+      "registration_endpoint": "http://127.0.0.1:3001/oauth/register",
+      "response_types_supported": [
+        "code"
+      ],
+      "grant_types_supported": [
+        "authorization_code",
+        "refresh_token"
+      ],
+      "token_endpoint_auth_methods_supported": [
+        "none"
+      ],
+      "code_challenge_methods_supported": [
+        "S256"
+      ],
+      "scopes_supported": [
+        "preferences:read",
+        "preferences:suggest",
+        "preferences:write",
+        "preferences:define",
+        "offline_access"
+      ]
+    }
+  },
+  "dcr": {
+    "path": "/oauth/register",
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Cache-Control": "no-store"
+    },
+    "cases": {
+      "claude": {
+        "client_id": "<claude-client-id>",
+        "token_endpoint_auth_method": "none",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "response_types": [
+          "code"
+        ],
+        "redirect_uris": [
+          "http://localhost:8081/callback"
+        ]
+      },
+      "codex": {
+        "client_id": "<codex-client-id>",
+        "token_endpoint_auth_method": "none",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "response_types": [
+          "code"
+        ],
+        "redirect_uris": [
+          "http://127.0.0.1:8082/callback"
+        ]
+      },
+      "fallback": {
+        "client_id": "<fallback-client-id>",
+        "token_endpoint_auth_method": "none",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "response_types": [
+          "code"
+        ],
+        "redirect_uris": [
+          "https://chatgpt.com/connector_platform_oauth_redirect"
+        ]
+      },
+      "empty": {
+        "status": 400,
+        "body": {
+          "error": "invalid_redirect_uri",
+          "error_description": "At least one redirect_uri must be provided for OAuth client registration."
+        }
+      },
+      "invalid": {
+        "status": 400,
+        "body": {
+          "error": "invalid_redirect_uri",
+          "error_description": "None of the requested redirect_uris are allowed. This server only accepts connections from authorized MCP clients."
+        }
+      },
+      "mixed": {
+        "status": 400,
+        "body": {
+          "error": "invalid_redirect_uri",
+          "error_description": "All requested redirect_uris must belong to the same supported MCP client."
+        }
+      }
+    }
+  },
+  "challenges": {
+    "missingToken": {
+      "headers": {
+        "WWW-Authenticate": "Bearer resource_metadata=\"http://127.0.0.1:3001/.well-known/oauth-protected-resource\", scope=\"preferences:read\""
+      },
+      "status": 401,
+      "body": {
+        "error": "missing_token",
+        "error_description": "Authentication required"
+      }
+    },
+    "invalidToken": {
+      "headers": {
+        "WWW-Authenticate": "Bearer resource_metadata=\"http://127.0.0.1:3001/.well-known/oauth-protected-resource\", error=\"invalid_token\", error_description=\"<verification-error>\""
+      },
+      "status": 401,
+      "body": {
+        "error": "invalid_token",
+        "error_description": "<verification-error>"
+      }
+    },
+    "insufficientWriteScope": {
+      "headers": {
+        "WWW-Authenticate": "Bearer resource_metadata=\"http://127.0.0.1:3001/.well-known/oauth-protected-resource\", error=\"insufficient_scope\", scope=\"preferences:write\""
+      },
+      "status": 403,
+      "body": {
+        "error": "insufficient_scope",
+        "error_description": "This operation requires the 'preferences:write' scope"
+      }
+    }
+  },
+  "clients": [
+    {
+      "key": "claude",
+      "label": "Claude",
+      "capabilities": [
+        "preferences:read",
+        "preferences:suggest",
+        "preferences:write",
+        "preferences:define"
+      ],
+      "targetRules": [],
+      "oauth": {
+        "clientId": "<claude-client-id>",
+        "redirectUris": [
+          "https://claude.ai/api/mcp/auth_callback",
+          "https://claude.com/api/mcp/auth_callback",
+          "https://claude.ai/oauth/callback",
+          "https://claude.com/oauth/callback",
+          "https://claude.ai/api/oauth/callback",
+          "https://claude.com/api/oauth/callback",
+          "http://localhost:8081/callback"
+        ]
+      }
+    },
+    {
+      "key": "codex",
+      "label": "Codex",
+      "capabilities": [
+        "preferences:read",
+        "preferences:suggest",
+        "preferences:write",
+        "preferences:define"
+      ],
+      "targetRules": [],
+      "oauth": {
+        "clientId": "<codex-client-id>",
+        "redirectUris": [
+          "http://127.0.0.1:8082/callback"
+        ]
+      }
+    },
+    {
+      "key": "fallback",
+      "label": "Supported Fallback",
+      "capabilities": [
+        "preferences:read"
+      ],
+      "targetRules": [],
+      "oauth": {
+        "clientId": "<fallback-client-id>",
+        "redirectUris": [
+          "https://chatgpt.com/connector_platform_oauth_redirect",
+          "https://platform.openai.com/apps-manage/oauth"
+        ]
+      }
+    },
+    {
+      "key": "unknown",
+      "label": "Unknown",
+      "capabilities": [],
+      "targetRules": []
+    }
+  ],
+  "configurationShapedNonCapabilities": [
+    "MCP_HTTP_PATH",
+    "MCP_HTTP_REQUIRE_AUTH=false",
+    "MCP_STDIO_ENABLED=true"
+  ]
+}
