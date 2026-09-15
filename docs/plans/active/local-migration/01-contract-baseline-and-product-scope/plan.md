@@ -420,8 +420,11 @@ active global catalog without duplicate slugs. A failing backend unit test first
 characterizes listener argument resolution; the smallest implementation makes
 `main.ts` pass an explicit host only when `APP_HOST` is set, preserving the
 current hosted default when it is absent. The smoke builds once, then starts the
-actual `node dist/main.js` process twice with `APP_HOST=127.0.0.1` on a
-dynamically selected port against the same database.
+actual build artifact, `node dist/src/main.js`, twice with
+`APP_HOST=127.0.0.1` on a dynamically selected port against the same database.
+Checkpoint 2 confirmed this repository's current TypeScript output path from a
+clean production build; the hosted package's stale `start:prod` shortcut is not
+used as restart evidence and remains outside this behavior-preserving step.
 
 A loopback-only HTTPS JWKS fixture supplies an ephemeral RSA key and a short-
 lived synthetic M2M token. The backend child alone trusts that generated test

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.local/contracts/local-migration-gate-phases-v1.schema.json",
+  "title": "Local Migration Baseline Gate phase lifecycle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "supportedModes", "phases"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "supportedModes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/phase" }
+    }
+  },
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "ownerStep",
+        "status",
+        "timeoutMs",
+        "modes",
+        "predecessors",
+        "replacementEvidence",
+        "retirementCondition",
+        "kind",
+        "commands"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "order": { "type": "integer", "minimum": 1 },
+        "ownerStep": { "type": "string", "pattern": "^(0[1-9]|10)$" },
+        "status": { "enum": ["active", "retired"] },
+        "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 1800000 },
+        "modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "predecessors": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" }
+        },
+        "replacementEvidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "retirementCondition": { "type": "string", "minLength": 20 },
+        "kind": { "enum": ["commands", "restart-smoke"] },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/command" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "retired" } } },
+          "then": {
+            "properties": {
+              "replacementEvidence": { "type": "array", "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["argv"],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

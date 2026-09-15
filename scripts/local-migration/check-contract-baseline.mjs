@@ -392,6 +392,8 @@ export function validateBaselineDocument(document) {
     errors.push("outboundCalls must be an array");
   if (!Array.isArray(document.consumers))
     errors.push("consumers must be an array");
+  if (!Array.isArray(document.migrationRecords))
+    errors.push("migrationRecords must be an array");
 
   const ids = new Set();
   for (const capability of document.capabilities ?? []) {
@@ -446,6 +448,98 @@ export function validateBaselineDocument(document) {
   }
   if (/https?:\/\/[^\s/"']+@/i.test(JSON.stringify(document))) {
     errors.push("registry must not contain URL userinfo");
+  }
+  for (const record of document.migrationRecords ?? []) {
+    for (const field of [
+      "id",
+      "contract",
+      "compatibilityWindow",
+      "migrationGuidance",
+      "rollback",
+      "approval",
+    ]) {
+      if (typeof record[field] !== "string" || !record[field].trim()) {
+        errors.push(`migration record ${record.id ?? "<unnamed>"} lacks ${field}`);
+      }
+    }
+    if (!Array.isArray(record.consumerEvidence) || !record.consumerEvidence.length) {
+      errors.push(`migration record ${record.id ?? "<unnamed>"} lacks consumer evidence`);
+    }
+  }
+  return errors;
+}
+
+export function validateBootstrapCompatibility({
+  currentVersion,
+  baseRegistryPresent,
+  baseSdl,
+  currentSdl,
+  baseCatalog,
+  currentCatalog,
+}) {
+  const errors = [];
+  if (baseRegistryPresent) return errors;
+  if (currentVersion !== 1) {
+    errors.push("an absent merge-base registry is permitted only for registry version 1 bootstrap");
+  }
+  if (
+    !jsonEqual(buildGraphqlSignature(baseSdl), buildGraphqlSignature(currentSdl))
+  ) {
+    errors.push("version-one bootstrap GraphQL producer differs from the merge base");
+  }
+  if (!jsonEqual(normalizeCatalog(baseCatalog), normalizeCatalog(currentCatalog))) {
+    errors.push("version-one bootstrap catalog producer differs from the merge base");
+  }
+  return errors;
+}
+
+function hasCompleteMigrationRecord(registry, contract) {
+  return (registry.migrationRecords ?? []).some(
+    (record) =>
+      record.contract === contract &&
+      record.approval === "reviewed" &&
+      typeof record.compatibilityWindow === "string" &&
+      record.compatibilityWindow.length > 0 &&
+      typeof record.migrationGuidance === "string" &&
+      record.migrationGuidance.length > 0 &&
+      typeof record.rollback === "string" &&
+      record.rollback.length > 0 &&
+      Array.isArray(record.consumerEvidence) &&
+      record.consumerEvidence.length > 0,
+  );
+}
+
+export function validateContractEvolution({
+  currentRegistry,
+  previousHttp,
+  currentHttp,
+  previousMcp,
+  currentMcp,
+  graphqlBreaking = [],
+}) {
+  const errors = [];
+  for (const [label, contract, previous, current] of [
+    ["HTTP", "http", previousHttp, currentHttp],
+    ["MCP", "mcp", previousMcp, currentMcp],
+  ]) {
+    if (
+      previous !== undefined &&
+      current !== undefined &&
+      !jsonEqual(previous, current) &&
+      !hasCompleteMigrationRecord(currentRegistry, contract)
+    ) {
+      errors.push(`${label} contract changed without a complete reviewed migration record`);
+    }
+  }
+  if (
+    graphqlBreaking.length &&
+    !hasCompleteMigrationRecord(currentRegistry, "graphql")
+  ) {
+    for (const change of graphqlBreaking) {
+      errors.push(
+        `breaking GraphQL change without a complete reviewed migration record: ${change}`,
+      );
+    }
   }
   return errors;
 }
@@ -699,6 +793,10 @@ async function readJson(relativePath) {
   );
 }
 
+async function readJsonFromAbsolute(absolutePath) {
+  return JSON.parse(await readFile(absolutePath, "utf8"));
+}
+
 async function validateReferencedPaths(registry) {
   const errors = [];
   const referenced = new Set();
@@ -875,35 +973,92 @@ async function run() {
   const baseDirectory = process.env.MIGRATION_GATE_BASELINE_DIR;
   if (baseDirectory) {
     try {
-      const previousRegistry = JSON.parse(
-        await readFile(path.join(baseDirectory, registryPath), "utf8"),
-      );
-      const previousGraphql = JSON.parse(
-        await readFile(
-          path.join(baseDirectory, previousRegistry.contracts.graphql.fixture),
-          "utf8",
-        ),
-      );
-      const graphqlDiff = diffGraphqlSignatures(
-        previousGraphql,
-        graphqlSignature,
-      );
-      for (const change of graphqlDiff.breaking)
-        errors.push(`breaking GraphQL change: ${change}`);
-      const previousManifestSchema = JSON.parse(
-        await readFile(
-          path.join(baseDirectory, previousRegistry.contracts.manifest.schema),
-          "utf8",
-        ),
-      );
-      errors.push(
-        ...validateManifestCompatibility({
-          previousVersion: previousRegistry.contracts.manifest.version,
-          currentVersion: registry.contracts.manifest.version,
-          previousSchema: previousManifestSchema,
-          currentSchema: manifestSchema,
-        }),
-      );
+      let previousRegistry;
+      try {
+        previousRegistry = JSON.parse(
+          await readFile(path.join(baseDirectory, registryPath), "utf8"),
+        );
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+      if (!previousRegistry) {
+        const bootstrapMarker = JSON.parse(
+          await readFile(path.join(baseDirectory, "bootstrap-v1.json"), "utf8"),
+        );
+        if (
+          bootstrapMarker.registryAbsent !== true ||
+          bootstrapMarker.baseSha !== process.env.MIGRATION_GATE_BASE_SHA
+        ) {
+          throw new Error("invalid version-one bootstrap marker");
+        }
+        const [baseSdl, baseCatalog] = await Promise.all([
+          readFile(
+            path.join(baseDirectory, "apps/backend/src/schema.gql"),
+            "utf8",
+          ),
+          readJsonFromAbsolute(
+            path.join(
+              baseDirectory,
+              "apps/backend/src/config/preferences.catalog.json",
+            ),
+          ),
+        ]);
+        errors.push(
+          ...validateBootstrapCompatibility({
+            currentVersion: registry.version,
+            baseRegistryPresent: false,
+            baseSdl,
+            currentSdl: schema,
+            baseCatalog,
+            currentCatalog: catalog,
+          }),
+        );
+      } else {
+        const [previousGraphql, previousManifestSchema, previousHttp, previousMcp] =
+          await Promise.all([
+            readJsonFromAbsolute(
+              path.join(
+                baseDirectory,
+                previousRegistry.contracts.graphql.fixture,
+              ),
+            ),
+            readJsonFromAbsolute(
+              path.join(
+                baseDirectory,
+                previousRegistry.contracts.manifest.schema,
+              ),
+            ),
+            readJsonFromAbsolute(
+              path.join(baseDirectory, previousRegistry.contracts.http.fixture),
+            ),
+            readJsonFromAbsolute(
+              path.join(baseDirectory, previousRegistry.contracts.mcp.fixture),
+            ),
+          ]);
+        const graphqlDiff = diffGraphqlSignatures(
+          previousGraphql,
+          graphqlSignature,
+        );
+        errors.push(
+          ...validateContractEvolution({
+            previousRegistry,
+            currentRegistry: registry,
+            previousHttp,
+            currentHttp: httpContract,
+            previousMcp,
+            currentMcp: mcpContract,
+            graphqlBreaking: graphqlDiff.breaking,
+          }),
+        );
+        errors.push(
+          ...validateManifestCompatibility({
+            previousVersion: previousRegistry.contracts.manifest.version,
+            currentVersion: registry.contracts.manifest.version,
+            previousSchema: previousManifestSchema,
+            currentSchema: manifestSchema,
+          }),
+        );
+      }
     } catch (error) {
       errors.push(`unable to validate merge-base contracts: ${error.message}`);
     }

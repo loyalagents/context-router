@@ -11,6 +11,8 @@ import {
   validateHttpContract,
   validateManifestCompatibility,
   validateMcpContract,
+  validateBootstrapCompatibility,
+  validateContractEvolution,
 } from "./check-contract-baseline.mjs";
 
 test("buildGraphqlSignature captures arguments, wrappers, enums, and deprecations semantically", () => {
@@ -137,6 +139,90 @@ test("validateBaselineDocument rejects unowned defers and duplicate ids", () => 
   assert.ok(errors.some((error) => error.includes("DEFER")));
   assert.ok(
     errors.some((error) => error.includes("missing package classification")),
+  );
+});
+
+test("version-one bootstrap still requires unchanged base GraphQL and catalog producers", () => {
+  const sdl = "type Query { ok: Boolean! }";
+  const catalog = {
+    "profile.email": {
+      category: "profile",
+      description: "Email",
+      valueType: "string",
+      scope: "global",
+      isSensitive: true,
+    },
+  };
+  assert.deepEqual(
+    validateBootstrapCompatibility({
+      currentVersion: 1,
+      baseRegistryPresent: false,
+      baseSdl: sdl,
+      currentSdl: sdl,
+      baseCatalog: catalog,
+      currentCatalog: catalog,
+    }),
+    [],
+  );
+  assert.ok(
+    validateBootstrapCompatibility({
+      currentVersion: 2,
+      baseRegistryPresent: false,
+      baseSdl: sdl,
+      currentSdl: sdl,
+      baseCatalog: catalog,
+      currentCatalog: catalog,
+    }).some((error) => error.includes("version 1")),
+  );
+  assert.ok(
+    validateBootstrapCompatibility({
+      currentVersion: 1,
+      baseRegistryPresent: false,
+      baseSdl: sdl,
+      currentSdl: "type Query { changed: Boolean! }",
+      baseCatalog: catalog,
+      currentCatalog: catalog,
+    }).some((error) => error.includes("GraphQL producer")),
+  );
+});
+
+test("HTTP and MCP drift requires a complete reviewed migration record", () => {
+  const base = {
+    version: 1,
+    migrationRecords: [],
+    contracts: { http: {}, mcp: {} },
+  };
+  const current = { ...base, migrationRecords: [] };
+  const errors = validateContractEvolution({
+    previousRegistry: base,
+    currentRegistry: current,
+    previousHttp: { route: "/old" },
+    currentHttp: { route: "/new" },
+    previousMcp: { tools: ["one"] },
+    currentMcp: { tools: ["one", "two"] },
+  });
+  assert.ok(errors.some((error) => error.includes("HTTP") && error.includes("migration record")));
+  assert.ok(errors.some((error) => error.includes("MCP") && error.includes("migration record")));
+
+  current.migrationRecords = ["http", "mcp"].map((contract) => ({
+    id: `${contract}-v2`,
+    contract,
+    compatibilityWindow: "two tagged releases",
+    migrationGuidance: "Migrate every named consumer to the additive replacement first.",
+    rollback: "Re-enable the prior adapter and rerun the aggregate gate.",
+    consumerEvidence: ["apps/example/client.ts"],
+    approval: "reviewed",
+  }));
+  assert.deepEqual(
+    validateContractEvolution({
+      previousRegistry: base,
+      currentRegistry: current,
+      previousHttp: { route: "/old" },
+      currentHttp: { route: "/new" },
+      previousMcp: { tools: ["one"] },
+      currentMcp: { tools: ["one", "two"] },
+    }),
+    [],
   );
 });
 
