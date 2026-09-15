@@ -1,9 +1,13 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `00-document-consolidation` — PR 00A merged; PR 00B
-  [#154](https://github.com/loyalagents/context-router/pull/154) is ready for
-  human review
+- Current step: `01-contract-baseline-and-product-scope` — ready for planning
+- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
+  writer is assigned
+- Concrete next action: create `codex/local-migration-01-contract-baseline`,
+  write and independently review the Step 01 plan, then begin only its first
+  approved implementation checkpoint
+- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -257,8 +261,8 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
-| `00-document-consolidation` | In progress — 00A merged, 00B [#154](https://github.com/loyalagents/context-router/pull/154) ready for human review | Classify legacy plans, distill durable knowledge, remove obsolete planning material, and leave one trustworthy planning set. | Hosted branch/tag preservation |
-| `01-contract-baseline-and-product-scope` | Not started | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 PR 00A |
+| `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
+| `01-contract-baseline-and-product-scope` | Ready for planning — [activation charter](01-contract-baseline-and-product-scope/README.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
 | `02-composition-boundaries` | Not started | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
@@ -272,15 +276,12 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-After Step 01 establishes contract tests, the interface-evolution track may run
-in parallel with internal adapter work. Visual-only UI work, new evaluation
-fixtures, and adapter implementations behind stable ports are usually safe to
-parallelize.
-
-Step 00 PR 00A is the documentation-classification gate for Step 01. Once it is
-approved, Step 01 contract capture may proceed while Step 00 distillation and
-deletion continue by topic, provided both PRs declare document ownership and do
-not edit the same canonical destination concurrently.
+Step 01 is the sole primary migration step. The interface-evolution track stays
+dormant until Step 01 establishes the contract baseline and aggregate migration
+gate. After that gate exists, the track may run in parallel with internal
+adapter work. Visual-only UI work, new evaluation fixtures, and adapter
+implementations behind stable ports are usually safe to parallelize when they
+do not alter a baselined contract or shared file.
 
 Coordinate or serialize changes to these hotspots:
 

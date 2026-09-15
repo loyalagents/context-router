@@ -1,23 +1,30 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `00-document-consolidation` — PR 00A merged; PR 00B
-  [#154](https://github.com/loyalagents/context-router/pull/154) is ready for
-  human review
+- Current step: `01-contract-baseline-and-product-scope` — ready for planning
+- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
+  writer is assigned
+- Concrete next action: create `codex/local-migration-01-contract-baseline`,
+  write `01-contract-baseline-and-product-scope/plan.md` from the template, and
+  obtain independent plan review before implementation
+- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
 - Last reviewed: 2026-09-14
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Continue Step 00
+## Start Step 01
 
 1. Read the orchestration, decision log, and
-   [`00-document-consolidation/README.md`](00-document-consolidation/README.md).
-2. For PR 00B, follow the independently approved
-   [`00b-plan.md`](00-document-consolidation/00b-plan.md).
-3. After 00B merges, create a separate 00C branch to perform the reviewed
-   deletion and strict-link closeout.
+   [`01-contract-baseline-and-product-scope/README.md`](01-contract-baseline-and-product-scope/README.md).
+2. Create the assigned Step 01 branch from `main` after Step 00 PR
+   [#155](https://github.com/loyalagents/context-router/pull/155) merges.
+3. Copy [`step-template.md`](step-template.md) to the Step 01 directory as
+   `plan.md`, record the exact base commit and ownership, and plan PR-sized
+   checkpoints.
+4. Obtain independent architecture, compatibility, testing, and
+   security/privacy review; resolve every finding before implementation.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may
