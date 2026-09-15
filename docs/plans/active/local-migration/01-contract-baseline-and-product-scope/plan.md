@@ -616,12 +616,14 @@ the real hosted backend is loopback-confined for the smoke and survives restart
 against isolated application-readable state.
 
 Final Checkpoint 2 remediation evidence on 2026-09-15: the focused
-local-migration suite passed 128/128 tests and the post-remediation LMBG passed
-all 11 phases in 232.541 seconds, including its 35.555-second clean-restart
-phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The passing
-aggregate run removed its generated database and fallback container and
-preserved the caller's tracked SDL and ignored generated paths. CI pnpm 9
-evidence is intentionally pending the PR workflow.
+local-migration suite passed 128/128 tests. The final committed-tree LMBG rerun
+passed all 11 phases in 227.805 seconds, including its 33.947-second
+clean-restart phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and
+PostgreSQL 15.15. The passing aggregate run removed its generated database and
+fallback container and preserved the caller's tracked SDL and ignored generated
+paths. PR #156's dedicated workflow subsequently passed under Node 20, pnpm 9,
+Python 3.12, and PostgreSQL 15, and every required remote check was green at the
+reviewed implementation head.
 
 The first Checkpoint 2 aggregate run also exposed two stale deterministic I-9
 expectation snapshots. Only

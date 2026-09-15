@@ -272,12 +272,13 @@ disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
 
 The post-remediation 2026-09-15 local acceptance run passed the focused
-migration suite 128/128 and all 11 aggregate phases in 232.541 seconds,
-including its 35.555-second clean-restart phase, with Node 20.19.5, pnpm 10.25.0,
-Python 3.12.8, and PostgreSQL 15.15. It preserved caller generated paths and
-removed its exact generated database and fallback container. This is local
-evidence only; the dedicated workflow's pnpm 9 result is recorded after the PR
-checks run.
+migration suite 128/128. The final committed-tree aggregate rerun passed all 11
+phases in 227.805 seconds, including its 33.947-second clean-restart phase, with
+Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. It preserved
+caller generated paths and removed its exact generated database and fallback
+container. PR #156's dedicated workflow then passed under Node 20, pnpm 9,
+Python 3.12, and PostgreSQL 15, with every required remote check green at the
+reviewed implementation head.
 
 ## Updating A Contract
 

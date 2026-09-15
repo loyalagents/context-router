@@ -2,14 +2,13 @@
 
 - Status: active program index
 - Current step: `01-contract-baseline-and-product-scope` — implementation
-  complete and independently approved; committed-tree validation and PR
-  preparation in progress
+  complete and independently approved;
+  [PR #156](https://github.com/loyalagents/context-router/pull/156) is prepared
+  for human review with all required local and remote checks green
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
-- Concrete next action: commit the approved Step 01 implementation, rerun the
-  exact-tree Local Migration Baseline Gate, prepare its PR for human review,
-  and start Step 02 planning from its activation charter only after Step 01
-  merges
+- Concrete next action: human-review and merge PR #156 without automatic merge,
+  then start Step 02 planning from its activation charter
 - Review date: 2026-10-14 or Step 01 human review, whichever comes first
 - Last reviewed: 2026-09-15
 
