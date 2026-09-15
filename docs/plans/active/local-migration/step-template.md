@@ -1,6 +1,7 @@
 # Step NN: Short Name
 
-- Status: draft plan
+- Document status: template
+- Status after copying: draft plan
 - Program step: `NN-short-name`
 - Target branch: `main`
 - Planning base commit:

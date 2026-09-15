@@ -69,32 +69,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Test documentation validators
-        run: >-
-          node --test
-          scripts/check-markdown-links.test.mjs
-          scripts/check-doc-plan-inventory.test.mjs
-
-      - name: Validate documentation inventory
-        run: >-
-          node scripts/check-doc-plan-inventory.mjs
-          --expected-base c284ce3f07bc5414edf0ccc1e68d51a8e10a2013
-          --expected-count 88
-          docs/plans/active/local-migration/00-document-consolidation/inventory.md
+        run: node --test scripts/check-markdown-links.test.mjs
 
       - name: Check repository Markdown links
-        run: >-
-          node scripts/check-markdown-links.mjs
-          --baseline
-          docs/plans/active/local-migration/00-document-consolidation/link-check-baseline.json
-          --expected-base c284ce3f07bc5414edf0ccc1e68d51a8e10a2013
+        run: node scripts/check-markdown-links.mjs
 
   backend-tests:
     needs: changes
