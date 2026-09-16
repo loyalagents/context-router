@@ -32,7 +32,10 @@ module.exports = {
       ...baseConfig,
       displayName: 'unit',
       rootDir: '.',
-      testMatch: ['<rootDir>/src/**/*.spec.ts'],
+      testMatch: [
+        '<rootDir>/src/**/*.spec.ts',
+        '<rootDir>/test/contracts/**/*.spec.ts',
+      ],
       collectCoverageFrom: ['src/**/*.(t|j)s'],
       coverageDirectory: './coverage/unit',
     },

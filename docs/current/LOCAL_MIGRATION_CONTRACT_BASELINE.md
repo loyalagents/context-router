@@ -36,9 +36,10 @@ The registry currently contains 39 decisions: 18 retain, 7 replace, 10 remove,
 and 4 defer. The detailed rationale, evidence path, owner, external callback
 allowlists, outbound inventory, and exact consumer map live in the JSON registry.
 The checker regenerates an exact census of public-route/tool/resource references
-and outbound sink paths/kinds/counts across product, operator, and evaluation
-source trees; missing, stale, changed-count, or unclassified rows fail
-automatically alongside the curated semantic fingerprints.
+and outbound sink paths/kinds/counts across product, operator, evaluation, and
+local-migration orchestration/smoke source trees; missing, stale, changed-count,
+or unclassified rows fail automatically alongside the curated semantic
+fingerprints.
 
 ## Public Contract Families
 
@@ -197,6 +198,11 @@ retired mode must name exactly one active successor, and a later step adds
 replacement evidence before retiring a hosted-only phase. The version-one
 command allowlist remains intentionally hosted-specific and must be reviewed
 and expanded atomically with the first successor-mode phase set.
+The aggregate runner requires a verified merge-base comparison for every
+contract-baseline phase command and fails if the bound artifact directory is
+missing. Direct checker runs remain useful for current-tree validation and
+report `baseComparison=skipped`; aggregate runs report
+`baseComparison=performed` so the comparison cannot disappear silently.
 
 The dedicated workflow selects Node 20, pnpm 9, Python 3.12, and PostgreSQL 15.
 Step 01 locally enforces Python 3.12 plus the database locality and destructive-
@@ -232,7 +238,7 @@ pnpm migration:smoke:restart
 
 The Hosted Baseline Clean-Restart Smoke migrates a random, server-verified
 `context_router_<hex>_test` database, seeds the exact 19-entry catalog twice,
-builds the backend and web app once each, and starts `node dist/src/main.js`
+builds the backend and web app once each, and starts `node dist/main.js`
 from `apps/backend` twice against the same state. An ephemeral loopback HTTPS
 OIDC/JWKS server and short-lived signed read-only M2M token exercise the
 production GraphQL and MCP verifiers without Auth0 or model-provider egress.

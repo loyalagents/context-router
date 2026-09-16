@@ -18,6 +18,7 @@ import {
   diffMcpContracts,
   normalizeCatalog,
   protectedRegistrySnapshot,
+  resolveBaseComparisonMode,
   validateBaselineDocument,
   validateConsumerMap,
   validateContractReferenceMap,
@@ -2746,6 +2747,16 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
     new Map([
       ["client.ts", "fetch('/one'); fetch('/two');"],
       ["runner.mjs", "spawn('provider', []);"],
+      [
+        "gate-orchestration.mjs",
+        [
+          "dns.lookup(hostname);",
+          "await runCommand(['git', 'status']);",
+          "await commandRunner(['docker', 'info']);",
+          "await execFileAsync('git', ['status']);",
+          "new (pgFor(root).Client)({});",
+        ].join("\n"),
+      ],
       ["python.py", "subprocess.run(command, check=True)"],
       [
         "shell-runner.sh",
@@ -2765,6 +2776,10 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
       sources: [
         { path: "client.ts", fingerprints: ["fetch('/one')"] },
         { path: "runner.mjs", fingerprints: ["spawn('provider'"] },
+        {
+          path: "gate-orchestration.mjs",
+          fingerprints: ["dns.lookup(hostname)"],
+        },
         { path: "python.py", fingerprints: ["subprocess.run("] },
         { path: "shell-runner.sh", fingerprints: ["docker info"] },
       ],
@@ -2777,6 +2792,15 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
   assert.deepEqual(
     discovered.find((item) => item.path === "python.py")?.sinks,
     { "python-subprocess": 1 },
+  );
+  assert.deepEqual(
+    discovered.find((item) => item.path === "gate-orchestration.mjs")?.sinks,
+    {
+      "dns-lookup": 1,
+      "exec-file": 1,
+      "postgresql-client": 1,
+      "subprocess-wrapper": 2,
+    },
   );
   assert.deepEqual(
     validateOutboundSinkInventory(discovered, discovered, outboundCalls),
@@ -2804,6 +2828,28 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
       discovered,
       outboundCalls,
     ).some((error) => error.includes("stale outbound sink inventory")),
+  );
+});
+
+test("base comparison mode fails closed when the aggregate gate requires evidence", () => {
+  assert.deepEqual(resolveBaseComparisonMode({}), {
+    baseDirectory: undefined,
+    required: false,
+    status: "skipped",
+  });
+  assert.throws(
+    () =>
+      resolveBaseComparisonMode({
+        MIGRATION_GATE_REQUIRE_BASE_COMPARISON: "1",
+      }),
+    /required.*MIGRATION_GATE_BASELINE_DIR/,
+  );
+  assert.deepEqual(
+    resolveBaseComparisonMode({
+      MIGRATION_GATE_REQUIRE_BASE_COMPARISON: "1",
+      MIGRATION_GATE_BASELINE_DIR: "/tmp/base",
+    }),
+    { baseDirectory: "/tmp/base", required: true, status: "performed" },
   );
 });
 

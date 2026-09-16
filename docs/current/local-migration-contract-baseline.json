@@ -104,9 +104,10 @@
       "ownerSteps": [
         "09"
       ],
-      "acceptanceQuestion": "After backup and restore are defined, is a separate consented versioned conflict-aware bulk data format still needed?",
+      "acceptanceQuestion": "After backup and restore are defined, is a separate consented versioned conflict-aware bulk data format still needed, and if so what fresh design is justified without inheriting hosted-era dedupe/resume, retry/pacing, durable run-history, or definition-aware-writer TODOs?",
       "evidence": [
-        "apps/local-orchestrator/README.md"
+        "apps/local-orchestrator/README.md",
+        "docs/plans/active/local-migration/orchestration.md"
       ]
     },
     {
@@ -1164,11 +1165,39 @@
       "id": "migration-gate-loopback-probes",
       "sources": [
         {
+          "path": "scripts/local-migration/check-generated-integrity.mjs",
+          "fingerprints": [
+            "await runCommand([\"pnpm\", \"--filter\", \"backend\", \"prisma:generate\"], {",
+            "await runCommand([\"git\", \"diff\", \"--check\"], {"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/gate-runner.mjs",
+          "fingerprints": [
+            "dns.lookup(hostname, { all: true, verbatim: true })",
+            "child = spawnProcess(argv[0], argv.slice(1), {"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/migration-gate.mjs",
+          "fingerprints": [
+            "const result = await execFileAsync(\"git\", args, {",
+            "await runCommand(command.argv, {"
+          ]
+        },
+        {
           "path": "scripts/local-migration/restart-smoke.mjs",
           "fingerprints": [
             "net.connect({ host, port })",
-            "spawn(process.execPath, [\"dist/src/main.js\"]",
+            "spawn(process.execPath, [BACKEND_PRODUCTION_ENTRYPOINT]",
             "const response = await fetch(url, { ...options, signal })"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/test-database.mjs",
+          "fingerprints": [
+            "new (pgFor(repositoryRoot).Client)({",
+            "const context = await commandRunner("
           ]
         },
         {
@@ -1179,8 +1208,8 @@
           ]
         }
       ],
-      "destination": "ephemeral loopback-only backend, JWKS fixture, and web support-route smoke processes",
-      "payload": "synthetic signed token, contract probes, and public fixture data only",
+      "destination": "validated loopback PostgreSQL, the local Docker daemon, repository-local subprocesses, and ephemeral loopback-only backend, JWKS, and web support-route processes",
+      "payload": "synthetic test state, signed tokens, contract probes, command arguments, isolated process environments, and public fixture data only",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
@@ -3082,11 +3111,39 @@
       }
     },
     {
+      "path": "scripts/local-migration/check-generated-integrity.mjs",
+      "sinks": {
+        "subprocess-wrapper": 4
+      }
+    },
+    {
+      "path": "scripts/local-migration/gate-runner.mjs",
+      "sinks": {
+        "dns-lookup": 2,
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/migration-gate.mjs",
+      "sinks": {
+        "exec-file": 1,
+        "subprocess-wrapper": 6
+      }
+    },
+    {
       "path": "scripts/local-migration/restart-smoke.mjs",
       "sinks": {
         "fetch": 1,
         "net-connect": 1,
-        "spawn": 1
+        "spawn": 1,
+        "subprocess-wrapper": 9
+      }
+    },
+    {
+      "path": "scripts/local-migration/test-database.mjs",
+      "sinks": {
+        "postgresql-client": 1,
+        "subprocess-wrapper": 5
       }
     },
     {

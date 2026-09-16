@@ -1267,6 +1267,10 @@ export function validateContractReferenceMap(discovered, declared) {
 const OUTBOUND_SINK_PATTERNS = [
   ["fetch", /\b(?:fetch|fetchImpl)\s*\(/g],
   ["spawn", /\b(?:spawn|spawnProcess)\s*\(/g],
+  ["subprocess-wrapper", /(?<!function\s)\b(?:runCommand|commandRunner)\s*\(/g],
+  ["exec-file", /\bexecFile(?:Async)?\s*\(/g],
+  ["dns-lookup", /\bdns\.lookup\s*\(/g],
+  ["postgresql-client", /new\s+\(pgFor\([^)]*\)\.Client\)\s*\(/g],
   ["vertex-ai", /new\s+VertexAI\s*\(/g],
   ["auth0-management", /new\s+ManagementClient\s*\(/g],
   ["auth0-authentication", /new\s+AuthenticationClient\s*\(/g],
@@ -2913,8 +2917,7 @@ const OUTBOUND_SINK_ROOTS = [
   "test-document-upload.sh",
   "test-graphql.sh",
   "test-vertex-ai.sh",
-  "scripts/local-migration/restart-smoke.mjs",
-  "scripts/local-migration/web-support-smoke.mjs",
+  "scripts/local-migration",
 ];
 const DERIVED_SOURCE_EXCLUSIONS =
   /(?:^|\/)(?:__tests__|test|tests)(?:\/|$)|\.(?:spec|test)\.[^/]+$/;
@@ -3248,6 +3251,27 @@ async function updateDerivedFixtures() {
   );
 }
 
+export function resolveBaseComparisonMode(environment = process.env) {
+  const requirement = environment.MIGRATION_GATE_REQUIRE_BASE_COMPARISON;
+  if (requirement !== undefined && !new Set(["0", "1"]).has(requirement)) {
+    throw new Error(
+      "MIGRATION_GATE_REQUIRE_BASE_COMPARISON must be 0 or 1",
+    );
+  }
+  const required = requirement === "1";
+  const baseDirectory = environment.MIGRATION_GATE_BASELINE_DIR;
+  if (required && !baseDirectory) {
+    throw new Error(
+      "base comparison is required but MIGRATION_GATE_BASELINE_DIR is missing",
+    );
+  }
+  return {
+    baseDirectory,
+    required,
+    status: baseDirectory ? "performed" : "skipped",
+  };
+}
+
 async function run() {
   const registryPath = "docs/current/local-migration-contract-baseline.json";
   const registry = await readJson(registryPath);
@@ -3403,7 +3427,17 @@ async function run() {
     }),
   );
 
-  const baseDirectory = process.env.MIGRATION_GATE_BASELINE_DIR;
+  let baseComparison = {
+    baseDirectory: undefined,
+    required: false,
+    status: "skipped",
+  };
+  try {
+    baseComparison = resolveBaseComparisonMode(process.env);
+  } catch (error) {
+    errors.push(error.message);
+  }
+  const { baseDirectory } = baseComparison;
   if (baseDirectory) {
     try {
       const bundleArguments = {
@@ -3514,7 +3548,8 @@ async function run() {
   console.log(
     `contract-baseline: ok; capabilities=${registry.capabilities.length} ` +
       `graphqlTypes=${Object.keys(graphqlSignature.types).length} ` +
-      `consumers=${registry.consumers.length} catalog=${Object.keys(catalog).length}`,
+      `consumers=${registry.consumers.length} catalog=${Object.keys(catalog).length} ` +
+      `baseComparison=${baseComparison.status}`,
   );
   console.log(
     `contract-baseline: dispositions=${JSON.stringify(dispositions)}`,

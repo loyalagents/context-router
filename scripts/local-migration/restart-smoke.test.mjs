@@ -7,9 +7,11 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  BACKEND_PRODUCTION_ENTRYPOINT,
   assertCatalogState,
   assertGenerationStatesEqual,
   assertNonLoopbackUnreachable,
+  buildRetryGenerationArguments,
   buildSmokeBackendEnvironment,
   buildSmokeBuildEnvironment,
   buildSmokeToolEnvironment,
@@ -38,6 +40,43 @@ async function waitForFile(filePath, timeoutMs = 2_000) {
   }
   throw new Error(`timed out waiting for ${filePath}`);
 }
+
+test("restart smoke uses the documented backend production artifact", async () => {
+  const backendPackage = JSON.parse(
+    await readFile(
+      new URL("../../apps/backend/package.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const dockerfile = await readFile(
+    new URL("../../apps/backend/Dockerfile", import.meta.url),
+    "utf8",
+  );
+  assert.equal(BACKEND_PRODUCTION_ENTRYPOINT, backendPackage.main);
+  assert.equal(
+    backendPackage.scripts["start:prod"],
+    `node ${BACKEND_PRODUCTION_ENTRYPOINT.replace(/\.js$/, "")}`,
+  );
+  assert.ok(
+    dockerfile.includes(
+      `CMD ["node", "apps/backend/${BACKEND_PRODUCTION_ENTRYPOINT.replace(/\.js$/, "")}"]`,
+    ),
+  );
+});
+
+test("port-collision retry preserves every generation dependency", () => {
+  const httpContract = { routes: { dcr: { errors: {} } } };
+  const options = {
+    repositoryRoot: "/repo",
+    contract: { tools: [] },
+    httpContract,
+    portAttempt: 1,
+  };
+  const retry = buildRetryGenerationArguments(options);
+  assert.deepEqual(Object.keys(retry).sort(), Object.keys(options).sort());
+  assert.equal(retry.httpContract, httpContract);
+  assert.equal(retry.portAttempt, 2);
+});
 
 test("ephemeral test token is RS256-signed and contains the bounded M2M claims", () => {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });

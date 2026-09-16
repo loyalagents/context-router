@@ -49,6 +49,7 @@ import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.m
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const defaultRepositoryRoot = path.resolve(scriptDirectory, "../..");
 const expectedCatalogCount = 19;
+export const BACKEND_PRODUCTION_ENTRYPOINT = "dist/main.js";
 const audience = "urn:context-router:hosted-baseline-smoke";
 const mcpScopes = [
   "preferences:read",
@@ -667,7 +668,7 @@ async function startBackend({
   };
   const stdout = createStreamingRedactor(write("stdout"), canaries);
   const stderr = createStreamingRedactor(write("stderr"), canaries);
-  const child = spawn(process.execPath, ["dist/src/main.js"], {
+  const child = spawn(process.execPath, [BACKEND_PRODUCTION_ENTRYPOINT], {
     cwd: backendDirectory,
     env: environment,
     stdio: ["ignore", "pipe", "pipe"],
@@ -881,27 +882,35 @@ async function probeMcp({
   );
 }
 
-async function probeGeneration({
-  repositoryRoot,
-  databaseUrl,
-  backendDirectory,
-  jwks,
-  signingPrivateKey,
-  kid,
-  clientIds,
-  clientSecret,
-  caCertificate,
-  rawCatalog,
-  contract,
-  httpContract,
-  generation,
-  diagnosticsDirectory,
-  sourceEnvironment,
-  signal,
-  journal,
-  smokeCanaries,
-  portAttempt = 1,
-}) {
+export function buildRetryGenerationArguments(options) {
+  return {
+    ...options,
+    portAttempt: (options.portAttempt ?? 1) + 1,
+  };
+}
+
+async function probeGeneration(options) {
+  const {
+    repositoryRoot,
+    databaseUrl,
+    backendDirectory,
+    jwks,
+    signingPrivateKey,
+    kid,
+    clientIds,
+    clientSecret,
+    caCertificate,
+    rawCatalog,
+    contract,
+    httpContract,
+    generation,
+    diagnosticsDirectory,
+    sourceEnvironment,
+    signal,
+    journal,
+    smokeCanaries,
+    portAttempt = 1,
+  } = options;
   const appPort = await findFreeLoopbackPort();
   const serverUrl = `http://127.0.0.1:${appPort}`;
   const issuer = `https://127.0.0.1:${jwks.port}/`;
@@ -937,7 +946,7 @@ async function probeGeneration({
     identity: {
       generation,
       port: appPort,
-      command: [process.execPath, "dist/src/main.js"],
+      command: [process.execPath, BACKEND_PRODUCTION_ENTRYPOINT],
     },
     recovery: `Verify the recorded PID is the generation-${generation} backend before sending SIGTERM, then SIGKILL if required.`,
   });
@@ -1232,26 +1241,7 @@ async function probeGeneration({
     portAttempt < 3 &&
     /(?:EADDRINUSE|address already in use)/i.test(backend.outputTail())
   ) {
-    return probeGeneration({
-      repositoryRoot,
-      databaseUrl,
-      backendDirectory,
-      jwks,
-      signingPrivateKey,
-      kid,
-      clientIds,
-      clientSecret,
-      caCertificate,
-      rawCatalog,
-      contract,
-      generation,
-      diagnosticsDirectory,
-      sourceEnvironment,
-      signal,
-      journal,
-      smokeCanaries,
-      portAttempt: portAttempt + 1,
-    });
+    return probeGeneration(buildRetryGenerationArguments(options));
   }
   const combined = combineFailures(
     primaryError,

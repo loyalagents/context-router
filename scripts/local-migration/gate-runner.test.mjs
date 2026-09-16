@@ -176,7 +176,6 @@ test("phase environments expose database credentials only to their named consume
   };
   const contracts = buildPhaseEnvironment(base, "contract-baseline", {
     ...values,
-    exposeBaseArtifacts: true,
     commandArgv: ["node", "scripts/local-migration/check-contract-baseline.mjs"],
   });
   assert.equal(contracts.MIGRATION_GATE_BASE_SHA, values.baseSha);
@@ -186,8 +185,10 @@ test("phase environments expose database credentials only to their named consume
     contracts.MIGRATION_GATE_BASELINE_MANIFEST_SHA256,
     values.baseManifestSha256,
   );
+  assert.equal(contracts.MIGRATION_GATE_REQUIRE_BASE_COMPARISON, "1");
   const contractTests = buildPhaseEnvironment(base, "contract-baseline", values);
-  assert.equal(contractTests.MIGRATION_GATE_BASELINE_DIR, undefined);
+  assert.equal(contractTests.MIGRATION_GATE_BASELINE_DIR, values.baseDirectory);
+  assert.equal(contractTests.MIGRATION_GATE_REQUIRE_BASE_COMPARISON, "1");
 
   const database = buildPhaseEnvironment(base, "backend-database", {
     ...values,
@@ -196,6 +197,7 @@ test("phase environments expose database credentials only to their named consume
   assert.equal(database.DATABASE_URL, values.databaseUrl);
   assert.equal(database.NODE_ENV, "test");
   assert.equal(database.MIGRATION_TEST_ADMIN_URL, undefined);
+  assert.equal(database.MIGRATION_GATE_REQUIRE_BASE_COMPARISON, undefined);
 
   const smoke = buildPhaseEnvironment(base, "restart-smoke", values);
   assert.equal(smoke.DATABASE_URL, undefined);

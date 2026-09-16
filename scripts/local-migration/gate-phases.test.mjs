@@ -124,6 +124,26 @@ test("dedicated CI seeds the offline pnpm 9 Corepack cache before invoking the g
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
+test("backend build and seed configs pin production and smoke entrypoints", async () => {
+  const [backendTsconfig, seedTsconfig] = await Promise.all(
+    ["../../apps/backend/tsconfig.json", "../../apps/backend/tsconfig.seed.json"].map(
+      async (relativePath) =>
+        JSON.parse(await readFile(new URL(relativePath, import.meta.url), "utf8")),
+    ),
+  );
+  assert.equal(backendTsconfig.compilerOptions.rootDir, "./src");
+  assert.deepEqual(seedTsconfig.include, [
+    "prisma/seed.ts",
+    "prisma/seed-catalog-smoke.ts",
+  ]);
+  assert.equal(seedTsconfig.compilerOptions.rootDir, ".");
+  const backendJest = require("./apps/backend/jest.config.js");
+  const unit = backendJest.projects.find(
+    (project) => project.displayName === "unit",
+  );
+  assert.ok(unit.testMatch.includes("<rootDir>/test/contracts/**/*.spec.ts"));
+});
+
 test("approved command policy rejects substitution, removal, unknown commands, and eval indirection", () => {
   for (const mutate of [
     (candidate) => {

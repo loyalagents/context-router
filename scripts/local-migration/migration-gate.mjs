@@ -471,12 +471,6 @@ async function executeFullGate({
             baseSha,
             baseDirectory,
             baseManifestSha256,
-            exposeBaseArtifacts:
-              phase.id === "contract-baseline" &&
-              command.argv.length === 2 &&
-              command.argv[0] === "node" &&
-              command.argv[1] ===
-                "scripts/local-migration/check-contract-baseline.mjs",
             diagnosticsDirectory,
             pythonBin,
             pythonCacheDirectory: path.join(

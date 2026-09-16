@@ -469,15 +469,16 @@ migrations into `public`, runs the real catalog seed twice, and asserts the exac
 active global catalog without duplicate slugs. A failing backend unit test first
 characterizes listener argument resolution; the smallest implementation makes
 `main.ts` pass an explicit host only when `APP_HOST` is set, preserving the
-current hosted default when it is absent. The smoke builds the backend and web
-app once each. It starts the built Next.js app on `127.0.0.1`, proves the
+current hosted default when it is absent. The backend build config pins
+`rootDir` to `src`, and contract-only Jest files live under `test/contracts`, so
+a test import cannot relocate the production artifact. The smoke builds the
+backend and web app once each. It starts the built Next.js app on `127.0.0.1`, proves the
 unauthenticated `/api/chat` and `/api/debug/token` envelopes, and follows
 `/auth/login` only as far as an ephemeral loopback OIDC discovery endpoint. It
-then starts the actual backend build artifact, `node dist/src/main.js`, twice with
+then starts the documented backend build artifact, `node dist/main.js`, twice with
 `APP_HOST=127.0.0.1` on a dynamically selected port against the same database.
-Checkpoint 2 confirmed this repository's current TypeScript output path from a
-clean production build; the hosted package's stale `start:prod` shortcut is not
-used as restart evidence and remains outside this behavior-preserving step.
+The same artifact is named by the package and Docker production commands, and
+the focused tests plus clean-restart smoke fail if those entrypoints diverge.
 
 A loopback-only HTTPS OIDC/JWKS fixture supplies an ephemeral RSA key and a
 short-lived synthetic M2M token. Only the isolated web probe and backend child
@@ -787,11 +788,37 @@ Checkpoint 3 is blocked until fresh read-only reviews compare the complete
 base-to-HEAD diff and validation evidence with this approved plan. The sole
 writer resolves every finding and records explicit final approval here.
 
+The first-pass approvals below are retained as audit history, but they were
+superseded when a user-supplied independent review of PR #156 found a production
+entrypoint regression at head `493bf49`. They do not authorize merge after the
+remediation.
+
 | Review dimension | Reviewer | Findings resolution | Approval |
 | --- | --- | --- | --- |
 | Architecture, scope and maintainability | `/root/final_architecture_scope` | Reconciled canonical counts; made restart GraphQL probes named, fragment-aware consumers; derived MCP schema/catalog affinities from actual visibility; and kept the implementation within the two approved checkpoints. No remaining semantic, architecture, scope, or maintainability finding. | **APPROVED AND REAFFIRMED** 2026-09-15; no remaining findings |
 | Public compatibility and consumers | `/root/final_compatibility_testing` | Closed fail-open GraphQL, HTTP, MCP, OAuth/DCR/challenge, client-visibility, authority, task-execution, output-domain, and accepted-MIME evolution cases; protected both sides of consumer transitions; and tied real HTTP/MCP descriptors and upload enforcement to executable e2e evidence. No remaining compatibility or consumer finding. | **APPROVED** 2026-09-15; no remaining findings |
 | Testing, security and privacy | `/root/final_compatibility_testing` | Added environment replacement/restoration, manifest-producer validation, private atomic journals, loopback/peer checks, independent database/container ownership, immutable-ID cleanup, cancellation-safe acquisition, merge-base artifact hashing, and real unsupported-upload rejection coverage. No remaining testing, security, privacy, or CI-equivalence finding outside the remote workflow result. | **APPROVED** 2026-09-15; no remaining findings |
+
+### Post-approval remediation
+
+| Finding | Resolution | Verification state |
+| --- | --- | --- |
+| Production build moved from `dist/main.js` to `dist/src/main.js`, breaking `start:prod` and the Docker/Cloud Run container command | Moved the MCP contract spec out of `src`, pinned the production TypeScript `rootDir` to `src`, added the contract directory to Jest, restored the smoke to `dist/main.js`, and tied package/Docker/smoke entrypoints together with a focused test. | Focused build/unit validation passed; exact-tree aggregate and remote reruns pending. |
+| EADDRINUSE retry omitted `httpContract` | Retry now spreads the complete generation options object and increments only `portAttempt`; a regression test pins dependency preservation. | Focused migration tests passed; restart smoke pending. |
+| Merge-base comparison could skip without explicit evidence | Every aggregate contract-baseline command receives bound base artifacts plus `MIGRATION_GATE_REQUIRE_BASE_COMPARISON=1`; required-but-missing state fails closed, and success reports `baseComparison=performed` or `skipped`. | Focused migration tests and standalone skipped-mode checker passed; aggregate performed-mode run pending. |
+| Catalog smoke seed missed the dedicated seed typecheck | `tsconfig.seed.json` includes both seed entrypoints with an explicit package root. | Seed typecheck passed. |
+| Gate orchestration was outside the outbound-sink census | The census now covers all non-test local-migration scripts and recognizes subprocess wrappers, `execFile`, DNS, direct PostgreSQL clients, spawn, fetch, and sockets; the registry classifies the reviewed gate boundary and fingerprints its sources. | Contract checker passed. |
+| Hosted-era orchestrator TODO disposition existed only in this plan | The canonical bulk-import/export registry decision now says any Step 09 design starts fresh without inheriting dedupe/resume, retry/pacing, durable run-history, or definition-aware-writer requirements. | Contract checker passed. |
+
+Fresh read-only remediation reviewers must fill the table below after comparing
+the complete implementation and diff with this plan. All rows remain pending
+until that review is complete.
+
+| Review dimension | Reviewer | Findings resolution | Approval |
+| --- | --- | --- | --- |
+| Architecture, scope and maintainability | Pending | Pending fresh remediation review. | **PENDING** |
+| Public compatibility and consumers | Pending | Pending fresh remediation review. | **PENDING** |
+| Testing, security and privacy | Pending | Pending fresh remediation review. | **PENDING** |
 
 ## Exit Criteria
 

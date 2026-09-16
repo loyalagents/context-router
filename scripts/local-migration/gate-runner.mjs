@@ -674,7 +674,8 @@ export function buildPhaseEnvironment(base, phaseId, values) {
       ? "production"
       : "test",
   };
-  if (phaseId === "contract-baseline" && values.exposeBaseArtifacts) {
+  if (phaseId === "contract-baseline") {
+    environment.MIGRATION_GATE_REQUIRE_BASE_COMPARISON = "1";
     environment.MIGRATION_GATE_BASE_SHA = values.baseSha;
     environment.MIGRATION_GATE_BASELINE_DIR = values.baseDirectory;
     environment.MIGRATION_GATE_BASELINE_MANIFEST_SHA256 =

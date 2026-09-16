@@ -1,5 +1,5 @@
-import baseline from "../../test/contracts/fixtures/mcp-contract-baseline.json";
-import { collectMcpContractBaseline } from "../../test/contracts/mcp-contract-collector";
+import baseline from "./fixtures/mcp-contract-baseline.json";
+import { collectMcpContractBaseline } from "./mcp-contract-collector";
 
 describe("MCP public contract baseline", () => {
   it("matches server, tool, resource, OAuth, DCR, challenge, and visibility fixtures", () => {
