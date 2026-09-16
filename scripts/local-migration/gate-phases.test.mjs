@@ -132,6 +132,17 @@ test("backend build and seed configs pin production and smoke entrypoints", asyn
     ),
   );
   assert.equal(backendTsconfig.compilerOptions.rootDir, "./src");
+  assert.equal(backendTsconfig.compilerOptions.outDir, "./dist");
+  assert.equal(
+    backendTsconfig.compilerOptions.tsBuildInfoFile,
+    "./dist/tsconfig.tsbuildinfo",
+  );
+  assert.equal(
+    backendTsconfig.compilerOptions.tsBuildInfoFile.startsWith(
+      `${backendTsconfig.compilerOptions.outDir}/`,
+    ),
+    true,
+  );
   assert.deepEqual(seedTsconfig.include, [
     "prisma/seed.ts",
     "prisma/seed-catalog-smoke.ts",
