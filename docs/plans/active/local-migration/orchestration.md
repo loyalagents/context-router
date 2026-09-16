@@ -1,14 +1,16 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `02-composition-boundaries` — plan independently approved;
-  PR 02A (hosted model binding) is the only active implementation checkpoint
+- Current step: `02-composition-boundaries` — plan and PR 02A
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) implementation
+  independently approved; PR 02A remains unmerged
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-composition-boundaries`
-- Concrete next action: commit/push the approved Step 02 planning checkpoint,
-  open PR 02A as a draft, and implement only its test-first hosted-model binding
-  before fresh implementation review; never auto-merge
-- Review date: 2026-10-14 or PR 02A implementation review, whichever comes first
+- Concrete next action: obtain the required final-head local and remote check
+  evidence, then a human review and landing decision; do not activate PR 02B
+  before PR 02A is human-merged and its exact merge SHA is recorded
+- Review date: 2026-10-14 or the PR 02A human landing decision, whichever comes
+  first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -265,7 +267,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Complete — [PR #156](https://github.com/loyalagents/context-router/pull/156) merged at `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
-| `02-composition-boundaries` | Plan independently approved; PR 02A active on `codex/local-migration-02-composition-boundaries` from the exact Step 01 merge SHA — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
+| `02-composition-boundaries` | Plan and [PR #157](https://github.com/loyalagents/context-router/pull/157) implementation independently approved but unmerged on `codex/local-migration-02-composition-boundaries`; PR 02B remains inactive until the human-merged SHA is recorded — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
 | `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and make restart/recovery explicit. | Step 04 |
