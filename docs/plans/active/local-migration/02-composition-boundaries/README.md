@@ -1,15 +1,17 @@
 # Step 02: Composition Boundaries
 
-- Status: plan independently approved; PR 02A (hosted model binding) is active
+- Status: plan and PR 02A ([#157](https://github.com/loyalagents/context-router/pull/157))
+  implementation independently approved; PR 02A remains unmerged
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-composition-boundaries` for PR 02A only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: commit/push the approved planning checkpoint, open PR
-  02A as a draft, then add its tests first and implement only the approved
-  hosted-model binding before fresh implementation review
-- Review date: 2026-10-14 or PR 02A implementation review, whichever comes first
+- Concrete next action: obtain the required final-head local and remote check
+  evidence, then a human review and landing decision; do not activate PR 02B
+  before PR 02A is human-merged and its exact merge SHA is recorded
+- Review date: 2026-10-14 or the PR 02A human landing decision, whichever comes
+  first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
 - Supported mode during planning: the existing hosted

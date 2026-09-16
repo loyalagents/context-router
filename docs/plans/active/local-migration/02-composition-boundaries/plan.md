@@ -1,6 +1,8 @@
 # Step 02: Composition Boundaries
 
-- Document status: independently approved; PR 02A implementation authorized
+- Document status: independently approved; PR 02A
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) implementation
+  independently approved and unmerged
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
@@ -21,7 +23,7 @@ are not pre-authorized stacked branches.
 
 | PR/checkpoint | Branch and base | Sole writer | Read-only reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
-| 02A: hosted model binding | active `codex/local-migration-02-composition-boundaries` from `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` | `/root` | fresh implementation reviewers, assigned after implementation | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
+| 02A: hosted model binding | active `codex/local-migration-02-composition-boundaries` from `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | inactive `codex/local-migration-02-toolchain-contract`; create only from the human-merged 02A commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | inactive `codex/local-migration-02-runtime-bootstrap`; create only from the human-merged 02B commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
@@ -1034,6 +1036,18 @@ unit/build, exact-base full LMBG, dedicated migration workflow, all applicable
 standard CI, clean repository/integrity state, and unchanged public fixtures.
 The PR stays draft until local review/validation is complete and becomes ready
 only after remote required checks pass. It is never auto-merged.
+
+The fresh 02A implementation review completed on 2026-09-16. Architecture and
+security reviewers each found that the initial import contract rejected direct
+concrete-service imports but did not reject a direct
+`@google-cloud/vertexai` SDK import. The writer added a separate SDK import
+guard covering static, dynamic, and CommonJS forms with the sole production
+allowlist entry at the hosted adapter implementation, reran the exact targeted
+suite at 75/75, and both reviewers approved the resolution. The compatibility
+reviewer approved without findings. All three reviewers confirmed the change
+stays within 02A, preserves the public transport and hosted behavior, and does
+not enter Steps 03–09. Final-head local and remote validation remains a
+closeout gate rather than an implementation-review assumption.
 
 ## Exit Criteria
 

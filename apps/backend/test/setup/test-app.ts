@@ -3,7 +3,7 @@
  *
  * Creates a NestJS test application with:
  * - Auth guards bypassed (injects test user into context)
- * - VertexAiService mocked
+ * - Model ports mocked
  * - Auth0Service mocked
  * - ValidationPipe applied globally
  *
@@ -14,7 +14,9 @@
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  DynamicModule,
   INestApplication,
+  Module,
   ValidationPipe,
   ExecutionContext,
 } from '@nestjs/common';
@@ -24,8 +26,11 @@ import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
 import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
 import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
-import { VertexAiService } from '../../src/infrastructure/vertex-ai/vertex-ai.service';
-import { VertexAiStructuredService } from '../../src/infrastructure/vertex-ai/vertex-ai-structured.service';
+import { HostedModelAdapterModule } from '../../src/composition/hosted-model-adapter.module';
+import {
+  AI_STRUCTURED_OUTPUT_PORT,
+  AI_TEXT_GENERATOR_PORT,
+} from '../../src/domains/shared/ports/ai.tokens';
 import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from './test-db';
@@ -112,6 +117,24 @@ export interface MockAuth0Service {
   updateUserMetadata: (...args: any[]) => any;
   getManagementClient: (...args: any[]) => any;
   getAuthClient: (...args: any[]) => any;
+}
+
+@Module({})
+class TestHostedModelAdapterModule {
+  static register(
+    textGenerator: MockVertexAiService,
+    structuredOutput: MockStructuredAiService,
+  ): DynamicModule {
+    return {
+      global: true,
+      module: TestHostedModelAdapterModule,
+      providers: [
+        { provide: AI_TEXT_GENERATOR_PORT, useValue: textGenerator },
+        { provide: AI_STRUCTURED_OUTPUT_PORT, useValue: structuredOutput },
+      ],
+      exports: [AI_TEXT_GENERATOR_PORT, AI_STRUCTURED_OUTPUT_PORT],
+    };
+  }
 }
 
 type DefaultMockVertexAiService = ReturnType<typeof createMockVertexAiService>;
@@ -339,6 +362,12 @@ export async function createTestApp(
     imports: [AppModule],
   });
 
+  moduleBuilder
+    .overrideModule(HostedModelAdapterModule)
+    .useModule(
+      TestHostedModelAdapterModule.register(mockVertexAi, mockStructuredAi),
+    );
+
   // Override guards
   if (overrideGraphqlAuthGuards) {
     moduleBuilder.overrideGuard(GqlAuthGuard).useValue(mockAuthGuard);
@@ -348,13 +377,6 @@ export async function createTestApp(
   moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
 
   // Override external services
-  moduleBuilder.overrideProvider(VertexAiService).useValue(mockVertexAi);
-  moduleBuilder
-    .overrideProvider(VertexAiStructuredService)
-    .useValue(mockStructuredAi);
-  moduleBuilder
-    .overrideProvider('AiStructuredOutputPort')
-    .useValue(mockStructuredAi);
   moduleBuilder.overrideProvider(Auth0Service).useValue(mockAuth0);
 
   // Use test database PrismaClient

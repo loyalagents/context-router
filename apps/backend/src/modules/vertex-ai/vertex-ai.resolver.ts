@@ -3,8 +3,9 @@ import {
   Query,
   Resolver,
 } from '@nestjs/graphql';
-import { UseGuards, Logger } from '@nestjs/common';
-import { VertexAiService } from '../../infrastructure/vertex-ai/vertex-ai.service';
+import { Inject, Logger, UseGuards } from '@nestjs/common';
+import { AiTextGeneratorPort } from '../../domains/shared/ports/ai-text-generator.port';
+import { AI_TEXT_GENERATOR_PORT } from '../../domains/shared/ports/ai.tokens';
 import { GqlAuthGuard } from '../../common/guards/gql-auth.guard';
 
 @Resolver()
@@ -12,7 +13,10 @@ import { GqlAuthGuard } from '../../common/guards/gql-auth.guard';
 export class VertexAiResolver {
   private readonly logger = new Logger(VertexAiResolver.name);
 
-  constructor(private readonly vertexAiService: VertexAiService) {}
+  constructor(
+    @Inject(AI_TEXT_GENERATOR_PORT)
+    private readonly textGenerator: AiTextGeneratorPort,
+  ) {}
 
   @Query(() => String, {
     name: 'askVertexAI',
@@ -23,7 +27,7 @@ export class VertexAiResolver {
   ): Promise<string> {
     try {
       this.logger.log(`Received query with message: ${message.substring(0, 50)}...`);
-      const response = await this.vertexAiService.generateText(message);
+      const response = await this.textGenerator.generateText(message);
       return response;
     } catch (error) {
       this.logger.error('Failed to generate text from Vertex AI', error);

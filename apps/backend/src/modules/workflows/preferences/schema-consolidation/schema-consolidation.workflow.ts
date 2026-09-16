@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../../domains/shared/ports/ai.tokens';
 import {
     PreferenceSchemaSnapshotService,
     PreferenceDefinitionSnapshot,
@@ -38,7 +39,7 @@ export class SchemaConsolidationWorkflow
     IWorkflow<SchemaConsolidationWorkflowInput, SchemaConsolidationWorkflowOutput>
 {
   constructor(
-    @Inject('AiStructuredOutputPort')
+    @Inject(AI_STRUCTURED_OUTPUT_PORT)
     private readonly aiStructuredPort: AiStructuredOutputPort,
     private readonly snapshotService: PreferenceSchemaSnapshotService,
   ) {}
