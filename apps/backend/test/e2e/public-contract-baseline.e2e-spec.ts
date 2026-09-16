@@ -4,6 +4,7 @@ import {
   INestApplication,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type { AddressInfo } from "node:net";
 import request from "supertest";
 import contract from "../contracts/fixtures/http-contracts.v1.json";
 import { getDocumentUploadConfig } from "../../src/config/document-upload.config";
@@ -37,6 +38,29 @@ describe("Hosted HTTP public contract baseline (e2e)", () => {
 
   beforeEach(async () => {
     setTestUser(await createTestUser());
+  });
+
+  it("keeps the shared e2e server on one loopback listener", async () => {
+    const server = app.getHttpServer();
+    const initialAddress = server.address();
+
+    expect(server.listening).toBe(true);
+    expect(initialAddress).not.toBeNull();
+    expect(typeof initialAddress).not.toBe("string");
+
+    const { address, port } = initialAddress as AddressInfo;
+    expect(address).toBe("127.0.0.1");
+    expect(port).toBeGreaterThan(0);
+
+    await request(server)
+      .get(contract.routes.health.path)
+      .expect(contract.routes.health.success.status);
+    await request(server)
+      .get(contract.routes.mcpGet.path)
+      .expect(contract.routes.mcpGet.response.status);
+
+    expect(server.listening).toBe(true);
+    expect((server.address() as AddressInfo).port).toBe(port);
   });
 
   afterAll(async () => {

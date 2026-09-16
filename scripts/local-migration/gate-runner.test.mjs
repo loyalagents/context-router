@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import {
   assertCallerIntegrity,
+  assertContractBaselineComparisonPerformed,
   assertSafePostgresEndpoint,
   assertServerVerifiedTestDatabase,
   buildIsolatedGateEnvironment,
@@ -30,6 +31,7 @@ import {
   validatePhaseManifest,
   gitWithoutHooks,
   loadAcceptedDecisionEvidence,
+  readContractBaselineComparisonEvidence,
   writeSanitizedJson,
 } from "./gate-runner.mjs";
 
@@ -224,6 +226,42 @@ test("phase environments expose database credentials only to their named consume
   assert.equal(
     harbor.PYTHONPYCACHEPREFIX,
     values.pythonCacheDirectory,
+  );
+});
+
+test("aggregate gate requires observable performed merge-base comparison evidence", () => {
+  const checker = [
+    "node",
+    "scripts/local-migration/check-contract-baseline.mjs",
+  ];
+  assert.equal(
+    readContractBaselineComparisonEvidence(
+      checker,
+      "[stdout] contract-baseline: ok; capabilities=39 baseComparison=performed\n",
+    ),
+    "performed",
+  );
+  assert.equal(
+    readContractBaselineComparisonEvidence(
+      ["node", "scripts/check-markdown-links.mjs"],
+      "[stdout] baseComparison=performed\n",
+    ),
+    null,
+  );
+  for (const output of [
+    "[stdout] contract-baseline: ok; capabilities=39\n",
+    "[stdout] contract-baseline: ok; capabilities=39 baseComparison=skipped\n",
+    "[stdout] contract-baseline: ok; baseComparison=performed baseComparison=performed\n",
+  ]) {
+    assert.throws(
+      () => readContractBaselineComparisonEvidence(checker, output),
+      /required baseComparison=performed evidence/,
+    );
+  }
+  assert.equal(assertContractBaselineComparisonPerformed("performed"), "performed");
+  assert.throws(
+    () => assertContractBaselineComparisonPerformed("pending"),
+    /did not record required base comparison evidence/,
   );
 });
 

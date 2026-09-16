@@ -1182,7 +1182,7 @@
           "path": "scripts/local-migration/migration-gate.mjs",
           "fingerprints": [
             "const result = await execFileAsync(\"git\", args, {",
-            "await runCommand(command.argv, {"
+            "const commandResult = await runCommand(command.argv, {"
           ]
         },
         {
@@ -1208,8 +1208,8 @@
           ]
         }
       ],
-      "destination": "validated loopback PostgreSQL, the local Docker daemon, repository-local subprocesses, and ephemeral loopback-only backend, JWKS, and web support-route processes",
-      "payload": "synthetic test state, signed tokens, contract probes, command arguments, isolated process environments, and public fixture data only",
+      "destination": "the host-configured DNS resolver for operator-supplied PostgreSQL hostnames, validated loopback PostgreSQL, the local Docker daemon, repository-local subprocesses, and ephemeral loopback-only backend, JWKS, and web support-route processes",
+      "payload": "operator-supplied PostgreSQL administration hostnames to the configured resolver, plus synthetic test state, signed tokens, contract probes, command arguments, isolated process environments, and public fixture data only",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [

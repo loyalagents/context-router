@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   assertCallerIntegrity,
+  assertContractBaselineComparisonPerformed,
   buildIsolatedGateEnvironment,
   buildIsolatedGitEnvironment,
   buildPhaseEnvironment,
@@ -30,6 +31,7 @@ import {
   gitWithoutHooks,
   loadAcceptedDecisionEvidence,
   prepareOwnedTemporaryDirectory,
+  readContractBaselineComparisonEvidence,
   redactSecrets,
   resolveOwnedArtifactPath,
   runCommand,
@@ -345,6 +347,7 @@ async function executeFullGate({
     },
     administrationSource: "pending",
     databaseName: null,
+    baseComparison: "pending",
     phases: [],
     cleanup: [],
   };
@@ -480,7 +483,7 @@ async function executeFullGate({
             trackedSdlSha256,
           },
         );
-        await runCommand(command.argv, {
+        const commandResult = await runCommand(command.argv, {
           cwd: workspace,
           env: phaseEnvironment,
           timeoutMs: remaining,
@@ -492,8 +495,16 @@ async function executeFullGate({
           terminationGraceMs: terminationGraceForPhase(phase),
           canaries: sensitiveCanaries,
         });
+        const comparisonEvidence = readContractBaselineComparisonEvidence(
+          command.argv,
+          commandResult.outputTail,
+        );
+        if (comparisonEvidence) summary.baseComparison = comparisonEvidence;
       },
       onPhaseFinish: async (phase, result) => {
+        if (phase.id === "contract-baseline") {
+          assertContractBaselineComparisonPerformed(summary.baseComparison);
+        }
         console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
       },
       onSummary: async (phasesSummary) => {
@@ -781,7 +792,7 @@ async function main() {
   console.log(
     smokeOnly
       ? `migration-smoke: ok; disposable caller-integrity=true elapsedMs=${elapsedMs}`
-      : `migration-gate: ok; phases=${result.phases.length} caller-integrity=true elapsedMs=${elapsedMs}`,
+      : `migration-gate: ok; phases=${result.phases.length} baseComparison=${result.baseComparison} caller-integrity=true elapsedMs=${elapsedMs}`,
   );
   await rm(diagnosticsDirectory, { recursive: true, force: true });
 }

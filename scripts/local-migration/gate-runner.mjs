@@ -663,6 +663,44 @@ export function createSignalAbortController(processLike = process) {
   };
 }
 
+const contractBaselineComparisonCommand = [
+  "node",
+  "scripts/local-migration/check-contract-baseline.mjs",
+];
+
+export function readContractBaselineComparisonEvidence(argv, outputTail) {
+  if (!jsonArrayEqual(argv, contractBaselineComparisonCommand)) return null;
+  const normalizedOutput = String(outputTail ?? "").replace(
+    /\[(?:stdout|stderr)\]\s*/g,
+    "",
+  );
+  const evidenceLines = normalizedOutput
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith("contract-baseline: ok;"));
+  const statuses = evidenceLines.flatMap((line) =>
+    [...line.matchAll(/\bbaseComparison=([^\s]+)/g)].map((match) => match[1]),
+  );
+  if (
+    evidenceLines.length !== 1 ||
+    statuses.length !== 1 ||
+    statuses[0] !== "performed"
+  ) {
+    throw new Error(
+      "contract baseline checker did not emit required baseComparison=performed evidence",
+    );
+  }
+  return "performed";
+}
+
+export function assertContractBaselineComparisonPerformed(status) {
+  if (status !== "performed") {
+    throw new Error(
+      "contract-baseline phase did not record required base comparison evidence",
+    );
+  }
+  return status;
+}
+
 export function buildPhaseEnvironment(base, phaseId, values) {
   const productionBuildCommands = new Set([
     JSON.stringify(["pnpm", "--filter", "backend", "build"]),
