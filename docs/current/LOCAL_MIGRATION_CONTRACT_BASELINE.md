@@ -277,14 +277,18 @@ both primary and cleanup errors; success removes it together with the
 disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
 
-The post-remediation 2026-09-15 local acceptance run passed the focused
-migration suite 128/128. The final committed-tree aggregate rerun passed all 11
-phases in 227.805 seconds, including its 33.947-second clean-restart phase, with
-Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. It preserved
-caller generated paths and removed its exact generated database and fallback
-container. PR #156's dedicated workflow then passed under Node 20, pnpm 9,
-Python 3.12, and PostgreSQL 15, with every required remote check green at the
-reviewed implementation head.
+The superseded 128-test, 227.805-second, and remote-green results were collected
+at head `493bf49` before independent review found a production-entrypoint
+regression; they are not current acceptance evidence. On 2026-09-15, the
+remediated focused migration suite passed 133/133 tests and committed
+implementation head `b568834` passed all 11 aggregate phases in 231.787 seconds,
+including its 35.256-second clean-restart phase, with Node 20.19.5, pnpm 10.25.0,
+Python 3.12.8, and PostgreSQL 15.15. It reported
+`baseComparison=performed`, preserved caller integrity, and removed its exact
+generated databases and fallback container. Two consecutive backend builds and
+an independent 76.980-second restart smoke also proved the restored
+`dist/main.js` production entrypoint. PR #156's current-head Node 20/pnpm 9
+remote gate remains pending until the remediation is pushed.
 
 ## Updating A Contract
 

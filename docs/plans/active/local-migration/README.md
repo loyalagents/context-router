@@ -1,17 +1,17 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `01-contract-baseline-and-product-scope` — implementation
-  remediation complete after external review;
+- Current step: `01-contract-baseline-and-product-scope` — remediation
+  independently approved and local implementation-head gate passed;
   [PR #156](https://github.com/loyalagents/context-router/pull/156) is draft
-  pending fresh independent review and exact-tree validation
+  pending current-head remote CI and final human review
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
-- Concrete next action: complete fresh remediation review and exact-tree local
-  and remote validation, then return PR #156 to human review without automatic
-  merge
+- Concrete next action: push the approved remediation, require current-head
+  local-migration and standard CI checks to pass, then return PR #156 to human
+  review without automatic merge
 - Review date: 2026-10-14 or Step 01 human review, whichever comes first
-- Last reviewed: 2026-09-15
+- Last reviewed: 2026-09-16
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions

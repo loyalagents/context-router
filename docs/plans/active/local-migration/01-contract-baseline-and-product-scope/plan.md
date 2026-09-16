@@ -1,6 +1,6 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Document status: implementation complete; final review in progress
+- Document status: remediation approved; local implementation-head gate passed; remote CI pending
 - Program step: `01-contract-baseline-and-product-scope`
 - Target branch: `main`
 - Planning base commit: `9b56d38fde927d4e643af89ba45665a439613939`
@@ -12,10 +12,11 @@
 - Implementation owner: `/root` (approval gate completed 2026-09-14)
 - Read-only discovery reviewers: `/root/discovery_contracts`, `/root/discovery_runtime_security`, `/root/discovery_tests_tooling`
 - Plan reviewers: `/root/plan_review_architecture`, `/root/plan_review_compatibility`, `/root/plan_review_test_security` (fresh, read-only, explicitly approved)
+- Remediation reviewers: `/root/remediation_architecture_build`, `/root/remediation_gate_security` (fresh read-only implementation review, explicitly approved)
 - Implementation PR: one PR from `codex/local-migration-01-contract-baseline`, organized as the three independently runnable checkpoints below
-- Checkpoint commits: plan gate `d3536c7`, executable registry `bc183ae`, aggregate gate/restart `64342cc`
+- Checkpoint commits: plan gate `d3536c7`, executable registry `bc183ae`, aggregate gate/restart `64342cc`, external-review fixes `9698651`, gate/test hardening `13c8bef`, and repeated-build fix `b568834`
 - Supported mode after every checkpoint: the existing hosted NestJS/PostgreSQL/Auth0/Vertex and Next.js composition; no local preview becomes supported in this step
-- Last updated: 2026-09-15
+- Last updated: 2026-09-16
 
 ## Outcome
 
@@ -616,15 +617,21 @@ Reportable result: local and CI callers share one complete deterministic gate;
 the real hosted backend is loopback-confined for the smoke and survives restart
 against isolated application-readable state.
 
-Final Checkpoint 2 remediation evidence on 2026-09-15: the focused
-local-migration suite passed 128/128 tests. The final committed-tree LMBG rerun
-passed all 11 phases in 227.805 seconds, including its 33.947-second
-clean-restart phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and
-PostgreSQL 15.15. The passing aggregate run removed its generated database and
-fallback container and preserved the caller's tracked SDL and ignored generated
-paths. PR #156's dedicated workflow subsequently passed under Node 20, pnpm 9,
-Python 3.12, and PostgreSQL 15, and every required remote check was green at the
-reviewed implementation head.
+The earlier 128-test, 227.805-second, and remote-green evidence was collected at
+head `493bf49` before an independent review found the production-entrypoint
+regression; it is retained only as superseded audit history and is not Step 01
+acceptance evidence.
+
+Final local remediation evidence on 2026-09-15: the focused local-migration
+suite passed 133/133 tests, and committed implementation head `b568834` passed
+all 11 LMBG phases in 231.787 seconds, including its 35.256-second clean-restart
+phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15.
+The success record included `baseComparison=performed`, preserved caller
+integrity, and removed the exact generated databases and fallback container.
+The restored `dist/main.js` entrypoint also passed two consecutive clean Nest
+builds and an independent 76.980-second restart smoke. PR #156's current-head
+Node 20/pnpm 9 remote workflow remains pending until the remediation commits are
+pushed; prior remote runs do not satisfy that gate.
 
 The first Checkpoint 2 aggregate run also exposed two stale deterministic I-9
 expectation snapshots. Only
@@ -679,9 +686,13 @@ for human review with no automatic merge.
   owns only the narrow `APP_HOST` resolution and its focused tests in
   `apps/backend/src/main.ts` (or a helper extracted solely for testability).
 - No Step 01 edit will touch `pnpm-lock.yaml`, `apps/backend/src/schema.gql`,
-  `apps/web/lib/generated/graphql.ts`, shared e2e setup, authentication, MCP
-  routing, `AppModule`, any other `main.ts` behavior, database schema/migrations, or
+  `apps/web/lib/generated/graphql.ts`, authentication, MCP routing, `AppModule`,
+  any other `main.ts` behavior, database schema/migrations, or
   `.github/workflows/ci.yml`.
+- The sole reviewed deviation is test-only: after the aggregate exposed
+  Supertest's repeated ephemeral listen/close race, shared e2e setup now owns
+  one stable `127.0.0.1:0` listener until each existing `app.close()`. It changes
+  no production listener or public behavior and has a same-port regression.
 - Worktrees proposing `.github/workflows/ci.yml` optimizations may land before
   or after Step 01 because this branch uses a separate workflow. If later work
   consolidates workflows, it must land after Step 01 and retain
@@ -803,22 +814,24 @@ remediation.
 
 | Finding | Resolution | Verification state |
 | --- | --- | --- |
-| Production build moved from `dist/main.js` to `dist/src/main.js`, breaking `start:prod` and the Docker/Cloud Run container command | Moved the MCP contract spec out of `src`, pinned the production TypeScript `rootDir` to `src`, added the contract directory to Jest, restored the smoke to `dist/main.js`, and tied package/Docker/smoke entrypoints together with a focused test. | Focused build/unit validation passed; exact-tree aggregate and remote reruns pending. |
-| EADDRINUSE retry omitted `httpContract` | Retry now spreads the complete generation options object and increments only `portAttempt`; a regression test pins dependency preservation. | Focused migration tests passed; restart smoke pending. |
-| Merge-base comparison could skip without explicit evidence | Every aggregate contract-baseline command receives bound base artifacts plus `MIGRATION_GATE_REQUIRE_BASE_COMPARISON=1`; required-but-missing state fails closed, and success reports `baseComparison=performed` or `skipped`. | Focused migration tests and standalone skipped-mode checker passed; aggregate performed-mode run pending. |
+| Production build moved from `dist/main.js` to `dist/src/main.js`, breaking `start:prod` and the Docker/Cloud Run container command | Moved the MCP contract spec out of `src`, pinned the production TypeScript `rootDir` to `src`, added the contract directory to Jest, restored the smoke to `dist/main.js`, and tied package/Docker/smoke entrypoints together with a focused test. | Build/unit validation and the `b568834` exact-implementation-head aggregate passed; current-head remote rerun pending. |
+| EADDRINUSE retry omitted `httpContract` | Retry now spreads the complete generation options object and increments only `portAttempt`; a regression test pins dependency preservation. | Focused migration tests, independent restart smoke, and aggregate restart phase passed. |
+| Merge-base comparison could skip without explicit evidence | Every aggregate contract-baseline command receives bound base artifacts plus `MIGRATION_GATE_REQUIRE_BASE_COMPARISON=1`; the gate accepts only one exact checker success marker, rejects missing/skipped/duplicate evidence, records it in the summary, and surfaces it in the final success line. Direct checker runs remain explicitly `skipped`. | Focused tests passed and the `b568834` aggregate reported `baseComparison=performed`. |
 | Catalog smoke seed missed the dedicated seed typecheck | `tsconfig.seed.json` includes both seed entrypoints with an explicit package root. | Seed typecheck passed. |
-| Gate orchestration was outside the outbound-sink census | The census now covers all non-test local-migration scripts and recognizes subprocess wrappers, `execFile`, DNS, direct PostgreSQL clients, spawn, fetch, and sockets; the registry classifies the reviewed gate boundary and fingerprints its sources. | Contract checker passed. |
+| Gate orchestration was outside the outbound-sink census | The census now covers all non-test local-migration scripts and recognizes subprocess wrappers, `execFile`, DNS, direct PostgreSQL clients, spawn, fetch, and sockets; the registry classifies the reviewed gate boundary, fingerprints its sources, and discloses the host DNS resolver plus operator-supplied hostname payload. | Contract checker passed. |
 | Hosted-era orchestrator TODO disposition existed only in this plan | The canonical bulk-import/export registry decision now says any Step 09 design starts fresh without inheriting dedupe/resume, retry/pacing, durable run-history, or definition-aware-writer requirements. | Contract checker passed. |
+| The full e2e suite intermittently failed with an HTTP parser error | Shared test-app setup now binds one stable loopback listener for the app lifetime instead of allowing Supertest to repeatedly bind/close the same server; a regression pins listening state, loopback address, and stable port across HTTP and MCP requests. | The focused test failed before the fix; the full uncached e2e suite passed 250/250 afterward, and both later aggregate database/e2e phases passed. |
+| A second Nest build deleted `dist` while incremental metadata outside `dist` suppressed re-emission | `tsBuildInfoFile` is pinned inside `outDir`, so Nest's clean removes output and cache atomically; the config test pins that containment. | Two consecutive builds produced `dist/main.js`; the independent restart smoke and the `b568834` aggregate restart phase passed. |
 
-Fresh read-only remediation reviewers must fill the table below after comparing
-the complete implementation and diff with this plan. All rows remain pending
-until that review is complete.
+Fresh read-only remediation reviewers compared the complete implementation and
+diff with this plan, re-reviewed each late gate fix, and reported no remaining
+code findings.
 
 | Review dimension | Reviewer | Findings resolution | Approval |
 | --- | --- | --- | --- |
-| Architecture, scope and maintainability | Pending | Pending fresh remediation review. | **PENDING** |
-| Public compatibility and consumers | Pending | Pending fresh remediation review. | **PENDING** |
-| Testing, security and privacy | Pending | Pending fresh remediation review. | **PENDING** |
+| Architecture, scope and maintainability | `/root/remediation_architecture_build` | Verified `dist/main.js` restoration, build-cache lifecycle, stable test listener, exact gate evidence, TODO disposition, outbound classification, and scope; no production behavior or public schema changed. | **APPROVED AND REAFFIRMED** 2026-09-16; no remaining findings |
+| Public compatibility and consumers | `/root/remediation_architecture_build` | Verified package/Docker/smoke entrypoints, Jest contract placement, opt-in `APP_HOST`, generated/public consumer stability, repeated build output, and 250/250 uncached e2e evidence. | **APPROVED AND REAFFIRMED** 2026-09-16; no remaining findings |
+| Testing, security and privacy | `/root/remediation_gate_security` | Verified the loopback listener regression, fail-closed and observable base comparison, DNS disclosure, repeated-build cache containment, duplicate-marker coverage, and no new credential, network, or privacy exposure. | **APPROVED AND REAFFIRMED** 2026-09-16; no remaining findings |
 
 ## Exit Criteria
 

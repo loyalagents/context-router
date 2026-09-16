@@ -1,16 +1,17 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: post-review remediation implemented —
-  [PR #156](https://github.com/loyalagents/context-router/pull/156) is draft
-  pending fresh independent review and exact-tree validation
+- Status: remediation independently approved and local implementation-head gate
+  passed — [PR #156](https://github.com/loyalagents/context-router/pull/156) is
+  draft pending current-head remote CI and final human review
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: complete fresh read-only remediation review, rerun the
-  exact-tree local and remote gates, and return PR #156 to human review only
-  after every finding is resolved; do not merge automatically
+- Concrete next action: validate this closeout-only documentation delta, push
+  the approved remediation, require current-head local-migration and standard
+  CI checks to pass, then return PR #156 to human review; do not merge
+  automatically
 - Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
   first
 - Depends on: completed Step 00 PRs
@@ -19,7 +20,7 @@
   [#155](https://github.com/loyalagents/context-router/pull/155)
 - Supported mode during planning: the existing hosted
   NestJS/PostgreSQL/Auth0/Vertex and Next.js composition remains supported
-- Last updated: 2026-09-15
+- Last updated: 2026-09-16
 
 ## Outcome
 
@@ -52,14 +53,15 @@ database lifecycle, disposable-workspace and merge-base checks, and
 and runs two real production backend processes on loopback with an ephemeral
 HTTPS OIDC/JWKS fixture and signed read-only M2M token, then compares the
 complete 19-definition catalog and stable principal through restart. After the
-final security and lifecycle remediations on 2026-09-15, the focused migration
-suite passed 128/128 tests. The final committed-tree aggregate rerun passed all
-11 phases in 227.805 seconds, including its 33.947-second clean-restart phase,
-using Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The run
-preserved caller generated paths and removed its exact generated database and
-fallback container. On 2026-09-15, PR #156's dedicated Local Migration Baseline
-Gate also passed under Node 20, pnpm 9, Python 3.12, and PostgreSQL 15; every
-required PR check was green at the reviewed implementation head.
+external-review remediation on 2026-09-15, the focused migration suite passed
+133/133 tests. Committed implementation head `b568834` passed all 11 aggregate
+phases in 231.787 seconds, including a 35.256-second clean-restart phase, using
+Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The run reported
+`baseComparison=performed`, preserved caller integrity, and removed its exact
+generated databases and fallback container. Two consecutive backend builds and
+an independent 76.980-second restart smoke also proved `dist/main.js` survives
+the build lifecycle. The current-head Node 20/pnpm 9 remote workflow is pending;
+the green run from superseded head `493bf49` is not acceptance evidence.
 
 ## Required Reading
 
