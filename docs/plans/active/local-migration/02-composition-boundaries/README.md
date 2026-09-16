@@ -1,23 +1,21 @@
 # Step 02: Composition Boundaries
 
-- Status: activated for planning after the Step 01 PR merges
-- Outcome owner: local-migration coordinator (`/root`) until a Step 02 sole
-  writer is assigned
+- Status: plan independently approved; PR 02A (hosted model binding) is active
+- Outcome owner and sole writer: `/root` on
+  `codex/local-migration-02-composition-boundaries` for PR 02A only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: after Step 01 merges, create
-  `codex/local-migration-02-composition-boundaries` from `main`, copy
-  [`../step-template.md`](../step-template.md) to `plan.md`, and obtain fresh
-  architecture, compatibility, testing, packaging, and security/privacy review
-  before implementation
-- Review date: 2026-10-14 or Step 02 plan approval, whichever comes first
+- Concrete next action: commit/push the approved planning checkpoint, open PR
+  02A as a draft, then add its tests first and implement only the approved
+  hosted-model binding before fresh implementation review
+- Review date: 2026-10-14 or PR 02A implementation review, whichever comes first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
 - Supported mode during planning: the existing hosted
   NestJS/PostgreSQL/Auth0/Vertex and Next.js composition remains supported; no
   local preview is implied by this charter
-- Last updated: 2026-09-15
+- Last updated: 2026-09-16
 
 ## Outcome
 
@@ -30,10 +28,11 @@ startup, shutdown, and clean restart. The plan must preserve all Step 01
 contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
-This README activates planning only. It does not approve a boundary design,
-runtime upgrade, package format, local identity, database, model, UI shell, or
-default listener change. The Step 02 planning agent must create an independently
-reviewed `plan.md` before implementation.
+The independently reviewed [`plan.md`](plan.md) defines five serial PRs. Only
+02A is active on the current branch; 02B–02E remain inactive until a human
+merges each predecessor and their activation gates assign fresh bases, owners,
+and reviewers. Approval does not authorize a local identity, database, model,
+UI shell, installer, final OS claim, or default listener change.
 
 ## Required Reading
 

@@ -1,36 +1,33 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `01-contract-baseline-and-product-scope` — remediation
-  independently approved, local gate passed, and remote gate green at
-  `d68dd6c`; [PR #156](https://github.com/loyalagents/context-router/pull/156)
-  is prepared for final human review subject to final-head required checks
-  remaining green
+- Current step: `02-composition-boundaries` — plan independently approved;
+  PR 02A (hosted model binding) is the only active implementation checkpoint
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-01-contract-baseline`
-- Concrete next action: human review and merge decision for PR #156 only while
-  required checks remain green and without automatic merge; begin Step 02
-  planning only after it merges
-- Review date: 2026-10-14 or Step 01 human review, whichever comes first
+  `codex/local-migration-02-composition-boundaries`
+- Concrete next action: commit and push the approved planning checkpoint, open
+  PR 02A as a draft, then implement only its test-first hosted-model binding;
+  keep the PR unmerged for human review
+- Review date: 2026-10-14 or PR 02A implementation review, whichever comes first
 - Last reviewed: 2026-09-16
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Close Step 01 And Start Step 02
+## Run Step 02 PR 02A
 
-1. Read the orchestration, decision log, and the Step 01
-   [`plan.md`](01-contract-baseline-and-product-scope/plan.md).
-2. Run `pnpm migration:gate` with a validated full-history merge base and safe
-   loopback PostgreSQL 15 administration connection; do not substitute a list
-   of partial commands for the aggregate result.
-3. Complete fresh read-only implementation review, resolve every finding as the
-   sole writer, and leave the PR unmerged for human review.
-4. After Step 01 merges, read the
-   [`02-composition-boundaries` activation charter](02-composition-boundaries/README.md),
-   create its assigned branch from `main`, copy [`step-template.md`](step-template.md)
-   to `plan.md`, and obtain independent plan review before implementation.
+1. Follow the independently approved Step 02
+   [`plan.md`](02-composition-boundaries/plan.md) and its five-PR landing order.
+2. Preserve the exact Step 01 merge base
+   `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` for PR 02A and bind every local
+   aggregate run to that base.
+3. Commit/push the planning checkpoint and open the current branch as a draft
+   PR before product implementation.
+4. Add PR 02A tests first, make only the approved model token/root/import
+   changes, run targeted tests, backend build, and the exact-base full LMBG,
+   then obtain fresh read-only implementation review and required CI. Never
+   auto-merge.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may
