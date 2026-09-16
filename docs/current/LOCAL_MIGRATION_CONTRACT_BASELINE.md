@@ -287,8 +287,11 @@ Python 3.12.8, and PostgreSQL 15.15. It reported
 `baseComparison=performed`, preserved caller integrity, and removed its exact
 generated databases and fallback container. Two consecutive backend builds and
 an independent 76.980-second restart smoke also proved the restored
-`dist/main.js` production entrypoint. PR #156's current-head Node 20/pnpm 9
-remote gate remains pending until the remediation is pushed.
+`dist/main.js` production entrypoint. On 2026-09-16, PR #156's remediated head
+`d68dd6c` passed its Node 20/pnpm 9 remote gate and all applicable standard
+checks. The path-filtered `eval-harbor-checks` job skipped, while the aggregate
+gate's Harbor static phase passed. Required checks on the final documentation
+head must remain green at human review.
 
 ## Updating A Contract
 

@@ -2,14 +2,15 @@
 
 - Status: active program
 - Current step: `01-contract-baseline-and-product-scope` — remediation
-  independently approved and local implementation-head gate passed;
-  [PR #156](https://github.com/loyalagents/context-router/pull/156) is draft
-  pending current-head remote CI and final human review
+  independently approved, local gate passed, and remote gate green at
+  `d68dd6c`; [PR #156](https://github.com/loyalagents/context-router/pull/156)
+  is prepared for final human review subject to final-head required checks
+  remaining green
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
-- Concrete next action: push the approved remediation, require current-head
-  local-migration and standard CI checks to pass, then return PR #156 to human
-  review without automatic merge; after it merges, begin the activated
+- Concrete next action: human review and merge decision for PR #156 only while
+  required checks remain green and without automatic merge; after it merges,
+  begin the activated
   [Step 02 planning charter](02-composition-boundaries/README.md)
 - Review date: 2026-10-14 or Step 01 human review, whichever comes first
 - Primary development branch: `main`
@@ -266,7 +267,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | Step | Status | Outcome | Depends on |
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
-| `01-contract-baseline-and-product-scope` | Remediation independently approved; local implementation-head gate passed; [PR #156](https://github.com/loyalagents/context-router/pull/156) draft pending current-head remote CI and final human review — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
+| `01-contract-baseline-and-product-scope` | Remediation independently approved; local gate passed; remote gate green at `d68dd6c`; [PR #156](https://github.com/loyalagents/context-router/pull/156) prepared for final human review subject to final-head required checks remaining green — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
 | `02-composition-boundaries` | Activated for planning after Step 01 merges — [charter](02-composition-boundaries/README.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |

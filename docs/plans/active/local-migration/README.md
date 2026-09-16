@@ -2,14 +2,15 @@
 
 - Status: active program index
 - Current step: `01-contract-baseline-and-product-scope` — remediation
-  independently approved and local implementation-head gate passed;
-  [PR #156](https://github.com/loyalagents/context-router/pull/156) is draft
-  pending current-head remote CI and final human review
+  independently approved, local gate passed, and remote gate green at
+  `d68dd6c`; [PR #156](https://github.com/loyalagents/context-router/pull/156)
+  is prepared for final human review subject to final-head required checks
+  remaining green
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
-- Concrete next action: push the approved remediation, require current-head
-  local-migration and standard CI checks to pass, then return PR #156 to human
-  review without automatic merge
+- Concrete next action: human review and merge decision for PR #156 only while
+  required checks remain green and without automatic merge; begin Step 02
+  planning only after it merges
 - Review date: 2026-10-14 or Step 01 human review, whichever comes first
 - Last reviewed: 2026-09-16
 

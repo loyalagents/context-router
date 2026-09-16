@@ -1,17 +1,17 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: remediation independently approved and local implementation-head gate
-  passed — [PR #156](https://github.com/loyalagents/context-router/pull/156) is
-  draft pending current-head remote CI and final human review
+- Status: remediation independently approved; the local implementation-head
+  gate passed and the remote gate is green at `d68dd6c` —
+  [PR #156](https://github.com/loyalagents/context-router/pull/156) is prepared
+  for final human review subject to final-head required checks remaining green
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: validate this closeout-only documentation delta, push
-  the approved remediation, require current-head local-migration and standard
-  CI checks to pass, then return PR #156 to human review; do not merge
-  automatically
+- Concrete next action: human review and merge decision for PR #156 only while
+  required checks remain green; do not merge automatically, and begin Step 02
+  planning only after it merges
 - Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
   first
 - Depends on: completed Step 00 PRs
@@ -60,8 +60,11 @@ Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The run reporte
 `baseComparison=performed`, preserved caller integrity, and removed its exact
 generated databases and fallback container. Two consecutive backend builds and
 an independent 76.980-second restart smoke also proved `dist/main.js` survives
-the build lifecycle. The current-head Node 20/pnpm 9 remote workflow is pending;
-the green run from superseded head `493bf49` is not acceptance evidence.
+the build lifecycle. On 2026-09-16, remediated head `d68dd6c` passed the Node
+20/pnpm 9 remote workflow and all applicable standard checks. The path-filtered
+`eval-harbor-checks` job skipped, while the aggregate Harbor static phase
+passed. Required checks on the final documentation head must remain green. The
+earlier green run from superseded head `493bf49` remains non-acceptance evidence.
 
 ## Required Reading
 

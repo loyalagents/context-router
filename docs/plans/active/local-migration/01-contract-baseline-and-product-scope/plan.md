@@ -1,6 +1,7 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Document status: remediation approved; local implementation-head gate passed; remote CI pending
+- Document status: remediation approved; local gate passed; remote gate green at
+  `d68dd6c`; human review pending with final-head checks required green
 - Program step: `01-contract-baseline-and-product-scope`
 - Target branch: `main`
 - Planning base commit: `9b56d38fde927d4e643af89ba45665a439613939`
@@ -629,9 +630,12 @@ phase, under Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15.
 The success record included `baseComparison=performed`, preserved caller
 integrity, and removed the exact generated databases and fallback container.
 The restored `dist/main.js` entrypoint also passed two consecutive clean Nest
-builds and an independent 76.980-second restart smoke. PR #156's current-head
-Node 20/pnpm 9 remote workflow remains pending until the remediation commits are
-pushed; prior remote runs do not satisfy that gate.
+builds and an independent 76.980-second restart smoke. On 2026-09-16, PR #156's
+remediated head `d68dd6c` passed the Node 20/pnpm 9 remote workflow and all
+applicable standard checks. The path-filtered `eval-harbor-checks` job skipped,
+while the aggregate Harbor static phase passed. Required checks on the final
+documentation head must remain green; prior remote runs do not satisfy that
+gate.
 
 The first Checkpoint 2 aggregate run also exposed two stale deterministic I-9
 expectation snapshots. Only
@@ -814,7 +818,7 @@ remediation.
 
 | Finding | Resolution | Verification state |
 | --- | --- | --- |
-| Production build moved from `dist/main.js` to `dist/src/main.js`, breaking `start:prod` and the Docker/Cloud Run container command | Moved the MCP contract spec out of `src`, pinned the production TypeScript `rootDir` to `src`, added the contract directory to Jest, restored the smoke to `dist/main.js`, and tied package/Docker/smoke entrypoints together with a focused test. | Build/unit validation and the `b568834` exact-implementation-head aggregate passed; current-head remote rerun pending. |
+| Production build moved from `dist/main.js` to `dist/src/main.js`, breaking `start:prod` and the Docker/Cloud Run container command | Moved the MCP contract spec out of `src`, pinned the production TypeScript `rootDir` to `src`, added the contract directory to Jest, restored the smoke to `dist/main.js`, and tied package/Docker/smoke entrypoints together with a focused test. | Build/unit validation, the `b568834` exact-implementation-head aggregate, and the remediated Node 20/pnpm 9 remote gate at `d68dd6c` passed. |
 | EADDRINUSE retry omitted `httpContract` | Retry now spreads the complete generation options object and increments only `portAttempt`; a regression test pins dependency preservation. | Focused migration tests, independent restart smoke, and aggregate restart phase passed. |
 | Merge-base comparison could skip without explicit evidence | Every aggregate contract-baseline command receives bound base artifacts plus `MIGRATION_GATE_REQUIRE_BASE_COMPARISON=1`; the gate accepts only one exact checker success marker, rejects missing/skipped/duplicate evidence, records it in the summary, and surfaces it in the final success line. Direct checker runs remain explicitly `skipped`. | Focused tests passed and the `b568834` aggregate reported `baseComparison=performed`. |
 | Catalog smoke seed missed the dedicated seed typecheck | `tsconfig.seed.json` includes both seed entrypoints with an explicit package root. | Seed typecheck passed. |
