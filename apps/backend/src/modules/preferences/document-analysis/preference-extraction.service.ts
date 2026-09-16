@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import type { PreferenceDefinition as PrismaPreferenceDefinition } from '@infrastructure/prisma/prisma-models';
 import { z } from 'zod';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../domains/shared/ports/ai.tokens';
 import { PreferenceService } from '../preference/preference.service';
 import {
   PreferenceSuggestion,
@@ -65,7 +66,7 @@ export class PreferenceExtractionService {
   private readonly config = getDocumentUploadConfig();
 
   constructor(
-    @Inject('AiStructuredOutputPort')
+    @Inject(AI_STRUCTURED_OUTPUT_PORT)
     private readonly aiStructuredService: AiStructuredOutputPort,
     private readonly preferenceService: PreferenceService,
     private readonly defRepo: PreferenceDefinitionRepository,

@@ -5,6 +5,7 @@ import {
   PreferenceSearchWorkflowInput,
 } from './preference-search.workflow';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../../domains/shared/ports/ai.tokens';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
 import { EnrichedPreference } from '../../../preferences/preference/preference.repository';
@@ -91,7 +92,7 @@ describe('PreferenceSearchWorkflow', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PreferenceSearchWorkflow,
-        { provide: 'AiStructuredOutputPort', useValue: mockAiPort },
+        { provide: AI_STRUCTURED_OUTPUT_PORT, useValue: mockAiPort },
         {
           provide: PreferenceSchemaSnapshotService,
           useValue: mockSnapshotService,

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { VertexAiModule } from '../../vertex-ai/vertex-ai.module';
 import { PreferenceModule } from '../preference/preference.module';
 import { FormFillController } from './form-fill.controller';
 import { FormFillService } from './form-fill.service';
@@ -9,7 +8,7 @@ import { PdfFieldExtractorService } from './pdf-field-extractor.service';
 import { PdfFieldFillerService } from './pdf-field-filler.service';
 
 @Module({
-  imports: [PreferenceModule, VertexAiModule],
+  imports: [PreferenceModule],
   controllers: [FormFillController],
   providers: [
     FormFillService,

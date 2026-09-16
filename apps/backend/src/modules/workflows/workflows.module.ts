@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { VertexAiModule } from '../vertex-ai/vertex-ai.module';
 import { PreferenceDefinitionModule } from '../preferences/preference-definition/preference-definition.module';
 import { PreferenceModule } from '../preferences/preference/preference.module';
 import { PreferenceSearchWorkflow } from './preferences/preference-search/preference-search.workflow';
@@ -7,7 +6,7 @@ import { PreferenceSearchResolver } from './preferences/preference-search/prefer
 import { SchemaConsolidationWorkflow } from './preferences/schema-consolidation/schema-consolidation.workflow';
 
 @Module({
-  imports: [VertexAiModule, PreferenceDefinitionModule, PreferenceModule],
+  imports: [PreferenceDefinitionModule, PreferenceModule],
   providers: [
     PreferenceSearchWorkflow,
     PreferenceSearchResolver,

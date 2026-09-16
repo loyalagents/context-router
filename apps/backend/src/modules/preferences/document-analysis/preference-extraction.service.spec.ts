@@ -3,6 +3,7 @@ import { Logger } from "@nestjs/common";
 import { PreferenceExtractionService } from "./preference-extraction.service";
 import { PreferenceService } from "../preference/preference.service";
 import { AiStructuredOutputPort } from "../../../domains/shared/ports/ai-structured-output.port";
+import { AI_STRUCTURED_OUTPUT_PORT } from "../../../domains/shared/ports/ai.tokens";
 import { PreferenceOperation } from "./dto/preference-suggestion.dto";
 import { EnrichedPreference } from "../preference/preference.repository";
 import {
@@ -131,7 +132,7 @@ describe("PreferenceExtractionService", () => {
       providers: [
         PreferenceExtractionService,
         {
-          provide: "AiStructuredOutputPort",
+          provide: AI_STRUCTURED_OUTPUT_PORT,
           useValue: mockAiStructuredService,
         },
         {

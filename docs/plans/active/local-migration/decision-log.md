@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-15
+- Last reviewed: 2026-09-16
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -135,6 +135,25 @@ step plan that resolves them.
   may not promote a developer's toolchain into the product contract. A later
   version change is a Step 02 decision and must keep the Step 01 aggregate gate
   green or update it through reviewed replacement evidence.
+
+### LM-013: Exact Step 02 runtime and package-manager target
+
+- Status: Accepted
+- Decision: Step 02 selects exact Node.js 24.21.0 and pnpm 10.25.0 for
+  installation, builds, the Local Migration Baseline Gate, and packaging
+  evidence. This is a reviewed target, not yet a support claim. It becomes the
+  supported contract only when PR 02B atomically aligns all version sources,
+  eval discovery, Docker, CI, and documentation and the complete exact-runtime
+  gate passes locally and remotely. Until then LM-012 evidence governs.
+- Evidence: the exact Step 01-base gate passed all 11 phases on Node 20.19.5 and
+  pnpm 10.25.0. Supplemental already-installed Node 22.13.1 and 24.18.0 runs
+  passed phases 1–5 and exposed the same phase-6 directory test-discovery defect;
+  the quoted recursive test glob passed all 364 eval tests on Node 24 without
+  fixture changes. Partial runs do not establish support.
+- Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
+  other pnpm versions, before resource acquisition. A future patch/version
+  change requires reviewed evidence and atomic metadata/CI/documentation
+  alignment; it may not regenerate fixtures merely to force the upgrade.
 
 ## Deferred Decisions And Owning Steps
 

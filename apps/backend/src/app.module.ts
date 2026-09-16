@@ -15,6 +15,7 @@ import formFillConfig from './config/form-fill.config';
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { Auth0Module } from './infrastructure/auth0/auth0.module';
+import { HostedModelAdapterModule } from './composition/hosted-model-adapter.module';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -68,6 +69,7 @@ import { WorkflowsModule } from './modules/workflows/workflows.module';
     // Infrastructure
     PrismaModule,
     Auth0Module,
+    HostedModelAdapterModule,
 
     // Feature Modules
     AuthModule,

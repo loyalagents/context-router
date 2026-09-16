@@ -5,6 +5,7 @@ import {
   SchemaConsolidationWorkflowInput,
 } from './schema-consolidation.workflow';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../../domains/shared/ports/ai.tokens';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 
 const makeSnapshot = (
@@ -44,7 +45,7 @@ describe('SchemaConsolidationWorkflow', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SchemaConsolidationWorkflow,
-        { provide: 'AiStructuredOutputPort', useValue: mockAiPort },
+        { provide: AI_STRUCTURED_OUTPUT_PORT, useValue: mockAiPort },
         {
           provide: PreferenceSchemaSnapshotService,
           useValue: mockSnapshotService,

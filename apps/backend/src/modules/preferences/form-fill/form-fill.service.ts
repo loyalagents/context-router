@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../domains/shared/ports/ai.tokens';
 import { getFormFillConfig } from '../../../config/form-fill.config';
 import { PreferenceService } from '../preference/preference.service';
 import { PdfFieldExtractorService } from './pdf-field-extractor.service';
@@ -29,7 +30,7 @@ export class FormFillService {
   private readonly config = getFormFillConfig();
 
   constructor(
-    @Inject('AiStructuredOutputPort')
+    @Inject(AI_STRUCTURED_OUTPUT_PORT)
     private readonly aiStructuredService: AiStructuredOutputPort,
     private readonly preferenceService: PreferenceService,
     private readonly fieldExtractor: PdfFieldExtractorService,

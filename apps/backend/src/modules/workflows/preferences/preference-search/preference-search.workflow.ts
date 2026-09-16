@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
 import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
+import { AI_STRUCTURED_OUTPUT_PORT } from '../../../../domains/shared/ports/ai.tokens';
 import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceSlugAccessFilter } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
@@ -34,7 +35,7 @@ export class PreferenceSearchWorkflow
   implements IWorkflow<PreferenceSearchWorkflowInput, PreferenceSearchWorkflowOutput>
 {
   constructor(
-    @Inject('AiStructuredOutputPort')
+    @Inject(AI_STRUCTURED_OUTPUT_PORT)
     private readonly aiStructuredPort: AiStructuredOutputPort,
     private readonly snapshotService: PreferenceSchemaSnapshotService,
     private readonly preferenceService: PreferenceService,

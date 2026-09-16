@@ -1,19 +1,14 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: remediation independently approved; the local implementation-head
-  gate passed and the remote gate is green at `d68dd6c` —
-  [PR #156](https://github.com/loyalagents/context-router/pull/156) is prepared
-  for final human review subject to final-head required checks remaining green
-- Outcome owner and sole writer: `/root` on
-  `codex/local-migration-01-contract-baseline`
+- Status: complete — [PR #156](https://github.com/loyalagents/context-router/pull/156)
+  merged to `main` at `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
+- Completed by: `/root` on `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: human review and merge decision for PR #156 only while
-  required checks remain green; do not merge automatically, and begin Step 02
-  planning only after it merges
-- Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
-  first
+- Concrete next action: preserve this merged contract/gate baseline while the
+  independently approved Step 02 PR 02A proceeds from the exact merge SHA
+- Review date: completed 2026-09-16
 - Depends on: completed Step 00 PRs
   [#153](https://github.com/loyalagents/context-router/pull/153),
   [#154](https://github.com/loyalagents/context-router/pull/154), and
