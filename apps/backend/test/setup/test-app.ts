@@ -375,7 +375,11 @@ export async function createTestApp(
     }),
   );
 
-  await app.init();
+  // Keep one explicit loopback listener for the application's full lifetime.
+  // Passing an initialized-but-unbound server to Supertest makes each request
+  // race through its own listen(0)/close cycle, which can intermittently route
+  // a later request to a reused ephemeral port.
+  await app.listen(0, '127.0.0.1');
 
   return {
     app,

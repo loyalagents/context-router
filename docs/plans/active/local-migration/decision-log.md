@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-13
+- Last reviewed: 2026-09-15
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -96,12 +96,50 @@ step plan that resolves them.
 - Consequence: short-lived migration branches target `main`; package boundaries
   may evolve without adding cross-repository versioning and release overhead.
 
+### LM-010: Step 01 product-scope baseline
+
+- Status: Accepted
+- Decision: the versioned
+  [`LOCAL_MIGRATION_CONTRACT_BASELINE.md`](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md)
+  and its JSON registry govern the retain/replace/remove/defer disposition of
+  current capabilities and public/package surfaces. The local orchestrator is
+  temporary developer tooling, deterministic eval remains developer/evaluation
+  tooling, and live provider or Harbor paths are never installed-product or
+  merge-gate dependencies.
+- Consequence: later steps preserve or deliberately evolve the registered
+  outcome and consumer contracts. A public breaking change follows LM-008, and
+  a deferred question remains owned by the roadmap step recorded in the
+  registry rather than becoming an unscoped backlog item.
+
+### LM-011: Local Migration Baseline Gate
+
+- Status: Accepted
+- Decision: `pnpm migration:gate` is the authoritative aggregate compatibility
+  gate across migration steps. Its checked-in lifecycle manifest may retire a
+  phase only with reviewed replacement evidence, and every supported mode must
+  keep an active clean-restart smoke.
+- Consequence: local and CI validation use the same root command. Later steps
+  expand replacement-mode evidence before retiring hosted-only coverage; they
+  do not silently drop phases, invoke live providers, or replace the gate with
+  an undocumented CI-only command list.
+
+### LM-012: Step 01 runtime evidence boundary
+
+- Status: Accepted
+- Decision: the dedicated Step 01 workflow selects Node 20, pnpm 9, Python
+  3.12, and PostgreSQL 15. The local aggregate gate enforces Python 3.12 and
+  safe database locality/targeting, and records rather than pins the observed
+  Node, pnpm, and PostgreSQL versions. Step 02 owns the exact supported Node and
+  package-manager contract plus packaging-runtime validation.
+- Consequence: Step 01 evidence must state the versions actually exercised and
+  may not promote a developer's toolchain into the product contract. A later
+  version change is a Step 02 decision and must keep the Step 01 aggregate gate
+  green or update it through reviewed replacement evidence.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |
 | --- | --- |
-| Capabilities and public surfaces to retain, replace, remove, or defer | `01-contract-baseline-and-product-scope` |
-| Whether local-orchestrator and eval tooling are product surfaces or developer-only tooling | `01-contract-baseline-and-product-scope` |
 | Supported operating systems, process topology, signing, and distribution constraints | `02-composition-boundaries` and `09-installation-and-packaging` |
 | Stable local principal ID, display/email behavior, and credential storage | `03-local-identity` |
 | Local database choice; if SQLite is confirmed, its library and schema/bootstrap mechanism | `05-local-database-runtime` |

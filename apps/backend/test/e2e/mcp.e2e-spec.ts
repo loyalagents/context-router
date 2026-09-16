@@ -14,6 +14,7 @@ import {
   AuditEventType,
   AuditOrigin,
 } from '../../src/infrastructure/prisma/generated-client';
+import mcpContract from '../contracts/fixtures/mcp-contract-baseline.json';
 
 const TEST_CLIENT_IDS = {
   claude: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID!,
@@ -178,7 +179,7 @@ describe('MCP Integration (e2e)', () => {
   });
 
   describe('POST /mcp', () => {
-    it('should return tools list', async () => {
+    it('should exactly match full-scope runtime tool and resource descriptors to the fixture', async () => {
       const response = await mcpPost({
         jsonrpc: '2.0',
         id: 1,
@@ -190,8 +191,18 @@ describe('MCP Integration (e2e)', () => {
       expect(response.body.result?.tools).toBeDefined();
       const tools = response.body.result.tools;
       const toolNames = tools.map((t: any) => t.name);
-      expect(toolNames).toContain('searchPreferences');
-      expect(toolNames).toContain('listPreferenceSlugs');
+      expect(new Set(toolNames).size).toBe(toolNames.length);
+      const expectedToolNames = mcpContract.visibility.claude.tools;
+      expect([...toolNames].sort()).toEqual([...expectedToolNames].sort());
+      const expectedDescriptors = mcpContract.tools
+        .filter((tool) => expectedToolNames.includes(tool.descriptor.name))
+        .map((tool) => tool.descriptor)
+        .sort((left, right) => left.name.localeCompare(right.name));
+      expect(
+        [...tools].sort((left: any, right: any) =>
+          left.name.localeCompare(right.name),
+        ),
+      ).toEqual(expectedDescriptors);
 
       for (const toolName of [
         'listPreferenceSlugs',
@@ -210,6 +221,95 @@ describe('MCP Integration (e2e)', () => {
         (tool: any) => tool.name === 'mutatePreferences',
       );
       expect(mutatePreferencesTool.outputSchema).toBeUndefined();
+
+      const resourcesResponse = await mcpPost({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'resources/list',
+        params: {},
+      });
+      expect(resourcesResponse.status).toBe(200);
+      const resources = resourcesResponse.body.result?.resources;
+      expect(new Set(resources.map((resource: any) => resource.uri)).size).toBe(
+        resources.length,
+      );
+      const expectedResourceUris = mcpContract.visibility.claude.resources;
+      expect(resources.map((resource: any) => resource.uri).sort()).toEqual(
+        [...expectedResourceUris].sort(),
+      );
+      expect(
+        [...resources].sort((left: any, right: any) =>
+          left.uri.localeCompare(right.uri),
+        ),
+      ).toEqual(
+        mcpContract.resources
+          .filter((resource) =>
+            expectedResourceUris.includes(resource.descriptor.uri),
+          )
+          .map((resource) => resource.descriptor)
+          .sort((left, right) => left.uri.localeCompare(right.uri)),
+      );
+
+      const codexToolsResponse = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+      expect(codexToolsResponse.status).toBe(200);
+      const codexTools = codexToolsResponse.body.result?.tools;
+      expect(new Set(codexTools.map((tool: any) => tool.name)).size).toBe(
+        codexTools.length,
+      );
+      const expectedCodexNames = mcpContract.visibility.codex.tools;
+      expect(
+        codexTools.map((tool: any) => tool.name).sort(),
+      ).toEqual([...expectedCodexNames].sort());
+      expect(
+        [...codexTools].sort((left: any, right: any) =>
+          left.name.localeCompare(right.name),
+        ),
+      ).toEqual(
+        mcpContract.tools
+          .filter((tool) => expectedCodexNames.includes(tool.descriptor.name))
+          .map((tool) => tool.descriptor)
+          .sort((left, right) => left.name.localeCompare(right.name)),
+      );
+
+      const codexResourcesResponse = await mcpPost(
+        {
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'resources/list',
+          params: {},
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+      expect(codexResourcesResponse.status).toBe(200);
+      const codexResources = codexResourcesResponse.body.result?.resources;
+      expect(
+        new Set(codexResources.map((resource: any) => resource.uri)).size,
+      ).toBe(codexResources.length);
+      const expectedCodexResourceUris =
+        mcpContract.visibility.codex.resources;
+      expect(
+        codexResources.map((resource: any) => resource.uri).sort(),
+      ).toEqual([...expectedCodexResourceUris].sort());
+      expect(
+        [...codexResources].sort((left: any, right: any) =>
+          left.uri.localeCompare(right.uri),
+        ),
+      ).toEqual(
+        mcpContract.resources
+          .filter((resource) =>
+            expectedCodexResourceUris.includes(resource.descriptor.uri),
+          )
+          .map((resource) => resource.descriptor)
+          .sort((left, right) => left.uri.localeCompare(right.uri)),
+      );
     });
 
     it('should execute listPreferenceSlugs tool', async () => {
@@ -270,7 +370,7 @@ describe('MCP Integration (e2e)', () => {
       expect(toolNames).not.toContain('deletePreference');
     });
 
-    it('should allow SUGGEST_PREFERENCE for codex', async () => {
+    it('should allow SUGGEST_PREFERENCE for codex and preserve the text-only result envelope', async () => {
       const response = await mutatePreferences(
         {
           operation: 'SUGGEST_PREFERENCE',
@@ -286,6 +386,12 @@ describe('MCP Integration (e2e)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.result?.isError).not.toBe(true);
+      expect(
+        mcpContract.tools.find(
+          (tool) => tool.descriptor.name === 'mutatePreferences',
+        )?.resultEnvelope,
+      ).toBe('text-only');
+      expect(response.body.result).not.toHaveProperty('structuredContent');
       const result = JSON.parse(response.body.result.content[0].text);
       expect(result.preference).toMatchObject({
         slug: 'food.dietary_restrictions',

@@ -1,0 +1,384 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-router.invalid/contracts/run-manifest-v3.schema.json",
+  "title": "Context Router developer orchestrator run manifest v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "startedAt",
+    "finishedAt",
+    "config",
+    "hiddenEntriesSkipped",
+    "files",
+    "summary"
+  ],
+  "properties": {
+    "version": {"const": 3},
+    "startedAt": {"type": "string"},
+    "finishedAt": {"type": "string"},
+    "config": {"$ref": "#/$defs/runConfig"},
+    "hiddenEntriesSkipped": {"type": "integer", "minimum": 0},
+    "files": {"type": "array", "items": {"$ref": "#/$defs/fileRunRecord"}},
+    "summary": {"$ref": "#/$defs/runSummary"}
+  },
+  "$defs": {
+    "nullableString": {
+      "anyOf": [{"type": "string"}, {"type": "null"}]
+    },
+    "requestError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "http",
+            "network",
+            "timeout",
+            "invalid_response",
+            "auth",
+            "graphql",
+            "process"
+          ]
+        },
+        "message": {"type": "string"},
+        "statusCode": {"type": "integer"}
+      }
+    },
+    "aiFilterConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "stage",
+        "adapter",
+        "command",
+        "commandArgs",
+        "goal",
+        "timeoutMs",
+        "promptVersion",
+        "failurePolicy"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "stage": {"anyOf": [{"enum": ["suggestion", "file", "both"]}, {"type": "null"}]},
+        "adapter": {"anyOf": [{"const": "command"}, {"type": "null"}]},
+        "command": {"$ref": "#/$defs/nullableString"},
+        "commandArgs": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "null"}]},
+        "goal": {"$ref": "#/$defs/nullableString"},
+        "timeoutMs": {"anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]},
+        "promptVersion": {"$ref": "#/$defs/nullableString"},
+        "failurePolicy": {"anyOf": [{"const": "dry-run-passthrough_apply-skip"}, {"type": "null"}]}
+      }
+    },
+    "runConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["folder", "backendUrl", "apply", "concurrency", "includeHidden", "aiFilter"],
+      "properties": {
+        "folder": {"type": "string"},
+        "backendUrl": {"type": "string"},
+        "apply": {"type": "boolean"},
+        "concurrency": {"type": "integer", "minimum": 1},
+        "includeHidden": {"type": "boolean"},
+        "aiFilter": {"$ref": "#/$defs/aiFilterConfig"}
+      }
+    },
+    "sourceMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {"type": "integer"},
+        "line": {"type": "integer"},
+        "filename": {"type": "string"}
+      }
+    },
+    "preferenceSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "operation", "newValue", "confidence", "sourceSnippet"],
+      "properties": {
+        "id": {"type": "string"},
+        "slug": {"type": "string"},
+        "operation": {"enum": ["CREATE", "UPDATE"]},
+        "oldValue": {},
+        "newValue": {},
+        "confidence": {"type": "number"},
+        "sourceSnippet": {"type": "string"},
+        "sourceMeta": {"$ref": "#/$defs/sourceMeta"},
+        "wasCorrected": {"type": "boolean"},
+        "category": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "filteredSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "operation", "newValue", "confidence", "sourceSnippet", "filterReason"],
+      "properties": {
+        "id": {"type": "string"},
+        "slug": {"type": "string"},
+        "operation": {"enum": ["CREATE", "UPDATE"]},
+        "oldValue": {},
+        "newValue": {},
+        "confidence": {"type": "number"},
+        "sourceSnippet": {"type": "string"},
+        "sourceMeta": {"$ref": "#/$defs/sourceMeta"},
+        "wasCorrected": {"type": "boolean"},
+        "category": {"type": "string"},
+        "description": {"type": "string"},
+        "filterReason": {"enum": ["MISSING_FIELDS", "DUPLICATE_KEY", "NO_CHANGE", "UNKNOWN_SLUG"]},
+        "filterDetails": {"type": "string"}
+      }
+    },
+    "discoveredFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "relativePath",
+        "sizeBytes",
+        "extension",
+        "originalMimeType",
+        "uploadMimeType",
+        "uploadFileName",
+        "coercedToPlainText"
+      ],
+      "properties": {
+        "path": {"type": "string"},
+        "relativePath": {"type": "string"},
+        "sizeBytes": {"type": "integer", "minimum": 0},
+        "extension": {"type": "string"},
+        "originalMimeType": {"$ref": "#/$defs/nullableString"},
+        "uploadMimeType": {"type": "string"},
+        "uploadFileName": {"type": "string"},
+        "coercedToPlainText": {"type": "boolean"}
+      }
+    },
+    "discoveryDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "reason"],
+      "properties": {
+        "action": {"enum": ["analyze", "skip"]},
+        "reason": {"type": "string"},
+        "details": {"type": "string"}
+      }
+    },
+    "fileFilterDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "reason"],
+      "properties": {
+        "action": {"enum": ["analyze", "skip"]},
+        "reason": {"type": "string"},
+        "score": {"type": "number"},
+        "details": {"type": "string"},
+        "source": {"enum": ["passthrough", "ai", "fallback", "bypass"]},
+        "promptVersion": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "suggestionDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suggestionId", "action", "reason"],
+      "properties": {
+        "suggestionId": {"type": "string"},
+        "action": {"enum": ["apply", "skip"]},
+        "reason": {"type": "string"},
+        "score": {"type": "number"},
+        "details": {"type": "string"},
+        "source": {"enum": ["passthrough", "ai", "fallback"]},
+        "promptVersion": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "analysisRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempted", "status", "suggestions", "filteredSuggestions", "filteredCount"],
+      "properties": {
+        "attempted": {"type": "boolean"},
+        "status": {"enum": ["success", "no_matches", "parse_error", "ai_error", "request_error"]},
+        "statusReason": {"$ref": "#/$defs/nullableString"},
+        "analysisId": {"type": "string"},
+        "documentSummary": {"$ref": "#/$defs/nullableString"},
+        "suggestions": {"type": "array", "items": {"$ref": "#/$defs/preferenceSuggestion"}},
+        "filteredSuggestions": {"type": "array", "items": {"$ref": "#/$defs/filteredSuggestion"}},
+        "filteredCount": {"type": "integer", "minimum": 0},
+        "error": {"$ref": "#/$defs/requestError"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "request_error"}}, "required": ["status"]},
+          "then": {"required": ["error"]},
+          "else": {"required": ["analysisId"]}
+        }
+      ]
+    },
+    "applyInputSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suggestionId", "slug", "operation"],
+      "properties": {
+        "suggestionId": {"type": "string"},
+        "slug": {"type": "string"},
+        "operation": {"enum": ["CREATE", "UPDATE"]},
+        "newValue": {},
+        "confidence": {"type": "number"},
+        "evidence": {"type": "object"}
+      }
+    },
+    "appliedPreference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "value"],
+      "properties": {
+        "id": {"type": "string"},
+        "slug": {"type": "string"},
+        "value": {},
+        "status": {"type": "string"},
+        "sourceType": {"type": "string"}
+      }
+    },
+    "applyBatchResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysisId",
+        "requestedCount",
+        "appliedCount",
+        "matchedSuggestionIds",
+        "unmatchedSuggestionIds",
+        "ambiguousSuggestionIds",
+        "appliedPreferences"
+      ],
+      "properties": {
+        "analysisId": {"type": "string"},
+        "requestedCount": {"type": "integer", "minimum": 0},
+        "appliedCount": {"type": "integer", "minimum": 0},
+        "matchedSuggestionIds": {"type": "array", "items": {"type": "string"}},
+        "unmatchedSuggestionIds": {"type": "array", "items": {"type": "string"}},
+        "ambiguousSuggestionIds": {"type": "array", "items": {"type": "string"}},
+        "appliedPreferences": {"type": "array", "items": {"$ref": "#/$defs/appliedPreference"}},
+        "error": {"type": "string"}
+      }
+    },
+    "filterAuditRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "adapter", "goal", "decision", "reason"],
+      "properties": {
+        "stage": {"const": "suggestion"},
+        "adapter": {"const": "command"},
+        "goal": {"type": "string"},
+        "decision": {"enum": ["apply", "skip"]},
+        "score": {"type": "number"},
+        "reason": {"type": "string"}
+      }
+    },
+    "aiStageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "promptVersion": {"$ref": "#/$defs/nullableString"},
+        "adapterError": {"$ref": "#/$defs/requestError"},
+        "usedFallback": {"type": "boolean"},
+        "applySkipped": {"type": "boolean"},
+        "bypassReason": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "fileAiRunRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fileStage": {"$ref": "#/$defs/aiStageRecord"},
+        "suggestionStage": {"$ref": "#/$defs/aiStageRecord"}
+      }
+    },
+    "fileRunRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "relativePath", "discovery"],
+      "properties": {
+        "file": {"$ref": "#/$defs/discoveredFile"},
+        "path": {"type": "string"},
+        "relativePath": {"type": "string"},
+        "sizeBytes": {"type": "integer", "minimum": 0},
+        "extension": {"type": "string"},
+        "originalMimeType": {"$ref": "#/$defs/nullableString"},
+        "uploadMimeType": {"$ref": "#/$defs/nullableString"},
+        "discovery": {"$ref": "#/$defs/discoveryDecision"},
+        "fileFilter": {"$ref": "#/$defs/fileFilterDecision"},
+        "analysis": {"$ref": "#/$defs/analysisRecord"},
+        "suggestionDecisions": {"type": "array", "items": {"$ref": "#/$defs/suggestionDecision"}},
+        "apply": {"$ref": "#/$defs/applyBatchResult"},
+        "ai": {"$ref": "#/$defs/fileAiRunRecord"}
+      }
+    },
+    "runSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discoveredVisibleFiles",
+        "hiddenEntriesSkipped",
+        "unsupportedFilesSkipped",
+        "skippedByFileFilter",
+        "analysisAttempted",
+        "analysisSucceeded",
+        "analysisNoMatches",
+        "analysisParseErrors",
+        "analysisAiErrors",
+        "analysisRequestErrors",
+        "backendFilteredSuggestions",
+        "validSuggestionsFound",
+        "suggestionsAccepted",
+        "suggestionsSkippedByFilter",
+        "applyRequested",
+        "applyMatched",
+        "applyUnmatched",
+        "applyAmbiguous",
+        "aiFilesEvaluated",
+        "aiFilesSkipped",
+        "aiFilesBypassed",
+        "aiSuggestionsAccepted",
+        "aiSuggestionsSkipped",
+        "fallbackSuggestionsAccepted",
+        "aiAdapterFailures",
+        "aiApplySkippedFiles",
+        "degradedByAiFallback",
+        "hasFailures"
+      ],
+      "properties": {
+        "discoveredVisibleFiles": {"type": "integer", "minimum": 0},
+        "hiddenEntriesSkipped": {"type": "integer", "minimum": 0},
+        "unsupportedFilesSkipped": {"type": "integer", "minimum": 0},
+        "skippedByFileFilter": {"type": "integer", "minimum": 0},
+        "analysisAttempted": {"type": "integer", "minimum": 0},
+        "analysisSucceeded": {"type": "integer", "minimum": 0},
+        "analysisNoMatches": {"type": "integer", "minimum": 0},
+        "analysisParseErrors": {"type": "integer", "minimum": 0},
+        "analysisAiErrors": {"type": "integer", "minimum": 0},
+        "analysisRequestErrors": {"type": "integer", "minimum": 0},
+        "backendFilteredSuggestions": {"type": "integer", "minimum": 0},
+        "validSuggestionsFound": {"type": "integer", "minimum": 0},
+        "suggestionsAccepted": {"type": "integer", "minimum": 0},
+        "suggestionsSkippedByFilter": {"type": "integer", "minimum": 0},
+        "applyRequested": {"type": "integer", "minimum": 0},
+        "applyMatched": {"type": "integer", "minimum": 0},
+        "applyUnmatched": {"type": "integer", "minimum": 0},
+        "applyAmbiguous": {"type": "integer", "minimum": 0},
+        "aiFilesEvaluated": {"type": "integer", "minimum": 0},
+        "aiFilesSkipped": {"type": "integer", "minimum": 0},
+        "aiFilesBypassed": {"type": "integer", "minimum": 0},
+        "aiSuggestionsAccepted": {"type": "integer", "minimum": 0},
+        "aiSuggestionsSkipped": {"type": "integer", "minimum": 0},
+        "fallbackSuggestionsAccepted": {"type": "integer", "minimum": 0},
+        "aiAdapterFailures": {"type": "integer", "minimum": 0},
+        "aiApplySkippedFiles": {"type": "integer", "minimum": 0},
+        "degradedByAiFallback": {"type": "boolean"},
+        "hasFailures": {"type": "boolean"}
+      }
+    }
+  }
+}

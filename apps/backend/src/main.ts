@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { resolveListenArguments } from './config/listener-options';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -38,9 +39,14 @@ async function bootstrap() {
     ],
   });
 
-  const port = process.env.PORT || 3000;
+  const listenArguments = resolveListenArguments();
+  const [port] = listenArguments;
 
-  await app.listen(port);
+  if (listenArguments.length === 2) {
+    await app.listen(listenArguments[0], listenArguments[1]);
+  } else {
+    await app.listen(listenArguments[0]);
+  }
 
   logger.log(`Application is running on: http://localhost:${port}`);
   logger.log(`GraphQL Playground: http://localhost:${port}/graphql`);

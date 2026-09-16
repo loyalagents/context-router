@@ -1,23 +1,26 @@
 # Step 01: Contract Baseline And Product Scope
 
-- Status: ready for planning
-- Outcome owner: local-migration coordinator (`/root`) until a Step 01 sole
-  writer is assigned
+- Status: remediation independently approved; the local implementation-head
+  gate passed and the remote gate is green at `d68dd6c` —
+  [PR #156](https://github.com/loyalagents/context-router/pull/156) is prepared
+  for final human review subject to final-head required checks remaining green
+- Outcome owner and sole writer: `/root` on
+  `codex/local-migration-01-contract-baseline`
 - Outcome: an approved retain/replace/remove/defer matrix for every current
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
-- Concrete next action: create `codex/local-migration-01-contract-baseline`
-  from `main`, copy `../step-template.md` to `plan.md`, and obtain independent
-  architecture, compatibility, test, and security/privacy review before
-  implementation
-- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
+- Concrete next action: human review and merge decision for PR #156 only while
+  required checks remain green; do not merge automatically, and begin Step 02
+  planning only after it merges
+- Review date: 2026-10-14 or Step 01 implementation closeout, whichever comes
+  first
 - Depends on: completed Step 00 PRs
   [#153](https://github.com/loyalagents/context-router/pull/153),
   [#154](https://github.com/loyalagents/context-router/pull/154), and
   [#155](https://github.com/loyalagents/context-router/pull/155)
 - Supported mode during planning: the existing hosted
   NestJS/PostgreSQL/Auth0/Vertex and Next.js composition remains supported
-- Last updated: 2026-09-14
+- Last updated: 2026-09-16
 
 ## Outcome
 
@@ -27,8 +30,41 @@ must retain, replace, intentionally remove, or defer; names the observable
 acceptance evidence for each decision; and establishes one aggregate gate that
 proves a checkpoint has not left the supported application between two modes.
 
-This README activates planning only. The Step 01 planning agent must produce an
-independently reviewed `plan.md` before changing application behavior.
+The Step 01 plan was independently approved on 2026-09-14 by fresh read-only
+architecture/scope/maintainability, compatibility/contracts, and
+testing/security/privacy reviewers after every finding was resolved. The
+approved [`plan.md`](plan.md) governs implementation; material deviations pause
+the affected checkpoint for renewed review.
+
+Checkpoint 1 added the versioned capability/outbound/package registry, an exact
+automatically refreshed public-reference and outbound-sink census, complete
+semantic GraphQL and MCP fixtures, HTTP contracts, all 19 catalog semantics and
+seed edge characterization, the strict developer-orchestrator manifest-v3
+schema, and the canonical current-state baseline. Its focused checker, backend
+unit/integration/e2e, orchestrator, Markdown-link, and whitespace validations
+passed without changing a public schema or runtime handler. Evidence collection
+corrected a prose count from 14 to the schema-derived 15 mutations; scope and
+implementation were unchanged.
+
+Checkpoint 2 added the single authoritative `pnpm migration:gate` command, its
+strict 11-phase lifecycle manifest, a dedicated CI workflow, safe isolated test
+database lifecycle, disposable-workspace and merge-base checks, and
+`pnpm migration:smoke:restart`. The smoke probes the built Next.js support routes
+and runs two real production backend processes on loopback with an ephemeral
+HTTPS OIDC/JWKS fixture and signed read-only M2M token, then compares the
+complete 19-definition catalog and stable principal through restart. After the
+external-review remediation on 2026-09-15, the focused migration suite passed
+133/133 tests. Committed implementation head `b568834` passed all 11 aggregate
+phases in 231.787 seconds, including a 35.256-second clean-restart phase, using
+Node 20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. The run reported
+`baseComparison=performed`, preserved caller integrity, and removed its exact
+generated databases and fallback container. Two consecutive backend builds and
+an independent 76.980-second restart smoke also proved `dist/main.js` survives
+the build lifecycle. On 2026-09-16, remediated head `d68dd6c` passed the Node
+20/pnpm 9 remote workflow and all applicable standard checks. The path-filtered
+`eval-harbor-checks` job skipped, while the aggregate Harbor static phase
+passed. Required checks on the final documentation head must remain green. The
+earlier green run from superseded head `493bf49` remains non-acceptance evidence.
 
 ## Required Reading
 

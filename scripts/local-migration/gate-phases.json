@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "supportedModes": [
+    {
+      "id": "hosted-baseline",
+      "status": "active",
+      "successorModes": [],
+      "requiredEvidenceClasses": ["contract", "build", "state", "restart", "integrity"]
+    }
+  ],
+  "phases": [
+    {
+      "id": "contract-baseline",
+      "order": 1,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 120000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["contract"],
+      "predecessors": [],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after every supported successor mode passes equivalent public-contract checks.",
+      "kind": "commands",
+      "commands": [
+        {
+          "argv": [
+            "node",
+            "--test",
+            "scripts/local-migration/check-contract-baseline.test.mjs",
+            "scripts/local-migration/gate-runner.test.mjs",
+            "scripts/local-migration/gate-phases.test.mjs",
+            "scripts/local-migration/restart-smoke.test.mjs",
+            "scripts/local-migration/test-database.test.mjs",
+            "scripts/local-migration/web-support-smoke.test.mjs"
+          ]
+        },
+        { "argv": ["node", "scripts/local-migration/check-contract-baseline.mjs"] }
+      ]
+    },
+    {
+      "id": "documentation",
+      "order": 2,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 120000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["documentation"],
+      "predecessors": ["contract-baseline"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only when a reviewed replacement validates all canonical repository documentation.",
+      "kind": "commands",
+      "commands": [
+        { "argv": ["node", "--test", "scripts/check-markdown-links.test.mjs"] },
+        { "argv": ["node", "scripts/check-markdown-links.mjs"] }
+      ]
+    },
+    {
+      "id": "backend-unit-build",
+      "order": 3,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 600000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["build"],
+      "predecessors": ["documentation"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire a hosted build or unit proof only after its replacement implementation and tests land atomically.",
+      "kind": "commands",
+      "commands": [
+        { "argv": ["pnpm", "--filter", "backend", "prisma:generate"] },
+        { "argv": ["pnpm", "--filter", "backend", "typecheck:seed"] },
+        { "argv": ["pnpm", "--filter", "backend", "build"] },
+        { "argv": ["pnpm", "--filter", "backend", "test:unit"] }
+      ]
+    },
+    {
+      "id": "backend-database",
+      "order": 4,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 900000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["state"],
+      "predecessors": ["backend-unit-build"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after the replacement store passes the shared integration and end-to-end contracts.",
+      "kind": "commands",
+      "commands": [
+        { "argv": ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"] },
+        { "argv": ["pnpm", "--filter", "backend", "test:integration"] },
+        { "argv": ["pnpm", "--filter", "backend", "test:e2e:tests-only"] }
+      ]
+    },
+    {
+      "id": "local-orchestrator",
+      "order": 5,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 300000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["tooling"],
+      "predecessors": ["backend-database"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire with the Step 09 developer-tool decision and explicit consumer migration evidence.",
+      "kind": "commands",
+      "commands": [
+        { "argv": ["pnpm", "--filter", "local-orchestrator", "test"] },
+        { "argv": ["pnpm", "--filter", "local-orchestrator", "lint"] },
+        { "argv": ["pnpm", "--filter", "local-orchestrator", "build"] }
+      ]
+    },
+    {
+      "id": "eval-fixtures",
+      "order": 6,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 300000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["evaluation"],
+      "predecessors": ["local-orchestrator"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after deterministic replacement fixtures cover the same migration contracts.",
+      "kind": "commands",
+      "commands": [{ "argv": ["pnpm", "eval:verify"] }]
+    },
+    {
+      "id": "eval-deterministic-scenarios",
+      "order": 7,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 600000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["evaluation", "state"],
+      "predecessors": ["eval-fixtures"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after successor deterministic scenarios prove equivalent stored-state behavior.",
+      "kind": "commands",
+      "commands": [
+        { "argv": ["pnpm", "eval:run", "--scenario", "samir-desai-i9-template-smoke"] },
+        { "argv": ["pnpm", "eval:run", "--scenario", "elena-marquez-i9-template-smoke"] }
+      ]
+    },
+    {
+      "id": "web-production-build",
+      "order": 8,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 600000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["build"],
+      "predecessors": ["eval-deterministic-scenarios"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only when the replacement product UI has an equivalent production build proof.",
+      "kind": "commands",
+      "commands": [{ "argv": ["pnpm", "--filter", "web", "build"] }]
+    },
+    {
+      "id": "harbor-static",
+      "order": 9,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 300000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["research"],
+      "predecessors": ["web-production-build"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only through the Step 06 research-tool decision with static-fixture replacement evidence.",
+      "kind": "commands",
+      "commands": [{ "argv": ["bash", "examples/eval-harbor/scripts/check_static.sh"] }]
+    },
+    {
+      "id": "restart-smoke",
+      "order": 10,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 600000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["restart"],
+      "predecessors": ["harbor-static"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after a passing clean-restart smoke exists for every replacement supported mode.",
+      "kind": "restart-smoke",
+      "commands": [{ "argv": ["node", "scripts/local-migration/restart-smoke.mjs"] }]
+    },
+    {
+      "id": "repository-integrity",
+      "order": 11,
+      "ownerStep": "01",
+      "status": "active",
+      "timeoutMs": 300000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["integrity"],
+      "predecessors": ["restart-smoke"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only when the stable aggregate gate preserves equivalent caller and generation integrity proof.",
+      "kind": "commands",
+      "commands": [{ "argv": ["node", "scripts/local-migration/check-generated-integrity.mjs"] }]
+    }
+  ]
+}

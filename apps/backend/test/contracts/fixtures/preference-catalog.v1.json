@@ -1,0 +1,272 @@
+{
+  "semantic": {
+    "communication.preferred_channels": {
+      "valueType": "array",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "dev.coding_style": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "dev.tech_stack": {
+      "valueType": "array",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "food.cuisine_preferences": {
+      "valueType": "array",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "food.dietary_restrictions": {
+      "valueType": "array",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "food.spice_tolerance": {
+      "valueType": "enum",
+      "scope": "global",
+      "isSensitive": false,
+      "options": [
+        "none",
+        "mild",
+        "medium",
+        "hot",
+        "extra_hot"
+      ],
+      "default": null,
+      "validation": null
+    },
+    "location.default_temperature": {
+      "valueType": "string",
+      "scope": "location",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "location.quiet_hours": {
+      "valueType": "string",
+      "scope": "location",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.badge_name": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.company": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.email": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": true,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.first_name": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.full_name": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.last_name": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "profile.title": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "system.response_length": {
+      "valueType": "enum",
+      "scope": "global",
+      "isSensitive": false,
+      "options": [
+        "brief",
+        "moderate",
+        "detailed"
+      ],
+      "default": null,
+      "validation": null
+    },
+    "system.response_tone": {
+      "valueType": "enum",
+      "scope": "global",
+      "isSensitive": false,
+      "options": [
+        "casual",
+        "professional",
+        "concise",
+        "enthusiastic"
+      ],
+      "default": null,
+      "validation": null
+    },
+    "travel.meal_preference": {
+      "valueType": "string",
+      "scope": "global",
+      "isSensitive": false,
+      "options": null,
+      "default": null,
+      "validation": null
+    },
+    "travel.seat_preference": {
+      "valueType": "enum",
+      "scope": "global",
+      "isSensitive": false,
+      "options": [
+        "window",
+        "middle",
+        "aisle"
+      ],
+      "default": null,
+      "validation": null
+    }
+  },
+  "copy": {
+    "communication.preferred_channels": {
+      "category": "communication",
+      "displayName": null,
+      "description": "Preferred methods of communication (e.g., email, phone, text, slack)."
+    },
+    "dev.coding_style": {
+      "category": "dev",
+      "displayName": null,
+      "description": "Coding conventions and style preferences (e.g., tabs vs spaces, naming conventions)."
+    },
+    "dev.tech_stack": {
+      "category": "dev",
+      "displayName": null,
+      "description": "Preferred programming languages, frameworks, and tools the user works with."
+    },
+    "food.cuisine_preferences": {
+      "category": "food",
+      "displayName": null,
+      "description": "Types of cuisine the user enjoys or prefers (e.g., Italian, Japanese, Mexican)."
+    },
+    "food.dietary_restrictions": {
+      "category": "food",
+      "displayName": null,
+      "description": "Food allergies, intolerances, dislikes, or diet plans the user follows (e.g., vegetarian, vegan, gluten-free, kosher, halal)."
+    },
+    "food.spice_tolerance": {
+      "category": "food",
+      "displayName": null,
+      "description": "How much spice/heat the user prefers in their food."
+    },
+    "location.default_temperature": {
+      "category": "location",
+      "displayName": null,
+      "description": "Preferred temperature setting for a specific location (in Fahrenheit)."
+    },
+    "location.quiet_hours": {
+      "category": "location",
+      "displayName": null,
+      "description": "Time range when the user prefers no notifications or disturbances at this location."
+    },
+    "profile.badge_name": {
+      "category": "profile",
+      "displayName": "Badge Name",
+      "description": "The name the user prefers on badges, labels, or short-form introductions."
+    },
+    "profile.company": {
+      "category": "profile",
+      "displayName": "Company",
+      "description": "The user's current organization or company for profile and form filling."
+    },
+    "profile.email": {
+      "category": "profile",
+      "displayName": "Contact Email",
+      "description": "The user's preferred contact email for forms and communication."
+    },
+    "profile.first_name": {
+      "category": "profile",
+      "displayName": "First Name",
+      "description": "The user's preferred first or given name."
+    },
+    "profile.full_name": {
+      "category": "profile",
+      "displayName": "Full Name",
+      "description": "The user's preferred full name for addressing them and filling forms."
+    },
+    "profile.last_name": {
+      "category": "profile",
+      "displayName": "Last Name",
+      "description": "The user's preferred last or family name."
+    },
+    "profile.title": {
+      "category": "profile",
+      "displayName": "Title",
+      "description": "The user's current role, title, or job function for profile and form filling."
+    },
+    "system.response_length": {
+      "category": "system",
+      "displayName": null,
+      "description": "Preferred length of AI responses - brief for quick answers, detailed for thorough explanations."
+    },
+    "system.response_tone": {
+      "category": "system",
+      "displayName": null,
+      "description": "The personality and formality level the AI should use when responding."
+    },
+    "travel.meal_preference": {
+      "category": "travel",
+      "displayName": null,
+      "description": "Meal preference for flights and travel."
+    },
+    "travel.seat_preference": {
+      "category": "travel",
+      "displayName": null,
+      "description": "Preferred airplane seat location."
+    }
+  }
+}

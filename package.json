@@ -50,6 +50,8 @@
     "eval-harbor:dynamicmem:resume": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "eval-harbor:dynamicmem:fast": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "eval-harbor:dynamicmem:fresh-fast": "env HARBOR_SKIP_EXISTING=0 HARBOR_FORCE=1 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
+    "migration:gate": "node scripts/local-migration/migration-gate.mjs",
+    "migration:smoke:restart": "node scripts/local-migration/migration-gate.mjs --smoke-only",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

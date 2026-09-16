@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "routes": {
+    "health": {
+      "method": "GET",
+      "path": "/health",
+      "auth": "none",
+      "success": {
+        "status": 200,
+        "contentType": "application/json",
+        "required": ["status", "timestamp"],
+        "constants": { "status": "ok" },
+        "formats": { "timestamp": "date-time" }
+      }
+    },
+    "graphql": {
+      "method": "POST",
+      "path": "/graphql",
+      "contentType": "application/json",
+      "request": {
+        "required": ["query"],
+        "optional": ["variables", "operationName"]
+      },
+      "success": { "status": 200, "required": ["data"] },
+      "applicationError": {
+        "status": 200,
+        "required": ["errors"],
+        "errorRequired": ["message"]
+      },
+      "publicProbe": { "query": "{ __typename }", "root": "Query" },
+      "catalogAnonymousAccess": "observed-not-promised-class-guard-rejects"
+    },
+    "documentAnalysis": {
+      "method": "POST",
+      "path": "/api/preferences/analysis",
+      "auth": "bearer-user",
+      "contentType": "multipart/form-data",
+      "multipart": { "required": ["file"], "optional": [] },
+      "maxFileSizeBytes": 10485760,
+      "allowedMimeTypes": [
+        "text/plain",
+        "text/markdown",
+        "application/json",
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/yaml",
+        "text/yaml",
+        "application/x-yaml"
+      ],
+      "success": {
+        "status": 201,
+        "required": [
+          "analysisId",
+          "suggestions",
+          "filteredSuggestions",
+          "status",
+          "filteredCount"
+        ],
+        "optionalNullable": ["documentSummary", "statusReason"],
+        "statuses": ["success", "no_matches", "parse_error", "ai_error"]
+      },
+      "errors": {
+        "missingOrInvalidUpload": {
+          "status": 400,
+          "required": ["statusCode", "message", "error"]
+        },
+        "missingBearer": {
+          "status": 401,
+          "required": ["statusCode", "message"]
+        },
+        "oversizedMultipart": {
+          "status": 413,
+          "required": ["statusCode", "message"]
+        }
+      }
+    },
+    "formFill": {
+      "method": "POST",
+      "path": "/api/form-fill/pdf",
+      "auth": "bearer-user",
+      "contentType": "multipart/form-data",
+      "multipart": { "required": ["file"], "optional": ["fieldPolicies"] },
+      "fieldPolicies": { "encoding": "JSON string", "schemaVersion": 1 },
+      "maxFileSizeBytes": 10485760,
+      "allowedMimeTypes": ["application/pdf"],
+      "success": {
+        "status": 201,
+        "required": [
+          "fillId",
+          "status",
+          "originalFilename",
+          "outputFilename",
+          "outputMimeType",
+          "filledPdfBase64",
+          "summary"
+        ],
+        "statuses": [
+          "success",
+          "partial",
+          "no_fillable_fields",
+          "unsupported_format",
+          "failed"
+        ],
+        "outputMimeType": "application/pdf",
+        "summaryRequired": [
+          "totalFields",
+          "filledCount",
+          "skippedCount",
+          "filledFields",
+          "skippedFields",
+          "warnings"
+        ]
+      },
+      "errors": {
+        "missingInvalidOrPolicy": {
+          "status": 400,
+          "required": ["statusCode", "message", "error"]
+        },
+        "missingBearer": {
+          "status": 401,
+          "required": ["statusCode", "message"]
+        },
+        "oversizedMultipart": {
+          "status": 413,
+          "required": ["statusCode", "message"]
+        }
+      }
+    },
+    "mcpPost": {
+      "method": "POST",
+      "path": "/mcp",
+      "auth": "bearer-mcp",
+      "contentType": "application/json",
+      "accept": "application/json, text/event-stream",
+      "request": { "protocol": "JSON-RPC 2.0" },
+      "success": { "status": 200, "contentType": "application/json" },
+      "disabled": {
+        "status": 503,
+        "body": { "error": "MCP HTTP transport is disabled" }
+      }
+    },
+    "mcpGet": {
+      "method": "GET",
+      "path": "/mcp",
+      "auth": "none",
+      "response": {
+        "status": 405,
+        "headers": { "Allow": "POST" },
+        "body": { "error": "Method Not Allowed" }
+      }
+    },
+    "oauthMetadata": {
+      "method": "GET",
+      "paths": [
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/.well-known/oauth-authorization-server",
+        "/.well-known/oauth-authorization-server/mcp"
+      ],
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=3600"
+      }
+    },
+    "dcr": {
+      "method": "POST",
+      "path": "/oauth/register",
+      "auth": "none",
+      "contentType": "application/json",
+      "success": {
+        "status": 201,
+        "required": [
+          "client_id",
+          "token_endpoint_auth_method",
+          "grant_types",
+          "response_types",
+          "redirect_uris"
+        ],
+        "constants": {
+          "token_endpoint_auth_method": "none",
+          "grant_types": ["authorization_code", "refresh_token"],
+          "response_types": ["code"]
+        }
+      },
+      "errors": {
+        "emptyRedirect": {
+          "status": 400,
+          "body": {
+            "error": "invalid_redirect_uri",
+            "error_description": "At least one redirect_uri must be provided for OAuth client registration."
+          }
+        },
+        "invalidRedirect": {
+          "status": 400,
+          "body": {
+            "error": "invalid_redirect_uri",
+            "error_description": "None of the requested redirect_uris are allowed. This server only accepts connections from authorized MCP clients."
+          }
+        },
+        "mixedRedirect": {
+          "status": 400,
+          "body": {
+            "error": "invalid_redirect_uri",
+            "error_description": "All requested redirect_uris must belong to the same supported MCP client."
+          }
+        },
+        "missingConfiguredClientId": {
+          "status": 500,
+          "body": {
+            "error": "server_error",
+            "error_description": "OAuth client registration is not configured"
+          }
+        },
+        "rateLimit": {
+          "status": 429,
+          "windowMs": 60000,
+          "maxRequests": 30,
+          "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": null,
+            "Access-Control-Allow-Methods": null,
+            "Access-Control-Allow-Headers": null,
+            "Cache-Control": null
+          },
+          "body": {
+            "error": "too_many_requests",
+            "error_description": "Rate limit exceeded. Try again in 60 seconds."
+          }
+        }
+      },
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Cache-Control": "no-store"
+      }
+    }
+  },
+  "supportRoutes": [
+    { "method": "POST", "path": "/api/chat", "class": "planned-removal" },
+    { "method": "GET", "path": "/api/debug/token", "class": "planned-removal" },
+    { "method": "GET", "path": "/auth/*", "class": "planned-removal" }
+  ],
+  "runtimeEvidence": [
+    {
+      "surface": "backend-http-e2e",
+      "path": "apps/backend/test/e2e/public-contract-baseline.e2e-spec.ts",
+      "cases": [
+        "pins the health and public GraphQL transport envelopes",
+        "records anonymous preferenceCatalog as rejected by production guards",
+        "pins upload limits, MIME sets, multipart errors, and field-policy parsing",
+        "pins successful upload envelopes and form summary against fixtures",
+        "pins production bearer rejection for both upload routes",
+        "pins the real multipart 413 envelope for both upload routes",
+        "pins DCR success, rejection, envelope keys, and cache/CORS headers",
+        "pins the exact DCR missing-client configuration error",
+        "pins the exact DCR rate-limit envelope and retry calculation",
+        "pins the real DCR rate-limit transport headers",
+        "pins GET /mcp method refusal and OAuth metadata headers",
+        "pins disabled POST /mcp to the exact 503 envelope"
+      ]
+    },
+    {
+      "surface": "web-support-runtime",
+      "path": "scripts/local-migration/web-support-smoke.mjs",
+      "cases": ["assertWebSupportResponses", "runWebSupportSmoke"]
+    },
+    {
+      "surface": "web-support-build",
+      "path": "scripts/local-migration/gate-phases.json",
+      "cases": ["web-production-build"]
+    }
+  ]
+}

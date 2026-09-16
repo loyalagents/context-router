@@ -12,6 +12,7 @@ import {
   AuditOrigin,
   SourceType,
 } from '../../src/infrastructure/prisma/generated-client';
+import mcpContract from '../contracts/fixtures/mcp-contract-baseline.json';
 
 const TEST_CLIENT_IDS = {
   claude: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID!,
@@ -838,7 +839,7 @@ describe('Permission Grants (e2e)', () => {
     expect(parseToolResult(allowed).success).toBe(true);
   });
 
-  it('scopes listPermissionGrants to the calling client key', async () => {
+  it('scopes listPermissionGrants to the calling client key and preserves matching structured/text envelopes', async () => {
     await grantRepository.upsert(
       testUser.userId,
       'claude',
@@ -854,15 +855,34 @@ describe('Permission Grants (e2e)', () => {
       'ALLOW',
     );
 
-    const claudeResult = parseToolResult(
-      await mcpToolCall('listPermissionGrants', {}, TEST_CLIENT_IDS.claude),
+    const claudeEnvelope = await mcpToolCall(
+      'listPermissionGrants',
+      {},
+      TEST_CLIENT_IDS.claude,
     );
+    expect(
+      mcpContract.tools.find(
+        (tool) => tool.descriptor.name === 'listPermissionGrants',
+      )?.resultEnvelope,
+    ).toBe('structuredContent-and-matching-json-text');
+    expect(claudeEnvelope.structuredContent).toBeDefined();
+    expect(JSON.parse(claudeEnvelope.content[0].text)).toEqual(
+      claudeEnvelope.structuredContent,
+    );
+    const claudeResult = parseToolResult(claudeEnvelope);
     expect(claudeResult.grants).toHaveLength(1);
     expect(claudeResult.grants[0].clientKey).toBe('claude');
 
-    const codexResult = parseToolResult(
-      await mcpToolCall('listPermissionGrants', {}, TEST_CLIENT_IDS.codex),
+    const codexEnvelope = await mcpToolCall(
+      'listPermissionGrants',
+      {},
+      TEST_CLIENT_IDS.codex,
     );
+    expect(codexEnvelope.structuredContent).toBeDefined();
+    expect(JSON.parse(codexEnvelope.content[0].text)).toEqual(
+      codexEnvelope.structuredContent,
+    );
+    const codexResult = parseToolResult(codexEnvelope);
     expect(codexResult.grants).toHaveLength(1);
     expect(codexResult.grants[0].clientKey).toBe('codex');
   });

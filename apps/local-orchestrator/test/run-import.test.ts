@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -16,6 +17,30 @@ import {
   DocumentAnalysisResult,
   SuggestionDecision,
 } from '../src/types';
+
+const repositoryRoot = path.resolve(__dirname, '../../..');
+const requireFromRoot = createRequire(path.join(repositoryRoot, 'package.json'));
+const Ajv = requireFromRoot('ajv/dist/2020').default;
+
+async function assertManifestConformsToV3Schema(
+  manifest: Awaited<ReturnType<typeof runImport>>,
+): Promise<void> {
+  const schema = JSON.parse(
+    await readFile(
+      path.join(
+        repositoryRoot,
+        'apps/local-orchestrator/contracts/run-manifest-v3.schema.json',
+      ),
+      'utf8',
+    ),
+  );
+  const validate = new Ajv({ strict: false }).compile(schema);
+  assert.equal(
+    validate(manifest),
+    true,
+    `runImport produced an invalid manifest: ${JSON.stringify(validate.errors)}`,
+  );
+}
 
 function buildOptions(overrides: Partial<CliOptions> = {}): CliOptions {
   return {
@@ -91,6 +116,8 @@ test('runImport records analysis request failures and continues', async (t) => {
     },
   );
 
+  await assertManifestConformsToV3Schema(manifest);
+
   assert.equal(manifest.version, 3);
   assert.equal(manifest.config.aiFilter.enabled, false);
   assert.equal(manifest.summary.analysisAttempted, 2);
@@ -135,6 +162,8 @@ test('runImport persists includeHidden when hidden traversal is enabled', async 
       suggestionFilter: new PassthroughSuggestionFilter(),
     },
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.equal(manifest.config.includeHidden, true);
   assert.equal(manifest.hiddenEntriesSkipped, 0);
@@ -333,6 +362,8 @@ test('runImport maps accepted suggestions into apply requests with evidence', as
       suggestionFilter: new PassthroughSuggestionFilter(),
     },
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.ok(capturedBatch);
   assert.equal(capturedBatch.analysisId, 'analysis-apply');
@@ -854,6 +885,8 @@ test('runImport records ambiguous apply reconciliation when multiple accepted su
     },
   );
 
+  await assertManifestConformsToV3Schema(manifest);
+
   assert.deepEqual(manifest.files[0].apply?.matchedSuggestionIds, []);
   assert.deepEqual(manifest.files[0].apply?.unmatchedSuggestionIds, []);
   assert.deepEqual(manifest.files[0].apply?.ambiguousSuggestionIds, [
@@ -906,6 +939,8 @@ test('runImport records apply transport failures as unmatched suggestions', asyn
       suggestionFilter: new PassthroughSuggestionFilter(),
     },
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.equal(manifest.files[0].apply?.error, 'Socket hang up');
   assert.deepEqual(manifest.files[0].apply?.matchedSuggestionIds, []);
@@ -976,6 +1011,8 @@ test('runImport falls back to passthrough decisions on AI suggestion adapter fai
       },
     },
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.equal(manifest.summary.aiAdapterFailures, 1);
   assert.equal(manifest.summary.fallbackSuggestionsAccepted, 2);
@@ -1048,6 +1085,8 @@ test('runImport skips apply for a file when AI suggestion filtering fails in app
     },
   );
 
+  await assertManifestConformsToV3Schema(manifest);
+
   assert.equal(applyCalls, 0);
   assert.equal(manifest.summary.aiAdapterFailures, 1);
   assert.equal(manifest.summary.aiApplySkippedFiles, 1);
@@ -1099,6 +1138,8 @@ test('runImport records AI file-stage fallback when the local adapter fails', as
       suggestionFilter: new PassthroughSuggestionFilter(),
     },
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.equal(manifest.files[0].fileFilter?.source, 'fallback');
   assert.equal(manifest.files[0].fileFilter?.reason, 'ai_file_filter_failure_bypass');
@@ -1172,6 +1213,8 @@ test('runImport produces a stable manifest shape for a mixed dry run', async (t)
       return value;
     }),
   );
+
+  await assertManifestConformsToV3Schema(manifest);
 
   assert.deepEqual(stableManifest, {
     version: 3,
