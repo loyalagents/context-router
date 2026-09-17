@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 import SuggestionItem from './SuggestionItem';
 import type {
   FilterReason,
@@ -307,8 +308,7 @@ export default function SuggestionsList({
         batchesByAnalysisId.set(analysisId, existing);
       }
 
-      const graphqlUrl =
-        process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+      const graphqlUrl = GRAPHQL_URL;
 
       for (const [analysisId, input] of batchesByAnalysisId.entries()) {
         const response = await fetch(graphqlUrl, {

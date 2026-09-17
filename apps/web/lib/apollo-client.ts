@@ -1,10 +1,11 @@
 import { HttpLink, ApolloClient, InMemoryCache } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { registerApolloClient } from "@apollo/experimental-nextjs-app-support";
+import { GRAPHQL_URL } from "@/lib/runtime-config";
 
 export const { getClient } = registerApolloClient(() => {
   const httpLink = new HttpLink({
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
+    uri: GRAPHQL_URL,
   });
 
   const authLink = setContext((_, { headers }) => {

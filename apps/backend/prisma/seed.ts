@@ -9,7 +9,9 @@ import {
 } from "../src/config/preferences.catalog";
 import { buildPrismaClientOptions } from "../src/infrastructure/prisma/prisma-client-options";
 
-const prisma = new PrismaClient(buildPrismaClientOptions());
+const prisma = new PrismaClient(
+  buildPrismaClientOptions({ databaseUrl: process.env.DATABASE_URL ?? '' }),
+);
 
 const VALUE_TYPE_MAP: Record<string, PreferenceValueType> = {
   string: PreferenceValueType.STRING,

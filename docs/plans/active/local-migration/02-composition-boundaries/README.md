@@ -5,16 +5,16 @@
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C runtime
-  configuration/bootstrap active
+  configuration/bootstrap locally implemented and independently approved
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-runtime-bootstrap` for PR 02C only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: implement the approved PR 02C test-first checkpoints,
-  preserve the hosted composition/listener/public contracts, obtain fresh
-  read-only implementation approval, run final exact-base evidence, and leave
-  review and landing to a human; keep PRs 02D and 02E inactive
+- Concrete next action: publish the locally validated PR 02C branch as a draft,
+  complete the dedicated migration workflow and all applicable standard CI on
+  final HEAD, and prepare it for human review and landing; keep PRs 02D and 02E
+  inactive
 - Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
@@ -36,9 +36,10 @@ contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
 The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PRs 02A
-and 02B are merged and only 02C is active on the current branch; 02D–02E remain
-inactive until a human merges each predecessor and their activation gates assign
-fresh bases, owners, and reviewers. Approval does not authorize a local identity,
+and 02B are merged and only 02C is active on the current branch; its local
+implementation and read-only review are complete. PRs 02D–02E remain inactive
+until a human merges each predecessor and their activation gates assign fresh
+bases, owners, and reviewers. Approval does not authorize a local identity,
 database, model, UI shell, installer, final OS claim, or default listener change.
 
 ## Required Reading

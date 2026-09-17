@@ -17,16 +17,17 @@ import {
   DynamicModule,
   INestApplication,
   Module,
-  ValidationPipe,
   ExecutionContext,
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AppModule } from '../../src/app.module';
+import { configureHostedApplication } from '../../src/bootstrap/hosted-bootstrap';
 import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
 import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
 import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
 import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
 import { HostedModelAdapterModule } from '../../src/composition/hosted-model-adapter.module';
+import { resolveRuntimeConfiguration } from '../../src/config/runtime-config';
 import {
   AI_STRUCTURED_OUTPUT_PORT,
   AI_TEXT_GENERATOR_PORT,
@@ -159,6 +160,8 @@ export interface CreateTestAppOptions<
   mockAuth0?: TAuth0;
   /** Whether to override GraphQL/JWT auth guards with the test user injector */
   overrideGraphqlAuthGuards?: boolean;
+  /** Startup value for the demo-only reset modes. */
+  enableDemoReset?: boolean;
 }
 
 interface CreateTestAppResult<
@@ -349,6 +352,12 @@ export async function createTestApp(
     options.mockStructuredAi || createMockStructuredAiService();
   const mockAuth0 = options.mockAuth0 || createMockAuth0Service();
   const overrideGraphqlAuthGuards = options.overrideGraphqlAuthGuards ?? true;
+  const environment = {
+    ...process.env,
+    ...(options.enableDemoReset === undefined
+      ? {}
+      : { ENABLE_DEMO_RESET: String(options.enableDemoReset) }),
+  };
 
   // Mutable reference - guard always reads current value
   const userRef: UserRef = { current: null };
@@ -357,9 +366,10 @@ export async function createTestApp(
   // Per-userId map for concurrent MCP tests using X-Test-User-Id header
   const mcpUsersMap = new Map<string, TestUser>();
   const mcpMockAuthGuard = createMcpMockAuthGuard(mcpUsersMap, userRef);
+  const runtimeConfiguration = resolveRuntimeConfiguration(environment);
 
   const moduleBuilder = Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.register(runtimeConfiguration, environment)],
   });
 
   moduleBuilder
@@ -385,17 +395,7 @@ export async function createTestApp(
   const module = await moduleBuilder.compile();
 
   const app = module.createNestApplication();
-
-  // Apply global validation pipe (matches production config in main.ts)
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
+  configureHostedApplication(app, runtimeConfiguration);
 
   // Keep one explicit loopback listener for the application's full lifetime.
   // Passing an initialized-but-unbound server to Supertest makes each request

@@ -1,55 +1,13 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { AppModule } from './app.module';
-import { resolveListenArguments } from './config/listener-options';
+import { Logger } from '@nestjs/common';
+import { resolve } from 'path';
+import { bootstrapHostedApplication } from './bootstrap/hosted-bootstrap';
 
-async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+const logger = new Logger('Bootstrap');
 
-  const app = await NestFactory.create(AppModule);
-
-  // Enable validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
-
-  // Enable CORS with proper configuration
-  const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',')
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3002'];
-
-  app.enableCors({
-    origin: corsOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'Accept',
-      'X-Requested-With',
-      'apollographql-client-name',
-      'apollographql-client-version',
-    ],
-  });
-
-  const listenArguments = resolveListenArguments();
-  const [port] = listenArguments;
-
-  if (listenArguments.length === 2) {
-    await app.listen(listenArguments[0], listenArguments[1]);
-  } else {
-    await app.listen(listenArguments[0]);
-  }
-
-  logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`GraphQL Playground: http://localhost:${port}/graphql`);
-}
-
-bootstrap();
+void bootstrapHostedApplication({
+  packageRoot: resolve(__dirname, '..'),
+  logger,
+}).catch(() => {
+  logger.error('Application failed to start');
+  process.exit(1);
+});

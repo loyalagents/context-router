@@ -1,7 +1,8 @@
 # Step 02: Composition Boundaries
 
 - Document status: independently approved; PRs 02A and 02B merged; PR 02C
-  implementation active
+  implementation locally complete and independently approved, with remote
+  final-head checks and human landing pending
   ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
@@ -28,7 +29,7 @@ are not pre-authorized stacked branches.
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | active `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | `/root/runtime_activation_audit`, `/root/runtime_arch_review`, and `/root/runtime_test_security_review` (fresh and read-only) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02C: runtime configuration/bootstrap | locally implemented and approved on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; remote final-head checks and human landing pending | `/root` | `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security` (fresh, read-only, and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
@@ -181,6 +182,46 @@ ownership and human landing, then activation of 02D, then activation of 02E.
 The supported mode after PR 02C remains the existing hosted composition with
 explicit configuration/origin ownership and a tested process lifecycle; it
 does not add local identity, storage, model execution, UI, or packaging policy.
+
+### PR 02C implementation evidence
+
+The implementation keeps PR 02C within its approved boundary. Backend startup
+now loads `.env.local` and `.env` from the explicit backend package root with
+process-environment precedence, validates listener and origin inputs once, and
+passes an explicit startup snapshot into the dynamic Nest composition. The
+hosted bootstrap has separable create/configure/start/close stages, actual-port
+readiness, bounded partial-start and signal cleanup, one-close behavior, and
+sanitized nonzero failures without changing the no-host listener call. The MCP
+origin fallback consumes the same normalized CORS list. The web application has
+one owner for its two build-time public backend endpoints, while `APP_BASE_URL`
+remains the Auth0 runtime origin. Launch and Compose migration guidance, the
+contract registry, and the cumulative gate argv moved with those changes.
+
+The backend tests were written red first. The final focused Jest command passes
+three suites and 49 tests; the required runtime/web Node command passes 16/16;
+the reset e2e regression passes 8/8; backend unit/build, seed type-check,
+contract checking, frozen-install integrity, web production build, and hosted
+restart evidence all pass. The exact-base LMBG is bound to
+`5a8b640a883dd33d42239d3a74e827cc17ffaae3` on Node 24.21.0, pnpm 10.25.0,
+Python 3.12.8, and PostgreSQL 15.15 and passes all 11 phases with
+`baseComparison=performed`, caller integrity true, no skipped phase, and clean
+resource cleanup. Exact elapsed time and final-head remote runs belong in the
+PR evidence so this repository record does not become self-referential.
+
+Fresh read-only implementation reviewers `/root/runtime_impl_arch`,
+`/root/runtime_impl_compat`, and `/root/runtime_impl_security` compared the
+complete base-to-working-tree diff with the approved plan. Their findings led
+to explicit Nest non-aborting creation, bounded hard exit after failed cleanup,
+startup-owned reset configuration, explicit seed database inputs, race-free
+process waiters, real post-bind/stuck-close process coverage, compatible dotenv
+parsing and runtime dependency classification, exact web consumer/registry
+evidence, and preservation of the baseline raw-`NODE_ENV` GraphQL stacktrace
+behavior. The reset e2e now constructs independent enabled and disabled startup
+compositions instead of mutating configuration after startup. All three
+reviewers approved with no remaining findings. GitHub's dedicated migration
+workflow and applicable standard CI remain required on final HEAD before human
+review and landing. Vercel remains outside required evidence under LM-014 and
+was not rechecked. PRs 02D and 02E remain inactive.
 
 ### Authoritative entry gate
 
@@ -408,7 +449,7 @@ authority, and unknown external GraphQL/HTTP/MCP clients remain binding.
 | Configuration and env-file lookup | **intentional compatible behavior correction** in 02C, not merely additive | backend `.env.example`, root Compose file/new Compose env example, package start scripts, Docker/Cloud Run, operator docs, gate/smoke | `PORT` is application listen port; `APP_PORT` is Compose host publication only. Process env continues to win; `<backend-package-root>/.env.local` wins `.env`. Arbitrary caller-cwd env loading is removed with migration guidance. No hosted bind-default change. |
 | Backend/web origins and endpoints | preserved semantics with one owner in 02C | `main.ts`, `mcp.config.ts`, web `.env.example`; all `NEXT_PUBLIC_GRAPHQL_URL` and `NEXT_PUBLIC_BACKEND_URL` consumers in the Step 01 registry/census | Backend `CORS_ORIGIN` is parsed once; `MCP_HTTP_ALLOWED_ORIGINS` remains an explicit override and otherwise inherits that normalized list. Web endpoint variables remain build-time public inputs, while `APP_BASE_URL` remains the server-runtime Auth0 origin. The staged build records its exact backend proxy URL and probes backend CORS with the actual staged web origin. |
 | Filesystem/resources | corrected without public content drift in 02D | GraphQL generator, MCP `schema://graphql`, contract collector, Docker/stage, restart smoke | Runtime schema comes from one cwd-independent source. No caller-cwd `src/schema.gql` creation. Missing/tampered asset fails before readiness with sanitized diagnostics. |
-| Package/toolchain | explicit supported contract in 02B; package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. Frozen install must not alter the lockfile except the reviewed workspace-importer move in 02D. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
+| Package/toolchain | explicit supported contract in 02B; direct runtime-parser classification in 02C; broad package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. The frozen lockfile permits the reviewed 02C backend-importer reclassification of the existing `dotenv` spec from development to runtime plus the separately reviewed 02D workspace-importer move; 02C does not pull the broader Vertex/package-closure work forward. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
 | Process lifecycle | additive testability in 02C | package `start:prod`, Docker command, restart/packaging smoke | Preserve hosted validation/CORS/listen semantics. Add bounded readiness and graceful close; errors remain sanitized and nonzero. |
 
 Any configuration, package, public descriptor, generated schema, registry

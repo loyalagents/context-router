@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 import {
   MatchedPreferenceDefinition,
   Preference,
@@ -10,8 +11,7 @@ import {
   SmartSearchResult,
 } from './types';
 
-const GRAPHQL_ENDPOINT =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+const GRAPHQL_ENDPOINT = GRAPHQL_URL;
 
 const SMART_SEARCH_QUERY = `
   query SmartSearchPreferences($input: SmartPreferenceSearchInput!) {

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 const PROFILE_FIELDS = [
   { slug: 'profile.full_name', label: 'Full Name', required: true },
@@ -89,8 +90,7 @@ export default function ProfileForm({
     query: string,
     variables: Record<string, unknown>,
   ) => {
-    const graphqlUrl =
-      process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+    const graphqlUrl = GRAPHQL_URL;
     const response = await fetch(graphqlUrl, {
       method: 'POST',
       headers: {

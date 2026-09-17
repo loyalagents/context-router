@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { BACKEND_URL } from '@/lib/runtime-config';
 import type {
   DocumentAnalysisResult,
   UploadBatchFileResult,
@@ -156,7 +157,7 @@ export default function DocumentUpload({
     setIsUploading(true);
     publishRecords();
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+    const backendUrl = BACKEND_URL;
 
     for (const record of records) {
       if (record.status === 'validation_error') {

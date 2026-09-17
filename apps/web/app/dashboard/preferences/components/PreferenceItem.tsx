@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 interface Preference {
   id: string;
@@ -110,7 +111,7 @@ export default function PreferenceItem({
         return;
       }
 
-      const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+      const graphqlUrl = GRAPHQL_URL;
       const response = await fetch(graphqlUrl, {
         method: 'POST',
         headers: {
@@ -153,7 +154,7 @@ export default function PreferenceItem({
     setIsDeleting(true);
 
     try {
-      const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+      const graphqlUrl = GRAPHQL_URL;
       const response = await fetch(graphqlUrl, {
         method: 'POST',
         headers: {

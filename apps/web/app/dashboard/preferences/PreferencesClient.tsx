@@ -7,6 +7,7 @@ import {
   ApolloClient,
   InMemoryCache,
 } from '@apollo/experimental-nextjs-app-support';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
@@ -30,7 +31,7 @@ interface PreferencesClientProps {
 function createApolloClient(accessToken: string) {
   return new ApolloClient({
     link: new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql',
+      uri: GRAPHQL_URL,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

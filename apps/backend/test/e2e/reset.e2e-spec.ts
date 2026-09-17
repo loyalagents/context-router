@@ -19,29 +19,29 @@ import {
 
 describe('Demo Memory Reset GraphQL API (e2e)', () => {
   let app: INestApplication;
+  let disabledApp: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
+  let setDisabledTestUser: (user: TestUser) => void;
   const prisma = getPrismaClient();
-  const originalEnableDemoReset = process.env.ENABLE_DEMO_RESET;
 
   beforeAll(async () => {
-    const testApp = await createTestApp();
+    const testApp = await createTestApp({ enableDemoReset: true });
+    const disabledTestApp = await createTestApp({ enableDemoReset: false });
     app = testApp.app;
+    disabledApp = disabledTestApp.app;
     setTestUser = testApp.setTestUser;
+    setDisabledTestUser = disabledTestApp.setTestUser;
   });
 
   beforeEach(async () => {
-    process.env.ENABLE_DEMO_RESET = 'false';
     testUser = await createTestUser();
     setTestUser(testUser);
+    setDisabledTestUser(testUser);
   });
 
   afterAll(async () => {
-    if (originalEnableDemoReset === undefined) {
-      delete process.env.ENABLE_DEMO_RESET;
-    } else {
-      process.env.ENABLE_DEMO_RESET = originalEnableDemoReset;
-    }
+    await disabledApp.close();
     await app.close();
   });
 
@@ -325,9 +325,10 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     await seedResetData(testUser, 'disabled_demo');
 
     for (const mode of ['DEMO_DATA', 'FULL_USER_DATA']) {
-      const response = await graphqlRequest(RESET_MUTATION, {
-        mode,
-      }).expect(200);
+      const response = await request(disabledApp.getHttpServer())
+        .post('/graphql')
+        .send({ query: RESET_MUTATION, variables: { mode } })
+        .expect(200);
 
       expect(response.body.data).toBeNull();
       expect(response.body.errors?.[0]?.message).toContain(
@@ -346,7 +347,6 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
   });
 
   it('DEMO_DATA deletes current user demo data but preserves permission grants and other users', async () => {
-    process.env.ENABLE_DEMO_RESET = 'true';
     await seedResetData(testUser, 'current_demo');
     const otherUser = await createUser('reset-other-demo@example.com');
     await seedResetData(otherUser, 'other_demo');
@@ -387,7 +387,6 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
   });
 
   it('FULL_USER_DATA also deletes current user permission grants', async () => {
-    process.env.ENABLE_DEMO_RESET = 'true';
     await seedResetData(testUser, 'full_demo');
     const otherUser = await createUser('reset-other-full-demo@example.com');
     await seedResetData(otherUser, 'other_full_demo');
@@ -430,7 +429,6 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
   it.each(['DEMO_DATA', 'FULL_USER_DATA'] as const)(
     '%s preserves the current user and external identity rows',
     async (mode) => {
-      process.env.ENABLE_DEMO_RESET = 'true';
       await seedResetData(testUser, `identity_${mode.toLowerCase()}`);
       await prisma.externalIdentity.create({
         data: {
@@ -476,7 +474,6 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
   });
 
   it('rolls back when another user references a current user definition', async () => {
-    process.env.ENABLE_DEMO_RESET = 'true';
     const { userDefinition } = await seedResetData(testUser, 'cross_user');
     const otherUser = await createUser('reset-other-cross-user@example.com');
 
