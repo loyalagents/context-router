@@ -1,7 +1,8 @@
 # Step 02: Composition Boundaries
 
 - Document status: independently approved; PRs 02A and 02B merged; PR 02C
-  implementation locally complete and independently approved, with remote
+  implementation locally complete and independently approved in draft
+  [#159](https://github.com/loyalagents/context-router/pull/159), with remote
   final-head checks and human landing pending
   ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
@@ -29,7 +30,7 @@ are not pre-authorized stacked branches.
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | locally implemented and approved on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; remote final-head checks and human landing pending | `/root` | `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security` (fresh, read-only, and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02C: runtime configuration/bootstrap | draft [#159](https://github.com/loyalagents/context-router/pull/159), locally implemented and approved on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; remote final-head checks and human landing pending | `/root` | `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security` (fresh, read-only, and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
@@ -220,8 +221,10 @@ behavior. The reset e2e now constructs independent enabled and disabled startup
 compositions instead of mutating configuration after startup. All three
 reviewers approved with no remaining findings. GitHub's dedicated migration
 workflow and applicable standard CI remain required on final HEAD before human
-review and landing. Vercel remains outside required evidence under LM-014 and
-was not rechecked. PRs 02D and 02E remain inactive.
+review and landing of draft PR
+[#159](https://github.com/loyalagents/context-router/pull/159). Vercel remains
+outside required evidence under LM-014 and was not rechecked. PRs 02D and 02E
+remain inactive.
 
 ### Authoritative entry gate
 

@@ -5,16 +5,16 @@
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C runtime
-  configuration/bootstrap locally implemented and independently approved
+  configuration/bootstrap locally implemented and independently approved in
+  draft [#159](https://github.com/loyalagents/context-router/pull/159)
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-runtime-bootstrap` for PR 02C only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: publish the locally validated PR 02C branch as a draft,
-  complete the dedicated migration workflow and all applicable standard CI on
-  final HEAD, and prepare it for human review and landing; keep PRs 02D and 02E
-  inactive
+- Concrete next action: complete the dedicated migration workflow and all
+  applicable standard CI for draft PR #159 on final HEAD, then prepare it for
+  human review and landing; keep PRs 02D and 02E inactive
 - Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
