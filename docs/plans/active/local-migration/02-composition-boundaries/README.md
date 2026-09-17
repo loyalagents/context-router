@@ -2,18 +2,22 @@
 
 - Status: plan approved; PR 02A
   ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
-  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B local implementation and
-  independent review complete, with remote CI and human landing pending
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation and
+  independent review complete; candidate head
+  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` passed the required GitHub checks
+  and LM-014 external verification, with human review and landing pending
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-toolchain-contract` for PR 02B only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: publish the revised final head, rerun the dedicated
-  migration workflow and all applicable standard CI, verify Vercel applies the
-  production-only ignored-build policy from LM-014, resolve any remote finding,
-  and leave landing to a human; promote the exact toolchain only after those
-  gates pass
+- Concrete next action: maintain PR
+  [#158](https://github.com/loyalagents/context-router/pull/158) closeout by
+  keeping required checks green and its description synchronized on the
+  documentation-only closeout head and any later head, mark or keep the PR
+  ready, then leave review and landing to a human and keep PR 02C inactive;
+  after PR 02B merges, record the exact merge SHA, activate PR 02C from that
+  base, and promote the exact toolchain contract to the landed baseline
 - Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing

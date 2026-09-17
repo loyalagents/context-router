@@ -231,13 +231,16 @@ local-first push may create a canceled preview deployment record or
 informational status, but the ignored-build check must cancel it before the
 configured application build proceeds. The canceled record still consumes a
 deployment and concurrent-build slot; that cost is accepted because hosted
-deployments are infrequent. Before PR 02B lands, an operator verifies that
-policy, verifies no GitHub rule or branch-protection setting requires Vercel,
-and confirms production still follows `hosted-v1-maintenance`. GitHub Actions
-provides the required exact Node and pnpm final-head evidence; an informational
-Vercel status cannot replace it. No repository `vercel.json` branch allowlist
-is added for this infrequent hosted deployment topology. The checker is not
-bypassed or silently loosened.
+deployments are infrequent. On 2026-09-16, PR 02B head
+`e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` received a successful Vercel status
+labeled `Canceled by Ignored Build Step`; separate repository inspection found
+no rulesets and no `main` branch protection that required Vercel. Production
+remains on the operator-confirmed `hosted-v1-maintenance` branch recorded in the
+orchestration document, and that external topology must be reverified before a
+branch-role change. GitHub Actions provides the required exact Node and pnpm
+final-head evidence; an informational Vercel status cannot replace it. No
+repository `vercel.json` branch allowlist is added for this infrequent hosted
+deployment topology. The checker is not bypassed or silently loosened.
 
 The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
 requires installed frozen dependencies, an offline Corepack cache containing

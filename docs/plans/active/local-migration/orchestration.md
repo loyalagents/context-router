@@ -1,17 +1,21 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `02-composition-boundaries` — PR 02B toolchain contract local
-  implementation and independent review are complete after PR 02A
+- Current step: `02-composition-boundaries` — PR 02B toolchain contract
+  implementation and independent review are complete; candidate head
+  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` passed the required GitHub checks
+  and LM-014 external verification after PR 02A
   ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-toolchain-contract`
-- Concrete next action: publish the revised final head, rerun the dedicated
-  migration workflow and all applicable standard CI, verify Vercel applies the
-  production-only ignored-build policy from LM-014, resolve any remote finding,
-  and leave landing to a human; promote the exact toolchain only after those
-  gates pass
+- Concrete next action: maintain PR
+  [#158](https://github.com/loyalagents/context-router/pull/158) closeout by
+  keeping required checks green and its description synchronized on the
+  documentation-only closeout head and any later head, mark or keep the PR
+  ready, then leave review and landing to a human and keep PR 02C inactive;
+  after PR 02B merges, record the exact merge SHA, activate PR 02C from that
+  base, and promote the exact toolchain contract to the landed baseline
 - Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Primary development branch: `main`

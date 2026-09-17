@@ -120,7 +120,10 @@ Node 24.21.0/pnpm 10.25.0. The final gate was bound to
 reported `baseComparison=performed`, caller integrity true, no skipped phase,
 and clean resource cleanup. Exact elapsed time belongs in the PR evidence rather
 than this self-referential repository record. The fresh independent reviewers
-approved the local implementation; remote final-head evidence remains required.
+approved the local implementation. PR 02B head
+`e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` subsequently passed all applicable
+standard CI jobs in run `35173087186` and the dedicated 11-phase baseline gate
+in run `35173087176`.
 
 Vercel is an external remote build topology. It can select Node 24 only by major
 and may roll its minor/patch release, while the 02B checker intentionally
@@ -137,6 +140,13 @@ production remains on `hosted-v1-maintenance`. No repository `vercel.json`
 branch allowlist is introduced for this infrequently used hosted topology. An
 informational Vercel status does not replace the dedicated migration workflow
 or applicable standard CI evidence.
+
+On 2026-09-16, that same PR 02B head received a successful Vercel status labeled
+`Canceled by Ignored Build Step`, confirming the external policy stopped the
+preview before the configured application build. Separate repository inspection
+found no rulesets and no `main` branch protection that required Vercel. The
+production branch remains the operator-confirmed `hosted-v1-maintenance`
+setting recorded in the orchestration document.
 
 ### Authoritative entry gate
 
@@ -1118,7 +1128,14 @@ ignored-build check prevents the configured application build from proceeding,
 the deployment/concurrency cost is explicitly accepted, no Vercel result is
 required merge evidence, production remains on `hosted-v1-maintenance`, and no
 JSON-registry change is needed. PR-body synchronization plus final-head remote
-observation remain pre-landing closeout gates.
+observation were the remaining pre-landing closeout gates.
+
+On 2026-09-16, PR [#158](https://github.com/loyalagents/context-router/pull/158)
+head `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` completed the remote-observation
+gate: all applicable standard CI jobs and the dedicated 11-phase LMBG passed,
+and Vercel returned `Canceled by Ignored Build Step`. This evidence does not
+replace PR-body synchronization or the required checks on any later head. PR
+#158 must keep both current before human review and landing.
 
 ## Implementation Review Gate
 
@@ -1153,7 +1170,9 @@ assertions for every workflow selection, a pnpm setup action compatible with
 the integrity-suffixed `packageManager` value, and precise registry/status
 wording. The writer resolved each finding, reran focused validation and the
 exact-base full gate, and both reviewers approved the current local diff.
-Remote final-head workflow evidence remains the closeout gate.
+The implementation head's required remote workflow evidence subsequently
+passed; any later documentation-only head must preserve it before human review
+and landing.
 
 A later independent review found the external Vercel compatibility gap, stale
 elapsed-time wording, the analysis-only Windows limitation, an imprecise
@@ -1163,7 +1182,7 @@ boundaries, made failure labels stage-aware, moved success output after cleanup,
 and added bounded shell-free probe failure tests. Read-only reviewers
 `/root/review_findings_platform` and `/root/review_findings_gate` approved the
 result on 2026-09-16. The Vercel topology decision is now resolved by LM-014;
-verifying the external settings remains a landing gate, not an
+the external settings were subsequently verified as a landing gate, not as an
 implementation-review finding.
 
 ## Exit Criteria

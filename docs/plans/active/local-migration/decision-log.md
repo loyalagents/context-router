@@ -141,10 +141,11 @@ step plan that resolves them.
 - Status: Accepted
 - Decision: Step 02 selects exact Node.js 24.21.0 and pnpm 10.25.0 for
   installation, builds, the Local Migration Baseline Gate, and packaging
-  evidence. This is a reviewed target, not yet a support claim. It becomes the
-  supported contract only when PR 02B atomically aligns all version sources,
-  eval discovery, Docker, CI, and documentation and the complete exact-runtime
-  gate passes locally and remotely. Until then LM-012 evidence governs.
+  evidence. This is a reviewed target, not yet a `main` support claim. It
+  becomes the supported contract only when PR 02B atomically aligns all version
+  sources, eval discovery, Docker, CI, and documentation, the complete
+  exact-runtime gate passes locally and remotely, and a human merges the PR.
+  Until then LM-012 evidence governs.
 - Evidence: the exact Step 01-base gate passed all 11 phases on Node 20.19.5 and
   pnpm 10.25.0. Supplemental already-installed Node 22.13.1 and 24.18.0 runs
   passed phases 1–5 and exposed the same phase-6 directory test-discovery defect;
@@ -156,8 +157,11 @@ step plan that resolves them.
   24.21.0/pnpm 10.25.0; the post-review full-tree rerun reported
   `baseComparison=performed`, caller integrity true, and clean resource cleanup.
   Exact elapsed time is retained in the PR evidence rather than this repository
-  record. Remote final-head evidence is still required before this target
-  becomes the supported merged contract.
+  record. PR 02B head `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` then passed
+  all applicable standard CI jobs in run `35173087186` and the dedicated
+  11-phase baseline gate in run `35173087176`. The target has satisfied its
+  implementation evidence but becomes the supported `main` contract only after
+  human landing.
 - Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
   other pnpm versions, before resource acquisition. A future patch/version
   change requires reviewed evidence and atomic metadata/CI/documentation
@@ -188,6 +192,16 @@ step plan that resolves them.
   deployment remains an explicitly re-verified external topology. Reintroducing
   Vercel builds for local-first `main` requires a new reviewed decision and a
   runtime contract that its selector can satisfy without a checker bypass.
+- Verification: on 2026-09-16, PR
+  [#158](https://github.com/loyalagents/context-router/pull/158) head
+  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` received a
+  successful Vercel status labeled `Canceled by Ignored Build Step`, confirming
+  that the ignored-build check stopped the preview before the configured
+  application build. Repository inspection found no rulesets and no `main`
+  branch protection, so no GitHub rule required Vercel. The production branch
+  remains the operator-confirmed `hosted-v1-maintenance` setting recorded in
+  the orchestration document. This observation closes the external PR 02B gate
+  but is not required merge evidence.
 
 ## Deferred Decisions And Owning Steps
 
