@@ -222,17 +222,17 @@ deliberately uses no shell and therefore does not execute the `.cmd` pnpm shims
 commonly installed by Corepack/npm; no Windows support claim exists without a
 native safe executable-resolution design and full gate evidence.
 
-The Vercel status attached to `main` pull requests is an external build
-topology, not a repository-controlled version selector. Vercel exposes a Node
-major selection and may roll minor/patch releases, so the repository cannot
-make that setting durably select Node 24.21.0. PR 02B therefore requires the
-final remote Vercel log, when that status is attached, to record the observed
-Node and pnpm versions. Even an exact point-in-time result does not resolve the
-major-only selector: landing remains blocked until a reviewed decision either
-reconfigures/scopes that preview out of the local-first `main` contract or
-revises the toolchain contract atomically. The checker is not bypassed or
-silently loosened. Vercel production remains on `hosted-v1-maintenance` per
-LM-001.
+Vercel is an external build topology, not a repository-controlled exact-version
+selector. It exposes a Node major selection and may roll minor/patch releases,
+so it cannot durably select Node 24.21.0. LM-014 therefore excludes Vercel
+previews and deployments from the supported local-first `main` product and its
+required merge evidence. Before PR 02B lands, an operator verifies that Vercel
+project settings disable automatic preview/deployment creation for `main` and
+its local-first pull request branches, no GitHub rule or branch-protection
+setting requires a Vercel status, and production still follows
+`hosted-v1-maintenance`. GitHub Actions provides the required exact Node and
+pnpm final-head evidence; an informational Vercel status cannot replace it. The
+checker is not bypassed or silently loosened.
 
 The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
 requires installed frozen dependencies, an offline Corepack cache containing

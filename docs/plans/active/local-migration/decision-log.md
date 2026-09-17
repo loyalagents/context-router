@@ -163,11 +163,26 @@ step plan that resolves them.
   change requires reviewed evidence and atomic metadata/CI/documentation
   alignment; it may not regenerate fixtures merely to force the upgrade.
   Windows remains analysis-only until a native shell-free pnpm resolution path
-  and gate pass exist. An attached Vercel preview is required final-head remote
-  evidence, but its external major-only Node setting is not an exact selector:
-  its log records the observed pair, but even a green exact result is only
-  point-in-time evidence. Landing stops for a reviewed reconfiguration/scope or
-  atomic contract decision rather than a checker bypass.
+  and gate pass exist. Required final-head remote evidence comes from the
+  dedicated migration workflow and applicable standard CI; LM-014 excludes
+  Vercel preview builds from this exact-toolchain contract rather than
+  weakening the checker.
+
+### LM-014: Vercel is outside the local-first `main` contract
+
+- Status: Accepted
+- Decision: Vercel previews and deployments are not part of the supported
+  local-first `main` product or its required merge evidence. Vercel production
+  remains on `hosted-v1-maintenance`; GitHub Actions supplies the required
+  final-head evidence for local-first pull requests.
+- Consequence: before PR 02B lands, an operator verifies that automatic Vercel
+  preview/deployment creation is disabled for `main` and its local-first pull
+  request branches, no GitHub rule or branch-protection setting requires a
+  Vercel status, and Vercel production still follows
+  `hosted-v1-maintenance`. An informational Vercel status cannot establish or
+  replace the exact Node.js/pnpm evidence. Reintroducing Vercel for local-first
+  `main` requires a new reviewed decision and a runtime contract that its
+  selector can satisfy without a checker bypass.
 
 ## Deferred Decisions And Owning Steps
 

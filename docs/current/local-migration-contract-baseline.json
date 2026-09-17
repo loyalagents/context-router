@@ -493,7 +493,7 @@
     },
     {
       "id": "hosted-deployment-workflow",
-      "label": "Cloud Run, Vercel/Auth0, and hosted operator workflow on main",
+      "label": "Hosted deployment/operator workflow (Cloud Run, Vercel, and Auth0)",
       "disposition": "REMOVE",
       "contractClass": "planned-removal",
       "ownerSteps": [

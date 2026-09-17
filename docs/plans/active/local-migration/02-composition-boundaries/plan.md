@@ -122,16 +122,16 @@ and clean resource cleanup. Exact elapsed time belongs in the PR evidence rather
 than this self-referential repository record. The fresh independent reviewers
 approved the local implementation; remote final-head evidence remains required.
 
-The Vercel preview status is an external remote build topology. Vercel can
-select Node 24 only by major and may roll its minor/patch release, while the 02B
-checker intentionally requires Node 24.21.0. When that status is attached to
-the final PR head, its log must record the observed Node and pnpm versions. A
-green run on the exact pair is only point-in-time evidence, not a durable
-selector. Landing remains blocked until a separate reviewed decision either
-reconfigures/scopes the preview out of the local-first `main` contract or
-revises the exact toolchain contract atomically; repository files do not capture
-the project settings. Production remains on `hosted-v1-maintenance` under
-LM-001.
+Vercel is an external remote build topology. It can select Node 24 only by major
+and may roll its minor/patch release, while the 02B checker intentionally
+requires Node 24.21.0. Accepted decision LM-014 therefore excludes Vercel
+previews and deployments from the supported local-first `main` product and its
+required merge evidence. Before landing, an operator must verify that external
+Vercel project settings disable automatic preview/deployment creation for
+`main` and its local-first pull request branches, no GitHub rule or
+branch-protection setting requires a Vercel status, and production remains on
+`hosted-v1-maintenance`. An informational Vercel status does not replace the
+dedicated migration workflow or applicable standard CI evidence.
 
 ### Authoritative entry gate
 
@@ -786,11 +786,13 @@ selection rules it validates.
    remote-required `contract-baseline` test argv described above and prove the
    JSON/fallback argv are identical. Stop if
    the exact runtime is unavailable, lockfile drifts, any phase skips/fails, or
-   `ci.yml` ownership lacks an explicit landing order. Also stop if a Vercel
-   preview is attached without a reviewed decision for its major-only
-   Node selector; even a point-in-time exact result does not establish durable
-   alignment. Revert the entire version/eval checkpoint together; do not leave
-   mixed version sources.
+   `ci.yml` ownership lacks an explicit landing order. Also stop landing if
+   automatic Vercel preview/deployment creation remains enabled for `main` or
+   its local-first pull request branches, a GitHub rule requires a Vercel status,
+   or Vercel production no longer follows `hosted-v1-maintenance`; LM-014
+   excludes that major-only selector from the local-first contract rather than
+   treating a point-in-time preview as durable alignment. Revert the entire
+   version/eval checkpoint together; do not leave mixed version sources.
 
 ### PR 02C: configuration/bootstrap lifecycle
 
@@ -913,7 +915,7 @@ selection rules it validates.
 | Aggregate compatibility | `MIGRATION_GATE_BASE_SHA=<recorded-exact-base> MIGRATION_GATE_PYTHON_BIN=<python-3.12> pnpm migration:gate`, with `baseComparison=performed`, no skips, integrity true, clean cleanup | Yes for every PR |
 | Dedicated workflow | `.github/workflows/local-migration-baseline.yml` exact root gate on selected runtime | Yes remotely |
 | Standard CI | exact path-filter mapping below; backend, orchestrator, eval, Harbor static, frontend, and docs jobs as selected | Yes remotely |
-| Attached Vercel preview | final-head build log records observed Node/pnpm; a reviewed decision must reconfigure/scope out the major-only preview or revise the exact contract | Yes when the status is attached to the PR |
+| Vercel project topology | operator verifies automatic previews/deployments are disabled for `main` and its local-first pull request branches, no GitHub rule requires Vercel, and production remains on `hosted-v1-maintenance` under LM-014 | Yes externally before landing; no Vercel build is required evidence |
 | Repository quality | `git diff --check`; clean status; no generated/lock drift; no residual process/container/temp root | Yes |
 
 Live Auth0/Vertex/provider evaluation, package downloads, `pnpm install`/`npm
@@ -1070,8 +1072,26 @@ The PR 02B follow-up review exposed Vercel's external major-only Node selector
 and the unvalidated Windows `.cmd` probe path. The writer added the explicit
 Vercel landing stop/decision gate and clarified the current macOS/Linux evidence
 boundary. Fresh read-only reviewer `/root/review_findings_platform` approved
-that material plan clarification on 2026-09-16; it does not authorize a checker
-bypass, a Vercel project-setting mutation, or a Windows support claim.
+that material plan clarification on 2026-09-16; that review did not itself
+authorize a checker bypass, a Vercel project-setting mutation, or a Windows
+support claim.
+
+On 2026-09-16 the operator selected the reviewed scope-out alternative: Vercel
+is outside the supported local-first `main` product and its required merge
+evidence, while Vercel production remains on `hosted-v1-maintenance`. This
+decision is recorded as LM-014. Before landing, external settings must disable
+automatic Vercel previews/deployments for `main` and its local-first pull
+request branches, keep Vercel out of GitHub requirements, and preserve the
+hosted production branch; the repository checker and exact GitHub Actions
+evidence remain unchanged.
+
+Fresh read-only reviewer `/root/vercel_decision_review` reviewed LM-014 and its
+synchronized canonical baseline, step plan, and status updates on 2026-09-16
+and approved with no remaining findings. The review confirmed that automatic
+Vercel previews/deployments and required Vercel statuses are excluded from
+local-first `main`, Vercel production remains on `hosted-v1-maintenance`, and
+external project/rules verification remains a pre-landing gate rather than
+repository toolchain evidence.
 
 ## Implementation Review Gate
 
@@ -1115,8 +1135,9 @@ The writer removed self-referential timing, recorded the Vercel/Windows
 boundaries, made failure labels stage-aware, moved success output after cleanup,
 and added bounded shell-free probe failure tests. Read-only reviewers
 `/root/review_findings_platform` and `/root/review_findings_gate` approved the
-result on 2026-09-16. The unresolved reviewed Vercel topology decision remains
-a landing blocker, not an implementation-review finding.
+result on 2026-09-16. The Vercel topology decision is now resolved by LM-014;
+verifying the external settings remains a landing gate, not an
+implementation-review finding.
 
 ## Exit Criteria
 
