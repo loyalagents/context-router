@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 interface PreferenceDefinition {
   id: string;
@@ -327,7 +328,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const graphqlUrl = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+  const graphqlUrl = GRAPHQL_URL;
 
   const handleDownload = async (scope: DownloadScope) => {
     setIsDownloading(true);

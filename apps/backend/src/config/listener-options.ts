@@ -1,19 +1,15 @@
-interface ListenerEnvironment {
-  PORT?: string;
-  APP_HOST?: string;
-}
+import type { RuntimeConfiguration } from './runtime-config';
 
-export type ListenArguments =
-  | [port: string | number]
-  | [port: string | number, host: string];
+export type ListenArguments = [port: number] | [port: number, host: string];
 
 /**
  * Preserve Nest's existing hosted listen call unless a caller explicitly opts
  * into a host. Step 02 owns changing the default bind policy.
  */
 export function resolveListenArguments(
-  environment: ListenerEnvironment = process.env as ListenerEnvironment,
+  configuration: Pick<RuntimeConfiguration, 'port' | 'host'>,
 ): ListenArguments {
-  const port = environment.PORT || 3000;
-  return environment.APP_HOST ? [port, environment.APP_HOST] : [port];
+  return configuration.host
+    ? [configuration.port, configuration.host]
+    : [configuration.port];
 }

@@ -104,8 +104,11 @@ cp apps/web/.env.example apps/web/.env.local
 
 Important backend env notes:
 
-- `apps/backend/.env` is the container-oriented baseline file used by `docker compose`
-- The Nest app loads `.env.local` before `.env`, so `apps/backend/.env.local` is the right place for local-only overrides
+- The backend loads only `apps/backend/.env.local` and then `apps/backend/.env`, regardless of the directory from which it is launched. Existing process environment values win over both files.
+- `apps/backend/.env` is also the container-oriented service environment file used by `docker compose`
+- `apps/backend/.env.local` is the right place for local-only overrides
+- Docker Compose interpolation is separate from the service `env_file`. Copy `docker-compose.env.example` to the root `.env`, or run commands with `docker compose --env-file docker-compose.env.example ...`.
+- `PORT` is the backend listener port. Root `APP_PORT` is only the Docker Compose host-publication port that maps to the container's listener.
 - Authenticated flows require valid `AUTH0_*` values in both apps
 - Invite-only login and signup gating is configured in Auth0 Actions; see [`docs/useful/AUTH0_LOGIN_GATING.md`](docs/useful/AUTH0_LOGIN_GATING.md)
 - Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
@@ -113,8 +116,8 @@ Important backend env notes:
 
 Important frontend env notes:
 
-- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` at the backend, usually `http://localhost:3000/graphql`
-- `APP_BASE_URL` should match the frontend dev server, usually `http://localhost:3002`
+- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` (usually `http://localhost:3000/graphql`) and `NEXT_PUBLIC_BACKEND_URL` (usually `http://localhost:3000`) at the backend. Next captures both public values at build time, so rebuild the web app after changing them.
+- `APP_BASE_URL` is the Auth0 server-runtime origin and should match the frontend server, usually `http://localhost:3002` in development.
 
 ### Database Hostname Rule
 
@@ -171,6 +174,20 @@ pnpm dev
 ```
 
 That still assumes your backend is using a host-based `DATABASE_URL`, not the Docker hostname.
+
+The supported direct backend launch paths are:
+
+```bash
+pnpm --filter backend start
+pnpm --filter backend start:dev
+pnpm --filter backend start:prod
+```
+
+The root `pnpm dev` and `pnpm dev:backend` commands delegate to these package
+scripts. Docker and Cloud Run inject their process environment before starting
+the same hosted entrypoint. The tests and staged runtime harnesses inject an
+explicit backend package root and environment so they exercise the same
+configuration contract without depending on the caller's working directory.
 
 ### Containerized Backend Workflow
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 type ResetMemoryMode = 'MEMORY_ONLY' | 'DEMO_DATA' | 'FULL_USER_DATA';
 
@@ -115,8 +116,7 @@ export default function MemoryResetPanel({
     setProcessingMode(option.mode);
 
     try {
-      const graphqlUrl =
-        process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+      const graphqlUrl = GRAPHQL_URL;
       const response = await fetch(graphqlUrl, {
         method: 'POST',
         headers: {

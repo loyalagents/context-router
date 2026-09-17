@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 type GrantAction = 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE';
 
@@ -21,8 +22,7 @@ interface PermissionsClientProps {
 
 type ClientKey = 'claude' | 'codex' | 'fallback';
 
-const GRAPHQL_ENDPOINT =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+const GRAPHQL_ENDPOINT = GRAPHQL_URL;
 
 const QUERY = `
   query MyPermissionGrants {

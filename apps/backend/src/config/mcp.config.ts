@@ -1,15 +1,28 @@
 import { registerAs } from '@nestjs/config';
 import { McpClientConfig } from '../mcp/types/mcp-authorization.types';
+import {
+  normalizeOriginList,
+  resolveCorsOrigins,
+  type RuntimeConfiguration,
+  type RuntimeEnvironment,
+} from './runtime-config';
 
-export default registerAs('mcp', () => {
-  const auth0Domain = process.env.AUTH0_DOMAIN;
-  const auth0Audience = process.env.AUTH0_AUDIENCE;
-  const serverUrl = process.env.MCP_SERVER_URL;
-  const httpPath = process.env.MCP_HTTP_PATH || '/mcp';
-  const normalizedHttpPath = httpPath.startsWith('/') ? httpPath : `/${httpPath}`;
+export function createMcpConfiguration(
+  environment: RuntimeEnvironment = process.env,
+  defaultAllowedOrigins: string[] = resolveCorsOrigins(environment),
+) {
+  const auth0Domain = environment.AUTH0_DOMAIN;
+  const auth0Audience = environment.AUTH0_AUDIENCE;
+  const serverUrl = environment.MCP_SERVER_URL;
+  const httpPath = environment.MCP_HTTP_PATH || '/mcp';
+  const normalizedHttpPath = httpPath.startsWith('/')
+    ? httpPath
+    : `/${httpPath}`;
   const protectedResource =
-    process.env.MCP_RESOURCE ||
-    (serverUrl ? new URL(normalizedHttpPath, serverUrl).toString() : auth0Audience);
+    environment.MCP_RESOURCE ||
+    (serverUrl
+      ? new URL(normalizedHttpPath, serverUrl).toString()
+      : auth0Audience);
 
   const authorizationEndpoint = auth0Domain
     ? new URL(`https://${auth0Domain}/authorize`)
@@ -30,7 +43,7 @@ export default registerAs('mcp', () => {
       ],
       targetRules: [],
       oauth: {
-        clientId: process.env.AUTH0_MCP_CLAUDE_CLIENT_ID,
+        clientId: environment.AUTH0_MCP_CLAUDE_CLIENT_ID,
         redirectUris: [
           'https://claude.ai/api/mcp/auth_callback',
           'https://claude.com/api/mcp/auth_callback',
@@ -53,7 +66,7 @@ export default registerAs('mcp', () => {
       ],
       targetRules: [],
       oauth: {
-        clientId: process.env.AUTH0_MCP_CODEX_CLIENT_ID,
+        clientId: environment.AUTH0_MCP_CODEX_CLIENT_ID,
         redirectUris: ['http://127.0.0.1:8082/callback'],
       },
     },
@@ -64,8 +77,8 @@ export default registerAs('mcp', () => {
       targetRules: [],
       oauth: {
         clientId:
-          process.env.AUTH0_MCP_FALLBACK_CLIENT_ID ||
-          process.env.AUTH0_MCP_PUBLIC_CLIENT_ID,
+          environment.AUTH0_MCP_FALLBACK_CLIENT_ID ||
+          environment.AUTH0_MCP_PUBLIC_CLIENT_ID,
         redirectUris: [
           'https://chatgpt.com/connector_platform_oauth_redirect',
           'https://platform.openai.com/apps-manage/oauth',
@@ -90,32 +103,27 @@ export default registerAs('mcp', () => {
 
     // HTTP Transport Configuration
     httpTransport: {
-      enabled: process.env.MCP_HTTP_ENABLED !== 'false', // Enabled by default
+      enabled: environment.MCP_HTTP_ENABLED !== 'false', // Enabled by default
       path: httpPath,
-      requireAuth: process.env.MCP_HTTP_REQUIRE_AUTH !== 'false', // JWT required by default
-      allowedOrigins: process.env.MCP_HTTP_ALLOWED_ORIGINS
-        ? process.env.MCP_HTTP_ALLOWED_ORIGINS.split(',')
-        : process.env.CORS_ORIGIN
-          ? process.env.CORS_ORIGIN.split(',')
-          : [
-              'http://localhost:3000',
-              'http://localhost:3001',
-              'http://localhost:3002',
-              'http://127.0.0.1:3002',
-            ],
+      requireAuth: environment.MCP_HTTP_REQUIRE_AUTH !== 'false', // JWT required by default
+      allowedOrigins:
+        normalizeOriginList(
+          environment.MCP_HTTP_ALLOWED_ORIGINS,
+          'MCP_HTTP_ALLOWED_ORIGINS',
+        ) ?? defaultAllowedOrigins,
     },
 
     // Stdio Transport Configuration
     stdioTransport: {
-      enabled: process.env.MCP_STDIO_ENABLED === 'true', // Disabled by default (enable for local dev)
+      enabled: environment.MCP_STDIO_ENABLED === 'true', // Disabled by default (enable for local dev)
     },
 
     // Feature Configuration
     tools: {
       preferences: {
-        enabled: process.env.MCP_TOOLS_PREFERENCES_ENABLED !== 'false',
+        enabled: environment.MCP_TOOLS_PREFERENCES_ENABLED !== 'false',
         maxSearchResults: parseInt(
-          process.env.MCP_TOOLS_PREFERENCES_MAX_SEARCH_RESULTS || '100',
+          environment.MCP_TOOLS_PREFERENCES_MAX_SEARCH_RESULTS || '100',
           10,
         ),
       },
@@ -123,7 +131,7 @@ export default registerAs('mcp', () => {
 
     resources: {
       schema: {
-        enabled: process.env.MCP_RESOURCES_SCHEMA_ENABLED !== 'false',
+        enabled: environment.MCP_RESOURCES_SCHEMA_ENABLED !== 'false',
       },
     },
 
@@ -162,7 +170,7 @@ export default registerAs('mcp', () => {
       rateLimit: {
         windowMs: 60 * 1000, // 1 minute
         maxRequests: parseInt(
-          process.env.MCP_OAUTH_REGISTER_RATE_LIMIT || '30',
+          environment.MCP_OAUTH_REGISTER_RATE_LIMIT || '30',
           10,
         ),
       },
@@ -170,4 +178,12 @@ export default registerAs('mcp', () => {
 
     clients,
   };
-});
+}
+
+export function mcpConfigLoader(configuration: RuntimeConfiguration) {
+  return registerAs('mcp', () =>
+    createMcpConfiguration(process.env, configuration.corsOrigins),
+  );
+}
+
+export default registerAs('mcp', () => createMcpConfiguration());

@@ -136,16 +136,17 @@ step plan that resolves them.
   version change is a Step 02 decision and must keep the Step 01 aggregate gate
   green or update it through reviewed replacement evidence.
 
-### LM-013: Exact Step 02 runtime and package-manager target
+### LM-013: Exact Step 02 runtime and package-manager contract
 
 - Status: Accepted
 - Decision: Step 02 selects exact Node.js 24.21.0 and pnpm 10.25.0 for
   installation, builds, the Local Migration Baseline Gate, and packaging
-  evidence. This is a reviewed target, not yet a `main` support claim. It
-  becomes the supported contract only when PR 02B atomically aligns all version
-  sources, eval discovery, Docker, CI, and documentation, the complete
-  exact-runtime gate passes locally and remotely, and a human merges the PR.
-  Until then LM-012 evidence governs.
+  evidence. PR 02B atomically aligned the version sources, eval discovery,
+  Docker, CI, and documentation; passed the complete exact-runtime gate locally
+  and remotely; and was human-merged through
+  [#158](https://github.com/loyalagents/context-router/pull/158) at
+  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`. The exact pair is therefore the
+  supported `main` contract; LM-012 remains historical Step 01 evidence.
 - Evidence: the exact Step 01-base gate passed all 11 phases on Node 20.19.5 and
   pnpm 10.25.0. Supplemental already-installed Node 22.13.1 and 24.18.0 runs
   passed phases 1–5 and exposed the same phase-6 directory test-discovery defect;
@@ -160,9 +161,8 @@ step plan that resolves them.
   record. PR 02B head `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` then passed
   all applicable standard CI jobs in run `35173087186` and the dedicated
   11-phase baseline gate in run `35173087176`. The target has satisfied its
-  implementation evidence but becomes the supported `main` contract only after
-  human landing.
-- Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
+  implementation evidence and was human-landed at the merge SHA above.
+- Consequence: the landed contract rejects other Node majors and Node 24 patch releases, or
   other pnpm versions, before resource acquisition. A future patch/version
   change requires reviewed evidence and atomic metadata/CI/documentation
   alignment; it may not regenerate fixtures merely to force the upgrade.

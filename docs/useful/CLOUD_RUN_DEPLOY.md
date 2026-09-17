@@ -63,7 +63,9 @@ DATABASE_URL="${CLOUD_DB}" pnpm exec prisma db seed
 ## What Looks Correct
 
 - `cloudbuild.yaml` correctly builds the backend image from the monorepo root with `apps/backend/Dockerfile`.
-- The backend listens on `process.env.PORT`, which is what Cloud Run injects.
+- Cloud Run injects `PORT` into the process environment. The backend snapshots
+  that value at startup before creating the Nest application and listens on the
+  parsed port.
 - The Cloud SQL Unix socket style can work with the current `pg` adapter when `DATABASE_URL` includes `host=/cloudsql/<instance-connection-name>`.
 
 ## Things To Fix Before Deploying

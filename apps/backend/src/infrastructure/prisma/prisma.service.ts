@@ -4,6 +4,7 @@ import {
   OnModuleDestroy,
   Logger,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { PrismaClient } from "./generated-client";
 import { buildPrismaClientOptions } from "./prisma-client-options";
 
@@ -13,13 +14,17 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly nodeEnvironment: string;
 
-  constructor() {
+  constructor(configService: ConfigService) {
     super(
       buildPrismaClientOptions({
+        databaseUrl: configService.getOrThrow<string>("DATABASE_URL"),
         log: ["query", "info", "warn", "error"],
       }),
     );
+    this.nodeEnvironment =
+      configService.get<string>("app.nodeEnv") ?? "development";
   }
 
   async onModuleInit() {
@@ -38,7 +43,7 @@ export class PrismaService
   }
 
   async cleanDatabase() {
-    if (process.env.NODE_ENV === "production") {
+    if (this.nodeEnvironment === "production") {
       throw new Error("Cannot clean database in production");
     }
 

@@ -7,10 +7,11 @@ import {
   NextSSRInMemoryCache,
   SSRMultipartLink,
 } from "@apollo/experimental-nextjs-app-support/ssr";
+import { GRAPHQL_URL } from "@/lib/runtime-config";
 
 function makeClient() {
   const httpLink = new HttpLink({
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
+    uri: GRAPHQL_URL,
   });
 
   return new NextSSRApolloClient({

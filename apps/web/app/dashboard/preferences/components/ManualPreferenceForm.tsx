@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 interface Preference {
   id: string;
@@ -103,8 +104,7 @@ export default function ManualPreferenceForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const graphqlUrl =
-    process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+  const graphqlUrl = GRAPHQL_URL;
 
   const normalizedSlug = slug.trim();
   const existingDefinition = definitions.find(

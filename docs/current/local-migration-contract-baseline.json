@@ -590,8 +590,8 @@
         {
           "path": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
           "fingerprints": [
-            "process.env.DATABASE_URL",
-            "new PrismaPg(new Pool({ connectionString: databaseUrl })"
+            "if (!options.databaseUrl)",
+            "adapter: new PrismaPg(new Pool({ connectionString: options.databaseUrl }), {"
           ]
         }
       ],
@@ -723,14 +723,14 @@
           "path": "apps/web/lib/apollo-client.ts",
           "fingerprints": [
             "new HttpLink({",
-            "process.env.NEXT_PUBLIC_GRAPHQL_URL || \"http://localhost:3000/graphql\""
+            "uri: GRAPHQL_URL"
           ]
         },
         {
           "path": "apps/web/lib/apollo-wrapper.tsx",
           "fingerprints": [
             "new HttpLink({",
-            "process.env.NEXT_PUBLIC_GRAPHQL_URL || \"http://localhost:3000/graphql\""
+            "uri: GRAPHQL_URL"
           ]
         },
         {
@@ -807,7 +807,7 @@
           "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
           "fingerprints": [
             "link: new HttpLink({",
-            "uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql'"
+            "uri: GRAPHQL_URL"
           ]
         },
         {
@@ -2189,12 +2189,6 @@
     },
     {
       "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
       "contract": "mcp",
       "kind": "tool",
       "reference": "searchPreferences"
@@ -2224,52 +2218,10 @@
       "reference": "/auth/*"
     },
     {
-      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
       "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
       "contract": "http",
       "kind": "route",
       "reference": "/api/preferences/analysis"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
     },
     {
       "path": "apps/web/app/dashboard/preferences/page.tsx",
@@ -2278,22 +2230,10 @@
       "reference": "/auth/*"
     },
     {
-      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
       "path": "apps/web/app/dashboard/profile/page.tsx",
       "contract": "http",
       "kind": "route",
       "reference": "/auth/*"
-    },
-    {
-      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
     },
     {
       "path": "apps/web/app/dashboard/schema/page.tsx",
@@ -2302,22 +2242,10 @@
       "reference": "/auth/*"
     },
     {
-      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
       "path": "apps/web/app/dashboard/search-lab/page.tsx",
       "contract": "http",
       "kind": "route",
       "reference": "/auth/*"
-    },
-    {
-      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
     },
     {
       "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
@@ -2338,13 +2266,7 @@
       "reference": "/graphql"
     },
     {
-      "path": "apps/web/lib/apollo-client.ts",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
-      "path": "apps/web/lib/apollo-wrapper.tsx",
+      "path": "apps/web/lib/runtime-config.ts",
       "contract": "http",
       "kind": "route",
       "reference": "/graphql"

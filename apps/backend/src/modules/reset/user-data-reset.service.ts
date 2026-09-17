@@ -118,10 +118,7 @@ export class UserDataResetService {
   }
 
   private demoResetEnabled(): boolean {
-    return (
-      this.configService.get<string>('ENABLE_DEMO_RESET') === 'true' ||
-      process.env.ENABLE_DEMO_RESET === 'true'
-    );
+    return this.configService.get<boolean>('app.enableDemoReset') === true;
   }
 
   private async getUserDefinitionIds(

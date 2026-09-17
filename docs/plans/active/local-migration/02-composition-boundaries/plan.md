@@ -1,15 +1,21 @@
 # Step 02: Composition Boundaries
 
-- Document status: independently approved; PR 02A
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
-  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation active
+- Document status: independently approved plan; PR 02A
+  [#157](https://github.com/loyalagents/context-router/pull/157) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
+  [#158](https://github.com/loyalagents/context-router/pull/158) merged at
+  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
+  [#159](https://github.com/loyalagents/context-router/pull/159) is open on
+  `codex/local-migration-02-runtime-bootstrap`, with review-finding fixes
+  locally implemented and independently approved; final-head required checks
+  and human landing are governed by the closeout gates below
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02B only
+- Implementation owner: `/root` for active PR 02C only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
@@ -24,12 +30,12 @@ are not pre-authorized stacked branches.
 | PR/checkpoint | Branch and base | Sole writer | Read-only reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
-| 02B: toolchain contract | active `codex/local-migration-02-toolchain-contract` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | inactive `codex/local-migration-02-runtime-bootstrap`; create only from the human-merged 02B commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
+| 02C: runtime configuration/bootstrap | open [#159](https://github.com/loyalagents/context-router/pull/159) on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes locally implemented and independently approved, with final-head required checks enforced before human landing | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02B only**. Any
+The current branch may implement **02C only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -147,6 +153,97 @@ preview before the configured application build. Separate repository inspection
 found no rulesets and no `main` branch protection that required Vercel. The
 production branch remains the operator-confirmed `hosted-v1-maintenance`
 setting recorded in the orchestration document.
+
+PR 02B was subsequently human-merged through
+[#158](https://github.com/loyalagents/context-router/pull/158) at
+`5a8b640a883dd33d42239d3a74e827cc17ffaae3`, promoting Node 24.21.0 and pnpm
+10.25.0 to the landed `main` contract recorded by LM-013.
+
+### PR 02C activation evidence
+
+Before any PR 02C product change, the active branch was
+`codex/local-migration-02-runtime-bootstrap`; `HEAD`, local `main`,
+`origin/main`, and both merge bases resolved exactly to the human-merged PR 02B
+SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; history was full and
+non-shallow; and the worktree was clean. The worktree audit found this to be the
+only holder of the 02C branch and found no competing owner for its runtime,
+configuration, web endpoint, Compose, documentation, or
+`scripts/local-migration/**` hotspots. PR 02C does not own `.github/workflows/ci.yml`;
+an unexpected workflow edit stops for explicit coordination.
+
+The activation LMBG was bound to that exact merge SHA and passed all 11 phases
+in 240,211 ms using Node 24.21.0, pnpm 10.25.0, Python 3.12.8, and PostgreSQL
+15.15. It reported `baseComparison=performed`, caller integrity true, no skipped
+phase, and clean resource cleanup. `/root` is the sole writer. Fresh read-only
+reviewers are `/root/runtime_activation_audit`, `/root/runtime_arch_review`, and
+`/root/runtime_test_security_review`; they may inspect and report but may not
+mutate the repository.
+
+Shared-hotspot landing order is the merged PR 02B state, then sole 02C
+ownership and human landing, then activation of 02D, then activation of 02E.
+The supported mode after PR 02C remains the existing hosted composition with
+explicit configuration/origin ownership and a tested process lifecycle; it
+does not add local identity, storage, model execution, UI, or packaging policy.
+
+### PR 02C implementation evidence
+
+The implementation keeps PR 02C within its approved boundary. Backend startup
+now loads `.env.local` and `.env` from the explicit backend package root with
+process-environment precedence, validates listener and origin inputs once, and
+passes an explicit startup snapshot into the dynamic Nest composition. The
+hosted bootstrap has separable create/configure/start/close stages, actual-port
+readiness, bounded partial-start and signal cleanup, one-close behavior, and
+sanitized nonzero failures without changing the no-host listener call. The MCP
+origin fallback consumes the same normalized CORS list. The web application has
+one owner for its two build-time public backend endpoints, while `APP_BASE_URL`
+remains the Auth0 runtime origin. Launch and Compose migration guidance, the
+contract registry, and the cumulative gate argv moved with those changes.
+
+The backend tests were written red first. The final focused Jest command passes
+three suites and 50 tests; the required runtime/web Node command passes 17/17;
+the reset e2e regression passes 8/8; backend unit/build, seed type-check,
+contract checking, frozen-install integrity, web production build, and hosted
+restart evidence all pass. The exact-base LMBG is bound to
+`5a8b640a883dd33d42239d3a74e827cc17ffaae3` on Node 24.21.0, pnpm 10.25.0,
+Python 3.12.8, and PostgreSQL 15.15 and passes all 11 phases with
+`baseComparison=performed`, caller integrity true, no skipped phase, and clean
+resource cleanup. Exact elapsed time and final-head remote runs belong in the
+PR evidence so this repository record does not become self-referential.
+
+Fresh read-only implementation reviewers `/root/runtime_impl_arch`,
+`/root/runtime_impl_compat`, and `/root/runtime_impl_security` compared the
+complete base-to-working-tree diff with the approved plan. Their findings led
+to explicit Nest non-aborting creation, bounded hard exit after failed cleanup,
+startup-owned reset configuration, explicit seed database inputs, race-free
+process waiters, real post-bind/stuck-close process coverage, compatible dotenv
+parsing and runtime dependency classification, exact web consumer/registry
+evidence, and preservation of the baseline raw-`NODE_ENV` GraphQL stacktrace
+behavior. The reset e2e now constructs independent enabled and disabled startup
+compositions instead of mutating configuration after startup. All three
+reviewers approved that implementation state with no remaining findings.
+
+A later independent review of consolidated head
+`0de5e803bea05a8729f8502afa7f06c3de8f10a8` found an operational diagnostics
+regression, a retained MCP-origin fallback inconsistency, a latent
+split-environment bootstrap option, and stale control-plane wording. The current
+branch resolves those findings with allowlisted startup diagnostics, one shared
+CORS-origin resolver, a fail-fast custom-environment contract, regression
+coverage, and this status correction. Fresh read-only reviewers
+`/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and
+`/root/review_fix_security` approved the corrected implementation with no
+remaining findings. Their review also found and resolved a stateful-getter
+redaction gap before approval. GitHub's dedicated migration workflow plus
+applicable standard CI remain required before human landing of
+[#159](https://github.com/loyalagents/context-router/pull/159).
+
+The prior reviewed head `0de5e803bea05a8729f8502afa7f06c3de8f10a8`
+passed applicable standard CI in run
+[`35181940243`](https://github.com/loyalagents/context-router/actions/runs/35181940243)
+and the dedicated 11-phase workflow in run
+[`35181940231`](https://github.com/loyalagents/context-router/actions/runs/35181940231).
+Those runs predate the review-finding fixes and are historical evidence only;
+the newer final head must earn fresh checks. Vercel remains outside required
+evidence under LM-014 and was not rechecked. PRs 02D and 02E remain inactive.
 
 ### Authoritative entry gate
 
@@ -374,7 +471,7 @@ authority, and unknown external GraphQL/HTTP/MCP clients remain binding.
 | Configuration and env-file lookup | **intentional compatible behavior correction** in 02C, not merely additive | backend `.env.example`, root Compose file/new Compose env example, package start scripts, Docker/Cloud Run, operator docs, gate/smoke | `PORT` is application listen port; `APP_PORT` is Compose host publication only. Process env continues to win; `<backend-package-root>/.env.local` wins `.env`. Arbitrary caller-cwd env loading is removed with migration guidance. No hosted bind-default change. |
 | Backend/web origins and endpoints | preserved semantics with one owner in 02C | `main.ts`, `mcp.config.ts`, web `.env.example`; all `NEXT_PUBLIC_GRAPHQL_URL` and `NEXT_PUBLIC_BACKEND_URL` consumers in the Step 01 registry/census | Backend `CORS_ORIGIN` is parsed once; `MCP_HTTP_ALLOWED_ORIGINS` remains an explicit override and otherwise inherits that normalized list. Web endpoint variables remain build-time public inputs, while `APP_BASE_URL` remains the server-runtime Auth0 origin. The staged build records its exact backend proxy URL and probes backend CORS with the actual staged web origin. |
 | Filesystem/resources | corrected without public content drift in 02D | GraphQL generator, MCP `schema://graphql`, contract collector, Docker/stage, restart smoke | Runtime schema comes from one cwd-independent source. No caller-cwd `src/schema.gql` creation. Missing/tampered asset fails before readiness with sanitized diagnostics. |
-| Package/toolchain | explicit supported contract in 02B; package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. Frozen install must not alter the lockfile except the reviewed workspace-importer move in 02D. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
+| Package/toolchain | explicit supported contract in 02B; direct runtime-parser classification in 02C; broad package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. The frozen lockfile permits the reviewed 02C backend-importer reclassification of the existing `dotenv` spec from development to runtime plus the separately reviewed 02D workspace-importer move; 02C does not pull the broader Vertex/package-closure work forward. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
 | Process lifecycle | additive testability in 02C | package `start:prod`, Docker command, restart/packaging smoke | Preserve hosted validation/CORS/listen semantics. Add bounded readiness and graceful close; errors remain sanitized and nonzero. |
 
 Any configuration, package, public descriptor, generated schema, registry

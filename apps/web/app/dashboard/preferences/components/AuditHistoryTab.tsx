@@ -4,9 +4,9 @@ import { gql } from '@apollo/client';
 import { print } from 'graphql';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PreferenceAuditHistoryForTabQuery } from '@/lib/generated/graphql';
+import { GRAPHQL_URL } from '@/lib/runtime-config';
 
-const GRAPHQL_ENDPOINT =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3000/graphql';
+const GRAPHQL_ENDPOINT = GRAPHQL_URL;
 
 const PAGE_SIZE = 20;
 

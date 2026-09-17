@@ -9,21 +9,19 @@ type DirectPrismaClientOptions = Extract<
 >;
 
 type BuildPrismaClientOptionsInput = {
-  databaseUrl?: string;
+  databaseUrl: string;
   log?: PrismaLogLevel[];
 };
 
 export function buildPrismaClientOptions(
-  options: BuildPrismaClientOptionsInput = {},
+  options: BuildPrismaClientOptionsInput,
 ): DirectPrismaClientOptions {
-  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
+  if (!options.databaseUrl) {
     throw new Error("DATABASE_URL is not set");
   }
 
   return {
-    adapter: new PrismaPg(new Pool({ connectionString: databaseUrl }), {
+    adapter: new PrismaPg(new Pool({ connectionString: options.databaseUrl }), {
       disposeExternalPool: true,
     }),
     ...(options.log ? { log: options.log } : {}),

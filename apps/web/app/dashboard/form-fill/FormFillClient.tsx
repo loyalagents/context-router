@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { BACKEND_URL } from '@/lib/runtime-config';
 
 type FormFillStatus =
   | 'success'
@@ -162,8 +163,7 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
     replaceDownloadUrl(null);
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+      const backendUrl = BACKEND_URL;
       const formData = new FormData();
       formData.append('file', selectedFile);
 

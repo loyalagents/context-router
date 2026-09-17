@@ -1,22 +1,19 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `02-composition-boundaries` — PR 02B toolchain contract
-  implementation and independent review are complete; candidate head
-  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` passed the required GitHub checks
-  and LM-014 external verification after PR 02A
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
-  `5a2fc8a09e9091d16160caea258d678293a1e2b3`
+- Current step: `02-composition-boundaries` — PR 02C runtime
+  configuration/bootstrap [#159](https://github.com/loyalagents/context-router/pull/159)
+  is open after PR 02B
+  [#158](https://github.com/loyalagents/context-router/pull/158) merged at
+  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes are locally
+  implemented and independently approved, with final-head required checks
+  enforced by the closeout gates
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-toolchain-contract`
-- Concrete next action: maintain PR
-  [#158](https://github.com/loyalagents/context-router/pull/158) closeout by
-  keeping required checks green and its description synchronized on the
-  documentation-only closeout head and any later head, mark or keep the PR
-  ready, then leave review and landing to a human and keep PR 02C inactive;
-  after PR 02B merges, record the exact merge SHA, activate PR 02C from that
-  base, and promote the exact toolchain contract to the landed baseline
-- Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
+  `codex/local-migration-02-runtime-bootstrap`
+- Concrete next action: complete final-head required checks for PR #159, then
+  leave landing to a human; keep PRs 02D and 02E inactive until the predecessor
+  human-merge and activation gates are complete
+- Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
   first
 - Last reviewed: 2026-09-16
 
@@ -24,18 +21,18 @@ Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Implement And Review Step 02 PR 02B
+## Implement And Review Step 02 PR 02C
 
 1. Follow the independently approved Step 02
    [`plan.md`](02-composition-boundaries/plan.md) and its five-PR landing order.
-2. Preserve the exact PR 02A merge base
-   `5a2fc8a09e9091d16160caea258d678293a1e2b3` for PR 02B and bind every local
+2. Preserve the exact PR 02B merge base
+   `5a8b640a883dd33d42239d3a74e827cc17ffaae3` for PR 02C and bind every local
    aggregate run to that base.
-3. Keep PR 02B limited to eval discovery and the exact Node.js/pnpm contract,
-   require final-head local and remote evidence plus resolved read-only review,
-   and leave its landing to a human. Never auto-merge.
-4. Do not activate PR 02C until PR 02B is human-merged and its exact `main`
-   merge SHA is recorded.
+3. Keep PR 02C limited to runtime configuration, origin ownership, web public
+   endpoint ownership, and hosted bootstrap lifecycle. Do not enter resource
+   packaging, local identity, storage, model, UI, or installer policy.
+4. Require final-head local and remote evidence plus resolved fresh read-only
+   review, leave landing to a human, and do not activate PR 02D beforehand.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

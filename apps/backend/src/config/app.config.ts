@@ -1,8 +1,18 @@
 import { registerAs } from '@nestjs/config';
+import type { RuntimeConfiguration } from './runtime-config';
 
-export default registerAs('app', () => ({
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-  isDevelopment: process.env.NODE_ENV === 'development',
-  isProduction: process.env.NODE_ENV === 'production',
-}));
+export function appConfigLoader(
+  configuration: RuntimeConfiguration,
+  environment: NodeJS.ProcessEnv,
+) {
+  const rawNodeEnv = environment.NODE_ENV;
+  const nodeEnv = rawNodeEnv || 'development';
+
+  return registerAs('app', () => ({
+    nodeEnv,
+    port: configuration.port,
+    isDevelopment: rawNodeEnv === 'development',
+    isProduction: rawNodeEnv === 'production',
+    enableDemoReset: environment.ENABLE_DEMO_RESET === 'true',
+  }));
+}
