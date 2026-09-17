@@ -7,10 +7,10 @@
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-toolchain-contract`
-- Concrete next action: run the dedicated migration workflow and all applicable
-  standard CI on the final remote head, resolve any remote finding, and leave
-  landing to a human; promote the exact toolchain to the supported contract only
-  after that remote evidence passes
+- Concrete next action: resolve the reviewed Vercel preview/toolchain decision,
+  then run the dedicated migration workflow and all applicable standard CI on
+  the final remote head, resolve any remote finding, and leave landing to a
+  human; promote the exact toolchain only after those gates pass
 - Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Primary development branch: `main`

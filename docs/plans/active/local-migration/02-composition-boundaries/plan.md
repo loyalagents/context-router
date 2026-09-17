@@ -116,11 +116,22 @@ The implemented PR 02B working tree then passed a frozen pnpm 10.25.0 install
 with the lockfile hash unchanged, the quoted eval glob and `pnpm eval:verify`
 with 364/364 tests and unchanged fixtures, and the full 11-phase LMBG on exact
 Node 24.21.0/pnpm 10.25.0. The final gate was bound to
-`5a2fc8a09e9091d16160caea258d678293a1e2b3`; the final-head rerun after review
-fixes completed in 240,280 ms and reported `baseComparison=performed`, caller
-integrity true, no skipped phase, and clean resource cleanup. The fresh
-independent reviewers approved the current local implementation; remote
-final-head evidence remains required.
+`5a2fc8a09e9091d16160caea258d678293a1e2b3`; the post-review full-tree rerun
+reported `baseComparison=performed`, caller integrity true, no skipped phase,
+and clean resource cleanup. Exact elapsed time belongs in the PR evidence rather
+than this self-referential repository record. The fresh independent reviewers
+approved the local implementation; remote final-head evidence remains required.
+
+The Vercel preview status is an external remote build topology. Vercel can
+select Node 24 only by major and may roll its minor/patch release, while the 02B
+checker intentionally requires Node 24.21.0. When that status is attached to
+the final PR head, its log must record the observed Node and pnpm versions. A
+green run on the exact pair is only point-in-time evidence, not a durable
+selector. Landing remains blocked until a separate reviewed decision either
+reconfigures/scopes the preview out of the local-first `main` contract or
+revises the exact toolchain contract atomically; repository files do not capture
+the project settings. Production remains on `hosted-v1-maintenance` under
+LM-001.
 
 ### Authoritative entry gate
 
@@ -266,7 +277,7 @@ registry/consumer census and the owning step's behavioral tests.
 | GitHub `ubuntu-latest` | CI-tested, source workspace only | Step 01 remote Node 20/pnpm 9 gate; current evidence does not persist exact architecture/libc for a staged artifact | 02E workflow must record and pass the exact staged smoke before naming Linux x64/glibc support evidence |
 | macOS x64 | analysis-only | lock/package metadata only | native staged smoke required |
 | Linux arm64 | analysis-only | lock/package metadata only | native staged smoke required |
-| Windows x64/arm64 | analysis-only | no ACL proof; real descendant-kill regression currently skips Windows | native staged smoke, ACL assertion, and owned process-tree termination required |
+| Windows x64/arm64 | analysis-only | no ACL proof; real descendant-kill regression currently skips Windows; the shell-free pnpm probe does not execute common `.cmd` shims | native safe tool resolution, staged smoke, ACL assertion, and owned process-tree termination required |
 | Alpine/musl or any cross-built artifact | analysis-only | Dockerfile/optional lock entries only | build and run on the exact target; no cross-target `node_modules` reuse |
 
 Step 02 records feasibility evidence; Step 09 owns the final product support,
@@ -775,8 +786,11 @@ selection rules it validates.
    remote-required `contract-baseline` test argv described above and prove the
    JSON/fallback argv are identical. Stop if
    the exact runtime is unavailable, lockfile drifts, any phase skips/fails, or
-   `ci.yml` ownership lacks an explicit landing order. Revert the entire
-   version/eval checkpoint together; do not leave mixed version sources.
+   `ci.yml` ownership lacks an explicit landing order. Also stop if a Vercel
+   preview is attached without a reviewed decision for its major-only
+   Node selector; even a point-in-time exact result does not establish durable
+   alignment. Revert the entire version/eval checkpoint together; do not leave
+   mixed version sources.
 
 ### PR 02C: configuration/bootstrap lifecycle
 
@@ -899,6 +913,7 @@ selection rules it validates.
 | Aggregate compatibility | `MIGRATION_GATE_BASE_SHA=<recorded-exact-base> MIGRATION_GATE_PYTHON_BIN=<python-3.12> pnpm migration:gate`, with `baseComparison=performed`, no skips, integrity true, clean cleanup | Yes for every PR |
 | Dedicated workflow | `.github/workflows/local-migration-baseline.yml` exact root gate on selected runtime | Yes remotely |
 | Standard CI | exact path-filter mapping below; backend, orchestrator, eval, Harbor static, frontend, and docs jobs as selected | Yes remotely |
+| Attached Vercel preview | final-head build log records observed Node/pnpm; a reviewed decision must reconfigure/scope out the major-only preview or revise the exact contract | Yes when the status is attached to the PR |
 | Repository quality | `git diff --check`; clean status; no generated/lock drift; no residual process/container/temp root | Yes |
 
 Live Auth0/Vertex/provider evaluation, package downloads, `pnpm install`/`npm
@@ -1051,6 +1066,13 @@ material plan changes still require re-review.
 | Testing, LMBG, CI, packaging/OS evidence | `/root/plan_review_test_security` | Added exact tests, cumulative remote execution, bounded gate/workflow timeline, web/backend process proof, interface-complete negative probes, and required CI routing. | **APPROVED** 2026-09-16 |
 | Security and privacy | `/root/plan_review_test_security` | Added private-root/permission/redaction, partial-start/signal/orphan/scoped cleanup evidence and explicitly deferred final authorization, Host/Origin/CSRF/DNS-rebinding and offline policy. | **APPROVED** 2026-09-16 |
 
+The PR 02B follow-up review exposed Vercel's external major-only Node selector
+and the unvalidated Windows `.cmd` probe path. The writer added the explicit
+Vercel landing stop/decision gate and clarified the current macOS/Linux evidence
+boundary. Fresh read-only reviewer `/root/review_findings_platform` approved
+that material plan clarification on 2026-09-16; it does not authorize a checker
+bypass, a Vercel project-setting mutation, or a Windows support claim.
+
 ## Implementation Review Gate
 
 Each PR is blocked from ready-for-review status until fresh read-only reviewers
@@ -1085,6 +1107,16 @@ the integrity-suffixed `packageManager` value, and precise registry/status
 wording. The writer resolved each finding, reran focused validation and the
 exact-base full gate, and both reviewers approved the current local diff.
 Remote final-head workflow evidence remains the closeout gate.
+
+A later independent review found the external Vercel compatibility gap, stale
+elapsed-time wording, the analysis-only Windows limitation, an imprecise
+top-level gate failure label, and missing probe-bound regression assertions.
+The writer removed self-referential timing, recorded the Vercel/Windows
+boundaries, made failure labels stage-aware, moved success output after cleanup,
+and added bounded shell-free probe failure tests. Read-only reviewers
+`/root/review_findings_platform` and `/root/review_findings_gate` approved the
+result on 2026-09-16. The unresolved reviewed Vercel topology decision remains
+a landing blocker, not an implementation-review finding.
 
 ## Exit Criteria
 

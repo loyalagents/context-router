@@ -9,10 +9,10 @@
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: run the dedicated migration workflow and all applicable
-  standard CI on the final remote head, resolve any remote finding, and leave
-  landing to a human; promote the exact toolchain to the supported contract only
-  after that remote evidence passes
+- Concrete next action: resolve the reviewed Vercel preview/toolchain decision,
+  then run the dedicated migration workflow and all applicable standard CI on
+  the final remote head, resolve any remote finding, and leave landing to a
+  human; promote the exact toolchain only after those gates pass
 - Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing

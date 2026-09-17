@@ -153,14 +153,21 @@ step plan that resolves them.
   left the lockfile byte-identical, `pnpm eval:verify` passed 364 tests plus
   fixture validation, and the full gate bound to PR 02A merge
   `5a2fc8a09e9091d16160caea258d678293a1e2b3` passed all 11 phases on Node
-  24.21.0/pnpm 10.25.0; the final-head rerun after review fixes completed in
-  240,280 ms with `baseComparison=performed`, caller integrity true, and clean
-  resource cleanup. Remote final-head evidence is still required before this
-  target becomes the supported merged contract.
+  24.21.0/pnpm 10.25.0; the post-review full-tree rerun reported
+  `baseComparison=performed`, caller integrity true, and clean resource cleanup.
+  Exact elapsed time is retained in the PR evidence rather than this repository
+  record. Remote final-head evidence is still required before this target
+  becomes the supported merged contract.
 - Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
   other pnpm versions, before resource acquisition. A future patch/version
   change requires reviewed evidence and atomic metadata/CI/documentation
   alignment; it may not regenerate fixtures merely to force the upgrade.
+  Windows remains analysis-only until a native shell-free pnpm resolution path
+  and gate pass exist. An attached Vercel preview is required final-head remote
+  evidence, but its external major-only Node setting is not an exact selector:
+  its log records the observed pair, but even a green exact result is only
+  point-in-time evidence. Landing stops for a reviewed reconfiguration/scope or
+  atomic contract decision rather than a checker bypass.
 
 ## Deferred Decisions And Owning Steps
 

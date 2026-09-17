@@ -216,6 +216,24 @@ The unreferenced root `Dockerfile.dev` was removed instead of retaining its
 stale Node 20/npm path; supported backend container builds use
 `apps/backend/Dockerfile`.
 
+The checked contributor and gate path currently covers macOS and Linux only.
+Windows remains analysis-only because the credential-free version probe
+deliberately uses no shell and therefore does not execute the `.cmd` pnpm shims
+commonly installed by Corepack/npm; no Windows support claim exists without a
+native safe executable-resolution design and full gate evidence.
+
+The Vercel status attached to `main` pull requests is an external build
+topology, not a repository-controlled version selector. Vercel exposes a Node
+major selection and may roll minor/patch releases, so the repository cannot
+make that setting durably select Node 24.21.0. PR 02B therefore requires the
+final remote Vercel log, when that status is attached, to record the observed
+Node and pnpm versions. Even an exact point-in-time result does not resolve the
+major-only selector: landing remains blocked until a reviewed decision either
+reconfigures/scopes that preview out of the local-first `main` contract or
+revises the toolchain contract atomically. The checker is not bypassed or
+silently loosened. Vercel production remains on `hosted-v1-maintenance` per
+LM-001.
+
 The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
 requires installed frozen dependencies, an offline Corepack cache containing
 pnpm 10.25.0, and full Git history containing the selected base SHA. Supply a

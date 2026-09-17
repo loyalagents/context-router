@@ -793,13 +793,13 @@ async function executeGate() {
     return;
   }
 
+  await rm(diagnosticsDirectory, { recursive: true, force: true });
   const elapsedMs = Date.now() - startedAt;
   console.log(
     smokeOnly
       ? `migration-smoke: ok; disposable caller-integrity=true elapsedMs=${elapsedMs}`
       : `migration-gate: ok; phases=${result.phases.length} baseComparison=${result.baseComparison} caller-integrity=true elapsedMs=${elapsedMs}`,
   );
-  await rm(diagnosticsDirectory, { recursive: true, force: true });
 }
 
 export async function runWithToolchainPreflight(
@@ -810,16 +810,42 @@ export async function runWithToolchainPreflight(
   return action();
 }
 
+export function formatUnhandledGateFailure(
+  error,
+  { beforeResourceAcquisition },
+) {
+  const rawMessage = error?.message ?? error;
+  if (beforeResourceAcquisition && rawMessage === TOOLCHAIN_ERROR_MESSAGE) {
+    return TOOLCHAIN_ERROR_MESSAGE;
+  }
+  const stage = beforeResourceAcquisition
+    ? " before resource acquisition"
+    : "";
+  return `migration-gate: failed${stage}: ${redactSecrets(rawMessage)}`;
+}
+
 async function main() {
   try {
-    await runWithToolchainPreflight();
+    await checkCurrentToolchain();
   } catch (error) {
-    const message =
-      error?.message === TOOLCHAIN_ERROR_MESSAGE
-        ? TOOLCHAIN_ERROR_MESSAGE
-        : `migration-gate: failed before resource acquisition: ${redactSecrets(error?.message ?? error)}`;
-    console.error(message);
+    console.error(
+      formatUnhandledGateFailure(error, {
+        beforeResourceAcquisition: true,
+      }),
+    );
     process.exitCode = 1;
+    return;
+  }
+
+  try {
+    await executeGate();
+  } catch (error) {
+    console.error(
+      formatUnhandledGateFailure(error, {
+        beforeResourceAcquisition: false,
+      }),
+    );
+    process.exitCode = error?.exitCode ?? 1;
   }
 }
 

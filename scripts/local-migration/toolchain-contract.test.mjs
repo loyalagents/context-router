@@ -112,16 +112,22 @@ test("the checker accepts only Node 24.21.0 and pnpm 10.25.0", async () => {
   }
 });
 
-test("the pnpm version probe does not inherit caller credentials", async () => {
-  const { readCurrentToolchain } = await import("../check-toolchain.mjs");
+test("the pnpm version probe is bounded, shell-free, and credential-free", async () => {
+  const { TOOLCHAIN_ERROR_MESSAGE, readCurrentToolchain } = await import(
+    "../check-toolchain.mjs"
+  );
   const canary = "toolchain-secret-canary";
   const original = process.env.TOOLCHAIN_TEST_SECRET;
   process.env.TOOLCHAIN_TEST_SECRET = canary;
+  let observedFile;
+  let observedArguments;
   let observedOptions;
 
   try {
     const observed = await readCurrentToolchain({
-      run: async (_file, _args, options) => {
+      run: async (file, args, options) => {
+        observedFile = file;
+        observedArguments = args;
         observedOptions = options;
         return { stdout: "10.25.0\n", stderr: "" };
       },
@@ -130,11 +136,35 @@ test("the pnpm version probe does not inherit caller credentials", async () => {
       nodeVersion: "24.21.0",
       pnpmVersion: "10.25.0",
     });
+    assert.equal(observedFile, "pnpm");
+    assert.deepEqual(observedArguments, ["--version"]);
+    assert.equal(observedOptions.timeout, 10_000);
+    assert.equal(observedOptions.maxBuffer, 16 * 1024);
+    assert.equal(observedOptions.shell, false);
     assert.equal(observedOptions.env.TOOLCHAIN_TEST_SECRET, undefined);
     assert.doesNotMatch(
       JSON.stringify(observedOptions.env),
       new RegExp(canary),
     );
+
+    for (const probeError of [
+      Object.assign(new Error("missing /private/path"), { code: "ENOENT" }),
+      Object.assign(new Error("exit secret"), { code: 7 }),
+      Object.assign(new Error("timed out secret"), { code: "ETIMEDOUT" }),
+      Object.assign(new Error("oversized secret"), {
+        code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER",
+      }),
+    ]) {
+      await assert.rejects(
+        readCurrentToolchain({
+          run: async () => {
+            throw probeError;
+          },
+        }),
+        (error) =>
+          error instanceof Error && error.message === TOOLCHAIN_ERROR_MESSAGE,
+      );
+    }
   } finally {
     if (original === undefined) delete process.env.TOOLCHAIN_TEST_SECRET;
     else process.env.TOOLCHAIN_TEST_SECRET = original;
@@ -155,6 +185,33 @@ test("the direct gate rejects an unsupported toolchain before acquisition", asyn
     (error) => error === rejection,
   );
   assert.deepEqual(acquired, []);
+});
+
+test("top-level gate failures distinguish preflight from later failures", async () => {
+  const { TOOLCHAIN_ERROR_MESSAGE } = await import("../check-toolchain.mjs");
+  const { formatUnhandledGateFailure } = await import("./migration-gate.mjs");
+  const failure = new Error("cleanup failed");
+
+  assert.equal(
+    formatUnhandledGateFailure(failure, { beforeResourceAcquisition: true }),
+    "migration-gate: failed before resource acquisition: cleanup failed",
+  );
+  assert.equal(
+    formatUnhandledGateFailure(failure, { beforeResourceAcquisition: false }),
+    "migration-gate: failed: cleanup failed",
+  );
+  assert.equal(
+    formatUnhandledGateFailure(new Error(TOOLCHAIN_ERROR_MESSAGE), {
+      beforeResourceAcquisition: true,
+    }),
+    TOOLCHAIN_ERROR_MESSAGE,
+  );
+  assert.equal(
+    formatUnhandledGateFailure(new Error(TOOLCHAIN_ERROR_MESSAGE), {
+      beforeResourceAcquisition: false,
+    }),
+    `migration-gate: failed: ${TOOLCHAIN_ERROR_MESSAGE}`,
+  );
 });
 
 test("the direct gate CLI rejects before creating a diagnostic root", async () => {

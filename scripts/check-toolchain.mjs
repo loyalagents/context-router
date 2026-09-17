@@ -56,6 +56,7 @@ export async function readCurrentToolchain({ run } = {}) {
       encoding: "utf8",
       env: buildProbeEnvironment(process.env),
       maxBuffer: 16 * 1024,
+      shell: false,
       timeout: 10_000,
     };
     const result = run

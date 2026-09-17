@@ -87,6 +87,12 @@ migration gate all use this exact pair. Other Node.js 24 patch releases and
 other pnpm versions are intentionally unsupported until a reviewed atomic
 toolchain update changes every source together.
 
+The checked contributor and gate path currently covers macOS and Linux only.
+Windows remains analysis-only: common Corepack/npm pnpm shims are `.cmd` files,
+while the version probe deliberately does not start a shell. Use a validated
+macOS or Linux environment until native Windows executable resolution and gate
+evidence land.
+
 ## Environment Setup
 
 Create the env files the apps expect:
