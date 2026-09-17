@@ -4,14 +4,14 @@
 - Current step: `02-composition-boundaries` — PR 02C runtime
   configuration/bootstrap is locally implemented and independently approved
   in draft [#159](https://github.com/loyalagents/context-router/pull/159) after
-  PR 02B
+  PR 02B; its required GitHub CI and dedicated migration workflow are green
   ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-runtime-bootstrap`
-- Concrete next action: complete the dedicated migration workflow and all
-  applicable standard CI for draft PR #159 on final HEAD, then prepare it for
-  human review and landing; PRs 02D and 02E remain inactive
+- Concrete next action: present draft PR #159 for human review and landing;
+  keep PRs 02D and 02E inactive until the predecessor human-merge and activation
+  gates are complete
 - Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
   first
 - Last reviewed: 2026-09-16
