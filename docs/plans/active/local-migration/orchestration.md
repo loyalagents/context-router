@@ -1,26 +1,23 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `02-composition-boundaries` — PR 02C runtime
-  configuration/bootstrap [#159](https://github.com/loyalagents/context-router/pull/159)
-  is open after PR 02B
-  [#158](https://github.com/loyalagents/context-router/pull/158) merged at
-  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes are locally
-  implemented and independently approved, with final-head required checks
-  enforced by the closeout gates
+- Current step: `02-composition-boundaries` — PR 02D runtime resources and
+  production package closure is active after PR 02C
+  [#159](https://github.com/loyalagents/context-router/pull/159) merged at
+  `143515dac687ffbca989a315edaa89e794a04db3`
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-runtime-bootstrap`
-- Concrete next action: complete final-head required checks for PR #159, then
-  leave landing to a human; keep PRs 02D and 02E inactive until the predecessor
-  human-merge and activation gates are complete
-- Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
+  `codex/local-migration-02-runtime-resources`
+- Concrete next action: publish PR 02D, require final-head standard CI and the
+  dedicated migration gate, and leave landing to a human; keep PR 02E inactive
+  until PR 02D is human-merged and PR 02E's activation gate is complete
+- Review date: 2026-10-14 or the PR 02D human landing decision, whichever comes
   first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-09-17
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -271,7 +268,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Complete — [PR #156](https://github.com/loyalagents/context-router/pull/156) merged at `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
-| `02-composition-boundaries` | Plan approved; PR 02A [#157](https://github.com/loyalagents/context-router/pull/157) merged at `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B [#158](https://github.com/loyalagents/context-router/pull/158) merged at `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C [#159](https://github.com/loyalagents/context-router/pull/159) is open on `codex/local-migration-02-runtime-bootstrap`, with review-finding fixes locally implemented and independently approved; final-head required checks and human landing are governed by the closeout gates — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
+| `02-composition-boundaries` | Plan approved; PR 02A [#157](https://github.com/loyalagents/context-router/pull/157) merged at `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B [#158](https://github.com/loyalagents/context-router/pull/158) merged at `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C [#159](https://github.com/loyalagents/context-router/pull/159) merged at `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D is active on `codex/local-migration-02-runtime-resources` from that exact merge SHA — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
 | `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and make restart/recovery explicit. | Step 04 |
@@ -284,11 +281,11 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-Step 02 PR 02C is the sole primary migration checkpoint and `/root` is its sole
-writer. PRs 02D–02E are inactive and unassigned until their predecessor is
-human-merged and each activation gate passes. Read-only discovery/review may run
-in parallel. The interface-evolution track may run only when it does not alter
-the active runtime/configuration subset, a baselined contract, or a shared file.
+Step 02 PR 02D is the sole primary migration checkpoint and `/root` is its sole
+writer. PR 02E is inactive and unassigned until PR 02D is human-merged and its
+activation gate passes. Read-only discovery/review may run in parallel. The
+interface-evolution track may run only when it does not alter
+the active resource/package-closure subset, a baselined contract, or a shared file.
 Visual-only UI work and new evaluation fixtures are otherwise safe only with an
 explicit non-overlapping owner.
 

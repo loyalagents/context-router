@@ -22,6 +22,7 @@ import { McpClientRegistry } from './auth/mcp-client-registry.service';
 import { McpAuthorizationService } from './auth/mcp-authorization.service';
 import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
 import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
+import { graphqlSchemaSdlSupplierProvider } from './resources/graphql-schema-sdl';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
         PermissionGrantListTool,
       ],
     },
+    graphqlSchemaSdlSupplierProvider,
     SchemaResource,
     DcrRateLimitGuard,
     McpAuthGuard,

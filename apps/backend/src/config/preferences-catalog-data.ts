@@ -1,4 +1,4 @@
-import rawCatalogData = require('./preferences.catalog.json');
+import { getValidatedPreferenceCatalog } from '../bootstrap/runtime-resource-preflight';
 
 // Evidence schema for provenance tracking
 export interface PreferenceEvidence {
@@ -21,10 +21,9 @@ export interface PreferenceDefinition {
   isSensitive?: boolean; // future: redact from prompt by default
 }
 
-// Keep the unwrap defensive because JSON module interop differs across
-// ts-jest, ts-node, and compiled CommonJS consumers.
-const catalogData =
-  'default' in rawCatalogData ? rawCatalogData.default : rawCatalogData;
+const catalogData = getValidatedPreferenceCatalog();
 
-export const PREFERENCE_CATALOG =
-  catalogData as Record<string, PreferenceDefinition>;
+export const PREFERENCE_CATALOG = catalogData as Record<
+  string,
+  PreferenceDefinition
+>;

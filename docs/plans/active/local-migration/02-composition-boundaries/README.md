@@ -5,25 +5,25 @@
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
-  [#159](https://github.com/loyalagents/context-router/pull/159) is open on the
-  active branch, with review-finding fixes locally implemented and independently
-  approved; final-head required checks are enforced by the closeout gates
+  [#159](https://github.com/loyalagents/context-router/pull/159) merged at
+  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D is active from that exact
+  merge SHA
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-runtime-bootstrap` for PR 02C only
+  `codex/local-migration-02-runtime-resources` for PR 02D only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: complete final-head required checks for PR #159, then
-  leave landing to a human; keep PRs 02D and 02E inactive until the predecessor
-  human-merge and activation gates are complete
-- Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
+- Concrete next action: publish PR 02D, require final-head standard CI and the
+  dedicated migration gate, and leave landing to a human; keep PR 02E inactive
+  until PR 02D is human-merged and PR 02E's activation gate is complete
+- Review date: 2026-10-14 or the PR 02D human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
 - Supported mode during planning: the existing hosted
   NestJS/PostgreSQL/Auth0/Vertex and Next.js composition remains supported; no
   local preview is implied by this charter
-- Last updated: 2026-09-16
+- Last updated: 2026-09-17
 
 ## Outcome
 
@@ -36,13 +36,13 @@ startup, shutdown, and clean restart. The plan must preserve all Step 01
 contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
-The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PRs 02A
-and 02B are merged and only 02C is active on the current branch. Its
-implementation, review findings, and final-head evidence are governed by PR
-#159 and the plan's closeout gates. PRs 02D–02E remain inactive until a human
-merges each predecessor and their activation gates assign fresh bases, owners,
-and reviewers. Approval does not authorize a local identity, database, model,
-UI shell, installer, final OS claim, or default listener change.
+The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PRs
+02A–02C are merged and only 02D is active on the current branch. Its exact base,
+activation gate, owner, and fresh read-only reviewers are recorded in the plan.
+PR 02E remains inactive until a human merges PR 02D and its activation gate
+assigns a fresh base, owner, and reviewers. Approval does not authorize a local
+identity, database, model, UI shell, installer, final OS claim, or default
+listener change.
 
 ## Required Reading
 

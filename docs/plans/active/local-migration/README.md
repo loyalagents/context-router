@@ -1,38 +1,36 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `02-composition-boundaries` — PR 02C runtime
-  configuration/bootstrap [#159](https://github.com/loyalagents/context-router/pull/159)
-  is open after PR 02B
-  [#158](https://github.com/loyalagents/context-router/pull/158) merged at
-  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes are locally
-  implemented and independently approved, with final-head required checks
-  enforced by the closeout gates
+- Current step: `02-composition-boundaries` — PR 02D runtime resources and
+  production package closure is active after PR 02C
+  [#159](https://github.com/loyalagents/context-router/pull/159) merged at
+  `143515dac687ffbca989a315edaa89e794a04db3`
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-runtime-bootstrap`
-- Concrete next action: complete final-head required checks for PR #159, then
-  leave landing to a human; keep PRs 02D and 02E inactive until the predecessor
-  human-merge and activation gates are complete
-- Review date: 2026-10-14 or the PR 02C human landing decision, whichever comes
+  `codex/local-migration-02-runtime-resources`
+- Concrete next action: publish PR 02D, require final-head standard CI and the
+  dedicated migration gate, and leave landing to a human; keep PR 02E inactive
+  until PR 02D is human-merged and PR 02E's activation gate is complete
+- Review date: 2026-10-14 or the PR 02D human landing decision, whichever comes
   first
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-09-17
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Implement And Review Step 02 PR 02C
+## Implement And Review Step 02 PR 02D
 
 1. Follow the independently approved Step 02
    [`plan.md`](02-composition-boundaries/plan.md) and its five-PR landing order.
-2. Preserve the exact PR 02B merge base
-   `5a8b640a883dd33d42239d3a74e827cc17ffaae3` for PR 02C and bind every local
+2. Preserve the exact PR 02C merge base
+   `143515dac687ffbca989a315edaa89e794a04db3` for PR 02D and bind every local
    aggregate run to that base.
-3. Keep PR 02C limited to runtime configuration, origin ownership, web public
-   endpoint ownership, and hosted bootstrap lifecycle. Do not enter resource
-   packaging, local identity, storage, model, UI, or installer policy.
+3. Keep PR 02D limited to cwd-independent schema/catalog resources, sanitized
+   pre-readiness integrity failure, and independently deployable backend
+   production dependency closure. Do not enter the staged backend/web smoke,
+   local identity, storage, model, UI, or installer policy.
 4. Require final-head local and remote evidence plus resolved fresh read-only
-   review, leave landing to a human, and do not activate PR 02D beforehand.
+   review, leave landing to a human, and do not activate PR 02E beforehand.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

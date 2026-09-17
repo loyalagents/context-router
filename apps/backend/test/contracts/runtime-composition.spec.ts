@@ -91,10 +91,25 @@ describe("runtime composition contract", () => {
     expect(mcpConfig).toContain("MCP_HTTP_ALLOWED_ORIGINS");
   });
 
-  it("keeps schema cwd ownership unchanged for the later 02D checkpoint", () => {
-    expect(read("apps/backend/src/app.module.ts")).toMatch(
-      /join\(process\.cwd\(\),\s*["']src\/schema\.gql["']\)/,
+  it("owns the runtime schema in memory without caller-cwd filesystem access", () => {
+    const appModule = read("apps/backend/src/app.module.ts");
+    const schemaResource = read(
+      "apps/backend/src/mcp/resources/schema.resource.ts",
     );
+    const schemaProvider = read(
+      "apps/backend/src/mcp/resources/graphql-schema-sdl.ts",
+    );
+    const collector = read(
+      "apps/backend/test/contracts/mcp-contract-collector.ts",
+    );
+
+    expect(appModule).toMatch(/autoSchemaFile:\s*true/);
+    expect(appModule).not.toMatch(/process\.cwd|schema\.gql/);
+    expect(schemaResource).not.toMatch(
+      /process\.cwd|schema\.gql|readFile|from ["']fs|from ["']path/,
+    );
+    expect(schemaProvider).toContain("strict: false");
+    expect(collector).toMatch(/new SchemaResource\(\(\) =>/);
   });
 
   it("separates application PORT from Compose publication variables", () => {

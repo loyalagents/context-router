@@ -2,7 +2,6 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
 
 // Config
 import { appConfigLoader } from './config/app.config';
@@ -59,7 +58,7 @@ export class AppModule {
           driver: ApolloDriver,
           inject: [ConfigService],
           useFactory: (configService: ConfigService) => ({
-            autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+            autoSchemaFile: true,
             sortSchema: true,
             playground: configService.get<boolean>('graphql.playground'),
             introspection: configService.get<boolean>('graphql.introspection'),

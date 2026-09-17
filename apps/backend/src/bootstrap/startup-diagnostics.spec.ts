@@ -1,4 +1,8 @@
-import { formatHostedStartupFailure } from "./startup-diagnostics";
+import {
+  PREFERENCE_CATALOG_INTEGRITY_MESSAGE,
+  PREFERENCE_CATALOG_MISSING_MESSAGE,
+  formatHostedStartupFailure,
+} from "./startup-diagnostics";
 
 describe("hosted startup diagnostics", () => {
   it.each([
@@ -28,10 +32,54 @@ describe("hosted startup diagnostics", () => {
       }),
       "Application failed to start: Backend listener failed (EACCES)",
     ],
+    [
+      new Error(PREFERENCE_CATALOG_MISSING_MESSAGE),
+      `Application failed to start: ${PREFERENCE_CATALOG_MISSING_MESSAGE}`,
+    ],
+    [
+      new Error(PREFERENCE_CATALOG_INTEGRITY_MESSAGE),
+      `Application failed to start: ${PREFERENCE_CATALOG_INTEGRITY_MESSAGE}`,
+    ],
   ])("reports an allowlisted operator-safe cause", (error, expected) => {
     expect(formatHostedStartupFailure(error)).toBe(expected);
     expect(formatHostedStartupFailure(error)).not.toContain("secret-canary");
   });
+
+  it.each([
+    PREFERENCE_CATALOG_MISSING_MESSAGE,
+    PREFERENCE_CATALOG_INTEGRITY_MESSAGE,
+  ])(
+    "reports %s without inspecting or exposing its hostile cause",
+    (message) => {
+      const error = Object.assign(new Error(message), {
+        cause: Object.assign(
+          new Error(
+            "/private/repository/catalog-secret-canary.json: Unexpected token catalog-content-canary",
+          ),
+          {
+            expectedHash: "expected-hash-canary",
+            actualHash: "actual-hash-canary",
+          },
+        ),
+      });
+      error.stack = `${message}\n/private/cwd/stack-secret-canary`;
+
+      const formatted = formatHostedStartupFailure(error);
+
+      expect(formatted).toBe(`Application failed to start: ${message}`);
+      for (const canary of [
+        "/private/repository",
+        "catalog-secret-canary",
+        "catalog-content-canary",
+        "expected-hash-canary",
+        "actual-hash-canary",
+        "stack-secret-canary",
+        "Unexpected token",
+      ]) {
+        expect(formatted).not.toContain(canary);
+      }
+    },
+  );
 
   it("finds an allowlisted cause inside a cleanup aggregate", () => {
     const error = new AggregateError(
@@ -83,8 +131,7 @@ describe("hosted startup diagnostics", () => {
   });
 
   it("snapshots inspected fields before validating or reporting them", () => {
-    const safeMessage =
-      "Invalid PORT: expected an integer between 0 and 65535";
+    const safeMessage = "Invalid PORT: expected an integer between 0 and 65535";
     let messageReads = 0;
     const error = Object.defineProperty({}, "message", {
       get: () => {

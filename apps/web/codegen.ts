@@ -3,8 +3,8 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 const config: CodegenConfig = {
   overwrite: true,
   // Point to your GraphQL schema
-  // Option 1: Use the auto-generated schema file (NO Docker needed!)
-  //          Backend auto-generates this file when it starts
+  // Option 1: Use the tracked canonical schema fixture (NO Docker needed!)
+  //          Runtime schema generation is in memory and must remain byte-identical
   schema: '../backend/src/schema.gql',
 
   // Option 2: Use the local running server (requires Docker/backend running)

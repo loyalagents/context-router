@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "NestJS GraphQL monolith with Prisma and PostgreSQL",
   "main": "dist/main.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "node ../../scripts/check-toolchain.mjs",
     "build": "nest build",
@@ -45,6 +48,7 @@
   "homepage": "https://github.com/loyalagents/context-router#readme",
   "dependencies": {
     "@apollo/server": "^4.11.2",
+    "@google-cloud/vertexai": "^1.10.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@nestjs/apollo": "^12.2.1",
     "@nestjs/common": "^10.4.15",
