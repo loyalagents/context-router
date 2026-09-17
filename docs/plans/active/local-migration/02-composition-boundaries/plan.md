@@ -5,23 +5,30 @@
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
-  [#159](https://github.com/loyalagents/context-router/pull/159) is open on
-  `codex/local-migration-02-runtime-bootstrap`, with review-finding fixes
-  locally implemented and independently approved; final-head required checks
-  and human landing are governed by the closeout gates below
+  [#159](https://github.com/loyalagents/context-router/pull/159) merged at
+  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D
+  [#160](https://github.com/loyalagents/context-router/pull/160) is open as a
+  draft on `codex/local-migration-02-runtime-resources` from that exact merge
+  SHA, with corrective local implementation, validation, and read-only review
+  complete and corrective-head remote checks pending. The
+  pre-correction head `dc69dc7` passed standard CI run
+  [35193894121](https://github.com/loyalagents/context-router/actions/runs/35193894121)
+  and dedicated LMBG run
+  [35193894014](https://github.com/loyalagents/context-router/actions/runs/35193894014),
+  which are historical rather than final-head evidence
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02C only
+- Implementation owner: `/root` for active PR 02D only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
   `/root/plan_review_test_security` (all read-only and approved)
 - Supported mode during planning: the existing hosted NestJS/PostgreSQL/Auth0/Vertex and Next.js composition
-- Last updated: 2026-09-16
+- Last updated: 2026-09-17
 
 Step 02 is deliberately split into five independently useful PRs. Each later
 branch is created only after a human merges its predecessor into `main`; these
@@ -31,11 +38,11 @@ are not pre-authorized stacked branches.
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | open [#159](https://github.com/loyalagents/context-router/pull/159) on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes locally implemented and independently approved, with final-head required checks enforced before human landing | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
-| 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
+| 02C: runtime configuration/bootstrap | merged via [PR #159](https://github.com/loyalagents/context-router/pull/159) at `143515dac687ffbca989a315edaa89e794a04db3` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02D: runtime resources/package closure | draft [PR #160](https://github.com/loyalagents/context-router/pull/160) on `codex/local-migration-02-runtime-resources` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3`; corrective local implementation/validation/review complete, with corrective-head remote checks pending | `/root` | Original implementation: `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security`; review-finding correction: `/root/review_schema_tool`, `/root/review_plan_evidence`, and `/root/review_test_integration` (all fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02C only**. Any
+The current branch may implement **02D only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -225,25 +232,140 @@ reviewers approved that implementation state with no remaining findings.
 A later independent review of consolidated head
 `0de5e803bea05a8729f8502afa7f06c3de8f10a8` found an operational diagnostics
 regression, a retained MCP-origin fallback inconsistency, a latent
-split-environment bootstrap option, and stale control-plane wording. The current
-branch resolves those findings with allowlisted startup diagnostics, one shared
+split-environment bootstrap option, and stale control-plane wording. The PR 02C
+branch resolved those findings with allowlisted startup diagnostics, one shared
 CORS-origin resolver, a fail-fast custom-environment contract, regression
-coverage, and this status correction. Fresh read-only reviewers
+coverage, and the corresponding status correction. Fresh read-only reviewers
 `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and
 `/root/review_fix_security` approved the corrected implementation with no
 remaining findings. Their review also found and resolved a stateful-getter
 redaction gap before approval. GitHub's dedicated migration workflow plus
-applicable standard CI remain required before human landing of
-[#159](https://github.com/loyalagents/context-router/pull/159).
+applicable standard CI were required before human landing of
+[#159](https://github.com/loyalagents/context-router/pull/159), and subsequently
+passed as recorded below.
 
 The prior reviewed head `0de5e803bea05a8729f8502afa7f06c3de8f10a8`
 passed applicable standard CI in run
 [`35181940243`](https://github.com/loyalagents/context-router/actions/runs/35181940243)
 and the dedicated 11-phase workflow in run
 [`35181940231`](https://github.com/loyalagents/context-router/actions/runs/35181940231).
-Those runs predate the review-finding fixes and are historical evidence only;
-the newer final head must earn fresh checks. Vercel remains outside required
-evidence under LM-014 and was not rechecked. PRs 02D and 02E remain inactive.
+Those runs predate the review-finding fixes and are historical evidence only.
+Final PR 02C head `20800ea234584f86bc796238f4d5232d8082800c` subsequently
+passed applicable standard CI in run
+[`35185165880`](https://github.com/loyalagents/context-router/actions/runs/35185165880)
+and the dedicated 11-phase workflow in run
+[`35185165892`](https://github.com/loyalagents/context-router/actions/runs/35185165892).
+PR #159 was then human-merged at
+`143515dac687ffbca989a315edaa89e794a04db3`. Vercel remained outside required
+evidence under LM-014 and was not rechecked.
+
+### PR 02D activation evidence
+
+Before any PR 02D product change, the active branch was
+`codex/local-migration-02-runtime-resources`; `HEAD`, local `main`,
+`origin/main`, and both merge bases resolved exactly to the human-merged PR 02C
+SHA `143515dac687ffbca989a315edaa89e794a04db3`; history was full and
+non-shallow; and the worktree was clean. The worktree and open-PR audit found no
+competing owner for the 02D resource, backend package, lockfile, or migration
+gate files. Existing worktrees proposing `.github/workflows/ci.yml` changes
+land separately because 02D does not edit that workflow.
+
+The activation LMBG was bound to that exact merge SHA and passed all 11 phases
+in 229,801 ms using Node 24.21.0, pnpm 10.25.0, Python 3.12.8, and PostgreSQL
+15.15. It reported `baseComparison=performed`, caller integrity true, no skipped
+phase, and clean generated-database cleanup. The successful rerun used a
+separately owned loopback-only, tmpfs-backed PostgreSQL administration
+container after the default Docker writable layer reported no free space; the
+failed gate's exact owned container and disposable workspace were verified and
+removed before the rerun, and the successful administration container was
+verified and removed afterward.
+
+`/root` is the sole writer. Fresh read-only reviewers are
+`/root/02d_arch_resources`, `/root/02d_package_closure`, and
+`/root/02d_contract_security`; they may inspect and report but may not mutate
+the repository. Shared-hotspot landing order is the merged PR 02C state, then
+sole 02D ownership and human landing, then activation of 02E. The supported
+mode after PR 02D remains the existing hosted composition; it does not add
+local identity, storage, model execution, UI, or final OS/product
+packaging/distribution policy.
+
+### PR 02D implementation evidence
+
+The implementation keeps PR 02D within its approved resource and production
+closure boundary. GraphQL generation is in memory, while a lazy non-strict
+application-schema supplier serializes the initialized schema for
+`schema://graphql` with exact tracked-fixture parity. The resource caches only
+successful values and maps supplier failure to one fixed message without stale
+fallback, filesystem access, caller-cwd reads, or path-bearing diagnostics.
+The tracked consumer fixture now has explicit `schema:generate` and
+`schema:check` commands. Their development-only tool builds the full
+`AppModule` schema with inert database, Auth0, and hosted-model providers under
+a synthetic credential-free environment, opens no listener, restores the
+inherited environment, closes the shared Nest container exactly once, resolves
+the fixture module-relatively, and reuses the production serializer. Unit and
+hostile-cwd disposable-copy proofs cover exact parity, stale read-only failure,
+the actionable regeneration path, and clean exit. Repository attributes keep
+the schema and catalog exact-byte fixtures as reviewable LF text.
+
+The raw preference catalog is copied into `dist` and validated before Nest
+creation, signal registration, listener bind, or readiness. Its module-relative
+reader rejects symlinks and non-regular files, uses no-follow/nonblocking open,
+rechecks device/inode identity, bounds reads to the exact 4,273-byte resource,
+and parses and hashes those same bytes. The resulting parsed snapshot is the
+one consumed by the application, so a post-validation replacement cannot
+change runtime data. Missing and integrity-invalid states retain distinct fixed,
+cause-free messages; real symlink, directory, FIFO, oversized-file, exact-size
+valid-JSON digest tamper, and post-validation replacement/snapshot regressions
+enforce that contract.
+
+The backend now owns its Vertex runtime dependency while the root retains its
+separate eval importer. The backend packlist is limited to `dist`, production
+builds exclude specs, and the workspace plus lockfile enable the reviewed
+shared-lock deploy semantics without package/snapshot churn. The self-contained
+proof generates and builds in private disposable state, runs the exact offline
+production deploy, requires the staged top-level allowlist including pnpm's
+pruned lockfile, excludes source/tests/env canaries and dev dependencies, walks
+the canonical physical ancestor chain for hoisting, disables Node global module
+search, resolves Vertex beneath staged `node_modules`, and exercises staged
+resource failures from a hostile cwd under a strict credential-free environment.
+
+The tests were written red before the product slices and the corrective schema
+producer. The current exact 02D Jest command passes three suites and 16 tests;
+the isolated Node package/resource proof passes 1/1 in 25,607 ms; the backend
+unit suite passes 39 suites and 276 tests; and the cumulative migration Node
+argv passes 164/164. Direct schema check/generate parity, contract checking,
+Markdown validation, Prisma generation, seed type-check, and backend production
+build pass. The corrective exact-base LMBG is bound to
+`143515dac687ffbca989a315edaa89e794a04db3` and passes all 11 phases in
+246,790 ms using Node 24.21.0, pnpm 10.25.0, Python 3.12.8, and PostgreSQL
+15.15, with `baseComparison=performed`, caller integrity true, no skipped phase,
+and exact owned-resource cleanup. As in activation, the successful run used a
+separately owned loopback-only, tmpfs-backed PostgreSQL administration
+container because the gate's default Docker writable-layer container did not
+become ready; the gate database and external administration container were both
+verified and removed.
+
+Fresh read-only implementation reviewers `/root/02d_arch_resources`,
+`/root/02d_package_closure`, and `/root/02d_contract_security` compared the
+complete base-to-working-tree diff with this plan. Their findings produced the
+exhaustive importer/nearest-manifest census, a single validated catalog
+snapshot, bounded special-file handling, exact-length digest-negative coverage,
+canonical no-hoist ancestry, and disabled global module search. All three
+approved the corrected implementation on 2026-09-17 with no remaining required
+findings. Fresh corrective reviewers `/root/review_schema_tool` and
+`/root/review_test_integration` approved the schema lifecycle, strict
+environment/cleanup, hostile-cwd CLI proof, budget, and production closure.
+After the writer synchronized current evidence and canonical status,
+`/root/review_plan_evidence` approved the final closeout with no remaining
+findings.
+
+The pre-correction head `dc69dc7` passed standard CI run
+[35193894121](https://github.com/loyalagents/context-router/actions/runs/35193894121)
+and dedicated LMBG run
+[35193894014](https://github.com/loyalagents/context-router/actions/runs/35193894014).
+Those runs are historical evidence and do not satisfy the corrective head's
+remote gate. Corrective-head workflows and human landing remain closeout gates;
+PR 02E stays inactive.
 
 ### Authoritative entry gate
 
@@ -320,7 +442,7 @@ raw string tokens, three feature modules import `VertexAiModule`, and
 
 The Step 01 registry currently derives 39 capabilities, five contract families,
 45 static GraphQL consumers, nine dynamic consumers, 28 fingerprint consumers,
-four external-client buckets, 119 references, 16 outbound-call records, 54
+four external-client buckets, 106 references, 17 outbound-call records, 55
 outbound-sink rows, five packages, and six observed-but-not-promised items.
 Those mechanically derived inventories remain authoritative.
 
@@ -405,7 +527,7 @@ installer, signing, distribution, and update matrix.
 | `PORT`, `APP_PORT`, listener/CORS/origin parsing, environment-file root/precedence | **Immediate 02C config seam.** | Named backend, web, Compose, and process consumers exist. No generic config port. |
 | Bootstrap create/configure/start/close, actual readiness, partial failure, SIGINT/SIGTERM | **Immediate 02C process seam.** | Required for bounded staged-process proof; hosted default bind behavior stays unchanged. |
 | GraphQL schema generation/resource lookup and packaged catalog asset | **Immediate 02D resource seam.** | Concrete cwd bug with MCP/public consumers. One schema source/resolver, not a generic filesystem port. |
-| Backend runtime dependency ownership | **Immediate 02D package closure.** | Move `@google-cloud/vertexai` from the root importer to the backend package that imports it and prove a `pnpm --offline deploy` closure. |
+| Backend runtime dependency ownership | **Immediate 02D package closure.** | Add `@google-cloud/vertexai` to the backend package that imports it and prove a `pnpm --offline deploy` closure. Retain the root declaration because `examples/eval/scripts/generate.mjs` is a second, root-owned opt-in importer. |
 | Target-built backend/web stage, native inventory, private runtime dirs, restart/failure smoke | **Immediate 02E evidence.** | Required packaging feasibility, without selecting the final shell/installer. |
 | Prisma repositories, generated types, transaction/UoW, embedded data root/migrations | **Deferred to Steps 04–05.** | Fourteen runtime files import `PrismaService` and 38 import generated Prisma types; a cosmetic Step 02 port would pre-empt storage semantics. |
 | Auth0 service, GraphQL JWT/JWKS, local human principal/session/credentials | **Deferred to Step 03.** | Identity policy and persistence must move together. |
@@ -427,8 +549,9 @@ installer, signing, distribution, and update matrix.
   environment-file resolution to an explicit backend package root rather than
   caller cwd, and export testable bootstrap lifecycle/readiness.
 - 02D: eliminate cwd schema mutation/lookup, inventory the packaged catalog,
-  move the Vertex runtime dependency to the backend importer, and prove an
-  independently deployable production dependency closure.
+  give the backend its own Vertex runtime dependency while preserving the
+  root-owned eval importer, and prove an independently deployable production
+  dependency closure.
 - 02E: build target-native staged backend and Next production artifacts from
   already installed/frozen dependencies, then exercise both from a private
   non-repository cwd and add that bounded evidence as an active LMBG phase.
@@ -471,7 +594,7 @@ authority, and unknown external GraphQL/HTTP/MCP clients remain binding.
 | Configuration and env-file lookup | **intentional compatible behavior correction** in 02C, not merely additive | backend `.env.example`, root Compose file/new Compose env example, package start scripts, Docker/Cloud Run, operator docs, gate/smoke | `PORT` is application listen port; `APP_PORT` is Compose host publication only. Process env continues to win; `<backend-package-root>/.env.local` wins `.env`. Arbitrary caller-cwd env loading is removed with migration guidance. No hosted bind-default change. |
 | Backend/web origins and endpoints | preserved semantics with one owner in 02C | `main.ts`, `mcp.config.ts`, web `.env.example`; all `NEXT_PUBLIC_GRAPHQL_URL` and `NEXT_PUBLIC_BACKEND_URL` consumers in the Step 01 registry/census | Backend `CORS_ORIGIN` is parsed once; `MCP_HTTP_ALLOWED_ORIGINS` remains an explicit override and otherwise inherits that normalized list. Web endpoint variables remain build-time public inputs, while `APP_BASE_URL` remains the server-runtime Auth0 origin. The staged build records its exact backend proxy URL and probes backend CORS with the actual staged web origin. |
 | Filesystem/resources | corrected without public content drift in 02D | GraphQL generator, MCP `schema://graphql`, contract collector, Docker/stage, restart smoke | Runtime schema comes from one cwd-independent source. No caller-cwd `src/schema.gql` creation. Missing/tampered asset fails before readiness with sanitized diagnostics. |
-| Package/toolchain | explicit supported contract in 02B; direct runtime-parser classification in 02C; broad package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. The frozen lockfile permits the reviewed 02C backend-importer reclassification of the existing `dotenv` spec from development to runtime plus the separately reviewed 02D workspace-importer move; 02C does not pull the broader Vertex/package-closure work forward. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
+| Package/toolchain | explicit supported contract in 02B; direct runtime-parser classification in 02C; broad package ownership correction in 02D | root/backend/web packages, Docker, CI, Corepack, contributor docs | Exact Node/pnpm checks gate install/build/LMBG/package evidence. The frozen lockfile permits the reviewed 02C backend-importer reclassification of the existing `dotenv` spec from development to runtime plus the separately reviewed 02D backend importer addition while preserving the root eval importer; 02C does not pull the broader Vertex/package-closure work forward. Prior Node/pnpm lines cease to be supported only when 02B and migration guidance land. |
 | Process lifecycle | additive testability in 02C | package `start:prod`, Docker command, restart/packaging smoke | Preserve hosted validation/CORS/listen semantics. Add bounded readiness and graceful close; errors remain sanitized and nonzero. |
 
 Any configuration, package, public descriptor, generated schema, registry
@@ -597,23 +720,78 @@ Use one cwd-independent GraphQL schema source for generation and
 `schema://graphql`, preferably runtime/in-memory schema ownership. If an
 immutable asset is required, stage and integrity-check it explicitly. Keep the
 MCP contract collector usable through an explicit schema supplier or safe
-module-relative default, never an implicit cwd read. Inventory the catalog JSON
-in the built output and fail before readiness when a required asset is missing
-or tampered.
+module-relative default, never an implicit cwd read. Supplier failure must not
+serve a stale cached schema value. Inventory the catalog JSON in the built
+output and validate it before Nest creation, listener bind, or readiness. Read
+the catalog once and perform both the digest check and JSON parse against those
+same bytes. Missing and integrity-invalid resources map to distinct, fixed,
+allowlisted logical startup messages. Direct stderr, nested causes, and stacks
+must not disclose absolute/repository/cwd paths, canary filenames, parser or
+module-loader errors, expected or actual hashes, or asset content.
 
-Move `@google-cloud/vertexai` from the root package to
-`apps/backend/package.json`, because the backend is its runtime importer;
-retain root `yaml` for eval tooling. Update only the reviewed lockfile importer
-entries. Prove a backend-only production closure with:
+Keep `apps/backend/src/schema.gql` as the tracked consumer fixture, but give it
+one explicit producer instead of relying on hosted startup side effects. The
+backend exposes `schema:generate` and `schema:check` commands backed by one
+development-only tool outside the production `dist` payload. That tool builds
+the full `AppModule` schema in memory through a no-listener Nest testing
+composition whose Prisma, Auth0, and hosted-model providers are inert; it must
+not connect to a database or provider. While composing the application, replace
+the inherited process environment with a strict synthetic environment that
+contains no provider credentials, then restore it. In `finally`, close the Nest
+application if one was created; otherwise close the compiled testing module.
+Close the shared container exactly once, including on generation and check
+failures, so lifecycle-owned intervals cannot keep the command alive without
+double-running destroy hooks. It serializes only through
+`serializeGraphqlSchema`, resolves the fixture from the
+tool module rather than the caller cwd, and either writes those exact bytes or
+fails `--check` with the documented regeneration command. A backend unit
+contract builds through that same application-schema path, with credential
+variables absent, compares the result byte-for-byte with the tracked fixture,
+and proves clean close. Resolver/DTO drift therefore fails before the restart
+smoke. Keep the two exact-byte resources (`schema.gql` and
+`preferences.catalog.json`) as text with repository-enforced LF endings; do not
+disable text normalization and lose readable diffs.
+
+Add `@google-cloud/vertexai` to `apps/backend/package.json`, because the backend
+is a runtime importer. Retain the existing root declaration because
+`examples/eval/scripts/generate.mjs` dynamically imports the SDK for opt-in
+Vertex corpus generation; retain root `yaml` for the same developer/eval
+tooling boundary. A test inventories every non-test SDK importer and requires
+ownership by its nearest applicable manifest. Update only the reviewed backend
+lockfile importer entry plus the reviewed workspace/lockfile
+`injectWorkspacePackages` setting; package and snapshot resolution entries stay
+unchanged.
+
+pnpm 10.25.0's shared-lockfile deploy requires the reviewed
+`injectWorkspacePackages: true` workspace and lockfile setting to preserve the
+approved exact command. The legacy deploy fallback is prohibited: it
+re-resolves `auth0`'s ranged npm alias and therefore depends on registry
+metadata even with `--offline`, rather than consuming only the frozen shared
+lockfile and installed content-addressable store. Constrain the backend package
+payload to `files: ["dist"]` so deploy cannot copy ignored `.env*`, source, or
+tests; pnpm may additionally emit its pruned frozen deployment lockfile beside
+the always-emitted package manifest. Prove a backend-only production closure
+with:
 
 ```sh
 pnpm --offline --filter backend deploy --prod <private-stage>/backend
 ```
 
-The proof runs from a disposable source workspace, starts
-`<private-stage>/backend/dist/main.js` with no root workspace `node_modules` in
-resolution ancestry, loads the model adapter without calling it, and fails if
-hoisting masks an undeclared dependency.
+The proof is self-contained inside the existing 120-second `contract-baseline`
+phase: it cannot assume caller `dist` or generated Prisma output and creates its
+own private generated/build/deploy state without changing caller status or
+tracked-file hashes. It measures and asserts its own budget. The proof creates
+disposable source, stage, and hostile-cwd siblings under one mode-0700 private
+temporary root, so the stage is outside the source workspace's ancestry. The
+child environment is a strict allowlist with `NODE_PATH`, `NODE_OPTIONS`, and
+provider credentials absent and `COREPACK_ENABLE_NETWORK=0`. It requires no
+`node_modules` directory in any stage ancestor, resolves
+`@google-cloud/vertexai` with
+`require.resolve(..., { paths: [stageBackendRoot] })`, and verifies the resolved
+realpath is contained by the staged backend's own `node_modules` before loading
+the compiled model adapter without calling it. It then starts
+`<private-stage>/backend/dist/main.js` from the hostile cwd and fails if
+hoisting or inherited module paths mask an undeclared dependency.
 
 Schema content must remain byte-identical where the current fixture requires
 it and semantically identical everywhere. If the in-memory representation
@@ -638,12 +816,15 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    target-native tree:
 
    ```text
-   <stage>/backend/{package.json,dist/**,node_modules/**}
+   <stage>/backend/{package.json,pnpm-lock.yaml,dist/**,node_modules/**}
    <stage>/web/** := the complete, unpruned contents of apps/web/.next/standalone/**
    <stage>/web/<derived-app-relative>/.next/static/** := apps/web/.next/static/**
    <stage>/web/<derived-app-relative>/public/** := apps/web/public/**
    <stage>/manifest.json
    ```
+
+   The backend `pnpm-lock.yaml` is pnpm's pruned frozen deployment lockfile;
+   inventory it as part of the staged closure rather than deleting it.
 
    Copy the entire standalone tree without pruning, flattening, or re-parenting
    traced `.next/server`, `node_modules`, package/config, or workspace-package
@@ -947,25 +1128,45 @@ selection rules it validates.
 ### PR 02D: runtime resources and production closure
 
 1. Add red `src/mcp/resources/schema.resource.spec.ts`,
+   `test/contracts/graphql-schema-fixture.spec.ts`,
    `test/contracts/runtime-package-closure.spec.ts`, and
    `scripts/local-migration/runtime-resources.test.mjs`. They must fail on cwd
-   schema access, writable caller `src`, missing/tampered resource behavior,
-   root-owned Vertex dependency, and a backend deploy that succeeds only via
-   workspace hoisting.
+   schema access, a missing or stale supported schema producer, writable caller
+   `src`, missing/tampered resource behavior,
+   a backend importer without a backend-owned Vertex dependency, an unowned SDK
+   importer, secret-bearing files in the deploy payload, and a backend deploy
+   that succeeds only via workspace hoisting. Resource subprocess cases delete
+   the catalog and replace it with valid JSON containing a canary; both must
+   exit nonzero before listener bind/readiness and expose only their fixed
+   allowlisted logical startup message, never the canary, path, hash, parser or
+   module error, nested cause, or stack. Startup-diagnostics allowlist tests
+   enforce the same contract, and schema supplier failure proves there is no
+   stale-cache fallback. The Node suite owns private generated/build/stage
+   state, uses the strict environment and mode-0700/no-hoist layout above,
+   proves staged Vertex resolution remains beneath staged backend
+   `node_modules`, records elapsed time below its share of the existing
+   120-second phase, and leaves caller status and tracked hashes unchanged.
+   Update the existing 02C
+   `runtime-composition.spec.ts` expectation from preserved cwd schema ownership
+   to the new in-memory/module-relative 02D contract before implementation.
 2. Run exactly:
 
    ```sh
    pnpm --filter backend exec jest --selectProjects unit \
      --runTestsByPath \
      src/mcp/resources/schema.resource.spec.ts \
+     test/contracts/graphql-schema-fixture.spec.ts \
      test/contracts/runtime-package-closure.spec.ts \
      --runInBand
    node --test \
      scripts/local-migration/runtime-resources.test.mjs
    ```
 
-3. Implement the schema/catalog source and move the Vertex dependency/root
-   lockfile importer in small slices. In a private temp stage run the exact
+3. Implement the in-memory schema resource plus explicit fixture
+   generate/check commands, the catalog source, and LF checkout policy; add the
+   backend Vertex dependency and lockfile importer entry, and add the reviewed
+   workspace/lockfile
+   `injectWorkspacePackages` setting in small slices. In a private temp stage run the exact
    offline backend deploy and start it with no workspace ancestor. Then run
    backend unit/build, contract checker, hosted restart, and exact-base LMBG.
    Append `runtime-resources.test.mjs` to the cumulative remote-required
@@ -1124,8 +1325,9 @@ makes no production data migration:
   previously proven Node 20 entry state; it never leaves a mixed toolchain.
 - 02C reverts only configuration/origin/bootstrap lifecycle changes, restoring
   the prior hosted entrypoint and documented cwd behavior.
-- 02D reverts only schema/catalog/package-closure and dependency-importer
-  changes; it does not roll back 02C.
+- 02D reverts only schema/catalog/package-closure, dependency-importer, and
+  workspace/lockfile `injectWorkspacePackages` changes; it does not roll back
+  02C.
 - 02E removes the new manifest row, allowlist/env handling, script/tests,
   registry census, and workflow evidence atomically while retaining the Step 01
   hosted restart phase.
@@ -1179,6 +1381,19 @@ material plan changes still require re-review.
 | Public contracts, consumers, runtime compatibility | `/root/plan_review_compat_runtime` | Made LM-008 consumers/config migration exact; completed Next standalone staging, package ownership, toolchain enforcement, offline-deploy semantics, OS labels, and activation metadata. | **APPROVED** 2026-09-16 |
 | Testing, LMBG, CI, packaging/OS evidence | `/root/plan_review_test_security` | Added exact tests, cumulative remote execution, bounded gate/workflow timeline, web/backend process proof, interface-complete negative probes, and required CI routing. | **APPROVED** 2026-09-16 |
 | Security and privacy | `/root/plan_review_test_security` | Added private-root/permission/redaction, partial-start/signal/orphan/scoped cleanup evidence and explicitly deferred final authorization, Host/Origin/CSRF/DNS-rebinding and offline policy. | **APPROVED** 2026-09-16 |
+
+Fresh read-only reviewers `/root/review_schema_tool`,
+`/root/review_plan_evidence`, and `/root/review_test_integration` approved the
+complete PR 02D design at checksum `554480599 108261` on 2026-09-17 with no
+remaining findings. Their review covered the material 02D refinements that
+retain the root Vertex dependency for the eval importer, enable
+`injectWorkspacePackages`, constrain the backend payload to `files: ["dist"]`,
+permit pnpm's trimmed deployment lockfile, and place the isolated deploy proof
+inside the existing 120-second phase. It also covered the corrective explicit
+schema generate/check lifecycle, strict credential-free testing composition,
+exact-once cleanup, early byte-parity contract, and targeted LF checkout
+policy. Edits after that checksum record these approvals and implementation or
+status evidence only; further material changes require another fresh review.
 
 The PR 02B follow-up review exposed Vercel's external major-only Node selector
 and the unvalidated Windows `.cmd` probe path. The writer added the explicit

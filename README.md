@@ -242,11 +242,25 @@ Backend-specific commands:
 
 ```bash
 pnpm --filter backend prisma:generate
+pnpm --filter backend schema:check
+pnpm --filter backend schema:generate
 pnpm --filter backend test:db:up
 pnpm --filter backend test:db:down
 pnpm --filter backend test:db:migrate
 pnpm --filter backend test:e2e:tests-only
 ```
+
+`apps/backend/src/schema.gql` is the tracked GraphQL consumer fixture used by
+the web code generator and migration contract checks. After changing a GraphQL
+resolver or DTO, run `schema:generate` and commit the resulting fixture;
+`schema:check` is the read-only drift check. Both commands build the application
+schema in memory and resolve the fixture independently of the caller's working
+directory. They require installed dependencies and a generated Prisma client,
+but do not require a running database or provider credentials.
+An intentional SDL change still follows the
+[`interface-evolution` policy](docs/plans/active/local-migration/tracks/interface-evolution.md):
+review and update affected contract fixtures and consumers in the same change.
+Generating the file is not, by itself, approval for a contract change.
 
 More targeted operational commands live in [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md).
 

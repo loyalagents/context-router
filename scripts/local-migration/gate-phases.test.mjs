@@ -82,6 +82,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/ci-path-filters.test.mjs",
           "scripts/local-migration/runtime-process.test.mjs",
           "scripts/local-migration/web-runtime-config.test.mjs",
+          "scripts/local-migration/runtime-resources.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],

@@ -1,12 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  Resource,
-} from '@modelcontextprotocol/sdk/types.js';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Resource } from '@modelcontextprotocol/sdk/types.js';
 import { McpResourceInterface } from './base/mcp-resource.interface';
 import { McpContext } from '../types/mcp-context.type';
 import { McpResourceExecutionResult } from '../access-log/access-log.types';
+import {
+  GRAPHQL_SCHEMA_SDL_SUPPLIER,
+  type GraphqlSchemaSdlSupplier,
+} from './graphql-schema-sdl';
+
+export const SCHEMA_RESOURCE_UNAVAILABLE_MESSAGE =
+  'GraphQL schema is unavailable';
 
 @Injectable()
 export class SchemaResource implements McpResourceInterface {
@@ -14,6 +17,11 @@ export class SchemaResource implements McpResourceInterface {
   private schemaCache: string | null = null;
   private lastCacheTime: number = 0;
   private readonly CACHE_TTL_MS = 60000; // Cache for 1 minute
+
+  constructor(
+    @Inject(GRAPHQL_SCHEMA_SDL_SUPPLIER)
+    private readonly schemaSupplier: GraphqlSchemaSdlSupplier,
+  ) {}
 
   readonly descriptor: Resource = {
     uri: 'schema://graphql',
@@ -30,23 +38,23 @@ export class SchemaResource implements McpResourceInterface {
 
   /**
    * Get the GraphQL schema
-   * Returns the auto-generated schema from src/schema.gql
-   * Caches the schema for 1 minute to avoid excessive file reads
+   * Returns the schema owned by the initialized GraphQL runtime.
+   * Caches successful serialization for 1 minute.
    */
   async getGraphQLSchema(): Promise<{ schema: string; cacheHit: boolean }> {
     const now = Date.now();
 
     // Return cached schema if still valid
-    if (this.schemaCache && now - this.lastCacheTime < this.CACHE_TTL_MS) {
+    if (
+      this.schemaCache !== null &&
+      now - this.lastCacheTime < this.CACHE_TTL_MS
+    ) {
       this.logger.debug('Returning cached GraphQL schema');
       return { schema: this.schemaCache, cacheHit: true };
     }
 
     try {
-      const schemaPath = join(process.cwd(), 'src', 'schema.gql');
-      this.logger.log(`Reading GraphQL schema from: ${schemaPath}`);
-
-      const schema = await readFile(schemaPath, 'utf-8');
+      const schema = await this.schemaSupplier();
 
       // Update cache
       this.schemaCache = schema;
@@ -54,21 +62,9 @@ export class SchemaResource implements McpResourceInterface {
 
       this.logger.log('GraphQL schema loaded successfully');
       return { schema, cacheHit: false };
-    } catch (error) {
-      this.logger.error(
-        `Error reading GraphQL schema: ${error.message}`,
-        error.stack,
-      );
-
-      // Return cached schema if available, even if expired
-      if (this.schemaCache) {
-        this.logger.warn('Returning expired cached schema due to read error');
-        return { schema: this.schemaCache, cacheHit: true };
-      }
-
-      throw new Error(
-        'GraphQL schema not available. Ensure the application has started and schema has been generated.',
-      );
+    } catch {
+      this.logger.error(SCHEMA_RESOURCE_UNAVAILABLE_MESSAGE);
+      throw new Error(SCHEMA_RESOURCE_UNAVAILABLE_MESSAGE);
     }
   }
 

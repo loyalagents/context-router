@@ -1,5 +1,10 @@
 const GENERIC_STARTUP_FAILURE = "Application failed to start";
 
+export const PREFERENCE_CATALOG_MISSING_MESSAGE =
+  "Required preference catalog is missing";
+export const PREFERENCE_CATALOG_INTEGRITY_MESSAGE =
+  "Required preference catalog failed integrity validation";
+
 const SAFE_STARTUP_MESSAGES = new Set([
   "Invalid PORT: expected an integer between 0 and 65535",
   "CORS_ORIGIN must contain at least one origin",
@@ -11,6 +16,8 @@ const SAFE_STARTUP_MESSAGES = new Set([
   "Unable to determine backend readiness address",
   "Backend shutdown deadline exceeded",
   "Backend startup interrupted by shutdown signal",
+  PREFERENCE_CATALOG_MISSING_MESSAGE,
+  PREFERENCE_CATALOG_INTEGRITY_MESSAGE,
 ]);
 
 const SAFE_LISTENER_ERROR_CODES = new Set([

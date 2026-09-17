@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -30,6 +31,9 @@ importers:
       '@apollo/server':
         specifier: ^4.11.2
         version: 4.12.2(graphql@16.12.0)
+      '@google-cloud/vertexai':
+        specifier: ^1.10.0
+        version: 1.10.0
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.27.1(zod@4.1.13)

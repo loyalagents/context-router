@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "NestJS GraphQL monolith with Prisma and PostgreSQL",
   "main": "dist/main.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "node ../../scripts/check-toolchain.mjs",
     "build": "nest build",
@@ -29,6 +32,8 @@
     "prisma:migrate:deploy": "docker compose exec app npx prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "docker compose exec app npx ts-node prisma/seed.ts",
+    "schema:generate": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --write",
+    "schema:check": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --check",
     "db:push": "pnpm prisma:generate && docker compose exec app npx prisma db push",
     "db:reset": "docker compose exec app npx prisma migrate reset"
   },
@@ -45,6 +50,7 @@
   "homepage": "https://github.com/loyalagents/context-router#readme",
   "dependencies": {
     "@apollo/server": "^4.11.2",
+    "@google-cloud/vertexai": "^1.10.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@nestjs/apollo": "^12.2.1",
     "@nestjs/common": "^10.4.15",

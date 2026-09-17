@@ -109,7 +109,7 @@ export function collectMcpContractBaseline() {
         authorization,
       ),
     ];
-    const resources = [new SchemaResource()];
+    const resources = [new SchemaResource(() => "<schema-sdl>")];
     const service = new McpService(
       configService,
       tools,

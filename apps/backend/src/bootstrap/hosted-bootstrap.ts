@@ -7,6 +7,7 @@ import {
   type RuntimeConfiguration,
   type RuntimeEnvironment,
 } from "../config/runtime-config";
+import { validateHostedRuntimeResources } from "./runtime-resource-preflight";
 
 export interface HostedApplication {
   useGlobalPipes(...pipes: unknown[]): unknown;
@@ -45,6 +46,7 @@ export interface HostedBootstrapOptions {
   reportReadiness?: (readiness: HostedReadiness) => void;
   logger?: HostedBootstrapLogger;
   shutdownTimeoutMs?: number;
+  validateRuntimeResources?: ValidateHostedRuntimeResources;
 }
 
 export interface HostedApplicationController {
@@ -56,6 +58,8 @@ export interface HostedApplicationController {
 export type CreateHostedApplication = (
   configuration: RuntimeConfiguration,
 ) => Promise<HostedApplication>;
+
+export type ValidateHostedRuntimeResources = () => Promise<void>;
 
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -209,6 +213,7 @@ export async function bootstrapHostedApplication({
   reportReadiness = writeReadinessRecord,
   logger = new Logger("Bootstrap"),
   shutdownTimeoutMs = DEFAULT_SHUTDOWN_TIMEOUT_MS,
+  validateRuntimeResources = validateHostedRuntimeResources,
 }: HostedBootstrapOptions): Promise<HostedApplicationController> {
   if (
     environment !== process.env &&
@@ -223,6 +228,7 @@ export async function bootstrapHostedApplication({
     packageRoot,
     environment,
   });
+  await validateRuntimeResources();
   let application: HostedApplication | undefined;
   let applicationPromise: Promise<HostedApplication> | undefined;
   let closePromise: Promise<void> | undefined;

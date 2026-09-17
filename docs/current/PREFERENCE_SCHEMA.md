@@ -9,11 +9,15 @@
   `apps/backend/src/modules/auth/auth.service.ts`,
   `apps/backend/test/e2e/preference-catalog.e2e-spec.ts`, and
   `apps/backend/test/e2e/profile-preferences.e2e-spec.ts`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-17
 
 ## Definitions Model
 
-Preference definitions live in the database, not only in static code. Core definitions are still seeded from `src/config/preferences.catalog.ts`, but runtime behavior is driven by the `preference_definitions` table and the repository and service layer around it.
+Preference definitions live in the database, not only in static code. Core
+definitions are seeded from the canonical raw JSON asset
+`apps/backend/src/config/preferences.catalog.json`, but runtime behavior is
+driven by the `preference_definitions` table and the repository and service
+layer around it.
 
 Important fields:
 
@@ -100,3 +104,29 @@ direct seed has no domain audit event, and failure does not block login.
 
 - Grants are currently slug-based, so namespace is not part of grant matching.
 - Core definitions still originate from the seed catalog, so long-lived built-in schema changes still flow through code and migrations.
+
+## Editing The Canonical Catalog
+
+The runtime preflight intentionally pins the catalog's exact UTF-8 bytes as
+well as its parsed shape. A legitimate catalog edit therefore requires one
+reviewed change that keeps all semantic consumers and byte-integrity evidence
+aligned:
+
+1. Edit `apps/backend/src/config/preferences.catalog.json` using LF line
+   endings. Treat a semantic definition change as an LM-008 contract change and
+   update affected fixtures, fingerprints, consumers, and migration guidance in
+   the same checkpoint.
+2. From the repository root, print the new exact byte count and SHA-256:
+
+   ```bash
+   node -e 'const fs=require("node:fs");const crypto=require("node:crypto");const b=fs.readFileSync("apps/backend/src/config/preferences.catalog.json");console.log({byteLength:b.length,sha256:crypto.createHash("sha256").update(b).digest("hex")})'
+   ```
+
+3. After reviewing the semantic diff, update both
+   `PREFERENCE_CATALOG_BYTE_LENGTH` and `PREFERENCE_CATALOG_SHA256` in
+   `apps/backend/src/bootstrap/runtime-resource-preflight.ts`, plus the matching
+   `expectedCatalogByteLength` and `expectedCatalogSha256` assertions in
+   `scripts/local-migration/runtime-resources.test.mjs`. Do not weaken or
+   bypass the integrity check merely to make a changed file start.
+4. Run the targeted catalog/resource tests, the contract checker, and the full
+   exact-base migration gate before landing.
