@@ -65,6 +65,17 @@ async function flushAsyncWork(): Promise<void> {
 }
 
 describe("hosted bootstrap", () => {
+  it("rejects a custom environment without a custom application factory", async () => {
+    await expect(
+      bootstrapHostedApplication({
+        packageRoot: "relative-package-root",
+        environment: { PORT: "0" },
+      }),
+    ).rejects.toThrow(
+      "Custom runtime environment requires a custom application factory",
+    );
+  });
+
   it("keeps create, configure, start, and close as separable operations", async () => {
     const app = makeApplication();
     const create = jest.fn().mockResolvedValue(app);

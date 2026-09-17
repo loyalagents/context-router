@@ -1,15 +1,15 @@
 import { registerAs } from '@nestjs/config';
 import { McpClientConfig } from '../mcp/types/mcp-authorization.types';
 import {
-  DEFAULT_CORS_ORIGINS,
   normalizeOriginList,
+  resolveCorsOrigins,
   type RuntimeConfiguration,
   type RuntimeEnvironment,
 } from './runtime-config';
 
 export function createMcpConfiguration(
   environment: RuntimeEnvironment = process.env,
-  defaultAllowedOrigins: string[] = [...DEFAULT_CORS_ORIGINS],
+  defaultAllowedOrigins: string[] = resolveCorsOrigins(environment),
 ) {
   const auth0Domain = environment.AUTH0_DOMAIN;
   const auth0Audience = environment.AUTH0_AUDIENCE;

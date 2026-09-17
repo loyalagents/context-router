@@ -1,13 +1,14 @@
 # Step 02: Composition Boundaries
 
-- Document status: independently approved; PRs 02A and 02B merged; PR 02C
-  implementation locally complete and independently approved in draft
-  [#159](https://github.com/loyalagents/context-router/pull/159), with required
-  GitHub checks green and human landing pending
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+- Document status: independently approved plan; PR 02A
+  [#157](https://github.com/loyalagents/context-router/pull/157) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
-  ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
-  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`
+  [#158](https://github.com/loyalagents/context-router/pull/158) merged at
+  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
+  [#159](https://github.com/loyalagents/context-router/pull/159) is open on
+  `codex/local-migration-02-runtime-bootstrap`, with review-finding fixes
+  locally implemented and independently approved; final-head required checks
+  and human landing are governed by the closeout gates below
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
@@ -30,7 +31,7 @@ are not pre-authorized stacked branches.
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | draft [#159](https://github.com/loyalagents/context-router/pull/159), locally implemented and approved on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; required GitHub checks green and human landing pending | `/root` | `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security` (fresh, read-only, and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02C: runtime configuration/bootstrap | open [#159](https://github.com/loyalagents/context-router/pull/159) on `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; review-finding fixes locally implemented and independently approved, with final-head required checks enforced before human landing | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
@@ -199,7 +200,7 @@ remains the Auth0 runtime origin. Launch and Compose migration guidance, the
 contract registry, and the cumulative gate argv moved with those changes.
 
 The backend tests were written red first. The final focused Jest command passes
-three suites and 49 tests; the required runtime/web Node command passes 16/16;
+three suites and 50 tests; the required runtime/web Node command passes 17/17;
 the reset e2e regression passes 8/8; backend unit/build, seed type-check,
 contract checking, frozen-install integrity, web production build, and hosted
 restart evidence all pass. The exact-base LMBG is bound to
@@ -219,18 +220,30 @@ parsing and runtime dependency classification, exact web consumer/registry
 evidence, and preservation of the baseline raw-`NODE_ENV` GraphQL stacktrace
 behavior. The reset e2e now constructs independent enabled and disabled startup
 compositions instead of mutating configuration after startup. All three
-reviewers approved with no remaining findings. GitHub's dedicated migration
-workflow and applicable standard CI remain required on final HEAD before human
-review and landing of draft PR
-[#159](https://github.com/loyalagents/context-router/pull/159). On implementation
-head `ed0720e3769de6462cc9f1af46c80d10736a9a8a`, all applicable standard CI
-jobs passed in run
-[`35181457245`](https://github.com/loyalagents/context-router/actions/runs/35181457245)
-and the dedicated 11-phase workflow passed in run
-[`35181457383`](https://github.com/loyalagents/context-router/actions/runs/35181457383).
-Any later documentation-only head must preserve those required checks before
-human landing. Vercel remains outside required evidence under LM-014 and was
-not rechecked. PRs 02D and 02E remain inactive.
+reviewers approved that implementation state with no remaining findings.
+
+A later independent review of consolidated head
+`0de5e803bea05a8729f8502afa7f06c3de8f10a8` found an operational diagnostics
+regression, a retained MCP-origin fallback inconsistency, a latent
+split-environment bootstrap option, and stale control-plane wording. The current
+branch resolves those findings with allowlisted startup diagnostics, one shared
+CORS-origin resolver, a fail-fast custom-environment contract, regression
+coverage, and this status correction. Fresh read-only reviewers
+`/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and
+`/root/review_fix_security` approved the corrected implementation with no
+remaining findings. Their review also found and resolved a stateful-getter
+redaction gap before approval. GitHub's dedicated migration workflow plus
+applicable standard CI remain required before human landing of
+[#159](https://github.com/loyalagents/context-router/pull/159).
+
+The prior reviewed head `0de5e803bea05a8729f8502afa7f06c3de8f10a8`
+passed applicable standard CI in run
+[`35181940243`](https://github.com/loyalagents/context-router/actions/runs/35181940243)
+and the dedicated 11-phase workflow in run
+[`35181940231`](https://github.com/loyalagents/context-router/actions/runs/35181940231).
+Those runs predate the review-finding fixes and are historical evidence only;
+the newer final head must earn fresh checks. Vercel remains outside required
+evidence under LM-014 and was not rechecked. PRs 02D and 02E remain inactive.
 
 ### Authoritative entry gate
 

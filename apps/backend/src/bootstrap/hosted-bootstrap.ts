@@ -210,6 +210,15 @@ export async function bootstrapHostedApplication({
   logger = new Logger("Bootstrap"),
   shutdownTimeoutMs = DEFAULT_SHUTDOWN_TIMEOUT_MS,
 }: HostedBootstrapOptions): Promise<HostedApplicationController> {
+  if (
+    environment !== process.env &&
+    createApplication === createNestApplication
+  ) {
+    throw new Error(
+      "Custom runtime environment requires a custom application factory",
+    );
+  }
+
   const runtimeConfiguration = loadRuntimeConfiguration({
     packageRoot,
     environment,

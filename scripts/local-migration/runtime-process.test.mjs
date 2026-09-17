@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -340,6 +340,55 @@ test("invalid PORT fails before application creation without leaking the raw val
     );
   } finally {
     cleanupFixture(fixture, roots);
+  }
+});
+
+test("the production entry point reports safe invalid-PORT guidance from a hostile cwd", () => {
+  const roots = createRuntimeRoots();
+  const rawPort = "invalid-port-secret-canary";
+  const mainPath = path.join(repositoryRoot, "apps/backend/src/main.ts");
+  const tsNodeRegister = path.join(
+    repositoryRoot,
+    "apps/backend/node_modules/ts-node/register/transpile-only",
+  );
+  const tsconfigPathsRegister = path.join(
+    repositoryRoot,
+    "apps/backend/node_modules/tsconfig-paths/register",
+  );
+
+  try {
+    const result = spawnSync(
+      process.execPath,
+      ["-r", tsNodeRegister, "-r", tsconfigPathsRegister, mainPath],
+      {
+        cwd: roots.hostileCwd,
+        env: {
+          PATH: process.env.PATH,
+          NODE_ENV: "test",
+          PORT: rawPort,
+          TS_NODE_PROJECT: path.join(
+            repositoryRoot,
+            "apps/backend/tsconfig.json",
+          ),
+        },
+        encoding: "utf8",
+        timeout: deadlineMs,
+      },
+    );
+    const output = `${result.stdout}\n${result.stderr}`;
+
+    assert.equal(result.status, 1);
+    assert.match(
+      output,
+      /Application failed to start: Invalid PORT: expected an integer between 0 and 65535/,
+    );
+    assert.equal(output.includes(rawPort), false);
+    assert.equal(output.includes(roots.hostileCwd), false);
+    assert.equal(output.includes(repositoryRoot), false);
+    assert.equal(output.includes("context-router.backend.ready"), false);
+  } finally {
+    rmSync(roots.packageRoot, { recursive: true, force: true });
+    rmSync(roots.hostileCwd, { recursive: true, force: true });
   }
 });
 

@@ -55,16 +55,23 @@ export function normalizeOriginList(
   return origins;
 }
 
+export function resolveCorsOrigins(
+  environment: RuntimeEnvironment = process.env,
+): string[] {
+  return (
+    normalizeOriginList(environment.CORS_ORIGIN, "CORS_ORIGIN") ?? [
+      ...DEFAULT_CORS_ORIGINS,
+    ]
+  );
+}
+
 export function resolveRuntimeConfiguration(
   environment: RuntimeEnvironment = process.env,
 ): RuntimeConfiguration {
   return {
     port: parsePort(environment.PORT),
     host: environment.APP_HOST || undefined,
-    corsOrigins: normalizeOriginList(
-      environment.CORS_ORIGIN,
-      "CORS_ORIGIN",
-    ) ?? [...DEFAULT_CORS_ORIGINS],
+    corsOrigins: resolveCorsOrigins(environment),
   };
 }
 

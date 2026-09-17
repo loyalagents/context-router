@@ -10,6 +10,8 @@ describe('mcpConfig', () => {
     process.env.AUTH0_DOMAIN = 'example.us.auth0.com';
     delete process.env.MCP_RESOURCE;
     delete process.env.MCP_HTTP_PATH;
+    delete process.env.MCP_HTTP_ALLOWED_ORIGINS;
+    delete process.env.CORS_ORIGIN;
   });
 
   afterAll(() => {
@@ -28,5 +30,20 @@ describe('mcpConfig', () => {
     expect(config.oauth.auth0.authorizationEndpoint).toBe(
       'https://example.us.auth0.com/authorize?audience=https%3A%2F%2Fcontext-router-api',
     );
+  });
+
+  it('inherits the normalized CORS origins unless the MCP override wins', () => {
+    process.env.CORS_ORIGIN =
+      ' https://one.example,https://two.example, https://one.example ';
+
+    expect(mcpConfig().httpTransport.allowedOrigins).toEqual([
+      'https://one.example',
+      'https://two.example',
+    ]);
+
+    process.env.MCP_HTTP_ALLOWED_ORIGINS = 'https://mcp.example';
+    expect(mcpConfig().httpTransport.allowedOrigins).toEqual([
+      'https://mcp.example',
+    ]);
   });
 });
