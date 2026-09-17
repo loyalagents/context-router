@@ -1,15 +1,18 @@
 # Step 02: Composition Boundaries
 
-- Document status: independently approved; PR 02A
+- Document status: independently approved; PRs 02A and 02B merged; PR 02C
+  implementation active
   ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
-  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation active
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
+  ([#158](https://github.com/loyalagents/context-router/pull/158)) merged at
+  `5a8b640a883dd33d42239d3a74e827cc17ffaae3`
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02B only
+- Implementation owner: `/root` for active PR 02C only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
@@ -24,12 +27,12 @@ are not pre-authorized stacked branches.
 | PR/checkpoint | Branch and base | Sole writer | Read-only reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
-| 02B: toolchain contract | active `codex/local-migration-02-toolchain-contract` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
-| 02C: runtime configuration/bootstrap | inactive `codex/local-migration-02-runtime-bootstrap`; create only from the human-merged 02B commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
+| 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
+| 02C: runtime configuration/bootstrap | active `codex/local-migration-02-runtime-bootstrap` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | `/root/runtime_activation_audit`, `/root/runtime_arch_review`, and `/root/runtime_test_security_review` (fresh and read-only) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02B only**. Any
+The current branch may implement **02C only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -147,6 +150,37 @@ preview before the configured application build. Separate repository inspection
 found no rulesets and no `main` branch protection that required Vercel. The
 production branch remains the operator-confirmed `hosted-v1-maintenance`
 setting recorded in the orchestration document.
+
+PR 02B was subsequently human-merged through
+[#158](https://github.com/loyalagents/context-router/pull/158) at
+`5a8b640a883dd33d42239d3a74e827cc17ffaae3`, promoting Node 24.21.0 and pnpm
+10.25.0 to the landed `main` contract recorded by LM-013.
+
+### PR 02C activation evidence
+
+Before any PR 02C product change, the active branch was
+`codex/local-migration-02-runtime-bootstrap`; `HEAD`, local `main`,
+`origin/main`, and both merge bases resolved exactly to the human-merged PR 02B
+SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; history was full and
+non-shallow; and the worktree was clean. The worktree audit found this to be the
+only holder of the 02C branch and found no competing owner for its runtime,
+configuration, web endpoint, Compose, documentation, or
+`scripts/local-migration/**` hotspots. PR 02C does not own `.github/workflows/ci.yml`;
+an unexpected workflow edit stops for explicit coordination.
+
+The activation LMBG was bound to that exact merge SHA and passed all 11 phases
+in 240,211 ms using Node 24.21.0, pnpm 10.25.0, Python 3.12.8, and PostgreSQL
+15.15. It reported `baseComparison=performed`, caller integrity true, no skipped
+phase, and clean resource cleanup. `/root` is the sole writer. Fresh read-only
+reviewers are `/root/runtime_activation_audit`, `/root/runtime_arch_review`, and
+`/root/runtime_test_security_review`; they may inspect and report but may not
+mutate the repository.
+
+Shared-hotspot landing order is the merged PR 02B state, then sole 02C
+ownership and human landing, then activation of 02D, then activation of 02E.
+The supported mode after PR 02C remains the existing hosted composition with
+explicit configuration/origin ownership and a tested process lifecycle; it
+does not add local identity, storage, model execution, UI, or packaging policy.
 
 ### Authoritative entry gate
 
