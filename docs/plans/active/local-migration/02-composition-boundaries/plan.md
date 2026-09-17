@@ -6,8 +6,11 @@
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
   [#159](https://github.com/loyalagents/context-router/pull/159) merged at
-  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D is active on
-  `codex/local-migration-02-runtime-resources` from that exact merge SHA
+  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D
+  [#160](https://github.com/loyalagents/context-router/pull/160) is open as a
+  draft on `codex/local-migration-02-runtime-resources` from that exact merge
+  SHA, with local implementation/review complete and final-head remote checks
+  pending
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
@@ -31,7 +34,7 @@ are not pre-authorized stacked branches.
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | merged via [PR #159](https://github.com/loyalagents/context-router/pull/159) at `143515dac687ffbca989a315edaa89e794a04db3` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
-| 02D: runtime resources/package closure | active `codex/local-migration-02-runtime-resources` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3` | `/root` | `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security` (fresh and read-only) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
+| 02D: runtime resources/package closure | draft [PR #160](https://github.com/loyalagents/context-router/pull/160) on `codex/local-migration-02-runtime-resources` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3`; local implementation/review complete and final-head remote checks pending | `/root` | `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security` (fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
 The current branch may implement **02D only**. Any

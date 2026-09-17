@@ -6,16 +6,19 @@
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
   [#159](https://github.com/loyalagents/context-router/pull/159) merged at
-  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D is active from that exact
-  merge SHA
+  `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D
+  [#160](https://github.com/loyalagents/context-router/pull/160) is open as a
+  draft from that exact merge SHA, with local implementation/review complete
+  and final-head remote checks pending
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-runtime-resources` for PR 02D only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: publish PR 02D, require final-head standard CI and the
-  dedicated migration gate, and leave landing to a human; keep PR 02E inactive
-  until PR 02D is human-merged and PR 02E's activation gate is complete
+- Concrete next action: complete final-head standard CI and the dedicated
+  migration gate for PR #160, then mark it ready and leave landing to a human;
+  keep PR 02E inactive until PR 02D is human-merged and PR 02E's activation
+  gate is complete
 - Review date: 2026-10-14 or the PR 02D human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
