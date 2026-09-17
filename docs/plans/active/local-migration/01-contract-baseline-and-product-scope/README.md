@@ -9,7 +9,9 @@
 - Concrete next action: preserve this merged contract/gate baseline while Step
   02 PR 02D [#160](https://github.com/loyalagents/context-router/pull/160)
   completes final-head remote checks and human landing from PR 02C's exact
-  merge SHA `143515dac687ffbca989a315edaa89e794a04db3`
+  merge SHA
+  `143515dac687ffbca989a315edaa89e794a04db3`; pre-correction remote successes
+  remain historical rather than evidence for the corrective head
 - Review date: completed 2026-09-16
 - Depends on: completed Step 00 PRs
   [#153](https://github.com/loyalagents/context-router/pull/153),

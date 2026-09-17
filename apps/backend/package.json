@@ -32,6 +32,8 @@
     "prisma:migrate:deploy": "docker compose exec app npx prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "docker compose exec app npx ts-node prisma/seed.ts",
+    "schema:generate": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --write",
+    "schema:check": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --check",
     "db:push": "pnpm prisma:generate && docker compose exec app npx prisma db push",
     "db:reset": "docker compose exec app npx prisma migrate reset"
   },

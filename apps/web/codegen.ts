@@ -5,6 +5,8 @@ const config: CodegenConfig = {
   // Point to your GraphQL schema
   // Option 1: Use the tracked canonical schema fixture (NO Docker needed!)
   //          Runtime schema generation is in memory and must remain byte-identical
+  //          Regenerate: pnpm --filter backend schema:generate
+  //          Verify only: pnpm --filter backend schema:check
   schema: '../backend/src/schema.gql',
 
   // Option 2: Use the local running server (requires Docker/backend running)

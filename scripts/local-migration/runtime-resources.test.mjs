@@ -317,6 +317,14 @@ test("built backend resources and production dependencies are cwd-independent an
       rootManifest.dependencies["@google-cloud/vertexai"],
     );
     assert.deepEqual(backendManifest.files, ["dist"]);
+    assert.equal(
+      backendManifest.scripts["schema:generate"],
+      "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --write",
+    );
+    assert.equal(
+      backendManifest.scripts["schema:check"],
+      "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --check",
+    );
     assert.match(workspace, /^injectWorkspacePackages: true$/m);
     assert.match(
       lockfile,
@@ -394,6 +402,72 @@ test("built backend resources and production dependencies are cwd-independent an
           signal: controller.signal,
         }),
       );
+      await timed("schemaCheckMs", () =>
+        runCommand(
+          [
+            "pnpm",
+            "--dir",
+            path.join(sourceRoot, "apps/backend"),
+            "schema:check",
+          ],
+          {
+            cwd: hostileCwd,
+            env: environment,
+            timeoutMs: 15_000,
+            signal: controller.signal,
+          },
+        ),
+      );
+      const copiedSchemaPath = path.join(
+        sourceRoot,
+        "apps/backend/src/schema.gql",
+      );
+      const trackedSchema = await readFile(
+        path.join(repositoryRoot, "apps/backend/src/schema.gql"),
+      );
+      await writeFile(copiedSchemaPath, "stale-schema-fixture", "utf8");
+      const staleSchemaCheck = spawnSync(
+        "pnpm",
+        [
+          "--dir",
+          path.join(sourceRoot, "apps/backend"),
+          "schema:check",
+        ],
+        {
+          cwd: hostileCwd,
+          env: environment,
+          encoding: "utf8",
+          timeout: 15_000,
+          maxBuffer: 2 * 1024 * 1024,
+        },
+      );
+      assert.equal(staleSchemaCheck.error?.code, undefined);
+      assert.equal(staleSchemaCheck.status, 1);
+      assert.match(
+        `${staleSchemaCheck.stdout}\n${staleSchemaCheck.stderr}`,
+        /pnpm --filter backend schema:generate/,
+      );
+      assert.equal(
+        await readFile(copiedSchemaPath, "utf8"),
+        "stale-schema-fixture",
+      );
+      await timed("schemaGenerateMs", () =>
+        runCommand(
+          [
+            "pnpm",
+            "--dir",
+            path.join(sourceRoot, "apps/backend"),
+            "schema:generate",
+          ],
+          {
+            cwd: hostileCwd,
+            env: environment,
+            timeoutMs: 15_000,
+            signal: controller.signal,
+          },
+        ),
+      );
+      assert.deepEqual(await readFile(copiedSchemaPath), trackedSchema);
 
       const sourceCatalog = await readFile(
         path.join(
