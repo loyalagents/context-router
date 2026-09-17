@@ -7,7 +7,7 @@
   product capability, backed by observable contract evidence, a named aggregate
   migration gate, and a clean-restart smoke
 - Concrete next action: preserve this merged contract/gate baseline while the
-  independently approved Step 02 PR 02A proceeds from the exact merge SHA
+  independently approved Step 02 PR 02B proceeds from PR 02A's exact merge SHA
 - Review date: completed 2026-09-16
 - Depends on: completed Step 00 PRs
   [#153](https://github.com/loyalagents/context-router/pull/153),

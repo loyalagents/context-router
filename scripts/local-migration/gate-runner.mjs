@@ -30,7 +30,7 @@ const LIVE_PROVIDER_PATTERN =
   /(?:--provider(?:=|\s+)(?:vertex|claude|codex|openrouter)|\blive[-_:]|eval-harbor:smoke|run_smoke|bootstrap_runner|docker\s+pull|pnpm\s+install|npm\s+install)/i;
 const APPROVED_HOSTED_COMMANDS = new Map([
   ["contract-baseline", [
-    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs"],
+    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs"],
     ["node", "scripts/local-migration/check-contract-baseline.mjs"],
   ]],
   ["documentation", [
@@ -1373,7 +1373,11 @@ async function cloneDirectoryIsolated(source, target, allowedSourceRoot, signal)
   }
 }
 
-export async function cloneCorepackCache(source, target, { signal } = {}) {
+export async function cloneCorepackCache(
+  source,
+  target,
+  { signal, requiredPnpmVersion } = {},
+) {
   const sourceRoot = await realpath(source).catch(() => null);
   if (!sourceRoot) {
     throw new Error(
@@ -1388,6 +1392,14 @@ export async function cloneCorepackCache(source, target, { signal } = {}) {
   if (!cachedPnpmVersions.length) {
     throw new Error(
       `offline migration gate requires a cached pnpm distribution under ${pnpmRoot}`,
+    );
+  }
+  if (
+    requiredPnpmVersion &&
+    !cachedPnpmVersions.some((entry) => entry.name === requiredPnpmVersion)
+  ) {
+    throw new Error(
+      `offline migration gate requires cached pnpm ${requiredPnpmVersion}`,
     );
   }
   await cloneDirectoryIsolated(sourceRoot, target, sourceRoot, signal);

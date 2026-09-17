@@ -77,6 +77,9 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/restart-smoke.test.mjs",
           "scripts/local-migration/test-database.test.mjs",
           "scripts/local-migration/web-support-smoke.test.mjs",
+          "scripts/local-migration/eval-test-discovery.test.mjs",
+          "scripts/local-migration/toolchain-contract.test.mjs",
+          "scripts/local-migration/ci-path-filters.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],
@@ -113,14 +116,14 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
   );
 });
 
-test("dedicated CI seeds the offline pnpm 9 Corepack cache before invoking the gate", async () => {
+test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking the gate", async () => {
   const workflow = await readFile(
     new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
     "utf8",
   );
-  const seed = workflow.indexOf("corepack prepare pnpm@9 --activate");
+  const seed = workflow.indexOf("corepack prepare pnpm@10.25.0 --activate");
   const gate = workflow.indexOf("run: pnpm migration:gate");
-  assert.ok(seed >= 0, "workflow must seed the pnpm 9 Corepack cache");
+  assert.ok(seed >= 0, "workflow must seed the pnpm 10.25.0 Corepack cache");
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
@@ -230,14 +233,14 @@ test("successful preflight evidence is exact, single-line, and contains no admin
     formatPreflightEvidence({
       baseSha: "a".repeat(40),
       versions: {
-        node: "v20.19.5",
+        node: "v24.21.0",
         pnpm: "10.25.0",
         python: "3.12.14",
         postgres: "15.15",
       },
       administrationSource: "supplied-loopback-administration-url",
     }),
-    `migration-gate: preflight base=${"a".repeat(40)} node=v20.19.5 pnpm=10.25.0 python=3.12.14 postgres=15.15 administration=supplied-loopback-administration-url`,
+    `migration-gate: preflight base=${"a".repeat(40)} node=v24.21.0 pnpm=10.25.0 python=3.12.14 postgres=15.15 administration=supplied-loopback-administration-url`,
   );
 });
 

@@ -4,6 +4,7 @@
   "description": "NestJS GraphQL monolith with Prisma and PostgreSQL",
   "main": "dist/main.js",
   "scripts": {
+    "prebuild": "node ../../scripts/check-toolchain.mjs",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

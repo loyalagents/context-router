@@ -1,16 +1,24 @@
 # Step 02: Composition Boundaries
 
-- Status: plan and PR 02A ([#157](https://github.com/loyalagents/context-router/pull/157))
-  implementation independently approved; PR 02A remains unmerged
+- Status: plan approved; PR 02A
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation and
+  independent review complete; candidate head
+  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` passed the required GitHub checks
+  and LM-014 external verification, with human review and landing pending
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-composition-boundaries` for PR 02A only
+  `codex/local-migration-02-toolchain-contract` for PR 02B only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: obtain the required final-head local and remote check
-  evidence, then a human review and landing decision; do not activate PR 02B
-  before PR 02A is human-merged and its exact merge SHA is recorded
-- Review date: 2026-10-14 or the PR 02A human landing decision, whichever comes
+- Concrete next action: maintain PR
+  [#158](https://github.com/loyalagents/context-router/pull/158) closeout by
+  keeping required checks green and its description synchronized on the
+  documentation-only closeout head and any later head, mark or keep the PR
+  ready, then leave review and landing to a human and keep PR 02C inactive;
+  after PR 02B merges, record the exact merge SHA, activate PR 02C from that
+  base, and promote the exact toolchain contract to the landed baseline
+- Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
@@ -30,11 +38,11 @@ startup, shutdown, and clean restart. The plan must preserve all Step 01
 contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
-The independently reviewed [`plan.md`](plan.md) defines five serial PRs. Only
-02A is active on the current branch; 02B–02E remain inactive until a human
-merges each predecessor and their activation gates assign fresh bases, owners,
-and reviewers. Approval does not authorize a local identity, database, model,
-UI shell, installer, final OS claim, or default listener change.
+The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PR 02A
+is merged and only 02B is active on the current branch; 02C–02E remain inactive
+until a human merges each predecessor and their activation gates assign fresh
+bases, owners, and reviewers. Approval does not authorize a local identity,
+database, model, UI shell, installer, final OS claim, or default listener change.
 
 ## Required Reading
 

@@ -493,7 +493,7 @@
     },
     {
       "id": "hosted-deployment-workflow",
-      "label": "Cloud Run, Vercel/Auth0, and hosted operator workflow on main",
+      "label": "Hosted deployment/operator workflow (Cloud Run, Vercel, and Auth0)",
       "disposition": "REMOVE",
       "contractClass": "planned-removal",
       "ownerSteps": [
@@ -1159,6 +1159,25 @@
         "03",
         "06",
         "08"
+      ]
+    },
+    {
+      "id": "toolchain-version-probe",
+      "sources": [
+        {
+          "path": "scripts/check-toolchain.mjs",
+          "fingerprints": [
+            "await execFileAsync(\"pnpm\", [\"--version\"], options)",
+            "result.COREPACK_ENABLE_NETWORK = \"0\""
+          ]
+        }
+      ],
+      "destination": "the pnpm executable resolved from PATH with Corepack networking disabled",
+      "payload": "the literal --version argument plus only credential-free runtime, cache, temporary-directory, and user-directory locator environment; no credentials or project payload",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "02"
       ]
     },
     {
@@ -3108,6 +3127,12 @@
       "path": "get-test-token.sh",
       "sinks": {
         "curl": 1
+      }
+    },
+    {
+      "path": "scripts/check-toolchain.mjs",
+      "sinks": {
+        "exec-file": 1
       }
     },
     {

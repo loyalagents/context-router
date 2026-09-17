@@ -34,24 +34,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
         with:
-          version: 9
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
           cache: pnpm
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Seed offline pnpm runtime for the disposable gate
-        run: corepack prepare pnpm@9 --activate
+        run: corepack prepare pnpm@10.25.0 --activate
 
       - name: Run the Local Migration Baseline Gate
         run: pnpm migration:gate

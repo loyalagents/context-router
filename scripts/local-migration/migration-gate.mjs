@@ -48,6 +48,11 @@ import {
   queryDatabase,
 } from "./test-database.mjs";
 import { RESTART_SMOKE_BOUNDED_CLEANUP_BUDGET_MS } from "./restart-smoke.mjs";
+import {
+  checkCurrentToolchain,
+  EXPECTED_PNPM_VERSION,
+  TOOLCHAIN_ERROR_MESSAGE,
+} from "../check-toolchain.mjs";
 
 const execFileAsync = promisify(execFile);
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -186,7 +191,7 @@ async function prepareDisposableWorkspace(diagnosticsDirectory, signal) {
       const cachedPnpmVersions = await cloneCorepackCache(
         sourceCorepackHome,
         corepackHome,
-        { signal },
+        { signal, requiredPnpmVersion: EXPECTED_PNPM_VERSION },
       );
       return { files, corepackHome, cachedPnpmVersions };
     },
@@ -674,7 +679,7 @@ async function executeSmokeOnly({
   return { status: "passed", mode: "smoke-only" };
 }
 
-async function main() {
+async function executeGate() {
   const cancellation = createSignalAbortController();
   const smokeOnly = process.argv.includes("--smoke-only");
   const startedAt = Date.now();
@@ -788,13 +793,60 @@ async function main() {
     return;
   }
 
+  await rm(diagnosticsDirectory, { recursive: true, force: true });
   const elapsedMs = Date.now() - startedAt;
   console.log(
     smokeOnly
       ? `migration-smoke: ok; disposable caller-integrity=true elapsedMs=${elapsedMs}`
       : `migration-gate: ok; phases=${result.phases.length} baseComparison=${result.baseComparison} caller-integrity=true elapsedMs=${elapsedMs}`,
   );
-  await rm(diagnosticsDirectory, { recursive: true, force: true });
+}
+
+export async function runWithToolchainPreflight(
+  action = executeGate,
+  { checkToolchain = checkCurrentToolchain } = {},
+) {
+  await checkToolchain();
+  return action();
+}
+
+export function formatUnhandledGateFailure(
+  error,
+  { beforeResourceAcquisition },
+) {
+  const rawMessage = error?.message ?? error;
+  if (beforeResourceAcquisition && rawMessage === TOOLCHAIN_ERROR_MESSAGE) {
+    return TOOLCHAIN_ERROR_MESSAGE;
+  }
+  const stage = beforeResourceAcquisition
+    ? " before resource acquisition"
+    : "";
+  return `migration-gate: failed${stage}: ${redactSecrets(rawMessage)}`;
+}
+
+async function main() {
+  try {
+    await checkCurrentToolchain();
+  } catch (error) {
+    console.error(
+      formatUnhandledGateFailure(error, {
+        beforeResourceAcquisition: true,
+      }),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  try {
+    await executeGate();
+  } catch (error) {
+    console.error(
+      formatUnhandledGateFailure(error, {
+        beforeResourceAcquisition: false,
+      }),
+    );
+    process.exitCode = error?.exitCode ?? 1;
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -141,19 +141,67 @@ step plan that resolves them.
 - Status: Accepted
 - Decision: Step 02 selects exact Node.js 24.21.0 and pnpm 10.25.0 for
   installation, builds, the Local Migration Baseline Gate, and packaging
-  evidence. This is a reviewed target, not yet a support claim. It becomes the
-  supported contract only when PR 02B atomically aligns all version sources,
-  eval discovery, Docker, CI, and documentation and the complete exact-runtime
-  gate passes locally and remotely. Until then LM-012 evidence governs.
+  evidence. This is a reviewed target, not yet a `main` support claim. It
+  becomes the supported contract only when PR 02B atomically aligns all version
+  sources, eval discovery, Docker, CI, and documentation, the complete
+  exact-runtime gate passes locally and remotely, and a human merges the PR.
+  Until then LM-012 evidence governs.
 - Evidence: the exact Step 01-base gate passed all 11 phases on Node 20.19.5 and
   pnpm 10.25.0. Supplemental already-installed Node 22.13.1 and 24.18.0 runs
   passed phases 1–5 and exposed the same phase-6 directory test-discovery defect;
   the quoted recursive test glob passed all 364 eval tests on Node 24 without
-  fixture changes. Partial runs do not establish support.
+  fixture changes. On the active PR 02B worktree, a frozen pnpm 10.25.0 install
+  left the lockfile byte-identical, `pnpm eval:verify` passed 364 tests plus
+  fixture validation, and the full gate bound to PR 02A merge
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3` passed all 11 phases on Node
+  24.21.0/pnpm 10.25.0; the post-review full-tree rerun reported
+  `baseComparison=performed`, caller integrity true, and clean resource cleanup.
+  Exact elapsed time is retained in the PR evidence rather than this repository
+  record. PR 02B head `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` then passed
+  all applicable standard CI jobs in run `35173087186` and the dedicated
+  11-phase baseline gate in run `35173087176`. The target has satisfied its
+  implementation evidence but becomes the supported `main` contract only after
+  human landing.
 - Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
   other pnpm versions, before resource acquisition. A future patch/version
   change requires reviewed evidence and atomic metadata/CI/documentation
   alignment; it may not regenerate fixtures merely to force the upgrade.
+  Windows remains analysis-only until a native shell-free pnpm resolution path
+  and gate pass exist. Required final-head remote evidence comes from the
+  dedicated migration workflow and applicable standard CI; LM-014 excludes
+  Vercel preview builds from this exact-toolchain contract rather than
+  weakening the checker.
+
+### LM-014: Vercel is outside the local-first `main` contract
+
+- Status: Accepted
+- Decision: Vercel previews and deployments are not part of the supported
+  local-first `main` product or its required merge evidence. Vercel production
+  remains on `hosted-v1-maintenance`; GitHub Actions supplies the required
+  final-head evidence for local-first pull requests.
+- Consequence: the Vercel project uses the external `Only build production`
+  ignored-build policy. A local-first branch may still create a canceled
+  preview deployment record or informational status, but the ignored-build
+  check must cancel it before the configured application build proceeds and it
+  is never merge evidence. Canceled previews still consume a deployment and a
+  concurrent-build slot; that cost is accepted because hosted deployments are
+  infrequent. Before PR 02B lands, an operator verifies that policy, verifies
+  no GitHub rule or branch-protection setting requires Vercel, and confirms
+  Vercel production still follows `hosted-v1-maintenance`. No repository
+  `vercel.json` branch allowlist is added: the infrequently used hosted
+  deployment remains an explicitly re-verified external topology. Reintroducing
+  Vercel builds for local-first `main` requires a new reviewed decision and a
+  runtime contract that its selector can satisfy without a checker bypass.
+- Verification: on 2026-09-16, PR
+  [#158](https://github.com/loyalagents/context-router/pull/158) head
+  `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` received a
+  successful Vercel status labeled `Canceled by Ignored Build Step`, confirming
+  that the ignored-build check stopped the preview before the configured
+  application build. Repository inspection found no rulesets and no `main`
+  branch protection, so no GitHub rule required Vercel. The production branch
+  remains the operator-confirmed `hosted-v1-maintenance` setting recorded in
+  the orchestration document. This observation closes the external PR 02B gate
+  but is not required merge evidence.
 
 ## Deferred Decisions And Owning Steps
 

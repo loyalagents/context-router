@@ -1,15 +1,15 @@
 # Step 02: Composition Boundaries
 
 - Document status: independently approved; PR 02A
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) implementation
-  independently approved and unmerged
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation active
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02A only
+- Implementation owner: `/root` for active PR 02B only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
@@ -23,13 +23,13 @@ are not pre-authorized stacked branches.
 
 | PR/checkpoint | Branch and base | Sole writer | Read-only reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
-| 02A: hosted model binding | active `codex/local-migration-02-composition-boundaries` from `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
-| 02B: toolchain contract | inactive `codex/local-migration-02-toolchain-contract`; create only from the human-merged 02A commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
+| 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
+| 02B: toolchain contract | active `codex/local-migration-02-toolchain-contract` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | inactive `codex/local-migration-02-runtime-bootstrap`; create only from the human-merged 02B commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02A only** after this plan is approved. Any
+The current branch may implement **02B only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -92,6 +92,61 @@ the hosted composition cannot pass its gate, or the proposed fix requires a
 Step 03–09 product policy.
 
 ## Current Evidence
+
+### PR 02B activation evidence
+
+PR 02A was human-merged through
+[#157](https://github.com/loyalagents/context-router/pull/157) at
+`5a2fc8a09e9091d16160caea258d678293a1e2b3`. Before any PR 02B repository
+change, `HEAD`, local `main`, `origin/main`, and both merge bases resolved to
+that exact SHA; history was full and non-shallow; the worktree was clean; and
+the branch was `codex/local-migration-02-toolchain-contract`. A mechanical
+worktree/branch/PR audit found no active competing owner for the package,
+workflow, Docker, documentation, or `scripts/local-migration/**` hotspots.
+
+The entry LMBG was bound to that exact SHA and passed all 11 phases using Node
+20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. It reported
+`baseComparison=performed`, caller integrity true, no skipped phase, and clean
+resource cleanup. This only activates the checkpoint; it does not supersede
+LM-012 or establish the selected Node 24.21.0 support claim. `/root` is the
+sole writer. `/root/review02b_toolchain_contract` and
+`/root/review02b_gate_ci` are the fresh read-only implementation reviewers.
+
+The implemented PR 02B working tree then passed a frozen pnpm 10.25.0 install
+with the lockfile hash unchanged, the quoted eval glob and `pnpm eval:verify`
+with 364/364 tests and unchanged fixtures, and the full 11-phase LMBG on exact
+Node 24.21.0/pnpm 10.25.0. The final gate was bound to
+`5a2fc8a09e9091d16160caea258d678293a1e2b3`; the post-review full-tree rerun
+reported `baseComparison=performed`, caller integrity true, no skipped phase,
+and clean resource cleanup. Exact elapsed time belongs in the PR evidence rather
+than this self-referential repository record. The fresh independent reviewers
+approved the local implementation. PR 02B head
+`e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` subsequently passed all applicable
+standard CI jobs in run `35173087186` and the dedicated 11-phase baseline gate
+in run `35173087176`.
+
+Vercel is an external remote build topology. It can select Node 24 only by major
+and may roll its minor/patch release, while the 02B checker intentionally
+requires Node 24.21.0. Accepted decision LM-014 therefore excludes Vercel
+preview builds from the supported local-first `main` product and its required
+merge evidence. The external project uses `Only build production`: a local-first
+push may create a canceled preview deployment record or informational status,
+but the ignored-build check must cancel it before the configured application
+build proceeds. The canceled record still consumes a deployment and
+concurrent-build slot; that cost is accepted because hosted deployments are
+infrequent. Before landing, an operator must verify that policy, verify no
+GitHub rule or branch-protection setting requires a Vercel status, and confirm
+production remains on `hosted-v1-maintenance`. No repository `vercel.json`
+branch allowlist is introduced for this infrequently used hosted topology. An
+informational Vercel status does not replace the dedicated migration workflow
+or applicable standard CI evidence.
+
+On 2026-09-16, that same PR 02B head received a successful Vercel status labeled
+`Canceled by Ignored Build Step`, confirming the external policy stopped the
+preview before the configured application build. Separate repository inspection
+found no rulesets and no `main` branch protection that required Vercel. The
+production branch remains the operator-confirmed `hosted-v1-maintenance`
+setting recorded in the orchestration document.
 
 ### Authoritative entry gate
 
@@ -237,7 +292,7 @@ registry/consumer census and the owning step's behavioral tests.
 | GitHub `ubuntu-latest` | CI-tested, source workspace only | Step 01 remote Node 20/pnpm 9 gate; current evidence does not persist exact architecture/libc for a staged artifact | 02E workflow must record and pass the exact staged smoke before naming Linux x64/glibc support evidence |
 | macOS x64 | analysis-only | lock/package metadata only | native staged smoke required |
 | Linux arm64 | analysis-only | lock/package metadata only | native staged smoke required |
-| Windows x64/arm64 | analysis-only | no ACL proof; real descendant-kill regression currently skips Windows | native staged smoke, ACL assertion, and owned process-tree termination required |
+| Windows x64/arm64 | analysis-only | no ACL proof; real descendant-kill regression currently skips Windows; the shell-free pnpm probe does not execute common `.cmd` shims | native safe tool resolution, staged smoke, ACL assertion, and owned process-tree termination required |
 | Alpine/musl or any cross-built artifact | analysis-only | Dockerfile/optional lock entries only | build and run on the exact target; no cross-target `node_modules` reuse |
 
 Step 02 records feasibility evidence; Step 09 owns the final product support,
@@ -746,8 +801,13 @@ selection rules it validates.
    remote-required `contract-baseline` test argv described above and prove the
    JSON/fallback argv are identical. Stop if
    the exact runtime is unavailable, lockfile drifts, any phase skips/fails, or
-   `ci.yml` ownership lacks an explicit landing order. Revert the entire
-   version/eval checkpoint together; do not leave mixed version sources.
+   `ci.yml` ownership lacks an explicit landing order. Also stop landing if
+   a Vercel preview proceeds past the external production-only ignored-build
+   check into the configured application build, a GitHub rule requires a Vercel
+   status, or Vercel production no longer follows `hosted-v1-maintenance`;
+   LM-014 permits canceled preview records but excludes their major-only
+   selector from the local-first contract. Revert the entire version/eval
+   checkpoint together; do not leave mixed version sources.
 
 ### PR 02C: configuration/bootstrap lifecycle
 
@@ -870,6 +930,7 @@ selection rules it validates.
 | Aggregate compatibility | `MIGRATION_GATE_BASE_SHA=<recorded-exact-base> MIGRATION_GATE_PYTHON_BIN=<python-3.12> pnpm migration:gate`, with `baseComparison=performed`, no skips, integrity true, clean cleanup | Yes for every PR |
 | Dedicated workflow | `.github/workflows/local-migration-baseline.yml` exact root gate on selected runtime | Yes remotely |
 | Standard CI | exact path-filter mapping below; backend, orchestrator, eval, Harbor static, frontend, and docs jobs as selected | Yes remotely |
+| Vercel project topology | operator verifies `Only build production` cancels local-first previews before the configured application build proceeds, no GitHub rule requires Vercel, and production remains on `hosted-v1-maintenance` under LM-014 | Yes externally before landing; canceled records/statuses consume capacity but are not evidence |
 | Repository quality | `git diff --check`; clean status; no generated/lock drift; no residual process/container/temp root | Yes |
 
 Live Auth0/Vertex/provider evaluation, package downloads, `pnpm install`/`npm
@@ -1022,6 +1083,60 @@ material plan changes still require re-review.
 | Testing, LMBG, CI, packaging/OS evidence | `/root/plan_review_test_security` | Added exact tests, cumulative remote execution, bounded gate/workflow timeline, web/backend process proof, interface-complete negative probes, and required CI routing. | **APPROVED** 2026-09-16 |
 | Security and privacy | `/root/plan_review_test_security` | Added private-root/permission/redaction, partial-start/signal/orphan/scoped cleanup evidence and explicitly deferred final authorization, Host/Origin/CSRF/DNS-rebinding and offline policy. | **APPROVED** 2026-09-16 |
 
+The PR 02B follow-up review exposed Vercel's external major-only Node selector
+and the unvalidated Windows `.cmd` probe path. The writer added the explicit
+Vercel landing stop/decision gate and clarified the current macOS/Linux evidence
+boundary. Fresh read-only reviewer `/root/review_findings_platform` approved
+that material plan clarification on 2026-09-16; that review did not itself
+authorize a checker bypass, a Vercel project-setting mutation, or a Windows
+support claim.
+
+On 2026-09-16 the operator selected the reviewed scope-out alternative: Vercel
+is outside the supported local-first `main` product and its required merge
+evidence, while Vercel production remains on `hosted-v1-maintenance`. This
+decision is recorded as LM-014. Before landing, external settings must disable
+Vercel application builds for local-first pushes through `Only build
+production`, keep Vercel out of GitHub requirements, and preserve the hosted
+production branch. Canceled preview records are acceptable but are not merge
+evidence; the repository checker and exact GitHub Actions evidence remain
+unchanged.
+
+Fresh read-only reviewer `/root/vercel_decision_review` reviewed LM-014 and its
+synchronized canonical baseline, step plan, and status updates on 2026-09-16
+and approved with no remaining findings. The review confirmed the scope-out
+goal: Vercel preview builds and required Vercel statuses are excluded from
+local-first `main`, Vercel production remains on `hosted-v1-maintenance`, and
+external project/rules verification remains a pre-landing gate rather than
+repository toolchain evidence.
+
+The operator subsequently chose the dashboard-owned `Only build production`
+policy instead of a repository `vercel.json` branch allowlist because hosted
+deployments are infrequent and the allowlist would be easy to outlive unnoticed.
+LM-014 now permits Vercel to create a canceled preview record or informational
+status, but the ignored-build check must cancel it before the configured
+application build proceeds and no Vercel result is required evidence. Canceled
+previews still consume deployment/concurrency capacity; the operator accepts
+that cost for this infrequently used hosted topology. This refinement requires
+fresh read-only review and a final-head remote observation before landing.
+
+Fresh read-only reviewer `/root/vercel_production_only_docs` reviewed the
+LM-014 production-only ignored-build refinement and its synchronized canonical
+baseline, decision log, step plan, and status updates on 2026-09-16 and approved
+with no remaining repository findings. The review confirmed that local-first
+pushes may create canceled Vercel preview deployment records/statuses, the
+ignored-build check prevents the configured application build from proceeding,
+the deployment/concurrency cost is explicitly accepted, no Vercel result is
+required merge evidence, production remains on `hosted-v1-maintenance`, and no
+JSON-registry change is needed. PR-body synchronization plus final-head remote
+observation were the remaining pre-landing closeout gates.
+
+On 2026-09-16, PR [#158](https://github.com/loyalagents/context-router/pull/158)
+head `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` completed the remote-observation
+gate: all applicable standard CI jobs and the dedicated 11-phase LMBG passed,
+and Vercel returned `Canceled by Ignored Build Step`. This evidence does not
+replace PR-body synchronization or the required checks on any later head. PR
+#158 must keep both current before human review and landing.
+
 ## Implementation Review Gate
 
 Each PR is blocked from ready-for-review status until fresh read-only reviewers
@@ -1048,6 +1163,27 @@ reviewer approved without findings. All three reviewers confirmed the change
 stays within 02A, preserves the public transport and hosted behavior, and does
 not enter Steps 03–09. Final-head local and remote validation remains a
 closeout gate rather than an implementation-review assumption.
+
+The fresh PR 02B implementation review completed on 2026-09-16. The reviewers
+required a credential-free pnpm probe environment, exhaustive exact-version
+assertions for every workflow selection, a pnpm setup action compatible with
+the integrity-suffixed `packageManager` value, and precise registry/status
+wording. The writer resolved each finding, reran focused validation and the
+exact-base full gate, and both reviewers approved the current local diff.
+The implementation head's required remote workflow evidence subsequently
+passed; any later documentation-only head must preserve it before human review
+and landing.
+
+A later independent review found the external Vercel compatibility gap, stale
+elapsed-time wording, the analysis-only Windows limitation, an imprecise
+top-level gate failure label, and missing probe-bound regression assertions.
+The writer removed self-referential timing, recorded the Vercel/Windows
+boundaries, made failure labels stage-aware, moved success output after cleanup,
+and added bounded shell-free probe failure tests. Read-only reviewers
+`/root/review_findings_platform` and `/root/review_findings_gate` approved the
+result on 2026-09-16. The Vercel topology decision is now resolved by LM-014;
+the external settings were subsequently verified as a landing gate, not as an
+implementation-review finding.
 
 ## Exit Criteria
 
