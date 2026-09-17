@@ -225,14 +225,19 @@ native safe executable-resolution design and full gate evidence.
 Vercel is an external build topology, not a repository-controlled exact-version
 selector. It exposes a Node major selection and may roll minor/patch releases,
 so it cannot durably select Node 24.21.0. LM-014 therefore excludes Vercel
-previews and deployments from the supported local-first `main` product and its
-required merge evidence. Before PR 02B lands, an operator verifies that Vercel
-project settings disable automatic preview/deployment creation for `main` and
-its local-first pull request branches, no GitHub rule or branch-protection
-setting requires a Vercel status, and production still follows
-`hosted-v1-maintenance`. GitHub Actions provides the required exact Node and
-pnpm final-head evidence; an informational Vercel status cannot replace it. The
-checker is not bypassed or silently loosened.
+preview builds from the supported local-first `main` product and its required
+merge evidence. The external Vercel project uses `Only build production`: a
+local-first push may create a canceled preview deployment record or
+informational status, but the ignored-build check must cancel it before the
+configured application build proceeds. The canceled record still consumes a
+deployment and concurrent-build slot; that cost is accepted because hosted
+deployments are infrequent. Before PR 02B lands, an operator verifies that
+policy, verifies no GitHub rule or branch-protection setting requires Vercel,
+and confirms production still follows `hosted-v1-maintenance`. GitHub Actions
+provides the required exact Node and pnpm final-head evidence; an informational
+Vercel status cannot replace it. No repository `vercel.json` branch allowlist
+is added for this infrequent hosted deployment topology. The checker is not
+bypassed or silently loosened.
 
 The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
 requires installed frozen dependencies, an offline Corepack cache containing

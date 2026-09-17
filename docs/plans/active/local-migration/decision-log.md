@@ -175,14 +175,19 @@ step plan that resolves them.
   local-first `main` product or its required merge evidence. Vercel production
   remains on `hosted-v1-maintenance`; GitHub Actions supplies the required
   final-head evidence for local-first pull requests.
-- Consequence: before PR 02B lands, an operator verifies that automatic Vercel
-  preview/deployment creation is disabled for `main` and its local-first pull
-  request branches, no GitHub rule or branch-protection setting requires a
-  Vercel status, and Vercel production still follows
-  `hosted-v1-maintenance`. An informational Vercel status cannot establish or
-  replace the exact Node.js/pnpm evidence. Reintroducing Vercel for local-first
-  `main` requires a new reviewed decision and a runtime contract that its
-  selector can satisfy without a checker bypass.
+- Consequence: the Vercel project uses the external `Only build production`
+  ignored-build policy. A local-first branch may still create a canceled
+  preview deployment record or informational status, but the ignored-build
+  check must cancel it before the configured application build proceeds and it
+  is never merge evidence. Canceled previews still consume a deployment and a
+  concurrent-build slot; that cost is accepted because hosted deployments are
+  infrequent. Before PR 02B lands, an operator verifies that policy, verifies
+  no GitHub rule or branch-protection setting requires Vercel, and confirms
+  Vercel production still follows `hosted-v1-maintenance`. No repository
+  `vercel.json` branch allowlist is added: the infrequently used hosted
+  deployment remains an explicitly re-verified external topology. Reintroducing
+  Vercel builds for local-first `main` requires a new reviewed decision and a
+  runtime contract that its selector can satisfy without a checker bypass.
 
 ## Deferred Decisions And Owning Steps
 

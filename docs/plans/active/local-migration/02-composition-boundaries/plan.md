@@ -125,13 +125,18 @@ approved the local implementation; remote final-head evidence remains required.
 Vercel is an external remote build topology. It can select Node 24 only by major
 and may roll its minor/patch release, while the 02B checker intentionally
 requires Node 24.21.0. Accepted decision LM-014 therefore excludes Vercel
-previews and deployments from the supported local-first `main` product and its
-required merge evidence. Before landing, an operator must verify that external
-Vercel project settings disable automatic preview/deployment creation for
-`main` and its local-first pull request branches, no GitHub rule or
-branch-protection setting requires a Vercel status, and production remains on
-`hosted-v1-maintenance`. An informational Vercel status does not replace the
-dedicated migration workflow or applicable standard CI evidence.
+preview builds from the supported local-first `main` product and its required
+merge evidence. The external project uses `Only build production`: a local-first
+push may create a canceled preview deployment record or informational status,
+but the ignored-build check must cancel it before the configured application
+build proceeds. The canceled record still consumes a deployment and
+concurrent-build slot; that cost is accepted because hosted deployments are
+infrequent. Before landing, an operator must verify that policy, verify no
+GitHub rule or branch-protection setting requires a Vercel status, and confirm
+production remains on `hosted-v1-maintenance`. No repository `vercel.json`
+branch allowlist is introduced for this infrequently used hosted topology. An
+informational Vercel status does not replace the dedicated migration workflow
+or applicable standard CI evidence.
 
 ### Authoritative entry gate
 
@@ -787,12 +792,12 @@ selection rules it validates.
    JSON/fallback argv are identical. Stop if
    the exact runtime is unavailable, lockfile drifts, any phase skips/fails, or
    `ci.yml` ownership lacks an explicit landing order. Also stop landing if
-   automatic Vercel preview/deployment creation remains enabled for `main` or
-   its local-first pull request branches, a GitHub rule requires a Vercel status,
-   or Vercel production no longer follows `hosted-v1-maintenance`; LM-014
-   excludes that major-only selector from the local-first contract rather than
-   treating a point-in-time preview as durable alignment. Revert the entire
-   version/eval checkpoint together; do not leave mixed version sources.
+   a Vercel preview proceeds past the external production-only ignored-build
+   check into the configured application build, a GitHub rule requires a Vercel
+   status, or Vercel production no longer follows `hosted-v1-maintenance`;
+   LM-014 permits canceled preview records but excludes their major-only
+   selector from the local-first contract. Revert the entire version/eval
+   checkpoint together; do not leave mixed version sources.
 
 ### PR 02C: configuration/bootstrap lifecycle
 
@@ -915,7 +920,7 @@ selection rules it validates.
 | Aggregate compatibility | `MIGRATION_GATE_BASE_SHA=<recorded-exact-base> MIGRATION_GATE_PYTHON_BIN=<python-3.12> pnpm migration:gate`, with `baseComparison=performed`, no skips, integrity true, clean cleanup | Yes for every PR |
 | Dedicated workflow | `.github/workflows/local-migration-baseline.yml` exact root gate on selected runtime | Yes remotely |
 | Standard CI | exact path-filter mapping below; backend, orchestrator, eval, Harbor static, frontend, and docs jobs as selected | Yes remotely |
-| Vercel project topology | operator verifies automatic previews/deployments are disabled for `main` and its local-first pull request branches, no GitHub rule requires Vercel, and production remains on `hosted-v1-maintenance` under LM-014 | Yes externally before landing; no Vercel build is required evidence |
+| Vercel project topology | operator verifies `Only build production` cancels local-first previews before the configured application build proceeds, no GitHub rule requires Vercel, and production remains on `hosted-v1-maintenance` under LM-014 | Yes externally before landing; canceled records/statuses consume capacity but are not evidence |
 | Repository quality | `git diff --check`; clean status; no generated/lock drift; no residual process/container/temp root | Yes |
 
 Live Auth0/Vertex/provider evaluation, package downloads, `pnpm install`/`npm
@@ -1080,18 +1085,40 @@ On 2026-09-16 the operator selected the reviewed scope-out alternative: Vercel
 is outside the supported local-first `main` product and its required merge
 evidence, while Vercel production remains on `hosted-v1-maintenance`. This
 decision is recorded as LM-014. Before landing, external settings must disable
-automatic Vercel previews/deployments for `main` and its local-first pull
-request branches, keep Vercel out of GitHub requirements, and preserve the
-hosted production branch; the repository checker and exact GitHub Actions
-evidence remain unchanged.
+Vercel application builds for local-first pushes through `Only build
+production`, keep Vercel out of GitHub requirements, and preserve the hosted
+production branch. Canceled preview records are acceptable but are not merge
+evidence; the repository checker and exact GitHub Actions evidence remain
+unchanged.
 
 Fresh read-only reviewer `/root/vercel_decision_review` reviewed LM-014 and its
 synchronized canonical baseline, step plan, and status updates on 2026-09-16
-and approved with no remaining findings. The review confirmed that automatic
-Vercel previews/deployments and required Vercel statuses are excluded from
+and approved with no remaining findings. The review confirmed the scope-out
+goal: Vercel preview builds and required Vercel statuses are excluded from
 local-first `main`, Vercel production remains on `hosted-v1-maintenance`, and
 external project/rules verification remains a pre-landing gate rather than
 repository toolchain evidence.
+
+The operator subsequently chose the dashboard-owned `Only build production`
+policy instead of a repository `vercel.json` branch allowlist because hosted
+deployments are infrequent and the allowlist would be easy to outlive unnoticed.
+LM-014 now permits Vercel to create a canceled preview record or informational
+status, but the ignored-build check must cancel it before the configured
+application build proceeds and no Vercel result is required evidence. Canceled
+previews still consume deployment/concurrency capacity; the operator accepts
+that cost for this infrequently used hosted topology. This refinement requires
+fresh read-only review and a final-head remote observation before landing.
+
+Fresh read-only reviewer `/root/vercel_production_only_docs` reviewed the
+LM-014 production-only ignored-build refinement and its synchronized canonical
+baseline, decision log, step plan, and status updates on 2026-09-16 and approved
+with no remaining repository findings. The review confirmed that local-first
+pushes may create canceled Vercel preview deployment records/statuses, the
+ignored-build check prevents the configured application build from proceeding,
+the deployment/concurrency cost is explicitly accepted, no Vercel result is
+required merge evidence, production remains on `hosted-v1-maintenance`, and no
+JSON-registry change is needed. PR-body synchronization plus final-head remote
+observation remain pre-landing closeout gates.
 
 ## Implementation Review Gate
 
