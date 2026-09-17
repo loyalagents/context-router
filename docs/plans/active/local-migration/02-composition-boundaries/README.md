@@ -1,16 +1,19 @@
 # Step 02: Composition Boundaries
 
-- Status: plan and PR 02A ([#157](https://github.com/loyalagents/context-router/pull/157))
-  implementation independently approved; PR 02A remains unmerged
+- Status: plan approved; PR 02A
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B local implementation and
+  independent review complete, with remote CI and human landing pending
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-composition-boundaries` for PR 02A only
+  `codex/local-migration-02-toolchain-contract` for PR 02B only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: obtain the required final-head local and remote check
-  evidence, then a human review and landing decision; do not activate PR 02B
-  before PR 02A is human-merged and its exact merge SHA is recorded
-- Review date: 2026-10-14 or the PR 02A human landing decision, whichever comes
+- Concrete next action: run the dedicated migration workflow and all applicable
+  standard CI on the final remote head, resolve any remote finding, and leave
+  landing to a human; promote the exact toolchain to the supported contract only
+  after that remote evidence passes
+- Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
@@ -30,11 +33,11 @@ startup, shutdown, and clean restart. The plan must preserve all Step 01
 contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
-The independently reviewed [`plan.md`](plan.md) defines five serial PRs. Only
-02A is active on the current branch; 02B–02E remain inactive until a human
-merges each predecessor and their activation gates assign fresh bases, owners,
-and reviewers. Approval does not authorize a local identity, database, model,
-UI shell, installer, final OS claim, or default listener change.
+The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PR 02A
+is merged and only 02B is active on the current branch; 02C–02E remain inactive
+until a human merges each predecessor and their activation gates assign fresh
+bases, owners, and reviewers. Approval does not authorize a local identity,
+database, model, UI shell, installer, final OS claim, or default listener change.
 
 ## Required Reading
 

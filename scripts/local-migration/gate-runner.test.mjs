@@ -1106,8 +1106,10 @@ test("Corepack cache preparation fails closed when pnpm is not already cached", 
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-corepack-clone-test-"));
   const empty = path.join(root, "empty");
   const cached = path.join(root, "cached");
+  const wrong = path.join(root, "wrong");
   const target = path.join(root, "target");
   await mkdir(empty);
+  await mkdir(path.join(wrong, "v1", "pnpm", "10.24.0"), { recursive: true });
   await mkdir(path.join(cached, "v1", "pnpm", "10.25.0"), { recursive: true });
   await writeFile(
     path.join(cached, "v1", "pnpm", "10.25.0", "package.json"),
@@ -1118,7 +1120,13 @@ test("Corepack cache preparation fails closed when pnpm is not already cached", 
       cloneCorepackCache(empty, target),
       /requires a cached pnpm distribution/,
     );
-    const versions = await cloneCorepackCache(cached, target);
+    await assert.rejects(
+      cloneCorepackCache(wrong, target, { requiredPnpmVersion: "10.25.0" }),
+      /requires cached pnpm 10\.25\.0/,
+    );
+    const versions = await cloneCorepackCache(cached, target, {
+      requiredPnpmVersion: "10.25.0",
+    });
     assert.deepEqual(versions, ["10.25.0"]);
     const sourcePackage = path.join(
       cached,

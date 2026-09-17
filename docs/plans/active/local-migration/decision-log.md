@@ -149,7 +149,14 @@ step plan that resolves them.
   pnpm 10.25.0. Supplemental already-installed Node 22.13.1 and 24.18.0 runs
   passed phases 1–5 and exposed the same phase-6 directory test-discovery defect;
   the quoted recursive test glob passed all 364 eval tests on Node 24 without
-  fixture changes. Partial runs do not establish support.
+  fixture changes. On the active PR 02B worktree, a frozen pnpm 10.25.0 install
+  left the lockfile byte-identical, `pnpm eval:verify` passed 364 tests plus
+  fixture validation, and the full gate bound to PR 02A merge
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3` passed all 11 phases on Node
+  24.21.0/pnpm 10.25.0; the final-head rerun after review fixes completed in
+  240,280 ms with `baseComparison=performed`, caller integrity true, and clean
+  resource cleanup. Remote final-head evidence is still required before this
+  target becomes the supported merged contract.
 - Consequence: PR 02B rejects other Node majors and Node 24 patch releases, or
   other pnpm versions, before resource acquisition. A future patch/version
   change requires reviewed evidence and atomic metadata/CI/documentation

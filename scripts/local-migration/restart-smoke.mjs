@@ -38,6 +38,7 @@ import {
   runCommand,
   writeSanitizedJson,
 } from "./gate-runner.mjs";
+import { EXPECTED_PNPM_VERSION } from "../check-toolchain.mjs";
 import {
   createIsolatedTestDatabase,
   dropIsolatedTestDatabase,
@@ -1305,7 +1306,10 @@ export async function runRestartSmoke({
         "node",
         "corepack",
       );
-    await cloneCorepackCache(sourceCorepack, runtimeCorepack, { signal });
+    await cloneCorepackCache(sourceCorepack, runtimeCorepack, {
+      signal,
+      requiredPnpmVersion: EXPECTED_PNPM_VERSION,
+    });
     const result = await withCleanupStack(async (defer) => {
       const administration = await prepareTestAdministration({
         repositoryRoot,

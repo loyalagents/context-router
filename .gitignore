@@ -62,9 +62,6 @@ prisma/*.db
 prisma/*.db-journal
 apps/backend/src/generated/prisma/
 
-# TypeScript
-.nvmrc
-
 # GraphQL Code Generation
 apps/web/lib/generated/
 

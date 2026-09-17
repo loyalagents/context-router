@@ -1,15 +1,17 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `02-composition-boundaries` — plan and PR 02A
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) implementation
-  independently approved; PR 02A remains unmerged
+- Current step: `02-composition-boundaries` — PR 02B toolchain contract local
+  implementation and independent review are complete after PR 02A
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-composition-boundaries`
-- Concrete next action: obtain the required final-head local and remote check
-  evidence, then a human review and landing decision; do not activate PR 02B
-  before PR 02A is human-merged and its exact merge SHA is recorded
-- Review date: 2026-10-14 or the PR 02A human landing decision, whichever comes
+  `codex/local-migration-02-toolchain-contract`
+- Concrete next action: run the dedicated migration workflow and all applicable
+  standard CI on the final remote head, resolve any remote finding, and leave
+  landing to a human; promote the exact toolchain to the supported contract only
+  after that remote evidence passes
+- Review date: 2026-10-14 or the PR 02B human landing decision, whichever comes
   first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
@@ -267,7 +269,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Complete — [PR #156](https://github.com/loyalagents/context-router/pull/156) merged at `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
-| `02-composition-boundaries` | Plan and [PR #157](https://github.com/loyalagents/context-router/pull/157) implementation independently approved but unmerged on `codex/local-migration-02-composition-boundaries`; PR 02B remains inactive until the human-merged SHA is recorded — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
+| `02-composition-boundaries` | Plan approved; PR 02A [#157](https://github.com/loyalagents/context-router/pull/157) merged at `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B active on `codex/local-migration-02-toolchain-contract` — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
 | `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
 | `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and make restart/recovery explicit. | Step 04 |
@@ -280,11 +282,11 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-Step 02 PR 02A is the sole primary migration checkpoint and `/root` is its sole
-writer. PRs 02B–02E are inactive and unassigned until their predecessor is
+Step 02 PR 02B is the sole primary migration checkpoint and `/root` is its sole
+writer. PRs 02C–02E are inactive and unassigned until their predecessor is
 human-merged and each activation gate passes. Read-only discovery/review may run
 in parallel. The interface-evolution track may run only when it does not alter
-the active model-binding subset, a baselined contract, or a shared file.
+the active toolchain-contract subset, a baselined contract, or a shared file.
 Visual-only UI work and new evaluation fixtures are otherwise safe only with an
 explicit non-overlapping owner.
 

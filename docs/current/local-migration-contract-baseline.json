@@ -1162,6 +1162,25 @@
       ]
     },
     {
+      "id": "toolchain-version-probe",
+      "sources": [
+        {
+          "path": "scripts/check-toolchain.mjs",
+          "fingerprints": [
+            "await execFileAsync(\"pnpm\", [\"--version\"], options)",
+            "result.COREPACK_ENABLE_NETWORK = \"0\""
+          ]
+        }
+      ],
+      "destination": "the pnpm executable resolved from PATH with Corepack networking disabled",
+      "payload": "the literal --version argument plus only credential-free runtime, cache, temporary-directory, and user-directory locator environment; no credentials or project payload",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "02"
+      ]
+    },
+    {
       "id": "migration-gate-loopback-probes",
       "sources": [
         {
@@ -3108,6 +3127,12 @@
       "path": "get-test-token.sh",
       "sinks": {
         "curl": 1
+      }
+    },
+    {
+      "path": "scripts/check-toolchain.mjs",
+      "sinks": {
+        "exec-file": 1
       }
     },
     {

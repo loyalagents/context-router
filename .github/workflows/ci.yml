@@ -32,21 +32,39 @@ jobs:
           filters: |
             backend:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - '.nvmrc'
+              - '.npmrc'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - 'scripts/check-toolchain.mjs'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/backend/**'
             local_orchestrator:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - '.nvmrc'
+              - '.npmrc'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - 'scripts/check-toolchain.mjs'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/local-orchestrator/**'
             eval_fixtures:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - '.nvmrc'
+              - '.npmrc'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - 'scripts/check-toolchain.mjs'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
               - 'examples/eval/**'
               - 'apps/backend/package.json'
               - 'apps/backend/src/schema.gql'
@@ -54,13 +72,22 @@ jobs:
               - 'apps/backend/test/eval-runner/**'
             eval_harbor:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
               - 'examples/eval-harbor/**'
               - 'examples/eval_harbor_agents/**'
             frontend:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - '.nvmrc'
+              - '.npmrc'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - 'scripts/check-toolchain.mjs'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/web/**'
               - 'apps/backend/src/schema.gql'
 
@@ -72,7 +99,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
 
       - name: Test documentation validators
         run: node --test scripts/check-markdown-links.test.mjs
@@ -107,14 +134,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
         with:
-          version: 9
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
           cache: 'pnpm'
+
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        working-directory: .
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -124,7 +155,7 @@ jobs:
         run: pnpm prisma:generate
 
       - name: Run database migrations
-        run: npx prisma migrate deploy
+        run: pnpm exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/context_router_test
 
@@ -153,14 +184,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
         with:
-          version: 9
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
           cache: 'pnpm'
+
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        working-directory: .
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -183,14 +218,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
         with:
-          version: 9
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
           cache: 'pnpm'
+
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -228,14 +266,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6.0.8
         with:
-          version: 9
+          version: 10.25.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.21.0'
           cache: 'pnpm'
+
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        working-directory: .
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

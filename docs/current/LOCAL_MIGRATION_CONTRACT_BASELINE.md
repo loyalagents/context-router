@@ -204,17 +204,26 @@ missing. Direct checker runs remain useful for current-tree validation and
 report `baseComparison=skipped`; aggregate runs report
 `baseComparison=performed` so the comparison cannot disappear silently.
 
-The dedicated workflow selects Node 20, pnpm 9, Python 3.12, and PostgreSQL 15.
-Step 01 locally enforces Python 3.12 plus the database locality and destructive-
-target checks below, and records the observed Node, pnpm, and PostgreSQL
-versions. It deliberately does not select the remaining runtime versions;
-Step 02 owns that pin. A run also requires installed frozen dependencies, an
-offline Corepack cache containing the selected pnpm release, and full Git
-history containing the selected base SHA. Supply a safe loopback or local
-Unix-socket administration connection through `MIGRATION_TEST_ADMIN_URL`. If it
-is absent, the runner may start only an already cached `postgres:15-alpine`
-image with `--pull=never` and a loopback-published random port. It never
-downloads packages, images, datasets, or model assets.
+The repository toolchain contract is exact Node.js 24.21.0 and pnpm 10.25.0.
+The tracked `.nvmrc`, strict root engine/package-manager metadata, standard and
+dedicated workflows, and both backend Docker stages select that pair. Install,
+each package build, direct and package-script LMBG entry, and Docker build
+evidence run `scripts/check-toolchain.mjs`; unsupported Node majors, other Node
+24 patches, and other pnpm versions fail with one remediation message. The
+direct LMBG check runs before diagnostic directories, disposable workspaces,
+Corepack clones, databases, containers, or other owned resources are acquired.
+The unreferenced root `Dockerfile.dev` was removed instead of retaining its
+stale Node 20/npm path; supported backend container builds use
+`apps/backend/Dockerfile`.
+
+The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
+requires installed frozen dependencies, an offline Corepack cache containing
+pnpm 10.25.0, and full Git history containing the selected base SHA. Supply a
+safe loopback or local Unix-socket administration connection through
+`MIGRATION_TEST_ADMIN_URL`. If it is absent, the runner may start only an
+already cached `postgres:15-alpine` image with `--pull=never` and a
+loopback-published random port. It never downloads packages, images, datasets,
+or model assets.
 
 The runner validates the merge base and caller whitespace, then copies tracked
 and nonignored inputs into a private disposable workspace with its own Git

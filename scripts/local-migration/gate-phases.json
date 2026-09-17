@@ -31,7 +31,10 @@
             "scripts/local-migration/gate-phases.test.mjs",
             "scripts/local-migration/restart-smoke.test.mjs",
             "scripts/local-migration/test-database.test.mjs",
-            "scripts/local-migration/web-support-smoke.test.mjs"
+            "scripts/local-migration/web-support-smoke.test.mjs",
+            "scripts/local-migration/eval-test-discovery.test.mjs",
+            "scripts/local-migration/toolchain-contract.test.mjs",
+            "scripts/local-migration/ci-path-filters.test.mjs"
           ]
         },
         { "argv": ["node", "scripts/local-migration/check-contract-baseline.mjs"] }

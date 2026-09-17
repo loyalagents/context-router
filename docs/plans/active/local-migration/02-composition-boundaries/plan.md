@@ -1,15 +1,15 @@
 # Step 02: Composition Boundaries
 
 - Document status: independently approved; PR 02A
-  ([#157](https://github.com/loyalagents/context-router/pull/157)) implementation
-  independently approved and unmerged
+  ([#157](https://github.com/loyalagents/context-router/pull/157)) merged at
+  `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B implementation active
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02A only
+- Implementation owner: `/root` for active PR 02B only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
@@ -23,13 +23,13 @@ are not pre-authorized stacked branches.
 
 | PR/checkpoint | Branch and base | Sole writer | Read-only reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
-| 02A: hosted model binding | active `codex/local-migration-02-composition-boundaries` from `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
-| 02B: toolchain contract | inactive `codex/local-migration-02-toolchain-contract`; create only from the human-merged 02A commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
+| 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
+| 02B: toolchain contract | active `codex/local-migration-02-toolchain-contract` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | inactive `codex/local-migration-02-runtime-bootstrap`; create only from the human-merged 02B commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | inactive `codex/local-migration-02-runtime-resources`; create only from the human-merged 02C commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
 | 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02A only** after this plan is approved. Any
+The current branch may implement **02B only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -92,6 +92,35 @@ the hosted composition cannot pass its gate, or the proposed fix requires a
 Step 03–09 product policy.
 
 ## Current Evidence
+
+### PR 02B activation evidence
+
+PR 02A was human-merged through
+[#157](https://github.com/loyalagents/context-router/pull/157) at
+`5a2fc8a09e9091d16160caea258d678293a1e2b3`. Before any PR 02B repository
+change, `HEAD`, local `main`, `origin/main`, and both merge bases resolved to
+that exact SHA; history was full and non-shallow; the worktree was clean; and
+the branch was `codex/local-migration-02-toolchain-contract`. A mechanical
+worktree/branch/PR audit found no active competing owner for the package,
+workflow, Docker, documentation, or `scripts/local-migration/**` hotspots.
+
+The entry LMBG was bound to that exact SHA and passed all 11 phases using Node
+20.19.5, pnpm 10.25.0, Python 3.12.8, and PostgreSQL 15.15. It reported
+`baseComparison=performed`, caller integrity true, no skipped phase, and clean
+resource cleanup. This only activates the checkpoint; it does not supersede
+LM-012 or establish the selected Node 24.21.0 support claim. `/root` is the
+sole writer. `/root/review02b_toolchain_contract` and
+`/root/review02b_gate_ci` are the fresh read-only implementation reviewers.
+
+The implemented PR 02B working tree then passed a frozen pnpm 10.25.0 install
+with the lockfile hash unchanged, the quoted eval glob and `pnpm eval:verify`
+with 364/364 tests and unchanged fixtures, and the full 11-phase LMBG on exact
+Node 24.21.0/pnpm 10.25.0. The final gate was bound to
+`5a2fc8a09e9091d16160caea258d678293a1e2b3`; the final-head rerun after review
+fixes completed in 240,280 ms and reported `baseComparison=performed`, caller
+integrity true, no skipped phase, and clean resource cleanup. The fresh
+independent reviewers approved the current local implementation; remote
+final-head evidence remains required.
 
 ### Authoritative entry gate
 
@@ -1048,6 +1077,14 @@ reviewer approved without findings. All three reviewers confirmed the change
 stays within 02A, preserves the public transport and hosted behavior, and does
 not enter Steps 03–09. Final-head local and remote validation remains a
 closeout gate rather than an implementation-review assumption.
+
+The fresh PR 02B implementation review completed on 2026-09-16. The reviewers
+required a credential-free pnpm probe environment, exhaustive exact-version
+assertions for every workflow selection, a pnpm setup action compatible with
+the integrity-suffixed `packageManager` value, and precise registry/status
+wording. The writer resolved each finding, reran focused validation and the
+exact-base full gate, and both reviewers approved the current local diff.
+Remote final-head workflow evidence remains the closeout gate.
 
 ## Exit Criteria
 

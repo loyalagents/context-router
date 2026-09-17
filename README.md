@@ -65,8 +65,8 @@ Key frontend areas:
 
 ## Prerequisites
 
-- Node.js 20+
-- `pnpm` via Corepack
+- Node.js 24.21.0 exactly
+- pnpm 10.25.0 exactly, activated through Corepack
 - Docker with `docker compose`
 - Auth0 credentials for the backend API and frontend web app
 - Optional: Google Cloud application default credentials if you want Vertex AI-backed features to work locally
@@ -74,9 +74,18 @@ Key frontend areas:
 Install dependencies from the repo root:
 
 ```bash
+nvm install 24.21.0
+nvm use 24.21.0
 corepack enable
-pnpm install
+corepack prepare pnpm@10.25.0 --activate
+pnpm check:toolchain
+pnpm install --frozen-lockfile
 ```
+
+The tracked `.nvmrc`, strict package metadata, CI, Docker stages, builds, and
+migration gate all use this exact pair. Other Node.js 24 patch releases and
+other pnpm versions are intentionally unsupported until a reviewed atomic
+toolchain update changes every source together.
 
 ## Environment Setup
 

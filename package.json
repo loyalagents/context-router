@@ -2,14 +2,21 @@
   "name": "context-router-monorepo",
   "version": "0.0.0",
   "private": true,
+  "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",
+  "engines": {
+    "node": "24.21.0",
+    "pnpm": "10.25.0"
+  },
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
+    "preinstall": "node scripts/check-toolchain.mjs",
+    "check:toolchain": "node scripts/check-toolchain.mjs",
     "dev": "concurrently \"pnpm --filter backend start:dev\" \"pnpm --filter web dev\"",
     "dev:backend": "pnpm --filter backend start:dev",
     "dev:web": "pnpm --filter web dev",
-    "build": "pnpm -r build",
+    "build": "node scripts/check-toolchain.mjs && pnpm -r build",
     "build:backend": "pnpm --filter backend build",
     "build:web": "pnpm --filter web build",
     "test": "pnpm -r test",
@@ -41,7 +48,7 @@
     "eval:e2e-known-schema": "node examples/eval/scripts/e2e-known-schema.mjs",
     "eval:e2e-mcp-agent": "node examples/eval/scripts/e2e-mcp-agent.mjs",
     "eval:e2e-mcp-packet": "node examples/eval/scripts/e2e-mcp-packet.mjs",
-    "eval:test": "node --test examples/eval/scripts",
+    "eval:test": "node --test 'examples/eval/scripts/**/*.test.mjs'",
     "eval:verify": "pnpm eval:test && pnpm eval:validate",
     "eval-harbor:bootstrap": "bash examples/eval-harbor/scripts/bootstrap_runner.sh",
     "eval-harbor:check": "bash examples/eval-harbor/scripts/check_static.sh",
@@ -50,8 +57,8 @@
     "eval-harbor:dynamicmem:resume": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "eval-harbor:dynamicmem:fast": "env HARBOR_SKIP_EXISTING=1 HARBOR_FORCE=0 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "eval-harbor:dynamicmem:fresh-fast": "env HARBOR_SKIP_EXISTING=0 HARBOR_FORCE=1 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
-    "migration:gate": "node scripts/local-migration/migration-gate.mjs",
-    "migration:smoke:restart": "node scripts/local-migration/migration-gate.mjs --smoke-only",
+    "migration:gate": "node scripts/check-toolchain.mjs && node scripts/local-migration/migration-gate.mjs",
+    "migration:smoke:restart": "node scripts/check-toolchain.mjs && node scripts/local-migration/migration-gate.mjs --smoke-only",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

@@ -2917,6 +2917,7 @@ const OUTBOUND_SINK_ROOTS = [
   "test-document-upload.sh",
   "test-graphql.sh",
   "test-vertex-ai.sh",
+  "scripts/check-toolchain.mjs",
   "scripts/local-migration",
 ];
 const DERIVED_SOURCE_EXCLUSIONS =
