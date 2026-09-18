@@ -1201,7 +1201,19 @@
           "path": "scripts/local-migration/migration-gate.mjs",
           "fingerprints": [
             "const result = await execFileAsync(\"git\", args, {",
-            "const commandResult = await runCommand(command.argv, {"
+            "runCommand(command.argv, {"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "fingerprints": [
+            "const result = await execFileAsync(\"git\", args, {",
+            "execFileAsync(executable, args, options);",
+            "await runCommand(assertApprovedPackagingChildCommand(",
+            "const child = spawn(process.execPath, buildPackagedNodeArgv(entrypoint), {",
+            "const response = await fetch(`${origin}/`, {",
+            "const socket = net.connect({",
+            "const upstream = http.request("
           ]
         },
         {
@@ -1227,12 +1239,13 @@
           ]
         }
       ],
-      "destination": "the host-configured DNS resolver for operator-supplied PostgreSQL hostnames, validated loopback PostgreSQL, the local Docker daemon, repository-local subprocesses, and ephemeral loopback-only backend, JWKS, and web support-route processes",
-      "payload": "operator-supplied PostgreSQL administration hostnames to the configured resolver, plus synthetic test state, signed tokens, contract probes, command arguments, isolated process environments, and public fixture data only",
+      "destination": "the host-configured DNS resolver for operator-supplied PostgreSQL hostnames, validated loopback PostgreSQL, the local Docker daemon, repository-local Git/build/offline-deploy subprocesses, macOS /usr/sbin/lsof listener inspection, ephemeral loopback proxy/backend/web/JWKS/occupied-port fixtures, and enumerated local interface addresses used only for Linux negative reachability probes",
+      "payload": "operator-supplied PostgreSQL administration hostnames to the configured resolver; exact command arguments and isolated process environments; exact owned listener PID/port selectors for macOS native socket-table inspection; synthetic database state, signed tokens, HTTP, GraphQL, and MCP contract probes; stage metadata and hashes; and address/port-only Linux negative reachability probes",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
-        "01"
+        "01",
+        "02"
       ]
     }
   ],
@@ -1704,6 +1717,41 @@
       ]
     },
     {
+      "id": "packaging-smoke-web-chat-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "method": "POST",
+      "route": "/api/chat",
+      "fingerprints": [
+        "const chat = await fetchJson(`${webOrigin}/api/chat`, {",
+        "assert.equal(chat.status, 401);"
+      ]
+    },
+    {
+      "id": "packaging-smoke-web-debug-token-support-route",
+      "contract": "http",
+      "kind": "web-support-route",
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "method": "GET",
+      "route": "/api/debug/token",
+      "fingerprints": [
+        "const debug = await fetchJson(`${webOrigin}/api/debug/token?format=json`, { signal });",
+        "assert.equal(debug.status, 401);"
+      ]
+    },
+    {
+      "id": "packaging-smoke-mcp-graphql-schema-resource",
+      "contract": "mcp",
+      "kind": "mcp-resource",
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "resource": "schema://graphql",
+      "fingerprints": [
+        "method: \"resources/read\"",
+        "params: { uri: \"schema://graphql\" }"
+      ]
+    },
+    {
       "id": "restart-smoke-mcp-list-slugs",
       "contract": "mcp",
       "kind": "mcp-tool",
@@ -2109,6 +2157,39 @@
         "exportPreferenceSchema",
         "me",
         "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "kind": "mutation",
+      "operation": "PackagingSmokeWrite",
+      "rootFields": [
+        "setPreference"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "kind": "query",
+      "operation": "PackagingSmokeCatalog",
+      "rootFields": [
+        "activePreferences",
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "kind": "query",
+      "operation": "PackagingSmokeCors",
+      "rootFields": [
+        "__typename"
+      ]
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "kind": "query",
+      "operation": "PackagingSmokePrincipal",
+      "rootFields": [
+        "me"
       ]
     },
     {
@@ -2662,6 +2743,48 @@
       "reference": "/mcp"
     },
     {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/.well-known/oauth-protected-resource/mcp"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/chat"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/debug/token"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "mcp",
+      "kind": "resource",
+      "reference": "schema://graphql"
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "scripts/local-migration/restart-smoke.mjs",
       "contract": "http",
       "kind": "route",
@@ -3075,6 +3198,17 @@
       "sinks": {
         "exec-file": 1,
         "subprocess-wrapper": 6
+      }
+    },
+    {
+      "path": "scripts/local-migration/packaging-smoke.mjs",
+      "sinks": {
+        "exec-file": 2,
+        "fetch": 3,
+        "http-client": 1,
+        "net-connect": 2,
+        "spawn": 2,
+        "subprocess-wrapper": 8
       }
     },
     {

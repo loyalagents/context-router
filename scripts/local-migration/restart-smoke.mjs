@@ -166,15 +166,23 @@ export function createSignedTestToken({
   audience: tokenAudience,
   subject,
   clientId,
+  scopes = ["preferences:read"],
   nowSeconds = Math.floor(Date.now() / 1000),
 }) {
+  if (
+    !Array.isArray(scopes) ||
+    !scopes.length ||
+    scopes.some((scope) => typeof scope !== "string" || !scope || /\s/.test(scope))
+  ) {
+    throw new Error("test-token scopes must be nonempty, whitespace-free strings");
+  }
   const header = base64urlJson({ alg: "RS256", kid, typ: "JWT" });
   const payload = base64urlJson({
     iss: issuer,
     aud: tokenAudience,
     sub: subject,
     azp: clientId,
-    scope: "preferences:read",
+    scope: scopes.join(" "),
     iat: nowSeconds,
     nbf: nowSeconds - 5,
     exp: nowSeconds + 300,
@@ -375,11 +383,12 @@ async function findFreeLoopbackPort() {
   });
 }
 
-async function createTlsFixture(
+export async function createTlsFixture(
   repositoryRoot,
   secretDirectory,
   diagnosticsDirectory,
   signal,
+  environment = process.env,
 ) {
   const caKey = path.join(secretDirectory, "ca.key");
   const caCertificate = path.join(secretDirectory, "ca.crt");
@@ -387,6 +396,7 @@ async function createTlsFixture(
   const serverRequest = path.join(secretDirectory, "server.csr");
   const serverCertificate = path.join(secretDirectory, "server.crt");
   const extensions = path.join(secretDirectory, "server.ext");
+  const caSerial = path.join(secretDirectory, "ca.srl");
   await writeFile(
     extensions,
     "subjectAltName=IP:127.0.0.1\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n",
@@ -398,31 +408,32 @@ async function createTlsFixture(
       "-subj", "/CN=Context Router Migration Smoke CA", "-addext", "basicConstraints=critical,CA:TRUE",
       "-addext", "keyUsage=critical,keyCertSign,cRLSign", "-keyout", caKey, "-out", caCertificate,
     ],
-    { cwd: repositoryRoot, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-ca.log"), signal },
+    { cwd: repositoryRoot, env: environment, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-ca.log"), signal },
   );
   await runCommand(
     [
       "openssl", "req", "-newkey", "rsa:2048", "-nodes", "-sha256", "-subj", "/CN=127.0.0.1",
       "-keyout", serverKey, "-out", serverRequest,
     ],
-    { cwd: repositoryRoot, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-server.log"), signal },
+    { cwd: repositoryRoot, env: environment, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-server.log"), signal },
   );
   await runCommand(
     [
       "openssl", "x509", "-req", "-in", serverRequest, "-CA", caCertificate, "-CAkey", caKey,
-      "-CAcreateserial", "-days", "1", "-sha256", "-extfile", extensions, "-out", serverCertificate,
+      "-CAserial", caSerial, "-CAcreateserial", "-days", "1", "-sha256", "-extfile", extensions,
+      "-out", serverCertificate,
     ],
-    { cwd: repositoryRoot, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-sign.log"), signal },
+    { cwd: repositoryRoot, env: environment, timeoutMs: 30_000, logPath: path.join(diagnosticsDirectory, "openssl-sign.log"), signal },
   );
   const [key, certificate] = await Promise.all([readFile(serverKey), readFile(serverCertificate)]);
-  for (const secretPath of [caKey, serverKey, serverRequest, serverCertificate, extensions, `${caCertificate}.srl`]) {
+  for (const secretPath of [caKey, serverKey, serverRequest, serverCertificate, extensions, caSerial]) {
     await unlink(secretPath).catch(() => {});
   }
   await chmod(caCertificate, 0o600);
   return { caCertificate, key, certificate };
 }
 
-async function startJwksFixture({ key, certificate, signingPublicKey, kid }) {
+export async function startJwksFixture({ key, certificate, signingPublicKey, kid }) {
   const publicKey =
     signingPublicKey?.type === "public"
       ? signingPublicKey
@@ -476,6 +487,10 @@ async function startJwksFixture({ key, certificate, signingPublicKey, kid }) {
   server.on("connection", (socket) => {
     sockets.add(socket);
     socket.once("close", () => sockets.delete(socket));
+    // Backend shutdown can reset an idle keep-alive TLS connection after its
+    // request has settled. The fixture owns the socket and can safely consume
+    // that expected transport error.
+    socket.on("error", () => {});
   });
   await new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -582,7 +597,7 @@ export function buildSmokeBackendEnvironment({
   };
 }
 
-async function fetchJson(url, options = {}, timeoutMs = 5_000) {
+export async function fetchJson(url, options = {}, timeoutMs = 5_000) {
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const signal = options.signal
     ? AbortSignal.any([options.signal, timeoutSignal])
@@ -598,7 +613,7 @@ async function fetchJson(url, options = {}, timeoutMs = 5_000) {
   return { status: response.status, headers: response.headers, body };
 }
 
-async function graphql(serverUrl, query, token, signal) {
+export async function graphql(serverUrl, query, token, signal) {
   const headers = { "content-type": "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;
   return fetchJson(`${serverUrl}/graphql`, {
@@ -609,7 +624,7 @@ async function graphql(serverUrl, query, token, signal) {
   });
 }
 
-async function mcpPost(serverUrl, token, body, signal) {
+export async function mcpPost(serverUrl, token, body, signal) {
   return fetchJson(`${serverUrl}/mcp`, {
     method: "POST",
     headers: {
@@ -944,6 +959,7 @@ async function probeGeneration(options) {
   await journal.acquiring({
     id: resourceId,
     type: "backend-process",
+    owned: true,
     identity: {
       generation,
       port: appPort,
@@ -1339,7 +1355,7 @@ export async function runRestartSmoke({
         {
           id: administration.containerName ? "container" : "administration",
           type: administration.containerName
-            ? "postgres-container"
+            ? "local-administration-container"
             : "external-administration",
           owned: Boolean(administration.containerName),
           identity: administration.containerName
@@ -1362,7 +1378,7 @@ export async function runRestartSmoke({
         journal,
         {
           id: "database",
-          type: "postgres-database",
+          type: "owned-test-database",
           owned: true,
           identity: {
             name: database.databaseName,

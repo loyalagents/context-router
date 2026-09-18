@@ -12,7 +12,7 @@ import { pathToFileURL } from "node:url";
 import {
   combineFailures,
   redactSecrets,
-  writeSanitizedJson,
+  writeSanitizedResourceLifecycleJson,
 } from "./gate-runner.mjs";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
@@ -178,7 +178,8 @@ async function createWebSupportJournal(diagnosticsDirectory, canaries) {
     startedAt: new Date().toISOString(),
     resources: [],
   };
-  const persist = () => writeSanitizedJson(filePath, state, canaries);
+  const persist = () =>
+    writeSanitizedResourceLifecycleJson(filePath, state, canaries);
   await persist();
   return {
     filePath,

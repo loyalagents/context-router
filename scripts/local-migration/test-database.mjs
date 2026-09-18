@@ -90,6 +90,7 @@ async function verifyDatabaseOwnership(
   administrationUrl,
   databaseName,
   expectedOwnershipMarker,
+  options = {},
 ) {
   validateGeneratedDatabaseName(databaseName);
   return withVerifiedPostgresClient(
@@ -102,7 +103,14 @@ async function verifyDatabaseOwnership(
       );
       return result.rows[0]?.owner_marker === expectedOwnershipMarker;
     },
+    options,
   );
+}
+
+function resolveCleanupSignal(cleanupSignal) {
+  return typeof cleanupSignal === "function"
+    ? cleanupSignal()
+    : cleanupSignal;
 }
 
 export async function withVerifiedPostgresClient(
@@ -207,6 +215,7 @@ export async function createIsolatedTestDatabase(
   administrationUrl,
   {
     signal,
+    cleanupSignal,
     lifecycle,
     withClient = withVerifiedPostgresClient,
     dropDatabase = dropIsolatedTestDatabase,
@@ -219,7 +228,7 @@ export async function createIsolatedTestDatabase(
   const resourceId = "database";
   await lifecycle?.acquiring?.({
     id: resourceId,
-    type: "postgres-database",
+    type: "owned-test-database",
     owned: true,
     identity: { name: databaseName, ownershipMarker },
     recovery: `Verify database "${databaseName}" has ownership comment "${ownershipMarker}", then use the same verified local administration endpoint to drop only that database.`,
@@ -263,6 +272,7 @@ export async function createIsolatedTestDatabase(
           administrationUrl,
           databaseName,
           ownershipMarker,
+          { signal: resolveCleanupSignal(cleanupSignal) },
         );
       } catch (ownershipError) {
         cleanupError = new Error(
@@ -274,6 +284,7 @@ export async function createIsolatedTestDatabase(
         try {
           await dropDatabase(repositoryRoot, administrationUrl, databaseName, {
             expectedOwnershipMarker: ownershipMarker,
+            signal: resolveCleanupSignal(cleanupSignal),
           });
           cleanupStatus = "removed";
         } catch (dropError) {
@@ -316,6 +327,7 @@ export async function dropIsolatedTestDatabase(
   {
     withClient = withVerifiedPostgresClient,
     expectedOwnershipMarker,
+    signal,
   } = {},
 ) {
   validateGeneratedDatabaseName(databaseName);
@@ -362,6 +374,7 @@ export async function dropIsolatedTestDatabase(
       }
       await client.query(`DROP DATABASE "${databaseName}"`);
     },
+    { signal },
   );
 }
 
@@ -423,16 +436,19 @@ export async function prepareTestAdministration({
   diagnosticsDirectory,
   environment = process.env,
   signal,
+  cleanupSignal,
   lifecycle,
   commandRunner = runCommand,
   portFinder = findFreeLoopbackPort,
+  waitForAdministrationFn = waitForAdministration,
+  acquisitionCleanupSignal = () => AbortSignal.timeout(60_000),
   ownershipNonce = randomUUID(),
 }) {
   if (environment.MIGRATION_TEST_ADMIN_URL) {
     const resourceId = "administration";
     await lifecycle?.acquiring?.({
       id: resourceId,
-      type: "external-postgres-administration",
+      type: "external-administration",
       owned: false,
       identity: { source: "supplied-loopback-administration-url" },
       recovery: "The supplied PostgreSQL administration service is not owned by the gate.",
@@ -529,7 +545,10 @@ export async function prepareTestAdministration({
   const expectedOwner = validateOwnershipNonce(ownershipNonce);
   const syntheticPassword = `lmbg-${suffix}`;
   const containerResourceId = "container";
-  const removeContainer = async (logName = "docker-cleanup.log") => {
+  const removeContainer = async (
+    logName = "docker-cleanup.log",
+    boundedSignal = resolveCleanupSignal(cleanupSignal),
+  ) => {
     let inspection;
     try {
       inspection = await commandRunner(
@@ -547,6 +566,7 @@ export async function prepareTestAdministration({
           timeoutMs: 15_000,
           logPath: path.join(diagnosticsDirectory, `${logName}.inspect`),
           canaries: [syntheticPassword],
+          signal: boundedSignal,
         },
       );
     } catch (error) {
@@ -576,12 +596,13 @@ export async function prepareTestAdministration({
         timeoutMs: 30_000,
         logPath: path.join(diagnosticsDirectory, logName),
         canaries: [syntheticPassword],
+        signal: boundedSignal,
       },
     );
   };
   await lifecycle?.acquiring?.({
     id: containerResourceId,
-    type: "postgres-container",
+    type: "local-administration-container",
     owned: true,
     identity: { name: containerName, ownershipNonce: expectedOwner },
     recovery: {
@@ -633,9 +654,20 @@ export async function prepareTestAdministration({
       startError = null;
       break;
     } catch (error) {
+      const retryableCollision =
+        !signal?.aborted &&
+        attempt < 3 &&
+        /(?:port is already allocated|address already in use|bind:)/i.test(
+          error.outputTail ?? error.message,
+        );
       let cleanupError;
       try {
-        await removeContainer(`docker-start-${attempt}-cleanup.log`);
+        await removeContainer(
+          `docker-start-${attempt}-cleanup.log`,
+          retryableCollision
+            ? resolveCleanupSignal(acquisitionCleanupSignal)
+            : resolveCleanupSignal(cleanupSignal),
+        );
       } catch (removeError) {
         cleanupError = removeError;
       }
@@ -644,13 +676,7 @@ export async function prepareTestAdministration({
         cleanupError,
         `container ${containerName}`,
       );
-      if (
-        !signal?.aborted &&
-        attempt < 3 &&
-        /(?:port is already allocated|address already in use|bind:)/i.test(
-          error.outputTail ?? error.message,
-        )
-      ) {
+      if (retryableCollision && !cleanupError) {
         startError = combined;
         continue;
       }
@@ -674,7 +700,12 @@ export async function prepareTestAdministration({
   const administrationUrl = `postgresql://postgres:${encodeURIComponent(syntheticPassword)}@127.0.0.1:${port}/postgres`;
   try {
     await lifecycle?.acquired?.(containerResourceId);
-    await waitForAdministration(repositoryRoot, administrationUrl, 30_000, signal);
+    await waitForAdministrationFn(
+      repositoryRoot,
+      administrationUrl,
+      30_000,
+      signal,
+    );
   } catch (error) {
     let cleanupError;
     try {
@@ -714,11 +745,14 @@ export async function prepareTestAdministration({
       environment: { DOCKER_HOST: dockerRouting.verifiedHost },
       requiredLabel: `${ownershipLabel}=${expectedOwner}`,
     },
-    cleanup: async () => {
+    cleanup: async ({ signal: boundedSignal } = {}) => {
       if (!/^lmbg-postgres-[a-f0-9]{24}$/.test(containerName)) {
         throw new Error("refusing to clean an unexpected PostgreSQL container name");
       }
-      await removeContainer();
+      await removeContainer(
+        "docker-cleanup.log",
+        boundedSignal ?? resolveCleanupSignal(cleanupSignal),
+      );
     },
   };
 }

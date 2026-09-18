@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import { lstat, mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -18,6 +19,7 @@ import {
   copyWorkspaceFiles,
   cloneCorepackCache,
   cloneDependencyTrees,
+  createResourceLifecycleJournal,
   createStreamingRedactor,
   prepareOwnedTemporaryDirectory,
   redactSecrets,
@@ -30,12 +32,160 @@ import {
   validateMergeBase,
   validatePhaseManifest,
   gitWithoutHooks,
+  hasLiveProcessGroupMembers,
+  isProcessLive,
   loadAcceptedDecisionEvidence,
+  parseLinuxProcessStat,
   readContractBaselineComparisonEvidence,
+  resourceLifecycleDynamicValues,
   writeSanitizedJson,
 } from "./gate-runner.mjs";
 
 const fullSha = "0123456789abcdef0123456789abcdef01234567";
+
+test("Linux process stat parsing tolerates closing parentheses in command names", () => {
+  assert.deepEqual(
+    parseLinuxProcessStat(
+      "321 (worker ) name) Z 12 77 77 0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+    ),
+    { state: "Z", processGroupId: 77 },
+  );
+  assert.throws(() => parseLinuxProcessStat("not a proc stat record"), /process stat/);
+});
+
+test("Linux liveness treats zombie-only evidence as terminal and ambiguity as active", async () => {
+  const stats = new Map([
+    ["401", "401 (leader) Z 1 88 88 0 -1 0 0"],
+    ["402", "402 (child) X 1 88 88 0 -1 0 0"],
+    ["403", "403 (other) S 1 99 99 0 -1 0 0"],
+  ]);
+  const options = {
+    platform: "linux",
+    signalProcess() {},
+    async listProcessIds() {
+      return [...stats.keys()];
+    },
+    async readProcessStat(pid) {
+      return stats.get(String(pid));
+    },
+  };
+  assert.equal(await hasLiveProcessGroupMembers(88, options), false);
+  assert.equal(await isProcessLive(401, options), false);
+
+  stats.set("402", "402 (child) S 1 88 88 0 -1 0 0");
+  assert.equal(await hasLiveProcessGroupMembers(88, options), true);
+  assert.equal(await isProcessLive(402, options), true);
+
+  stats.set("402", "malformed");
+  assert.equal(await hasLiveProcessGroupMembers(88, options), true);
+  assert.equal(await isProcessLive(402, options), true);
+
+  const unreadable = new Error("denied");
+  unreadable.code = "EACCES";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async readProcessStat(pid) {
+        if (String(pid) === "402") throw unreadable;
+        return stats.get(String(pid));
+      },
+    }),
+    true,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      async readProcessStat() {
+        throw unreadable;
+      },
+    }),
+    true,
+  );
+
+  const vanished = new Error("gone");
+  vanished.code = "ENOENT";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async readProcessStat(pid) {
+        if (String(pid) === "402") throw vanished;
+        return stats.get(String(pid));
+      },
+    }),
+    false,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      async readProcessStat() {
+        throw vanished;
+      },
+    }),
+    false,
+  );
+
+  const absent = new Error("missing");
+  absent.code = "ESRCH";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      signalProcess() {
+        throw absent;
+      },
+    }),
+    false,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      signalProcess() {
+        throw absent;
+      },
+    }),
+    false,
+  );
+
+  let listed = false;
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      platform: "darwin",
+      async listProcessIds() {
+        listed = true;
+        return [];
+      },
+    }),
+    true,
+  );
+  assert.equal(listed, false);
+
+  const listFailure = new Error("proc unavailable");
+  listFailure.code = "EACCES";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async listProcessIds() {
+        throw listFailure;
+      },
+    }),
+    true,
+  );
+
+  let probes = 0;
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      signalProcess() {
+        probes += 1;
+      },
+      async listProcessIds() {
+        return ["403"];
+      },
+    }),
+    true,
+  );
+  assert.equal(probes, 2);
+});
 
 test("redactSecrets removes URL credentials, bearer values, JWTs, assignments, and canaries", () => {
   const jwt = `${"a".repeat(24)}.${"b".repeat(24)}.${"c".repeat(24)}`;
@@ -840,6 +990,29 @@ test("real command runner enforces a bounded timeout and writes only sanitized o
   }
 });
 
+test("command runner rejects invalid cleanup deadlines before spawning", async () => {
+  for (const [option, value, message] of [
+    ["terminationGraceMs", Number.NaN, /termination grace must be a positive integer/],
+    ["terminationGraceMs", Number.POSITIVE_INFINITY, /termination grace must be a positive integer/],
+    ["closeDeadlineMs", 0, /close deadline must be a positive integer/],
+    ["closeDeadlineMs", Number.POSITIVE_INFINITY, /close deadline must be a positive integer/],
+  ]) {
+    let spawned = false;
+    await assert.rejects(
+      runCommand(["never-spawn"], {
+        cwd: "/tmp",
+        [option]: value,
+        spawnProcess: () => {
+          spawned = true;
+          throw new Error("unexpected spawn");
+        },
+      }),
+      message,
+    );
+    assert.equal(spawned, false);
+  }
+});
+
 test("real command runner aborts a process group and never waits forever for close", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-command-abort-test-"));
   const controller = new AbortController();
@@ -854,17 +1027,93 @@ test("real command runner aborts a process group and never waits forever for clo
       {
         cwd: root,
         timeoutMs: 60_000,
-        terminationGraceMs: 50,
+        terminationGraceMs: 100,
         closeDeadlineMs: 500,
         signal: controller.signal,
       },
     );
     setTimeout(() => controller.abort(new Error("received SIGTERM")), 50);
     await assert.rejects(command, /received SIGTERM/);
-    assert.ok(Date.now() - startedAt < 2_000);
+    assert.ok(
+      Date.now() - startedAt < 400,
+      "terminationGraceMs must bound SIGTERM, SIGKILL, and close observation together",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("command runner never releases cleanup before child close is proven", async () => {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.stdout.setEncoding = () => {};
+  child.stderr.setEncoding = () => {};
+  child.kill = () => true;
+  const controller = new AbortController();
+  let settled = false;
+  const running = runCommand(["synthetic-hung-child"], {
+    cwd: "/tmp",
+    timeoutMs: 60_000,
+    terminationGraceMs: 20,
+    closeDeadlineMs: 5,
+    signal: controller.signal,
+    spawnProcess: () => child,
+  });
+  running.then(
+    () => {
+      settled = true;
+    },
+    () => {
+      settled = true;
+    },
+  );
+  controller.abort(new Error("injected non-cooperative child cancellation"));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(settled, false);
+  child.emit("close", null, "SIGKILL");
+  await assert.rejects(
+    running,
+    /injected non-cooperative child cancellation.*did not settle/s,
+  );
+});
+
+test("command runner bounds post-leader process-group settlement", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("POSIX process-group regression");
+    return;
+  }
+  const child = new EventEmitter();
+  child.pid = 424_242;
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.stdout.setEncoding = () => {};
+  child.stderr.setEncoding = () => {};
+  child.kill = () => true;
+  const signals = [];
+  const startedAt = Date.now();
+  await assert.rejects(
+    runCommand(["synthetic-leader-exit"], {
+      cwd: "/tmp",
+      timeoutMs: 60_000,
+      closeDeadlineMs: 5,
+      spawnProcess: () => {
+        setImmediate(() => child.emit("close", 0, null));
+        return child;
+      },
+      inspectProcessGroup: async () => true,
+      signalProcess: (target, signalName) => {
+        signals.push([target, signalName]);
+      },
+    }),
+    (error) => {
+      assert.match(error.message, /owned process group 424242 did not settle/);
+      assert.match(error.message, /leader exited while its owned process group remained/);
+      return true;
+    },
+  );
+  assert.ok(Date.now() - startedAt < 250, "post-leader cleanup must be bounded");
+  assert.deepEqual(signals, [[-424_242, "SIGKILL"]]);
 });
 
 test("explicit nested signal forwarding leaves no detached grandchild alive", async (context) => {
@@ -917,18 +1166,40 @@ test("explicit nested signal forwarding leaves no detached grandchild alive", as
     await assert.rejects(command, /received SIGTERM/);
     let alive = true;
     for (let attempt = 0; attempt < 50; attempt += 1) {
-      try {
-        process.kill(pid, 0);
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      } catch (error) {
-        if (error.code === "ESRCH") {
-          alive = false;
-          break;
-        }
-        throw error;
-      }
+      alive = await isProcessLive(pid);
+      if (!alive) break;
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
     assert.equal(alive, false, `detached grandchild ${pid} survived cancellation`);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a zero-exit leader with a surviving same-group descendant fails and is cleaned", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("POSIX process-group regression");
+    return;
+  }
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-descendant-leak-test-"));
+  const pidPath = path.join(root, "descendant.pid");
+  const parentSource = [
+    'const { spawn } = require("node:child_process");',
+    'const fs = require("node:fs");',
+    'const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });',
+    `fs.writeFileSync(${JSON.stringify(pidPath)}, String(child.pid));`,
+    "child.unref();",
+  ].join(" ");
+  try {
+    await assert.rejects(
+      runCommand([process.execPath, "-e", parentSource], {
+        cwd: root,
+        timeoutMs: 5_000,
+      }),
+      /owned process group remained/,
+    );
+    const pid = Number(await readFile(pidPath, "utf8"));
+    assert.equal(await isProcessLive(pid), false);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -1164,6 +1435,58 @@ test("owned temporary directory preparation is atomic on failure", async () => {
   }
 });
 
+test("owned temporary directory can hand partial ownership to bounded outer cleanup", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-owned-handoff-test-"));
+  let allocated;
+  try {
+    await assert.rejects(
+      prepareOwnedTemporaryDirectory(
+        path.join(root, "prepared-"),
+        async (directory) => {
+          await writeFile(path.join(directory, "partial.txt"), "partial\n");
+          throw new Error("preparation failed after allocation");
+        },
+        {
+          cleanupOnFailure: false,
+          onCreated(directory) {
+            allocated = directory;
+          },
+        },
+      ),
+      /preparation failed after allocation/,
+    );
+    assert.equal(await readFile(path.join(allocated, "partial.txt"), "utf8"), "partial\n");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("owned temporary directory hands off ownership before mode preparation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-owned-mode-handoff-test-"));
+  let allocated;
+  try {
+    await assert.rejects(
+      prepareOwnedTemporaryDirectory(
+        path.join(root, "prepared-"),
+        async () => assert.fail("prepare must not run after mode failure"),
+        {
+          cleanupOnFailure: false,
+          onCreated(directory) {
+            allocated = directory;
+          },
+          async setPrivateMode() {
+            throw new Error("injected chmod failure");
+          },
+        },
+      ),
+      /injected chmod failure/,
+    );
+    assert.equal((await lstat(allocated)).isDirectory(), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("sanitized JSON records replace atomically with private mode and no stale temp file", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-atomic-json-test-"));
   const target = path.join(root, "lifecycle.json");
@@ -1181,6 +1504,79 @@ test("sanitized JSON records replace atomically with private mode and no stale t
   }
 });
 
+test("lifecycle serialization preserves control fields while redacting colliding canaries", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-lifecycle-redaction-test-"));
+  const canaries = ["admin", "database", "passed", "postgres"];
+  try {
+    const journal = await createResourceLifecycleJournal(root, { canaries });
+    await journal.acquiring({
+      id: "administration",
+      type: "external-administration",
+      owned: false,
+      identity: { source: "admin database passed postgres" },
+      recovery: {
+        instruction: "admin database passed postgres",
+      },
+    });
+    await journal.acquired("administration");
+    await journal.cleanupFinished("administration", {
+      status: "not-owned",
+      error: new Error("admin database passed postgres"),
+    });
+    await journal.acquiring({
+      id: "database",
+      type: "owned-test-database",
+      owned: true,
+      identity: { name: "database", password: "postgres" },
+      recovery: "admin must remove database after passed",
+    });
+    await journal.acquired("database");
+    await journal.cleanupFinished("database", { status: "removed" });
+    await journal.finish(
+      "passed",
+      new Error("admin database passed postgres"),
+    );
+
+    const persisted = JSON.parse(await readFile(journal.filePath, "utf8"));
+    assert.equal(persisted.schemaVersion, 1);
+    assert.equal(persisted.status, "passed");
+    assert.deepEqual(
+      persisted.resources.map(({ id, type, owned, status, cleanup }) => ({
+        id,
+        type,
+        owned,
+        status,
+        cleanup: cleanup.status,
+      })),
+      [
+        {
+          id: "administration",
+          type: "external-administration",
+          owned: false,
+          status: "acquired",
+          cleanup: "not-owned",
+        },
+        {
+          id: "database",
+          type: "owned-test-database",
+          owned: true,
+          status: "acquired",
+          cleanup: "removed",
+        },
+      ],
+    );
+    const dynamicEvidence = JSON.stringify(
+      resourceLifecycleDynamicValues(persisted),
+    );
+    for (const canary of canaries) {
+      assert.equal(dynamicEvidence.includes(canary), false, canary);
+    }
+    assert.equal((await lstat(journal.filePath)).mode & 0o777, 0o600);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("caller integrity detects changes on both success and failure paths", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-integrity-test-"));
   const present = path.join(root, "schema.gql");
@@ -1191,6 +1587,39 @@ test("caller integrity detects changes on both success and failure paths", async
     await assert.doesNotReject(assertCallerIntegrity(before));
     await writeFile(present, "changed\n");
     await assert.rejects(assertCallerIntegrity(before), /caller path changed/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("workspace copying and caller-integrity hashing honor cancellation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-cancelled-fs-test-"));
+  const source = path.join(root, "source");
+  const target = path.join(root, "target");
+  await mkdir(source);
+  await writeFile(path.join(source, "tracked.txt"), "tracked\n");
+  const controller = new AbortController();
+  controller.abort(new Error("bounded filesystem work cancelled"));
+  try {
+    await assert.rejects(
+      copyWorkspaceFiles(source, target, ["tracked.txt"], {
+        signal: controller.signal,
+      }),
+      /bounded filesystem work cancelled/,
+    );
+    await assert.rejects(
+      captureCallerIntegrity([path.join(source, "tracked.txt")], {
+        signal: controller.signal,
+      }),
+      /bounded filesystem work cancelled/,
+    );
+    await assert.rejects(
+      assertCallerIntegrity(
+        new Map([[path.join(source, "tracked.txt"), { exists: true }]]),
+        { signal: controller.signal },
+      ),
+      /bounded filesystem work cancelled/,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

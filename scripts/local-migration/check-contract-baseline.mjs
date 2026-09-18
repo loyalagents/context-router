@@ -2872,6 +2872,7 @@ const GRAPHQL_CONSUMER_ROOTS = [
   "apps/web",
   "apps/local-orchestrator/src",
   "examples/eval",
+  "scripts/local-migration/packaging-smoke.mjs",
   "scripts/local-migration/restart-smoke.mjs",
 ];
 const CONTRACT_REFERENCE_ROOTS = [
@@ -2902,6 +2903,7 @@ const CONTRACT_REFERENCE_ROOTS = [
   "test-document-upload.sh",
   "test-graphql.sh",
   "test-vertex-ai.sh",
+  "scripts/local-migration/packaging-smoke.mjs",
   "scripts/local-migration/restart-smoke.mjs",
   "scripts/local-migration/web-support-smoke.mjs",
 ];

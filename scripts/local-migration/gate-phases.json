@@ -37,7 +37,8 @@
             "scripts/local-migration/ci-path-filters.test.mjs",
             "scripts/local-migration/runtime-process.test.mjs",
             "scripts/local-migration/web-runtime-config.test.mjs",
-            "scripts/local-migration/runtime-resources.test.mjs"
+            "scripts/local-migration/runtime-resources.test.mjs",
+            "scripts/local-migration/packaging-smoke.test.mjs"
           ]
         },
         { "argv": ["node", "scripts/local-migration/check-contract-baseline.mjs"] }
@@ -189,14 +190,29 @@
       "commands": [{ "argv": ["node", "scripts/local-migration/restart-smoke.mjs"] }]
     },
     {
-      "id": "repository-integrity",
+      "id": "packaged-composition-smoke",
       "order": 11,
+      "ownerStep": "02",
+      "status": "active",
+      "timeoutMs": 900000,
+      "terminationGraceMs": 180000,
+      "modes": ["hosted-baseline"],
+      "evidenceClasses": ["build", "restart", "integrity"],
+      "predecessors": ["restart-smoke"],
+      "replacementEvidence": [],
+      "retirementCondition": "Retire only after every supported packaged successor passes equivalent staged build, restart, and integrity evidence.",
+      "kind": "packaged-smoke",
+      "commands": [{ "argv": ["node", "scripts/local-migration/packaging-smoke.mjs"] }]
+    },
+    {
+      "id": "repository-integrity",
+      "order": 12,
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 300000,
       "modes": ["hosted-baseline"],
       "evidenceClasses": ["integrity"],
-      "predecessors": ["restart-smoke"],
+      "predecessors": ["packaged-composition-smoke"],
       "replacementEvidence": [],
       "retirementCondition": "Retire only when the stable aggregate gate preserves equivalent caller and generation integrity proof.",
       "kind": "commands",

@@ -57,7 +57,7 @@ an intentional fixture update but not a breaking migration record. Source
 locations and declaration order are deliberately excluded from compatibility.
 
 The baseline has 15 query fields, 15 mutation fields, and no subscription. The
-checker parses and validates 45 named in-repo operations across the web app,
+checker parses and validates 49 named in-repo operations across the web app,
 developer orchestrator, eval tooling, and clean-restart smoke. It separately
 tracks dynamic shell and runbook queries that cannot safely be extracted as
 ordinary template literals. Unknown external GraphQL clients are assumed to exist.
@@ -217,6 +217,24 @@ stale Node 20/npm path; supported backend container builds use
 `apps/backend/Dockerfile`.
 
 The checked contributor and gate path currently covers macOS and Linux only.
+The implemented Step 02E staged-artifact smoke uses platform-specific listener
+evidence: exact owned-PID/port native socket-table rows prove the bind tuple on
+macOS, while exhaustive nonloopback interface connection probes on Linux prove
+only runner-local negative reachability and are not authoritative bind-address
+evidence. Neither observes arbitrary outbound sockets or provides an offline or
+zero-egress guarantee.
+Earlier 2026-09-17 pre-correction runs passed the direct packaged-composition
+smoke on macOS arm64 with Node 24.21.0 and pnpm 10.25.0. They recorded exact
+owned-PID/port `/usr/sbin/lsof` loopback rows for both staged generations and
+verified the sealed target-native stage, source inputs, Corepack copy, generated
+outputs, and caller-owned paths remained within their declared integrity
+contracts. Those runs are historical rather than final-tree acceptance evidence
+after the subsequent review-finding corrections. On 2026-09-18 the corrected
+final tree passed the direct macOS arm64 smoke in 167.223 seconds with manifest
+`4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871` and stage
+`05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`.
+Linux staged-artifact evidence from the dedicated remote workflow remains
+pending; no unrun target is promoted.
 Windows remains analysis-only because the credential-free version probe
 deliberately uses no shell and therefore does not execute the `.cmd` pnpm shims
 commonly installed by Corepack/npm; no Windows support claim exists without a
@@ -258,12 +276,17 @@ dependency trees and the Corepack cache are cloned into private workspace-owned
 copies, using copy-on-write file cloning when the filesystem supports it, and
 no installer runs. Generators and build tools therefore have no write path
 through shared dependency trees. All generation, build, database, and process
-activity stays in the disposable workspace. The 11 fail-fast phases cover the
-contract checker, documentation, backend
+activity stays in the disposable workspace. Before preparation, the gate writes
+a private external recovery record and then a nonce-bearing internal
+`.git/lmbg-workspace-owner.json` marker. Cleanup requires both mode-`0600`
+regular JSON records to agree on their exact canonical paths, nonce, device,
+and inode, so immediate directory inode reuse cannot make a replacement
+workspace look owned. The 12 fail-fast phases cover the contract checker,
+documentation, backend
 generation/typecheck/production-build/unit, isolated-database integration/e2e, developer
 orchestrator, deterministic eval verification and scenarios, web production
-build, Harbor static checks, restart smoke, and final generated-output/caller
-integrity.
+build, Harbor static checks, hosted restart smoke, staged packaged-composition
+smoke, and final generated-output/caller integrity.
 
 Run the production-process proof independently with:
 
@@ -285,6 +308,34 @@ headers and success/error variants, MCP initialization/descriptors/resource
 SDL/read tool envelope, loopback-only reachability, and stable catalog/principal
 identity through restart.
 
+Run the target-native staged-artifact proof independently with:
+
+```sh
+pnpm migration:smoke:packaging
+```
+
+The Step 02 Packaged Composition Smoke builds in an owned disposable workspace,
+stages an offline production-only backend closure and Next standalone output,
+seals both read-only, and launches both generations from a hostile
+non-repository working directory with private mutable roots. It seeds the exact
+catalog before each generation, exercises the hosted health, GraphQL, MCP,
+OAuth protected-resource metadata, CORS, and web-support behavior through a
+stable loopback proxy, and proves target-native package resolution,
+stage/source/caller integrity, platform-appropriate loopback isolation, bounded
+shutdown, and no live owned descendants. The backend deploy environment forces
+`npm_config_package_import_method=copy`, and the smoke rejects regular-file
+inodes shared between its private pnpm store and staged payload before sealing.
+Both staged Node entrypoints disable global module lookup with
+`--no-global-search-paths`. Its exact dependency-materializer allowlist excludes
+installers and downloads, while an explicit source census covers every reviewed
+direct and imported-helper `runCommand`, `spawn`, and `execFile` callsite and
+pins the Git, Node, lsof, OpenSSL, and optional Docker-helper categories. This
+remains staged-hosted feasibility evidence, not an installed product, offline,
+or zero-egress claim. When the aggregate gate supplies its existing disposable
+workspace, the packaging smoke independently reads the bounded non-symlink
+ownership records and cross-validates the same canonical path, nonce, device,
+inode, regular-file type, and private mode before using that workspace.
+
 Database names, connected peers, and `current_database()` are validated before
 destructive operations. Duplicate connection-routing parameters fail before a
 PostgreSQL client receives credentials. Generated databases carry an
@@ -300,6 +351,18 @@ container, listener, process, secret directory, and private temporary home is
 recorded in the aggregate, restart, or linked web-subprobe mode-`0600`
 lifecycle journal before or as it is acquired, with an exact recovery
 instruction. Journal replacements are private, flushed, and atomically renamed.
+Lifecycle serialization validates the schema and preserves control fields such
+as resource IDs, types, ownership, status, cleanup state, and timestamps while
+redacting only dynamic identity, recovery, and error values; a secret-canary
+collision therefore cannot corrupt structural lifecycle evidence. After the
+packaged-smoke command settles on either success or failure, the outer gate
+independently verifies the diagnostics-directory identity, requires a regular
+non-symlink mode-`0600` JSON journal, and rejects any nonterminal resource or
+recovery-required state. A successful command additionally requires the exact
+fixed resources, both backend generations, web-attempt evidence for both
+generations, and exactly one administration source. Incomplete evidence reports
+the persisted redacted recovery identities but does not automatically signal a
+process named only by journal content.
 Before loading the in-process Next build, the web subprobe snapshots the caller
 environment, removes every inherited key, installs only its explicit allowlist
 and synthetic credentials, and restores the exact snapshot after bounded
@@ -311,6 +374,35 @@ diagnostics live in a mode-`0700` directory that is retained and printed with
 both primary and cleanup errors; success removes it together with the
 disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
+
+The implemented Step 02E gate treats T+103 as a cooperative signal-aware
+internal budget. The dedicated workflow's 108-minute gate-step timeout is the
+hard process-execution fail-safe; it does not claim that arbitrary in-process
+code which ignores cancellation can still complete scoped cleanup. Cleanup
+never races resource-owning work that has not settled, and any outer-timeout
+recovery is limited to exact identities already persisted in private journals.
+
+On 2026-09-18, the Step 02E correction tree passed all 244 local-migration tests.
+The dedicated Linux run had exposed zombie-only process groups that remained
+observable to `kill(0)` after every member was non-executable; the correction
+now treats only Linux `Z`/`X`/`x` members as quiescent, fails closed on ambiguous
+`/proc` evidence, and bounds post-`SIGKILL` settlement. A subsequent Linux
+phase-1 run exposed immediate device/inode reuse after a disposable workspace
+was deleted and recreated on overlay storage. The gate now writes the external
+recovery record first, binds it to a nonce-bearing internal `.git` marker, reads
+both through bounded non-symlink regular-file checks, and independently
+cross-validates canonical path, nonce, device, and inode before cleanup and in
+the packaging consumer. Fresh read-only reviews approved both CI corrections
+with no remaining findings. All seven focused Linux cleanup regressions and all
+three focused workspace-identity regressions passed in the network-disabled
+Node 24 image. The corrected final tree then passed the direct
+packaged-composition smoke in 167.223 seconds with manifest
+`4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871` and stage
+`05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`.
+The exact-base 12-phase aggregate gate then passed in 454.088 seconds, including
+phase 11 in 180.580 seconds, with merge-base comparison performed and caller
+integrity preserved. Final-head standard and dedicated remote workflows are
+still required before human landing.
 
 The superseded 128-test, 227.805-second, and remote-green results were collected
 at head `493bf49` before independent review found a production-entrypoint

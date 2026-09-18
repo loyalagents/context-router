@@ -188,6 +188,7 @@ test("verified ambiguous CREATE DATABASE failure attempts exact idempotent clean
   const calls = [];
   const ownershipNonce = "01234567-89ab-4cde-8fab-0123456789ab";
   const expectedMarker = `context-router-lmbg-owner:${ownershipNonce}`;
+  const cleanupController = new AbortController();
   await assert.rejects(
     createIsolatedTestDatabase(
       "/repository",
@@ -202,13 +203,16 @@ test("verified ambiguous CREATE DATABASE failure attempts exact idempotent clean
           });
         },
         ownershipNonce,
+        cleanupSignal: () => cleanupController.signal,
         dropDatabase: async (_root, _url, databaseName, options) => {
           assert.equal(options.expectedOwnershipMarker, expectedMarker);
+          assert.equal(options.signal, cleanupController.signal);
           calls.push(`DROP:${databaseName}`);
           throw new Error("drop confirmation failed");
         },
-        verifyOwnership: async (_root, _url, _databaseName, marker) => {
+        verifyOwnership: async (_root, _url, _databaseName, marker, options) => {
           assert.equal(marker, expectedMarker);
+          assert.equal(options.signal, cleanupController.signal);
           return true;
         },
       },
@@ -392,6 +396,39 @@ test("normal database cleanup re-verifies the exact ownership comment before dro
   }
 });
 
+test("database cleanup forwards its bounded cleanup signal to the verified client", async () => {
+  const databaseName = "context_router_0123456789abcdef01234567_test";
+  const expectedMarker =
+    "context-router-lmbg-owner:01234567-89ab-4cde-8fab-0123456789ab";
+  const controller = new AbortController();
+  let observedOptions;
+  await dropIsolatedTestDatabase(
+    "/repository",
+    "postgresql://admin:secret@127.0.0.1:5432/postgres",
+    databaseName,
+    {
+      expectedOwnershipMarker: expectedMarker,
+      signal: controller.signal,
+      withClient: async (_root, _url, callback, options) => {
+        observedOptions = options;
+        let inspection = 0;
+        return callback({
+          async query(sql) {
+            if (sql.includes("shobj_description")) {
+              inspection += 1;
+              return {
+                rows: [{ database_id: "123", owner_marker: expectedMarker }],
+              };
+            }
+            return { rows: [] };
+          },
+        });
+      },
+    },
+  );
+  assert.equal(observedOptions.signal, controller.signal);
+});
+
 test("database cleanup refuses a marker or database identity change before DROP", async () => {
   const databaseName = "context_router_0123456789abcdef01234567_test";
   const expectedOwnershipMarker =
@@ -475,8 +512,9 @@ test("Docker fallback uses an isolated config and cleans ambiguous container sta
   const calls = [];
   const ownershipNonce = "01234567-89ab-4cde-8fab-0123456789ab";
   const verifiedContainerId = "a".repeat(64);
+  const cleanupController = new AbortController();
   const commandRunner = async (argv, options) => {
-    calls.push({ argv, env: options.env });
+    calls.push({ argv, env: options.env, signal: options.signal });
     if (argv.includes("run")) {
       const error = new Error("daemon connection reset after container start");
       error.outputTail = "daemon connection reset after container start";
@@ -500,6 +538,7 @@ test("Docker fallback uses an isolated config and cleans ambiguous container sta
         commandRunner,
         portFinder: async () => 54321,
         ownershipNonce,
+        cleanupSignal: () => cleanupController.signal,
       }),
       /connection reset after container start/,
     );
@@ -528,11 +567,78 @@ test("Docker fallback uses an isolated config and cleans ambiguous container sta
       "--format",
       '{{.Id}} {{ index .Config.Labels "context-router.local-migration-gate-owner" }}',
     ]);
+    assert.equal(inspectCall.signal, cleanupController.signal);
+    assert.equal(
+      calls.find(({ argv }) => argv.includes("rm")).signal,
+      cleanupController.signal,
+    );
     for (const { env } of executionCalls) {
       assert.notEqual(env.HOME, "/host/home");
       assert.equal(env.DOCKER_HOST, "unix:///var/run/docker.sock");
       assert.ok(env.DOCKER_CONFIG.startsWith(diagnostics));
     }
+  } finally {
+    await rm(diagnostics, { recursive: true, force: true });
+  }
+});
+
+test("retryable Docker port cleanup does not consume final gate cleanup", async () => {
+  const diagnostics = await mkdtemp(path.join(os.tmpdir(), "lmbg-docker-retry-test-"));
+  const ownershipNonce = "11234567-89ab-4cde-8fab-0123456789ab";
+  const verifiedContainerId = "b".repeat(64);
+  const acquisitionController = new AbortController();
+  const finalController = new AbortController();
+  const calls = [];
+  let runAttempts = 0;
+  let acquisitionSignals = 0;
+  let finalSignals = 0;
+  const commandRunner = async (argv, options) => {
+    calls.push({ argv, signal: options.signal });
+    if (argv.includes("run")) {
+      runAttempts += 1;
+      if (runAttempts === 1) {
+        const error = new Error("port is already allocated");
+        error.outputTail = "port is already allocated";
+        throw error;
+      }
+      return { outputTail: verifiedContainerId };
+    }
+    if (argv.includes("container") && argv.includes("inspect")) {
+      return { outputTail: `${verifiedContainerId} ${ownershipNonce}` };
+    }
+    return { outputTail: "" };
+  };
+  try {
+    const administration = await prepareTestAdministration({
+      repositoryRoot: "/repository",
+      diagnosticsDirectory: diagnostics,
+      environment: {
+        PATH: "/bin",
+        DOCKER_HOST: "unix:///var/run/docker.sock",
+      },
+      commandRunner,
+      portFinder: async () => 54321 + runAttempts,
+      waitForAdministrationFn: async () => {},
+      ownershipNonce,
+      acquisitionCleanupSignal: () => {
+        acquisitionSignals += 1;
+        return acquisitionController.signal;
+      },
+      cleanupSignal: () => {
+        finalSignals += 1;
+        return finalController.signal;
+      },
+    });
+    assert.equal(runAttempts, 2);
+    assert.equal(acquisitionSignals, 1);
+    assert.equal(finalSignals, 0);
+    const retryCleanup = calls.filter(({ argv }) => argv.includes("rm"));
+    assert.equal(retryCleanup.length, 1);
+    assert.equal(retryCleanup[0].signal, acquisitionController.signal);
+
+    await administration.cleanup();
+    assert.equal(finalSignals, 1);
+    assert.equal(calls.filter(({ argv }) => argv.includes("rm")).at(-1).signal, finalController.signal);
   } finally {
     await rm(diagnostics, { recursive: true, force: true });
   }

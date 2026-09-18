@@ -1,15 +1,41 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { createRequire } from "node:module";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import {
   validateApprovedPhaseCommands,
   validatePhaseManifest,
+  createResourceLifecycleJournal,
 } from "./gate-runner.mjs";
 import {
+  assertGateDiagnosticsOwnership,
+  assertDisposableWorkspaceOwnership,
   buildAdministrationCanaries,
+  createDeadlineAbortController,
+  createFinalCleanupAbortController,
+  createGateTimeline,
+  effectivePhaseTimeoutMs,
+  finalizeGateAttemptEvidence,
+  GATE_TIMELINE_MS,
+  markGateSuccessCandidate,
+  persistExternalGateSummary,
+  prepareGateDiagnosticsRoot,
+  prepareDisposableWorkspace,
   RESTART_SMOKE_TERMINATION_GRACE_MS,
+  runBoundedGateStages,
   formatPreflightEvidence,
   terminationGraceForPhase,
 } from "./migration-gate.mjs";
@@ -20,6 +46,7 @@ const manifest = JSON.parse(
 );
 const require = createRequire(new URL("../../package.json", import.meta.url));
 const Ajv2020 = require("ajv/dist/2020").default;
+const { parse: parseYaml } = require("yaml");
 const schema = JSON.parse(
   await readFile(new URL("./gate-phases.schema.json", import.meta.url), "utf8"),
 );
@@ -32,6 +59,387 @@ test("administration redaction canaries include encoded and decoded credentials"
     ),
     ["synthetic-extra", "p%40ss", "p@ss"],
   );
+});
+
+test("completed inner gate work remains nonterminal until outer cleanup", () => {
+  const summary = markGateSuccessCandidate({ status: "passed", phases: [] });
+  assert.equal(summary.status, "running");
+  assert.equal(
+    summary.cleanupPending,
+    "caller-integrity-workspace-and-diagnostics-removal",
+  );
+});
+
+test("packaged smoke phase independently rejects an incomplete child journal", async () => {
+  const gate = await import("./migration-gate.mjs");
+  assert.equal(typeof gate.assertPackagedSmokeLifecycleEvidence, "function");
+  assert.equal(typeof gate.executePackagedSmokeCommand, "function");
+  assert.equal(typeof gate.executeGatePhaseCommand, "function");
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-packaging-journal-test-"));
+  const diagnostics = path.join(root, "packaging-smoke");
+  const journalPath = path.join(diagnostics, "resource-lifecycle.json");
+  await mkdir(diagnostics, { mode: 0o700 });
+  try {
+    await writeFile(
+      journalPath,
+      `${JSON.stringify({
+        schemaVersion: 1,
+        status: "running",
+        resources: [
+          {
+            id: "backend-generation-1",
+            type: "staged-backend-process",
+            status: "acquired",
+            identity: { pid: 4242 },
+            cleanup: { status: "pending" },
+            recovery: "Verify the recorded PID before scoped recovery.",
+          },
+        ],
+      })}\n`,
+      { mode: 0o600 },
+    );
+    await assert.rejects(
+      gate.executePackagedSmokeCommand({
+        executeCommand: async () => ({ outputTail: "smoke exited zero" }),
+        validateLifecycle: ({ commandSucceeded }) =>
+          gate.assertPackagedSmokeLifecycleEvidence(diagnostics, {
+            commandSucceeded,
+          }),
+      }),
+      /backend-generation-1.*4242/,
+    );
+
+    await writeFile(
+      journalPath,
+      `${JSON.stringify({ schemaVersion: 1, status: "passed", resources: [] })}\n`,
+      { mode: 0o600 },
+    );
+    await assert.rejects(
+      gate.assertPackagedSmokeLifecycleEvidence(diagnostics, {
+        commandSucceeded: true,
+      }),
+      /private-root/,
+    );
+
+    await writeFile(
+      journalPath,
+      `${JSON.stringify({ schemaVersion: 2, status: "passed", resources: [] })}\n`,
+      { mode: 0o600 },
+    );
+    await assert.rejects(
+      gate.assertPackagedSmokeLifecycleEvidence(diagnostics, {
+        commandSucceeded: true,
+      }),
+      /schemaVersion must be 1/,
+    );
+
+    const completed = (id, type, cleanup, identity = {}) => ({
+      id,
+      type,
+      status: "acquired",
+      identity,
+      cleanup: { status: cleanup },
+    });
+    await writeFile(
+      journalPath,
+      `${JSON.stringify({
+        schemaVersion: 1,
+        status: "passed",
+        resources: [
+          completed("private-root", "packaging-private-root", "removed"),
+          completed("stable-proxy", "loopback-http-proxy", "closed"),
+          completed("sealed-stage", "read-only-packaged-stage", "removed"),
+          completed("database", "owned-test-database", "removed"),
+          completed(
+            "administration",
+            "external-administration",
+            "not-owned",
+          ),
+          completed(
+            "synthetic-secrets",
+            "synthetic-credential-directory",
+            "removed",
+          ),
+          completed("synthetic-jwks", "loopback-synthetic-jwks", "closed"),
+          completed(
+            "backend-generation-1",
+            "staged-backend-process",
+            "exited",
+            { pid: 4242 },
+          ),
+          completed(
+            "backend-generation-2",
+            "staged-backend-process",
+            "exited",
+            { pid: 4243 },
+          ),
+          completed(
+            "web-generation-1-attempt-1",
+            "staged-web-process",
+            "exited",
+            { generation: 1, pid: 4244 },
+          ),
+          completed(
+            "web-generation-2-attempt-1",
+            "staged-web-process",
+            "exited",
+            { generation: 2, pid: 4245 },
+          ),
+        ],
+      })}\n`,
+      { mode: 0o600 },
+    );
+    const result = await gate.executePackagedSmokeCommand({
+      executeCommand: async () => ({ outputTail: "smoke exited zero" }),
+      validateLifecycle: ({ commandSucceeded }) =>
+        gate.assertPackagedSmokeLifecycleEvidence(diagnostics, {
+          commandSucceeded,
+        }),
+    });
+    assert.equal(result.outputTail, "smoke exited zero");
+
+    const dispatchEvents = [];
+    const dispatched = await gate.executeGatePhaseCommand({
+      phase: { kind: "packaged-smoke" },
+      executeCommand: async () => {
+        dispatchEvents.push("command");
+        return { outputTail: "dispatched" };
+      },
+      validatePackagedLifecycle: async ({ commandSucceeded }) => {
+        dispatchEvents.push(`lifecycle:${commandSucceeded}`);
+      },
+    });
+    assert.equal(dispatched.outputTail, "dispatched");
+    assert.deepEqual(dispatchEvents, ["command", "lifecycle:true"]);
+    await assert.rejects(
+      gate.executeGatePhaseCommand({
+        phase: { kind: "packaged-smoke" },
+        executeCommand: async () => ({ outputTail: "unvalidated" }),
+      }),
+      /requires lifecycle validation/,
+    );
+    let ordinaryValidated = false;
+    const ordinary = await gate.executeGatePhaseCommand({
+      phase: { kind: "command" },
+      executeCommand: async () => ({ outputTail: "ordinary" }),
+      validatePackagedLifecycle: async () => {
+        ordinaryValidated = true;
+      },
+    });
+    assert.equal(ordinary.outputTail, "ordinary");
+    assert.equal(ordinaryValidated, false);
+
+    await assert.rejects(
+      gate.executePackagedSmokeCommand({
+        executeCommand: async () => {
+          throw new Error("packaged smoke command failed");
+        },
+        validateLifecycle: async ({ commandSucceeded }) => {
+          assert.equal(commandSucceeded, false);
+          throw new Error("packaged smoke journal incomplete");
+        },
+      }),
+      (error) => {
+        assert.match(error.message, /packaged smoke command failed/);
+        assert.match(error.message, /packaged smoke journal incomplete/);
+        assert.equal(error.primaryError?.message, "packaged smoke command failed");
+        assert.equal(
+          error.secondaryErrors?.[0]?.message,
+          "packaged smoke journal incomplete",
+        );
+        return true;
+      },
+    );
+
+    if (process.platform !== "win32") {
+      await chmod(journalPath, 0o644);
+      await assert.rejects(
+        gate.assertPackagedSmokeLifecycleEvidence(diagnostics, {
+          commandSucceeded: true,
+        }),
+        /mode 0600/,
+      );
+      await chmod(journalPath, 0o600);
+    }
+
+    const linkedDiagnostics = path.join(root, "linked-packaging-smoke");
+    await symlink(diagnostics, linkedDiagnostics, "dir");
+    await assert.rejects(
+      gate.assertPackagedSmokeLifecycleEvidence(linkedDiagnostics, {
+        commandSucceeded: true,
+      }),
+      /not a real directory/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("disposable workspace identity is durable before preparation and fails closed on replacement", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-workspace-identity-test-"));
+  const diagnostics = path.join(root, "diagnostics");
+  await mkdir(diagnostics);
+  let ownership;
+  try {
+    await assert.rejects(
+      prepareDisposableWorkspace(diagnostics, undefined, {
+        onWorkspaceCreated(value) {
+          ownership = value;
+        },
+        async beforeWorkspacePreparation() {
+          throw new Error("injected first preparation failure");
+        },
+      }),
+      /injected first preparation failure/,
+    );
+    const marker = JSON.parse(
+      await readFile(path.join(diagnostics, "workspace-ownership.json"), "utf8"),
+    );
+    assert.equal(marker.workspace, ownership.workspace);
+    assert.equal(marker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(marker.ownershipMarkerPath, ownership.ownershipMarkerPath);
+    assert.equal(marker.workspaceMarkerPath, ownership.workspaceMarkerPath);
+    assert.equal(marker.device, ownership.device);
+    assert.equal(marker.inode, ownership.inode);
+    const workspaceMarkerContent = await readFile(
+      ownership.workspaceMarkerPath,
+      "utf8",
+    );
+    const workspaceMarker = JSON.parse(workspaceMarkerContent);
+    assert.equal(workspaceMarker.schemaVersion, 1);
+    assert.equal(workspaceMarker.workspace, ownership.workspace);
+    assert.equal(workspaceMarker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(workspaceMarker.device, ownership.device);
+    assert.equal(workspaceMarker.inode, ownership.inode);
+    assert.equal(
+      await assertDisposableWorkspaceOwnership(ownership),
+      ownership.workspace,
+    );
+
+    await writeFile(
+      ownership.ownershipMarkerPath,
+      `${JSON.stringify({
+        ...marker,
+        ownershipMarkerPath: path.join(root, "replacement-ownership.json"),
+      })}\n`,
+    );
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /marker did not verify/,
+    );
+    await writeFile(
+      ownership.ownershipMarkerPath,
+      `${JSON.stringify(marker)}\n`,
+    );
+
+    await writeFile(
+      ownership.workspaceMarkerPath,
+      `${JSON.stringify({ ...workspaceMarker, ownershipMarker: "replacement" })}\n`,
+    );
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent);
+    assert.equal(
+      await assertDisposableWorkspaceOwnership(ownership),
+      ownership.workspace,
+    );
+
+    await writeFile(ownership.workspaceMarkerPath, "{not-json\n");
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent);
+
+    if (process.platform !== "win32") {
+      await chmod(ownership.workspaceMarkerPath, 0o644);
+      await assert.rejects(
+        assertDisposableWorkspaceOwnership(ownership),
+        /changed identity/,
+      );
+      await chmod(ownership.workspaceMarkerPath, 0o600);
+    }
+
+    await rm(ownership.workspaceMarkerPath);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent, {
+      mode: 0o600,
+    });
+
+    const decoyMarkerPath = path.join(root, "decoy-workspace-marker.json");
+    await writeFile(decoyMarkerPath, workspaceMarkerContent, { mode: 0o600 });
+    await rm(ownership.workspaceMarkerPath);
+    await symlink(decoyMarkerPath, ownership.workspaceMarkerPath);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await rm(ownership.workspaceMarkerPath);
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent, {
+      mode: 0o600,
+    });
+    assert.equal(
+      await assertDisposableWorkspaceOwnership(ownership),
+      ownership.workspace,
+    );
+
+    await rm(ownership.workspace, { recursive: true, force: true });
+    await mkdir(ownership.workspace);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await rm(ownership.workspace, { recursive: true, force: true });
+    await symlink(root, ownership.workspace);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+  } finally {
+    if (ownership?.workspace) {
+      await rm(ownership.workspace, { recursive: true, force: true });
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("disposable workspace records external ownership before internal marker setup", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-workspace-recovery-test-"));
+  const diagnostics = path.join(root, "diagnostics");
+  await mkdir(diagnostics);
+  let ownership;
+  try {
+    await assert.rejects(
+      prepareDisposableWorkspace(diagnostics, undefined, {
+        async onWorkspaceCreated(value) {
+          ownership = value;
+          await writeFile(path.join(value.workspace, ".git"), "blocking file\n", {
+            mode: 0o600,
+          });
+        },
+      }),
+    );
+    const marker = JSON.parse(
+      await readFile(path.join(diagnostics, "workspace-ownership.json"), "utf8"),
+    );
+    assert.equal(marker.schemaVersion, 1);
+    assert.equal(marker.workspace, ownership.workspace);
+    assert.equal(marker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(marker.ownershipMarkerPath, ownership.ownershipMarkerPath);
+    assert.equal(marker.workspaceMarkerPath, ownership.workspaceMarkerPath);
+    assert.equal(marker.device, ownership.device);
+    assert.equal(marker.inode, ownership.inode);
+  } finally {
+    if (ownership?.workspace) {
+      await rm(ownership.workspace, { recursive: true, force: true });
+    }
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("checked-in gate manifest contains the complete approved lifecycle in order", () => {
@@ -52,10 +460,14 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
       "web-production-build",
       "harbor-static",
       "restart-smoke",
+      "packaged-composition-smoke",
       "repository-integrity",
     ],
   );
   assert.equal(manifest.phases[9].kind, "restart-smoke");
+  assert.equal(manifest.phases[10].kind, "packaged-smoke");
+  assert.equal(manifest.phases[10].terminationGraceMs, 180_000);
+  assert.equal(manifest.phases[10].ownerStep, "02");
   assert.deepEqual(manifest.supportedModes, [
     {
       id: "hosted-baseline",
@@ -83,6 +495,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/runtime-process.test.mjs",
           "scripts/local-migration/web-runtime-config.test.mjs",
           "scripts/local-migration/runtime-resources.test.mjs",
+          "scripts/local-migration/packaging-smoke.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],
@@ -114,6 +527,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
       [["pnpm", "--filter", "web", "build"]],
       [["bash", "examples/eval-harbor/scripts/check_static.sh"]],
       [["node", "scripts/local-migration/restart-smoke.mjs"]],
+      [["node", "scripts/local-migration/packaging-smoke.mjs"]],
       [["node", "scripts/local-migration/check-generated-integrity.mjs"]],
     ],
   );
@@ -128,6 +542,80 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   const gate = workflow.indexOf("run: pnpm migration:gate");
   assert.ok(seed >= 0, "workflow must seed the pnpm 10.25.0 Corepack cache");
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
+});
+
+test("dedicated CI enforces the reviewed 153/165-minute workflow budget", async () => {
+  const workflow = parseYaml(
+    await readFile(
+      new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
+      "utf8",
+    ),
+  );
+  const job = workflow.jobs["local-migration-baseline"];
+  assert.equal(job["timeout-minutes"], 165);
+  const expected = [
+    ["actions/checkout@v4", 5],
+    ["pnpm/action-setup@v6.0.8", 5],
+    ["actions/setup-node@v4", 5],
+    ["actions/setup-python@v5", 5],
+    ["Verify toolchain and seed offline Corepack runtime", 5],
+    ["Install dependencies", 15],
+    ["Run the Local Migration Baseline Gate", 108],
+    ["Persist sanitized gate evidence", 5],
+  ];
+  assert.deepEqual(
+    job.steps.map((step) => [step.uses ?? step.name, step["timeout-minutes"]]),
+    expected,
+  );
+  assert.equal(
+    job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
+    153,
+  );
+  assert.equal(job["timeout-minutes"] - 153, 12);
+  const evidence = job.steps.at(-1);
+  assert.equal(evidence.if, "always()");
+  assert.equal(
+    job.steps.at(-2).env.MIGRATION_GATE_CI_SUMMARY_PATH,
+    "${{ runner.temp }}/local-migration-gate-summary.json",
+  );
+  assert.match(
+    evidence.run,
+    /\$RUNNER_TEMP\/local-migration-gate-summary\.json/,
+  );
+  assert.match(evidence.run, /\$GITHUB_STEP_SUMMARY/);
+});
+
+test("external CI evidence is restricted to the exact runner-temp path and sanitized", async () => {
+  const root = await mkdtemp("/tmp/local-migration-summary-test-");
+  const requested = `${root}/local-migration-gate-summary.json`;
+  const expected = `${await realpath(root)}/local-migration-gate-summary.json`;
+  try {
+    assert.equal(
+      await persistExternalGateSummary(
+        {
+          RUNNER_TEMP: root,
+          MIGRATION_GATE_CI_SUMMARY_PATH: requested,
+        },
+        { status: "failed", message: "Bearer summary-secret" },
+      ),
+      expected,
+    );
+    const written = await readFile(expected, "utf8");
+    assert.equal(written.includes("summary-secret"), false);
+    assert.match(written, /<redacted>/);
+    await assert.rejects(
+      persistExternalGateSummary(
+        {
+          RUNNER_TEMP: root,
+          MIGRATION_GATE_CI_SUMMARY_PATH: `${root}/unexpected.json`,
+        },
+        { status: "passed" },
+      ),
+      /exact runner temporary summary path/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("backend build and seed configs pin production and smoke entrypoints", async () => {
@@ -185,6 +673,42 @@ test("approved command policy rejects substitution, removal, unknown commands, a
   }
 });
 
+test("packaged smoke and final integrity retain their exact reviewed transition semantics", () => {
+  const mutations = [
+    (candidate) => {
+      candidate.phases[10].predecessors = ["harbor-static"];
+    },
+    (candidate) => {
+      candidate.phases[10].evidenceClasses.push("state");
+    },
+    (candidate) => {
+      candidate.phases[10].evidenceClasses = ["build", "restart"];
+    },
+    (candidate) => {
+      candidate.phases[10].modes = ["hosted-baseline", "future-mode"];
+    },
+    (candidate) => {
+      candidate.phases[11].predecessors = ["restart-smoke"];
+    },
+  ];
+
+  for (const mutate of mutations) {
+    const candidate = structuredClone(manifest);
+    mutate(candidate);
+    assert.ok(
+      validatePhaseManifest(candidate).length > 0,
+      `mutation should violate the reviewed transition contract: ${JSON.stringify(
+        candidate.phases.slice(10).map(({ id, modes, evidenceClasses, predecessors }) => ({
+          id,
+          modes,
+          evidenceClasses,
+          predecessors,
+        })),
+      )}`,
+    );
+  }
+});
+
 test("phase manifest schema rejects unknown fields and incomplete lifecycle records", () => {
   const validate = new Ajv2020({ strict: true, allErrors: true }).compile(schema);
   const invalid = structuredClone(manifest);
@@ -197,7 +721,10 @@ test("phase manifest schema rejects unknown fields and incomplete lifecycle reco
 
 test("every phase has explicit transition metadata and no live-provider dependency", () => {
   for (const phase of manifest.phases) {
-    assert.equal(phase.ownerStep, "01");
+    assert.equal(
+      phase.ownerStep,
+      phase.id === "packaged-composition-smoke" ? "02" : "01",
+    );
     assert.equal(phase.status, "active");
     assert.ok(Number.isInteger(phase.timeoutMs) && phase.timeoutMs > 0);
     assert.ok(phase.retirementCondition.length > 20);
@@ -228,7 +755,600 @@ test("the outer gate grants restart smoke more time than its cumulative cleanup 
     terminationGraceForPhase({ kind: "restart-smoke" }),
     RESTART_SMOKE_TERMINATION_GRACE_MS,
   );
+  assert.equal(
+    terminationGraceForPhase({
+      kind: "packaged-smoke",
+      terminationGraceMs: 180_000,
+    }),
+    180_000,
+  );
   assert.equal(terminationGraceForPhase({ kind: "command" }), 5_000);
+});
+
+test("active phase timeouts retain the reviewed global gate windows", () => {
+  const active = manifest.phases.filter(({ status }) => status === "active");
+  assert.equal(
+    active.reduce((sum, phase) => sum + phase.timeoutMs, 0),
+    94 * 60_000,
+  );
+});
+
+test("gate-wide monotonic deadlines cap preflight, phases, settlement, and cleanup", () => {
+  let now = 10_000;
+  const timeline = createGateTimeline({ startedAt: now, now: () => now });
+  assert.deepEqual(GATE_TIMELINE_MS, {
+    preflight: 3 * 60_000,
+    phaseCancellation: 97 * 60_000,
+    childSettlement: 100 * 60_000,
+    finalCleanup: 103 * 60_000,
+  });
+  assert.equal(timeline.remaining("preflight"), 3 * 60_000);
+  now += 3 * 60_000;
+  assert.equal(timeline.remaining("preflight"), 0);
+  assert.throws(() => timeline.assertBefore("preflight"), /preflight deadline/);
+
+  now = 10_000 + 96 * 60_000;
+  assert.equal(
+    effectivePhaseTimeoutMs({
+      phaseTimeoutMs: 15 * 60_000,
+      phaseStartedAt: now,
+      timeline,
+    }),
+    60_000,
+  );
+  now = 10_000 + 103 * 60_000;
+  assert.throws(() => timeline.assertBefore("finalCleanup"), /final cleanup deadline/);
+});
+
+test("real monotonic fractional timestamps still produce an integer command timeout", () => {
+  const timeline = createGateTimeline({
+    startedAt: 10_000.125,
+    now: () => 10_000.875,
+  });
+  const timeoutMs = effectivePhaseTimeoutMs({
+    phaseTimeoutMs: 120_000,
+    phaseStartedAt: 10_000.25,
+    timeline,
+  });
+  assert.equal(Number.isInteger(timeoutMs), true);
+  assert.equal(timeoutMs, 119_999);
+});
+
+test("deadline controller aborts a forced hang using an injected fake clock", async () => {
+  let scheduled;
+  let cancelled = false;
+  const deadline = createDeadlineAbortController({
+    startedAt: 1_000,
+    deadlineOffsetMs: 500,
+    label: "forced acquisition",
+    now: () => 1_100,
+    schedule(callback, milliseconds) {
+      scheduled = { callback, milliseconds };
+      return 41;
+    },
+    cancel(timer) {
+      assert.equal(timer, 41);
+      cancelled = true;
+    },
+  });
+  assert.equal(scheduled.milliseconds, 400);
+  const hung = new Promise((resolve, reject) => {
+    deadline.signal.addEventListener(
+      "abort",
+      () => reject(deadline.signal.reason),
+      { once: true },
+    );
+  });
+  scheduled.callback();
+  await assert.rejects(hung, /forced acquisition deadline exceeded/);
+  deadline.dispose();
+  assert.equal(cancelled, true);
+
+  const expired = createDeadlineAbortController({
+    startedAt: 1_000,
+    deadlineOffsetMs: 500,
+    label: "already expired",
+    now: () => 1_500,
+    schedule() {
+      throw new Error("expired deadlines must not defer through the scheduler");
+    },
+  });
+  assert.equal(expired.signal.aborted, true);
+  assert.match(expired.signal.reason.message, /already expired deadline exceeded/);
+  expired.dispose();
+});
+
+test("final cleanup gets one lazy three-minute window capped by T+103", () => {
+  const scheduled = [];
+  let now = 5_000;
+  const timeline = createGateTimeline({ startedAt: now, now: () => now });
+  const early = createFinalCleanupAbortController({
+    timeline,
+    schedule(callback, milliseconds) {
+      scheduled.push({ callback, milliseconds });
+      return scheduled.length;
+    },
+    cancel() {},
+  });
+  assert.equal(scheduled.length, 0, "cleanup timer must be lazy");
+  now += 60_000;
+  early.start();
+  assert.equal(scheduled[0].milliseconds, 180_000);
+  early.start();
+  assert.equal(scheduled.length, 1, "cleanup timer must be memoized");
+  early.dispose();
+
+  now = 5_000 + 102 * 60_000;
+  const late = createFinalCleanupAbortController({
+    timeline,
+    schedule(callback, milliseconds) {
+      scheduled.push({ callback, milliseconds });
+      return scheduled.length;
+    },
+    cancel() {},
+  });
+  late.start();
+  assert.equal(scheduled[1].milliseconds, 60_000);
+  late.dispose();
+});
+
+function controlledDeadlineFactory(records) {
+  return ({ label, parentSignal }) => {
+    const controller = new AbortController();
+    const parentAbort = () =>
+      controller.abort(parentSignal.reason ?? new Error(`${label} cancelled`));
+    parentSignal?.addEventListener("abort", parentAbort, { once: true });
+    if (parentSignal?.aborted) parentAbort();
+    const record = {
+      controller,
+      disposed: false,
+      dispose() {
+        record.disposed = true;
+        parentSignal?.removeEventListener("abort", parentAbort);
+      },
+    };
+    records.set(label, record);
+    return { signal: controller.signal, dispose: record.dispose };
+  };
+}
+
+function controlledCleanupFactory(record) {
+  return () => {
+    const controller = new AbortController();
+    return {
+      start() {
+        record.starts += 1;
+        record.controller = controller;
+        return controller.signal;
+      },
+      dispose() {
+        record.disposed = true;
+      },
+    };
+  };
+}
+
+function rejectWhenAborted(signal) {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    signal.addEventListener("abort", () => reject(signal.reason), {
+      once: true,
+    });
+  });
+}
+
+test("production gate orchestration bounds acquisition and cleans after settlement", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  const events = [];
+  const timeline = createGateTimeline({ startedAt: 0, now: () => 1 });
+  const running = runBoundedGateStages({
+    timeline,
+    cancellationSignal: new AbortController().signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async ({ preflightSignal }) => {
+      events.push("acquisition-started");
+      await rejectWhenAborted(preflightSignal);
+      events.push("work-must-not-run");
+    },
+    cleanup: async () => {
+      events.push("cleanup");
+    },
+  });
+  deadlines.get("preflight").controller.abort(
+    new Error("preflight deadline exceeded"),
+  );
+  const outcome = await running;
+  assert.match(outcome.primaryError.message, /preflight deadline exceeded/);
+  assert.deepEqual(events, ["acquisition-started", "cleanup"]);
+  assert.equal(outcome.childSettlementAttempted, true);
+  assert.equal(cleanupRecord.starts, 1);
+  assert.equal(cleanupRecord.disposed, true);
+});
+
+test("production gate orchestration settles failed work before its one cleanup", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  const events = [];
+  const baseTimeline = createGateTimeline({ startedAt: 0, now: () => 1 });
+  const timeline = {
+    ...baseTimeline,
+    assertBefore(stage) {
+      events.push(`assert-${stage}`);
+      return baseTimeline.assertBefore(stage);
+    },
+  };
+  const running = runBoundedGateStages({
+    timeline,
+    cancellationSignal: new AbortController().signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async ({ completePreflight, workSignal }) => {
+      completePreflight();
+      events.push("work-started");
+      await rejectWhenAborted(workSignal);
+    },
+    cleanup: async () => {
+      events.push("cleanup");
+    },
+  });
+  deadlines.get("phase cancellation").controller.abort(
+    new Error("phase cancellation deadline exceeded"),
+  );
+  const outcome = await running;
+  assert.match(outcome.primaryError.message, /phase cancellation deadline/);
+  assert.ok(
+    events.indexOf("assert-childSettlement") < events.indexOf("cleanup"),
+  );
+  assert.equal(cleanupRecord.starts, 1);
+});
+
+test("settled work disposes T+97 before final cleanup crosses that boundary", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  let now = 1;
+  const timeline = createGateTimeline({ startedAt: 0, now: () => now });
+  const outcome = await runBoundedGateStages({
+    timeline,
+    cancellationSignal: new AbortController().signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async ({ completePreflight, confirmChildSettlement }) => {
+      completePreflight();
+      now = 96 * 60_000;
+      confirmChildSettlement();
+      return { status: "passed" };
+    },
+    cleanup: async ({ workSignal }) => {
+      now = 98 * 60_000;
+      assert.equal(
+        deadlines.get("phase cancellation").disposed,
+        true,
+        "the phase timer must be cancelled before cleanup starts",
+      );
+      assert.equal(workSignal.aborted, false);
+    },
+  });
+  assert.equal(outcome.primaryError, undefined);
+  assert.deepEqual(outcome.secondaryErrors, []);
+});
+
+test("phase and parent cancellation cannot be swallowed by a normally resolving callback", async () => {
+  for (const source of ["phase", "parent"]) {
+    const deadlines = new Map();
+    const cleanupRecord = { starts: 0, disposed: false };
+    const parent = new AbortController();
+    const reason = new Error(`${source} cancellation sentinel`);
+    const outcome = await runBoundedGateStages({
+      timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+      cancellationSignal: parent.signal,
+      deadlineFactory: controlledDeadlineFactory(deadlines),
+      finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+      execute: async ({ completePreflight, confirmChildSettlement }) => {
+        completePreflight();
+        if (source === "phase") {
+          deadlines.get("phase cancellation").controller.abort(reason);
+        } else {
+          parent.abort(reason);
+        }
+        confirmChildSettlement();
+        return { status: "passed" };
+      },
+      cleanup: async () => {},
+    });
+    assert.equal(outcome.primaryError, reason);
+    assert.equal(cleanupRecord.starts, 1);
+  }
+});
+
+test("cancellation triggered by finalization cannot be swallowed", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  const parent = new AbortController();
+  const reason = new Error("finalization cancellation sentinel");
+  const outcome = await runBoundedGateStages({
+    timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+    cancellationSignal: parent.signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async ({ completePreflight, confirmChildSettlement }) => {
+      completePreflight();
+      confirmChildSettlement();
+      return { status: "running" };
+    },
+    cleanup: async () => {},
+    finalize: async () => {
+      parent.abort(reason);
+    },
+  });
+  assert.equal(outcome.primaryError, undefined);
+  assert.ok(outcome.secondaryErrors.includes(reason));
+});
+
+test("non-cooperative work is not abandoned and remains bounded only by the workflow step", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  const release = Promise.withResolvers();
+  let cleanupRan = false;
+  let settled = false;
+  const running = runBoundedGateStages({
+    timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+    cancellationSignal: new AbortController().signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async ({ completePreflight }) => {
+      completePreflight();
+      await release.promise;
+      return { status: "passed" };
+    },
+    cleanup: async () => {
+      cleanupRan = true;
+    },
+  });
+  running.finally(() => {
+    settled = true;
+  });
+  deadlines.get("phase cancellation").controller.abort(
+    new Error("cooperative internal budget exceeded"),
+  );
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false, "cleanup must not race live non-cooperative work");
+  assert.equal(cleanupRan, false);
+  release.resolve();
+  const outcome = await running;
+  assert.match(outcome.primaryError.message, /cooperative internal budget exceeded/);
+  assert.equal(cleanupRan, true);
+
+  const workflow = parseYaml(
+    await readFile(
+      new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
+      "utf8",
+    ),
+  );
+  const gateStep = workflow.jobs["local-migration-baseline"].steps.find(
+    ({ name }) => name === "Run the Local Migration Baseline Gate",
+  );
+  assert.equal(gateStep["timeout-minutes"], 108);
+});
+
+test("production gate orchestration bounds cleanup and preserves settlement errors", async () => {
+  const deadlines = new Map();
+  const cleanupRecord = { starts: 0, disposed: false };
+  const cleanupStarted = Promise.withResolvers();
+  const events = [];
+  const baseTimeline = createGateTimeline({ startedAt: 0, now: () => 1 });
+  const timeline = {
+    ...baseTimeline,
+    assertBefore(stage) {
+      if (stage === "childSettlement") {
+        throw new Error("child settlement deadline exceeded");
+      }
+      return baseTimeline.assertBefore(stage);
+    },
+  };
+  const running = runBoundedGateStages({
+    timeline,
+    cancellationSignal: new AbortController().signal,
+    deadlineFactory: controlledDeadlineFactory(deadlines),
+    finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
+    execute: async () => {
+      throw new Error("ordinary work failure");
+    },
+    cleanup: async ({ signal }) => {
+      cleanupStarted.resolve();
+      await rejectWhenAborted(signal);
+    },
+    finalize: async ({ secondaryErrors }) => {
+      events.push("finalize");
+      assert.ok(
+        secondaryErrors.some((error) =>
+          /child settlement deadline exceeded/.test(error.message),
+        ),
+      );
+      assert.ok(
+        secondaryErrors.some((error) =>
+          /final cleanup deadline exceeded/.test(error.message),
+        ),
+      );
+    },
+  });
+  await cleanupStarted.promise;
+  cleanupRecord.controller.abort(new Error("final cleanup deadline exceeded"));
+  const outcome = await running;
+  assert.match(outcome.primaryError.message, /ordinary work failure/);
+  assert.ok(
+    outcome.secondaryErrors.some((error) =>
+      /child settlement deadline exceeded/.test(error.message),
+    ),
+  );
+  assert.ok(
+    outcome.secondaryErrors.some((error) =>
+      /final cleanup deadline exceeded/.test(error.message),
+    ),
+  );
+  assert.equal(cleanupRecord.starts, 1);
+  assert.deepEqual(events, ["finalize"]);
+});
+
+test("late gate evidence failure leaves retained summary and lifecycle failed", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-failure-test-"));
+  try {
+    const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
+    assert.equal(
+      await assertGateDiagnosticsOwnership(ownership),
+      ownership.directory,
+    );
+    const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
+      filename: "gate-resource-lifecycle.json",
+    });
+    const result = await finalizeGateAttemptEvidence({
+      timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+      diagnosticsDirectory: ownership.directory,
+      diagnosticsOwnership: ownership,
+      lifecycle,
+      summary: { status: "passed", phases: [] },
+      wallStartedAt: Date.now(),
+      callerIntegrityVerified: true,
+      cleanupErrors: [],
+      signals: [],
+      async persistExternal() {
+        throw new Error("injected external evidence failure");
+      },
+      async removeDiagnostics() {
+        assert.fail("failed evidence must retain diagnostics");
+      },
+    });
+    const summary = JSON.parse(
+      await readFile(path.join(ownership.directory, "summary.json"), "utf8"),
+    );
+    const persistedLifecycle = JSON.parse(await readFile(lifecycle.filePath, "utf8"));
+    assert.equal(result.summary.status, "failed");
+    assert.equal(summary.status, "failed");
+    assert.equal(persistedLifecycle.status, "failed");
+    assert.match(result.evidenceErrors[0].message, /external evidence failure/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("partial gate diagnostics removal leaves only non-pass internal evidence and never recreates ownership", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-removal-test-"));
+  try {
+    const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
+    const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
+      filename: "gate-resource-lifecycle.json",
+    });
+    const externalStatuses = [];
+    const result = await finalizeGateAttemptEvidence({
+      timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+      diagnosticsDirectory: ownership.directory,
+      diagnosticsOwnership: ownership,
+      lifecycle,
+      summary: { status: "passed", phases: [] },
+      wallStartedAt: Date.now(),
+      callerIntegrityVerified: true,
+      cleanupErrors: [],
+      signals: [],
+      async persistExternal(_environment, value) {
+        externalStatuses.push(value.status);
+      },
+      async removeDiagnostics() {
+        await rm(ownership.markerPath);
+        throw new Error("injected partial diagnostics removal failure");
+      },
+    });
+    const summary = JSON.parse(
+      await readFile(path.join(ownership.directory, "summary.json"), "utf8"),
+    );
+    const persistedLifecycle = JSON.parse(await readFile(lifecycle.filePath, "utf8"));
+    assert.equal(result.summary.status, "failed");
+    assert.equal(summary.status, "running");
+    assert.equal(summary.cleanupPending, "automatic-diagnostics-removal");
+    assert.equal(persistedLifecycle.status, "running");
+    assert.deepEqual(externalStatuses, ["running", "failed"]);
+    await assert.rejects(lstat(ownership.markerPath), /ENOENT/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("gate success publishes nonterminal evidence, removes diagnostics, then publishes pass", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-order-test-"));
+  try {
+    const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
+    const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
+      filename: "gate-resource-lifecycle.json",
+    });
+    const events = [];
+    const result = await finalizeGateAttemptEvidence({
+      timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+      diagnosticsDirectory: ownership.directory,
+      diagnosticsOwnership: ownership,
+      lifecycle,
+      summary: { status: "running", phases: [] },
+      wallStartedAt: Date.now(),
+      callerIntegrityVerified: true,
+      cleanupErrors: [],
+      signals: [],
+      async persistExternal(_environment, value) {
+        events.push(`external-${value.status}`);
+      },
+      async removeDiagnostics(directory) {
+        events.push("diagnostics-removal");
+        await rm(directory, { recursive: true, force: true });
+      },
+    });
+    assert.deepEqual(events, [
+      "external-running",
+      "diagnostics-removal",
+      "external-passed",
+    ]);
+    assert.equal(result.summary.status, "passed");
+    assert.equal(result.diagnosticsDirectory, null);
+    assert.equal(lifecycle.state.status, "passed");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("gate finalization observes cancellation raised by external persistence", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-cancel-test-"));
+  try {
+    const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
+    const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
+      filename: "gate-resource-lifecycle.json",
+    });
+    const controller = new AbortController();
+    const reason = new Error("injected cancellation from external persistence");
+    const externalStatuses = [];
+    let removalRan = false;
+    const result = await finalizeGateAttemptEvidence({
+      timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+      diagnosticsDirectory: ownership.directory,
+      diagnosticsOwnership: ownership,
+      lifecycle,
+      summary: { status: "running", phases: [] },
+      wallStartedAt: Date.now(),
+      callerIntegrityVerified: true,
+      cleanupErrors: [],
+      signals: [controller.signal],
+      async persistExternal(_environment, value) {
+        externalStatuses.push(value.status);
+        if (value.status === "running") controller.abort(reason);
+      },
+      async removeDiagnostics() {
+        removalRan = true;
+      },
+    });
+    assert.equal(removalRan, false);
+    assert.equal(result.summary.status, "cancelled");
+    assert.ok(result.evidenceErrors.includes(reason));
+    assert.deepEqual(externalStatuses, ["running", "cancelled"]);
+    assert.equal((await lstat(ownership.directory)).isDirectory(), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("successful preflight evidence is exact, single-line, and contains no administration URL", () => {
