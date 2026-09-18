@@ -16,9 +16,10 @@
   passed. PR 02E is activated from that exact merge SHA on
   `codex/local-migration-02-packaging-smoke`; its activation gate passed, and
   the bounded manifest-integrity and workflow-budget clarifications below are
-  independently approved. Implementation, the 238-test local-migration suite,
-  all three fresh correction reviews, the 163.385-second final-tree direct
-  packaged-composition smoke, and the 443.207-second exact-base 12-phase
+  independently approved. Implementation, the 242-test local-migration suite,
+  the original three correction reviews and final CI-correction review, the
+  160.698-second final-tree direct packaged-composition smoke, and the
+  446.274-second exact-base 12-phase
   aggregate gate are complete; final-head remote validation remains pending
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
@@ -32,7 +33,7 @@
   `/root/plan_review_compat_runtime`, and
   `/root/plan_review_test_security` (all read-only and approved)
 - Supported mode during planning: the existing hosted NestJS/PostgreSQL/Auth0/Vertex and Next.js composition
-- Last updated: 2026-09-17
+- Last updated: 2026-09-18
 
 Step 02 is deliberately split into five independently useful PRs. Each later
 branch is created only after a human merges its predecessor into `main`; these
@@ -44,7 +45,7 @@ are not pre-authorized stacked branches.
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | merged via [PR #159](https://github.com/loyalagents/context-router/pull/159) at `143515dac687ffbca989a315edaa89e794a04db3` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | merged via [PR #160](https://github.com/loyalagents/context-router/pull/160) at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3` | `/root` | Original implementation: `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security`; review-finding correction: `/root/review_schema_tool`, `/root/review_plan_evidence`, and `/root/review_test_integration` (all fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
-| 02E: staged packaging feasibility | active `codex/local-migration-02-packaging-smoke` from human-merged PR 02D SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; activation gate, implementation, 238-test suite, fresh correction review, 163.385-second final-tree direct packaging smoke, and 443.207-second exact-base 12-phase aggregate gate complete; final-head remote validation pending | `/root` | Activation/plan: `/root/02e_activation_audit`, `/root/02e_arch_packaging`, and `/root/02e_gate_security`; implementation: `/root/02e_packaging_recheck2`, `/root/02e_gate_recheck2`, and `/root/02e_overall_recheck2`; correction: `/root/review_linux_packaging`, `/root/review_gate_journal`, and `/root/review_allowlist_flake_docs` (all fresh, read-only, and approved) | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
+| 02E: staged packaging feasibility | active `codex/local-migration-02-packaging-smoke` from human-merged PR 02D SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; activation gate, implementation, 242-test suite, fresh correction review, 160.698-second final-tree direct packaging smoke, and 446.274-second exact-base 12-phase aggregate gate complete; final-head remote validation pending | `/root` | Activation/plan: `/root/02e_activation_audit`, `/root/02e_arch_packaging`, and `/root/02e_gate_security`; implementation: `/root/02e_packaging_recheck2`, `/root/02e_gate_recheck2`, and `/root/02e_overall_recheck2`; correction: `/root/review_linux_packaging`, `/root/review_gate_journal`, `/root/review_allowlist_flake_docs`, and `/root/linux_cleanup_final_review` (all fresh, read-only, and approved) | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
 The current branch may implement **02E only**. Any
 change to the later split, runtime target, public/configuration contract, or
@@ -559,7 +560,7 @@ registry/consumer census and the owning step's behavioral tests.
 
 | Target | Current label | What is actually proved | Step 02 promotion rule |
 | --- | --- | --- | --- |
-| macOS arm64 | final-tree direct and exact-base aggregate staged-artifact evidence | On 2026-09-17 the corrected tree passed the direct smoke in 163.385 seconds and the 12-phase aggregate gate in 443.207 seconds (phase 11: 174.727 seconds) with Node 24.21.0/pnpm 10.25.0, manifest `5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b`, stage `d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`, target-native SWC/sharp/Prisma resolution, two sealed-stage generations, exact owned-PID/port `/usr/sbin/lsof` loopback rows, performed base comparison, and preserved caller integrity | Retain this as feasibility rather than final product support; complete final-head remote evidence before landing |
+| macOS arm64 | final-tree direct and exact-base aggregate staged-artifact evidence | On 2026-09-18 the corrected tree passed the direct smoke in 160.698 seconds and the 12-phase aggregate gate in 446.274 seconds (phase 11: 179.275 seconds) with Node 24.21.0/pnpm 10.25.0, manifest `1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86`, stage `8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`, target-native SWC/sharp/Prisma resolution, two sealed-stage generations, exact owned-PID/port `/usr/sbin/lsof` loopback rows, performed base comparison, and preserved caller integrity | Retain this as feasibility rather than final product support; complete final-head remote evidence before landing |
 | GitHub `ubuntu-latest` | CI-tested, source workspace only | Step 01 remote Node 20/pnpm 9 gate; current evidence does not persist exact architecture/libc for a staged artifact | 02E workflow must record and pass the exact staged smoke before naming Linux x64/glibc support evidence |
 | macOS x64 | analysis-only | lock/package metadata only | native staged smoke required |
 | Linux arm64 | analysis-only | lock/package metadata only | native staged smoke required |
@@ -993,8 +994,9 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    listeners, journals, and tracked descendants once within grace, without
    SIGKILL. Escalation targets only the exact owned process tree and makes the
    smoke fail.
-10. On POSIX, run a real nested-grandchild orphan regression and verify exact
-   PIDs are gone. Windows remains analysis-only until a native job-object/tree
+10. On POSIX, run a real nested-grandchild orphan regression and verify both
+   processes are absent or terminal and cannot execute or retain resources.
+   Windows remains analysis-only until a native job-object/tree
    mechanism and ACL checks pass; POSIX chmod is not Windows privacy evidence.
 11. Restart both staged processes twice from the same artifacts and isolated
    state. Generation 1 writes a safe synthetic marker through a current use
@@ -1600,18 +1602,24 @@ protected-resource metadata. Staged Node entrypoints now also disable global
 module search. Follow-up adversarial review found that whole-document canary
 redaction could corrupt lifecycle IDs, types, and statuses, so lifecycle
 serialization now validates and preserves structural control fields while
-redacting only dynamic identity, recovery, and error values. The resulting
-local-migration suite passes 238/238. Fresh read-only reviewers
+redacting only dynamic identity, recovery, and error values. Fresh read-only reviewers
 `/root/review_linux_packaging`, `/root/review_gate_journal`, and
 `/root/review_allowlist_flake_docs` approved the corrected implementation on
-2026-09-17 with no remaining findings. The corrected final tree then passed the
-direct packaged-composition smoke in 163.385 seconds with manifest
-`5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b` and stage
-`d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`.
-The exact-base 12-phase aggregate gate then passed in 443.207 seconds, with
-phase 11 passing in 174.727 seconds, merge-base comparison performed, and caller
-integrity preserved. Linux staged-artifact evidence still requires the dedicated
-remote workflow.
+2026-09-17 with no remaining findings. The later dedicated Linux run exposed
+that zombie-only process groups remain observable to `kill(0)` after every
+member is non-executable. The correction now classifies Linux `Z`/`X`/`x`
+members as quiescent, fails closed on ambiguous `/proc` evidence, and bounds
+post-`SIGKILL` settlement. Fresh read-only reviewer
+`/root/linux_cleanup_final_review` approved that correction on 2026-09-18 with
+no remaining findings, and the resulting local-migration suite passes 242/242.
+The corrected final tree then passed the direct packaged-composition smoke in
+160.698 seconds with manifest
+`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
+`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
+The exact-base 12-phase aggregate gate then passed in 446.274 seconds, with
+phase 11 passing in 179.275 seconds, merge-base comparison performed, and
+caller integrity preserved. Final-head Linux staged-artifact evidence still
+requires the dedicated remote workflow.
 
 The PR 02B follow-up review exposed Vercel's external major-only Node selector
 and the unvalidated Windows `.cmd` probe path. The writer added the explicit

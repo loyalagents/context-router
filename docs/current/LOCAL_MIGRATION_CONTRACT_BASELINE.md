@@ -229,10 +229,10 @@ owned-PID/port `/usr/sbin/lsof` loopback rows for both staged generations and
 verified the sealed target-native stage, source inputs, Corepack copy, generated
 outputs, and caller-owned paths remained within their declared integrity
 contracts. Those runs are historical rather than final-tree acceptance evidence
-after the subsequent review-finding corrections. On 2026-09-17 the corrected
-final tree passed the direct macOS arm64 smoke in 163.385 seconds with manifest
-`5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b` and stage
-`d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`.
+after the subsequent review-finding corrections. On 2026-09-18 the corrected
+final tree passed the direct macOS arm64 smoke in 160.698 seconds with manifest
+`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
+`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
 Linux staged-artifact evidence from the dedicated remote workflow remains
 pending; no unrun target is promoted.
 Windows remains analysis-only because the credential-free version probe
@@ -317,7 +317,7 @@ catalog before each generation, exercises the hosted health, GraphQL, MCP,
 OAuth protected-resource metadata, CORS, and web-support behavior through a
 stable loopback proxy, and proves target-native package resolution,
 stage/source/caller integrity, platform-appropriate loopback isolation, bounded
-shutdown, and no owned orphans. The backend deploy environment forces
+shutdown, and no live owned descendants. The backend deploy environment forces
 `npm_config_package_import_method=copy`, and the smoke rejects regular-file
 inodes shared between its private pnpm store and staged payload before sealing.
 Both staged Node entrypoints disable global module lookup with
@@ -374,15 +374,19 @@ code which ignores cancellation can still complete scoped cleanup. Cleanup
 never races resource-owning work that has not settled, and any outer-timeout
 recovery is limited to exact identities already persisted in private journals.
 
-On 2026-09-17, the Step 02E correction tree passed all 238 local-migration tests,
-and fresh Linux-packaging, gate-journal, and allowlist/test/docs reviewers
-approved the review-finding corrections with no remaining findings. The
+On 2026-09-18, the Step 02E correction tree passed all 242 local-migration tests.
+The dedicated Linux run had exposed zombie-only process groups that remained
+observable to `kill(0)` after every member was non-executable; the correction
+now treats only Linux `Z`/`X`/`x` members as quiescent, fails closed on ambiguous
+`/proc` evidence, and bounds post-`SIGKILL` settlement. Fresh read-only review
+approved that CI correction with no remaining findings, and all seven focused
+Linux cleanup regressions passed in the network-disabled Node 24 image. The
 corrected final tree then passed the direct packaged-composition smoke in
-163.385 seconds with manifest
-`5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b` and stage
-`d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`.
-The exact-base 12-phase aggregate gate then passed in 443.207 seconds, including
-phase 11 in 174.727 seconds, with merge-base comparison performed and caller
+160.698 seconds with manifest
+`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
+`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
+The exact-base 12-phase aggregate gate then passed in 446.274 seconds, including
+phase 11 in 179.275 seconds, with merge-base comparison performed and caller
 integrity preserved. Final-head standard and dedicated remote workflows are
 still required before human landing.
 

@@ -23,6 +23,7 @@ import {
   assertCallerIntegrity,
   captureCallerIntegrity,
   createResourceLifecycleJournal,
+  isProcessLive,
 } from "./gate-runner.mjs";
 
 import {
@@ -1342,10 +1343,7 @@ test("managed shutdown removes descendants after the process-group leader exits"
     assert.doesNotThrow(() => process.kill(ready.grandchildPid, 0));
     try {
       await stopManagedChild(managed, "SIGTERM", { requireRunning: false });
-      assert.throws(
-        () => process.kill(ready.grandchildPid, 0),
-        (error) => error.code === "ESRCH",
-      );
+      assert.equal(await isProcessLive(ready.grandchildPid), false);
     } finally {
       try {
         process.kill(ready.grandchildPid, "SIGKILL");

@@ -48,7 +48,9 @@ import {
   createResourceLifecycleJournal,
   createSignalAbortController,
   createStreamingRedactor,
+  hasLiveProcessGroupMembers,
   isLoopbackAddress,
+  isProcessLive,
   prepareOwnedTemporaryDirectory,
   redactSecrets,
   resourceLifecycleDynamicValues,
@@ -1733,21 +1735,10 @@ function signalProcessTree(child, signalName) {
   return child.kill(signalName);
 }
 
-function processGroupExists(pid) {
-  if (process.platform === "win32" || !pid) return false;
-  try {
-    process.kill(-pid, 0);
-    return true;
-  } catch (error) {
-    if (error.code === "ESRCH") return false;
-    throw error;
-  }
-}
-
 async function waitForProcessGroupExit(pid, timeoutMs) {
   if (process.platform === "win32" || !pid) return;
   const deadline = Date.now() + timeoutMs;
-  while (processGroupExists(pid)) {
+  while (await hasLiveProcessGroupMembers(pid)) {
     if (Date.now() >= deadline) {
       throw new Error(`owned process group ${pid} did not settle`);
     }
@@ -3146,16 +3137,6 @@ async function runPartialStartCleanup({
   return { primaryPreserved: true, cleanupComplete: true };
 }
 
-function processExists(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    if (error.code === "ESRCH") return false;
-    throw error;
-  }
-}
-
 async function runOrphanRegression({
   runtimeRoot,
   hostileCwd,
@@ -3233,17 +3214,24 @@ async function runOrphanRegression({
     );
     await stopManagedChild(managed, "SIGTERM", { requireRunning: false });
     const deadline = Date.now() + 3_000;
-    while (
-      Date.now() < deadline &&
-      (processExists(ready.parentPid) || processExists(ready.grandchildPid))
-    ) {
+    while (Date.now() < deadline) {
+      const parentLive = await isProcessLive(ready.parentPid);
+      const grandchildLive = await isProcessLive(ready.grandchildPid);
+      if (!parentLive && !grandchildLive) break;
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
-    if (processExists(ready.parentPid) || processExists(ready.grandchildPid)) {
+    if (
+      (await isProcessLive(ready.parentPid)) ||
+      (await isProcessLive(ready.grandchildPid))
+    ) {
       throw new Error("owned nested-grandchild process survived scoped shutdown");
     }
     await journal.cleanupFinished(id, { status: "exited" });
-    return { status: "passed", parentGone: true, grandchildGone: true };
+    return {
+      status: "passed",
+      parentQuiescent: true,
+      grandchildQuiescent: true,
+    };
   } catch (error) {
     const cleanupErrors = [];
     if (managed) {

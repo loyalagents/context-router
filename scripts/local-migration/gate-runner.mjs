@@ -64,9 +64,134 @@ const APPROVED_HOSTED_COMMANDS = new Map([
   ["packaged-composition-smoke", [["node", "scripts/local-migration/packaging-smoke.mjs"]]],
   ["repository-integrity", [["node", "scripts/local-migration/check-generated-integrity.mjs"]]],
 ]);
+const TERMINAL_LINUX_PROCESS_STATES = new Set(["Z", "X", "x"]);
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function parseLinuxProcessStat(value) {
+  const record = String(value ?? "");
+  const open = record.indexOf("(");
+  const close = record.lastIndexOf(") ");
+  const pid = Number(record.slice(0, open).trim());
+  const fields = close > open
+    ? record.slice(close + 2).trim().split(/\s+/)
+    : [];
+  const state = fields[0];
+  const processGroupId = Number(fields[2]);
+  if (
+    open <= 0 ||
+    close <= open ||
+    !Number.isInteger(pid) ||
+    pid <= 0 ||
+    !/^[A-Za-z]$/.test(state ?? "") ||
+    !Number.isInteger(processGroupId) ||
+    processGroupId <= 0
+  ) {
+    throw new Error("invalid Linux process stat record");
+  }
+  return { state, processGroupId };
+}
+
+function processTargetExists(target, signalProcess) {
+  try {
+    signalProcess(target, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === "ESRCH") return false;
+    throw error;
+  }
+}
+
+export async function hasLiveProcessGroupMembers(
+  processGroupId,
+  {
+    platform = process.platform,
+    signalProcess = process.kill,
+    listProcessIds = () => readdir("/proc"),
+    readProcessStat = (pid) => readFile(`/proc/${pid}/stat`, "utf8"),
+  } = {},
+) {
+  if (
+    platform === "win32" ||
+    !Number.isInteger(processGroupId) ||
+    processGroupId <= 0
+  ) {
+    return false;
+  }
+  try {
+    if (!processTargetExists(-processGroupId, signalProcess)) return false;
+  } catch {
+    return true;
+  }
+  if (platform !== "linux") return true;
+
+  let processIds;
+  try {
+    processIds = await listProcessIds();
+  } catch {
+    return true;
+  }
+  let sawTerminalMember = false;
+  for (const candidate of processIds) {
+    const pid = String(candidate);
+    if (!/^[1-9][0-9]*$/.test(pid)) continue;
+    let statRecord;
+    try {
+      statRecord = await readProcessStat(pid);
+    } catch (error) {
+      if (error?.code === "ENOENT" || error?.code === "ESRCH") continue;
+      return true;
+    }
+    let parsed;
+    try {
+      parsed = parseLinuxProcessStat(statRecord);
+    } catch {
+      return true;
+    }
+    if (parsed.processGroupId !== processGroupId) continue;
+    if (!TERMINAL_LINUX_PROCESS_STATES.has(parsed.state)) return true;
+    sawTerminalMember = true;
+  }
+  if (sawTerminalMember) return false;
+  try {
+    return processTargetExists(-processGroupId, signalProcess);
+  } catch {
+    return true;
+  }
+}
+
+export async function isProcessLive(
+  pid,
+  {
+    platform = process.platform,
+    signalProcess = process.kill,
+    readProcessStat = (candidate) =>
+      readFile(`/proc/${candidate}/stat`, "utf8"),
+  } = {},
+) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    if (!processTargetExists(pid, signalProcess)) return false;
+  } catch {
+    return true;
+  }
+  if (platform !== "linux") return true;
+  let statRecord;
+  try {
+    statRecord = await readProcessStat(pid);
+  } catch (error) {
+    if (error?.code === "ENOENT" || error?.code === "ESRCH") return false;
+    return true;
+  }
+  try {
+    return !TERMINAL_LINUX_PROCESS_STATES.has(
+      parseLinuxProcessStat(statRecord).state,
+    );
+  } catch {
+    return true;
+  }
 }
 
 export function redactSecrets(value, canaries = []) {
@@ -1321,10 +1446,18 @@ export async function runCommand(
     createLogStream = (filePath) =>
       createWriteStream(filePath, { flags: "w", mode: 0o600 }),
     spawnProcess = spawn,
+    inspectProcessGroup = hasLiveProcessGroupMembers,
+    signalProcess = process.kill,
   } = {},
 ) {
   if (!Array.isArray(argv) || !argv.length) throw new Error("command argv is empty");
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new Error("command timeout must be positive");
+  if (!Number.isInteger(terminationGraceMs) || terminationGraceMs <= 0) {
+    throw new Error("command termination grace must be a positive integer");
+  }
+  if (!Number.isInteger(closeDeadlineMs) || closeDeadlineMs <= 0) {
+    throw new Error("command close deadline must be a positive integer");
+  }
   let child;
   let logStream;
   let logFailure;
@@ -1357,7 +1490,7 @@ export async function runCommand(
     if (!child) return false;
     if (process.platform !== "win32" && child.pid) {
       try {
-        process.kill(-child.pid, signalName);
+        signalProcess(-child.pid, signalName);
         return true;
       } catch (error) {
         if (error.code !== "ESRCH") throw error;
@@ -1370,16 +1503,6 @@ export async function runCommand(
       signalProcessTree(signalName);
     } catch (error) {
       terminationSignalErrors.push(error);
-    }
-  };
-  const processGroupExists = () => {
-    if (process.platform === "win32" || !child?.pid) return false;
-    try {
-      process.kill(-child.pid, 0);
-      return true;
-    } catch (error) {
-      if (error.code === "ESRCH") return false;
-      throw error;
     }
   };
   const startTermination = () => {
@@ -1464,14 +1587,25 @@ export async function runCommand(
       );
     });
     result = await childSettlement;
-    if (process.platform !== "win32" && child.pid && processGroupExists()) {
+    if (
+      process.platform !== "win32" &&
+      child.pid &&
+      (await inspectProcessGroup(child.pid))
+    ) {
       // The leader may close before descendants. Do not return control to
-      // cleanup until the complete owned process group is observably absent.
+      // cleanup until the complete owned process group is observably quiescent.
       descendantEscalationError = new Error(
         "command leader exited while its owned process group remained",
       );
       signalProcessTree("SIGKILL");
-      while (processGroupExists()) {
+      const descendantDeadlineAt = performance.now() + closeDeadlineMs;
+      while (await inspectProcessGroup(child.pid)) {
+        if (performance.now() >= descendantDeadlineAt) {
+          settlementDeadlineError ??= new Error(
+            `owned process group ${child.pid} did not settle within ${closeDeadlineMs}ms after SIGKILL`,
+          );
+          break;
+        }
         await new Promise((resolve) => setTimeout(resolve, 25));
       }
     }

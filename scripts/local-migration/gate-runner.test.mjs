@@ -32,13 +32,160 @@ import {
   validateMergeBase,
   validatePhaseManifest,
   gitWithoutHooks,
+  hasLiveProcessGroupMembers,
+  isProcessLive,
   loadAcceptedDecisionEvidence,
+  parseLinuxProcessStat,
   readContractBaselineComparisonEvidence,
   resourceLifecycleDynamicValues,
   writeSanitizedJson,
 } from "./gate-runner.mjs";
 
 const fullSha = "0123456789abcdef0123456789abcdef01234567";
+
+test("Linux process stat parsing tolerates closing parentheses in command names", () => {
+  assert.deepEqual(
+    parseLinuxProcessStat(
+      "321 (worker ) name) Z 12 77 77 0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+    ),
+    { state: "Z", processGroupId: 77 },
+  );
+  assert.throws(() => parseLinuxProcessStat("not a proc stat record"), /process stat/);
+});
+
+test("Linux liveness treats zombie-only evidence as terminal and ambiguity as active", async () => {
+  const stats = new Map([
+    ["401", "401 (leader) Z 1 88 88 0 -1 0 0"],
+    ["402", "402 (child) X 1 88 88 0 -1 0 0"],
+    ["403", "403 (other) S 1 99 99 0 -1 0 0"],
+  ]);
+  const options = {
+    platform: "linux",
+    signalProcess() {},
+    async listProcessIds() {
+      return [...stats.keys()];
+    },
+    async readProcessStat(pid) {
+      return stats.get(String(pid));
+    },
+  };
+  assert.equal(await hasLiveProcessGroupMembers(88, options), false);
+  assert.equal(await isProcessLive(401, options), false);
+
+  stats.set("402", "402 (child) S 1 88 88 0 -1 0 0");
+  assert.equal(await hasLiveProcessGroupMembers(88, options), true);
+  assert.equal(await isProcessLive(402, options), true);
+
+  stats.set("402", "malformed");
+  assert.equal(await hasLiveProcessGroupMembers(88, options), true);
+  assert.equal(await isProcessLive(402, options), true);
+
+  const unreadable = new Error("denied");
+  unreadable.code = "EACCES";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async readProcessStat(pid) {
+        if (String(pid) === "402") throw unreadable;
+        return stats.get(String(pid));
+      },
+    }),
+    true,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      async readProcessStat() {
+        throw unreadable;
+      },
+    }),
+    true,
+  );
+
+  const vanished = new Error("gone");
+  vanished.code = "ENOENT";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async readProcessStat(pid) {
+        if (String(pid) === "402") throw vanished;
+        return stats.get(String(pid));
+      },
+    }),
+    false,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      async readProcessStat() {
+        throw vanished;
+      },
+    }),
+    false,
+  );
+
+  const absent = new Error("missing");
+  absent.code = "ESRCH";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      signalProcess() {
+        throw absent;
+      },
+    }),
+    false,
+  );
+  assert.equal(
+    await isProcessLive(402, {
+      ...options,
+      signalProcess() {
+        throw absent;
+      },
+    }),
+    false,
+  );
+
+  let listed = false;
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      platform: "darwin",
+      async listProcessIds() {
+        listed = true;
+        return [];
+      },
+    }),
+    true,
+  );
+  assert.equal(listed, false);
+
+  const listFailure = new Error("proc unavailable");
+  listFailure.code = "EACCES";
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      async listProcessIds() {
+        throw listFailure;
+      },
+    }),
+    true,
+  );
+
+  let probes = 0;
+  assert.equal(
+    await hasLiveProcessGroupMembers(88, {
+      ...options,
+      signalProcess() {
+        probes += 1;
+      },
+      async listProcessIds() {
+        return ["403"];
+      },
+    }),
+    true,
+  );
+  assert.equal(probes, 2);
+});
 
 test("redactSecrets removes URL credentials, bearer values, JWTs, assignments, and canaries", () => {
   const jwt = `${"a".repeat(24)}.${"b".repeat(24)}.${"c".repeat(24)}`;
@@ -843,6 +990,29 @@ test("real command runner enforces a bounded timeout and writes only sanitized o
   }
 });
 
+test("command runner rejects invalid cleanup deadlines before spawning", async () => {
+  for (const [option, value, message] of [
+    ["terminationGraceMs", Number.NaN, /termination grace must be a positive integer/],
+    ["terminationGraceMs", Number.POSITIVE_INFINITY, /termination grace must be a positive integer/],
+    ["closeDeadlineMs", 0, /close deadline must be a positive integer/],
+    ["closeDeadlineMs", Number.POSITIVE_INFINITY, /close deadline must be a positive integer/],
+  ]) {
+    let spawned = false;
+    await assert.rejects(
+      runCommand(["never-spawn"], {
+        cwd: "/tmp",
+        [option]: value,
+        spawnProcess: () => {
+          spawned = true;
+          throw new Error("unexpected spawn");
+        },
+      }),
+      message,
+    );
+    assert.equal(spawned, false);
+  }
+});
+
 test("real command runner aborts a process group and never waits forever for close", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-command-abort-test-"));
   const controller = new AbortController();
@@ -908,6 +1078,44 @@ test("command runner never releases cleanup before child close is proven", async
   );
 });
 
+test("command runner bounds post-leader process-group settlement", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("POSIX process-group regression");
+    return;
+  }
+  const child = new EventEmitter();
+  child.pid = 424_242;
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.stdout.setEncoding = () => {};
+  child.stderr.setEncoding = () => {};
+  child.kill = () => true;
+  const signals = [];
+  const startedAt = Date.now();
+  await assert.rejects(
+    runCommand(["synthetic-leader-exit"], {
+      cwd: "/tmp",
+      timeoutMs: 60_000,
+      closeDeadlineMs: 5,
+      spawnProcess: () => {
+        setImmediate(() => child.emit("close", 0, null));
+        return child;
+      },
+      inspectProcessGroup: async () => true,
+      signalProcess: (target, signalName) => {
+        signals.push([target, signalName]);
+      },
+    }),
+    (error) => {
+      assert.match(error.message, /owned process group 424242 did not settle/);
+      assert.match(error.message, /leader exited while its owned process group remained/);
+      return true;
+    },
+  );
+  assert.ok(Date.now() - startedAt < 250, "post-leader cleanup must be bounded");
+  assert.deepEqual(signals, [[-424_242, "SIGKILL"]]);
+});
+
 test("explicit nested signal forwarding leaves no detached grandchild alive", async (context) => {
   if (process.platform === "win32") {
     context.skip("POSIX process-group regression");
@@ -958,16 +1166,9 @@ test("explicit nested signal forwarding leaves no detached grandchild alive", as
     await assert.rejects(command, /received SIGTERM/);
     let alive = true;
     for (let attempt = 0; attempt < 50; attempt += 1) {
-      try {
-        process.kill(pid, 0);
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      } catch (error) {
-        if (error.code === "ESRCH") {
-          alive = false;
-          break;
-        }
-        throw error;
-      }
+      alive = await isProcessLive(pid);
+      if (!alive) break;
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
     assert.equal(alive, false, `detached grandchild ${pid} survived cancellation`);
   } finally {
@@ -998,10 +1199,7 @@ test("a zero-exit leader with a surviving same-group descendant fails and is cle
       /owned process group remained/,
     );
     const pid = Number(await readFile(pidPath, "utf8"));
-    assert.throws(
-      () => process.kill(pid, 0),
-      (error) => error.code === "ESRCH",
-    );
+    assert.equal(await isProcessLive(pid), false);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
