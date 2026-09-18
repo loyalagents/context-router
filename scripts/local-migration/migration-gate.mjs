@@ -33,6 +33,7 @@ import {
   gitWithoutHooks,
   loadAcceptedDecisionEvidence,
   prepareOwnedTemporaryDirectory,
+  readPrivateRegularJson,
   readContractBaselineComparisonEvidence,
   redactSecrets,
   resolveOwnedArtifactPath,
@@ -60,6 +61,10 @@ const execFileAsync = promisify(execFile);
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, "../..");
 const dependencyRoots = ["", "apps/backend", "apps/web", "apps/local-orchestrator"];
+const disposableWorkspaceMarkerRelativePath = path.join(
+  ".git",
+  "lmbg-workspace-owner.json",
+);
 const callerIntegrityPaths = [
   path.join(repositoryRoot, "apps/backend/src/schema.gql"),
   path.join(repositoryRoot, "apps/backend/src/generated/prisma"),
@@ -810,33 +815,85 @@ export async function assertDisposableWorkspaceOwnership(ownership) {
     !ownership?.workspace ||
     !ownership.ownershipMarker ||
     !ownership.ownershipMarkerPath ||
+    !ownership.workspaceMarkerPath ||
     !ownership.device ||
     !ownership.inode
   ) {
     throw new Error("disposable workspace ownership is incomplete");
   }
-  const [workspaceInfo, markerInfo] = await Promise.all([
-    lstat(ownership.workspace),
-    lstat(ownership.ownershipMarkerPath),
-  ]);
+  const expectedWorkspaceMarkerPath = path.join(
+    ownership.workspace,
+    disposableWorkspaceMarkerRelativePath,
+  );
+  if (ownership.workspaceMarkerPath !== expectedWorkspaceMarkerPath) {
+    throw new Error("disposable workspace ownership path changed identity");
+  }
+  let workspaceInfo;
+  let canonicalWorkspace;
+  let canonicalWorkspaceMarker;
+  try {
+    [
+      workspaceInfo,
+      canonicalWorkspace,
+      canonicalWorkspaceMarker,
+    ] = await Promise.all([
+      lstat(ownership.workspace),
+      realpath(ownership.workspace),
+      realpath(ownership.workspaceMarkerPath),
+    ]);
+  } catch {
+    throw new Error("disposable workspace ownership path changed identity");
+  }
   if (
     !workspaceInfo.isDirectory() ||
     workspaceInfo.isSymbolicLink() ||
-    !markerInfo.isFile() ||
-    markerInfo.isSymbolicLink() ||
-    (await realpath(ownership.workspace)) !== ownership.workspace ||
+    canonicalWorkspace !== ownership.workspace ||
+    canonicalWorkspaceMarker !== ownership.workspaceMarkerPath ||
     String(workspaceInfo.dev) !== ownership.device ||
     String(workspaceInfo.ino) !== ownership.inode
   ) {
     throw new Error("disposable workspace ownership path changed identity");
   }
-  const marker = JSON.parse(
-    await readFile(ownership.ownershipMarkerPath, "utf8"),
-  );
+  let workspaceMarker;
+  try {
+    ({ value: workspaceMarker } = await readPrivateRegularJson(
+      ownership.workspaceMarkerPath,
+    ));
+  } catch {
+    throw new Error("disposable workspace ownership path changed identity");
+  }
   if (
+    !workspaceMarker ||
+    typeof workspaceMarker !== "object" ||
+    Array.isArray(workspaceMarker) ||
+    workspaceMarker.schemaVersion !== 1 ||
+    workspaceMarker.workspace !== ownership.workspace ||
+    workspaceMarker.ownershipMarker !== ownership.ownershipMarker ||
+    workspaceMarker.device !== ownership.device ||
+    workspaceMarker.inode !== ownership.inode
+  ) {
+    throw new Error("disposable workspace ownership path changed identity");
+  }
+  let marker;
+  let canonicalOwnershipMarker;
+  try {
+    [{ value: marker }, canonicalOwnershipMarker] = await Promise.all([
+      readPrivateRegularJson(ownership.ownershipMarkerPath),
+      realpath(ownership.ownershipMarkerPath),
+    ]);
+  } catch {
+    throw new Error("disposable workspace ownership marker did not verify");
+  }
+  if (
+    canonicalOwnershipMarker !== ownership.ownershipMarkerPath ||
+    !marker ||
+    typeof marker !== "object" ||
+    Array.isArray(marker) ||
     marker.schemaVersion !== 1 ||
     marker.workspace !== ownership.workspace ||
     marker.ownershipMarker !== ownership.ownershipMarker ||
+    marker.ownershipMarkerPath !== ownership.ownershipMarkerPath ||
+    marker.workspaceMarkerPath !== ownership.workspaceMarkerPath ||
     marker.device !== ownership.device ||
     marker.inode !== ownership.inode
   ) {
@@ -925,8 +982,12 @@ export async function prepareDisposableWorkspace(
           workspace: await realpath(workspace),
           ownershipMarker: randomBytes(24).toString("hex"),
           ownershipMarkerPath: path.join(
-            diagnosticsDirectory,
+            await realpath(diagnosticsDirectory),
             "workspace-ownership.json",
+          ),
+          workspaceMarkerPath: path.join(
+            await realpath(workspace),
+            disposableWorkspaceMarkerRelativePath,
           ),
           device: String(info.dev),
           inode: String(info.ino),
@@ -936,6 +997,17 @@ export async function prepareDisposableWorkspace(
           workspaceOwnership.ownershipMarkerPath,
           { schemaVersion: 1, ...workspaceOwnership },
         );
+        await mkdir(path.dirname(workspaceOwnership.workspaceMarkerPath), {
+          recursive: true,
+          mode: 0o700,
+        });
+        await writeSanitizedJson(workspaceOwnership.workspaceMarkerPath, {
+          schemaVersion: 1,
+          workspace: workspaceOwnership.workspace,
+          ownershipMarker: workspaceOwnership.ownershipMarker,
+          device: workspaceOwnership.device,
+          inode: workspaceOwnership.inode,
+        });
       },
     },
   );

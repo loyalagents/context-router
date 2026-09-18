@@ -62,6 +62,7 @@ import {
   startManagedChild,
   startWebWithAddressRetry,
   stopManagedChild,
+  verifyGateWorkspaceOwnership,
   verifySealedStage,
   waitWithTimeout,
   withPrivateFileCreationMask,
@@ -138,6 +139,100 @@ test("Next standalone configuration is module-relative and derives apps/web", as
       }),
     /apps\/web/,
   );
+});
+
+test("aggregate gate workspace ownership requires matching durable records", async () => {
+  await temporaryDirectory("packaging-gate-ownership-test-", async (root) => {
+    const canonicalRoot = await realpath(root);
+    const workspace = path.join(canonicalRoot, "workspace");
+    const workspaceMarkerPath = path.join(
+      workspace,
+      ".git",
+      "lmbg-workspace-owner.json",
+    );
+    const ownershipMarkerPath = path.join(
+      canonicalRoot,
+      "workspace-ownership.json",
+    );
+    const corepackHome = path.join(canonicalRoot, "corepack-home");
+    await mkdir(path.dirname(workspaceMarkerPath), {
+      recursive: true,
+      mode: 0o700,
+    });
+    await mkdir(corepackHome, { mode: 0o700 });
+    const workspaceInfo = await lstat(workspace);
+    const ownershipMarker = "a".repeat(48);
+    const workspaceMarker = {
+      schemaVersion: 1,
+      workspace,
+      ownershipMarker,
+      device: String(workspaceInfo.dev),
+      inode: String(workspaceInfo.ino),
+    };
+    const ownershipRecord = {
+      schemaVersion: 1,
+      workspace,
+      ownershipMarker,
+      ownershipMarkerPath,
+      workspaceMarkerPath,
+      device: workspaceMarker.device,
+      inode: workspaceMarker.inode,
+    };
+    const environment = {
+      MIGRATION_PACKAGING_GATE_WORKSPACE: workspace,
+      MIGRATION_PACKAGING_GATE_OWNERSHIP_MARKER: ownershipMarker,
+      MIGRATION_PACKAGING_GATE_OWNERSHIP_FILE: ownershipMarkerPath,
+      MIGRATION_PACKAGING_COREPACK_HOME: corepackHome,
+    };
+    const writePrivateJson = (filePath, value) =>
+      writeFile(filePath, `${JSON.stringify(value)}\n`, { mode: 0o600 });
+
+    await writePrivateJson(workspaceMarkerPath, workspaceMarker);
+    await writePrivateJson(ownershipMarkerPath, ownershipRecord);
+    assert.deepEqual(
+      await verifyGateWorkspaceOwnership(workspace, environment),
+      {
+        workspace,
+        marker: ownershipMarker,
+        markerPath: ownershipMarkerPath,
+        corepackHome,
+      },
+    );
+
+    await writePrivateJson(workspaceMarkerPath, {
+      ...workspaceMarker,
+      ownershipMarker: "b".repeat(48),
+    });
+    await assert.rejects(
+      verifyGateWorkspaceOwnership(workspace, environment),
+      /workspace ownership did not verify/,
+    );
+    await writePrivateJson(workspaceMarkerPath, workspaceMarker);
+
+    await rm(workspaceMarkerPath);
+    await assert.rejects(
+      verifyGateWorkspaceOwnership(workspace, environment),
+      /workspace ownership did not verify/,
+    );
+    await writePrivateJson(workspaceMarkerPath, workspaceMarker);
+
+    await writePrivateJson(ownershipMarkerPath, {
+      ...ownershipRecord,
+      ownershipMarkerPath: path.join(canonicalRoot, "replacement.json"),
+    });
+    await assert.rejects(
+      verifyGateWorkspaceOwnership(workspace, environment),
+      /ownership record did not verify/,
+    );
+    await writePrivateJson(ownershipMarkerPath, {
+      ...ownershipRecord,
+      workspaceMarkerPath: path.join(workspace, ".git", "replacement.json"),
+    });
+    await assert.rejects(
+      verifyGateWorkspaceOwnership(workspace, environment),
+      /ownership record did not verify/,
+    );
+  });
 });
 
 test("diagnostic sanitation preserves lifecycle controls under colliding canaries", async () => {

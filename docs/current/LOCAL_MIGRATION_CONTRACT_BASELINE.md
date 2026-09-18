@@ -230,9 +230,9 @@ verified the sealed target-native stage, source inputs, Corepack copy, generated
 outputs, and caller-owned paths remained within their declared integrity
 contracts. Those runs are historical rather than final-tree acceptance evidence
 after the subsequent review-finding corrections. On 2026-09-18 the corrected
-final tree passed the direct macOS arm64 smoke in 160.698 seconds with manifest
-`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
-`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
+final tree passed the direct macOS arm64 smoke in 167.223 seconds with manifest
+`4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871` and stage
+`05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`.
 Linux staged-artifact evidence from the dedicated remote workflow remains
 pending; no unrun target is promoted.
 Windows remains analysis-only because the credential-free version probe
@@ -276,8 +276,13 @@ dependency trees and the Corepack cache are cloned into private workspace-owned
 copies, using copy-on-write file cloning when the filesystem supports it, and
 no installer runs. Generators and build tools therefore have no write path
 through shared dependency trees. All generation, build, database, and process
-activity stays in the disposable workspace. The 12 fail-fast phases cover the
-contract checker, documentation, backend
+activity stays in the disposable workspace. Before preparation, the gate writes
+a private external recovery record and then a nonce-bearing internal
+`.git/lmbg-workspace-owner.json` marker. Cleanup requires both mode-`0600`
+regular JSON records to agree on their exact canonical paths, nonce, device,
+and inode, so immediate directory inode reuse cannot make a replacement
+workspace look owned. The 12 fail-fast phases cover the contract checker,
+documentation, backend
 generation/typecheck/production-build/unit, isolated-database integration/e2e, developer
 orchestrator, deterministic eval verification and scenarios, web production
 build, Harbor static checks, hosted restart smoke, staged packaged-composition
@@ -326,7 +331,10 @@ installers and downloads, while an explicit source census covers every reviewed
 direct and imported-helper `runCommand`, `spawn`, and `execFile` callsite and
 pins the Git, Node, lsof, OpenSSL, and optional Docker-helper categories. This
 remains staged-hosted feasibility evidence, not an installed product, offline,
-or zero-egress claim.
+or zero-egress claim. When the aggregate gate supplies its existing disposable
+workspace, the packaging smoke independently reads the bounded non-symlink
+ownership records and cross-validates the same canonical path, nonce, device,
+inode, regular-file type, and private mode before using that workspace.
 
 Database names, connected peers, and `current_database()` are validated before
 destructive operations. Duplicate connection-routing parameters fail before a
@@ -374,19 +382,25 @@ code which ignores cancellation can still complete scoped cleanup. Cleanup
 never races resource-owning work that has not settled, and any outer-timeout
 recovery is limited to exact identities already persisted in private journals.
 
-On 2026-09-18, the Step 02E correction tree passed all 242 local-migration tests.
+On 2026-09-18, the Step 02E correction tree passed all 244 local-migration tests.
 The dedicated Linux run had exposed zombie-only process groups that remained
 observable to `kill(0)` after every member was non-executable; the correction
 now treats only Linux `Z`/`X`/`x` members as quiescent, fails closed on ambiguous
-`/proc` evidence, and bounds post-`SIGKILL` settlement. Fresh read-only review
-approved that CI correction with no remaining findings, and all seven focused
-Linux cleanup regressions passed in the network-disabled Node 24 image. The
-corrected final tree then passed the direct packaged-composition smoke in
-160.698 seconds with manifest
-`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
-`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
-The exact-base 12-phase aggregate gate then passed in 446.274 seconds, including
-phase 11 in 179.275 seconds, with merge-base comparison performed and caller
+`/proc` evidence, and bounds post-`SIGKILL` settlement. A subsequent Linux
+phase-1 run exposed immediate device/inode reuse after a disposable workspace
+was deleted and recreated on overlay storage. The gate now writes the external
+recovery record first, binds it to a nonce-bearing internal `.git` marker, reads
+both through bounded non-symlink regular-file checks, and independently
+cross-validates canonical path, nonce, device, and inode before cleanup and in
+the packaging consumer. Fresh read-only reviews approved both CI corrections
+with no remaining findings. All seven focused Linux cleanup regressions and all
+three focused workspace-identity regressions passed in the network-disabled
+Node 24 image. The corrected final tree then passed the direct
+packaged-composition smoke in 167.223 seconds with manifest
+`4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871` and stage
+`05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`.
+The exact-base 12-phase aggregate gate then passed in 454.088 seconds, including
+phase 11 in 180.580 seconds, with merge-base comparison performed and caller
 integrity preserved. Final-head standard and dedicated remote workflows are
 still required before human landing.
 

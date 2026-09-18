@@ -2006,3 +2006,54 @@ export async function writeSanitizedJson(filePath, value, canaries = []) {
     await rm(temporaryPath, { force: true }).catch(() => {});
   }
 }
+
+export async function readPrivateRegularJson(filePath) {
+  const maximumBytes = 64 * 1024;
+  let handle;
+  try {
+    handle = await open(
+      filePath,
+      fsConstants.O_RDONLY |
+        (fsConstants.O_NOFOLLOW ?? 0) |
+        (fsConstants.O_NONBLOCK ?? 0),
+    );
+    const info = await handle.stat();
+    if (
+      !info.isFile() ||
+      info.size <= 0 ||
+      info.size > maximumBytes ||
+      (process.platform !== "win32" && (info.mode & 0o777) !== 0o600)
+    ) {
+      throw new Error("private JSON path is not a mode-0600 regular file");
+    }
+    const content = Buffer.alloc(info.size);
+    let offset = 0;
+    while (offset < content.length) {
+      const { bytesRead } = await handle.read(
+        content,
+        offset,
+        content.length - offset,
+        offset,
+      );
+      if (bytesRead === 0) break;
+      offset += bytesRead;
+    }
+    const finalInfo = await handle.stat();
+    if (
+      offset !== content.length ||
+      !finalInfo.isFile() ||
+      finalInfo.size !== info.size ||
+      finalInfo.dev !== info.dev ||
+      finalInfo.ino !== info.ino ||
+      finalInfo.mode !== info.mode ||
+      finalInfo.nlink !== info.nlink ||
+      finalInfo.mtimeMs !== info.mtimeMs ||
+      finalInfo.ctimeMs !== info.ctimeMs
+    ) {
+      throw new Error("private JSON file changed while being read");
+    }
+    return { info, value: JSON.parse(content.toString("utf8")) };
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+}

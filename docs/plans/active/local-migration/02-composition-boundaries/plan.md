@@ -16,10 +16,10 @@
   passed. PR 02E is activated from that exact merge SHA on
   `codex/local-migration-02-packaging-smoke`; its activation gate passed, and
   the bounded manifest-integrity and workflow-budget clarifications below are
-  independently approved. Implementation, the 242-test local-migration suite,
-  the original three correction reviews and final CI-correction review, the
-  160.698-second final-tree direct packaged-composition smoke, and the
-  446.274-second exact-base 12-phase
+  independently approved. Implementation, the 244-test local-migration suite,
+  the original three correction reviews and both final CI-correction review
+  rounds, the 167.223-second final-tree direct packaged-composition smoke, and
+  the 454.088-second exact-base 12-phase
   aggregate gate are complete; final-head remote validation remains pending
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
@@ -45,7 +45,7 @@ are not pre-authorized stacked branches.
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | merged via [PR #159](https://github.com/loyalagents/context-router/pull/159) at `143515dac687ffbca989a315edaa89e794a04db3` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
 | 02D: runtime resources/package closure | merged via [PR #160](https://github.com/loyalagents/context-router/pull/160) at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3` | `/root` | Original implementation: `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security`; review-finding correction: `/root/review_schema_tool`, `/root/review_plan_evidence`, and `/root/review_test_integration` (all fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
-| 02E: staged packaging feasibility | active `codex/local-migration-02-packaging-smoke` from human-merged PR 02D SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; activation gate, implementation, 242-test suite, fresh correction review, 160.698-second final-tree direct packaging smoke, and 446.274-second exact-base 12-phase aggregate gate complete; final-head remote validation pending | `/root` | Activation/plan: `/root/02e_activation_audit`, `/root/02e_arch_packaging`, and `/root/02e_gate_security`; implementation: `/root/02e_packaging_recheck2`, `/root/02e_gate_recheck2`, and `/root/02e_overall_recheck2`; correction: `/root/review_linux_packaging`, `/root/review_gate_journal`, `/root/review_allowlist_flake_docs`, and `/root/linux_cleanup_final_review` (all fresh, read-only, and approved) | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
+| 02E: staged packaging feasibility | active `codex/local-migration-02-packaging-smoke` from human-merged PR 02D SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; activation gate, implementation, 244-test suite, fresh correction reviews, 167.223-second final-tree direct packaging smoke, and 454.088-second exact-base 12-phase aggregate gate complete; final-head remote validation pending | `/root` | Activation/plan: `/root/02e_activation_audit`, `/root/02e_arch_packaging`, and `/root/02e_gate_security`; implementation: `/root/02e_packaging_recheck2`, `/root/02e_gate_recheck2`, and `/root/02e_overall_recheck2`; correction: `/root/review_linux_packaging`, `/root/review_gate_journal`, `/root/review_allowlist_flake_docs`, `/root/linux_cleanup_final_review`, `/root/workspace_identity_fix_review`, `/root/workspace_identity_usage_audit`, and `/root/workspace_identity_test_audit` (all fresh, read-only, and approved) | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
 The current branch may implement **02E only**. Any
 change to the later split, runtime target, public/configuration contract, or
@@ -560,7 +560,7 @@ registry/consumer census and the owning step's behavioral tests.
 
 | Target | Current label | What is actually proved | Step 02 promotion rule |
 | --- | --- | --- | --- |
-| macOS arm64 | final-tree direct and exact-base aggregate staged-artifact evidence | On 2026-09-18 the corrected tree passed the direct smoke in 160.698 seconds and the 12-phase aggregate gate in 446.274 seconds (phase 11: 179.275 seconds) with Node 24.21.0/pnpm 10.25.0, manifest `1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86`, stage `8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`, target-native SWC/sharp/Prisma resolution, two sealed-stage generations, exact owned-PID/port `/usr/sbin/lsof` loopback rows, performed base comparison, and preserved caller integrity | Retain this as feasibility rather than final product support; complete final-head remote evidence before landing |
+| macOS arm64 | final-tree direct and exact-base aggregate staged-artifact evidence | On 2026-09-18 the corrected tree passed the direct smoke in 167.223 seconds and the 12-phase aggregate gate in 454.088 seconds (phase 11: 180.580 seconds) with Node 24.21.0/pnpm 10.25.0, manifest `4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871`, stage `05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`, target-native SWC/sharp/Prisma resolution, two sealed-stage generations, exact owned-PID/port `/usr/sbin/lsof` loopback rows, performed base comparison, and preserved caller integrity | Retain this as feasibility rather than final product support; complete final-head remote evidence before landing |
 | GitHub `ubuntu-latest` | CI-tested, source workspace only | Step 01 remote Node 20/pnpm 9 gate; current evidence does not persist exact architecture/libc for a staged artifact | 02E workflow must record and pass the exact staged smoke before naming Linux x64/glibc support evidence |
 | macOS x64 | analysis-only | lock/package metadata only | native staged smoke required |
 | Linux arm64 | analysis-only | lock/package metadata only | native staged smoke required |
@@ -865,9 +865,13 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    hardlinks by using the existing isolated cloning helpers, and verifies the
    caller dependency copies, source, and observed store before and after. This
    copy is not a dependency materializer. The aggregate gate passes its
-   already-owned disposable workspace, dependency/Corepack copies, and a
-   verified ownership marker into the same implementation; it does not create
-   a nested clone or a second set of dependencies.
+   already-owned disposable workspace, dependency/Corepack copies, and
+   coordinated ownership records into the same implementation: a mode-`0600`
+   external recovery record written first and a nonce-bearing internal
+   `.git/lmbg-workspace-owner.json` marker. Cleanup and the packaging consumer
+   independently cross-validate their exact canonical paths, nonce, device,
+   inode, regular-file type, and private mode. The implementation does not
+   create a nested clone or a second set of dependencies.
 2. From already installed frozen dependencies, build backend and web. Configure
    Next with `output: "standalone"` and a module-relative
    `outputFileTracingRoot` equal to the repository root; never derive that root
@@ -1611,13 +1615,25 @@ member is non-executable. The correction now classifies Linux `Z`/`X`/`x`
 members as quiescent, fails closed on ambiguous `/proc` evidence, and bounds
 post-`SIGKILL` settlement. Fresh read-only reviewer
 `/root/linux_cleanup_final_review` approved that correction on 2026-09-18 with
-no remaining findings, and the resulting local-migration suite passes 242/242.
-The corrected final tree then passed the direct packaged-composition smoke in
-160.698 seconds with manifest
-`1dfc2c30338b789751542efec3c49a8b4321c91c986ccad822e433672e0d3d86` and stage
-`8db4a454231df98e4f1e2cd38e84281f3303477f5cec6a9b28bdd244101ba62c`.
-The exact-base 12-phase aggregate gate then passed in 446.274 seconds, with
-phase 11 passing in 179.275 seconds, merge-base comparison performed, and
+no remaining findings. A subsequent dedicated Linux phase-1 run exposed that
+overlay storage can immediately reuse a deleted workspace directory's device
+and inode, so those values alone did not prove that the same disposable
+workspace remained. The correction writes the private external recovery record
+before the internal marker, binds both records to a per-run nonce and their
+exact canonical paths, reads them through a bounded non-symlink regular-file
+path, and independently cross-validates the same identity before cleanup and in
+the packaging consumer. Fresh read-only reviewers
+`/root/workspace_identity_fix_review`, `/root/workspace_identity_usage_audit`,
+and `/root/workspace_identity_test_audit` approved that correction on
+2026-09-18 with no remaining findings. The resulting local-migration suite
+passes 244/244; all seven focused Linux cleanup regressions and all three
+focused workspace-identity regressions passed in the network-disabled Node 24
+image. The corrected final tree then passed the direct packaged-composition
+smoke in 167.223 seconds with manifest
+`4b72d2f23dbc3dc41ffc7d023f9254acfbc1bb6201a53c6726e6ae940d5ff871` and stage
+`05ba11662cbae3c72a72898f1c2abd3833998ba045518ea9000f2d82bf47c5b1`.
+The exact-base 12-phase aggregate gate then passed in 454.088 seconds, with
+phase 11 passing in 180.580 seconds, merge-base comparison performed, and
 caller integrity preserved. Final-head Linux staged-artifact evidence still
 requires the dedicated remote workflow.
 

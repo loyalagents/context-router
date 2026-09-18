@@ -297,8 +297,92 @@ test("disposable workspace identity is durable before preparation and fails clos
     );
     assert.equal(marker.workspace, ownership.workspace);
     assert.equal(marker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(marker.ownershipMarkerPath, ownership.ownershipMarkerPath);
+    assert.equal(marker.workspaceMarkerPath, ownership.workspaceMarkerPath);
     assert.equal(marker.device, ownership.device);
     assert.equal(marker.inode, ownership.inode);
+    const workspaceMarkerContent = await readFile(
+      ownership.workspaceMarkerPath,
+      "utf8",
+    );
+    const workspaceMarker = JSON.parse(workspaceMarkerContent);
+    assert.equal(workspaceMarker.schemaVersion, 1);
+    assert.equal(workspaceMarker.workspace, ownership.workspace);
+    assert.equal(workspaceMarker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(workspaceMarker.device, ownership.device);
+    assert.equal(workspaceMarker.inode, ownership.inode);
+    assert.equal(
+      await assertDisposableWorkspaceOwnership(ownership),
+      ownership.workspace,
+    );
+
+    await writeFile(
+      ownership.ownershipMarkerPath,
+      `${JSON.stringify({
+        ...marker,
+        ownershipMarkerPath: path.join(root, "replacement-ownership.json"),
+      })}\n`,
+    );
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /marker did not verify/,
+    );
+    await writeFile(
+      ownership.ownershipMarkerPath,
+      `${JSON.stringify(marker)}\n`,
+    );
+
+    await writeFile(
+      ownership.workspaceMarkerPath,
+      `${JSON.stringify({ ...workspaceMarker, ownershipMarker: "replacement" })}\n`,
+    );
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent);
+    assert.equal(
+      await assertDisposableWorkspaceOwnership(ownership),
+      ownership.workspace,
+    );
+
+    await writeFile(ownership.workspaceMarkerPath, "{not-json\n");
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent);
+
+    if (process.platform !== "win32") {
+      await chmod(ownership.workspaceMarkerPath, 0o644);
+      await assert.rejects(
+        assertDisposableWorkspaceOwnership(ownership),
+        /changed identity/,
+      );
+      await chmod(ownership.workspaceMarkerPath, 0o600);
+    }
+
+    await rm(ownership.workspaceMarkerPath);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent, {
+      mode: 0o600,
+    });
+
+    const decoyMarkerPath = path.join(root, "decoy-workspace-marker.json");
+    await writeFile(decoyMarkerPath, workspaceMarkerContent, { mode: 0o600 });
+    await rm(ownership.workspaceMarkerPath);
+    await symlink(decoyMarkerPath, ownership.workspaceMarkerPath);
+    await assert.rejects(
+      assertDisposableWorkspaceOwnership(ownership),
+      /changed identity/,
+    );
+    await rm(ownership.workspaceMarkerPath);
+    await writeFile(ownership.workspaceMarkerPath, workspaceMarkerContent, {
+      mode: 0o600,
+    });
     assert.equal(
       await assertDisposableWorkspaceOwnership(ownership),
       ownership.workspace,
@@ -316,6 +400,40 @@ test("disposable workspace identity is durable before preparation and fails clos
       assertDisposableWorkspaceOwnership(ownership),
       /changed identity/,
     );
+  } finally {
+    if (ownership?.workspace) {
+      await rm(ownership.workspace, { recursive: true, force: true });
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("disposable workspace records external ownership before internal marker setup", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-workspace-recovery-test-"));
+  const diagnostics = path.join(root, "diagnostics");
+  await mkdir(diagnostics);
+  let ownership;
+  try {
+    await assert.rejects(
+      prepareDisposableWorkspace(diagnostics, undefined, {
+        async onWorkspaceCreated(value) {
+          ownership = value;
+          await writeFile(path.join(value.workspace, ".git"), "blocking file\n", {
+            mode: 0o600,
+          });
+        },
+      }),
+    );
+    const marker = JSON.parse(
+      await readFile(path.join(diagnostics, "workspace-ownership.json"), "utf8"),
+    );
+    assert.equal(marker.schemaVersion, 1);
+    assert.equal(marker.workspace, ownership.workspace);
+    assert.equal(marker.ownershipMarker, ownership.ownershipMarker);
+    assert.equal(marker.ownershipMarkerPath, ownership.ownershipMarkerPath);
+    assert.equal(marker.workspaceMarkerPath, ownership.workspaceMarkerPath);
+    assert.equal(marker.device, ownership.device);
+    assert.equal(marker.inode, ownership.inode);
   } finally {
     if (ownership?.workspace) {
       await rm(ownership.workspace, { recursive: true, force: true });

@@ -12,10 +12,10 @@
   passed. PR 02E is activated from that exact SHA on
   `codex/local-migration-02-packaging-smoke`; its exact-base activation gate
   passed, the bounded plan clarifications are independently approved, and
-  implementation, the 242-test local-migration suite, the original three
-  correction reviews and final CI-correction review, the 160.698-second
-  final-tree direct packaging smoke, and the 446.274-second exact-base 12-phase
-  LMBG are complete; final-head standard
+  implementation, the 244-test local-migration suite, the original three
+  correction reviews and both final CI-correction review rounds, the
+  167.223-second final-tree direct packaging smoke, and the 454.088-second
+  exact-base 12-phase LMBG are complete; final-head standard
   and dedicated remote validation remain pending
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-02-packaging-smoke`

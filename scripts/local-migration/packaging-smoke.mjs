@@ -52,6 +52,7 @@ import {
   isLoopbackAddress,
   isProcessLive,
   prepareOwnedTemporaryDirectory,
+  readPrivateRegularJson,
   redactSecrets,
   resourceLifecycleDynamicValues,
   runCommand,
@@ -80,6 +81,10 @@ const execFileAsync = promisify(execFile);
 const backendEntrypointRelative = "dist/main.js";
 const expectedCatalogCount = 19;
 const packagingAudience = "urn:context-router:packaging-smoke";
+const aggregateGateWorkspaceMarkerRelativePath = path.join(
+  ".git",
+  "lmbg-workspace-owner.json",
+);
 
 export const BACKEND_DEPLOY_ARGV_PREFIX = Object.freeze([
   "pnpm",
@@ -1172,7 +1177,7 @@ async function assertPrivateTree(root) {
   await visit(root);
 }
 
-async function verifyGateWorkspaceOwnership(repositoryRoot, environment) {
+export async function verifyGateWorkspaceOwnership(repositoryRoot, environment) {
   const values = [
     environment.MIGRATION_PACKAGING_GATE_WORKSPACE,
     environment.MIGRATION_PACKAGING_GATE_OWNERSHIP_MARKER,
@@ -1194,20 +1199,71 @@ async function verifyGateWorkspaceOwnership(repositoryRoot, environment) {
   if (!path.isAbsolute(markerPath) || !path.isAbsolute(corepackHome)) {
     throw new Error("aggregate-gate packaging ownership paths must be absolute");
   }
-  const markerInfo = await lstat(markerPath);
-  if (!markerInfo.isFile() || markerInfo.isSymbolicLink()) {
-    throw new Error("aggregate-gate packaging ownership file must be a regular file");
+  let record;
+  let canonicalMarkerPath;
+  try {
+    [{ value: record }, canonicalMarkerPath] = await Promise.all([
+      readPrivateRegularJson(markerPath),
+      realpath(markerPath),
+    ]);
+  } catch {
+    throw new Error(
+      "aggregate-gate packaging ownership file must be a private regular JSON file",
+    );
   }
-  if (process.platform !== "win32" && (markerInfo.mode & 0o777) !== 0o600) {
-    throw new Error("aggregate-gate packaging ownership file must use mode 0600");
-  }
-  const record = JSON.parse(await readFile(markerPath, "utf8"));
+  const expectedWorkspaceMarkerPath = path.join(
+    workspaceReal,
+    aggregateGateWorkspaceMarkerRelativePath,
+  );
   if (
+    canonicalMarkerPath !== markerPath ||
+    !record ||
+    typeof record !== "object" ||
+    Array.isArray(record) ||
     record.schemaVersion !== 1 ||
     record.ownershipMarker !== marker ||
-    (await realpath(record.workspace)) !== workspaceReal
+    record.workspace !== workspaceReal ||
+    record.ownershipMarkerPath !== markerPath ||
+    record.workspaceMarkerPath !== expectedWorkspaceMarkerPath ||
+    typeof record.device !== "string" ||
+    !record.device ||
+    typeof record.inode !== "string" ||
+    !record.inode
   ) {
     throw new Error("aggregate-gate packaging ownership record did not verify");
+  }
+  let workspaceInfo;
+  let canonicalWorkspaceMarker;
+  let workspaceMarker;
+  try {
+    [
+      workspaceInfo,
+      canonicalWorkspaceMarker,
+      { value: workspaceMarker },
+    ] = await Promise.all([
+      lstat(workspaceReal),
+      realpath(expectedWorkspaceMarkerPath),
+      readPrivateRegularJson(expectedWorkspaceMarkerPath),
+    ]);
+  } catch {
+    throw new Error("aggregate-gate packaging workspace ownership did not verify");
+  }
+  if (
+    !workspaceInfo.isDirectory() ||
+    workspaceInfo.isSymbolicLink() ||
+    String(workspaceInfo.dev) !== record.device ||
+    String(workspaceInfo.ino) !== record.inode ||
+    canonicalWorkspaceMarker !== expectedWorkspaceMarkerPath ||
+    !workspaceMarker ||
+    typeof workspaceMarker !== "object" ||
+    Array.isArray(workspaceMarker) ||
+    workspaceMarker.schemaVersion !== 1 ||
+    workspaceMarker.workspace !== workspaceReal ||
+    workspaceMarker.ownershipMarker !== marker ||
+    workspaceMarker.device !== record.device ||
+    workspaceMarker.inode !== record.inode
+  ) {
+    throw new Error("aggregate-gate packaging workspace ownership did not verify");
   }
   const corepackReal = await realpath(corepackHome);
   if (!(await stat(corepackReal)).isDirectory()) {
