@@ -30,7 +30,7 @@ const LIVE_PROVIDER_PATTERN =
   /(?:--provider(?:=|\s+)(?:vertex|claude|codex|openrouter)|\blive[-_:]|eval-harbor:smoke|run_smoke|bootstrap_runner|docker\s+pull|pnpm\s+install|npm\s+install)/i;
 const APPROVED_HOSTED_COMMANDS = new Map([
   ["contract-baseline", [
-    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs"],
+    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs", "scripts/local-migration/packaging-smoke.test.mjs"],
     ["node", "scripts/local-migration/check-contract-baseline.mjs"],
   ]],
   ["documentation", [
@@ -61,6 +61,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
   ["web-production-build", [["pnpm", "--filter", "web", "build"]]],
   ["harbor-static", [["bash", "examples/eval-harbor/scripts/check_static.sh"]]],
   ["restart-smoke", [["node", "scripts/local-migration/restart-smoke.mjs"]]],
+  ["packaged-composition-smoke", [["node", "scripts/local-migration/packaging-smoke.mjs"]]],
   ["repository-integrity", [["node", "scripts/local-migration/check-generated-integrity.mjs"]]],
 ]);
 
@@ -414,6 +415,23 @@ export function validatePhaseManifest(
     if (phase.status === "retired" && !phase.replacementEvidence?.length) errors.push(`retired phase ${phase.id ?? index + 1} requires replacement evidence`);
     if (phase.status === "active" && phase.replacementEvidence?.length) errors.push(`active phase ${phase.id ?? index + 1} must not declare replacement evidence`);
     if (phase.kind === "restart-smoke" && !phase.evidenceClasses?.includes("restart")) errors.push(`restart smoke ${phase.id ?? index + 1} must provide restart evidence`);
+    if (phase.kind === "packaged-smoke") {
+      if (phase.id !== "packaged-composition-smoke") errors.push("packaged smoke must use the approved phase id");
+      if (phase.ownerStep !== "02") errors.push("packaged smoke must be owned by Step 02");
+      if (phase.timeoutMs !== 900_000) errors.push("packaged smoke must use the approved 900000ms timeout");
+      if (phase.terminationGraceMs !== 180_000) errors.push("packaged smoke must use the approved 180000ms termination grace");
+      if (!jsonArrayEqual(phase.modes, ["hosted-baseline"])) {
+        errors.push("packaged smoke must use exactly the hosted-baseline mode");
+      }
+      if (!jsonArrayEqual(phase.predecessors, ["restart-smoke"])) {
+        errors.push("packaged smoke must immediately follow restart-smoke");
+      }
+      if (!jsonArrayEqual(phase.evidenceClasses, ["build", "restart", "integrity"])) {
+        errors.push("packaged smoke must provide exactly build, restart, and integrity evidence");
+      }
+    } else if (phase.terminationGraceMs !== undefined) {
+      errors.push(`phase ${phase.id ?? index + 1} must not declare terminationGraceMs`);
+    }
     if (!phase.retirementCondition) errors.push(`phase ${phase.id ?? index + 1} lacks a retirement condition`);
     if (!Array.isArray(phase.commands) || !phase.commands.length) errors.push(`phase ${phase.id ?? index + 1} has no commands`);
     for (const command of phase.commands ?? []) {
@@ -423,9 +441,24 @@ export function validatePhaseManifest(
       }
     }
   }
+  const activeTimeoutTotal = manifest.phases
+    .filter((phase) => phase.status === "active")
+    .reduce((total, phase) => total + (phase.timeoutMs ?? 0), 0);
+  if (activeTimeoutTotal > 94 * 60_000) {
+    errors.push("active phase timeouts exceed the approved 94-minute budget");
+  }
   const phasesById = new Map(
     manifest.phases.map((phase) => [phase.id, phase]),
   );
+  const repositoryIntegrity = phasesById.get("repository-integrity");
+  if (
+    repositoryIntegrity &&
+    !jsonArrayEqual(repositoryIntegrity.predecessors, ["packaged-composition-smoke"])
+  ) {
+    errors.push(
+      "repository integrity must immediately follow packaged-composition-smoke",
+    );
+  }
   for (const [index, phase] of manifest.phases.entries()) {
     for (const predecessor of phase.predecessors ?? []) {
       const predecessorIndex = manifest.phases.findIndex((item) => item.id === predecessor);
@@ -735,6 +768,19 @@ export function buildPhaseEnvironment(base, phaseId, values) {
       "restart-smoke",
     );
   }
+  if (phaseId === "packaged-composition-smoke") {
+    environment.MIGRATION_TEST_ADMIN_URL = values.administrationUrl;
+    environment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR = path.join(
+      values.diagnosticsDirectory,
+      "packaging-smoke",
+    );
+    environment.MIGRATION_PACKAGING_GATE_WORKSPACE = values.workspace;
+    environment.MIGRATION_PACKAGING_GATE_OWNERSHIP_MARKER =
+      values.workspaceOwnershipMarker;
+    environment.MIGRATION_PACKAGING_GATE_OWNERSHIP_FILE =
+      values.workspaceOwnershipMarkerPath;
+    environment.MIGRATION_PACKAGING_COREPACK_HOME = values.corepackHome;
+  }
   if (phaseId === "harbor-static") {
     environment.PYTHON_BIN = values.pythonBin;
     environment.PYTHONPYCACHEPREFIX = values.pythonCacheDirectory;
@@ -863,6 +909,207 @@ export function combineFailures(primaryError, secondaryErrors = [], context = "o
   return combined;
 }
 
+const LIFECYCLE_CONTROL_TOKEN_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const LIFECYCLE_STATE_KEYS = new Set([
+  "schemaVersion",
+  "status",
+  "startedAt",
+  "resources",
+  "finishedAt",
+  "error",
+]);
+const LIFECYCLE_RESOURCE_KEYS = new Set([
+  "id",
+  "type",
+  "owned",
+  "identity",
+  "recovery",
+  "status",
+  "cleanup",
+  "acquiredAt",
+  "recoveryRequired",
+]);
+const LIFECYCLE_ACQUISITION_KEYS = new Set([
+  "id",
+  "type",
+  "owned",
+  "identity",
+  "recovery",
+]);
+const LIFECYCLE_ACQUIRED_UPDATE_KEYS = new Set(["identity", "recovery"]);
+const LIFECYCLE_CLEANUP_KEYS = new Set(["status", "finishedAt", "error"]);
+
+function assertLifecycleRecord(value, allowedKeys, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
+  }
+  const unexpected = Object.keys(value).filter((key) => !allowedKeys.has(key));
+  if (unexpected.length) {
+    throw new Error(`${label} has unexpected fields: ${unexpected.join(", ")}`);
+  }
+}
+
+function assertLifecycleControlToken(value, label) {
+  if (
+    typeof value !== "string" ||
+    !LIFECYCLE_CONTROL_TOKEN_PATTERN.test(value)
+  ) {
+    throw new Error(`${label} must be a lowercase lifecycle control token`);
+  }
+  return value;
+}
+
+function assertLifecycleTimestamp(value, label) {
+  if (
+    typeof value !== "string" ||
+    !Number.isFinite(Date.parse(value))
+  ) {
+    throw new Error(`${label} must be an ISO timestamp`);
+  }
+  return value;
+}
+
+function sanitizeLifecycleDynamicValue(value, canaries) {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "string") return redactSecrets(value, canaries);
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeLifecycleDynamicValue(item, canaries));
+  }
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        redactSecrets(key, canaries),
+        sanitizeLifecycleDynamicValue(item, canaries),
+      ]),
+    );
+  }
+  return redactSecrets(String(value), canaries);
+}
+
+export function sanitizeResourceLifecycleState(state, canaries = []) {
+  assertLifecycleRecord(state, LIFECYCLE_STATE_KEYS, "lifecycle state");
+  if (state.schemaVersion !== 1) {
+    throw new Error("lifecycle state schemaVersion must be 1");
+  }
+  if (!Array.isArray(state.resources)) {
+    throw new Error("lifecycle state resources must be an array");
+  }
+  const sanitized = {
+    schemaVersion: 1,
+    status: assertLifecycleControlToken(state.status, "lifecycle status"),
+    startedAt: assertLifecycleTimestamp(
+      state.startedAt,
+      "lifecycle startedAt",
+    ),
+    resources: state.resources.map((resource, index) => {
+      const label = `lifecycle resource ${index + 1}`;
+      assertLifecycleRecord(resource, LIFECYCLE_RESOURCE_KEYS, label);
+      if (typeof resource.owned !== "boolean") {
+        throw new Error(`${label} owned must be boolean`);
+      }
+      assertLifecycleRecord(
+        resource.cleanup,
+        LIFECYCLE_CLEANUP_KEYS,
+        `${label} cleanup`,
+      );
+      const result = {
+        id: assertLifecycleControlToken(resource.id, `${label} id`),
+        type: assertLifecycleControlToken(resource.type, `${label} type`),
+        owned: resource.owned,
+        ...(resource.identity === undefined
+          ? {}
+          : {
+              identity: sanitizeLifecycleDynamicValue(
+                resource.identity,
+                canaries,
+              ),
+            }),
+        ...(resource.recovery === undefined
+          ? {}
+          : {
+              recovery: sanitizeLifecycleDynamicValue(
+                resource.recovery,
+                canaries,
+              ),
+            }),
+        status: assertLifecycleControlToken(
+          resource.status,
+          `${label} status`,
+        ),
+        cleanup: {
+          status: assertLifecycleControlToken(
+            resource.cleanup.status,
+            `${label} cleanup status`,
+          ),
+          ...(resource.cleanup.finishedAt === undefined
+            ? {}
+            : {
+                finishedAt: assertLifecycleTimestamp(
+                  resource.cleanup.finishedAt,
+                  `${label} cleanup finishedAt`,
+                ),
+              }),
+          ...(resource.cleanup.error === undefined
+            ? {}
+            : {
+                error: sanitizeLifecycleDynamicValue(
+                  resource.cleanup.error,
+                  canaries,
+                ),
+              }),
+        },
+      };
+      if (resource.acquiredAt !== undefined) {
+        result.acquiredAt = assertLifecycleTimestamp(
+          resource.acquiredAt,
+          `${label} acquiredAt`,
+        );
+      }
+      if (resource.recoveryRequired !== undefined) {
+        if (typeof resource.recoveryRequired !== "boolean") {
+          throw new Error(`${label} recoveryRequired must be boolean`);
+        }
+        result.recoveryRequired = resource.recoveryRequired;
+      }
+      return result;
+    }),
+  };
+  if (state.finishedAt !== undefined) {
+    sanitized.finishedAt = assertLifecycleTimestamp(
+      state.finishedAt,
+      "lifecycle finishedAt",
+    );
+  }
+  if (state.error !== undefined) {
+    sanitized.error = sanitizeLifecycleDynamicValue(state.error, canaries);
+  }
+  return sanitized;
+}
+
+export function resourceLifecycleDynamicValues(state) {
+  if (!state || !Array.isArray(state.resources)) return [];
+  return [
+    state.error,
+    ...state.resources.flatMap((resource) => [
+      resource.identity,
+      resource.recovery,
+      resource.cleanup?.error,
+    ]),
+  ].filter((value) => value !== undefined);
+}
+
+export async function writeSanitizedResourceLifecycleJson(
+  filePath,
+  state,
+  canaries = [],
+) {
+  return writeSanitizedJson(
+    filePath,
+    sanitizeResourceLifecycleState(state, canaries),
+  );
+}
+
 export async function createResourceLifecycleJournal(
   diagnosticsDirectory,
   { canaries = [], filename = "resource-lifecycle.json" } = {},
@@ -874,7 +1121,8 @@ export async function createResourceLifecycleJournal(
     startedAt: new Date().toISOString(),
     resources: [],
   };
-  const persist = () => writeSanitizedJson(filePath, state, canaries);
+  const persist = () =>
+    writeSanitizedResourceLifecycleJson(filePath, state, canaries);
   await persist();
   const resource = (id) => {
     const found = state.resources.find((item) => item.id === id);
@@ -888,10 +1136,20 @@ export async function createResourceLifecycleJournal(
       if (value && !canaries.includes(value)) canaries.push(value);
     },
     async acquiring(record) {
+      assertLifecycleRecord(
+        record,
+        LIFECYCLE_ACQUISITION_KEYS,
+        "lifecycle acquisition",
+      );
       if (!record?.id || state.resources.some((item) => item.id === record.id)) {
         throw new Error(
           `duplicate or missing lifecycle resource id: ${record?.id ?? "<missing>"}`,
         );
+      }
+      assertLifecycleControlToken(record.id, "lifecycle resource id");
+      assertLifecycleControlToken(record.type, "lifecycle resource type");
+      if (typeof record.owned !== "boolean") {
+        throw new Error("lifecycle resource owned must be boolean");
       }
       state.resources.push({
         ...record,
@@ -905,6 +1163,11 @@ export async function createResourceLifecycleJournal(
         await this.acquiring(recordOrId);
         return this.acquired(recordOrId.id);
       }
+      assertLifecycleRecord(
+        updates,
+        LIFECYCLE_ACQUIRED_UPDATE_KEYS,
+        "lifecycle acquisition update",
+      );
       const record = resource(recordOrId);
       const previousIdentity = record.identity;
       Object.assign(record, updates);
@@ -934,6 +1197,49 @@ export async function createResourceLifecycleJournal(
       await persist();
     },
   };
+}
+
+const TERMINAL_RESOURCE_CLEANUP_STATUSES = new Set([
+  "clean",
+  "closed",
+  "exited",
+  "not-owned",
+  "removed",
+]);
+
+export function assertCompletedResourceLifecycle(state) {
+  if (state?.schemaVersion !== 1) {
+    throw new Error("lifecycle journal schemaVersion must be 1");
+  }
+  if (!new Set(["passed", "failed", "cancelled"]).has(state?.status)) {
+    throw new Error("lifecycle journal has no terminal status");
+  }
+  if (!Array.isArray(state.resources)) {
+    throw new Error("lifecycle journal resources are missing");
+  }
+  const resourceIds = new Set();
+  for (const resource of state.resources) {
+    if (
+      typeof resource?.id !== "string" ||
+      !resource.id ||
+      typeof resource.type !== "string" ||
+      !resource.type ||
+      resourceIds.has(resource.id)
+    ) {
+      throw new Error("lifecycle journal has a missing or duplicate resource identity");
+    }
+    resourceIds.add(resource.id);
+    if (
+      resource.status !== "acquired" ||
+      !TERMINAL_RESOURCE_CLEANUP_STATUSES.has(resource.cleanup?.status) ||
+      resource.recoveryRequired
+    ) {
+      throw new Error(
+        `lifecycle resource ${resource.id ?? "<unknown>"} is incomplete`,
+      );
+    }
+  }
+  return state;
 }
 
 export async function runPhaseSequence(
@@ -1043,26 +1349,70 @@ export async function runCommand(
   let terminationStarted = false;
   let forceTimeout;
   let closeTimeout;
-  let resolveHardDeadline;
+  let terminationDeadlineAt;
+  let settlementDeadlineError;
+  let descendantEscalationError;
+  const terminationSignalErrors = [];
   const signalProcessTree = (signalName) => {
-    if (!child) return;
+    if (!child) return false;
     if (process.platform !== "win32" && child.pid) {
       try {
         process.kill(-child.pid, signalName);
-        return;
-      } catch {}
+        return true;
+      } catch (error) {
+        if (error.code !== "ESRCH") throw error;
+      }
     }
-    child.kill(signalName);
+    return child.kill(signalName);
+  };
+  const recordSignalFailure = (signalName) => {
+    try {
+      signalProcessTree(signalName);
+    } catch (error) {
+      terminationSignalErrors.push(error);
+    }
+  };
+  const processGroupExists = () => {
+    if (process.platform === "win32" || !child?.pid) return false;
+    try {
+      process.kill(-child.pid, 0);
+      return true;
+    } catch (error) {
+      if (error.code === "ESRCH") return false;
+      throw error;
+    }
   };
   const startTermination = () => {
     if (!child || terminationStarted) return;
     terminationStarted = true;
-    signalProcessTree("SIGTERM");
+    terminationDeadlineAt = performance.now() + terminationGraceMs;
+    recordSignalFailure("SIGTERM");
+    const diagnosticCloseBudgetMs = Math.min(
+      2_000,
+      Math.max(1, Math.floor(terminationGraceMs / 4)),
+    );
+    const processTerminationBudgetMs = Math.max(
+      1,
+      terminationGraceMs - diagnosticCloseBudgetMs,
+    );
+    const boundedCloseDeadlineMs = Math.min(
+      closeDeadlineMs,
+      Math.max(1, Math.floor(processTerminationBudgetMs / 2)),
+    );
+    const gracefulWindowMs = Math.max(
+      0,
+      processTerminationBudgetMs - boundedCloseDeadlineMs,
+    );
     forceTimeout = setTimeout(() => {
-      signalProcessTree("SIGKILL");
-      closeTimeout = setTimeout(() => resolveHardDeadline?.(), closeDeadlineMs);
+      recordSignalFailure("SIGKILL");
+      closeTimeout = setTimeout(() => {
+        settlementDeadlineError ??= new Error(
+          `command child did not settle within ${terminationGraceMs}ms after termination`,
+        );
+        recordSignalFailure("SIGKILL");
+      }, boundedCloseDeadlineMs);
       closeTimeout.unref();
-    }, terminationGraceMs);
+    }, gracefulWindowMs);
     forceTimeout.unref();
   };
   const terminate = (reason) => {
@@ -1110,32 +1460,27 @@ export async function runCommand(
     const childSettlement = new Promise((resolve, reject) => {
       child.once("error", reject);
       child.once("close", (exitCode, childSignal) =>
-        resolve({ exitCode, signal: childSignal, closeDeadlineExceeded: false }),
+        resolve({ exitCode, signal: childSignal }),
       );
     });
-    const hardDeadline = new Promise((resolve) => {
-      resolveHardDeadline = () =>
-        resolve({
-          exitCode: null,
-          signal: "SIGKILL",
-          closeDeadlineExceeded: true,
-        });
-    });
-    result = await Promise.race([childSettlement, hardDeadline]);
-    if (terminationReason && process.platform !== "win32") {
-      // The leader may close before descendants. A final group kill prevents a
-      // detached grandchild from escaping the bounded command lifecycle.
+    result = await childSettlement;
+    if (process.platform !== "win32" && child.pid && processGroupExists()) {
+      // The leader may close before descendants. Do not return control to
+      // cleanup until the complete owned process group is observably absent.
+      descendantEscalationError = new Error(
+        "command leader exited while its owned process group remained",
+      );
       signalProcessTree("SIGKILL");
+      while (processGroupExists()) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
     }
+    result.closeDeadlineExceeded = Boolean(settlementDeadlineError);
   } finally {
     if (timeout) clearTimeout(timeout);
     if (forceTimeout) clearTimeout(forceTimeout);
     if (closeTimeout) clearTimeout(closeTimeout);
     signal?.removeEventListener("abort", abortListener);
-    if (result?.closeDeadlineExceeded) {
-      child.stdout.destroy();
-      child.stderr.destroy();
-    }
     stdout.end();
     stderr.end();
     if (logStream) {
@@ -1151,11 +1496,16 @@ export async function runCommand(
           clearTimeout(deadline);
           resolve();
         };
+        const logCloseBudgetMs = terminationDeadlineAt
+          ? Math.max(1, Math.floor(terminationDeadlineAt - performance.now()))
+          : 2_000;
         const deadline = setTimeout(() => {
-          logFailure ??= new Error("diagnostic log did not close within 2000ms");
+          logFailure ??= new Error(
+            `diagnostic log did not close within ${logCloseBudgetMs}ms`,
+          );
           logStream.destroy();
           finish();
-        }, 2_000);
+        }, logCloseBudgetMs);
         logStream.once("finish", finish);
         logStream.once("close", finish);
         logStream.end();
@@ -1205,7 +1555,16 @@ export async function runCommand(
     error.outputTail = tail.join("");
     commandError = error;
   }
-  const combined = combineFailures(commandError, [logError], "command");
+  const combined = combineFailures(
+    commandError,
+    [
+      logError,
+      settlementDeadlineError,
+      descendantEscalationError,
+      ...terminationSignalErrors,
+    ],
+    "command",
+  );
   if (combined) throw combined;
   return { ...result, outputTail: tail.join("") };
 }
@@ -1257,9 +1616,22 @@ export async function resolveOwnedArtifactPath(root, relativePath) {
   return candidate;
 }
 
-export async function copyWorkspaceFiles(sourceRoot, targetRoot, files) {
+function throwIfAborted(signal, fallbackMessage = "operation aborted") {
+  if (signal?.aborted) {
+    throw signal.reason ?? new Error(fallbackMessage);
+  }
+}
+
+export async function copyWorkspaceFiles(
+  sourceRoot,
+  targetRoot,
+  files,
+  { signal } = {},
+) {
+  throwIfAborted(signal, "workspace copy aborted");
   await mkdir(targetRoot, { recursive: true });
   for (const relativePath of files) {
+    throwIfAborted(signal, "workspace copy aborted");
     assertSafeRelativePath(relativePath);
     const sourcePath = path.join(sourceRoot, relativePath);
     const targetPath = path.join(targetRoot, relativePath);
@@ -1285,14 +1657,19 @@ export async function copyWorkspaceFiles(sourceRoot, targetRoot, files) {
     } else {
       await copyFile(sourcePath, targetPath);
     }
+    throwIfAborted(signal, "workspace copy aborted");
   }
 }
 
-async function hashFile(filePath) {
-  return createHash("sha256").update(await readFile(filePath)).digest("hex");
+async function hashFile(filePath, signal) {
+  throwIfAborted(signal, "caller integrity hashing aborted");
+  const content = await readFile(filePath, signal ? { signal } : undefined);
+  throwIfAborted(signal, "caller integrity hashing aborted");
+  return createHash("sha256").update(content).digest("hex");
 }
 
-async function hashPath(targetPath) {
+async function hashPath(targetPath, signal) {
+  throwIfAborted(signal, "caller integrity hashing aborted");
   let info;
   try {
     info = await lstat(targetPath);
@@ -1303,16 +1680,26 @@ async function hashPath(targetPath) {
   if (info.isSymbolicLink()) {
     return { exists: true, kind: "symlink", target: await readlink(targetPath) };
   }
-  if (info.isFile()) return { exists: true, kind: "file", sha256: await hashFile(targetPath) };
+  if (info.isFile()) {
+    return {
+      exists: true,
+      kind: "file",
+      sha256: await hashFile(targetPath, signal),
+    };
+  }
   if (info.isDirectory()) {
     const entries = [];
     async function visit(directory, relative = "") {
+      throwIfAborted(signal, "caller integrity hashing aborted");
       for (const name of (await readdir(directory)).sort()) {
+        throwIfAborted(signal, "caller integrity hashing aborted");
         const absolute = path.join(directory, name);
         const childRelative = path.join(relative, name);
         const child = await lstat(absolute);
         if (child.isDirectory()) await visit(absolute, childRelative);
-        else if (child.isFile()) entries.push([childRelative, await hashFile(absolute)]);
+        else if (child.isFile()) {
+          entries.push([childRelative, await hashFile(absolute, signal)]);
+        }
         else if (child.isSymbolicLink()) entries.push([childRelative, `link:${await readlink(absolute)}`]);
       }
     }
@@ -1326,16 +1713,20 @@ async function hashPath(targetPath) {
   return { exists: true, kind: "other", mode: info.mode };
 }
 
-export async function captureCallerIntegrity(paths) {
+export async function captureCallerIntegrity(paths, { signal } = {}) {
   const snapshot = new Map();
-  for (const targetPath of paths) snapshot.set(targetPath, await hashPath(targetPath));
+  for (const targetPath of paths) {
+    throwIfAborted(signal, "caller integrity capture aborted");
+    snapshot.set(targetPath, await hashPath(targetPath, signal));
+  }
   return snapshot;
 }
 
-export async function assertCallerIntegrity(snapshot) {
+export async function assertCallerIntegrity(snapshot, { signal } = {}) {
   const changed = [];
   for (const [targetPath, before] of snapshot) {
-    const after = await hashPath(targetPath);
+    throwIfAborted(signal, "caller integrity assertion aborted");
+    const after = await hashPath(targetPath, signal);
     if (JSON.stringify(before) !== JSON.stringify(after)) changed.push(targetPath);
   }
   if (changed.length) throw new Error(`caller path changed during disposable gate: ${changed.join(", ")}`);
@@ -1427,14 +1818,27 @@ export async function cloneDependencyTrees(
   }
 }
 
-export async function prepareOwnedTemporaryDirectory(prefix, prepare) {
+export async function prepareOwnedTemporaryDirectory(
+  prefix,
+  prepare,
+  {
+    onCreated = () => {},
+    cleanupOnFailure = true,
+    setPrivateMode = (directory) => chmod(directory, 0o700),
+  } = {},
+) {
   const directory = await mkdtemp(prefix);
-  await chmod(directory, 0o700);
   try {
+    // Hand the exact allocation to the outer owner before chmod or any other
+    // fallible preparation so bounded recovery never loses the path.
+    await onCreated(directory);
+    await setPrivateMode(directory);
     const value = await prepare(directory);
     return { directory, value };
   } catch (error) {
-    await rm(directory, { recursive: true, force: true });
+    if (cleanupOnFailure) {
+      await rm(directory, { recursive: true, force: true });
+    }
     throw error;
   }
 }

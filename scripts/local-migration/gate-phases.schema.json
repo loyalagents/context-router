@@ -75,6 +75,7 @@
         "ownerStep": { "type": "string", "pattern": "^(0[1-9]|1[01])$" },
         "status": { "enum": ["active", "retired"] },
         "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 1800000 },
+        "terminationGraceMs": { "type": "integer", "minimum": 1, "maximum": 180000 },
         "modes": {
           "type": "array",
           "minItems": 1,
@@ -98,7 +99,7 @@
           "items": { "$ref": "#/$defs/replacementEvidence" }
         },
         "retirementCondition": { "type": "string", "minLength": 20 },
-        "kind": { "enum": ["commands", "restart-smoke"] },
+        "kind": { "enum": ["commands", "restart-smoke", "packaged-smoke"] },
         "commands": {
           "type": "array",
           "minItems": 1,
@@ -106,6 +107,14 @@
         }
       },
       "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "packaged-smoke" } } },
+          "then": {
+            "required": ["terminationGraceMs"],
+            "properties": { "terminationGraceMs": { "const": 180000 } }
+          },
+          "else": { "not": { "required": ["terminationGraceMs"] } }
+        },
         {
           "if": { "properties": { "status": { "const": "retired" } } },
           "then": {

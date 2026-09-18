@@ -7,24 +7,26 @@
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
   [#159](https://github.com/loyalagents/context-router/pull/159) merged at
   `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D
-  [#160](https://github.com/loyalagents/context-router/pull/160) is open as a
-  draft from that exact merge SHA, with corrective local implementation,
-  validation, and read-only review complete and corrective-head remote checks
-  pending. The pre-correction head `dc69dc7` passed standard CI run
-  [35193894121](https://github.com/loyalagents/context-router/actions/runs/35193894121)
+  [#160](https://github.com/loyalagents/context-router/pull/160) was
+  human-merged at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`
+  after final-head standard CI run
+  [35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
   and dedicated LMBG run
-  [35193894014](https://github.com/loyalagents/context-router/actions/runs/35193894014),
-  which are historical rather than final-head evidence
+  [35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476)
+  passed. PR 02E is activated from that exact merge SHA; its activation LMBG
+  passed; its implementation, 238-test local-migration suite, all three fresh
+  correction reviews, the 163.385-second final-tree direct packaging smoke, and
+  the 443.207-second exact-base 12-phase LMBG are complete; final-head standard
+  and dedicated remote validation remain pending
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-runtime-resources` for PR 02D only
+  `codex/local-migration-02-packaging-smoke` for PR 02E only
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: commit and push the corrective head, then complete
-  final-head standard CI and the dedicated migration gate for PR #160; leave
-  landing to a human and keep PR 02E inactive
-  until PR 02D is human-merged and PR 02E's activation gate is complete
-- Review date: 2026-10-14 or the PR 02D human landing decision, whichever comes
+- Concrete next action: commit/push PR 02E, run final-head standard and dedicated
+  remote CI, and resolve any final-head review findings; leave
+  landing to a human
+- Review date: 2026-10-15 or the PR 02E human landing decision, whichever comes
   first
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
@@ -45,12 +47,15 @@ contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
 The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PRs
-02A–02C are merged and only 02D is active on the current branch. Its exact base,
+02A–02D are merged and only 02E is active on the current branch. Its exact base,
 activation gate, owner, and fresh read-only reviewers are recorded in the plan.
-PR 02E remains inactive until a human merges PR 02D and its activation gate
-assigns a fresh base, owner, and reviewers. Approval does not authorize a local
-identity, database, model, UI shell, installer, final OS claim, or default
-listener change.
+The bounded 02E implementation and 238-test local-migration suite are complete,
+fresh read-only Linux packaging, gate-journal, and allowlist/test/docs
+correction reviews have no remaining findings, the 163.385-second final-tree
+direct packaging smoke passed, and the exact-base 12-phase aggregate gate
+passed in 443.207 seconds with phase 11 at 174.727 seconds. This does not
+authorize a local identity, database, model, UI shell, installer, final OS
+claim, or default listener change.
 
 ## Required Reading
 

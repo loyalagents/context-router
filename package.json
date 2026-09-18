@@ -59,6 +59,7 @@
     "eval-harbor:dynamicmem:fresh-fast": "env HARBOR_SKIP_EXISTING=0 HARBOR_FORCE=1 HARBOR_PARALLEL=1 bash examples/eval-harbor/scripts/run_dynamicmem_memory_final.sh",
     "migration:gate": "node scripts/check-toolchain.mjs && node scripts/local-migration/migration-gate.mjs",
     "migration:smoke:restart": "node scripts/check-toolchain.mjs && node scripts/local-migration/migration-gate.mjs --smoke-only",
+    "migration:smoke:packaging": "node scripts/check-toolchain.mjs && node scripts/local-migration/packaging-smoke.mjs",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format"
   },

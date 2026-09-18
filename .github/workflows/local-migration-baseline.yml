@@ -12,7 +12,7 @@ permissions:
 jobs:
   local-migration-baseline:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 165
 
     services:
       postgres:
@@ -31,34 +31,57 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 5
         with:
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v6.0.8
+        timeout-minutes: 5
         with:
           version: 10.25.0
 
       - uses: actions/setup-node@v4
+        timeout-minutes: 5
         with:
           node-version: '24.21.0'
           cache: pnpm
 
       - uses: actions/setup-python@v5
+        timeout-minutes: 5
         with:
           python-version: '3.12'
 
-      - name: Verify toolchain
-        run: node scripts/check-toolchain.mjs
+      - name: Verify toolchain and seed offline Corepack runtime
+        timeout-minutes: 5
+        run: |
+          node scripts/check-toolchain.mjs
+          corepack prepare pnpm@10.25.0 --activate
 
       - name: Install dependencies
+        timeout-minutes: 15
         run: pnpm install --frozen-lockfile
 
-      - name: Seed offline pnpm runtime for the disposable gate
-        run: corepack prepare pnpm@10.25.0 --activate
-
       - name: Run the Local Migration Baseline Gate
+        timeout-minutes: 108
         run: pnpm migration:gate
         env:
           MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
           MIGRATION_GATE_PYTHON_BIN: python3
+          MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
+
+      - name: Persist sanitized gate evidence
+        if: always()
+        timeout-minutes: 5
+        run: |
+          summary="$RUNNER_TEMP/local-migration-gate-summary.json"
+          if [ -f "$summary" ]; then
+            {
+              echo '## Local Migration Baseline Gate evidence'
+              echo '```json'
+              cat "$summary"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
+          fi

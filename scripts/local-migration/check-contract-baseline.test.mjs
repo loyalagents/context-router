@@ -551,6 +551,138 @@ test("restart smoke GraphQL probes are named consumers required by migration evi
   );
 });
 
+test("packaging smoke has exact derived consumers, references, sinks, and curated probes", async () => {
+  const repositoryRoot = path.resolve(import.meta.dirname, "../..");
+  const packagingPath = "scripts/local-migration/packaging-smoke.mjs";
+  const packagingSource = await readFile(
+    path.join(repositoryRoot, packagingPath),
+    "utf8",
+  );
+  const expectedConsumers = [
+    {
+      path: packagingPath,
+      kind: "mutation",
+      operation: "PackagingSmokeWrite",
+      rootFields: ["setPreference"],
+    },
+    {
+      path: packagingPath,
+      kind: "query",
+      operation: "PackagingSmokeCatalog",
+      rootFields: ["activePreferences", "preferenceCatalog"],
+    },
+    {
+      path: packagingPath,
+      kind: "query",
+      operation: "PackagingSmokeCors",
+      rootFields: ["__typename"],
+    },
+    {
+      path: packagingPath,
+      kind: "query",
+      operation: "PackagingSmokePrincipal",
+      rootFields: ["me"],
+    },
+  ];
+  assert.deepEqual(
+    collectGraphqlOperations(new Map([[packagingPath, packagingSource]])),
+    expectedConsumers,
+  );
+
+  const registry = JSON.parse(
+    await readFile(
+      path.join(
+        repositoryRoot,
+        "docs/current/local-migration-contract-baseline.json",
+      ),
+      "utf8",
+    ),
+  );
+  assert.deepEqual(
+    registry.consumers.filter(({ path: sourcePath }) => sourcePath === packagingPath),
+    expectedConsumers,
+  );
+  assert.deepEqual(
+    registry.contractReferences
+      .filter(({ path: sourcePath }) => sourcePath === packagingPath)
+      .map(({ reference }) => reference)
+      .sort(),
+    [
+      "/.well-known/oauth-protected-resource/mcp",
+      "/api/chat",
+      "/api/debug/token",
+      "/graphql",
+      "/health",
+      "/mcp",
+      "schema://graphql",
+    ].sort(),
+  );
+
+  const outbound = registry.outboundCalls.find(
+    ({ id }) => id === "migration-gate-loopback-probes",
+  );
+  assert.deepEqual(outbound.ownerSteps, ["01", "02"]);
+  const packagingOutbound = outbound.sources.find(
+    ({ path: sourcePath }) => sourcePath === packagingPath,
+  );
+  assert.ok(packagingOutbound);
+  assert.deepEqual(
+    validateOutboundSourceFingerprints(
+      [{ ...outbound, sources: [packagingOutbound] }],
+      new Map([[packagingPath, packagingSource]]),
+    ),
+    [],
+  );
+  const liveSinks = collectOutboundSinkInventory(
+    new Map([[packagingPath, packagingSource]]),
+  );
+  assert.deepEqual(liveSinks, [
+    {
+      path: packagingPath,
+      sinks: {
+        "exec-file": 2,
+        fetch: 3,
+        "http-client": 1,
+        "net-connect": 2,
+        spawn: 2,
+        "subprocess-wrapper": 8,
+      },
+    },
+  ]);
+  assert.deepEqual(
+    registry.outboundSinkInventory.find(
+      ({ path: sourcePath }) => sourcePath === packagingPath,
+    ),
+    liveSinks[0],
+  );
+
+  const curated = registry.fingerprintConsumers.filter(({ id }) =>
+    id.startsWith("packaging-smoke-"),
+  );
+  assert.deepEqual(
+    curated.map(({ id }) => id),
+    [
+      "packaging-smoke-web-chat-support-route",
+      "packaging-smoke-web-debug-token-support-route",
+      "packaging-smoke-mcp-graphql-schema-resource",
+    ],
+  );
+  const [httpContract, mcpContract] = await Promise.all(
+    [registry.contracts.http.fixture, registry.contracts.mcp.fixture].map(
+      async (fixture) =>
+        JSON.parse(await readFile(path.join(repositoryRoot, fixture), "utf8")),
+    ),
+  );
+  assert.deepEqual(
+    validateFingerprintConsumers(
+      curated,
+      new Map([[packagingPath, packagingSource]]),
+      { httpContract, mcpContract },
+    ),
+    [],
+  );
+});
+
 test("normalizeCatalog pins all semantic fields while separating copy", () => {
   const normalized = normalizeCatalog({
     "profile.email": {
@@ -2717,6 +2849,7 @@ test("derived references cover maintained root, eval, and configuration runbooks
     "docs/plans/active/local-migration/orchestration.md",
     "examples/eval/README.md",
     "examples/simple-eval-example-1/intermediary-files/json-mime-smoke.md",
+    "scripts/local-migration/packaging-smoke.mjs",
   ]) {
     assert.ok(paths.has(expected), `missing maintained contract runbook ${expected}`);
   }

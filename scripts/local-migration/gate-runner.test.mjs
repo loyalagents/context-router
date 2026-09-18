@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import { lstat, mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -18,6 +19,7 @@ import {
   copyWorkspaceFiles,
   cloneCorepackCache,
   cloneDependencyTrees,
+  createResourceLifecycleJournal,
   createStreamingRedactor,
   prepareOwnedTemporaryDirectory,
   redactSecrets,
@@ -32,6 +34,7 @@ import {
   gitWithoutHooks,
   loadAcceptedDecisionEvidence,
   readContractBaselineComparisonEvidence,
+  resourceLifecycleDynamicValues,
   writeSanitizedJson,
 } from "./gate-runner.mjs";
 
@@ -854,17 +857,55 @@ test("real command runner aborts a process group and never waits forever for clo
       {
         cwd: root,
         timeoutMs: 60_000,
-        terminationGraceMs: 50,
+        terminationGraceMs: 100,
         closeDeadlineMs: 500,
         signal: controller.signal,
       },
     );
     setTimeout(() => controller.abort(new Error("received SIGTERM")), 50);
     await assert.rejects(command, /received SIGTERM/);
-    assert.ok(Date.now() - startedAt < 2_000);
+    assert.ok(
+      Date.now() - startedAt < 400,
+      "terminationGraceMs must bound SIGTERM, SIGKILL, and close observation together",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("command runner never releases cleanup before child close is proven", async () => {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.stdout.setEncoding = () => {};
+  child.stderr.setEncoding = () => {};
+  child.kill = () => true;
+  const controller = new AbortController();
+  let settled = false;
+  const running = runCommand(["synthetic-hung-child"], {
+    cwd: "/tmp",
+    timeoutMs: 60_000,
+    terminationGraceMs: 20,
+    closeDeadlineMs: 5,
+    signal: controller.signal,
+    spawnProcess: () => child,
+  });
+  running.then(
+    () => {
+      settled = true;
+    },
+    () => {
+      settled = true;
+    },
+  );
+  controller.abort(new Error("injected non-cooperative child cancellation"));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(settled, false);
+  child.emit("close", null, "SIGKILL");
+  await assert.rejects(
+    running,
+    /injected non-cooperative child cancellation.*did not settle/s,
+  );
 });
 
 test("explicit nested signal forwarding leaves no detached grandchild alive", async (context) => {
@@ -929,6 +970,38 @@ test("explicit nested signal forwarding leaves no detached grandchild alive", as
       }
     }
     assert.equal(alive, false, `detached grandchild ${pid} survived cancellation`);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a zero-exit leader with a surviving same-group descendant fails and is cleaned", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("POSIX process-group regression");
+    return;
+  }
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-descendant-leak-test-"));
+  const pidPath = path.join(root, "descendant.pid");
+  const parentSource = [
+    'const { spawn } = require("node:child_process");',
+    'const fs = require("node:fs");',
+    'const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });',
+    `fs.writeFileSync(${JSON.stringify(pidPath)}, String(child.pid));`,
+    "child.unref();",
+  ].join(" ");
+  try {
+    await assert.rejects(
+      runCommand([process.execPath, "-e", parentSource], {
+        cwd: root,
+        timeoutMs: 5_000,
+      }),
+      /owned process group remained/,
+    );
+    const pid = Number(await readFile(pidPath, "utf8"));
+    assert.throws(
+      () => process.kill(pid, 0),
+      (error) => error.code === "ESRCH",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -1164,6 +1237,58 @@ test("owned temporary directory preparation is atomic on failure", async () => {
   }
 });
 
+test("owned temporary directory can hand partial ownership to bounded outer cleanup", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-owned-handoff-test-"));
+  let allocated;
+  try {
+    await assert.rejects(
+      prepareOwnedTemporaryDirectory(
+        path.join(root, "prepared-"),
+        async (directory) => {
+          await writeFile(path.join(directory, "partial.txt"), "partial\n");
+          throw new Error("preparation failed after allocation");
+        },
+        {
+          cleanupOnFailure: false,
+          onCreated(directory) {
+            allocated = directory;
+          },
+        },
+      ),
+      /preparation failed after allocation/,
+    );
+    assert.equal(await readFile(path.join(allocated, "partial.txt"), "utf8"), "partial\n");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("owned temporary directory hands off ownership before mode preparation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-owned-mode-handoff-test-"));
+  let allocated;
+  try {
+    await assert.rejects(
+      prepareOwnedTemporaryDirectory(
+        path.join(root, "prepared-"),
+        async () => assert.fail("prepare must not run after mode failure"),
+        {
+          cleanupOnFailure: false,
+          onCreated(directory) {
+            allocated = directory;
+          },
+          async setPrivateMode() {
+            throw new Error("injected chmod failure");
+          },
+        },
+      ),
+      /injected chmod failure/,
+    );
+    assert.equal((await lstat(allocated)).isDirectory(), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("sanitized JSON records replace atomically with private mode and no stale temp file", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-atomic-json-test-"));
   const target = path.join(root, "lifecycle.json");
@@ -1181,6 +1306,79 @@ test("sanitized JSON records replace atomically with private mode and no stale t
   }
 });
 
+test("lifecycle serialization preserves control fields while redacting colliding canaries", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-lifecycle-redaction-test-"));
+  const canaries = ["admin", "database", "passed", "postgres"];
+  try {
+    const journal = await createResourceLifecycleJournal(root, { canaries });
+    await journal.acquiring({
+      id: "administration",
+      type: "external-administration",
+      owned: false,
+      identity: { source: "admin database passed postgres" },
+      recovery: {
+        instruction: "admin database passed postgres",
+      },
+    });
+    await journal.acquired("administration");
+    await journal.cleanupFinished("administration", {
+      status: "not-owned",
+      error: new Error("admin database passed postgres"),
+    });
+    await journal.acquiring({
+      id: "database",
+      type: "owned-test-database",
+      owned: true,
+      identity: { name: "database", password: "postgres" },
+      recovery: "admin must remove database after passed",
+    });
+    await journal.acquired("database");
+    await journal.cleanupFinished("database", { status: "removed" });
+    await journal.finish(
+      "passed",
+      new Error("admin database passed postgres"),
+    );
+
+    const persisted = JSON.parse(await readFile(journal.filePath, "utf8"));
+    assert.equal(persisted.schemaVersion, 1);
+    assert.equal(persisted.status, "passed");
+    assert.deepEqual(
+      persisted.resources.map(({ id, type, owned, status, cleanup }) => ({
+        id,
+        type,
+        owned,
+        status,
+        cleanup: cleanup.status,
+      })),
+      [
+        {
+          id: "administration",
+          type: "external-administration",
+          owned: false,
+          status: "acquired",
+          cleanup: "not-owned",
+        },
+        {
+          id: "database",
+          type: "owned-test-database",
+          owned: true,
+          status: "acquired",
+          cleanup: "removed",
+        },
+      ],
+    );
+    const dynamicEvidence = JSON.stringify(
+      resourceLifecycleDynamicValues(persisted),
+    );
+    for (const canary of canaries) {
+      assert.equal(dynamicEvidence.includes(canary), false, canary);
+    }
+    assert.equal((await lstat(journal.filePath)).mode & 0o777, 0o600);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("caller integrity detects changes on both success and failure paths", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-integrity-test-"));
   const present = path.join(root, "schema.gql");
@@ -1191,6 +1389,39 @@ test("caller integrity detects changes on both success and failure paths", async
     await assert.doesNotReject(assertCallerIntegrity(before));
     await writeFile(present, "changed\n");
     await assert.rejects(assertCallerIntegrity(before), /caller path changed/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("workspace copying and caller-integrity hashing honor cancellation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "lmbg-cancelled-fs-test-"));
+  const source = path.join(root, "source");
+  const target = path.join(root, "target");
+  await mkdir(source);
+  await writeFile(path.join(source, "tracked.txt"), "tracked\n");
+  const controller = new AbortController();
+  controller.abort(new Error("bounded filesystem work cancelled"));
+  try {
+    await assert.rejects(
+      copyWorkspaceFiles(source, target, ["tracked.txt"], {
+        signal: controller.signal,
+      }),
+      /bounded filesystem work cancelled/,
+    );
+    await assert.rejects(
+      captureCallerIntegrity([path.join(source, "tracked.txt")], {
+        signal: controller.signal,
+      }),
+      /bounded filesystem work cancelled/,
+    );
+    await assert.rejects(
+      assertCallerIntegrity(
+        new Map([[path.join(source, "tracked.txt"), { exists: true }]]),
+        { signal: controller.signal },
+      ),
+      /bounded filesystem work cancelled/,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

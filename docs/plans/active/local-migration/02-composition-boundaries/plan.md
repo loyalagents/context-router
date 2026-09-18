@@ -1,28 +1,32 @@
 # Step 02: Composition Boundaries
 
-- Document status: independently approved plan; PR 02A
+- Document status: independently approved plan through PR 02D; PR 02A
   [#157](https://github.com/loyalagents/context-router/pull/157) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
   `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C
   [#159](https://github.com/loyalagents/context-router/pull/159) merged at
   `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D
-  [#160](https://github.com/loyalagents/context-router/pull/160) is open as a
-  draft on `codex/local-migration-02-runtime-resources` from that exact merge
-  SHA, with corrective local implementation, validation, and read-only review
-  complete and corrective-head remote checks pending. The
-  pre-correction head `dc69dc7` passed standard CI run
-  [35193894121](https://github.com/loyalagents/context-router/actions/runs/35193894121)
+  [#160](https://github.com/loyalagents/context-router/pull/160) was
+  human-merged at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`
+  after final-head standard CI run
+  [35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
   and dedicated LMBG run
-  [35193894014](https://github.com/loyalagents/context-router/actions/runs/35193894014),
-  which are historical rather than final-head evidence
+  [35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476)
+  passed. PR 02E is activated from that exact merge SHA on
+  `codex/local-migration-02-packaging-smoke`; its activation gate passed, and
+  the bounded manifest-integrity and workflow-budget clarifications below are
+  independently approved. Implementation, the 238-test local-migration suite,
+  all three fresh correction reviews, the 163.385-second final-tree direct
+  packaged-composition smoke, and the 443.207-second exact-base 12-phase
+  aggregate gate are complete; final-head remote validation remains pending
 - Program step: `02-composition-boundaries`
 - Target branch: `main`
 - Planning base commit: `ff9d8bce6f1b5b28752ab1582e47947f131eff8c`
 - Change classification: `shared`
 - Depends on: Step 01 [PR #156](https://github.com/loyalagents/context-router/pull/156), merged at the planning base above
 - Planning owner and sole repository writer: `/root`
-- Implementation owner: `/root` for active PR 02D only
+- Implementation owner: `/root` for active PR 02E only
 - Read-only discovery agents: `/root/discovery_arch_contracts`, `/root/discovery_runtime_packaging`, and `/root/discovery_tests_security`
 - Plan reviewers: `/root/plan_review_architecture_scope`,
   `/root/plan_review_compat_runtime`, and
@@ -39,10 +43,10 @@ are not pre-authorized stacked branches.
 | 02A: hosted model binding | merged via [PR #157](https://github.com/loyalagents/context-router/pull/157) at `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/final02a_arch_scope`, `/root/final02a_contract_runtime`, and `/root/final02a_test_security` (all read-only and approved) | Existing hosted composition; `AppModule` selects one hosted adapter binding while the legacy GraphQL transport and application consumers use the existing model ports. No local mode. |
 | 02B: toolchain contract | merged via [PR #158](https://github.com/loyalagents/context-router/pull/158) at `5a8b640a883dd33d42239d3a74e827cc17ffaae3` from human-merged PR 02A SHA `5a2fc8a09e9091d16160caea258d678293a1e2b3` | `/root` | `/root/review02b_toolchain_contract` and `/root/review02b_gate_ci` (read-only and approved) | Existing hosted composition on the exact reviewed Node.js/pnpm contract. |
 | 02C: runtime configuration/bootstrap | merged via [PR #159](https://github.com/loyalagents/context-router/pull/159) at `143515dac687ffbca989a315edaa89e794a04db3` from human-merged PR 02B SHA `5a8b640a883dd33d42239d3a74e827cc17ffaae3` | `/root` | Earlier implementation: `/root/runtime_impl_arch`, `/root/runtime_impl_compat`, and `/root/runtime_impl_security`; review-finding fixes: `/root/review_fix_architecture`, `/root/review_fix_compat_docs`, and `/root/review_fix_security` (all read-only and approved) | Existing hosted composition with explicit configuration/origin ownership and a tested process lifecycle. No local identity, store, or model. |
-| 02D: runtime resources/package closure | draft [PR #160](https://github.com/loyalagents/context-router/pull/160) on `codex/local-migration-02-runtime-resources` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3`; corrective local implementation/validation/review complete, with corrective-head remote checks pending | `/root` | Original implementation: `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security`; review-finding correction: `/root/review_schema_tool`, `/root/review_plan_evidence`, and `/root/review_test_integration` (all fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
-| 02E: staged packaging feasibility | inactive `codex/local-migration-02-packaging-smoke`; create only from the human-merged 02D commit and record its exact SHA | unassigned until activation | fresh reviewers assigned at activation | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
+| 02D: runtime resources/package closure | merged via [PR #160](https://github.com/loyalagents/context-router/pull/160) at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf` from human-merged PR 02C SHA `143515dac687ffbca989a315edaa89e794a04db3` | `/root` | Original implementation: `/root/02d_arch_resources`, `/root/02d_package_closure`, and `/root/02d_contract_security`; review-finding correction: `/root/review_schema_tool`, `/root/review_plan_evidence`, and `/root/review_test_integration` (all fresh, read-only, and approved) | Existing hosted composition with cwd-independent schema/catalog resources and an independently deployable backend production dependency closure. |
+| 02E: staged packaging feasibility | active `codex/local-migration-02-packaging-smoke` from human-merged PR 02D SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; activation gate, implementation, 238-test suite, fresh correction review, 163.385-second final-tree direct packaging smoke, and 443.207-second exact-base 12-phase aggregate gate complete; final-head remote validation pending | `/root` | Activation/plan: `/root/02e_activation_audit`, `/root/02e_arch_packaging`, and `/root/02e_gate_security`; implementation: `/root/02e_packaging_recheck2`, `/root/02e_gate_recheck2`, and `/root/02e_overall_recheck2`; correction: `/root/review_linux_packaging`, `/root/review_gate_journal`, and `/root/review_allowlist_flake_docs` (all fresh, read-only, and approved) | Existing hosted source composition plus a tested staged-hosted backend and web feasibility path. This is not an installed local product preview or an offline-guarantee claim. |
 
-The current branch may implement **02D only**. Any
+The current branch may implement **02E only**. Any
 change to the later split, runtime target, public/configuration contract, or
 packaging topology is material and returns the affected plan section to fresh
 review.
@@ -363,9 +367,56 @@ The pre-correction head `dc69dc7` passed standard CI run
 [35193894121](https://github.com/loyalagents/context-router/actions/runs/35193894121)
 and dedicated LMBG run
 [35193894014](https://github.com/loyalagents/context-router/actions/runs/35193894014).
-Those runs are historical evidence and do not satisfy the corrective head's
-remote gate. Corrective-head workflows and human landing remain closeout gates;
-PR 02E stays inactive.
+Those runs are historical evidence and did not satisfy the corrective head's
+remote gate. The final corrective head subsequently passed standard CI run
+[35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
+and dedicated LMBG run
+[35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476).
+PR #160 was then human-merged at
+`9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`.
+
+### PR 02E activation evidence
+
+Before any PR 02E implementation change, the active branch was
+`codex/local-migration-02-packaging-smoke`; `HEAD`, local `main`,
+`origin/main`, and both merge bases resolved exactly to the human-merged PR 02D
+SHA `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; history was full and
+non-shallow; the branch was zero commits ahead/behind `main`; and the worktree
+was clean.
+
+The activation LMBG was bound to that exact merge SHA and passed all 11 phases
+in 251,654 ms using Node 24.21.0, pnpm 10.25.0, Python 3.12.8, and PostgreSQL
+15.15. It reported `baseComparison=performed`, caller integrity true, no
+skipped phase, and exact generated-database cleanup. The first attempt stopped
+before phase execution when an automatically acquired Docker PostgreSQL
+container could not become ready on its writable layer. Its exact owned
+container and private diagnostics were verified and removed. The successful
+rerun used a separately owned, loopback-only, tmpfs-backed PostgreSQL
+administration container; the generated database and exact external container
+were verified absent afterward.
+
+`/root` is the sole writer. Fresh read-only activation and plan reviewers are
+`/root/02e_activation_audit`, `/root/02e_arch_packaging`, and
+`/root/02e_gate_security`; they may inspect and report but may not mutate the
+repository. Shared-hotspot landing order is the human-merged PR 02D state, then
+sole 02E ownership and human landing, then activation of dependent Step 03 or
+Step 06 work unless an explicit non-overlap is approved. PR 02E owns the root
+package script, `apps/web/next.config.ts`, the dedicated migration workflow,
+the staged packaging and gate files under `scripts/local-migration/**`, the
+contract registry/census, and synchronized migration documentation. It does
+not edit `.github/workflows/ci.yml`. Historical worktrees
+`codex/optimize-ci-path-filters` and `codex/understand-eval-harness` each contain
+only a patch-equivalent commit already represented on `main`; they are
+superseded/non-landing for workflow ownership. If 02E unexpectedly requires a
+`ci.yml` edit, implementation stops for explicit coordination.
+
+The reviewers found two bounded infeasibilities in the previously approved 02E
+text: a manifest cannot contain its own final hash, and the earlier workflow
+budget grouped independent setup actions into an unenforceable five-minute
+window. The corrected self-excluding manifest/external final digest and the
+realizable 165-minute workflow schedule below require fresh approval before
+implementation. No product scope, public/configuration contract, process
+topology, phase order, or later-step ownership changes.
 
 ### Authoritative entry gate
 
@@ -440,10 +491,11 @@ application consumers already inject `AiStructuredOutputPort`, and
 raw string tokens, three feature modules import `VertexAiModule`, and
 `VertexAiResolver` imports the concrete adapter.
 
-The Step 01 registry currently derives 39 capabilities, five contract families,
-45 static GraphQL consumers, nine dynamic consumers, 28 fingerprint consumers,
-four external-client buckets, 106 references, 17 outbound-call records, 55
-outbound-sink rows, five packages, and six observed-but-not-promised items.
+The registry currently derives 39 capabilities, five contract families,
+49 static GraphQL consumers, nine dynamic consumers, 31 fingerprint consumers,
+four external-client buckets, 113 references, 17 outbound-call records, 56
+outbound-inventory path rows, five packages, and six observed-but-not-promised
+items.
 Those mechanically derived inventories remain authoritative.
 
 ### Mechanical construction/import dependency map
@@ -507,7 +559,7 @@ registry/consumer census and the owning step's behavioral tests.
 
 | Target | Current label | What is actually proved | Step 02 promotion rule |
 | --- | --- | --- | --- |
-| macOS arm64 | directly tested, source workspace only | local 11-phase Node 20 gate; partial Node 22/24 gates; no staged artifact yet | 02E smoke must pass natively and record platform, architecture, Node, pnpm, and relevant native package load |
+| macOS arm64 | final-tree direct and exact-base aggregate staged-artifact evidence | On 2026-09-17 the corrected tree passed the direct smoke in 163.385 seconds and the 12-phase aggregate gate in 443.207 seconds (phase 11: 174.727 seconds) with Node 24.21.0/pnpm 10.25.0, manifest `5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b`, stage `d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`, target-native SWC/sharp/Prisma resolution, two sealed-stage generations, exact owned-PID/port `/usr/sbin/lsof` loopback rows, performed base comparison, and preserved caller integrity | Retain this as feasibility rather than final product support; complete final-head remote evidence before landing |
 | GitHub `ubuntu-latest` | CI-tested, source workspace only | Step 01 remote Node 20/pnpm 9 gate; current evidence does not persist exact architecture/libc for a staged artifact | 02E workflow must record and pass the exact staged smoke before naming Linux x64/glibc support evidence |
 | macOS x64 | analysis-only | lock/package metadata only | native staged smoke required |
 | Linux arm64 | analysis-only | lock/package metadata only | native staged smoke required |
@@ -802,11 +854,19 @@ do not relax the fixture merely to accommodate the implementation.
 
 The smoke is a hosted-artifact feasibility proof, not a local product mode:
 
-1. The direct command creates its own disposable full-history source workspace;
-   it never builds, generates, or cleans `dist`, `.next`, Prisma output, or temp
-   state in the caller checkout. A dirty caller is allowed only when its
-   pre/post hashes and status are preserved exactly. The aggregate gate invokes
-   the same implementation with its already-created disposable workspace.
+1. The direct command creates a local, no-hardlink, disposable full-history
+   clone and overlays the caller's current tracked and nonignored working-tree
+   state into that private source workspace; it never builds, generates, or
+   cleans `dist`, `.next`, Prisma output, or temp state in the caller checkout.
+   A dirty caller is allowed only when its pre/post hashes and status are
+   preserved exactly. Direct mode copies the verified target-native installed
+   dependency trees and offline Corepack cache into the private clone without
+   hardlinks by using the existing isolated cloning helpers, and verifies the
+   caller dependency copies, source, and observed store before and after. This
+   copy is not a dependency materializer. The aggregate gate passes its
+   already-owned disposable workspace, dependency/Corepack copies, and a
+   verified ownership marker into the same implementation; it does not create
+   a nested clone or a second set of dependencies.
 2. From already installed frozen dependencies, build backend and web. Configure
    Next with `output: "standalone"` and a module-relative
    `outputFileTracingRoot` equal to the repository root; never derive that root
@@ -831,22 +891,47 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    files. Derive the app-relative path from the configured tracing root, require
    it to equal `apps/web`, overlay `.next/static` and `public` there, and require
    the derived `<stage>/web/apps/web/server.js` to exist before launch. The
-   manifest records that derivation and entrypoint, a complete staged-file
-   inventory and hashes, platform, architecture, libc when applicable,
-   Node/pnpm, native SWC/sharp loads, backend dependency closure, schema/catalog
-   hashes, and the exact build-time public URLs.
+   manifest records that derivation and entrypoint, platform, architecture,
+   libc when applicable, Node/pnpm, native SWC/sharp loads, backend dependency
+   closure, schema/catalog hashes, and the exact build-time public URLs. Its
+   deterministic, path-sorted payload inventory covers every regular file and
+   symlink under `backend/` and `web/` and excludes only `manifest.json` itself;
+   it records `inventoryExcludes: ["manifest.json"]`. Each canonical inventory
+   row records path and type plus mode, size, and file SHA-256 or the normalized
+   non-escaping symlink target as applicable.
+
+   First seal payload regular files at mode 0444 and payload directories at mode
+   0555, then build the manifest inventory from those final modes. Keep only the
+   stage root writable long enough to write `manifest.json` atomically, seal the
+   manifest at mode 0444 and the stage root at mode 0555, and only then compute
+   its actual SHA-256 and the canonical final-stage-tree SHA-256. Final-tree rows
+   cover the stage root (`.`), every directory, regular file, and symlink with
+   the same deterministic path/type/mode plus file size/hash or normalized
+   non-escaping link-target representation. Record both hashes outside the stage
+   in the mode-0600 lifecycle journal and sanitized summary, then reverify them
+   before launch and after runtime. Secrets, credentials, mutable runtime files,
+   diagnostics, and the external journal remain mode 0600. The smoke rejects a
+   symlink that escapes the stage or makes the canonical walk ambiguous; it does
+   not require a manifest to recursively contain its own final hash.
 
    The offline backend deploy is the **single allowed dependency-materializing
    packaging command** in 02D/02E; it is not a runtime child and it does not
    authorize `pnpm install`, `npm install`, Corepack acquisition, or any
    network-capable equivalent. Command policy allowlists the exact argv above,
-   requires `--offline`, and rejects substitutions or a second materializer.
+   requires `--offline`, forces `npm_config_package_import_method=copy`, and
+   rejects substitutions or a second materializer. The smoke rejects any
+   regular-file inode shared by the private pnpm store and staged payload before
+   sealing, so read-only stage modes cannot mutate store files through a
+   hardlink.
    Tests capture deterministic inventories and hashes of the already-populated
-   pnpm store and source tree before and after, require both to be unchanged,
-   and make them read-only where the target permits. They fail rather than fetch
-   when an artifact is absent. Record immutable ownership IDs before acquisition,
-   hash the stage, then make staged dependencies/resources read-only. No package
-   download occurs.
+   pnpm store before and after and require it to be unchanged. Never chmod or
+   otherwise mutate a user/global pnpm store. Snapshot the private source tree
+   after legitimate generation/build output is complete and before deploy or
+   runtime, then require that snapshot to remain unchanged. Caller-checkout
+   hashes and status are captured before all work and must remain unchanged at
+   the end. Tests fail rather than fetch when an artifact is absent. Record
+   immutable ownership IDs before acquisition and make only the private staged
+   dependencies/resources read-only. No package download occurs.
 3. Before the web build, start a harness-owned loopback proxy on port 0 and use
    its actual URL for `NEXT_PUBLIC_BACKEND_URL` and `/graphql` URL. This stable
    proxy survives backend restarts and forwards only to the current staged
@@ -855,18 +940,28 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    the default/dead endpoint.
 4. Launch both artifacts from a second non-repository cwd with mode-0700 `HOME`, temp,
    `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`, `XDG_STATE_HOME`, and
-   log roots. Files, diagnostics, journals, and synthetic credentials are 0600.
-   The backend command is `node <stage>/backend/dist/main.js` with `PORT=0` and
-   structured actual-address readiness. The web command is the manifest-verified
-   `node <stage>/web/<derived-app-relative>/server.js` with
-   `HOSTNAME=127.0.0.1`; its
+   log roots. Private mutable runtime files, diagnostics, journals, and
+   synthetic credentials are mode 0600; staged files and directories retain
+   their sealed 0444/0555 modes.
+   The backend command is
+   `node --no-global-search-paths <stage>/backend/dist/main.js` with `PORT=0`
+   and structured actual-address readiness. The web command is the
+   manifest-verified
+   `node --no-global-search-paths <stage>/web/<derived-app-relative>/server.js`
+   with `HOSTNAME=127.0.0.1`; its
    supervisor uses a random explicit loopback port with bounded `EADDRINUSE`
    retry and emits a structured ready record only after TCP plus route probes.
    Use a strict environment allowlist and `COREPACK_ENABLE_NETWORK=0`.
    For each generation, start web first, capture its verified actual origin,
-   start backend with that exact `CORS_ORIGIN`, then point the already-bound
-   proxy at the verified backend address. Do not mark the generation ready
-   until web, backend, proxy, origins, and staged routes all agree.
+   start backend with that exact `CORS_ORIGIN`, and set `MCP_SERVER_URL` to the
+   stable proxy origin because `PORT=0` leaves the actual backend address
+   unknown until bind. The fallback generation omits `MCP_RESOURCE` and proves
+   derivation as `<proxy-origin>/mcp`; the explicit generation sets
+   `MCP_RESOURCE=<proxy-origin>/mcp`. This resource-URL proof stays distinct from
+   the separate `MCP_HTTP_ALLOWED_ORIGINS` override/fallback proof. Then point
+   the already-bound proxy at the verified backend address. Do not mark the
+   generation ready until web, backend, proxy, origins, and staged routes all
+   agree.
 5. Put canary `.env.local`/`.env`, URL userinfo, bearer/JWT, filenames, and user
    values in the unrelated cwd/env. Prove they neither influence configuration
    nor appear in stdout, stderr, thrown errors, tails, logs, journals, or
@@ -892,10 +987,12 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    and the staged `/api/chat` and `/api/debug/token` missing-session 401 probes.
    Send the actual staged web `Origin` to the backend and assert the preserved
    CORS response; assert the MCP explicit-override/fallback contract separately.
-   Exercise ready and during-startup SIGINT/SIGTERM for both children. Successful
-   shutdown must close Nest, Prisma, Next, proxy, listeners, journals, and
-   tracked descendants once within grace, without SIGKILL. Escalation targets
-   only the exact owned process tree and makes the smoke fail.
+   Generation 1 exits both ready children via `SIGINT`; generation 2 exits both
+   via `SIGTERM`. Separate during-startup cases exercise both signals against
+   both child types. Successful shutdown must close Nest, Prisma, Next, proxy,
+   listeners, journals, and tracked descendants once within grace, without
+   SIGKILL. Escalation targets only the exact owned process tree and makes the
+   smoke fail.
 10. On POSIX, run a real nested-grandchild orphan regression and verify exact
    PIDs are gone. Windows remains analysis-only until a native job-object/tree
    mechanism and ACL checks pass; POSIX chmod is not Windows privacy evidence.
@@ -904,12 +1001,28 @@ The smoke is a hosted-artifact feasibility proof, not a local product mode:
    case; generation 2 reads it and verifies the same principal, complete
    catalog/schema, web support routes/static asset, no duplicate seed, and
    unchanged public fixtures.
-12. Assert every recorded listener's actual bound address is loopback. Enumerate
+12. On macOS, prove every recorded listener's actual bound address is loopback
+   with an authoritative native socket-table check. Invoke the absolute system
+   `/usr/sbin/lsof` without a shell for each exact owned PID and TCP port, parse
+   its NUL-delimited field output, require at least one matching `LISTEN` row,
+   and require the complete endpoint set to be exactly `127.0.0.1:<port>`.
+   Reject wildcard, unspecified, mixed, malformed, missing, wrong-PID/port,
+   nonzero, timeout, stderr, or tool-unavailable results. On Linux, gather
+   exhaustive runner-local negative reachability evidence: enumerate
    every noninternal address on every interface and probe every address/family
    against every staged listener (backend, web, and proxy). Any reachable,
    unprobeable, or zero-address case is `INCONCLUSIVE`/failure for a claimed
    network-isolation row; one failed address is never treated as exhaustive.
-13. Clean only nonce/journal-owned paths, exact database, ports, and process
+   Both paths retain parsed structured evidence only. The macOS path proves the
+   exact inbound bind tuple; the Linux path proves only non-reachability through
+   every enumerated runner-local nonloopback address and is not authoritative
+   bind-address evidence. Neither path observes outbound sockets or establishes
+   an offline/zero-egress claim.
+13. `apps/web/public` is currently absent. Record `publicPresent: false` in the
+    manifest and skip that optional overlay; do not create an empty directory
+    merely for the smoke. If the directory is later present, inventory and copy
+    its full contents under the derived app-relative path.
+14. Clean only nonce/journal-owned paths, exact database, ports, and process
     tree; refuse symlink escapes or ambiguous targets. Success leaves no
     process/port/temp root. Failure retains only private sanitized diagnostics
     with exact recovery identities. Finally verify caller repo/worktree and
@@ -936,8 +1049,14 @@ The phase remains hosted-baseline feasibility evidence; it does not replace the
 existing hosted restart smoke. Add `packaged-smoke` and
 `terminationGraceMs` to the manifest schema, semantic validator, TypeScript/JSDoc
 shape, exact command policy, environment builder, cancellation path, and tests.
-The runner passes one abort signal, waits for the smoke's owned cleanup journal
-to settle, and treats escalation or an incomplete journal as failure.
+The runner passes one abort signal and, after the command settles on success or
+failure, independently validates the smoke's owned cleanup journal. It verifies
+the diagnostics-directory identity, regular non-symlink mode-0600 journal,
+schema and terminal cleanup state; a successful command additionally requires
+the exact fixed resources, both backend generations, web-attempt evidence for
+both generations, and exactly one administration source. Escalation or
+incomplete evidence fails with persisted redacted recovery identities; journal
+content alone is not authority to signal a process.
 
 Budgeting uses one gate-wide monotonic clock starting **before** any preflight,
 database/container acquisition, or phase work. Existing phase timeouts total
@@ -948,27 +1067,42 @@ complete timeline is:
 - `T+3..97m`: at most 94 minutes of phase execution; the effective timeout of
   every phase is capped by the remaining global window, and cancellation is
   initiated no later than `T+97m`;
-- `T+97..100m`: hard child-settlement/termination window of at most 180 seconds;
-  no child remains at `T+100m`; and
-- `T+100..103m`: unconditional final scoped cleanup, integrity verification,
-  sanitized summary, and journal flush. The gate has a 103-minute hard bound.
+- `T+97..100m`: a signal-aware child-settlement/termination window of at most
+  180 seconds; every preflight, phase, and other work subprocess must honor
+  cancellation and settle by `T+100m`; and
+- `T+100..103m`: the cooperative internal budget for final scoped cleanup,
+  including cleanup-owned helper subprocesses, integrity verification,
+  sanitized summary, and journal flush. The in-process gate must fail closed
+  when this budget is observed, but JavaScript cannot safely preempt and clean
+  up an arbitrary promise that ignores its `AbortSignal` without a separate
+  supervisor/recovery protocol.
 
-The dedicated workflow separately bounds all work before the gate: checkout at
-five minutes, Node/Corepack setup at five minutes, and frozen dependency
-installation at fifteen minutes, for a 25-minute maximum. The gate step gets
-108 minutes, comprising its 103-minute internal bound plus five minutes for the
-workflow shell to persist diagnostics. An `if: always()` artifact/summary step
-gets five minutes. The job timeout becomes 150 minutes: 25 + 108 + 5 plus a
-12-minute outer margin. Step timeouts are checked in, so the job timeout cannot
-silently become the primary cleanup mechanism.
+The dedicated workflow provides that outer process boundary and separately
+bounds every real step: checkout at five
+minutes; pnpm setup at five; Node setup at five; Python setup at five;
+toolchain verification plus offline Corepack-cache seeding at five; and frozen
+dependency installation at fifteen. The gate step gets 108 minutes, comprising
+its 103-minute cooperative internal budget plus five minutes for the workflow
+runner to terminate a non-cooperative gate process. This 108-minute step
+timeout is the hard process-execution bound; it is a fail-safe, not a claim that
+arbitrary uncooperative in-process work can still complete scoped cleanup. An
+`if: always()` sanitized artifact/summary step gets five
+minutes. Those explicit step maxima total 153 minutes. The job timeout becomes
+165 minutes, retaining a 12-minute outer margin. Step timeouts are checked in,
+so the job timeout cannot silently become the primary cleanup mechanism.
 
-Tests use a fake clock and forced acquisition/phase hangs to prove: preflight
+Tests use a fake clock and signal-aware forced acquisition/phase hangs to prove: preflight
 cannot exceed three minutes; sum of active manifest phase timeouts is at most
-94 minutes; cancellation begins by `T+97m`; every child settles by `T+100m`;
-final cleanup/summary ends by `T+103m`; and the 5/5/15/108/5-minute workflow
-step bounds plus the 150-minute job bound retain the stated margin. Cancellation
-at any boundary, including preflight and `T+97m`, must enter the one final
-three-minute cleanup path.
+94 minutes; cancellation begins by `T+97m`; every preflight/phase/work child
+settles by `T+100m`; cleanup-owned children and cooperative final
+cleanup/summary observe the `T+103m` budget; and the
+5/5/5/5/5/15/108/5-minute workflow step bounds total 153 minutes and retain a
+12-minute margin beneath the 165-minute job bound. Cancellation at any
+boundary, including preflight and `T+97m`, must enter the one final three-minute
+cleanup path after owned children settle. Tests that inject a promise which
+ignores cancellation must classify the in-process limit as non-preemptive and
+pin the workflow's 108-minute process timeout as the hard fail-safe; they must
+not use `Promise.race` to abandon live resource-owning work and race cleanup.
 
 The phase lands atomically with:
 
@@ -1209,7 +1343,11 @@ selection rules it validates.
    is invoked; on repository/cwd dependence, source/store/stage mutation,
    leaked canaries, weak permissions, any unprobeable/reachable nonloopback address for a claimed
    row, unowned processes/resources, missing web proof, or hosted phase/fixture
-   drift. Do not describe this selected-route proof as offline/zero-egress.
+   drift. On macOS, stop if the exact owned-PID/port listener-table proof is
+   absent, ambiguous, or contains any endpoint other than the required
+   loopback tuple; on Linux, stop on any unprobeable/reachable nonloopback
+   address for a claimed row. Do not describe either form of listener evidence
+   as offline/zero-egress.
 
 ## Validation Matrix
 
@@ -1279,10 +1417,14 @@ must add the required CI path filter and test/lint/build job atomically.
 ## Privacy And Security
 
 - Hosted behavior, auth, and default bind semantics stay unchanged. Step 02
-  test/feasibility listeners bind to IP-literal `127.0.0.1`; negative probes
-  cover every enumerated noninternal address/family for every staged listener,
-  and any unprobeable/empty set is inconclusive. This is not a final authorization,
-  Host, Origin, CSRF, DNS-rebinding, or LAN design.
+  test/feasibility listeners bind to IP-literal `127.0.0.1`. macOS verifies the
+  complete listener rows for each exact owned PID/port through `/usr/sbin/lsof`
+  and rejects any endpoint set other than the expected loopback tuple. Linux
+  negative probes cover every enumerated noninternal address/family for every
+  staged listener, and any unprobeable/empty set is inconclusive. The latter is
+  exhaustive runner-local negative reachability evidence, not authoritative
+  socket-bind evidence. Neither is a final authorization, Host, Origin, CSRF,
+  DNS-rebinding, LAN, or outbound-socket design.
 - Only synthetic credentials, OIDC/JWKS, users, documents, database state, and
   model configuration are allowed. No real secret or user file enters a smoke.
 - Child environments use an explicit allowlist. Arbitrary caller credential
@@ -1290,8 +1432,10 @@ must add the required CI path filter and test/lint/build job atomically.
   installers and telemetry commands are disabled in the staged smoke; only the
   exact offline backend deploy may materialize dependencies before runtime.
   This is command/environment containment, not arbitrary-socket observation.
-- Private roots are 0700 and files 0600 on POSIX, verified with `stat`, not
-  assumed from umask. A Windows claim requires native ACL evidence.
+- Private mutable runtime/diagnostic roots are 0700 and their files are 0600 on
+  POSIX, verified with `stat`, not assumed from umask. The immutable staged tree
+  retains its separately verified 0555 directory and 0444 regular-file modes.
+  A Windows claim requires native ACL evidence.
 - Redaction tests cover URL credentials/query values, bearer/JWT, env
   assignments, filenames, user values, encoded/decoded and chunk-split
   canaries across terminal output, errors, tails, logs, journals, summaries,
@@ -1303,6 +1447,11 @@ must add the required CI path filter and test/lint/build job atomically.
   cancellation, graceful signal deadlines, platform-appropriate descendant
   control, reverse partial-start cleanup, and exact scoped recovery. Never kill
   by name, wildcard, port owner, broad directory, or ambiguous PID.
+- The gate's T+103 budget is cooperative because cleanup must not race a live
+  resource-owning promise. The 108-minute workflow step timeout is the hard
+  process-execution fail-safe. If it is needed, diagnostics or cleanup may be
+  incomplete and require the exact journaled recovery procedure; no clean
+  shutdown claim is made for arbitrary code that ignores cancellation.
 - The staged smoke invokes no package download, `pnpm install`/`npm install`,
   or dependency materializer other than the exact offline backend deploy; it
   uses no live credential and intentionally exercises only loopback synthetic
@@ -1348,6 +1497,12 @@ its exact path plus immutable owned resource IDs. Attempt cleanup of the exact
 database, process tree, sockets, and temp roots; never issue wildcard cleanup.
 If ownership is ambiguous, stop and report rather than deleting. Successful
 runs remove every owned resource and leave the caller worktree unchanged.
+If a gate implementation ignores cancellation, do not start concurrent cleanup
+against its live resources. The workflow terminates the gate at its 108-minute
+hard step bound, retains any already-persisted exact ownership journal, and
+requires scoped recovery or reports ambiguous ownership without deletion. A
+future stronger 103-minute hard-cleanup claim requires a separately reviewed
+supervisor plus recovery-process protocol and complete descendant registration.
 
 ## Risks, Decisions, And Stop Conditions
 
@@ -1363,6 +1518,7 @@ runs remove every owned resource and leave the caller worktree unchanged.
 | Next/native dependency differs by target | Build/stage on each target. Never reuse `node_modules` cross-platform; keep unrun targets analysis-only. |
 | Windows tree/ACL semantics are unavailable | Do not claim Windows feasibility. Defer support until native proof rather than emulating POSIX assertions. |
 | Packaging smoke invokes package download, `pnpm install`/`npm install`, an unallowlisted materializer, live provider, or shared DB | Stop; only the exact offline backend deploy is allowed. Unexpected raw child egress is not claimed observable and remains a Step 09 proof obligation. |
+| Platform listener proof is unavailable or ambiguous | Stop. macOS requires exact owned-PID/port `/usr/sbin/lsof` `LISTEN` rows whose complete endpoint set is only `127.0.0.1:<port>`; Linux requires exhaustive nonloopback interface probes. Neither path may be weakened into a zero-egress claim. |
 | New gate phase weakens Step 01 evidence | Stop if old phases, allowlist exactness, base comparison, integrity, failure diagnostics, or cleanup are removed/skipped. |
 | Public/config/package surface changes without consumers/registry | Stop and apply LM-008; registry/fixtures/docs/consumers must move in the same checkpoint. |
 | Work expands into identity/storage/model/MCP/UI/installer policy | Stop and assign it to Steps 03–09. |
@@ -1394,6 +1550,68 @@ schema generate/check lifecycle, strict credential-free testing composition,
 exact-once cleanup, early byte-parity contract, and targeted LF checkout
 policy. Edits after that checksum record these approvals and implementation or
 status evidence only; further material changes require another fresh review.
+
+Fresh read-only reviewers `/root/02e_activation_audit`,
+`/root/02e_arch_packaging`, and `/root/02e_gate_security` approved the complete
+PR 02E activation and amended design at checksum `471172706 117875` on
+2026-09-17 with no remaining findings. Their review covered the exact merged
+base and activation gate, sole-writer/hotspot landing order, nonrecursive staged
+manifest and externally recorded sealed-tree integrity, direct/gate dependency
+copy ownership, stable-proxy/MCP configuration, final permission modes, signal
+and optional-public behavior, and the realizable 153/165-minute workflow
+budget. Edits after that checksum only record these approvals and activation
+status; further material changes require fresh plan review.
+
+During implementation, route-dependent macOS `awdl`/`utun` probe timeouts
+showed that the approved cross-platform connection-probe mechanism could not
+produce deterministic native macOS evidence. The writer therefore refined
+item 12, the platform promotion rule, privacy boundary, and 02E stop conditions
+to use exact owned-PID/port `/usr/sbin/lsof` listener-table evidence on macOS
+while retaining the approved exhaustive interface probes on Linux. The macOS
+path is an exact inbound-bind proof; the Linux path remains runner-local
+negative reachability evidence. Neither expands the zero-egress claim. The
+material refinement was approved by fresh read-only reviewer
+`/root/02e_macos_plan_review` at checksum `2730964944 121135` on 2026-09-17
+before its implementation.
+
+Implementation review also found that the earlier 103-minute "hard" claim was
+not realizable in one JavaScript process: racing a promise that ignores
+cancellation would abandon live resource-owning work and make concurrent
+cleanup unsafe. The timeline, privacy, recovery, tests, and exit criteria now
+state the narrower truthful contract: T+103 is the cooperative signal-aware
+internal budget, the workflow's 108-minute step timeout is the hard process
+execution bound, and that outer fail-safe does not promise successful cleanup
+of arbitrary uncooperative code. A future hard-cleanup claim requires a
+separately reviewed supervisor/recovery protocol. This material refinement
+was approved by fresh read-only reviewer `/root/02e_deadline_plan_review` at
+checksum `3875601529 123776` on 2026-09-17 before closeout.
+
+A later independent PR 02E implementation review found a likely Linux hardlink
+failure under pnpm's automatic import method, missing outer-gate validation of
+the packaged smoke lifecycle journal, a self-referential subprocess allowlist
+test, a signal-registration race in a remote-required restart fixture, and an
+overbroad packaged-smoke DCR documentation claim. The writer forced copy
+imports while retaining the exact offline deploy argv, added independent
+post-command journal and exact success-resource validation, replaced the
+self-check with a source census covering direct and imported Git, Node, lsof,
+OpenSSL, and optional Docker-helper child sites, registered the fixture's
+SIGTERM handler before readiness, and narrowed the packaged probe claim to OAuth
+protected-resource metadata. Staged Node entrypoints now also disable global
+module search. Follow-up adversarial review found that whole-document canary
+redaction could corrupt lifecycle IDs, types, and statuses, so lifecycle
+serialization now validates and preserves structural control fields while
+redacting only dynamic identity, recovery, and error values. The resulting
+local-migration suite passes 238/238. Fresh read-only reviewers
+`/root/review_linux_packaging`, `/root/review_gate_journal`, and
+`/root/review_allowlist_flake_docs` approved the corrected implementation on
+2026-09-17 with no remaining findings. The corrected final tree then passed the
+direct packaged-composition smoke in 163.385 seconds with manifest
+`5a5b6a96e91a5b6c4bc00361148eeeb6470a00474849ad7df5a8a5466f728c3b` and stage
+`d42b851212a7d77a594813a8794263c9e5253c4b918b2d7bf277ef1ccd1e1b9e`.
+The exact-base 12-phase aggregate gate then passed in 443.207 seconds, with
+phase 11 passing in 174.727 seconds, merge-base comparison performed, and caller
+integrity preserved. Linux staged-artifact evidence still requires the dedicated
+remote workflow.
 
 The PR 02B follow-up review exposed Vercel's external major-only Node selector
 and the unvalidated Windows `.cmd` probe path. The writer added the explicit
@@ -1519,7 +1737,9 @@ implementation-review finding.
   result is explicitly not an offline/zero-egress guarantee.
 - Existing Step 01 phases and all public contract fixtures remain active/green;
   the exact new Step 02 kind/phase/budgets and registry census are atomic and
-  tested; the 150-minute workflow leaves the defined cleanup buffer.
+  tested; the gate observes its 103-minute cooperative internal budget, the
+  workflow enforces the 108-minute hard process bound, and the 165-minute job
+  leaves the defined artifact/cleanup buffer.
 - Platform rows claim only evidence actually executed. Final OS/product
   packaging policy remains assigned to Step 09.
 - Plan and implementation reviews have no unresolved findings, canonical docs

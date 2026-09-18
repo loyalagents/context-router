@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { generateKeyPairSync, verify } from "node:crypto";
 import { EventEmitter } from "node:events";
-import { access, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -18,6 +27,7 @@ import {
   cleanupBackendProcess,
   createResourceLifecycleJournal,
   createSignedTestToken,
+  createTlsFixture,
   enumerateNonLoopbackAddresses,
   runRestartSmoke,
   runWebSupportSubprocess,
@@ -115,6 +125,49 @@ test("ephemeral test token is RS256-signed and contains the bounded M2M claims",
     ),
     true,
   );
+});
+
+test("ephemeral test token accepts an explicit bounded scope set", () => {
+  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const token = createSignedTestToken({
+    privateKey,
+    kid: "smoke-key",
+    issuer: "https://127.0.0.1:4443/",
+    audience: "urn:context-router:smoke",
+    subject: "migration-smoke@clients",
+    clientId: "migration-smoke-client",
+    scopes: ["preferences:read", "preferences:write"],
+    nowSeconds: 1_700_000_000,
+  });
+  const payload = JSON.parse(
+    Buffer.from(token.split(".")[1], "base64url").toString(),
+  );
+  assert.equal(payload.scope, "preferences:read preferences:write");
+});
+
+test("TLS fixture removes OpenSSL serial and key material and keeps only a private CA", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "context-router-tls-fixture-"));
+  const secrets = path.join(root, "secrets");
+  const diagnostics = path.join(root, "diagnostics");
+  await Promise.all([
+    mkdir(secrets, { mode: 0o700 }),
+    mkdir(diagnostics, { mode: 0o700 }),
+  ]);
+  try {
+    const fixture = await createTlsFixture(
+      root,
+      secrets,
+      diagnostics,
+      undefined,
+      { PATH: process.env.PATH },
+    );
+    assert.deepEqual(await readdir(secrets), ["ca.crt"]);
+    assert.equal((await stat(fixture.caCertificate)).mode & 0o777, 0o600);
+    assert.ok(fixture.key.length > 0);
+    assert.ok(fixture.certificate.length > 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("catalog state rejects duplicates and generation comparison pins IDs, slugs, count, and principal", () => {
@@ -296,14 +349,14 @@ test("smoke environments replace hostile caller homes and disable package downlo
 
 test("resource journal is private, redacted, and retains exact recovery on cleanup failure", async () => {
   const diagnostics = await mkdtemp(path.join(os.tmpdir(), "restart-journal-test-"));
-  const secret = "bare-resource-secret";
+  const secret = "postgres";
   try {
     const journal = await createResourceLifecycleJournal(diagnostics, {
       canaries: [secret],
     });
     await journal.acquiring({
       id: "database",
-      type: "postgres-database",
+      type: "owned-test-database",
       owned: true,
       identity: { name: "context_router_0123456789abcdef01234567_test" },
       recovery: `drop exact database; never print ${secret}`,
@@ -317,6 +370,7 @@ test("resource journal is private, redacted, and retains exact recovery on clean
     const contents = await readFile(journal.filePath, "utf8");
     const parsed = JSON.parse(contents);
     assert.equal(contents.includes(secret), false);
+    assert.equal(parsed.resources[0].type, "owned-test-database");
     assert.equal(parsed.resources[0].recoveryRequired, true);
     assert.equal(
       parsed.resources[0].identity.name,
@@ -413,7 +467,7 @@ test("restart smoke entry point preserves an unexpected runtime failure and ever
         diagnosticsDirectory: diagnostics,
         workflowOverride: async ({ defer, journal, registerResource }) => {
           for (const [id, type] of [
-            ["database", "postgres-database"],
+            ["database", "owned-test-database"],
             ["jwks", "loopback-oidc-jwks-server"],
             ["web-support", "web-support-subprocess"],
             ["backend", "backend-process"],
@@ -524,13 +578,13 @@ test("restart smoke gives the web subprocess enough SIGTERM grace to finish its 
       fixturePath,
       [
         'import { writeFileSync } from "node:fs";',
-        'writeFileSync(process.env.WEB_CHILD_READY, "ready");',
         'process.on("SIGTERM", () => {',
         '  setTimeout(() => {',
         '    writeFileSync(process.env.WEB_CHILD_CLEANED, "cleaned");',
         '    process.exit(0);',
         '  }, 100);',
         '});',
+        'writeFileSync(process.env.WEB_CHILD_READY, "ready");',
         'setInterval(() => {}, 1_000);',
       ].join("\n"),
       { mode: 0o600 },
