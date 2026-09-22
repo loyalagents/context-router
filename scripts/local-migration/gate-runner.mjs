@@ -992,6 +992,8 @@ export function buildIsolatedGateEnvironment(
     MCP_RESOURCES_SCHEMA_ENABLED: "true",
     AUTH0_DOMAIN: "migration-gate.invalid",
     AUTH0_ISSUER: "https://migration-gate.invalid/",
+    AUTH0_LEGACY_ISSUER: "https://migration-gate.invalid/",
+    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_AUDIENCE: "urn:context-router:migration-gate",
     AUTH0_CLIENT_ID: "migration-gate-client",
     AUTH0_CLIENT_SECRET: "synthetic-migration-gate-secret",

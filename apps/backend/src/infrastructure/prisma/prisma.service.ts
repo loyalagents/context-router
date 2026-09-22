@@ -20,7 +20,6 @@ export class PrismaService
     super(
       buildPrismaClientOptions({
         databaseUrl: configService.getOrThrow<string>("DATABASE_URL"),
-        log: ["query", "info", "warn", "error"],
       }),
     );
     this.nodeEnvironment =
@@ -31,9 +30,9 @@ export class PrismaService
     try {
       await this.$connect();
       this.logger.log("Database connection established");
-    } catch (error) {
-      this.logger.error("Failed to connect to database", error);
-      throw error;
+    } catch {
+      this.logger.error("Failed to connect to database");
+      throw new Error("Database connection failed");
     }
   }
 

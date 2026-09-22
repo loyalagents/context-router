@@ -3,9 +3,17 @@
 - Status: useful
 - Read when: deploying the backend to Google Cloud Run
 - Source of truth: `cloudbuild.yaml`, `cloudrun.env.example`, `apps/backend/Dockerfile`, `apps/backend/.env.example`
-- Last reviewed: 2026-05-03
+- Last reviewed: 2026-09-22
 
 This runbook assumes `zsh`, `bash`, or another POSIX-style shell. The backend is deployed as a container image built by Cloud Build from `apps/backend/Dockerfile`.
+
+> **Step 03 identity migration warning:** if the image contains
+> `step03_20260922_external_identity_issuer`, do not use the generic migrate and
+> deploy sequence below. Keep all writers stopped and follow the drained audit,
+> verified full-backup restore, migration, and pre-listen admission procedure in
+> [Hosted Identity Migration](HOSTED_IDENTITY_MIGRATION.md). That change is a
+> `main`-only prerequisite; this runbook does not authorize a backport or claim
+> that `hosted-v1-maintenance` has been remediated.
 
 ## Copy/Paste: Build And Deploy
 
@@ -191,6 +199,9 @@ Set `MCP_SERVER_URL` in `cloudrun.env` to that URL, then redeploy with the same 
 ## Run Migrations
 
 Cloud Run deploys the app, but it does not apply Prisma migrations. Run migrations from a trusted machine that can reach Cloud SQL, usually through the Cloud SQL Auth Proxy:
+
+The Step 03 issuer migration is explicitly excluded from this generic recipe;
+use the warning and linked runbook above when it is pending.
 
 ```bash
 cloud-sql-proxy "${CLOUD_SQL_INSTANCE}" --port 5432

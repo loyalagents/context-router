@@ -33,6 +33,7 @@ model ExternalIdentity {
   id             String   @id @default(uuid())
   userId         String   @map("user_id")
   provider       String   // 'auth0', 'google', 'github', etc.
+  issuer         String
   providerUserId String   @map("provider_user_id") // The ID from the provider
   metadata       Json?    // Optional: store provider-specific data
   createdAt      DateTime @default(now()) @map("created_at")
@@ -40,9 +41,9 @@ model ExternalIdentity {
 
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@unique([provider, providerUserId])
+  @@unique([provider, issuer, providerUserId])
   @@index([userId])
-  @@index([provider, providerUserId])
+  @@index([provider, issuer, providerUserId])
   @@map("external_identities")
 }
 

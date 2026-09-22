@@ -4,9 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
 import { AuthService } from '../auth.service';
+import { HUMAN_AUTH_STRATEGY } from '../../../domains/shared/ports/human-auth.constants';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, HUMAN_AUTH_STRATEGY) {
   private readonly logger = new Logger(JwtStrategy.name);
 
   constructor(
@@ -41,7 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const audienceArray = Array.isArray(tokenAudience) ? tokenAudience : [tokenAudience];
 
     if (!audienceArray.includes(expectedAudience)) {
-      this.logger.error(`Invalid audience. Expected: ${expectedAudience}, Got: ${JSON.stringify(tokenAudience)}`);
+      this.logger.error('JWT audience validation failed');
       throw new UnauthorizedException('Invalid audience');
     }
 
@@ -49,7 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // This allows M2M tokens to work for testing without requiring real users
     // See docs/AUTHORIZATION_TODO.md for the proper implementation plan
     if (payload.sub && payload.sub.endsWith('@clients')) {
-      this.logger.log('M2M token detected, creating/finding mock user (TEMPORARY)');
+      this.logger.debug('Resolving an M2M compatibility principal');
 
       // Create or find the M2M mock user in database
       const user = await this.authService.findOrCreateM2MUser(payload.sub);
@@ -65,8 +66,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
 
       return user;
-    } catch (error) {
-      this.logger.error('JWT validation failed', error);
+    } catch {
+      this.logger.error('JWT human validation failed');
       throw new UnauthorizedException('Invalid token');
     }
   }

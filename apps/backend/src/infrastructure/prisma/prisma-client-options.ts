@@ -2,7 +2,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { Prisma } from "./generated-client";
 
-type PrismaLogLevel = "query" | "info" | "warn" | "error";
 type DirectPrismaClientOptions = Extract<
   Prisma.PrismaClientOptions,
   { adapter: unknown }
@@ -10,7 +9,6 @@ type DirectPrismaClientOptions = Extract<
 
 type BuildPrismaClientOptionsInput = {
   databaseUrl: string;
-  log?: PrismaLogLevel[];
 };
 
 export function buildPrismaClientOptions(
@@ -24,6 +22,5 @@ export function buildPrismaClientOptions(
     adapter: new PrismaPg(new Pool({ connectionString: options.databaseUrl }), {
       disposeExternalPool: true,
     }),
-    ...(options.log ? { log: options.log } : {}),
   };
 }

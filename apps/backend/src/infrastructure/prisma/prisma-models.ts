@@ -23,6 +23,7 @@ export interface ExternalIdentity {
   id: string;
   userId: string;
   provider: string;
+  issuer: string;
   providerUserId: string;
   metadata: unknown | null;
   createdAt: Date;

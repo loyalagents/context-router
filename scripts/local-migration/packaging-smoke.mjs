@@ -536,6 +536,8 @@ export function buildPackagedRuntimeEnvironment(
     DATABASE_URL: databaseUrl,
     AUTH0_DOMAIN: auth.domain,
     AUTH0_ISSUER: auth.issuer,
+    AUTH0_LEGACY_ISSUER: auth.issuer,
+    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_AUDIENCE: auth.audience,
     AUTH0_CLIENT_ID: auth.clientId,
     AUTH0_CLIENT_SECRET: auth.clientSecret,

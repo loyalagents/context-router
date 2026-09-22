@@ -9,7 +9,7 @@
   `apps/backend/src/modules/auth/auth.service.ts`,
   `apps/backend/test/e2e/preference-catalog.e2e-spec.ts`, and
   `apps/backend/test/e2e/profile-preferences.e2e-spec.ts`
-- Last reviewed: 2026-09-17
+- Last reviewed: 2026-09-22
 
 ## Definitions Model
 
@@ -79,9 +79,12 @@ Editable profile data uses seven global core preference definitions:
 - `profile.company`
 - `profile.title`
 
-Account identity remains on `User` as `userId`, login email, and timestamps.
-`profile.email` is editable contact and form-fill memory and can differ from the
-account email used for login.
+Account identity remains on `User` as opaque `userId`, a required compatibility
+email attribute, and timestamps. Hosted authentication authority is exact
+issuer plus subject; verified email is used only as frozen one-time historical
+binding evidence and is not ongoing login authority. `profile.email` is
+editable contact and form-fill memory and can differ from the compatibility
+email on `User`.
 
 The profile page reads and writes these values through the ordinary active-
 preference APIs. It requires full name and contact email in its UI, but the

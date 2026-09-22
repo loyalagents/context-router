@@ -15,7 +15,7 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async create(createUserInput: CreateUserInput): Promise<User> {
-    this.logger.log(`Creating new user: ${createUserInput.email}`);
+    this.logger.debug("Creating a user");
 
     // Check if user already exists
     const existingUser = await this.userRepository.findByEmail(
@@ -23,9 +23,7 @@ export class UserService {
     );
 
     if (existingUser) {
-      throw new ConflictException(
-        `User with email ${createUserInput.email} already exists`,
-      );
+      throw new ConflictException("User already exists");
     }
 
     return this.userRepository.create(createUserInput);
@@ -37,18 +35,18 @@ export class UserService {
   }
 
   async findOne(userId: string): Promise<User> {
-    this.logger.log(`Fetching user: ${userId}`);
+    this.logger.debug("Fetching a user");
     const user = await this.userRepository.findOne(userId);
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException("User not found");
     }
 
     return user;
   }
 
   async remove(userId: string): Promise<User> {
-    this.logger.log(`Removing user: ${userId}`);
+    this.logger.debug("Removing a user");
 
     // Verify user exists
     await this.findOne(userId);
@@ -61,7 +59,7 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    this.logger.log(`Fetching user by email: ${email}`);
+    this.logger.debug("Fetching a user by account email");
     return this.userRepository.findByEmail(email);
   }
 }

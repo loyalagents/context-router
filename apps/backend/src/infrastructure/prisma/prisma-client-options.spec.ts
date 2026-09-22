@@ -23,7 +23,8 @@ describe("buildPrismaClientOptions", () => {
 
   it("configures Prisma to dispose an injected pg pool on disconnect", () => {
     buildPrismaClientOptions({
-      databaseUrl: "postgresql://postgres:postgres@localhost:5432/context_router",
+      databaseUrl:
+        "postgresql://postgres:postgres@localhost:5432/context_router",
     });
 
     expect(Pool).toHaveBeenCalledWith({
@@ -33,5 +34,13 @@ describe("buildPrismaClientOptions", () => {
     expect(PrismaPg).toHaveBeenCalledWith(expect.anything(), {
       disposeExternalPool: true,
     });
+  });
+
+  it("never enables Prisma engine stdout logging", () => {
+    const options = buildPrismaClientOptions({
+      databaseUrl: "postgresql://user:password-canary@localhost:5432/database",
+    });
+
+    expect(options.log).toBeUndefined();
   });
 });

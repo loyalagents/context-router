@@ -16,6 +16,13 @@ import {
   PreferenceValueType,
   SourceType,
 } from '../../src/infrastructure/prisma/generated-client';
+import {
+  IDENTITY_LINK_CLAIM_METADATA_KEY,
+  computeIdentityLinkIdentityDigest,
+  computeIdentityLinkRowDigest,
+} from '../../src/modules/auth/hosted-identity-policy';
+
+const TEST_AUTH0_ISSUER = 'https://test-tenant.auth0.invalid/';
 
 describe('Demo Memory Reset GraphQL API (e2e)', () => {
   let app: INestApplication;
@@ -430,12 +437,27 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     '%s preserves the current user and external identity rows',
     async (mode) => {
       await seedResetData(testUser, `identity_${mode.toLowerCase()}`);
-      await prisma.externalIdentity.create({
+      const subject = `auth0|${mode.toLowerCase()}-reset-user`;
+      const marker = {
+        [IDENTITY_LINK_CLAIM_METADATA_KEY]: {
+          version: 1,
+          rowDigest: computeIdentityLinkRowDigest(
+            testUser.userId,
+            testUser.email,
+          ),
+          identityDigest: computeIdentityLinkIdentityDigest(
+            TEST_AUTH0_ISSUER,
+            subject,
+          ),
+        },
+      };
+      const identity = await prisma.externalIdentity.create({
         data: {
           userId: testUser.userId,
           provider: 'auth0',
-          providerUserId: `auth0|${mode.toLowerCase()}-reset-user`,
-          metadata: { source: 'reset-test' },
+          issuer: TEST_AUTH0_ISSUER,
+          providerUserId: subject,
+          metadata: marker,
         },
       });
 
@@ -448,6 +470,15 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
         users: 1,
         externalIdentities: 1,
       });
+      await expect(
+        prisma.externalIdentity.findUniqueOrThrow({
+          where: { id: identity.id },
+        }),
+      ).resolves.toMatchObject({
+        issuer: TEST_AUTH0_ISSUER,
+        providerUserId: subject,
+        metadata: marker,
+      });
     },
   );
 
@@ -457,6 +488,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       data: {
         userId: testUser.userId,
         provider: 'auth0',
+        issuer: TEST_AUTH0_ISSUER,
         providerUserId: 'auth0|memory-only-reset-user',
         metadata: { source: 'reset-test' },
       },

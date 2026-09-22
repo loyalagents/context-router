@@ -22,6 +22,9 @@ const TEST_ENV = {
   MCP_SERVER_URL: "http://127.0.0.1:3001",
   AUTH0_AUDIENCE: "https://baseline.invalid/api",
   AUTH0_DOMAIN: "baseline.invalid",
+  AUTH0_ISSUER: "https://baseline.invalid/",
+  AUTH0_LEGACY_ISSUER: "https://baseline.invalid/",
+  AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
   AUTH0_MCP_CLAUDE_CLIENT_ID: "<claude-client-id>",
   AUTH0_MCP_CODEX_CLIENT_ID: "<codex-client-id>",
   AUTH0_MCP_FALLBACK_CLIENT_ID: "<fallback-client-id>",
@@ -86,7 +89,7 @@ export function collectMcpContractBaseline() {
       "mcp.oauth.auth0.jwksUri": config.oauth.auth0.jwksUri,
       "mcp.oauth.scopes": config.oauth.scopes,
       "auth.auth0.domain": TEST_ENV.AUTH0_DOMAIN,
-      "auth.auth0.issuer": `https://${TEST_ENV.AUTH0_DOMAIN}/`,
+      "auth.auth0.issuer": TEST_ENV.AUTH0_ISSUER,
       "auth.auth0.audience": TEST_ENV.AUTH0_AUDIENCE,
     };
     const configService = makeConfigService(values);

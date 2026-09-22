@@ -6,7 +6,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 // Config
 import { appConfigLoader } from './config/app.config';
 import graphqlConfig from './config/graphql.config';
-import authConfig from './config/auth.config';
+import { authConfigLoader } from './config/auth.config';
 import { mcpConfigLoader } from './config/mcp.config';
 import documentUploadConfig from './config/document-upload.config';
 import formFillConfig from './config/form-fill.config';
@@ -47,7 +47,7 @@ export class AppModule {
             runtimeConfigLoader(configuration),
             appConfigLoader(configuration, environment),
             graphqlConfig,
-            authConfig,
+            authConfigLoader(environment),
             mcpConfigLoader(configuration),
             documentUploadConfig,
             formFillConfig,

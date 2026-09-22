@@ -34,6 +34,7 @@ import {
 } from '../../src/domains/shared/ports/ai.tokens';
 import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
+import { HostedIdentityAdmissionService } from '../../src/modules/auth/hosted-identity-admission.service';
 import { getPrismaClient } from './test-db';
 
 /**
@@ -388,6 +389,10 @@ export async function createTestApp(
 
   // Override external services
   moduleBuilder.overrideProvider(Auth0Service).useValue(mockAuth0);
+  moduleBuilder.overrideProvider(HostedIdentityAdmissionService).useValue({
+    onApplicationBootstrap: async () => undefined,
+    verify: async () => undefined,
+  });
 
   // Use test database PrismaClient
   moduleBuilder.overrideProvider(PrismaService).useValue(getPrismaClient());

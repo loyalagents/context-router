@@ -6,7 +6,7 @@
 - Source of truth: `apps/backend/src/modules/reset/**`,
   `apps/backend/test/e2e/reset.e2e-spec.ts`, and
   `apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 ## Reset modes and safety semantics
 
@@ -21,7 +21,8 @@ data. It returns the selected mode and per-table deletion counts.
 | `FULL_USER_DATA` | Everything in `DEMO_DATA`, plus the user's permission grants | `User` and `ExternalIdentity` | No reset event survives |
 
 Despite its name, `FULL_USER_DATA` deliberately preserves account and external
-identity rows so the current login remains usable.
+identity rows so the current login remains usable. This includes the protected
+semantic marker on an operator-approved hosted historical-account link.
 
 Every mode runs in one Prisma transaction and deletes preferences before owned
 definitions. Before an advanced reset deletes definitions, it checks for a

@@ -11,6 +11,7 @@ import { Auth0Service } from "../src/infrastructure/auth0/auth0.service";
 import { PrismaService } from "../src/infrastructure/prisma/prisma.service";
 import { VertexAiStructuredService } from "../src/infrastructure/vertex-ai/vertex-ai-structured.service";
 import { VertexAiService } from "../src/infrastructure/vertex-ai/vertex-ai.service";
+import { HostedIdentityAdmissionService } from "../src/modules/auth/hosted-identity-admission.service";
 import { serializeGraphqlSchema } from "../src/mcp/resources/graphql-schema-sdl";
 
 export const GRAPHQL_SCHEMA_FIXTURE_PATH = resolve(
@@ -45,6 +46,8 @@ export function createGraphqlSchemaBuildEnvironment(): NodeJS.ProcessEnv {
     AUTH0_DOMAIN: "schema-fixture.invalid",
     AUTH0_AUDIENCE: "https://schema-fixture.invalid/api",
     AUTH0_ISSUER: "https://schema-fixture.invalid/",
+    AUTH0_LEGACY_ISSUER: "https://schema-fixture.invalid/",
+    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_SYNC_STRATEGY: "ON_DEMAND",
     MCP_SERVER_URL: "https://schema-fixture.invalid",
     MCP_RESOURCE: "https://schema-fixture.invalid/mcp",
@@ -85,6 +88,10 @@ export async function buildApplicationGraphqlSchemaSdl(): Promise<string> {
       });
       moduleBuilder.overrideProvider(PrismaService).useValue({});
       moduleBuilder.overrideProvider(Auth0Service).useValue({});
+      moduleBuilder.overrideProvider(HostedIdentityAdmissionService).useValue({
+        onApplicationBootstrap: async () => undefined,
+        verify: async () => undefined,
+      });
       moduleBuilder.overrideProvider(VertexAiService).useValue({});
       moduleBuilder.overrideProvider(VertexAiStructuredService).useValue({});
 

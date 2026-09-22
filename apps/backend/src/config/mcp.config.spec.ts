@@ -8,6 +8,7 @@ describe('mcpConfig', () => {
     process.env.MCP_SERVER_URL = 'http://localhost:3001';
     process.env.AUTH0_AUDIENCE = 'https://context-router-api';
     process.env.AUTH0_DOMAIN = 'example.us.auth0.com';
+    process.env.AUTH0_ISSUER = 'https://example.us.auth0.com/';
     delete process.env.MCP_RESOURCE;
     delete process.env.MCP_HTTP_PATH;
     delete process.env.MCP_HTTP_ALLOWED_ORIGINS;
@@ -29,6 +30,18 @@ describe('mcpConfig', () => {
 
     expect(config.oauth.auth0.authorizationEndpoint).toBe(
       'https://example.us.auth0.com/authorize?audience=https%3A%2F%2Fcontext-router-api',
+    );
+  });
+
+  it('uses the explicit issuer for authorization endpoints and the domain only for JWKS', () => {
+    delete process.env.AUTH0_ISSUER;
+
+    const config = mcpConfig();
+
+    expect(config.oauth.auth0.authorizationEndpoint).toBeUndefined();
+    expect(config.oauth.auth0.tokenEndpoint).toBeUndefined();
+    expect(config.oauth.auth0.jwksUri).toBe(
+      'https://example.us.auth0.com/.well-known/jwks.json',
     );
   });
 

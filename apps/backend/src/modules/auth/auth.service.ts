@@ -1,16 +1,20 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { UserService } from "@modules/user/user.service";
-import { Auth0Service } from "@infrastructure/auth0/auth0.service";
-import { ExternalIdentityService } from "@modules/external-identity/external-identity.service";
-import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import {
   PreferenceStatus,
   SourceType,
 } from "@infrastructure/prisma/generated-client";
+import { PrismaService } from "@infrastructure/prisma/prisma.service";
+import { Auth0Service } from "@infrastructure/auth0/auth0.service";
+import { UserService } from "@modules/user/user.service";
+import {
+  type IdentityLinkClaims,
+  reconcileVerifiedEmailAssertions,
+} from "./hosted-identity-policy";
+import { HostedIdentityRepository } from "./hosted-identity.repository";
 
 export interface JwtPayload {
-  sub: string; // Auth0 user ID (auth0|xxxxx or google-oauth2|xxxxx)
+  sub: string;
   email?: string;
   email_verified?: boolean;
   name?: string;
@@ -21,10 +25,8 @@ export interface JwtPayload {
   exp?: number;
   azp?: string;
   scope?: string;
-  [key: string]: any; // For custom claims like roles
+  [key: string]: any;
 }
-
-type AuthTransactionClient = Pick<PrismaService, "user" | "externalIdentity">;
 
 interface InitialProfileValues {
   email?: string | null;
@@ -38,303 +40,145 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private userService: UserService,
-    private auth0Service: Auth0Service,
-    private externalIdentityService: ExternalIdentityService,
-    private configService: ConfigService,
-    private prisma: PrismaService,
+    private readonly userService: UserService,
+    private readonly auth0Service: Auth0Service,
+    private readonly hostedIdentityRepository: HostedIdentityRepository,
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  /**
-   * Validates JWT payload and syncs user to database with race condition protection.
-   * Uses transactions and retry logic to handle concurrent login attempts.
-   *
-   * Race condition scenarios handled:
-   * 1. Multiple simultaneous first-time logins for same user
-   * 2. Concurrent identity linking attempts
-   *
-   * See docs/LOCKING_TODO.md for implementation details.
-   */
   async validateAndSyncUser(jwtPayload: JwtPayload) {
-    const auth0UserId = jwtPayload.sub;
-    const email = jwtPayload.email;
-    const provider = "auth0";
+    if (typeof jwtPayload.sub !== "string" || jwtPayload.sub.length === 0) {
+      throw new Error("Invalid hosted identity subject");
+    }
 
-    this.logger.log(`Validating user: ${provider}/${auth0UserId} (${email})`);
+    const issuer = this.configService.getOrThrow<string>("auth.auth0.issuer");
+    const legacyIssuer = this.configService.get<string>(
+      "auth.auth0.legacyIssuer",
+    );
+    const claims = this.configService.getOrThrow<IdentityLinkClaims>(
+      "auth.auth0.identityLinkClaims",
+    );
 
-    // Try to find user by external identity first
-    const userId =
-      await this.externalIdentityService.findUserIdByProviderIdentity(
-        provider,
-        auth0UserId,
+    const existing = await this.hostedIdentityRepository.resolveExactOrLegacy({
+      issuer,
+      legacyIssuer,
+      subject: jwtPayload.sub,
+    });
+    if (existing) {
+      return existing.user;
+    }
+
+    let managementProfile: Record<string, unknown> | undefined;
+    try {
+      const response = await this.auth0Service.getUserInfo(jwtPayload.sub);
+      const profile = response?.data ?? response;
+      if (typeof profile === "object" && profile !== null) {
+        managementProfile = profile as Record<string, unknown>;
+      }
+    } catch {
+      this.logger.warn(
+        "Auth0 profile lookup unavailable; continuing with token evidence",
       );
-
-    if (userId) {
-      const user = await this.userService.findOne(userId);
-      this.logger.debug(`User found via external identity: ${user.userId}`);
-      return user;
     }
 
-    // If not found by external identity, try by email (for migration scenarios)
-    let user = null;
-    if (email) {
-      user = await this.userService.findByEmail(email);
-
-      if (user) {
-        // Link existing user to Auth0 identity with transaction protection
-        this.logger.log(
-          `Linking existing user ${user.userId} to ${provider} identity ${auth0UserId}`,
-        );
-
-        try {
-          await this.externalIdentityService.linkIdentityToUser(
-            user.userId,
-            provider,
-            auth0UserId,
-          );
-        } catch (error) {
-          // Handle race condition: another request already linked this identity
-          if (this.isUniqueConstraintError(error)) {
-            this.logger.warn(
-              `Identity already linked (race condition handled): ${auth0UserId}`,
-            );
-            // Verify it's linked to the same user
-            const linkedUserId =
-              await this.externalIdentityService.findUserIdByProviderIdentity(
-                provider,
-                auth0UserId,
-              );
-            if (linkedUserId !== user.userId) {
-              throw new Error(
-                `This ${provider} identity is already linked to a different user`,
-              );
-            }
-          } else {
-            throw error;
+    const verifiedEmail = reconcileVerifiedEmailAssertions(
+      {
+        email: jwtPayload.email,
+        emailVerified: jwtPayload.email_verified,
+      },
+      managementProfile
+        ? {
+            email: managementProfile.email,
+            emailVerified: managementProfile.email_verified,
           }
-        }
+        : undefined,
+    );
 
-        return user;
-      }
+    if (this.configService.get<string>("auth.syncStrategy") !== "ON_LOGIN") {
+      throw new Error("User synchronization is disabled for new identities");
     }
 
-    // User doesn't exist - create new user based on sync strategy
-    const syncStrategy = this.configService.get<string>("auth.syncStrategy");
+    const resolution = await this.hostedIdentityRepository.linkOrCreate({
+      issuer,
+      subject: jwtPayload.sub,
+      verifiedEmail,
+      claims,
+    });
 
-    if (syncStrategy === "ON_LOGIN") {
-      return this.createUserWithRetry(jwtPayload, provider, auth0UserId);
+    if (resolution.outcome === "created") {
+      const firstName =
+        jwtPayload.given_name ?? this.profileString(managementProfile, "given_name");
+      const lastName =
+        jwtPayload.family_name ??
+        this.profileString(managementProfile, "family_name");
+      const fullName =
+        jwtPayload.name ??
+        this.profileString(managementProfile, "name") ??
+        [firstName, lastName].filter(Boolean).join(" ");
+      await this.seedInitialProfileMemory(resolution.user.userId, {
+        email: verifiedEmail,
+        fullName,
+        firstName,
+        lastName,
+      });
     }
 
-    // For other strategies (ON_DEMAND, BACKGROUND), throw error
-    throw new Error(`User not found and sync strategy is ${syncStrategy}`);
-  }
-
-  /**
-   * Creates a new user with external identity in a transaction.
-   * Retries on unique constraint violations to handle race conditions.
-   */
-  private async createUserWithRetry(
-    jwtPayload: JwtPayload,
-    provider: string,
-    providerUserId: string,
-    maxRetries = 3,
-  ) {
-    const email = jwtPayload.email;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        this.logger.log(
-          `Creating new user for ${provider} identity: ${providerUserId} (attempt ${attempt}/${maxRetries})`,
-        );
-
-        // Get full user info from Auth0 if needed
-        let auth0User;
-        try {
-          auth0User = await this.auth0Service.getUserInfo(providerUserId);
-        } catch (error) {
-          this.logger.warn(
-            `Could not fetch Auth0 user info, using JWT payload: ${error.message}`,
-          );
-        }
-
-        const auth0Profile = auth0User?.data ?? auth0User;
-        const accountEmail =
-          email || auth0Profile?.email || "unknown@example.com";
-        const firstName = jwtPayload.given_name || auth0Profile?.given_name;
-        const lastName = jwtPayload.family_name || auth0Profile?.family_name;
-        const fullName =
-          jwtPayload.name ||
-          auth0Profile?.name ||
-          [firstName, lastName].filter(Boolean).join(" ");
-
-        // Use transaction to atomically create user and link identity
-        const user = await this.prisma.$transaction(
-          async (tx: AuthTransactionClient) => {
-            const newUser = await tx.user.create({
-              data: {
-                email: accountEmail,
-              },
-            });
-
-            await tx.externalIdentity.create({
-              data: {
-                userId: newUser.userId,
-                provider,
-                providerUserId,
-                metadata: null,
-              },
-            });
-
-            return newUser;
-          },
-        );
-
-        await this.seedInitialProfileMemory(user.userId, {
-          email: accountEmail,
-          fullName,
-          firstName,
-          lastName,
-        });
-
-        this.logger.log(`Successfully created user: ${user.userId}`);
-        return user;
-      } catch (error) {
-        // Handle race condition: another request created the user first
-        if (this.isUniqueConstraintError(error)) {
-          this.logger.warn(
-            `User creation conflict detected (attempt ${attempt}/${maxRetries}): ${error.message}`,
-          );
-
-          // If this is our last retry, try to fetch the existing user
-          if (attempt === maxRetries) {
-            this.logger.log("Max retries reached, fetching existing user");
-
-            // Try finding by external identity first
-            const userId =
-              await this.externalIdentityService.findUserIdByProviderIdentity(
-                provider,
-                providerUserId,
-              );
-
-            if (userId) {
-              return this.userService.findOne(userId);
-            }
-
-            // Try finding by email
-            if (email) {
-              const user = await this.userService.findByEmail(email);
-              if (user) {
-                // Ensure identity is linked
-                try {
-                  await this.externalIdentityService.linkIdentityToUser(
-                    user.userId,
-                    provider,
-                    providerUserId,
-                  );
-                } catch (linkError) {
-                  if (!this.isUniqueConstraintError(linkError)) {
-                    throw linkError;
-                  }
-                }
-                return user;
-              }
-            }
-
-            throw new Error(
-              "Failed to create user after max retries and could not find existing user",
-            );
-          }
-
-          // Wait with exponential backoff before retrying
-          const backoffMs = 100 * Math.pow(2, attempt - 1);
-          this.logger.debug(`Waiting ${backoffMs}ms before retry`);
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          continue;
-        }
-
-        // Re-throw non-constraint errors
-        throw error;
-      }
-    }
-
-    throw new Error("Unexpected error in createUserWithRetry");
+    return resolution.user;
   }
 
   async getCurrentUser(userId: string) {
     return this.userService.findOne(userId);
   }
 
-  /**
-   * TODO: TEMPORARY - Remove this when proper user login flow is implemented
-   * This creates a mock user for M2M tokens so they can be used for testing
-   * See docs/AUTHORIZATION_TODO.md for details
-   *
-   * Uses transaction to prevent race conditions when multiple M2M requests arrive simultaneously.
-   */
   async findOrCreateM2MUser(clientId: string) {
-    this.logger.log(`Finding or creating M2M mock user for: ${clientId}`);
+    this.logger.debug("Resolving hosted M2M compatibility principal");
     const email = `${clientId}@m2m.local`;
-
-    // Try to find existing user first
     let user = await this.userService.findByEmail(email);
-
     if (user) {
       return user;
     }
 
-    // User doesn't exist - create with retry logic for race conditions
     const maxRetries = 3;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
       try {
-        this.logger.log(
-          `Creating M2M mock user: ${clientId} (attempt ${attempt}/${maxRetries})`,
-        );
-
-        user = await this.userService.create({
-          email,
-        });
-
+        user = await this.userService.create({ email });
         return user;
       } catch (error) {
-        // Handle race condition: another request created the user
-        if (this.isUniqueConstraintError(error)) {
-          this.logger.warn(
-            `M2M user creation conflict (attempt ${attempt}/${maxRetries})`,
-          );
-
-          // On last retry, fetch the existing user
-          if (attempt === maxRetries) {
-            this.logger.log("Max retries reached, fetching existing M2M user");
-            user = await this.userService.findByEmail(email);
-            if (user) {
-              return user;
-            }
-            throw new Error(
-              `Failed to create M2M user after max retries: ${clientId}`,
-            );
-          }
-
-          // Exponential backoff
-          const backoffMs = 100 * Math.pow(2, attempt - 1);
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          continue;
+        if (!this.isUniqueConstraintError(error)) {
+          throw error;
         }
-
-        // Re-throw non-constraint errors
-        throw error;
+        this.logger.warn("Hosted M2M principal creation conflict");
+        if (attempt === maxRetries) {
+          user = await this.userService.findByEmail(email);
+          if (user) {
+            return user;
+          }
+          throw new Error("Failed to create hosted M2M principal");
+        }
+        await new Promise((resolve) =>
+          setTimeout(resolve, 100 * Math.pow(2, attempt - 1)),
+        );
       }
     }
 
-    throw new Error("Unexpected error in findOrCreateM2MUser");
+    throw new Error("Failed to create hosted M2M principal");
   }
 
-  /**
-   * Helper to detect Prisma unique constraint violations.
-   * These errors indicate race conditions where another request created the record first.
-   */
-  private isUniqueConstraintError(error: any): boolean {
-    // Prisma unique constraint error code
-    return error?.code === "P2002";
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      (error as { code?: string }).code === "P2002"
+    );
+  }
+
+  private profileString(
+    profile: Record<string, unknown> | undefined,
+    key: string,
+  ): string | undefined {
+    const value = profile?.[key];
+    return typeof value === "string" ? value : undefined;
   }
 
   private async seedInitialProfileMemory(
@@ -352,7 +196,6 @@ export class AuthService {
       const normalizedValue = value?.trim();
       return normalizedValue ? [{ slug, value: normalizedValue }] : [];
     });
-
     if (normalizedEntries.length === 0) {
       return;
     }
@@ -375,7 +218,6 @@ export class AuthService {
         if (!definitionId) {
           continue;
         }
-
         const existing = await this.prisma.preference.findFirst({
           where: {
             userId,
@@ -385,11 +227,9 @@ export class AuthService {
           },
           select: { id: true },
         });
-
         if (existing) {
           continue;
         }
-
         await this.prisma.preference.create({
           data: {
             userId,
@@ -404,11 +244,8 @@ export class AuthService {
           },
         });
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.warn(
-        `Could not seed initial profile preferences for user ${userId}: ${message}`,
-      );
+    } catch {
+      this.logger.warn("Could not seed initial profile preferences");
     }
   }
 }

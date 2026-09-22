@@ -10,7 +10,7 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateUserInput): Promise<User> {
-    this.logger.log(`Creating user with email: ${data.email}`);
+    this.logger.debug("Creating a user row");
     return this.prisma.user.create({
       data: {
         email: data.email,
@@ -28,21 +28,21 @@ export class UserRepository {
   }
 
   async findOne(userId: string): Promise<User | null> {
-    this.logger.log(`Fetching user with ID: ${userId}`);
+    this.logger.debug("Fetching a user row");
     return this.prisma.user.findUnique({
       where: { userId },
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    this.logger.log(`Fetching user with email: ${email}`);
+    this.logger.debug("Fetching a user row by account email");
     return this.prisma.user.findUnique({
       where: { email },
     });
   }
 
   async update(userId: string, data: { email?: string }): Promise<User> {
-    this.logger.log(`Updating user with ID: ${userId}`);
+    this.logger.debug("Updating a user row");
     return this.prisma.user.update({
       where: { userId },
       data: {
@@ -52,7 +52,7 @@ export class UserRepository {
   }
 
   async delete(userId: string): Promise<User> {
-    this.logger.log(`Deleting user with ID: ${userId}`);
+    this.logger.debug("Deleting a user row");
     return this.prisma.user.delete({
       where: { userId },
     });

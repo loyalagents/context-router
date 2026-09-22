@@ -1115,6 +1115,13 @@ test("packaged runtime environment is strict, private, loopback, and supports MC
   assert.equal(fallback.MCP_SERVER_URL, "http://127.0.0.1:41001");
   assert.equal(fallback.APP_HOST, "127.0.0.1");
   assert.equal(fallback.AUTH0_SECRET, "synthetic-session-secret");
+  assert.equal(fallback.AUTH0_ISSUER, "https://127.0.0.1:4443/");
+  assert.equal(fallback.AUTH0_LEGACY_ISSUER, fallback.AUTH0_ISSUER);
+  assert.equal(
+    fallback.AUTH0_IDENTITY_LINK_CLAIMS,
+    '{"version":1,"dispositions":[]}',
+  );
+  assert.equal(fallback.AUTH0_AUDIENCE, "urn:synthetic");
   assert.equal(fallback.NODE_EXTRA_CA_CERTS, "/private/secrets/ca.crt");
   assert.equal("MCP_RESOURCE" in fallback, false);
   assert.equal("MCP_HTTP_ALLOWED_ORIGINS" in fallback, false);

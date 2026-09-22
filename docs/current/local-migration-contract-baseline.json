@@ -97,6 +97,22 @@
       ]
     },
     {
+      "id": "hosted-main-identity-hardening",
+      "label": "Main-only hosted-baseline issuer and frozen historical-link admission; no hosted-v1-maintenance backport authorized",
+      "disposition": "REPLACE",
+      "contractClass": "observed-not-promised",
+      "ownerSteps": [
+        "03"
+      ],
+      "evidence": [
+        "apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql",
+        "apps/backend/src/modules/auth/hosted-identity-audit.ts",
+        "apps/backend/src/modules/auth/hosted-identity-admission.service.ts",
+        "docs/useful/HOSTED_IDENTITY_MIGRATION.md",
+        "docs/plans/active/local-migration/decision-log.md"
+      ]
+    },
+    {
       "id": "product-bulk-import-export",
       "label": "Product bulk value import/export",
       "disposition": "DEFER",

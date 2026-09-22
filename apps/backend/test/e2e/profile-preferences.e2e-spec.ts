@@ -157,6 +157,7 @@ describe('Profile Preferences GraphQL API (e2e)', () => {
       data: {
         userId: testUser.userId,
         provider: 'auth0',
+        issuer: 'https://test-tenant.auth0.invalid/',
         providerUserId: 'auth0|profile-preference-reset',
         metadata: { source: 'profile-preference-test' },
       },

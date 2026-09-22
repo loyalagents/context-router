@@ -32,7 +32,7 @@ Contract class is independent of disposition:
   accident or unsafe behavior into a permanent promise.
 - `planned-removal` remains present only through its compatibility window.
 
-The registry currently contains 39 decisions: 18 retain, 7 replace, 10 remove,
+The registry currently contains 40 decisions: 18 retain, 8 replace, 10 remove,
 and 4 defer. The detailed rationale, evidence path, owner, external callback
 allowlists, outbound inventory, and exact consumer map live in the JSON registry.
 The checker regenerates an exact census of public-route/tool/resource references
@@ -157,24 +157,36 @@ Important observed boundaries include:
 
 - raw document bytes and memory values can be sent to Vertex, including on a
   structured retry;
-- Auth0 human identity and MCP client identity are currently conflated for M2M
-  tokens, and email linking does not require a verified assertion;
+- Auth0 human identity and MCP client identity remain conflated for hosted M2M
+  compatibility tokens;
+- on `main`, the retained hosted adapter now requires independently verified
+  email evidence plus a frozen operator-approved issuer/subject tuple for a
+  one-time historical account link; `hosted-v1-maintenance` is unchanged and no
+  backport is authorized;
 - the default backend listener is not code-confined to loopback;
 - MCP Origin checks do not cover the entire browser trust boundary, and proxy
   headers are trusted for DCR rate limiting;
 - rejected DCR requests currently log the complete untrusted redirect-URI
   array, including any query strings; Step 07 must replace that with redacted
   origin/class/outcome logging before local transport ships;
-- provider prompt prefixes, extracted old/new preference values, identity
-  subjects/emails, and upload filenames/user IDs can enter current logs; Steps
-  06, 08, and 09 own centralized value-aware redaction and safe logging before
-  those paths become local-product surfaces;
+- provider prompt prefixes, extracted old/new preference values, and upload
+  filenames/user IDs can enter untouched current logs; the Step 03 hosted
+  identity, Auth0, user, Prisma, JWT, and MCP-auth paths use fixed diagnostics,
+  while Steps 06, 08, and 09 still own centralized value-aware redaction before
+  the remaining paths become local-product surfaces;
 - audit snapshots contain values, while sensitivity masking is derived from the
   live catalog; and
 - the authenticated web debug route renders a complete bearer token.
 
 These facts motivate later replacements and removals. They are not claims that
 unsafe behavior must be preserved.
+
+Step 03's `main`-line hosted identity boundary treats exact canonical issuer
+plus subject as ongoing authentication authority. Its offline audit emits only
+digest dispositions and startup admission completes before a listener binds.
+New principals use a unique non-routable `.invalid` compatibility email when no
+verified email exists. The issuer migration has backup-only old-binary rollback
+and is not a deployed hosted-production remediation.
 
 ## Package Scope
 

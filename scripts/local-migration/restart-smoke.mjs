@@ -573,6 +573,8 @@ export function buildSmokeBackendEnvironment({
     GRAPHQL_DEBUG: "false",
     AUTH0_DOMAIN: `127.0.0.1:${jwksPort}`,
     AUTH0_ISSUER: issuer,
+    AUTH0_LEGACY_ISSUER: issuer,
+    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_AUDIENCE: audience,
     AUTH0_CLIENT_ID: "hosted-baseline-smoke-app",
     AUTH0_CLIENT_SECRET: clientSecret,

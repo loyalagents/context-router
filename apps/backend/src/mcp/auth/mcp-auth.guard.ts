@@ -127,9 +127,9 @@ export class McpAuthGuard implements CanActivate {
       (request as any).tokenPayload = payload;
 
       return true;
-    } catch (error) {
-      this.logger.warn(`Token verification failed: ${error.message}`);
-      this.sendAuthChallenge(response, 401, 'invalid_token', error.message);
+    } catch {
+      this.logger.warn('MCP token validation failed');
+      this.sendAuthChallenge(response, 401, 'invalid_token', 'Invalid token');
       return false;
     }
   }
@@ -148,9 +148,7 @@ export class McpAuthGuard implements CanActivate {
 
     // Validate issuer
     if (payload.iss !== this.issuer) {
-      throw new Error(
-        `Invalid issuer. Expected: ${this.issuer}, Got: ${payload.iss}`,
-      );
+      throw new Error('Invalid token issuer');
     }
 
     // Validate audience
@@ -160,9 +158,7 @@ export class McpAuthGuard implements CanActivate {
       : [tokenAudience];
 
     if (!audienceArray.includes(this.expectedAudience)) {
-      throw new Error(
-        `Invalid audience. Expected: ${this.expectedAudience}, Got: ${JSON.stringify(tokenAudience)}`,
-      );
+      throw new Error('Invalid token audience');
     }
 
     // Check token expiration

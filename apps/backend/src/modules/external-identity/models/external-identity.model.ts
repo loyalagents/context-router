@@ -12,6 +12,8 @@ export class ExternalIdentity {
   @Field()
   provider: string;
 
+  issuer: string;
+
   @Field()
   providerUserId: string;
 

@@ -32,26 +32,23 @@ export class Auth0Service {
 
   async getUserInfo(auth0UserId: string) {
     try {
-      this.logger.debug(`Fetching user info for: ${auth0UserId}`);
+      this.logger.debug('Fetching Auth0 user profile');
       return await this.managementClient.users.get(auth0UserId);
     } catch (error) {
-      this.logger.error(`Failed to get user info for ${auth0UserId}`, error);
+      this.logger.error('Auth0 user profile request failed');
       throw error;
     }
   }
 
   async updateUserMetadata(auth0UserId: string, metadata: any) {
     try {
-      this.logger.debug(`Updating metadata for: ${auth0UserId}`);
+      this.logger.debug('Updating Auth0 user metadata');
       return await this.managementClient.users.update(
         auth0UserId,
         { user_metadata: metadata },
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to update metadata for ${auth0UserId}`,
-        error,
-      );
+      this.logger.error('Auth0 user metadata request failed');
       throw error;
     }
   }
