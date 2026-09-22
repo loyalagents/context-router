@@ -70,6 +70,60 @@ describe("AuthService", () => {
     };
   }
 
+  it("resolves an exact external identity before considering email", async () => {
+    const {
+      service,
+      prisma,
+      userService,
+      auth0Service,
+      externalIdentityService,
+    } = createService();
+    const existingUser = {
+      ...createdUser,
+      email: "existing@example.test",
+    };
+    externalIdentityService.findUserIdByProviderIdentity.mockResolvedValue(
+      existingUser.userId,
+    );
+    userService.findOne.mockResolvedValue(existingUser);
+
+    await expect(
+      service.validateAndSyncUser({
+        sub: "auth0|exact-identity",
+        email: "recycled@example.test",
+        email_verified: false,
+      }),
+    ).resolves.toEqual(existingUser);
+
+    expect(
+      externalIdentityService.findUserIdByProviderIdentity,
+    ).toHaveBeenCalledWith("auth0", "auth0|exact-identity");
+    expect(userService.findByEmail).not.toHaveBeenCalled();
+    expect(externalIdentityService.linkIdentityToUser).not.toHaveBeenCalled();
+    expect(auth0Service.getUserInfo).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("keeps the hosted M2M compatibility user keyed separately by client email", async () => {
+    const { service, userService, externalIdentityService } = createService();
+    userService.create.mockResolvedValue(createdUser);
+
+    await expect(
+      service.findOrCreateM2MUser("client-123@clients"),
+    ).resolves.toEqual(createdUser);
+
+    expect(userService.findByEmail).toHaveBeenCalledWith(
+      "client-123@clients@m2m.local",
+    );
+    expect(userService.create).toHaveBeenCalledWith({
+      email: "client-123@clients@m2m.local",
+    });
+    expect(
+      externalIdentityService.findUserIdByProviderIdentity,
+    ).not.toHaveBeenCalled();
+    expect(externalIdentityService.linkIdentityToUser).not.toHaveBeenCalled();
+  });
+
   it("seeds profile preferences for newly synced users", async () => {
     const { service, tx, prisma } = createService();
 
