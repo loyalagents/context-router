@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-09-22
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -203,12 +203,48 @@ step plan that resolves them.
   the orchestration document. This observation closes the external PR 02B gate
   but is not required merge evidence.
 
+### LM-015: Stable human principal and local identity preview
+
+- Status: Accepted — Step 03 plan independently approved; implementation
+  evidence pending
+- Decision: `User.userId` remains the provider-neutral human principal. Hosted
+  external identity is keyed by provider, verified issuer, and subject. Email
+  and display attributes are not ongoing authentication or authorization;
+  exceptionally, an eligible verified email may serve as one-time historical-
+  account binding evidence only when the exact user/email/issuer/subject tuple
+  also matches a frozen operator-reviewed link disposition from the complete
+  drained-writer audit. Every eligible historical row must instead be explicitly
+  denied when that binding is not accepted. A fresh local installation
+  generates an independent opaque principal and credential in versioned private
+  state under an explicit absolute root. Step 03 exposes that implementation as
+  a non-listening initialized Nest application preview that calls `init()` but
+  never `listen()`; local MCP credentials and browser sessions remain separate
+  later-step concerns.
+- Product-line disposition: this is `local-only` main-line migration work.
+  Issuer/link hardening applies only to `main`'s retained hosted-baseline adapter
+  as a prerequisite for the new boundary. `hosted-v1-maintenance` is unchanged;
+  Step 03 is not a production remediation and authorizes no backport or cherry-
+  pick. A future hosted-production fix requires a separate maintenance decision.
+- Consequence: Steps 04–08 use the stable principal rather than email, Auth0
+  subject suffixes, MCP client keys, machine identity, paths, or database row
+  order. Steps 04–05 must preserve the state-to-database binding and
+  crash-safe recovery fencing when they replace Step 03's narrow temporary
+  PostgreSQL advisory-session mechanism. Step 07 must add a distinct local MCP client-auth path, Step 08 must add
+  a browser/session exchange without exposing the file credential, and Step 09
+  owns final data-directory, keychain/process isolation, backup, and destructive
+  identity-reset policy. A reachable local listener is not authorized by this
+  decision and must add Host/Origin/CSRF/DNS-rebinding evidence before support.
+  The operator-approved hosted tuple is deliberate one-time binding authority;
+  an erroneous approval can misbind an account, removing its configuration does
+  not unlink a consumed identity, and recovery requires stopped writers plus the
+  verified full-backup rule or a separately reviewed exact repair.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |
 | --- | --- |
 | Supported operating systems, process topology, signing, and distribution constraints | `02-composition-boundaries` and `09-installation-and-packaging` |
-| Stable local principal ID, display/email behavior, and credential storage | `03-local-identity` |
+| Final platform credential protection, keychain/process isolation, and destructive identity reset | `09-installation-and-packaging` |
 | Local database choice; if SQLite is confirmed, its library and schema/bootstrap mechanism | `05-local-database-runtime` |
 | Local model runtime, supported capabilities, and download policy | `06-local-model` |
 | Exact offline guarantee before and after model assets are installed | `06-local-model` and `09-installation-and-packaging` |
