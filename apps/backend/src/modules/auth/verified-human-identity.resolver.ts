@@ -12,13 +12,12 @@ import type {
   VerifiedHumanIdentityProfileHints,
 } from '@/domains/shared/ports/verified-human-identity';
 import { createSyntheticPrincipalEmail } from './principal-identity';
+import { normalizeVerifiedHumanProfileHints } from './verified-human-profile-hints';
 
 const SERIALIZABLE_ATTEMPTS = 5;
 const MAX_PROVIDER_LENGTH = 32;
 const MAX_ISSUER_BYTES = 2048;
 const MAX_SUBJECT_BYTES = 1024;
-const MAX_EMAIL_BYTES = 320;
-const MAX_PROFILE_VALUE_BYTES = 256;
 const PROVIDER_PATTERN = /^[a-z][a-z0-9-]*$/;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 
@@ -49,49 +48,6 @@ function asBoundedCanonicalString(value: unknown, maxBytes: number): string {
     return fixedFailure();
   }
   return value;
-}
-
-function validateProfileHints(
-  value: unknown,
-): VerifiedHumanIdentityProfileHints | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return fixedFailure();
-  }
-
-  const hints = value as Record<string, unknown>;
-  const allowedKeys = new Set([
-    'verifiedEmail',
-    'displayName',
-    'givenName',
-    'familyName',
-  ]);
-  if (Object.keys(hints).some((key) => !allowedKeys.has(key))) {
-    return fixedFailure();
-  }
-
-  const result: VerifiedHumanIdentityProfileHints = {};
-  if (hints.verifiedEmail !== undefined) {
-    const email = asBoundedCanonicalString(
-      hints.verifiedEmail,
-      MAX_EMAIL_BYTES,
-    );
-    if (/\s/.test(email) || !/^[^@]+@[^@]+$/.test(email)) {
-      return fixedFailure();
-    }
-    result.verifiedEmail = email;
-  }
-  for (const key of ['displayName', 'givenName', 'familyName'] as const) {
-    if (hints[key] !== undefined) {
-      result[key] = asBoundedCanonicalString(
-        hints[key],
-        MAX_PROFILE_VALUE_BYTES,
-      );
-    }
-  }
-  return result;
 }
 
 export function validateVerifiedHumanIdentityAssertion(
@@ -145,7 +101,7 @@ export function validateVerifiedHumanIdentityAssertion(
         MAX_SUBJECT_BYTES,
       ),
     },
-    profileHints: validateProfileHints(assertion.profileHints),
+    profileHints: normalizeVerifiedHumanProfileHints(assertion.profileHints),
   };
 }
 

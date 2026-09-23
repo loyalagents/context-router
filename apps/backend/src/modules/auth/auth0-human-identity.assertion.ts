@@ -1,7 +1,5 @@
-import type {
-  VerifiedHumanIdentityAssertion,
-  VerifiedHumanIdentityProfileHints,
-} from '@/domains/shared/ports/verified-human-identity';
+import type { VerifiedHumanIdentityAssertion } from '@/domains/shared/ports/verified-human-identity';
+import { normalizeVerifiedHumanProfileHints } from './verified-human-profile-hints';
 
 export interface HostedJwtPayload {
   sub?: unknown;
@@ -26,14 +24,7 @@ function invalidToken(): never {
   throw new Error('Invalid hosted identity token');
 }
 
-function canonicalString(
-  value: unknown,
-  maxBytes: number,
-  required: boolean,
-): string | undefined {
-  if (value === undefined && !required) {
-    return undefined;
-  }
+function canonicalString(value: unknown, maxBytes: number): string {
   if (
     typeof value !== 'string' ||
     value.length === 0 ||
@@ -54,44 +45,13 @@ export function createAuth0HumanIdentityAssertion(
   if (payload.iss !== issuer) {
     return invalidToken();
   }
-  const subject = canonicalString(payload.sub, 1024, true);
-  if (
-    payload.email_verified !== undefined &&
-    typeof payload.email_verified !== 'boolean'
-  ) {
-    return invalidToken();
-  }
-
-  const email = canonicalString(payload.email, 320, false);
-  if (
-    email !== undefined &&
-    (/\s/.test(email) || !/^[^@]+@[^@]+$/.test(email))
-  ) {
-    return invalidToken();
-  }
-  if (payload.email_verified === true && email === undefined) {
-    return invalidToken();
-  }
-
-  const displayName = canonicalString(payload.name, 256, false);
-  const givenName = canonicalString(payload.given_name, 256, false);
-  const familyName = canonicalString(payload.family_name, 256, false);
-
-  const profileHints: VerifiedHumanIdentityProfileHints = {};
-  if (payload.email_verified === true) {
-    profileHints.verifiedEmail = email;
-  }
-  profileHints.displayName = displayName;
-  profileHints.givenName = givenName;
-  profileHints.familyName = familyName;
-
-  for (const key of Object.keys(profileHints) as Array<
-    keyof VerifiedHumanIdentityProfileHints
-  >) {
-    if (profileHints[key] === undefined) {
-      delete profileHints[key];
-    }
-  }
+  const subject = canonicalString(payload.sub, 1024);
+  const profileHints = normalizeVerifiedHumanProfileHints({
+    verifiedEmail: payload.email_verified === true ? payload.email : undefined,
+    displayName: payload.name,
+    givenName: payload.given_name,
+    familyName: payload.family_name,
+  });
 
   return {
     key: {
@@ -99,6 +59,6 @@ export function createAuth0HumanIdentityAssertion(
       issuer,
       subject,
     },
-    ...(Object.keys(profileHints).length > 0 ? { profileHints } : {}),
+    ...(profileHints ? { profileHints } : {}),
   };
 }

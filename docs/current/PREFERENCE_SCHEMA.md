@@ -107,6 +107,11 @@ name, and contact email for a newly created principal when those values and
 definitions are available. Those rows use imported provenance with
 `verified_identity` evidence. This
 direct seed has no domain audit event, and failure does not block login.
+Unusable optional hint values are omitted independently without rejecting an
+otherwise valid identity. Later logins neither reseed profile rows nor update
+`User.email`, including a synthetic compatibility value. Hosted initial email
+requires verified claims on the API access token; see
+[Auth0 profile-claim setup](../useful/AUTH0_LOGIN_GATING.md#optional-hosted-profile-claims-main-line-step-03).
 
 ## Known Constraints
 

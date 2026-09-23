@@ -3,7 +3,10 @@ import {
   PreferenceStatus,
   SourceType,
 } from '@infrastructure/prisma/generated-client';
-import { VerifiedHumanIdentityResolver } from './verified-human-identity.resolver';
+import {
+  VerifiedHumanIdentityResolver,
+  validateVerifiedHumanIdentityAssertion,
+} from './verified-human-identity.resolver';
 
 describe('VerifiedHumanIdentityResolver', () => {
   const now = new Date('2026-01-01T00:00:00.000Z');
@@ -336,12 +339,89 @@ describe('VerifiedHumanIdentityResolver', () => {
     [{ displayName: 'x'.repeat(257) }],
     [{ givenName: 'control\u0000value' }],
     [{ familyName: '' }],
-    [{ unknown: 'value' }],
   ])(
-    'rejects malformed profile hints before querying %#',
+    'omits malformed profile hints and creates the exact principal %#',
+    async (profileHints) => {
+      const { resolver, prisma, transaction } = createResolver();
+
+      const resolved = await resolver.resolve({
+        ...auth0Assertion,
+        profileHints,
+      } as never);
+      expect(resolved.email).toMatch(/^[a-f0-9]{64}@principal\.invalid$/);
+      expect(transaction.externalIdentity.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: resolved.userId,
+          provider: 'auth0',
+          issuer: auth0Assertion.key.issuer,
+          providerUserId: auth0Assertion.key.subject,
+        }),
+      });
+      expect(prisma.preference.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it('seeds only valid sibling hints when creating a new principal', async () => {
+    const { resolver, prisma } = createResolver();
+
+    const resolved = await resolver.resolve({
+      ...auth0Assertion,
+      profileHints: {
+        verifiedEmail: 'not an email',
+        displayName: 'Ada ',
+        givenName: 'Ada',
+        familyName: '\ud800',
+      },
+    });
+
+    expect(resolved.email).toMatch(/^[a-f0-9]{64}@principal\.invalid$/);
+    expect(prisma.preference.create).toHaveBeenCalledTimes(1);
+    expect(prisma.preference.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        definitionId: 'def-first-name',
+        value: 'Ada',
+      }),
+    });
+  });
+
+  it.each(['auth0', 'example-idp'])(
+    'keeps valid siblings and exact existing identity for %s',
+    async (provider) => {
+      const { resolver, transaction, prisma } = createResolver();
+      const existing = user('principal-existing');
+      transaction.externalIdentity.findUnique.mockResolvedValue({
+        user: existing,
+      });
+      const assertion = {
+        key: { ...auth0Assertion.key, provider },
+        profileHints: {
+          verifiedEmail: 'not an email',
+          displayName: 'Ada ',
+          givenName: 'Ada',
+          familyName: '\ud800',
+        },
+      };
+
+      expect(validateVerifiedHumanIdentityAssertion(assertion)).toEqual({
+        key: assertion.key,
+        profileHints: { givenName: 'Ada' },
+      });
+      await expect(resolver.resolve(assertion)).resolves.toBe(existing);
+      expect(transaction.user.create).not.toHaveBeenCalled();
+      expect(prisma.preference.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    null,
+    [],
+    'bad-envelope',
+    { unknown: 'value' },
+    { displayName: 'Ada', token: 'secret-canary' },
+  ])(
+    'still rejects malformed hint structure before querying %#',
     async (profileHints) => {
       const { resolver, prisma } = createResolver();
-
       await expect(
         resolver.resolve({ ...auth0Assertion, profileHints } as never),
       ).rejects.toThrow('Invalid verified human identity assertion');

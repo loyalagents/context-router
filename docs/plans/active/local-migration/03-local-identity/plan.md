@@ -200,9 +200,14 @@ types. Provider strings remain adapter-owned open values; adding Google,
 GitHub, or another provider requires a verifier that emits this assertion, not
 a schema or application-service switch. The shared boundary nevertheless
 revalidates fixed bounds and canonical representation: a short lowercase ASCII
-provider identifier, a bounded adapter-canonical issuer/authority string, a
-bounded nonempty opaque subject, and bounded UTF-8 profile hints. Invalid input
-fails with fixed cause-free diagnostics before a query. Only verified edge
+provider identifier, a bounded adapter-canonical issuer/authority string, and a
+bounded nonempty opaque subject. Invalid identity keys or assertion/hint object
+structure (including unknown keys) fail with fixed cause-free diagnostics before
+a query. Supported optional profile values are independently bounded and
+validated; malformed values are omitted without rejecting the verified identity
+or discarding valid sibling hints. They are never coerced or used for linking.
+Auth0 considers email only when `email_verified === true`; missing, malformed,
+or non-boolean verification flags never establish verified contact. Only verified edge
 strategies receive the resolver in composition; a type name alone is not
 treated as runtime proof.
 
@@ -717,6 +722,42 @@ are invalid for the changed legacy-data and local-state contracts.
 All four renewed plan dimensions approved the same substantive checksum. Fresh
 final implementation reviewers then approved the complete corrections recorded
 above. No blocking review finding remains.
+
+## External Review Follow-Up (R1)
+
+The user authorized the worthwhile corrections from the independent Claude
+review of `4661c989ff7a554e760820486bf5e5cdee820fe1`. F1 revises the optional
+profile-value policy above: authoritative key/structure failures remain strict,
+while unusable supported hints are omitted individually. F2 adds precise
+hosted API-token email/verification/scope and first-creation guidance, without
+tenant mutation, profile backfill, Management API calls, or UI/session cutover.
+F3 replaces runtime-selected CA certificates in the target-ID golden test with
+fixed public certificate fixtures; production TLS and target hashing do not
+change.
+
+The bounded checkpoints are: (1) failing adapter/resolver/JWT/MCP regressions
+then the shared optional-hint policy; (2) deterministic CA fixtures and operator
+guidance with focused tests/link validation; (3) affected independent review,
+final exact-base local gate, and final-head standard/dedicated CI in this PR.
+No new branch, PR, storage format, schema, listener, or public response shape is
+introduced. Existing filesystem/recovery, migration, transport, and packaging
+review coverage is carried forward only where these corrections do not change
+its inputs or contracts; the complete required gate still runs on the final
+candidate. Unrelated in-progress documentation edits are not part of R1.
+
+`/root` remains sole writer using its inherited coordinator settings (actual
+model/effort is not exposed here). Sensitive authentication-policy review was
+requested as `gpt-6-astra` / `xhigh`; the runtime accepted that supported
+configuration, but underlying inference settings are not independently exposed.
+The read-only reviewer approved the bounded R1 policy, including strict
+authoritative keys/envelopes, independently omitted hint values, signed human
+JWT/MCP regressions, and first-creation-only documentation. The same specialist
+approved the frozen 16-file R1 implementation delta with no blockers or material
+test gaps (aggregate content SHA-256
+`094ef34e9cd3bccfd1f4130cf5becc3629060347cd54a0f6ddda264bcbfa3054`, before this
+review-status-only update). The review covers R1; unaffected historical Step 03
+approvals remain in force. Final exact-head gate/CI results are recorded in the
+PR, not inferred from the review.
 
 ## Exit Criteria
 

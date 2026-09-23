@@ -2,8 +2,23 @@ import { ConfigService } from '@nestjs/config';
 import { ExecutionContext, Logger } from '@nestjs/common';
 import { McpAuthGuard } from './mcp-auth.guard';
 import { AuthService } from '@/modules/auth/auth.service';
+import { JwksClient } from 'jwks-rsa';
+import { createHumanJwtFixture } from '../../../test/fixtures/human-jwt';
 
 describe('McpAuthGuard', () => {
+  const signed = createHumanJwtFixture(
+    'https://example.us.auth0.com/',
+    'https://context-router-api',
+  );
+
+  afterEach(() => jest.restoreAllMocks());
+
+  function useFixtureKey(guard: McpAuthGuard) {
+    const client = (guard as unknown as { jwksClient: JwksClient }).jwksClient;
+    jest
+      .spyOn(client, 'getSigningKey')
+      .mockResolvedValue({ getPublicKey: () => signed.publicKey } as never);
+  }
   const configValues: Record<string, unknown> = {
     'auth.auth0.issuer': 'https://example.us.auth0.com/',
     'auth.auth0.audience': 'https://context-router-api',
@@ -58,6 +73,53 @@ describe('McpAuthGuard', () => {
         'resource_metadata="http://localhost:3001/.well-known/oauth-protected-resource"',
       ),
     );
+  });
+
+  it('authenticates a signed human JWT despite malformed optional hints', async () => {
+    const existing = { userId: 'principal-existing' };
+    const identityResolver = { resolve: jest.fn().mockResolvedValue(existing) };
+    const guard = createGuard({}, identityResolver);
+    useFixtureKey(guard);
+    const { context, response } = createContext({
+      authorization: `Bearer ${signed.token({
+        name: 'Ada ',
+        email: 'not an email',
+        email_verified: false,
+        given_name: 'Ada',
+      })}`,
+    });
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(context.switchToHttp().getRequest().user).toBe(existing);
+    expect(response.status).not.toHaveBeenCalled();
+    expect(identityResolver.resolve).toHaveBeenCalledWith({
+      key: {
+        provider: 'auth0',
+        issuer: 'https://example.us.auth0.com/',
+        subject: 'auth0|human',
+      },
+      profileHints: { givenName: 'Ada' },
+    });
+  });
+
+  it.each([
+    ['issuer', { iss: 'https://other.example.test/' }],
+    ['audience', { aud: 'wrong-audience' }],
+    ['expiration', { exp: 1 }],
+    ['subject', { sub: '' }],
+    ['signature', {}],
+  ])('rejects invalid %s before human resolution', async (reason, claims) => {
+    const identityResolver = { resolve: jest.fn() };
+    const guard = createGuard({}, identityResolver);
+    useFixtureKey(guard);
+    let token = signed.token({ name: 'Ada ', ...claims });
+    if (reason === 'signature')
+      token = `${token.slice(0, token.lastIndexOf('.') + 1)}invalid-signature`;
+    const { context, response } = createContext({
+      authorization: `Bearer ${token}`,
+    });
+    await expect(guard.canActivate(context)).resolves.toBe(false);
+    expect(response.status).toHaveBeenCalledWith(401);
+    expect(identityResolver.resolve).not.toHaveBeenCalled();
   });
 
   it('uses the public MCP server URL for insufficient-scope challenges', () => {

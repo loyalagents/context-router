@@ -1,8 +1,8 @@
 # Step 03: Local Identity
 
-- Status: implemented and locally validated in PR
-  [#162](https://github.com/loyalagents/context-router/pull/162); pending final
-  pushed-head remote evidence and human merge
+- Status: implemented in PR
+  [#162](https://github.com/loyalagents/context-router/pull/162); external-review
+  follow-up validation and final-head evidence recorded in the PR before human merge
 - Program step: `03-local-identity`
 - Target branch: `main`
 - Planning and implementation branch:
@@ -132,3 +132,9 @@ same branch. Fresh architecture/scope and security/lifecycle reviewers approved
 the final base-to-HEAD corrections, and the exact-base local 12-phase migration
 gate passed on 2026-09-23. Final pushed-head standard CI and the dedicated
 migration workflow are recorded in the PR before landing. A human owns merge.
+
+The user-authorized R1 external-review follow-up makes optional profile values
+best-effort while retaining strict identity authority, documents hosted API-token
+email setup and first-creation semantics, and freezes public CA test fixtures.
+Its affected independent review and exact-head gate/CI evidence supplement the
+earlier approvals; see the R1 section of the plan and the PR for final results.

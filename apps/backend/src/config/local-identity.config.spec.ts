@@ -1,4 +1,5 @@
-import { rootCertificates } from 'node:tls';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Client } from 'pg';
 
 import {
@@ -10,7 +11,17 @@ import {
   createLocalIdentityConfiguration,
 } from './local-identity.config';
 
-const TEST_CA = `${rootCertificates[0].trim()}\n`;
+// Public COMODO ECC / NetLock Arany certificates, frozen from Node 24.21.0's
+// bundled roots. Fixed bytes keep the golden independent of CA-bundle ordering.
+// These are parsing/hash fixtures only, not production trust configuration.
+const TEST_CA = readFileSync(
+  resolve(__dirname, '../../test/fixtures/local-identity-ca.pem'),
+  'utf8',
+);
+const OTHER_TEST_CA = readFileSync(
+  resolve(__dirname, '../../test/fixtures/local-identity-other-ca.pem'),
+  'utf8',
+);
 
 function validEnvironment(
   overrides: Record<string, string | undefined> = {},
@@ -134,7 +145,7 @@ describe('createLocalIdentityConfiguration', () => {
     );
     const changedCa = createLocalIdentityConfiguration(
       validEnvironment({
-        LOCAL_DATABASE_TLS_CA_PEM: `${rootCertificates[1].trim()}\n`,
+        LOCAL_DATABASE_TLS_CA_PEM: OTHER_TEST_CA,
       }),
     );
     expect(

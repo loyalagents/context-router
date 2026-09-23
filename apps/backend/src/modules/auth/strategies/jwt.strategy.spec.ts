@@ -2,8 +2,32 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import passport from 'passport';
 import { HUMAN_AUTH_STRATEGY } from '../../../domains/shared/ports/human-auth.constants';
 import { JwtStrategy } from './jwt.strategy';
+import { createHumanJwtFixture } from '../../../../test/fixtures/human-jwt';
 
 describe('JwtStrategy', () => {
+  const signed = createHumanJwtFixture(
+    'https://tenant.auth0.test/',
+    'https://context-router.test',
+  );
+
+  function authenticate(strategy: JwtStrategy, token: string) {
+    // Replace only key retrieval; Passport still verifies the real JWT.
+    Object.assign(strategy, {
+      _secretOrKeyProvider: (
+        _request: unknown,
+        _token: string,
+        done: (error: Error | null, key: string) => void,
+      ) => done(null, signed.publicKey),
+    });
+    return new Promise((resolve, reject) => {
+      strategy.success = resolve;
+      strategy.fail = reject;
+      strategy.error = reject;
+      strategy.authenticate({
+        headers: { authorization: `Bearer ${token}` },
+      } as never);
+    });
+  }
   function createStrategy() {
     const values: Record<string, string> = {
       'auth.auth0.audience': 'https://context-router.test',
@@ -23,6 +47,46 @@ describe('JwtStrategy', () => {
   afterEach(() => {
     passport.unuse(HUMAN_AUTH_STRATEGY);
     jest.restoreAllMocks();
+  });
+
+  it('authenticates a signed human JWT despite malformed optional profile claims', async () => {
+    const { strategy, identityResolver } = createStrategy();
+    const existing = { userId: 'principal-existing' };
+    identityResolver.resolve.mockResolvedValue(existing);
+    await expect(
+      authenticate(
+        strategy,
+        signed.token({
+          name: 'Ada ',
+          email: 'not an email',
+          email_verified: true,
+          given_name: 'Ada',
+        }),
+      ),
+    ).resolves.toBe(existing);
+    expect(identityResolver.resolve).toHaveBeenCalledWith({
+      key: {
+        provider: 'auth0',
+        issuer: 'https://tenant.auth0.test/',
+        subject: 'auth0|human',
+      },
+      profileHints: { givenName: 'Ada' },
+    });
+  });
+
+  it.each([
+    ['issuer', { iss: 'https://other.example.test/' }],
+    ['audience', { aud: 'wrong-audience' }],
+    ['expiration', { exp: 1 }],
+    ['subject', { sub: '' }],
+    ['signature', {}],
+  ])('rejects invalid %s before human resolution', async (reason, claims) => {
+    const { strategy, identityResolver } = createStrategy();
+    let token = signed.token({ name: 'Ada ', ...claims });
+    if (reason === 'signature')
+      token = `${token.slice(0, token.lastIndexOf('.') + 1)}invalid-signature`;
+    await expect(authenticate(strategy, token)).rejects.toBeDefined();
+    expect(identityResolver.resolve).not.toHaveBeenCalled();
   });
 
   it('emits a provider-neutral assertion from verified human token claims', async () => {
