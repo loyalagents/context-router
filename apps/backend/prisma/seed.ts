@@ -1,113 +1,28 @@
-import {
-  PrismaClient,
-  PreferenceValueType,
-  PreferenceScope,
-} from "../src/infrastructure/prisma/generated-client";
+import { PrismaClient } from "../src/infrastructure/prisma/generated-client";
 import {
   PREFERENCE_CATALOG,
-  PreferenceDefinition,
-} from "../src/config/preferences.catalog";
+  type PreferenceDefinition,
+} from "../src/config/preferences-catalog-data";
 import { buildPrismaClientOptions } from "../src/infrastructure/prisma/prisma-client-options";
+import { PostgresCatalogStorage } from "../src/infrastructure/storage/postgres/postgres-catalog-storage";
+import { seedCatalog } from "../src/domains/shared/storage/seed-catalog";
 
 const prisma = new PrismaClient(
-  buildPrismaClientOptions({ databaseUrl: process.env.DATABASE_URL ?? '' }),
+  buildPrismaClientOptions({ databaseUrl: process.env.DATABASE_URL ?? "" }),
 );
 
-const VALUE_TYPE_MAP: Record<string, PreferenceValueType> = {
-  string: PreferenceValueType.STRING,
-  boolean: PreferenceValueType.BOOLEAN,
-  enum: PreferenceValueType.ENUM,
-  array: PreferenceValueType.ARRAY,
-};
-
-const SCOPE_MAP: Record<string, PreferenceScope> = {
-  global: PreferenceScope.GLOBAL,
-  location: PreferenceScope.LOCATION,
-};
-
-export async function seedPreferenceDefinitions(
+/** PostgreSQL operational assembly; the catalog loop depends only on CatalogStorage. */
+export function seedPreferenceDefinitions(
   client: Pick<PrismaClient, "preferenceDefinition"> = prisma,
   catalog: Readonly<Record<string, PreferenceDefinition>> = PREFERENCE_CATALOG,
 ) {
-  console.log("Seeding preference definitions...");
-
-  for (const [slug, def] of Object.entries(catalog)) {
-    const catalogDef = def as PreferenceDefinition;
-
-    const existing = await client.preferenceDefinition.findFirst({
-      where: { namespace: "GLOBAL", slug, archivedAt: null },
-    });
-
-    if (existing) {
-      await client.preferenceDefinition.update({
-        where: { id: existing.id },
-        data: {
-          displayName: catalogDef.displayName ?? null,
-          description: catalogDef.description,
-          valueType: VALUE_TYPE_MAP[catalogDef.valueType],
-          scope: SCOPE_MAP[catalogDef.scope],
-          options: catalogDef.options ?? null,
-          isSensitive: catalogDef.isSensitive ?? false,
-          isCore: true,
-        },
-      });
-    } else {
-      // Warn if any active user defs share this slug (slug collision — allowed, user wins)
-      const collidingCount = await client.preferenceDefinition.count({
-        where: { namespace: { not: "GLOBAL" }, slug, archivedAt: null },
-      });
-      if (collidingCount > 0) {
-        console.warn(
-          `[seed] GLOBAL slug "${slug}" collides with ${collidingCount} active user definition(s). Global definition created; user defs take precedence for affected users.`,
-        );
-      }
-
-      await client.preferenceDefinition.create({
-        data: {
-          namespace: "GLOBAL",
-          slug,
-          ownerUserId: null,
-          displayName: catalogDef.displayName ?? null,
-          description: catalogDef.description,
-          valueType: VALUE_TYPE_MAP[catalogDef.valueType],
-          scope: SCOPE_MAP[catalogDef.scope],
-          options: catalogDef.options ?? null,
-          isSensitive: catalogDef.isSensitive ?? false,
-          isCore: true,
-        },
-      });
-    }
-  }
-
-  console.log(`Seeded ${Object.keys(catalog).length} preference definitions`);
+  return seedCatalog(new PostgresCatalogStorage(client), catalog);
 }
 
 async function main() {
   console.log("Seeding database...");
-
-  // Seed preference definitions (must come before any preference data)
   await seedPreferenceDefinitions();
-
-  // Create sample users
-  const user1 = await prisma.user.upsert({
-    where: { userId: "2f37ad7a-18c1-4d7b-99a7-b02f39de867a" },
-    update: {},
-    create: {
-      userId: "2f37ad7a-18c1-4d7b-99a7-b02f39de867a",
-      email: "john.doe@example.com",
-    },
-  });
-
-  const user2 = await prisma.user.upsert({
-    where: { userId: "8a139263-7a47-4bf5-80ae-2f936e2d7acc" },
-    update: {},
-    create: {
-      userId: "8a139263-7a47-4bf5-80ae-2f936e2d7acc",
-      email: "jane.smith@example.com",
-    },
-  });
-
-  console.log("Seeding completed:", { user1, user2 });
+  console.log("Seeding completed.");
 }
 
 if (require.main === module) {

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import ts from "typescript";
 import { storageDependencyViolations } from "./storage-dependency-check";
@@ -48,7 +48,7 @@ describe("storage dependency graph", () => {
     ).toHaveLength(1);
   });
 
-  it("keeps owned data and mutation ports independent through every imported type", () => {
+  it("keeps all production application, domain and transport code independent through every imported type", () => {
     const backend = resolve(__dirname, "../..");
     const configFile = ts.readConfigFile(
       resolve(backend, "tsconfig.json"),
@@ -59,25 +59,25 @@ describe("storage dependency graph", () => {
       ts.sys,
       backend,
     );
-    const roots = [
-      "domains/shared/storage/storage-types.ts",
-      "domains/shared/storage/storage-unit-of-work.ts",
-      "domains/shared/storage/storage-errors.ts",
-      "modules/preferences/preference/preference.repository.ts",
-      "modules/preferences/preference-definition/preference-definition.repository.ts",
-      "modules/preferences/audit/preference-audit.service.ts",
-      "modules/preferences/audit/snapshot-builders.ts",
-      "modules/user/user.repository.ts",
-      "modules/external-identity/external-identity.repository.ts",
-      "modules/permission-grant/permission-grant.repository.ts",
-      "modules/preferences/location/location.repository.ts",
-      "modules/auth/auth.service.ts",
-      "modules/auth/verified-human-identity.resolver.ts",
-      "modules/reset/user-data-reset.service.ts",
-      "modules/preferences/audit/preference-audit-query.service.ts",
-      "mcp/access-log/mcp-access-log.service.ts",
-      "mcp/access-log/mcp-access-log-query.service.ts",
-    ].map((file) => resolve(backend, "src", file));
+    const applicationRoots = ["common", "domains", "mcp", "modules"];
+    // This operational entrypoint is the explicit local administration composition root.
+    const compositionEntrypoints = new Set([
+      resolve(backend, "src/modules/auth/local-identity-admin.cli.ts"),
+    ]);
+    const collect = (directory: string): string[] =>
+      readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+        const file = resolve(directory, entry.name);
+        if (entry.isDirectory()) return collect(file);
+        return file.endsWith(".ts") &&
+          !file.endsWith(".spec.ts") &&
+          !compositionEntrypoints.has(file)
+          ? [file]
+          : [];
+      });
+    const roots = applicationRoots.flatMap((directory) =>
+      collect(resolve(backend, "src", directory)),
+    );
+    expect(roots.length).toBeGreaterThan(100);
     expect(
       storageDependencyViolations(
         roots,

@@ -26,6 +26,9 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
 
 ## Useful Runbooks
 
+- [Storage boundaries](current/STORAGE_BOUNDARIES.md) — application-owned persistence,
+  transaction lifetimes, PostgreSQL reference behavior, and local identity coordination.
+
 - [Agent workflow and model selection](useful/AGENT_WORKFLOW.md) — risk-based
   agent roles, effort settings, parallelism, review, and speed/assurance tradeoffs.
 - [Local identity administration](useful/LOCAL_IDENTITY_ADMIN.md) — initialize,

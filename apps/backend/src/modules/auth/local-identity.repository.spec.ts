@@ -6,8 +6,8 @@ import {
   LOCAL_IDENTITY_ADVISORY_UNLOCK_SQL,
   type LocalIdentityDatabaseClock,
   type LocalIdentityDatabaseClient,
-  LocalIdentityRepository,
-} from './local-identity.repository';
+  PostgresLocalIdentityCoordination as LocalIdentityRepository,
+} from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
 import { createSyntheticPrincipalEmail } from './principal-identity';
 import type { LocalIdentityState } from './local-identity-state.codec';
 

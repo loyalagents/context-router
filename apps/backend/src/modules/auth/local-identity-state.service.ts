@@ -5,10 +5,7 @@ import {
   LocalIdentityFileStore,
   type OpenLocalIdentityState,
 } from './local-identity-filesystem';
-import {
-  type LocalIdentityDatabaseSession,
-  LocalIdentityRepository,
-} from './local-identity.repository';
+import type { LocalIdentityCoordination, LocalIdentitySession } from '@/domains/shared/storage/local-identity-coordination';
 import {
   type LocalIdentityOperation,
   type LocalIdentityState,
@@ -20,9 +17,7 @@ import {
   encodeLocalIdentityState,
 } from './local-identity-state.codec';
 
-export interface LocalIdentityRepositoryPort {
-  acquire(): Promise<LocalIdentityDatabaseSession>;
-}
+export type LocalIdentityRepositoryPort = LocalIdentityCoordination;
 
 function unsafeRecovery(): never {
   throw new Error('Unsafe local identity recovery state');
@@ -56,7 +51,7 @@ export class LocalIdentityStateService {
 
   constructor(options: {
     fileStore: LocalIdentityFileStore;
-    repository: LocalIdentityRepositoryPort | LocalIdentityRepository;
+    repository: LocalIdentityCoordination;
     randomBytes?: (size: number) => Buffer;
   }) {
     this.fileStore = options.fileStore;
@@ -408,7 +403,7 @@ export class LocalIdentityStateService {
   }
 
   private async withSession<T>(
-    operation: (session: LocalIdentityDatabaseSession) => Promise<T>,
+    operation: (session: LocalIdentitySession) => Promise<T>,
   ): Promise<T> {
     const session = await this.repository.acquire();
     let primaryError: unknown;
@@ -426,7 +421,7 @@ export class LocalIdentityStateService {
     }
   }
 
-  private prepareRoot(session: LocalIdentityDatabaseSession, create: boolean) {
+  private prepareRoot(session: LocalIdentitySession, create: boolean) {
     session.assertHeld();
     return this.fileStore.prepareRoot({
       create,

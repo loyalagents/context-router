@@ -1,6 +1,6 @@
 # Step 04: Storage Boundaries
 
-- Status: approved plan; implementation in progress
+- Status: implementation checkpoints 1–4 complete; final review and aggregate validation pending
 - Program step: `04-storage-boundaries`
 - Target branch: `main`
 - Working branch: `codex/local-migration-04-storage-boundaries`
@@ -25,5 +25,7 @@ Fresh `origin/main` equals the recorded planning base and includes only the alre
 Read [orchestration](../orchestration.md), [decision log](../decision-log.md), [agent execution](../agent-execution.md), [agent workflow](../../../../useful/AGENT_WORKFLOW.md), and all [plan required reading](plan.md#required-reading). Parallel read-only discovery covered consumers/generated types/composition, transaction/identity/recovery, and tests/public consumers/seed/gate implications.
 
 Fresh independent architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved draft A without blockers. Findings and approvals bind to reviewed areas/revisions in the plan. After approval, the sole writer implements tests first, checkpoint by checkpoint, and obtains fresh final full-diff review plus exact-base local and final-head remote evidence.
+
+The implementation and targeted checkpoint evidence are recorded in the [plan](plan.md#checkpoint-evidence). The enduring contracts are in [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md). Remaining closeout work is fresh complete-diff review, exact-base twelve-phase validation, one implementation PR and final-head remote checks.
 
 Step 04 is the only primary step. Steps 05 and 06 remain inactive. No SQLite/database cutover, local model, MCP/browser/UI cutover, installer, LAN mode, historical-data migration, public-contract removal, or generic repository framework belongs here. There is no standalone planning/closeout PR and no automatic merge.

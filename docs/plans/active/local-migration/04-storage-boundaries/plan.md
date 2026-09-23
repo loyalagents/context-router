@@ -1,6 +1,6 @@
 # Step 04: Storage Boundaries
 
-- Document status: approved for implementation; independent draft A reviews complete
+- Document status: implementation checkpoints 1–4 complete; final full-diff review and aggregate validation pending
 - Program step: `04-storage-boundaries`
 - Target branch: `main`
 - Planning base commit: `311f5a09b9b1ee5d43717296fbb49e7d45feda5e`
@@ -73,7 +73,7 @@ No effort downgrade is inferred from a prompt. Mechanical work remains on the co
 
 Activation was local macOS arm64 evidence; Linux candidate CI and hardware/Windows limitations remain as stated in the validation matrix.
 
-## Current Evidence
+## Planning-Base Evidence
 
 The existing repository class names do not imply neutral boundaries. Services call `PrismaService.$transaction`, pass `Prisma.TransactionClient`, construct Prisma filter objects, and inspect `P2002` / `P2034` / `40001`. `prisma-models.ts` owns plain-looking rows but imports generated enum types; DTOs, GraphQL models, validation, snapshots, MCP and document/workflow code import those types transitively. Local identity's nominal repository port returns the concrete PostgreSQL session and its state service imports both concrete classes.
 
@@ -256,6 +256,12 @@ The post-approval changes only record verdicts and activation status; they do no
 - CP3 converted remaining repositories, history filtering adapters, access append, identity/profile and reset behavior; core services now own policies over neutral commands. The expanded dependency graph first failed on remaining provider imports (`checkpoint3-red.log`). New loader/package-alias fixtures first failed (`checkpoint3-scanner-red.log`), then passed after known nonliteral loaders fail closed and resolved provider package paths are classified before external pruning.
 - CP3 evidence: identity/reset/storage/scanner core **120/120, 8 suites, 16.901s** (`checkpoint3-core.log`); full backend unit **754/754, 64 suites, 20.599s** (`checkpoint3-unit.log`). Remaining real-adapter/public/MCP consumer run passed **97/97 in 10 suites** while two E2E suites did not compile because test assembly still used old constructors; only those constructors/imports changed, then recheck passed **30/30, 2 suites, 4.499s** (`checkpoint3-consumers.log`, `checkpoint3-assembly-recheck.log`). Neutral identity fake cases and new identity/reset facet expiry are included in the 97 passing tests. Backend rebuild, seed typecheck and unchanged GraphQL schema pass.
 - Advisory `/root/persistence_review` (Astra Extra High) found no defects in the CP3 identity/profile/reset/UoW behavior at 11-file digest `0eda7958c384bea7a7eaa7aa94b0562551b52addc01341d1e94a64accee8e0c3`; `/root/architecture_review` (Astra Extra High) rechecked and resolved both scanner findings. These are bounded static advisory verdicts, not final full-diff approval. Scope, retries, prechecks, default isolation, JSON distinctions and operation order remain the reviewed contracts. Full production graph coverage, held coordination and production seed are CP4.
+
+- CP4 extracted the separate neutral held-coordination handle and moved the PostgreSQL implementation without changing executable protocol logic. The full graph roots now cover every production file under common/domain/MCP/feature modules with one exact administration-composition entrypoint exclusion; the expanded check first failed on the old local identity dependency. Catalog code now consumes an owned behavior port; the production executable creates no users.
+- CP4 production-entrypoint red evidence first exposed a pre-existing plain-ts-node import ambiguity: the sibling `preferences.catalog.json` resolved before the TypeScript wrapper, yielding no named catalog export. Direct canonical-data import fixed that executable path; the new tests then failed on the two sample users before their removal. This necessary entrypoint correction preserves all catalog content/order and the reviewed per-entry persistence contract; it does not add a migration or change test requirements.
+- CP4 core **190/190, 6 suites, 18.835s** (`checkpoint4-core.log`) covers production seed, existing seed helper, neutral real-adapter coordination, full dependency graph and retained local adapter/state units. The direct-TLS/process/recovery suite passed **2/2, 72.239s** (`checkpoint4-process.log`), including its large session/pool/process recovery case. Final production/helper seed recheck after provider-error normalization passed **13/13, 2 suites, 6.932s** (`checkpoint4-seed-final.log`) using the actual plain-ts-node require-main path. Backend build and seed typecheck pass. Every runner exited normally with code 0; occasional Jest one-second handle notices did not require forceExit or leave a running test process.
+- CP4 advisory `/root/persistence_review` (Astra Extra High) compared the moved adapter and state service against base and found no protocol regression: executable lock/query/deadline/fail-latch/commit/release logic and state ordering are preserved. This is bounded advisory evidence, not final approval. Canonical [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md) carry the full held-handle, callback, ambiguity and terminate/reap guarantees.
+- The registry changes only relocate the PostgreSQL source/sink and record completed sample-user removal with executable evidence, retaining the historical approved disposition/classification. Public GraphQL/REST/MCP/catalog fingerprints, supported modes and all twelve gate phases/timeouts remain unchanged. Standalone registry/consumer checks pass (`baseComparison=skipped`, deliberately not final gate evidence); Markdown links pass across 139 documents. Checkpoints 1–4 implement the approved draft A scope; no material redesign requires new plan approval. Fresh complete-diff review and exact-base/final-head aggregate evidence remain CP5.
 
 ## Parallel Work And Conflict Surfaces
 

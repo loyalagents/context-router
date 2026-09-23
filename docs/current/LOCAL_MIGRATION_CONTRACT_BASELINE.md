@@ -127,8 +127,12 @@ The seed characterization proves the current helper:
 - is non-transactional across catalog entries; and
 - is ID-stable and duplicate-free across repeated successful runs.
 
-The exported definition helper creates no users. The private production seed
-entry point still creates two sample users; removal belongs to Step 04.
+The exported definition helper and actual production seed entrypoint create no
+users. Step 04 removed the sample-user block and added executable tests that run
+the require-main path twice, verify the exact catalog and stable active IDs,
+and preserve existing principals/bindings. The direct canonical-data import also
+fixes the prior plain-ts-node JSON/TypeScript filename ambiguity. See
+[storage boundaries](STORAGE_BOUNDARIES.md) for retained per-entry semantics.
 
 ### Developer Orchestrator Manifest
 

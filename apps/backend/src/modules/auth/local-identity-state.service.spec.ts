@@ -21,7 +21,7 @@ import {
   LocalIdentityFileStore,
   nodeLocalIdentityFileSystem,
 } from './local-identity-filesystem';
-import type { LocalIdentityDatabaseSession } from './local-identity.repository';
+import type { LocalIdentitySession as LocalIdentityDatabaseSession } from '@/domains/shared/storage/local-identity-coordination';
 import {
   createInitializeOperation,
   createRecoveryOperation,

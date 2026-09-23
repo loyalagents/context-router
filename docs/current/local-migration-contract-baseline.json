@@ -440,15 +440,18 @@
     },
     {
       "id": "sample-production-users",
-      "label": "Sample users created by production seed",
+      "label": "Sample users created by production seed (removal completed in Step 04)",
       "disposition": "REMOVE",
       "contractClass": "planned-removal",
       "ownerSteps": [
         "04"
       ],
       "evidence": [
-        "apps/backend/prisma/seed.ts"
-      ]
+        "apps/backend/prisma/seed.ts",
+        "apps/backend/test/integration/seed-production.spec.ts",
+        "docs/current/STORAGE_BOUNDARIES.md"
+      ],
+      "implementationStatus": "removed-in-step04"
     },
     {
       "id": "provider-neutral-principal",
@@ -693,7 +696,7 @@
           ]
         },
         {
-          "path": "apps/backend/src/modules/auth/local-identity.repository.ts",
+          "path": "apps/backend/src/infrastructure/storage/postgres/postgres-local-identity-coordination.ts",
           "fingerprints": [
             "this.client = new Client(configuration);",
             "await this.client.connect();"
@@ -2954,6 +2957,12 @@
       }
     },
     {
+      "path": "apps/backend/src/infrastructure/storage/postgres/postgres-local-identity-coordination.ts",
+      "sinks": {
+        "postgresql-client": 1
+      }
+    },
+    {
       "path": "apps/backend/src/infrastructure/vertex-ai/vertex-ai.service.ts",
       "sinks": {
         "vertex-ai": 1
@@ -2963,12 +2972,6 @@
       "path": "apps/backend/src/mcp/auth/mcp-auth.guard.ts",
       "sinks": {
         "auth0-jwks": 1
-      }
-    },
-    {
-      "path": "apps/backend/src/modules/auth/local-identity.repository.ts",
-      "sinks": {
-        "postgresql-client": 1
       }
     },
     {

@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
 import {
-  LocalIdentityRepository,
+  PostgresLocalIdentityCoordination as LocalIdentityRepository,
   createLocalIdentityDatabaseClient,
   type LocalIdentityDatabaseClient,
   type LocalIdentityDatabaseSession,
-} from "../../../src/modules/auth/local-identity.repository";
+} from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
 import { getPrismaClient } from "../../setup/test-db";
 import { localCoordinationContract } from "./local-coordination.contract";
 

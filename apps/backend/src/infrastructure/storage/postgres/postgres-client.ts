@@ -1,8 +1,8 @@
-import { Prisma } from "@infrastructure/prisma/generated-client";
+import type { Prisma } from "../../prisma/generated-client";
 import {
   StorageConflictError,
   StorageUnavailableError,
-} from "@/domains/shared/storage/storage-errors";
+} from "../../../domains/shared/storage/storage-errors";
 
 /** Call only at a provider boundary, never on an arbitrary application callback exception. */
 export function postgresFailure(error: unknown): Error {

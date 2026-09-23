@@ -4,7 +4,7 @@
 - Current step: `04-storage-boundaries` — Step 03 PR [#162](https://github.com/loyalagents/context-router/pull/162) was human-merged at `1b35c7c513b01a183bb740f0596273baf7620a10` from final tested head `cfe3b63786e729e60fd6f954c172db86487bebd4` after standard CI [35899268852](https://github.com/loyalagents/context-router/actions/runs/35899268852) and dedicated migration gate [35899268881](https://github.com/loyalagents/context-router/actions/runs/35899268881) succeeded. Step 04's clean-base activation gate passed all twelve phases at `311f5a09b9b1ee5d43717296fbb49e7d45feda5e`; its [plan](04-storage-boundaries/plan.md) is independently approved for implementation
 - Coordinator: `/root`, repository-read-only
 - Outcome owner and sole repository writer: `/root/storage_writer` on `codex/local-migration-04-storage-boundaries`
-- Concrete next action: implement the independently approved Step 04 storage/transaction/failure plan and validate one PR for human review
+- Concrete next action: complete fresh full-diff review and exact-base/final-head validation of Step 04 checkpoints 1–4, then leave one implementation PR for human review
 - Review date: 2026-10-07 or Step 04 plan approval, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`

@@ -38,10 +38,13 @@ metadata. Current event types cover:
 - preference-definition creation, update, and archive.
 
 Preference and definition services write the domain change and its audit event
-inside the same Prisma transaction. If the audit insert fails, the domain write
+inside the same application-owned unit of work, implemented by a PostgreSQL
+transaction. If the audit insert fails, the domain write
 rolls back; if the domain write fails, no corresponding audit row commits.
 Snapshots are normalized application views rather than raw Prisma records, so
 history consumers do not need to reconstruct the live row shape.
+The [storage boundary](STORAGE_BOUNDARIES.md) defines callback lifetime, error
+classification and the separate best-effort access append.
 
 The mutation context separates value provenance from mutation provenance:
 

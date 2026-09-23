@@ -4,7 +4,7 @@ import { ValidationPipe } from "@nestjs/common";
 
 import type { LocalIdentityConfiguration } from "../config/local-identity.config";
 import { LocalIdentityFileStore } from "../modules/auth/local-identity-filesystem";
-import { LocalIdentityRepository } from "../modules/auth/local-identity.repository";
+import { PostgresLocalIdentityCoordination } from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
 import { LocalIdentityStateService } from "../modules/auth/local-identity-state.service";
 
 type LocalIdentityPreviewSignal = "SIGINT" | "SIGTERM";
@@ -53,7 +53,7 @@ function createDefaultVerifier(
       stateRoot: configuration.stateRoot,
       databaseTargetId: configuration.databaseTargetId,
     }),
-    repository: new LocalIdentityRepository({
+    repository: new PostgresLocalIdentityCoordination({
       clientConfig: configuration.clientConfig,
     }),
   });
