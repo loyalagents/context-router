@@ -35,6 +35,11 @@ short enough that every migration agent can reread it before starting work.
 Detailed design belongs in the active step's `plan.md`; implemented behavior
 belongs in `docs/current/`, `docs/useful/`, or the relevant package README.
 
+For Steps 04–11, [`agent-execution.md`](agent-execution.md) records agreed
+agent/effort allocations and overlap candidates. Read it at activation along
+with the general [agent workflow guide](../../../useful/AGENT_WORKFLOW.md).
+It does not activate future steps or replace approved plans and merge gates.
+
 ## Goal
 
 Ship an application that a person can install and run without a hosted account
@@ -175,7 +180,7 @@ rather than encode storage, identity, or model behavior themselves.
 ## Branch And Change Policy
 
 - Local migration feature branches start from `main` and merge back through
-  small PRs. Use a short-lived name such as
+  focused PRs. Use a short-lived name such as
   `codex/local-migration-NN-short-outcome` for Codex-owned work.
 - Hosted maintenance feature branches start from and target
   `hosted-v1-maintenance`.
@@ -202,6 +207,14 @@ rather than encode storage, identity, or model behavior themselves.
   read-only; an assigned integrator coordinates landing order for overlapping
   paths.
 
+For Step 04 onward, default to one PR per step with internal testable checkpoints.
+A second PR requires a reviewed plan explaining a concrete independently useful
+or safer landing boundary, supported modes, and recovery. More than two requires
+an explicit human decision before expanding the sequence. Checkpoints, agent
+assignments, review waves, tests, docs, and gate integration are not by themselves
+reasons for separate PRs. Do not create standalone planning or closeout PRs just
+to satisfy process. There is no arbitrary limit on useful reviewers or waves.
+
 ## Agent Workflow
 
 For each numbered step:
@@ -210,6 +223,7 @@ For each numbered step:
    explicitly allowed parallel track.
 2. The planning agent reads `AGENTS.md`, this document, `decision-log.md`, the
    step `README.md`, and every file listed under the step's required reading.
+   For Steps 04–11, include `agent-execution.md` and record the role/effort roster.
 3. The planning agent creates `plan.md` from [`step-template.md`](step-template.md).
    Planning changes do not include product implementation.
 4. Independent reviewers examine architecture, test coverage, compatibility,
@@ -231,6 +245,27 @@ The coordinator resolves disagreement between reviewers. Agent consensus is
 input to a decision, not a reason to leave a step indefinitely unresolved.
 A material implementation deviation pauses the affected checkpoint until the
 plan and its review are updated.
+
+For new step plans, bind approvals to a revision and named contracts/review
+areas. Record change impact and renew affected reviews; do not restart unrelated
+approvals solely because a whole-plan checksum changed. Broaden review when
+impact is uncertain. Preserve existing Step 03 evidence and its approved plan;
+this rule does not retroactively rewrite its review record. Fresh final reviewers
+must cover the complete base-to-candidate diff across the required dimensions.
+Fixes require affected rechecks and an explicit record of unaffected coverage.
+
+A separate coordinator is repository-read-only when another agent is the sole
+writer, including for plans, documentation, staging, and commits. Record any
+sequential ownership transfer before writes resume; never have two writers on
+the same branch/worktree. Requested model/effort settings and actual availability
+are recorded separately. Higher effort does not waive independent review or tests.
+
+Use targeted validation between checkpoints, but retain the exact-base activation
+gate, final full local `pnpm migration:gate`, and applicable final pushed-head
+standard CI and dedicated migration workflow. Record base binding, caller
+integrity, phase results, cleanup, toolchain, and timing. Parallel review/testing
+requires a frozen candidate and isolated resources; changed inputs invalidate
+affected evidence. Do not substitute an earlier green run for final-head evidence.
 
 ## Global PR Gates
 
@@ -322,8 +357,10 @@ Coordinate or serialize changes to these hotspots:
 - frontend authentication and shared API-client configuration
 
 Each worktree uses independent ports, environment overrides, temporary data
-directories, and local database files. Two processes must never share a writable
-local database file.
+directories, and local database files. Independent worktrees or test runs must
+never share a writable local database file. A dedicated concurrency test may
+intentionally use multiple processes against one isolated fixture under one test
+owner, with explicit cleanup; this does not authorize shared product runtimes.
 
 ## Program Completion
 

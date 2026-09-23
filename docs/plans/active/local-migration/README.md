@@ -21,6 +21,12 @@ Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
+For future Steps 04–11, use [`agent-execution.md`](agent-execution.md) for the
+agreed agent/effort allocations, sensitive-work priorities, checkpoint sketches,
+and overlap candidates. This is execution strategy, not step activation or an
+approved implementation plan. General guidance lives in
+[`AGENT_WORKFLOW.md`](../../../useful/AGENT_WORKFLOW.md).
+
 ## Plan, Implement, And Review Step 03
 
 1. Follow the Step 03 [`README.md`](03-local-identity/README.md) and approved

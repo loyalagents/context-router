@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-09-23
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -245,6 +245,22 @@ step plan that resolves them.
   Step 09 owns final paths, keychain/process isolation, backup, and destructive
   identity reset. A reachable local listener remains unauthorized without
   Host/Origin/CSRF/DNS-rebinding evidence.
+
+### LM-016: Risk-weighted agent execution and bounded PR sequencing
+
+- Status: Accepted — user-requested working preferences for Steps 04 onward
+- Decision: use the allocations in [`agent-execution.md`](agent-execution.md),
+  including Astra Ultra coordinators for Steps 04–05, Extra High for critical
+  persistence/security work, and High for routine tasks. Accept slower reasoning
+  on sensitive decisions; improve speed through safe parallelism and less
+  duplicate work. These are project preferences, not model-quality guarantees.
+- Consequence: record role/model/effort and sole-writer ownership at activation.
+  Prefer one PR per step; a second needs a reviewed concrete landing rationale,
+  and more than two needs an explicit human decision. Checkpoints and useful
+  review waves do not become separate PRs. Re-review affected contracts after
+  changes, retain independent final-diff review and exact-head validation, and
+  leave merging to a human. This activates no future step and changes no
+  product, recovery, interface, or migration-gate contract.
 
 ## Deferred Decisions And Owning Steps
 

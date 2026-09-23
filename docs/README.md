@@ -26,6 +26,8 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
 
 ## Useful Runbooks
 
+- [Agent workflow and model selection](useful/AGENT_WORKFLOW.md) — risk-based
+  agent roles, effort settings, parallelism, review, and speed/assurance tradeoffs.
 - [Local identity administration](useful/LOCAL_IDENTITY_ADMIN.md) — initialize,
   rotate, perform terminate-and-reap break-glass recovery, and run the explicit
   non-listening Step 03 preview.

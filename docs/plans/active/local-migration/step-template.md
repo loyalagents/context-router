@@ -10,18 +10,31 @@
 - Depends on:
 - Planning owner:
 - Implementation owner:
+- Coordinator and sole repository writer (identify whether they are the same):
+- Risk profile and rationale:
 - Plan reviewers:
 - Implementation PR(s):
+- Intended PR count and rationale for any split:
 - Supported mode after merge:
 - Last updated: YYYY-MM-DD
 
 Delete instructional text from the copied plan. Keep the plan scoped to the next
 implementable outcome; put later ideas in the owning roadmap step instead.
+Rebase relative links when copying into a step directory: `orchestration.md`
+and `agent-execution.md` become `../orchestration.md` and
+`../agent-execution.md`; the general guide becomes
+`../../../../useful/AGENT_WORKFLOW.md`. Run the repository Markdown link check.
 
-For a multi-PR step, replace the singular metadata with this ownership map. Each
-branch has one sole writer; reviewers are read-only.
+Default to one PR with internal checkpoints. A second PR needs a reviewed,
+concrete independently useful or safer landing boundary; more than two needs an
+explicit human decision under [`orchestration.md`](orchestration.md). Do not split
+planning, implementation, tests, docs, or reviews into PRs merely as process phases.
 
-| PR/checkpoint | Branch and base | Sole writer | Reviewers | Supported mode after merge |
+For an approved multi-PR step, replace the singular metadata with this ownership
+map. Each branch has one sole writer; reviewers and a separate coordinator are
+read-only. The writer owns plans/docs as well as product edits and commits.
+
+| PR | Branch and base | Sole writer | Reviewers | Supported mode after merge |
 | --- | --- | --- | --- | --- |
 |  |  |  |  |  |
 
@@ -34,6 +47,26 @@ supported runtime that will work after merge.
 
 List the exact canonical docs and source/test areas needed for this step. Do not
 require agents to load unrelated historical plans.
+
+For Steps 04–11, include [`agent-execution.md`](agent-execution.md) and the
+[general agent workflow guide](../../../useful/AGENT_WORKFLOW.md). Do not copy
+their full contents into this plan.
+
+## Agent Allocation
+
+Name the agents and use the step's risk-weighted allocation. Verify settings
+before claiming they were used. Record an agreed fallback if unavailable.
+
+| Role/agent | Mandate and owned paths | Requested model/effort | Verified setting or limitation | Independent parallel work |
+| --- | --- | --- | --- | --- |
+| Coordinator |  |  |  |  |
+| Sole writer |  |  |  |  |
+| Read-only reviewers (one row per mandate) |  |  |  |  |
+
+The coordinator may also be the sole writer; otherwise it remains read-only.
+Assign reviewers by architecture, compatibility, tests, security/privacy, scope,
+and any persistence/packaging risks. Add reviewers/waves when justified, not to
+meet an arbitrary count. Identify decisions requiring deeper investigation.
 
 ## Entry Criteria
 
@@ -81,7 +114,8 @@ decision added to `decision-log.md`.
 
 ## Checkpoints
 
-Each checkpoint ends with runnable tests and a reportable result.
+Each checkpoint ends with runnable tests and a reportable result. Map checkpoints
+to the intended PR(s); multiple checkpoints normally belong to the same PR.
 
 ### Checkpoint 1: Contract/test setup
 
@@ -101,8 +135,9 @@ Each checkpoint ends with runnable tests and a reportable result.
 - Exercise restart, failure, and negative paths when applicable.
 - Update canonical docs and remove temporary scaffolding that has expired.
 
-Add or remove checkpoints to fit the step. One step may use multiple PRs when
-each PR is independently useful and has a tested rollback or recovery path.
+Add or remove checkpoints to fit the step without treating them as PR boundaries.
+Any approved split still needs independently useful, supported merge states and
+tested rollback or recovery paths.
 
 ## Validation Matrix
 
@@ -114,6 +149,25 @@ each PR is independently useful and has a tested rollback or recovery path.
 | Frontend/build |  |  | Yes/No |
 | Clean install/process restart |  |  | Yes/No |
 | Persisted-state upgrade/recovery |  |  | Yes/No |
+
+For migration implementation, include the exact-base activation and final full
+local `pnpm migration:gate`, applicable final pushed-head standard CI and the
+dedicated migration workflow, plus targeted checkpoint commands. Record source
+revision, toolchain, base comparison, caller integrity, phases, cleanup, timing,
+and limitations. Do not silently substitute targeted tests for required gates.
+
+## Independent Review And Evidence
+
+Record plan and implementation review dispositions by revision and named
+contracts/areas. For each change, identify affected reviews and tests; carry
+forward unrelated approvals only with an explicit impact assessment. Material
+changes need renewed affected review before implementation continues. Keep
+fresh independent final review of the complete candidate diff across required
+dimensions; an unchanged whole-document checksum is not the approval policy.
+
+| Revision | Reviewer/mandate | Finding and disposition/evidence | Approval or required recheck |
+| --- | --- | --- | --- |
+|  |  |  |  |
 
 ## Parallel Work And Conflict Surfaces
 
