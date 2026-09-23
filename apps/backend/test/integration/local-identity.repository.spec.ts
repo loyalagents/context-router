@@ -674,6 +674,9 @@ async function waitForBlockedLocalIdentityBackend(
 ): Promise<number> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    // Callers may hold a blocking transaction, which otherwise caches activity
+    // from the first poll even while other sessions advance to the lock wait.
+    await client.query('SELECT pg_catalog.pg_stat_clear_snapshot()');
     const result = await client.query(
       `SELECT pid
          FROM pg_catalog.pg_stat_activity
@@ -2517,6 +2520,11 @@ fsp.link = async function (...args) {
           await interruptionBlocker.query('BEGIN');
           await interruptionBlocker.query(
             'LOCK TABLE public.users IN ACCESS EXCLUSIVE MODE',
+          );
+          // Freeze an activity snapshot before the child exists. The observer
+          // must refresh it to see the later lock wait inside this transaction.
+          await interruptionBlocker.query(
+            'SELECT count(*) FROM pg_catalog.pg_stat_activity',
           );
           interruptedProcess = startCapturedProcess({
             executable: process.execPath,

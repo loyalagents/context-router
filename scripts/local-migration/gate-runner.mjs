@@ -1429,8 +1429,12 @@ export async function runPhaseSequence(
       for (let skipped = index + 1; skipped < results.length; skipped += 1) {
         results[skipped].status = "skipped";
       }
+      const outputTail = typeof error?.outputTail === "string"
+        ? redactSecrets(error.outputTail).slice(-16_384)
+        : "";
       const wrapped = new Error(
-        `phase ${phase.id} failed: ${redactSecrets(error?.message ?? error)}`,
+        `phase ${phase.id} failed: ${redactSecrets(error?.message ?? error)}` +
+          (outputTail ? `\nSanitized command output (tail):\n${outputTail}` : ""),
         { cause: error },
       );
       wrapped.phase = phase.id;

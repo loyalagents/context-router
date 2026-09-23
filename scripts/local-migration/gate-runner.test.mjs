@@ -926,6 +926,24 @@ test("phase runner is ordered, fail-fast, sanitized, and always invokes cleanup"
   assert.equal(cleanups, 1);
 });
 
+test("phase failures preserve bounded, redacted command diagnostics", async () => {
+  const failure = new Error("command exited 1");
+  failure.outputTail = `${"old-output\n".repeat(2000)}\nTLS fixture failed\nAuthorization: Bearer diagnostic-secret\n`;
+  await assert.rejects(
+    runPhaseSequence([{ id: "integration", commands: [{}] }], {
+      execute: async () => { throw failure; },
+    }),
+    (error) => {
+      assert.match(error.message, /phase integration failed: command exited 1/);
+      assert.match(error.message, /TLS fixture failed/);
+      assert.doesNotMatch(error.message, /diagnostic-secret/);
+      assert.ok(error.message.length < 17_000);
+      assert.equal(error.cause, failure);
+      return true;
+    },
+  );
+});
+
 test("phase runner reports failed/skipped states and preserves cleanup failure", async () => {
   let summary;
   await assert.rejects(
