@@ -6,15 +6,16 @@
   `6b420ed24e9dd344af8990c9045832990ae1b5ec`; activation preflight and the
   exact-base 12-phase LMBG passed. The user then confirmed existing users may be
   wiped and prioritized future-provider compatibility; four renewed review
-  dimensions approved the materially revised detailed plan
+  dimensions approved the materially revised detailed plan. All five
+  checkpoints are implemented and the exact-base local closeout gate passed in
+  PR [#162](https://github.com/loyalagents/context-router/pull/162)
 - Outcome owner and sole writer: `/root` on
   `codex/local-migration-03-local-identity`
-- Concrete next action: correct the unmerged historical-user checkpoint with a
-  normal follow-up commit and continue the five internal checkpoints in the
-  existing draft PR; leave landing to a human
+- Concrete next action: verify final pushed-head standard CI and the dedicated
+  migration workflow for PR #162, then leave review and landing to a human
 - Review date: 2026-10-16 or the Step 03 human landing decision, whichever comes
   first
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-09-23
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions

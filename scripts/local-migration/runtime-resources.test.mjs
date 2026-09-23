@@ -284,6 +284,7 @@ test("built backend resources and production dependencies are cwd-independent an
       workspace,
       lockfile,
       appModule,
+      graphqlApiModule,
       schemaResource,
     ] = await Promise.all(
       [
@@ -292,6 +293,7 @@ test("built backend resources and production dependencies are cwd-independent an
         "pnpm-workspace.yaml",
         "pnpm-lock.yaml",
         "apps/backend/src/app.module.ts",
+        "apps/backend/src/composition/graphql-api.module.ts",
         "apps/backend/src/mcp/resources/schema.resource.ts",
       ].map((relativePath) =>
         readFile(path.join(repositoryRoot, relativePath), "utf8"),
@@ -317,8 +319,13 @@ test("built backend resources and production dependencies are cwd-independent an
       lockfile,
       /^settings:\n(?:  .+\n)*  injectWorkspacePackages: true$/m,
     );
-    assert.match(appModule, /autoSchemaFile:\s*true/);
+    assert.match(appModule, /createGraphqlApiModule\(\)/);
     assert.doesNotMatch(appModule, /process\.cwd\(\)|schema\.gql/);
+    assert.match(graphqlApiModule, /autoSchemaFile:\s*true/);
+    assert.doesNotMatch(
+      graphqlApiModule,
+      /process\.cwd\(\)|schema\.gql/,
+    );
     assert.doesNotMatch(
       schemaResource,
       /process\.cwd\(\)|readFile|schema\.gql/,

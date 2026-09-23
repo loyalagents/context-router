@@ -1,6 +1,7 @@
 # Context Router
 
-Context Router is a `pnpm` workspace monorepo with:
+Context Router is a `pnpm` workspace monorepo with a retained hosted
+composition and an explicit Step 03 local-identity preview:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
 - `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
@@ -21,7 +22,7 @@ For local-first migration work, start with
 
 ## How The Repo Works
 
-The main request flow looks like this:
+The hosted request flow looks like this:
 
 1. A user signs into the Next.js app through Auth0.
 2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
@@ -69,7 +70,9 @@ Key frontend areas:
 - pnpm 10.25.0 exactly, activated through Corepack
 - Docker with `docker compose`
 - Auth0 issuer/audience values for the backend API and Auth0 credentials for the frontend web app
-- Optional: Google Cloud application default credentials if you want Vertex AI-backed features to work locally
+- Optional: Google Cloud application default credentials if you want the
+  hosted composition's Vertex AI-backed features to work on your development
+  machine
 
 Install dependencies from the repo root:
 
@@ -93,7 +96,7 @@ while the version probe deliberately does not start a shell. Use a validated
 macOS or Linux environment until native Windows executable resolution and gate
 evidence land.
 
-## Environment Setup
+## Hosted Composition Environment Setup
 
 Create the env files the apps expect:
 
@@ -119,14 +122,14 @@ Important frontend env notes:
 - `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` (usually `http://localhost:3000/graphql`) and `NEXT_PUBLIC_BACKEND_URL` (usually `http://localhost:3000`) at the backend. Next captures both public values at build time, so rebuild the web app after changing them.
 - `APP_BASE_URL` is the Auth0 server-runtime origin and should match the frontend server, usually `http://localhost:3002` in development.
 
-### Database Hostname Rule
+### Hosted Development Database Hostname Rule
 
 Use different `DATABASE_URL` hostnames depending on where the backend runs:
 
 - Backend in Docker: use `postgres` as the hostname
 - Backend on your host machine: use `localhost` as the hostname
 
-Example local override file for host-based backend development:
+Example override file for running the hosted backend composition on the host:
 
 ```bash
 cat > apps/backend/.env.local <<'EOF'
@@ -135,7 +138,11 @@ PORT=3000
 EOF
 ```
 
-### Vertex AI Note
+The `localhost` hostname and `?schema=public` query above are for hosted
+development only. The local-identity preview rejects them: it requires literal
+`127.0.0.1`, an explicit port, no URL query, and a verified TLS CA.
+
+### Hosted Vertex AI Note
 
 The root `docker-compose.yml` mounts `~/.config/gcloud/application_default_credentials.json` into the backend container. If you want containerized Vertex AI calls to work, run:
 
@@ -145,7 +152,7 @@ gcloud auth application-default login
 
 ## Running The Repo
 
-### Recommended Local Development Loop
+### Recommended Hosted Development Loop
 
 This is the best workflow if you are actively changing backend code and want hot reload:
 
@@ -189,6 +196,21 @@ the same hosted entrypoint. The tests and staged runtime harnesses inject an
 explicit backend package root and environment so they exercise the same
 configuration contract without depending on the caller's working directory.
 
+### Step 03 Local Identity Preview
+
+The opt-in `local-identity-preview` is a separate compiled backend entrypoint.
+It stores one random principal and an independent bearer credential in an
+explicit private state root, connects only to literal-loopback PostgreSQL over
+direct verified TLS, initializes the real local Nest composition, and never
+calls `listen()`. It has no web UI, HTTP or MCP endpoint, Auth0/JWKS dependency,
+cloud provider call, or usable AI model; both AI ports are bound to a fixed
+unavailable adapter that performs no model I/O.
+
+The preview reads only its explicit state root, database URL, and CA inputs. It
+does not load dotenv files or derive configuration from the working directory
+or home directory. Build, initialize, recover, rotate, and run it only through
+the [local identity administration runbook](docs/useful/LOCAL_IDENTITY_ADMIN.md).
+
 ### Containerized Backend Workflow
 
 Use this if you want the backend to run inside Docker instead of on the host:
@@ -209,7 +231,7 @@ Use this if you want the backend to run inside Docker instead of on the host:
 
 Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding or restarting the container.
 
-## Local URLs And Endpoints
+## Hosted Development URLs And Endpoints
 
 - Frontend dashboard: `http://localhost:3002`
 - Backend GraphQL API: `http://localhost:3000/graphql`

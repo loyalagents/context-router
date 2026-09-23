@@ -84,7 +84,9 @@ email attribute, and timestamps. Human authentication authority is the exact
 provider, issuer, and subject tuple stored in `ExternalIdentity`; email is
 non-unique and never used to find or merge principals. A verified provider
 email can seed the new account and profile memory, but is not ongoing login
-authority. `profile.email` is
+authority. When no verified contact exists, including for the local principal,
+the account receives a deterministic non-routable `.invalid` compatibility
+email; it is neither profile truth nor authentication authority. `profile.email` is
 editable contact and form-fill memory and can differ from the compatibility
 email on `User`.
 

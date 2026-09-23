@@ -45,6 +45,7 @@ import {
   prepareTestAdministration,
   queryDatabase,
 } from "./test-database.mjs";
+import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
 import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -1609,6 +1610,62 @@ export async function runRestartSmoke({
         true,
         "OIDC/JWKS fixture received an unexpected request",
       );
+      const hostileLocalCwd = path.join(secretDirectory, "hostile-local-cwd");
+      await mkdir(hostileLocalCwd, { mode: 0o700 });
+      await writeFile(
+        path.join(hostileLocalCwd, ".env"),
+        "DATABASE_URL=postgresql://hostile:hostile@203.0.113.9:5432/hostile\nAUTH0_ISSUER=https://hostile.invalid/\n",
+        { mode: 0o600 },
+      );
+      const localIdentity = await runLocalIdentitySmoke({
+        repositoryRoot,
+        entrypoint: path.join(
+          repositoryRoot,
+          "apps/backend/dist/local-identity.js",
+        ),
+        cwd: hostileLocalCwd,
+        home: path.join(secretDirectory, "local-identity-home"),
+        temporaryDirectory: path.join(secretDirectory, "local-identity-tmp"),
+        stateParent: secretDirectory,
+        tlsParent: secretDirectory,
+        caPem: await readFile(tls.caCertificate, "utf8"),
+        serverKey: tls.key,
+        serverCertificate: tls.certificate,
+        diagnosticsDirectory: diagnostics,
+        journal,
+        canaries: smokeCanaries,
+        environment,
+        signal,
+        migrateDatabase: async (localDatabaseUrl) => {
+          await runCommand(
+            [
+              "pnpm",
+              "--filter",
+              "backend",
+              "exec",
+              "prisma",
+              "migrate",
+              "deploy",
+            ],
+            {
+              cwd: repositoryRoot,
+              env: buildSmokeToolEnvironment(
+                environment,
+                localDatabaseUrl,
+                runtimeHome,
+                runtimeCorepack,
+              ),
+              timeoutMs: 120_000,
+              logPath: path.join(
+                diagnostics,
+                "local-identity-migrations.log",
+              ),
+              canaries: smokeCanaries,
+              signal,
+            },
+          );
+        },
+      });
       return {
         databaseName: database.databaseName,
         administrationSource: administration.source,
@@ -1617,6 +1674,7 @@ export async function runRestartSmoke({
           { number: 2, port: second.port, principalStable: true, catalogCount: second.catalog.length },
         ],
         jwksFetches: jwksHits.length,
+        localIdentity,
         elapsedMs: Date.now() - startedAt,
       };
     });

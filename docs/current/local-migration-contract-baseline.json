@@ -1,14 +1,89 @@
 {
-  "version": 1,
-  "title": "Local migration hosted-contract baseline",
+  "version": 2,
+  "title": "Local migration supported-mode contract baseline",
   "planningBase": "9b56d38fde927d4e643af89ba45665a439613939",
-  "supportedMode": "hosted-baseline",
+  "supportedModes": [
+    "hosted-baseline",
+    "local-identity-preview"
+  ],
   "contractClasses": [
     "preserved-contract",
     "observed-not-promised",
     "planned-removal"
   ],
-  "migrationRecords": [],
+  "migrationRecords": [
+    {
+      "id": "step03-provider-neutral-local-identity-registry-v2",
+      "contract": "registry",
+      "compatibilityWindow": "The hosted wire contracts and hosted-baseline mode remain supported while local-identity-preview is added; existing main-line user data is intentionally outside the compatibility window.",
+      "migrationGuidance": "Stop old main-line binaries, accept the destructive fresh-data identity migration, and select either the retained hosted composition or the explicit non-listening local identity preview. Future verified providers implement the shared provider, issuer, and subject assertion instead of adding an email-link path.",
+      "rollback": "Before merge, abandon or revert the Step 03 branch to the Step 02 base. After merge, stop Step 03 binaries, revert code and schema to a Step 02-compatible revision, and discard or recreate all Step 03 main-line data; no in-place data downgrade is promised. The preserved hosted-v1-maintenance line is unchanged.",
+      "approval": "reviewed",
+      "fromFingerprint": "sha256:e5b543a9a9ae3cc91853dc9dc9203d39eac4fcbee75a9293ff4c74cf2f38f51b",
+      "toFingerprint": "sha256:a95699b617ed71018a18f80a381a7c4cd5d2eb04fa366eb2c0aaf231810bcdf3",
+      "breakingChanges": [
+        "removed $.capabilities.auth0-profile-copy = {\"contractClass\":\"observed-not-promised\",\"disposition\":\"REPLACE\",\"ownerSteps\":[\"03\",\"08\"]}",
+        "removed $.outboundCalls.auth0-authentication-client = {\"contractClass\":null,\"defaultRuntime\":true,\"disposition\":\"REMOVE\",\"ownerSteps\":[\"03\"]}",
+        "removed $.outboundCalls.auth0-management = {\"contractClass\":null,\"defaultRuntime\":true,\"disposition\":\"REMOVE\",\"ownerSteps\":[\"03\"]}",
+        "removed $.outboundCalls.auth0-test-token-scripts = {\"contractClass\":null,\"defaultRuntime\":false,\"disposition\":\"REMOVE\",\"ownerSteps\":[\"03\"]}",
+        "changed $.outboundCalls.postgresql.ownerSteps[0] from \"04\" to \"03\"",
+        "changed $.outboundCalls.postgresql.ownerSteps[1] from \"05\" to \"04\"",
+        "changed $.outboundCalls.web-auth0-sdk.ownerSteps[0] from \"03\" to \"08\"",
+        "removed $.outboundCalls.web-auth0-sdk.ownerSteps[1] = \"08\""
+      ],
+      "additiveReplacement": {
+        "description": "A provider-neutral exact external-identity key and explicit local-identity-preview mode replace the removed Auth0 profile-copy and backend SDK-client dependencies.",
+        "evidencePath": "docs/plans/active/local-migration/03-local-identity/plan.md"
+      },
+      "consumerEvidence": [
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:external-graphql-consumers",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:external-health-monitors",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:external-document-analysis-clients",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:external-form-fill-clients",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "consumerId": "fp:mcp-claude-auth-setup",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "consumerId": "fp:mcp-codex-auth-setup",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:mcp-fallback-auth-class",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:mcp-unknown-auth-class",
+          "outcome": "migrated"
+        },
+        {
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "consumerId": "fp:mcp-external-unknown",
+          "outcome": "migrated"
+        }
+      ]
+    }
+  ],
   "capabilities": [
     {
       "id": "preference-definition-domain",
@@ -616,6 +691,13 @@
             "buildLocalPrismaClientOptions(",
             "adapter: new PrismaPg(new Pool(poolConfig), {"
           ]
+        },
+        {
+          "path": "apps/backend/src/modules/auth/local-identity.repository.ts",
+          "fingerprints": [
+            "this.client = new Client(configuration);",
+            "await this.client.connect();"
+          ]
         }
       ],
       "destination": "configured PostgreSQL connection or local pool",
@@ -1149,6 +1231,13 @@
           ]
         },
         {
+          "path": "scripts/local-migration/local-identity-smoke.mjs",
+          "fingerprints": [
+            "const child = spawn(executable, args, {",
+            "await commandRunner("
+          ]
+        },
+        {
           "path": "scripts/local-migration/migration-gate.mjs",
           "fingerprints": [
             "const result = await execFileAsync(\"git\", args, {",
@@ -1190,13 +1279,14 @@
           ]
         }
       ],
-      "destination": "the host-configured DNS resolver for operator-supplied PostgreSQL hostnames, validated loopback PostgreSQL, the local Docker daemon, repository-local Git/build/offline-deploy subprocesses, macOS /usr/sbin/lsof listener inspection, ephemeral loopback proxy/backend/web/JWKS/occupied-port fixtures, and enumerated local interface addresses used only for Linux negative reachability probes",
-      "payload": "operator-supplied PostgreSQL administration hostnames to the configured resolver; exact command arguments and isolated process environments; exact owned listener PID/port selectors for macOS native socket-table inspection; synthetic database state, signed tokens, HTTP, GraphQL, and MCP contract probes; stage metadata and hashes; and address/port-only Linux negative reachability probes",
+      "destination": "the host-configured DNS resolver for operator-supplied PostgreSQL hostnames, validated loopback PostgreSQL, the local Docker daemon, repository-local Git/build/offline-deploy/local-identity subprocesses, macOS /usr/sbin/lsof listener inspection, ephemeral loopback proxy/backend/web/JWKS/occupied-port fixtures, a fresh TLS-only local-identity PostgreSQL fixture, and enumerated local interface addresses used only for Linux negative reachability probes",
+      "payload": "operator-supplied PostgreSQL administration hostnames to the configured resolver; exact command arguments and isolated process environments; exact owned listener PID/port selectors for macOS native socket-table inspection; synthetic database and provider-binding state, signed tokens, HTTP, GraphQL, and MCP contract probes; stage metadata and hashes; and address/port-only Linux negative reachability probes",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
         "01",
-        "02"
+        "02",
+        "03"
       ]
     }
   ],
@@ -2876,6 +2966,12 @@
       }
     },
     {
+      "path": "apps/backend/src/modules/auth/local-identity.repository.ts",
+      "sinks": {
+        "postgresql-client": 1
+      }
+    },
+    {
       "path": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
       "sinks": {
         "auth0-jwks": 1
@@ -3132,6 +3228,13 @@
       }
     },
     {
+      "path": "scripts/local-migration/local-identity-smoke.mjs",
+      "sinks": {
+        "spawn": 1,
+        "subprocess-wrapper": 6
+      }
+    },
+    {
       "path": "scripts/local-migration/migration-gate.mjs",
       "sinks": {
         "exec-file": 1,
@@ -3155,7 +3258,7 @@
         "fetch": 1,
         "net-connect": 1,
         "spawn": 1,
-        "subprocess-wrapper": 9
+        "subprocess-wrapper": 10
       }
     },
     {

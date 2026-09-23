@@ -5,7 +5,9 @@
   retention, permission grants, or reset UI
 - Source of truth: `apps/backend/src/modules/reset/**`,
   `apps/backend/test/e2e/reset.e2e-spec.ts`, and
-  `apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx`
+  `apps/backend/test/contracts/local-identity-application.spec.ts`,
+  `apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql`,
+  and `apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx`
 - Last reviewed: 2026-09-22
 
 ## Reset modes and safety semantics
@@ -22,7 +24,20 @@ data. It returns the selected mode and per-table deletion counts.
 
 Despite its name, `FULL_USER_DATA` deliberately preserves account and external
 identity rows so the current login remains usable. Any provider bindings owned
-by that principal are retained with the account.
+by that principal are retained with the account. In the local composition, all
+three modes also preserve the exact `identity.json` bytes, principal, bearer,
+generation, and database target.
+
+## Not The Step 03 Schema Transition
+
+The Step 03 main-line database migration is not a GraphQL reset mode. It is an
+intentional fresh-data transition that deletes every `User` and user-owned row
+before installing the required provider-neutral external-identity key, while
+retaining unrelated global definitions. There is no legacy-user translation,
+email claim, or audit/backfill path.
+
+The local preview does not expose an account-deletion surface. Step 09 owns an
+explicit destructive local-identity reset and its backup/recovery policy.
 
 Every mode runs in one Prisma transaction and deletes preferences before owned
 definitions. Before an advanced reset deletes definitions, it checks for a

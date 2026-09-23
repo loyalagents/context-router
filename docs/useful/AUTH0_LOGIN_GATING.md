@@ -5,7 +5,9 @@
 - Source of truth: Auth0 Dashboard Actions and Triggers, plus `apps/backend/src/modules/auth/verified-human-identity.resolver.ts`
 - Last reviewed: 2026-09-22
 
-This app's production account gate is currently configured outside the repo in Auth0 Actions. Keep exact invited email addresses in Auth0, not in repo docs.
+This hosted-only account gate is configured outside the repo in Auth0 Actions.
+The Step 03 local identity preview has no Auth0 signup, login, or browser
+session. Keep exact invited email addresses in Auth0, not in repo docs.
 
 ## Current Shape
 

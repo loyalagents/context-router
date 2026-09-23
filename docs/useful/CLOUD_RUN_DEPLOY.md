@@ -200,7 +200,7 @@ Set `MCP_SERVER_URL` in `cloudrun.env` to that URL, then redeploy with the same 
 Cloud Run deploys the app, but it does not apply Prisma migrations. Run migrations from a trusted machine that can reach Cloud SQL, usually through the Cloud SQL Auth Proxy:
 
 The Step 03 issuer migration is explicitly excluded from this generic recipe;
-use the warning and linked runbook above when it is pending.
+use the destructive migration warning above when it is pending.
 
 ```bash
 cloud-sql-proxy "${CLOUD_SQL_INSTANCE}" --port 5432

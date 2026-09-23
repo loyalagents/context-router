@@ -1,7 +1,8 @@
 # Step 03: Local Identity
 
-- Status: active; materially revised plan approved after renewed independent
-  review; implementation resumed
+- Status: implemented and locally validated in PR
+  [#162](https://github.com/loyalagents/context-router/pull/162); pending final
+  pushed-head remote evidence and human merge
 - Program step: `03-local-identity`
 - Target branch: `main`
 - Planning and implementation branch:
@@ -17,8 +18,9 @@
 - Supported modes after merge: the existing hosted application and an explicit,
   non-listening `local-identity-preview`; neither is selected by missing
   configuration
-- Implementation PR: one draft PR from the branch above; no automatic merge
-- Last updated: 2026-09-22
+- Implementation PR: one PR from the branch above, prepared for human review;
+  no automatic merge
+- Last updated: 2026-09-23
 
 ## Outcome
 
@@ -121,9 +123,9 @@ architecture, persistence/recovery, compatibility, and security reviews
 approved the same substantive plan checksum `1416604905 48917`. Findings and
 dispositions are recorded in the plan.
 
-The activation checkpoint and draft PR already exist. The pushed historical-
-user implementation will be corrected with a normal follow-up commit rather
-than rewritten or force-pushed. Implementation continues on the same branch.
-Fresh reviewers compare the complete base-to-HEAD
-diff with the revised plan, and final local/remote evidence must be recorded
-before the PR is marked ready for human review. A human owns merge.
+The historical-user implementation was corrected with normal follow-up commits
+rather than rewritten or force-pushed. All five checkpoints are complete on the
+same branch. Fresh architecture/scope and security/lifecycle reviewers approved
+the final base-to-HEAD corrections, and the exact-base local 12-phase migration
+gate passed on 2026-09-23. Final pushed-head standard CI and the dedicated
+migration workflow are recorded in the PR before landing. A human owns merge.

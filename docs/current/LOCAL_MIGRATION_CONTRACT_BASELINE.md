@@ -2,15 +2,17 @@
 
 This document is the human-readable companion to the versioned
 [`local-migration-contract-baseline.json`](local-migration-contract-baseline.json)
-registry. The registry and its referenced fixtures are the executable baseline
-for migration Step 01. They describe the hosted product at planning base
-`9b56d38fde927d4e643af89ba45665a439613939`; they do not declare the hosted
-implementation to be the target local architecture.
+registry. The version-two registry and its referenced fixtures are the
+executable baseline. They retain the hosted product characterized at planning
+base `9b56d38fde927d4e643af89ba45665a439613939` and now name two explicit modes:
+`hosted-baseline` and `local-identity-preview`.
 
-The supported composition remains the NestJS backend and Next.js web app backed
-by PostgreSQL, Auth0, and Vertex AI. Step 01 adds characterization and validation
-plus an opt-in `APP_HOST` test setting. Leaving that setting unset preserves the
-existing listener call shape.
+`hosted-baseline` remains the NestJS backend and Next.js web app backed by
+PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` is an opt-in,
+non-listening backend composition with a private local principal and bearer,
+the temporary Step 03 PostgreSQL adapter, and a fixed unavailable model adapter.
+The database itself is an explicit operator-supplied loopback TLS target;
+missing configuration never selects one mode as a fallback for the other.
 
 ## How To Read The Baseline
 
@@ -150,6 +152,10 @@ Normal hosted operation can contact PostgreSQL, the configured hosted issuer's
 JWKS endpoint, Google Vertex and credential endpoints, and the configured
 web/backend origin. The backend no longer embeds Auth0 Management or
 Authentication SDK clients.
+The local identity preview contacts only literal `127.0.0.1` PostgreSQL over
+direct verified TLS. It performs no Auth0/JWKS, Vertex/model, web, or MCP
+transport call and opens no network listener. Its private bearer authenticates
+only the in-process local human guard; it is not an MCP or browser credential.
 Opt-in tooling can additionally contact an arbitrary orchestrator backend,
 spawn commands with inherited environment, and invoke hosted model/evaluation
 providers. The exact data classes, default status, disposition, and owner are
@@ -206,17 +212,29 @@ user-owned data, and installs the required provider-neutral keys atomically.
 later migration checkpoints. Its lifecycle is checked into
 [`gate-phases.json`](../../scripts/local-migration/gate-phases.json) and validated
 against a strict schema plus semantic ownership, predecessor, retirement, and
-supported-mode rules. Every supported mode must retain an active clean-restart
-smoke. Each mode records active/retired status and at most one successor; a
-retired mode must name exactly one active successor, and a later step adds
-replacement evidence before retiring a hosted-only phase. The version-one
-command allowlist remains intentionally hosted-specific and must be reviewed
-and expanded atomically with the first successor-mode phase set.
+supported-mode rules. Both modes share `contract-baseline`, `documentation`,
+`backend-unit-build`, `backend-database`, `restart-smoke`,
+`packaged-composition-smoke`, and `repository-integrity`.
+`local-orchestrator`, evaluation, web-production, and Harbor phases remain
+hosted-only. Phase IDs, order, commands, timeouts, and workflow budgets are
+unchanged. Every supported mode must retain active contract, build, state,
+restart, and integrity evidence. Each mode records active/retired status and at
+most one successor; a retired mode must name exactly one active successor. The
+command allowlist pins the exact two-mode matrix and rejects added modes,
+phases, or command substitutions.
 The aggregate runner requires a verified merge-base comparison for every
 contract-baseline phase command and fails if the bound artifact directory is
 missing. Direct checker runs remain useful for current-tree validation and
 report `baseComparison=skipped`; aggregate runs report
 `baseComparison=performed` so the comparison cannot disappear silently.
+
+The Step 03 restart and sealed-package evidence starts the compiled local
+preview twice around a credential rotation, preserves one principal and its
+provider bindings, exercises both clean recovery entrypoints, proves fixed
+SIGTERM/SIGINT exits and zero listeners, and leaves the canonical state bytes
+unchanged across each preview run. The packaged run uses the relocated sealed
+backend with a hostile working directory and environment; its journal owns and
+cleans the exact TLS database fixture, private state root, and child processes.
 
 The repository toolchain contract is exact Node.js 24.21.0 and pnpm 10.25.0.
 The tracked `.nvmrc`, strict root engine/package-manager metadata, standard and

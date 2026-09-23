@@ -44,7 +44,12 @@ const repositoryRoot = resolve(__dirname, '../../../..');
 function run(
   executable: string,
   args: string[],
-  options: { cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number } = {},
+  options: {
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    timeout?: number;
+    failureMessage?: string;
+  } = {},
 ): Promise<void> {
   return new Promise((resolveRun, reject) => {
     execFile(
@@ -58,7 +63,12 @@ function run(
       },
       (error) => {
         if (error) {
-          reject(new Error('Local identity TLS fixture command failed'));
+          reject(
+            new Error(
+              options.failureMessage ??
+                'Local identity TLS fixture command failed',
+            ),
+          );
           return;
         }
         resolveRun();
@@ -96,7 +106,11 @@ async function waitForPostgres(containerName: string): Promise<void> {
       await run(
         'docker',
         ['exec', containerName, 'pg_isready', '-U', 'postgres'],
-        { timeout: 5_000 },
+        {
+          timeout: 5_000,
+          failureMessage:
+            'Local identity TLS fixture readiness probe failed',
+        },
       );
       return;
     } catch {
@@ -122,26 +136,33 @@ async function createCertificates(directory: string): Promise<string> {
   const caKey = join(directory, 'ca.key');
   const caCertificate = join(directory, 'ca.crt');
   const serial = join(directory, 'ca.srl');
-  await run('openssl', [
-    'req',
-    '-x509',
-    '-newkey',
-    'rsa:2048',
-    '-nodes',
-    '-sha256',
-    '-days',
-    '2',
-    '-subj',
-    '/CN=Context Router Local Identity Test CA',
-    '-addext',
-    'basicConstraints=critical,CA:TRUE',
-    '-addext',
-    'keyUsage=critical,keyCertSign,cRLSign',
-    '-keyout',
-    caKey,
-    '-out',
-    caCertificate,
-  ]);
+  await run(
+    'openssl',
+    [
+      'req',
+      '-x509',
+      '-newkey',
+      'rsa:2048',
+      '-nodes',
+      '-sha256',
+      '-days',
+      '2',
+      '-subj',
+      '/CN=Context Router Local Identity Test CA',
+      '-addext',
+      'basicConstraints=critical,CA:TRUE',
+      '-addext',
+      'keyUsage=critical,keyCertSign,cRLSign',
+      '-keyout',
+      caKey,
+      '-out',
+      caCertificate,
+    ],
+    {
+      failureMessage:
+        'Local identity TLS fixture CA generation failed',
+    },
+  );
   for (const [prefix, address] of [
     ['server', '127.0.0.1'],
     ['wrong-server', '127.0.0.2'],
@@ -155,39 +176,53 @@ async function createCertificates(directory: string): Promise<string> {
       `subjectAltName=IP:${address}\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n`,
       { mode: 0o600 },
     );
-    await run('openssl', [
-      'req',
-      '-newkey',
-      'rsa:2048',
-      '-nodes',
-      '-sha256',
-      '-subj',
-      '/CN=127.0.0.1',
-      '-keyout',
-      serverKey,
-      '-out',
-      serverRequest,
-    ]);
-    await run('openssl', [
-      'x509',
-      '-req',
-      '-in',
-      serverRequest,
-      '-CA',
-      caCertificate,
-      '-CAkey',
-      caKey,
-      '-CAserial',
-      serial,
-      ...(prefix === 'server' ? ['-CAcreateserial'] : []),
-      '-days',
-      '2',
-      '-sha256',
-      '-extfile',
-      extensions,
-      '-out',
-      serverCertificate,
-    ]);
+    await run(
+      'openssl',
+      [
+        'req',
+        '-newkey',
+        'rsa:2048',
+        '-nodes',
+        '-sha256',
+        '-subj',
+        '/CN=127.0.0.1',
+        '-keyout',
+        serverKey,
+        '-out',
+        serverRequest,
+      ],
+      {
+        failureMessage:
+          'Local identity TLS fixture server request generation failed',
+      },
+    );
+    await run(
+      'openssl',
+      [
+        'x509',
+        '-req',
+        '-in',
+        serverRequest,
+        '-CA',
+        caCertificate,
+        '-CAkey',
+        caKey,
+        '-CAserial',
+        serial,
+        ...(prefix === 'server' ? ['-CAcreateserial'] : []),
+        '-days',
+        '2',
+        '-sha256',
+        '-extfile',
+        extensions,
+        '-out',
+        serverCertificate,
+      ],
+      {
+        failureMessage:
+          'Local identity TLS fixture server certificate signing failed',
+      },
+    );
     await chmod(serverKey, 0o600);
     await Promise.all([unlink(serverRequest), unlink(extensions)]);
   }
@@ -250,6 +285,7 @@ async function startTlsPostgres(options: {
     {
       env: { ...process.env, POSTGRES_PASSWORD: options.password },
       timeout: 30_000,
+      failureMessage: 'Local identity TLS fixture container start failed',
     },
   );
   const mapping = await capture(
@@ -545,6 +581,39 @@ async function waitForCandidate(root: string): Promise<string> {
   );
 }
 
+async function waitForPublishedCandidateStageRemoval(
+  root: string,
+): Promise<string> {
+  const deadline = Date.now() + 30_000;
+  let lastNames: string[] = [];
+  while (Date.now() < deadline) {
+    const names = await readdir(root).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return [];
+      throw error;
+    });
+    lastNames = names;
+    const candidate = names.find(
+      (name) =>
+        name.startsWith('identity.pending-') ||
+        name.startsWith('identity.rotate-'),
+    );
+    if (
+      candidate &&
+      !names.some(
+        (name) =>
+          name.startsWith('identity.stage-') &&
+          name.endsWith('-candidate.tmp'),
+      )
+    ) {
+      return candidate;
+    }
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 25));
+  }
+  throw new Error(
+    `Local identity candidate stage removal was not observed (${lastNames.join(',')})`,
+  );
+}
+
 async function waitForFile(path: string): Promise<void> {
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
@@ -601,8 +670,9 @@ const TEST_COMMIT_BARRIER_KEY = [36_541_119, 1_879_950_421] as const;
 async function waitForBlockedLocalIdentityBackend(
   client: LocalIdentityDatabaseClient,
   queryText: string,
+  timeoutMs = 8_000,
 ): Promise<number> {
-  const deadline = Date.now() + 8_000;
+  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const result = await client.query(
       `SELECT pid
@@ -875,6 +945,7 @@ describe('local identity direct-TLS repository', () => {
         {
           env: { ...process.env, DATABASE_URL: databaseUrl },
           timeout: 90_000,
+          failureMessage: 'Local identity TLS fixture migration failed',
         },
       );
       const configuration = createLocalIdentityConfiguration({
@@ -958,6 +1029,8 @@ describe('local identity direct-TLS repository', () => {
       expect(wrongSanError?.code).toBe('ERR_TLS_CERT_ALTNAME_INVALID');
       await run('docker', ['rm', '-f', wrongSanContainerName], {
         timeout: 30_000,
+        failureMessage:
+          'Local identity wrong-SAN fixture cleanup failed',
       });
       startedContainers.splice(
         startedContainers.indexOf(wrongSanContainerName),
@@ -1475,8 +1548,26 @@ describe('local identity direct-TLS repository', () => {
         }
       }
 
+      const modulesMetadata = await readFile(
+        join(repositoryRoot, 'node_modules/.modules.yaml'),
+        'utf8',
+      );
+      const observedStorePath = modulesMetadata
+        .match(/^storeDir:\s*(.+)$/mu)?.[1]
+        ?.trim();
+      if (
+        !observedStorePath ||
+        resolve(observedStorePath) !== observedStorePath
+      ) {
+        throw new Error('Installed pnpm store was not found');
+      }
+      const observedStore = await realpath(observedStorePath);
+      if (!(await lstat(observedStore)).isDirectory()) {
+        throw new Error('Installed pnpm store was not found');
+      }
       await run('pnpm', ['--filter', 'backend', 'build'], {
         timeout: 90_000,
+        failureMessage: 'Local identity sealed fixture build failed',
       });
       const sealedStage = join(fixtureRoot, 'sealed-stage');
       const deployedBackend = join(sealedStage, 'backend');
@@ -1497,8 +1588,10 @@ describe('local identity direct-TLS repository', () => {
             ...process.env,
             npm_config_offline: 'true',
             npm_config_package_import_method: 'copy',
+            npm_config_store_dir: observedStore,
           },
           timeout: 90_000,
+          failureMessage: 'Local identity sealed fixture deploy failed',
         },
       );
       const compiledEntrypoint = join(
@@ -1730,14 +1823,6 @@ if (mode === "audit") {
 `,
         { mode: 0o600 },
       );
-      const modulesMetadata = await readFile(
-        join(repositoryRoot, 'node_modules/.modules.yaml'),
-        'utf8',
-      );
-      const observedStore = modulesMetadata
-        .match(/^storeDir:\s*(.+)$/mu)?.[1]
-        ?.trim();
-      if (!observedStore) throw new Error('Installed pnpm store was not found');
       await run(
         process.execPath,
         [
@@ -1749,7 +1834,12 @@ if (mode === "audit") {
           fixtureRoot,
           JSON.stringify([repositoryRoot, observedStore]),
         ],
-        { cwd: hostileCwd, env: isolatedEnvironment, timeout: 90_000 },
+        {
+          cwd: hostileCwd,
+          env: isolatedEnvironment,
+          timeout: 90_000,
+          failureMessage: 'Local identity sealed fixture audit failed',
+        },
       );
       await run(
         process.execPath,
@@ -1762,7 +1852,12 @@ if (mode === "audit") {
           fixtureRoot,
           '[]',
         ],
-        { cwd: hostileCwd, env: isolatedEnvironment, timeout: 90_000 },
+        {
+          cwd: hostileCwd,
+          env: isolatedEnvironment,
+          timeout: 90_000,
+          failureMessage: 'Local identity sealed fixture seal failed',
+        },
       );
       const verifySealedLocalIdentityStage = () =>
         run(
@@ -1776,7 +1871,12 @@ if (mode === "audit") {
             fixtureRoot,
             '[]',
           ],
-          { cwd: hostileCwd, env: isolatedEnvironment, timeout: 90_000 },
+          {
+            cwd: hostileCwd,
+            env: isolatedEnvironment,
+            timeout: 90_000,
+            failureMessage: 'Local identity sealed fixture verify failed',
+          },
         );
       await verifySealedLocalIdentityStage();
 
@@ -2097,6 +2197,8 @@ if (mode === "audit") {
         {
           env: { ...process.env, DATABASE_URL: otherDatabaseUrl },
           timeout: 90_000,
+          failureMessage:
+            'Local identity secondary TLS fixture migration failed',
         },
       );
       const otherConfiguration = createLocalIdentityConfiguration({
@@ -2421,16 +2523,18 @@ fsp.link = async function (...args) {
             args: compiledArguments('initialize'),
             cwd: hostileCwd,
             env: cliEnvironment(interruptionRoot),
-            timeoutMs: 25_000,
+            timeoutMs: 60_000,
           });
           spawnedChildren.push(interruptedProcess.child);
-          const candidateName = await waitForCandidate(interruptionRoot);
+          const candidateName =
+            await waitForPublishedCandidateStageRemoval(interruptionRoot);
           interruptedCandidate = decodeLocalIdentityState(
             await readFile(join(interruptionRoot, candidateName)),
           );
           interruptedBackendPid = await waitForBlockedLocalIdentityBackend(
             interruptionBlocker,
             'LOCK TABLE public.users IN SHARE ROW EXCLUSIVE MODE',
+            20_000,
           );
 
           if (interruption === 'SIGINT' || interruption === 'SIGTERM') {

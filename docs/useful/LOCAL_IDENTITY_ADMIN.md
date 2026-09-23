@@ -2,6 +2,10 @@
 
 - Status: useful
 - Read when: initializing, rotating, or recovering the single-user local identity
+- Source of truth: `apps/backend/src/local-identity.ts`,
+  `apps/backend/src/bootstrap/local-identity-preview.ts`,
+  `apps/backend/src/modules/auth/local-identity-*.ts`, and
+  `apps/backend/src/config/local-identity.config.ts`
 - Last reviewed: 2026-09-22
 
 ## Scope
@@ -28,11 +32,12 @@ The command reads exactly these inputs:
 - `LOCAL_DATABASE_TLS_CA_PEM`: one CA certificate whose server certificate
   verifies the loopback IP SAN.
 
-The administrative commands are `initialize`, `rotate`,
-`recover-initialize`, and `recover-rotation`.
-Successful output contains only the operation and generation; failures use a
-fixed diagnostic and do not print credentials, principals, URLs, SQL, or
-causes.
+The exactly four administrative commands are `initialize`, `rotate`,
+`recover-initialize`, and `recover-rotation`. `preview` is a separate runtime
+entrypoint, not an administrative mutation.
+Successful output is one fixed JSON record containing only the record type,
+version, operation, `ok` status, and generation; failures use a fixed diagnostic
+and do not print credentials, principals, URLs, SQL, or causes.
 
 ## Recovery Is Break-Glass
 
@@ -61,6 +66,10 @@ For a normal credential rotation, with no recovery artifacts present, run:
 pnpm --filter backend local-identity rotate
 ```
 
+Rotation preserves the principal, database target, account email, and every
+provider binding attached to that principal. It changes only the local bearer
+and generation.
+
 The recovery command takes the database advisory lock and validates the durable
 operation/candidate protocol. It fails closed on a wrong target, corrupt or
 unknown artifact, unrecognized inode relationship, wrong principal, multiple
@@ -72,3 +81,29 @@ After initialization or rotation succeeds, the state root contains exactly
 mode `0700`. A successful `recover-initialize` with `generation: null` instead
 means no database identity was committed and the pre-initialization state root
 remains empty.
+
+## Run The Non-Listening Preview
+
+After `initialize` succeeds, start the preview with the same three explicit
+inputs:
+
+```sh
+pnpm --filter backend local-identity preview
+```
+
+The process preflights the canonical state and exact database ownership,
+initializes the real local Nest composition with `init()`, verifies state and
+database again, emits only the fixed readiness record, and waits for
+`SIGINT`/`SIGTERM`. It never calls `listen()` and has no HTTP, GraphQL-over-the-
+network, MCP, OAuth, web, or model endpoint. Shutdown is bounded and returns
+the conventional signal exit code.
+
+After a successful quiescent operation, the raw bearer exists only in the
+current-UID-owned `0600` `identity.json`. During an administrative operation,
+private `0600` candidate or stage artifacts can transiently contain the proposed
+credential; a crash can leave those artifacts for the matching recovery command
+to reconcile. Never copy any state artifact into argv, environment variables,
+logs, issue text, or command output. Final state location, keychain integration,
+backup/restore, and an explicit destructive identity reset belong to Step 09.
+Another process with the same UID, root access, a debugger, or a compromised
+runtime/kernel/hardware remains outside this preview's protection boundary.

@@ -27,4 +27,5 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
 ## Useful Runbooks
 
 - [Local identity administration](useful/LOCAL_IDENTITY_ADMIN.md) — initialize,
-  rotate, and perform terminate-and-reap break-glass recovery.
+  rotate, perform terminate-and-reap break-glass recovery, and run the explicit
+  non-listening Step 03 preview.

@@ -844,7 +844,7 @@ test("decision replacement evidence resolves only exact accepted repository reco
   }
 });
 
-test("approved command policy rejects active phases outside the sole version-one mode", async () => {
+test("approved command policy rejects modes and phases outside the exact dual-mode matrix", async () => {
   const manifest = JSON.parse(
     await readFile(
       new URL("./gate-phases.json", import.meta.url),
@@ -868,7 +868,7 @@ test("approved command policy rejects active phases outside the sole version-one
     predecessors: [injected.phases.at(-1).id],
   });
   const errors = validateApprovedPhaseCommands(injected);
-  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline")));
+  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline and local-identity-preview")));
   assert.ok(errors.some((error) => error.includes("outside the approved")));
 });
 

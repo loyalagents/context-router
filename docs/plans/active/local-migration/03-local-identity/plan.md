@@ -1,6 +1,8 @@
 # Step 03: Local Identity
 
-- Document status: approved for implementation after renewed independent review
+- Document status: implemented and locally validated in PR
+  [#162](https://github.com/loyalagents/context-router/pull/162); pending final
+  pushed-head remote evidence and human merge
 - Program step: `03-local-identity`
 - Target line: `main`
 - Planning and implementation branch:
@@ -17,7 +19,7 @@
   automatic merge
 - Supported modes after merge: retained `hosted-baseline` and explicit,
   non-listening `local-identity-preview`
-- Last updated: 2026-09-22
+- Last updated: 2026-09-23
 
 ## Outcome
 
@@ -40,9 +42,9 @@ before canonical publication. Rotation atomically replaces the ready state
 while preserving the principal. The local preview initializes the real Nest
 composition with `init()` and never calls `listen()`.
 
-The already-pushed Checkpoint 2 commit implemented a historical-user migration
-path before the fresh-data requirement was clarified. It will be corrected by
-a normal follow-up commit; branch history will not be rewritten or force-pushed.
+The earlier Checkpoint 2 historical-user implementation remains visible in
+branch history and was corrected by normal follow-up commits; history was not
+rewritten or force-pushed.
 
 ## Required Reading
 
@@ -95,10 +97,11 @@ a normal follow-up commit; branch history will not be rewritten or force-pushed.
 - The Step 02 package already provides sealed relocatable backend output and
   bounded restart/package evidence. Step 03 adds ordinary compiled Node
   entrypoints, not a native launcher or alternate package system.
-- Checkpoint 1 characterization is committed. Checkpoint 2's pushed historical
-  link/audit implementation is unmerged and may be removed without preserving
-  its behavior. Checkpoint 3 work remains uncommitted and is being realigned
-  with the revised provider/data contract before it becomes supported.
+- Checkpoint 1 activation and characterization, the corrected provider-neutral
+  fresh-data Checkpoint 2, crash-safe local state/admin Checkpoint 3, real local
+  composition/authentication Checkpoint 4, and Checkpoint 5 gate,
+  documentation, and final review are complete. Final pushed-head remote
+  evidence and human merge remain.
 
 ## Scope
 
@@ -488,23 +491,34 @@ contract/build/state/restart/integrity classes:
 
 The relocated sealed-package composition smoke executes `initialize`, both
 recovery commands, `rotate`, and `preview` without source fallback. Restart
-evidence covers two preview starts with one principal, provider-binding
-coexistence, old/new rotation behavior, pre/post-commit kills, deadline and
-SIGINT/SIGTERM handling, fresh-client lock release, and exact cleanup. The
-outer gate owns and journals the exact TLS fixture database, private state root,
-and child process group, then proves no owned database/process/file/listener
-remains on success, failure, timeout, or signal. No phase, workflow job, timeout
-increase, or listener is added.
+and packaged-smoke evidence covers two preview starts with one principal,
+provider-binding coexistence, old/new rotation behavior, SIGINT/SIGTERM
+handling, and exact cleanup. Combined database integration plus restart/package
+evidence covers pre/post-commit kills, deadlines, and fresh-client lock release.
+Each smoke journal owns its exact TLS fixture database, private state root, and
+child process groups; the outer gate validates that lifecycle evidence and
+proves no owned database/process/file/listener remains on success, failure,
+timeout, or signal. The package proof retains the web manifest's existing
+Auth0 dependency and exercises the isolated staged Auth0 routes; it does not
+require that Next expose a bundled server dependency as a loose `node_modules`
+entry, and it does not change web bundling configuration. No phase, workflow
+job, product deadline, gate timeout, or listener is added. One bounded
+integration-test observer window and its supervising child watchdog are wider
+so the harness begins its exact database-lock observation after the candidate
+stage unlink; the production database deadline remains unchanged.
 
 ## Checkpoints
 
 ### Checkpoint 1: Activation and characterization
 
-**Status:** committed. Record exact base/ownership/gate evidence and pin current
+**Status:** committed (`69ada2d`, `d92bcbf`). Record exact base/ownership/gate evidence and pin current
 identity, public contract, reset, M2M, package, and consumer behavior without
 product changes.
 
 ### Checkpoint 2: Correct provider seam and fresh-data adapter
+
+**Status:** committed through corrective commit `1e07ea0`; the transparent
+branch history also contains superseded `162ad3c` and planning pivot `9a71a36`.
 
 **Tests first:** replace historical migration expectations with fresh and
 destructive-upgrade fixtures; generic assertion/resolver unit and real-DB race
@@ -529,6 +543,8 @@ build and relocated deployed-backend dependency scan, hosted restart, and
 unchanged GraphQL/REST/MCP wire contracts.
 
 ### Checkpoint 3: Crash-safe local state and admin CLI
+
+**Status:** committed (`412c1c6`).
 
 **Tests first:** canonical codec; config/TLS target; owner/type/mode/symlink/
 hardlink/ancestry/rebind protections; injected clocks and every query including
@@ -555,6 +571,9 @@ relocation scan, backend build, and one canonical file after success.
 
 ### Checkpoint 4: Real local composition and authentication
 
+**Status:** committed (`21c6c14`) after independent architecture, security,
+and test reviews approved the staged diff.
+
 **Tests first:** real-module correct/missing/wrong/rotated bearer; `me` and
 self-only `user(id)`; REST guard; exact SDL; provider-binding coexistence;
 unavailable model; reset byte stability; no MCP/Auth0/hosted-model imports or
@@ -567,6 +586,10 @@ and local schema comparison, real DB/state tests, build, hosted restart, and
 relocated preview smoke.
 
 ### Checkpoint 5: Gate, documentation, review, and PR closeout
+
+**Status:** complete locally. The exact-base 12-phase migration gate passed on
+2026-09-23 after final architecture/scope and security/lifecycle review. Final
+pushed-head remote evidence and human merge remain external closeout steps.
 
 Update the exact registry/gate schema and active mode, lasting identity/reset/
 operator/outbound docs, and outer cleanup journal. Run fresh read-only reviews
@@ -688,10 +711,12 @@ are invalid for the changed legacy-data and local-state contracts.
 | Persistence/concurrency/recovery/gate | Approved the locked destructive migration, exact-key transaction, durable operation/candidate protocol, complete recovery enumeration, terminate/reap fencing, and gate mapping on checksum `1416604905 48917`. | Approved |
 | Compatibility/consumers/interface evolution | Approved the intentional data incompatibility, email-only public compatibility, generic provider adapter, Auth0/M2M dispositions, and retained wire consumers on checksum `1416604905 48917`. | Approved |
 | Security/privacy/credentials/local threats | Approved provider trust boundaries, secret handling, destructive transition, local filesystem/database controls, quiescent recovery, no-listener composition, and package evidence on checksum `1416604905 48917`. | Approved |
+| Final implementation architecture/scope review | Approved the provider-neutral fresh-data implementation, scoped interruption-test synchronization, unchanged production deadlines, and bundled-web compatibility proof without changing Next/Auth0 runtime semantics. | Approved |
+| Final implementation security/lifecycle/gate review | Approved exact recovery semantics for all eight local resources, credential-free listener inspection, bounded EOF/process-group reap, provider-binding evidence, and outer gate validation after focused tests passed. | Approved |
 
-All four renewed dimensions approved the same substantive checksum. The status
-and approval rows above are the only later plan edits; implementation may
-resume under this contract.
+All four renewed plan dimensions approved the same substantive checksum. Fresh
+final implementation reviewers then approved the complete corrections recorded
+above. No blocking review finding remains.
 
 ## Exit Criteria
 

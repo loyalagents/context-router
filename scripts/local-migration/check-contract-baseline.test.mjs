@@ -621,7 +621,7 @@ test("packaging smoke has exact derived consumers, references, sinks, and curate
   const outbound = registry.outboundCalls.find(
     ({ id }) => id === "migration-gate-loopback-probes",
   );
-  assert.deepEqual(outbound.ownerSteps, ["01", "02"]);
+  assert.deepEqual(outbound.ownerSteps, ["01", "02", "03"]);
   const packagingOutbound = outbound.sources.find(
     ({ path: sourcePath }) => sourcePath === packagingPath,
   );
@@ -746,6 +746,45 @@ test("validateBaselineDocument rejects unowned defers and duplicate ids", () => 
   assert.ok(errors.some((error) => error.includes("DEFER")));
   assert.ok(
     errors.some((error) => error.includes("missing package classification")),
+  );
+});
+
+test("registry mode declarations are versioned, exclusive, and unique", () => {
+  const minimal = {
+    capabilities: [],
+    contracts: {},
+    outboundCalls: [],
+    packages: [],
+    consumers: [],
+    dynamicConsumers: [],
+    fingerprintConsumers: [],
+    externalClients: [],
+    contractReferences: [],
+    outboundSinkInventory: [],
+    migrationRecords: [],
+  };
+  assert.ok(
+    validateBaselineDocument({
+      ...minimal,
+      version: 1,
+      supportedMode: "hosted-baseline",
+      supportedModes: ["hosted-baseline"],
+    }).some((error) => error.includes("version-one registry must not use supportedModes")),
+  );
+  assert.ok(
+    validateBaselineDocument({
+      ...minimal,
+      version: 2,
+      supportedMode: "hosted-baseline",
+      supportedModes: ["hosted-baseline", "local-identity-preview"],
+    }).some((error) => error.includes("not supportedMode")),
+  );
+  assert.ok(
+    validateBaselineDocument({
+      ...minimal,
+      version: 2,
+      supportedModes: ["hosted-baseline", "hosted-baseline"],
+    }).some((error) => error.includes("unique strings")),
   );
 });
 
@@ -2855,24 +2894,42 @@ test("derived references cover maintained root, eval, and configuration runbooks
   }
 });
 
-test("registry supported mode must name an active executable gate mode", () => {
+test("registry supported modes must exactly name active executable gate modes", () => {
   const manifest = {
     supportedModes: [
       { id: "hosted-baseline", status: "active" },
+      { id: "local-identity-preview", status: "active" },
       { id: "legacy", status: "retired" },
     ],
   };
   assert.deepEqual(
-    validateRegistryMode({ supportedMode: "hosted-baseline" }, manifest),
+    validateRegistryMode(
+      {
+        version: 2,
+        supportedModes: ["hosted-baseline", "local-identity-preview"],
+      },
+      manifest,
+    ),
     [],
   );
-  for (const unsupported of ["hosted", "legacy"]) {
+  for (const supportedModes of [
+    ["hosted-baseline"],
+    ["hosted-baseline", "legacy"],
+    ["local-identity-preview", "hosted-baseline"],
+    ["hosted-baseline", "local-identity-preview", "hosted"],
+  ]) {
     assert.ok(
-      validateRegistryMode({ supportedMode: unsupported }, manifest).some(
-        (error) => error.includes("active gate mode"),
+      validateRegistryMode({ version: 2, supportedModes }, manifest).some(
+        (error) => error.includes("active gate modes"),
       ),
     );
   }
+  assert.ok(
+    validateRegistryMode(
+      { version: 2, supportedMode: "hosted-baseline" },
+      manifest,
+    ).some((error) => error.includes("supportedModes")),
+  );
 });
 
 test("automatic outbound inventory pins sink paths, kinds, counts, and classifications", () => {
@@ -2888,6 +2945,7 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
           "await commandRunner(['docker', 'info']);",
           "await execFileAsync('git', ['status']);",
           "new (pgFor(root).Client)({});",
+          "new Client(configuration);",
         ].join("\n"),
       ],
       ["python.py", "subprocess.run(command, check=True)"],
@@ -2931,7 +2989,7 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
     {
       "dns-lookup": 1,
       "exec-file": 1,
-      "postgresql-client": 1,
+      "postgresql-client": 2,
       "subprocess-wrapper": 2,
     },
   );

@@ -6,7 +6,7 @@
 - Source of truth: `apps/backend/src/modules/preferences/form-fill/**`,
   `apps/backend/test/e2e/form-fill.e2e-spec.ts`, and
   `apps/web/app/dashboard/form-fill/FormFillClient.tsx`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 ## Current form-fill contract
 
@@ -30,6 +30,11 @@ values and descriptions, resolved form facts, and any supplied field policies
 are included in the structured-model prompt. The current provider is Vertex AI.
 The flow is therefore not fully local or private even though it does not send
 the PDF bytes themselves.
+
+This describes the hosted composition. The Step 03 local identity preview
+binds the AI ports to a fixed unavailable adapter that performs no model I/O,
+and the preview has no listener. It is composition evidence, not a usable local
+form-fill surface; Step 06 owns the local model implementation.
 
 ### Supported fields and policies
 

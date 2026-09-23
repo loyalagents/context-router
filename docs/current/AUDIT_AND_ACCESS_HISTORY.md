@@ -8,7 +8,7 @@
   `apps/backend/src/mcp/access-log/**`, preference and definition services,
   `apps/backend/test/e2e/audit-history.e2e-spec.ts`, and
   `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 The application keeps three related but distinct records:
 
@@ -19,6 +19,12 @@ The application keeps three related but distinct records:
 Do not treat one as a substitute for another. An unsuccessful MCP mutation can
 have an access event without a domain audit event, while a GraphQL mutation can
 have a domain audit event without an MCP access event.
+
+The Step 03 destructive fresh-data schema transition intentionally carries no
+historical user's mutation or access history forward. Its local preview
+composes the GraphQL history resolvers over its configured loopback TLS
+database through the temporary Step 03 PostgreSQL adapter but exposes no
+listener or MCP transport, so it creates no local MCP access event.
 
 ## Mutation audit events and provenance
 

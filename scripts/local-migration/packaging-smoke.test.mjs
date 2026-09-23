@@ -492,6 +492,38 @@ test("every packaging subprocess has materializer policy or a reviewed helper ce
       `missing reviewed Docker helper command fragment: ${fragment}`,
     );
   }
+
+  const localIdentitySource = await readFile(
+    path.join(repositoryRoot, "scripts/local-migration/local-identity-smoke.mjs"),
+    "utf8",
+  );
+  assert.match(
+    localIdentitySource,
+    /import \{ spawn \} from "node:child_process";/,
+  );
+  assert.equal(
+    [...localIdentitySource.matchAll(/\bspawn\s*\(/g)].length,
+    1,
+    "the local identity helper must retain one reviewed process launcher",
+  );
+  assert.equal(
+    [...localIdentitySource.matchAll(/\bcommandRunner\s*\(/g)].length,
+    6,
+    "the local identity helper Docker command census changed",
+  );
+  for (const fragment of [
+    '"context",\n        "inspect",',
+    '"image", "inspect", image',
+    '"run",',
+    '"container",\n          "inspect",',
+    '"exec",\n            "--user",',
+    '"rm", "--force", containerId',
+  ]) {
+    assert.ok(
+      localIdentitySource.includes(fragment),
+      `missing reviewed local identity Docker command fragment: ${fragment}`,
+    );
+  }
 });
 
 test("direct caller integrity covers ignored outputs and every copied input tree", async () => {

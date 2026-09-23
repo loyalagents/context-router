@@ -6,6 +6,11 @@
 
 ## Purpose
 
+In this runbook, "local backend" means the hosted-baseline composition running
+on the development machine. The Step 03 `local-identity-preview` has no HTTP or
+MCP listener, excludes the developer orchestrator, and cannot serve these
+commands.
+
 This is a quick command reference for:
 
 - getting a real user token from the local web app
