@@ -603,6 +603,39 @@ describe('MCP Access Log (e2e)', () => {
     }
   });
 
+  it("keeps a committed mutation and its audit when access logging fails", async () => {
+    const failure = jest
+      .spyOn(accessLogService, "record")
+      .mockRejectedValueOnce(new Error("access log unavailable"));
+    try {
+      const response = await mutatePreferences(
+        {
+          operation: "SET_PREFERENCE",
+          preference: { slug: "system.response_length", value: '"brief"' },
+        },
+        mcpHeaders(TEST_CLIENT_IDS.codex),
+      );
+      expect(response.status).toBe(200);
+      expect(response.body.result?.isError).not.toBe(true);
+      expect(failure).toHaveBeenCalledTimes(1);
+      const row = await prisma.preference.findFirstOrThrow({
+        where: { userId: testUser.userId },
+      });
+      expect(row.value).toBe("brief");
+      const events = await prisma.preferenceAuditEvent.findMany({
+        where: { userId: testUser.userId },
+      });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        eventType: AuditEventType.PREFERENCE_SET,
+        targetId: row.id,
+      });
+      await expect(prisma.mcpAccessEvent.count()).resolves.toBe(0);
+    } finally {
+      failure.mockRestore();
+    }
+  });
+
   it('does not fail resource reads or mask resource errors when access logging fails', async () => {
     const recordSpy = jest
       .spyOn(accessLogService, 'record')
