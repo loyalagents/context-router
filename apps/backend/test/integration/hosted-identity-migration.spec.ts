@@ -271,6 +271,8 @@ describe('fresh external identity migration', () => {
           CURRENT_TIMESTAMP
         )
       `);
+      // Observe the expected termination immediately; assert on the original promise below.
+      void pendingWrite.catch(() => undefined);
 
       let blockers: number[] = [];
       for (let attempt = 0; attempt < 100; attempt += 1) {
