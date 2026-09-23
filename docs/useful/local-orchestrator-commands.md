@@ -2,7 +2,7 @@
 
 - Status: useful
 - Read when: running the local orchestrator against a local backend
-- Last reviewed: 2026-04-29
+- Last reviewed: 2026-09-22
 
 ## Purpose
 
@@ -14,10 +14,9 @@ This is a quick command reference for:
 - applying suggestions for real
 - verifying what was written
 
-Important:
-
-- `./get-test-token.sh` returns an M2M token and writes to a mock user
-- to write to your actual user, use the token from the web app debug route instead
+The repository's API test scripts require an explicit bearer token (argument or
+`CONTEXT_ROUTER_BEARER_TOKEN`); they do not read provider credentials or mint a
+token. To write to your actual user, use the token from the web app debug route.
 
 ## Assumptions
 

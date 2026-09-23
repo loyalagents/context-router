@@ -1,7 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { ExternalIdentity } from "@infrastructure/prisma/prisma-models";
-import { PrismaService } from "@infrastructure/prisma/prisma.service";
-import { hasIdentityLinkClaimMetadata } from "../auth/hosted-identity-policy";
+import { Injectable, Logger } from '@nestjs/common';
+import type { ExternalIdentity } from '@infrastructure/prisma/prisma-models';
+import { PrismaService } from '@infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class ExternalIdentityRepository {
@@ -14,7 +13,7 @@ export class ExternalIdentityRepository {
     issuer: string,
     providerUserId: string,
   ): Promise<ExternalIdentity | null> {
-    this.logger.debug("Looking up an external identity");
+    this.logger.debug('Looking up an external identity');
     return this.prisma.externalIdentity.findUnique({
       where: {
         provider_issuer_providerUserId: {
@@ -27,10 +26,10 @@ export class ExternalIdentityRepository {
   }
 
   async findByUserId(userId: string): Promise<ExternalIdentity[]> {
-    this.logger.debug("Looking up external identities for a user");
+    this.logger.debug('Looking up external identities for a user');
     return this.prisma.externalIdentity.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -41,10 +40,7 @@ export class ExternalIdentityRepository {
     providerUserId: string;
     metadata?: any;
   }): Promise<ExternalIdentity> {
-    if (hasIdentityLinkClaimMetadata(data.metadata)) {
-      throw new Error("Protected identity link metadata");
-    }
-    this.logger.debug("Creating an external identity");
+    this.logger.debug('Creating an external identity');
     return this.prisma.externalIdentity.create({
       data: {
         userId: data.userId,
@@ -62,35 +58,16 @@ export class ExternalIdentityRepository {
       metadata?: any;
     },
   ): Promise<ExternalIdentity> {
-    if (hasIdentityLinkClaimMetadata(data.metadata)) {
-      throw new Error("Protected identity link metadata");
-    }
-    this.logger.debug("Updating external identity metadata");
-    return this.prisma.$transaction(async (transaction) => {
-      const current = await transaction.externalIdentity.findUnique({
-        where: { id },
-      });
-      if (hasIdentityLinkClaimMetadata(current?.metadata)) {
-        throw new Error("Protected identity link metadata");
-      }
-      return transaction.externalIdentity.update({
-        where: { id },
-        data,
-      });
+    this.logger.debug('Updating external identity metadata');
+    return this.prisma.externalIdentity.update({
+      where: { id },
+      data,
     });
   }
 
   async delete(id: string): Promise<ExternalIdentity> {
-    this.logger.debug("Deleting an external identity");
-    return this.prisma.$transaction(async (transaction) => {
-      const current = await transaction.externalIdentity.findUnique({
-        where: { id },
-      });
-      if (hasIdentityLinkClaimMetadata(current?.metadata)) {
-        throw new Error("Protected identity link metadata");
-      }
-      return transaction.externalIdentity.delete({ where: { id } });
-    });
+    this.logger.debug('Deleting an external identity');
+    return this.prisma.externalIdentity.delete({ where: { id } });
   }
 
   async linkIdentityToUser(
@@ -100,7 +77,7 @@ export class ExternalIdentityRepository {
     providerUserId: string,
     metadata?: any,
   ): Promise<ExternalIdentity> {
-    this.logger.debug("Linking an external identity to a user");
+    this.logger.debug('Linking an external identity to a user');
     return this.create({
       userId,
       provider,

@@ -11,7 +11,6 @@ export function createMcpConfiguration(
   environment: RuntimeEnvironment = process.env,
   defaultAllowedOrigins: string[] = resolveCorsOrigins(environment),
 ) {
-  const auth0Domain = environment.AUTH0_DOMAIN;
   const auth0Issuer = environment.AUTH0_ISSUER;
   const auth0Audience = environment.AUTH0_AUDIENCE;
   const serverUrl = environment.MCP_SERVER_URL;
@@ -146,15 +145,14 @@ export function createMcpConfiguration(
       // This must be the actual URL where the server is accessible, not the Auth0 audience
       serverUrl,
 
-      // Auth0 issuer owns authorization endpoints; the domain owns only JWKS.
+      // The canonical issuer owns all hosted OAuth/JWKS endpoints.
       auth0: {
-        domain: auth0Domain,
         authorizationEndpoint: authorizationEndpoint?.toString(),
         tokenEndpoint: auth0Issuer
           ? new URL('oauth/token', auth0Issuer).toString()
           : undefined,
-        jwksUri: auth0Domain
-          ? `https://${auth0Domain}/.well-known/jwks.json`
+        jwksUri: auth0Issuer
+          ? new URL('.well-known/jwks.json', auth0Issuer).toString()
           : undefined,
       },
 

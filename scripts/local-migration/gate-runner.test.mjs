@@ -433,12 +433,16 @@ test("gate environment isolates package-manager state and disables Corepack netw
   assert.equal(environment.XDG_CONFIG_HOME, "/disposable/home/.config");
   assert.equal(environment.XDG_CACHE_HOME, "/disposable/home/.cache");
   assert.equal(environment.AUTH0_ISSUER, "https://migration-gate.invalid/");
-  assert.equal(environment.AUTH0_LEGACY_ISSUER, environment.AUTH0_ISSUER);
-  assert.equal(
-    environment.AUTH0_IDENTITY_LINK_CLAIMS,
-    '{"version":1,"dispositions":[]}',
-  );
   assert.equal(environment.AUTH0_AUDIENCE, "urn:context-router:migration-gate");
+  for (const retired of [
+    "AUTH0_DOMAIN",
+    "AUTH0_CLIENT_ID",
+    "AUTH0_CLIENT_SECRET",
+    "AUTH0_LEGACY_ISSUER",
+    "AUTH0_IDENTITY_LINK_CLAIMS",
+  ]) {
+    assert.equal(retired in environment, false);
+  }
 });
 
 test("disposable Git commands ignore global templates and hooks", async () => {

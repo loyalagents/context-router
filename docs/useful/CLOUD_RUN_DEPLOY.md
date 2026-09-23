@@ -8,12 +8,11 @@
 This runbook assumes `zsh`, `bash`, or another POSIX-style shell. The backend is deployed as a container image built by Cloud Build from `apps/backend/Dockerfile`.
 
 > **Step 03 identity migration warning:** if the image contains
-> `step03_20260922_external_identity_issuer`, do not use the generic migrate and
-> deploy sequence below. Keep all writers stopped and follow the drained audit,
-> verified full-backup restore, migration, and pre-listen admission procedure in
-> [Hosted Identity Migration](HOSTED_IDENTITY_MIGRATION.md). That change is a
-> `main`-only prerequisite; this runbook does not authorize a backport or claim
-> that `hosted-v1-maintenance` has been remediated.
+> `step03_20260922_external_identity_issuer`, the migration deliberately deletes
+> every user-owned row before installing the provider-neutral identity schema.
+> Stop and reap all old backend/admin writers before applying it, confirm the
+> intended database target, apply the migration once, and only then start the
+> new binary. Existing user data is not preserved.
 
 ## Copy/Paste: Build And Deploy
 
@@ -52,7 +51,7 @@ Run these from `apps/backend`. Use **migrate only** for normal deploys. Use **fu
 cd apps/backend
 export CLOUD_DB="postgresql://<db-user>:<db-password>@<cloud-sql-public-ip>:5432/<db-name>?schema=public"
 
-# Normal deploy path: apply only pending migrations. Non-destructive.
+# Apply pending migrations only after reviewing their data effects. Step 03 is destructive.
 DATABASE_URL="${CLOUD_DB}" pnpm exec prisma migrate deploy
 
 # Optional after migrate: seed or upsert app data.
@@ -85,7 +84,7 @@ DATABASE_URL="${CLOUD_DB}" pnpm exec prisma db seed
 
 ## TODO
 
-- Move `DATABASE_URL` and `AUTH0_CLIENT_SECRET` from plain Cloud Run env vars to Secret Manager when this deployment needs tighter production handling. Keeping them in the ignored local `cloudrun.env` is acceptable for the current convenience workflow.
+- Move `DATABASE_URL` from plain Cloud Run env vars to Secret Manager when this deployment needs tighter production handling. Keeping it in the ignored local `cloudrun.env` is acceptable for the current convenience workflow.
 
 ## One-Time Setup
 
@@ -181,7 +180,7 @@ gcloud run deploy "${SERVICE}" \
   --allow-unauthenticated
 ```
 
-Use `--allow-unauthenticated` only if the backend should be reachable directly by the web app and MCP clients. The app still enforces Auth0 for protected routes.
+Use `--allow-unauthenticated` only if the backend should be reachable directly by the web app and MCP clients. The app still enforces its configured hosted JWT verifier for protected routes.
 
 Fetch the deployed URL:
 
@@ -241,10 +240,6 @@ printf '%s' '<database-url>' \
       --data-file - \
       --project "${PROJECT_ID}"
 
-printf '%s' '<auth0-client-secret>' \
-  | gcloud secrets create context-router-auth0-client-secret \
-      --data-file - \
-      --project "${PROJECT_ID}"
 ```
 
 Allow the runtime service account to read them:
@@ -255,13 +250,9 @@ gcloud secrets add-iam-policy-binding context-router-database-url \
   --role roles/secretmanager.secretAccessor \
   --project "${PROJECT_ID}"
 
-gcloud secrets add-iam-policy-binding context-router-auth0-client-secret \
-  --member "serviceAccount:${RUNTIME_SERVICE_ACCOUNT}" \
-  --role roles/secretmanager.secretAccessor \
-  --project "${PROJECT_ID}"
 ```
 
-Remove `DATABASE_URL` and `AUTH0_CLIENT_SECRET` from `cloudrun.env`, then deploy with explicit secret versions:
+Remove `DATABASE_URL` from `cloudrun.env`, then deploy with an explicit secret version:
 
 ```bash
 gcloud run deploy "${SERVICE}" \
@@ -270,7 +261,7 @@ gcloud run deploy "${SERVICE}" \
   --project "${PROJECT_ID}" \
   --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
   --env-vars-file cloudrun.env \
-  --update-secrets DATABASE_URL=context-router-database-url:1,AUTH0_CLIENT_SECRET=context-router-auth0-client-secret:1 \
+  --update-secrets DATABASE_URL=context-router-database-url:1 \
   --add-cloudsql-instances "${CLOUD_SQL_INSTANCE}" \
   --allow-unauthenticated
 ```

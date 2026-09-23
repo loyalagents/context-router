@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Test script for Auth0 authentication
-# Usage: ./test-auth.sh <YOUR_AUTH0_TOKEN>
+# Test script for bearer authentication
+# Usage: ./test-auth.sh <BEARER_TOKEN>
 
 set -e
 
@@ -11,23 +11,18 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-TOKEN=$1
+TOKEN="${1:-${CONTEXT_ROUTER_BEARER_TOKEN:-}}"
 API_URL=${API_URL:-http://localhost:3000/graphql}
 
 if [ -z "$TOKEN" ]; then
-  echo -e "${RED}Error: Please provide an Auth0 token${NC}"
+  echo -e "${RED}Error: provide a bearer token as the first argument or CONTEXT_ROUTER_BEARER_TOKEN${NC}"
   echo "Usage: ./test-auth.sh <YOUR_TOKEN>"
   echo ""
-  echo "Get a token from:"
-  echo "  1. Auth0 Dashboard → APIs → Context Router API → Test tab"
-  echo "  2. Or use: curl --request POST \\"
-  echo "       --url https://YOUR-TENANT.auth0.com/oauth/token \\"
-  echo "       --header 'content-type: application/json' \\"
-  echo "       --data '{\"client_id\":\"YOUR_CLIENT_ID\",\"client_secret\":\"YOUR_CLIENT_SECRET\",\"audience\":\"https://context-router-api\",\"grant_type\":\"client_credentials\"}'"
+  echo "Obtain a valid token from the identity provider configured for this environment."
   exit 1
 fi
 
-echo -e "${YELLOW}Testing Auth0 Authentication...${NC}"
+echo -e "${YELLOW}Testing bearer authentication...${NC}"
 echo ""
 
 # Test 1: Health check (no auth required)

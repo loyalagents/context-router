@@ -80,9 +80,11 @@ Editable profile data uses seven global core preference definitions:
 - `profile.title`
 
 Account identity remains on `User` as opaque `userId`, a required compatibility
-email attribute, and timestamps. Hosted authentication authority is exact
-issuer plus subject; verified email is used only as frozen one-time historical
-binding evidence and is not ongoing login authority. `profile.email` is
+email attribute, and timestamps. Human authentication authority is the exact
+provider, issuer, and subject tuple stored in `ExternalIdentity`; email is
+non-unique and never used to find or merge principals. A verified provider
+email can seed the new account and profile memory, but is not ongoing login
+authority. `profile.email` is
 editable contact and form-fill memory and can differ from the compatibility
 email on `User`.
 
@@ -98,9 +100,10 @@ ordinary preferences while preserving `User` and `ExternalIdentity`.
 
 Schema consolidation rejects any proposed group that contains a `profile.*`
 slug, protecting the built-in profile definitions from merge/delete advice.
-Auth sync makes a best-effort seed of full name, first name, last name, and
-contact email for a newly created user when those values and definitions are
-available. Those rows use imported provenance with `auth_sync` evidence. This
+Verified profile hints make a best-effort seed of full name, first name, last
+name, and contact email for a newly created principal when those values and
+definitions are available. Those rows use imported provenance with
+`verified_identity` evidence. This
 direct seed has no domain audit event, and failure does not block login.
 
 ## Known Constraints

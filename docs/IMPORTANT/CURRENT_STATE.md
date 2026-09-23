@@ -3,17 +3,17 @@
 - Status: important
 - Read when: startup
 - Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`, `README.md`
-- Last reviewed: 2026-09-13
+- Last reviewed: 2026-09-22
 
 ## What This Is
 
-A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend (`apps/web/`). PostgreSQL via Prisma. Auth0 for authentication. Vertex AI for AI-backed features. The backend exposes both GraphQL and an MCP HTTP endpoint.
+A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend (`apps/web/`). PostgreSQL via Prisma. Auth0 is the current hosted token provider, behind a provider-neutral principal resolver. Vertex AI powers AI-backed features. The backend exposes both GraphQL and an MCP HTTP endpoint.
 
 Run `./print-repo-structure.sh` for the full layout. See `README.md` for setup and dev workflows.
 
 ## Implemented Systems
 
-- Auth0-backed auth exists for GraphQL and MCP, with user creation and external identity linking in the backend auth module.
+- GraphQL and MCP share a provider-neutral verified-human identity resolver keyed by `(provider, issuer, subject)`; Auth0-specific code is limited to JWT/JWKS validation and claim adaptation. Email is a non-authoritative, non-unique profile hint.
 - Preference definitions are stored in the database, with global and user-owned namespaces, archive support, GraphQL mutations, and an MCP tool for creating user definitions.
 - User preferences support active and suggested states, location-scoped values, and AI-backed document analysis for extracting suggestions from uploaded files.
 - MCP is a first-class backend surface with HTTP transport, OAuth metadata, a DCR shim, a tool registry, a GraphQL schema resource, permission grants, and workflow-backed tools.

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { User } from "@infrastructure/prisma/prisma-models";
-import { PrismaService } from "@infrastructure/prisma/prisma.service";
-import { CreateUserInput } from "./dto/create-user.input";
+import { Injectable, Logger } from '@nestjs/common';
+import type { User } from '@infrastructure/prisma/prisma-models';
+import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { CreateUserInput } from './dto/create-user.input';
 
 @Injectable()
 export class UserRepository {
@@ -10,7 +10,7 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateUserInput): Promise<User> {
-    this.logger.debug("Creating a user row");
+    this.logger.debug('Creating a user row');
     return this.prisma.user.create({
       data: {
         email: data.email,
@@ -19,30 +19,23 @@ export class UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    this.logger.log("Fetching all users");
+    this.logger.log('Fetching all users');
     return this.prisma.user.findMany({
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
   }
 
   async findOne(userId: string): Promise<User | null> {
-    this.logger.debug("Fetching a user row");
+    this.logger.debug('Fetching a user row');
     return this.prisma.user.findUnique({
       where: { userId },
     });
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    this.logger.debug("Fetching a user row by account email");
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
-  }
-
   async update(userId: string, data: { email?: string }): Promise<User> {
-    this.logger.debug("Updating a user row");
+    this.logger.debug('Updating a user row');
     return this.prisma.user.update({
       where: { userId },
       data: {
@@ -52,7 +45,7 @@ export class UserRepository {
   }
 
   async delete(userId: string): Promise<User> {
-    this.logger.debug("Deleting a user row");
+    this.logger.debug('Deleting a user row');
     return this.prisma.user.delete({
       where: { userId },
     });

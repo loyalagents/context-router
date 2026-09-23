@@ -57,6 +57,11 @@ function callerStatus() {
 }
 
 function disposableSourceFiles() {
+  const deleted = new Set(
+    gitOutput(["ls-files", "--deleted", "-z"])
+      .split("\0")
+      .filter(Boolean),
+  );
   const output = gitOutput([
     "ls-files",
     "-co",
@@ -74,6 +79,7 @@ function disposableSourceFiles() {
   return output
     .split("\0")
     .filter(Boolean)
+    .filter((relativePath) => !deleted.has(relativePath))
     .filter((relativePath) => !relativePath.includes("/node_modules/"))
     .filter((relativePath) => !relativePath.includes("/dist/"))
     .filter(

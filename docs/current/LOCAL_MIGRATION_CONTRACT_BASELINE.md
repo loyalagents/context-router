@@ -146,8 +146,10 @@ not promoted.
 
 ## Outbound And Trust Boundaries
 
-Normal hosted operation can contact PostgreSQL, Auth0 Management/JWKS endpoints,
-Google Vertex and credential endpoints, and the configured web/backend origin.
+Normal hosted operation can contact PostgreSQL, the configured hosted issuer's
+JWKS endpoint, Google Vertex and credential endpoints, and the configured
+web/backend origin. The backend no longer embeds Auth0 Management or
+Authentication SDK clients.
 Opt-in tooling can additionally contact an arbitrary orchestrator backend,
 spawn commands with inherited environment, and invoke hosted model/evaluation
 providers. The exact data classes, default status, disposition, and owner are
@@ -157,12 +159,11 @@ Important observed boundaries include:
 
 - raw document bytes and memory values can be sent to Vertex, including on a
   structured retry;
-- Auth0 human identity and MCP client identity remain conflated for hosted M2M
-  compatibility tokens;
-- on `main`, the retained hosted adapter now requires independently verified
-  email evidence plus a frozen operator-approved issuer/subject tuple for a
-  one-time historical account link; `hosted-v1-maintenance` is unchanged and no
-  backport is authorized;
+- hosted M2M compatibility tokens still materialize synthetic account rows, but
+  those rows cannot carry a human `ExternalIdentity` binding;
+- human principals resolve only by exact `(provider, issuer, subject)` identity;
+  verified email is a non-authoritative profile hint and may be shared by
+  multiple principals;
 - the default backend listener is not code-confined to loopback;
 - MCP Origin checks do not cover the entire browser trust boundary, and proxy
   headers are trusted for DCR rate limiting;
@@ -181,12 +182,13 @@ Important observed boundaries include:
 These facts motivate later replacements and removals. They are not claims that
 unsafe behavior must be preserved.
 
-Step 03's `main`-line hosted identity boundary treats exact canonical issuer
-plus subject as ongoing authentication authority. Its offline audit emits only
-digest dispositions and startup admission completes before a listener binds.
+Step 03's identity boundary stores the exact provider, canonical issuer, and
+subject as ongoing authentication authority. Auth0 remains only the current
+JWT/JWKS claim adapter, so another verified provider can feed the same resolver.
 New principals use a unique non-routable `.invalid` compatibility email when no
-verified email exists. The issuer migration has backup-only old-binary rollback
-and is not a deployed hosted-production remediation.
+verified email exists, and account email is deliberately non-unique. The Step 03
+migration is a fresh-data transition: it locks the identity tables, deletes all
+user-owned data, and installs the required provider-neutral keys atomically.
 
 ## Package Scope
 

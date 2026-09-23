@@ -1,54 +1,60 @@
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
-import { AuthGuard } from "@nestjs/passport";
-import { GqlAuthGuard } from "../../src/common/guards/gql-auth.guard";
-import { JwtAuthGuard } from "../../src/common/guards/jwt-auth.guard";
-import { OptionalGqlAuthGuard } from "../../src/common/guards/optional-gql-auth.guard";
-import { HUMAN_AUTH_STRATEGY } from "../../src/domains/shared/ports/human-auth.constants";
-import { JwtStrategy } from "../../src/modules/auth/strategies/jwt.strategy";
-import passport from "passport";
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { AuthGuard } from '@nestjs/passport';
+import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
+import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
+import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
+import { HUMAN_AUTH_STRATEGY } from '../../src/domains/shared/ports/human-auth.constants';
+import { JwtStrategy } from '../../src/modules/auth/strategies/jwt.strategy';
+import passport from 'passport';
 
-const backendRoot = join(__dirname, "..", "..");
-const sourceRoot = join(backendRoot, "src");
+const backendRoot = join(__dirname, '..', '..');
+const sourceRoot = join(backendRoot, 'src');
 const strategyTokenPath = join(
   sourceRoot,
-  "domains/shared/ports/human-auth.constants.ts",
+  'domains/shared/ports/human-auth.constants.ts',
 );
 
 function readSource(relativePath: string): string {
-  return readFileSync(join(sourceRoot, relativePath), "utf8");
+  return readFileSync(join(sourceRoot, relativePath), 'utf8');
 }
 
-describe("human authentication composition contract", () => {
-  it("binds common human guards and the hosted adapter to one stable strategy name", () => {
+describe('human authentication composition contract', () => {
+  it('binds common human guards and the hosted adapter to one stable strategy name', () => {
     expect(existsSync(strategyTokenPath)).toBe(true);
 
     const strategyTokens = require(strategyTokenPath) as Record<string, string>;
-    expect(strategyTokens.HUMAN_AUTH_STRATEGY).toBe("human");
+    expect(strategyTokens.HUMAN_AUTH_STRATEGY).toBe('human');
 
     for (const guardPath of [
-      "common/guards/gql-auth.guard.ts",
-      "common/guards/optional-gql-auth.guard.ts",
-      "common/guards/jwt-auth.guard.ts",
+      'common/guards/gql-auth.guard.ts',
+      'common/guards/optional-gql-auth.guard.ts',
+      'common/guards/jwt-auth.guard.ts',
     ]) {
       const source = readSource(guardPath);
-      expect(source).toContain("HUMAN_AUTH_STRATEGY");
+      expect(source).toContain('HUMAN_AUTH_STRATEGY');
       expect(source).toMatch(/AuthGuard\(HUMAN_AUTH_STRATEGY\)/);
       expect(source).not.toMatch(/AuthGuard\(["']jwt["']\)/);
     }
 
-    const authModule = readSource("modules/auth/auth.module.ts");
-    expect(authModule).toContain("HUMAN_AUTH_STRATEGY");
+    const authModule = readSource('modules/auth/auth.module.ts');
+    expect(authModule).toContain('HUMAN_AUTH_STRATEGY');
     expect(authModule).toMatch(
       /PassportModule\.register\(\{\s*defaultStrategy:\s*HUMAN_AUTH_STRATEGY\s*\}\)/,
     );
+    expect(authModule).toContain('VerifiedHumanIdentityResolver');
 
-    const hostedStrategy = readSource("modules/auth/strategies/jwt.strategy.ts");
-    expect(hostedStrategy).toContain("HUMAN_AUTH_STRATEGY");
+    const appModule = readSource('app.module.ts');
+    expect(appModule).not.toContain('Auth0Module');
+
+    const hostedStrategy = readSource(
+      'modules/auth/strategies/jwt.strategy.ts',
+    );
+    expect(hostedStrategy).toContain('HUMAN_AUTH_STRATEGY');
     expect(hostedStrategy).toMatch(
       /PassportStrategy\(Strategy,\s*HUMAN_AUTH_STRATEGY\)/,
     );
-    expect(hostedStrategy).toContain("findOrCreateM2MUser");
+    expect(hostedStrategy).toContain('findOrCreateM2MUser');
 
     const humanGuard = AuthGuard(HUMAN_AUTH_STRATEGY);
     for (const guard of [GqlAuthGuard, JwtAuthGuard, OptionalGqlAuthGuard]) {
@@ -59,14 +65,16 @@ describe("human authentication composition contract", () => {
       {
         get: jest.fn((key: string) => {
           const values: Record<string, string> = {
-            "auth.auth0.domain": "tenant.auth0.test",
-            "auth.auth0.audience": "https://context-router.test",
-            "auth.auth0.issuer": "https://tenant.auth0.test/",
+            'auth.auth0.audience': 'https://context-router.test',
+            'auth.auth0.issuer': 'https://tenant.auth0.test/',
+            'auth.auth0.jwksUri':
+              'https://tenant.auth0.test/.well-known/jwks.json',
           };
           return values[key];
         }),
       } as never,
-      { validateAndSyncUser: jest.fn(), findOrCreateM2MUser: jest.fn() } as never,
+      { findOrCreateM2MUser: jest.fn() } as never,
+      { resolve: jest.fn() } as never,
     );
     expect(passport._strategy(HUMAN_AUTH_STRATEGY)).toBe(strategy);
     passport.unuse(HUMAN_AUTH_STRATEGY);

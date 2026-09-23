@@ -21,8 +21,8 @@ data. It returns the selected mode and per-table deletion counts.
 | `FULL_USER_DATA` | Everything in `DEMO_DATA`, plus the user's permission grants | `User` and `ExternalIdentity` | No reset event survives |
 
 Despite its name, `FULL_USER_DATA` deliberately preserves account and external
-identity rows so the current login remains usable. This includes the protected
-semantic marker on an operator-approved hosted historical-account link.
+identity rows so the current login remains usable. Any provider bindings owned
+by that principal are retained with the account.
 
 Every mode runs in one Prisma transaction and deletes preferences before owned
 definitions. Before an advanced reset deletes definitions, it checks for a

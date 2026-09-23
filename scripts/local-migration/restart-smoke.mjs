@@ -541,7 +541,6 @@ export function buildSmokeBackendEnvironment({
   jwksPort,
   caCertificate,
   clientIds,
-  clientSecret,
 }) {
   const allowed = [
     "PATH",
@@ -571,14 +570,8 @@ export function buildSmokeBackendEnvironment({
     DATABASE_URL: databaseUrl,
     GRAPHQL_PLAYGROUND: "false",
     GRAPHQL_DEBUG: "false",
-    AUTH0_DOMAIN: `127.0.0.1:${jwksPort}`,
     AUTH0_ISSUER: issuer,
-    AUTH0_LEGACY_ISSUER: issuer,
-    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_AUDIENCE: audience,
-    AUTH0_CLIENT_ID: "hosted-baseline-smoke-app",
-    AUTH0_CLIENT_SECRET: clientSecret,
-    AUTH0_MANAGEMENT_API_AUDIENCE: `${issuer}api/v2/`,
     MCP_SERVER_URL: serverUrl,
     MCP_RESOURCE: `${serverUrl}/mcp`,
     AUTH0_MCP_CLAUDE_CLIENT_ID: clientIds.claude,
@@ -916,7 +909,6 @@ async function probeGeneration(options) {
     signingPrivateKey,
     kid,
     clientIds,
-    clientSecret,
     caCertificate,
     rawCatalog,
     contract,
@@ -980,10 +972,9 @@ async function probeGeneration(options) {
         jwksPort: jwks.port,
         caCertificate,
         clientIds,
-        clientSecret,
       }),
       logPath: path.join(diagnosticsDirectory, `backend-generation-${generation}.log`),
-      canaries: [token, issuer.replace(/\/$/, ""), clientSecret, ...smokeCanaries],
+      canaries: [token, issuer.replace(/\/$/, ""), ...smokeCanaries],
       signal,
     });
   } catch (error) {
@@ -1561,8 +1552,6 @@ export async function runRestartSmoke({
         codex: `migration-smoke-codex-${randomBytes(8).toString("hex")}`,
         fallback: `migration-smoke-fallback-${randomBytes(8).toString("hex")}`,
       };
-      const clientSecret = `synthetic-${randomBytes(16).toString("hex")}`;
-      journal.addCanary(clientSecret);
       const [rawCatalog, contract, httpContract] = await Promise.all([
         readFile(path.join(repositoryRoot, "apps/backend/src/config/preferences.catalog.json"), "utf8").then(JSON.parse),
         readFile(path.join(repositoryRoot, "apps/backend/test/contracts/fixtures/mcp-contract-baseline.json"), "utf8").then(JSON.parse),
@@ -1581,7 +1570,6 @@ export async function runRestartSmoke({
         signingPrivateKey: signingKeys.privateKey,
         kid,
         clientIds,
-        clientSecret,
         caCertificate: tls.caCertificate,
         rawCatalog,
         contract,

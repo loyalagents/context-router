@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { JwksClient } from 'jwks-rsa';
 import { AuthService } from '@/modules/auth/auth.service';
+import { VerifiedHumanIdentityResolver } from '@/modules/auth/verified-human-identity.resolver';
+import { createAuth0HumanIdentityAssertion } from '@/modules/auth/auth0-human-identity.assertion';
 import { normalizeMcpGrants } from '../types/mcp-authorization.types';
 
 // Simple JWT decode without verification (just to read header/payload)
@@ -63,11 +65,10 @@ export class McpAuthGuard implements CanActivate {
   constructor(
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
+    private readonly identityResolver: VerifiedHumanIdentityResolver,
   ) {
-    const auth0Domain = this.configService.get<string>('auth.auth0.domain');
-
     this.jwksClient = new JwksClient({
-      jwksUri: `https://${auth0Domain}/.well-known/jwks.json`,
+      jwksUri: this.configService.get<string>('auth.auth0.jwksUri'),
       cache: true,
       rateLimit: true,
       jwksRequestsPerMinute: 5,
@@ -103,11 +104,17 @@ export class McpAuthGuard implements CanActivate {
 
       // Sync/retrieve user from local database (same as existing JwtStrategy)
       let user;
-      if (payload.sub && payload.sub.endsWith('@clients')) {
+      if (typeof payload.sub === 'string' && payload.sub.endsWith('@clients')) {
         // M2M token
-        user = await this.authService.findOrCreateM2MUser(payload.sub);
+        user = await this.authService.findOrCreateM2MUser({
+          provider: 'auth0',
+          issuer: this.issuer,
+          subject: payload.sub,
+        });
       } else {
-        user = await this.authService.validateAndSyncUser(payload);
+        user = await this.identityResolver.resolve(
+          createAuth0HumanIdentityAssertion(payload, this.issuer),
+        );
       }
 
       if (!user) {

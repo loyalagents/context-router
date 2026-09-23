@@ -1,9 +1,11 @@
-import { INestApplication } from "@nestjs/common";
-import request from "supertest";
-import { createTestApp, createTestUser, TestUser } from "../setup/test-app";
-import { getPrismaClient } from "../setup/test-db";
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
+import { VerifiedHumanIdentityResolver } from '../../src/modules/auth/verified-human-identity.resolver';
+import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
+import { getPrismaClient } from '../setup/test-db';
 
-describe("User Identity GraphQL API (e2e)", () => {
+describe('User Identity GraphQL API (e2e)', () => {
   let app: INestApplication;
   let testUser: TestUser;
   let setTestUser: (user: TestUser) => void;
@@ -24,9 +26,9 @@ describe("User Identity GraphQL API (e2e)", () => {
   });
 
   const graphqlRequest = (query: string, variables?: Record<string, unknown>) =>
-    request(app.getHttpServer()).post("/graphql").send({ query, variables });
+    request(app.getHttpServer()).post('/graphql').send({ query, variables });
 
-  it("exposes account identity without profile name fields", async () => {
+  it('exposes account identity without profile name fields', async () => {
     const response = await graphqlRequest(`
       query Me {
         me {
@@ -56,7 +58,7 @@ describe("User Identity GraphQL API (e2e)", () => {
     );
   });
 
-  it("does not expose the legacy updateUser mutation", async () => {
+  it('does not expose the legacy updateUser mutation', async () => {
     const response = await graphqlRequest(`
       mutation UpdateUser {
         updateUser(updateUserInput: { userId: "user-1", email: "new@example.test" }) {
@@ -70,7 +72,43 @@ describe("User Identity GraphQL API (e2e)", () => {
     );
   });
 
-  it("keeps user(id) self-only while preserving its current shape", async () => {
+  it('keeps me principals distinct when verified account email matches', async () => {
+    const resolver = new VerifiedHumanIdentityResolver(
+      getPrismaClient() as unknown as PrismaService,
+    );
+    const profileHints = { verifiedEmail: 'shared-account@example.test' };
+    const first = await resolver.resolve({
+      key: {
+        provider: 'auth0',
+        issuer: 'https://tenant-one.example.test/',
+        subject: 'subject',
+      },
+      profileHints,
+    });
+    const second = await resolver.resolve({
+      key: {
+        provider: 'second-idp',
+        issuer: 'https://tenant-two.example.test/',
+        subject: 'subject',
+      },
+      profileHints,
+    });
+
+    setTestUser(first);
+    const firstMe = await graphqlRequest('{ me { userId email } }').expect(200);
+    setTestUser(second);
+    const secondMe = await graphqlRequest('{ me { userId email } }').expect(
+      200,
+    );
+
+    expect(firstMe.body.errors).toBeUndefined();
+    expect(secondMe.body.errors).toBeUndefined();
+    expect(firstMe.body.data.me.email).toBe(profileHints.verifiedEmail);
+    expect(secondMe.body.data.me.email).toBe(profileHints.verifiedEmail);
+    expect(firstMe.body.data.me.userId).not.toBe(secondMe.body.data.me.userId);
+  });
+
+  it('keeps user(id) self-only while preserving its current shape', async () => {
     const sameUser = await graphqlRequest(
       `
         query User($id: ID!) {
@@ -90,7 +128,7 @@ describe("User Identity GraphQL API (e2e)", () => {
     });
 
     const otherUser = await getPrismaClient().user.create({
-      data: { email: "identity-other@example.test" },
+      data: { email: 'identity-other@example.test' },
     });
     const crossUser = await graphqlRequest(
       `
@@ -106,7 +144,7 @@ describe("User Identity GraphQL API (e2e)", () => {
 
     expect(crossUser.body.data).toBeNull();
     expect(crossUser.body.errors?.[0]?.message).toBe(
-      "You can only view your own account",
+      'You can only view your own account',
     );
   });
 });

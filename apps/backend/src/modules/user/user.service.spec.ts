@@ -1,25 +1,35 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
-import { UserService } from "./user.service";
+import { NotFoundException } from '@nestjs/common';
+import { UserService } from './user.service';
 
-describe("UserService identity diagnostics", () => {
-  const emailCanary = "private-email-canary@example.com";
-  const userIdCanary = "private-user-id-canary";
+describe('UserService identity diagnostics', () => {
+  const emailCanary = 'private-email-canary@example.com';
+  const userIdCanary = 'private-user-id-canary';
 
-  it("preserves exception classes without exposing identity fields", async () => {
+  it('creates duplicate account attributes without using email as identity', async () => {
     const repository = {
-      findByEmail: jest.fn().mockResolvedValue({ userId: "existing" }),
+      create: jest.fn().mockResolvedValue({
+        userId: 'new-principal',
+        email: emailCanary,
+      }),
       findOne: jest.fn().mockResolvedValue(null),
     };
     const service = new UserService(repository as never);
 
-    const createError = await service
-      .create({ email: emailCanary })
-      .catch((error) => error);
-    expect(createError).toEqual(new ConflictException("User already exists"));
-    expect(JSON.stringify(createError)).not.toContain(emailCanary);
+    await expect(service.create({ email: emailCanary })).resolves.toEqual({
+      userId: 'new-principal',
+      email: emailCanary,
+    });
+    expect(repository.create).toHaveBeenCalledWith({ email: emailCanary });
+  });
 
-    const findError = await service.findOne(userIdCanary).catch((error) => error);
-    expect(findError).toEqual(new NotFoundException("User not found"));
+  it('preserves not-found class without exposing the principal', async () => {
+    const repository = { findOne: jest.fn().mockResolvedValue(null) };
+    const service = new UserService(repository as never);
+
+    const findError = await service
+      .findOne(userIdCanary)
+      .catch((error) => error);
+    expect(findError).toEqual(new NotFoundException('User not found'));
     expect(JSON.stringify(findError)).not.toContain(userIdCanary);
   });
 });

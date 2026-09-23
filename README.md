@@ -2,7 +2,7 @@
 
 Context Router is a `pnpm` workspace monorepo with:
 
-- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and an Auth0-protected MCP HTTP endpoint
+- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
 - `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
 - PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage
 
@@ -25,7 +25,7 @@ The main request flow looks like this:
 
 1. A user signs into the Next.js app through Auth0.
 2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
-3. The backend validates the token, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
+3. The backend validates the token through the current Auth0 adapter, resolves a provider-neutral `(provider, issuer, subject)` identity, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
 4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth and JWT setup.
 
 Major product areas currently in the repo:
@@ -68,7 +68,7 @@ Key frontend areas:
 - Node.js 24.21.0 exactly
 - pnpm 10.25.0 exactly, activated through Corepack
 - Docker with `docker compose`
-- Auth0 credentials for the backend API and frontend web app
+- Auth0 issuer/audience values for the backend API and Auth0 credentials for the frontend web app
 - Optional: Google Cloud application default credentials if you want Vertex AI-backed features to work locally
 
 Install dependencies from the repo root:
@@ -109,7 +109,7 @@ Important backend env notes:
 - `apps/backend/.env.local` is the right place for local-only overrides
 - Docker Compose interpolation is separate from the service `env_file`. Copy `docker-compose.env.example` to the root `.env`, or run commands with `docker compose --env-file docker-compose.env.example ...`.
 - `PORT` is the backend listener port. Root `APP_PORT` is only the Docker Compose host-publication port that maps to the container's listener.
-- Authenticated flows require valid `AUTH0_*` values in both apps
+- Authenticated flows require `AUTH0_ISSUER` and `AUTH0_AUDIENCE` in the backend plus the web app's Auth0 session/client values
 - Invite-only login and signup gating is configured in Auth0 Actions; see [`docs/useful/AUTH0_LOGIN_GATING.md`](docs/useful/AUTH0_LOGIN_GATING.md)
 - Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
 - MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs

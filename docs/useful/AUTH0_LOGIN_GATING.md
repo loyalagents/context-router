@@ -2,8 +2,8 @@
 
 - Status: useful
 - Read when: changing who can create accounts, disabling invite-only access for a demo, or debugging unexpected Auth0 login denials
-- Source of truth: Auth0 Dashboard Actions and Triggers, plus `apps/backend/src/modules/auth/auth.service.ts`
-- Last reviewed: 2026-05-03
+- Source of truth: Auth0 Dashboard Actions and Triggers, plus `apps/backend/src/modules/auth/verified-human-identity.resolver.ts`
+- Last reviewed: 2026-09-22
 
 This app's production account gate is currently configured outside the repo in Auth0 Actions. Keep exact invited email addresses in Auth0, not in repo docs.
 
@@ -22,9 +22,15 @@ Both Actions should use the same allowlist logic. If an invited email is added o
 
 ## Why Auth0 Is The Gate
 
-The backend trusts valid Auth0 JWTs and, with the default `AUTH0_SYNC_STRATEGY=ON_LOGIN`, creates or links the local database user on first authenticated request.
+The backend trusts valid Auth0 JWTs and resolves the exact
+`(provider="auth0", issuer, subject)` tuple on the first authenticated request.
+It creates a fresh local principal when that tuple is new and never links by
+email. Auth0 is the current edge adapter; the persisted identity model is not
+Auth0-specific.
 
-That means the backend is not the first account-creation gate. If Auth0 lets a user authenticate and receive a token, the backend may create the local user.
+That means the backend is not the first account-creation gate. If Auth0 lets a
+user authenticate and receive a token, the backend may create a local principal
+for that exact issuer and subject.
 
 ## Verify The Gate Is Active
 

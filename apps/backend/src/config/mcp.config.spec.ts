@@ -7,7 +7,6 @@ describe('mcpConfig', () => {
     process.env = { ...originalEnv };
     process.env.MCP_SERVER_URL = 'http://localhost:3001';
     process.env.AUTH0_AUDIENCE = 'https://context-router-api';
-    process.env.AUTH0_DOMAIN = 'example.us.auth0.com';
     process.env.AUTH0_ISSUER = 'https://example.us.auth0.com/';
     delete process.env.MCP_RESOURCE;
     delete process.env.MCP_HTTP_PATH;
@@ -33,16 +32,21 @@ describe('mcpConfig', () => {
     );
   });
 
-  it('uses the explicit issuer for authorization endpoints and the domain only for JWKS', () => {
+  it('derives authorization, token, and JWKS endpoints from the explicit issuer', () => {
+    expect(mcpConfig().oauth.auth0).toEqual({
+      authorizationEndpoint:
+        'https://example.us.auth0.com/authorize?audience=https%3A%2F%2Fcontext-router-api',
+      tokenEndpoint: 'https://example.us.auth0.com/oauth/token',
+      jwksUri: 'https://example.us.auth0.com/.well-known/jwks.json',
+    });
+
     delete process.env.AUTH0_ISSUER;
 
     const config = mcpConfig();
 
     expect(config.oauth.auth0.authorizationEndpoint).toBeUndefined();
     expect(config.oauth.auth0.tokenEndpoint).toBeUndefined();
-    expect(config.oauth.auth0.jwksUri).toBe(
-      'https://example.us.auth0.com/.well-known/jwks.json',
-    );
+    expect(config.oauth.auth0.jwksUri).toBeUndefined();
   });
 
   it('inherits the normalized CORS origins unless the MCP override wins', () => {

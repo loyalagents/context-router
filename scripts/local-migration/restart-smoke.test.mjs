@@ -340,21 +340,25 @@ test("smoke environments replace hostile caller homes and disable package downlo
     jwksPort: 4443,
     caCertificate: "/smoke/ca.pem",
     clientIds: { claude: "a", codex: "b", fallback: "c" },
-    clientSecret: "synthetic-secret",
   });
   assert.equal(backend.HOME, "/smoke/home");
   assert.equal(backend.XDG_CONFIG_HOME, "/smoke/home/.config");
   assert.equal(backend.PNPM_HOME, undefined);
   assert.equal(backend.AUTH0_ISSUER, "https://127.0.0.1:4443/");
-  assert.equal(backend.AUTH0_LEGACY_ISSUER, backend.AUTH0_ISSUER);
-  assert.equal(
-    backend.AUTH0_IDENTITY_LINK_CLAIMS,
-    '{"version":1,"dispositions":[]}',
-  );
   assert.equal(
     backend.AUTH0_AUDIENCE,
     "urn:context-router:hosted-baseline-smoke",
   );
+  for (const retired of [
+    "AUTH0_DOMAIN",
+    "AUTH0_CLIENT_ID",
+    "AUTH0_CLIENT_SECRET",
+    "AUTH0_MANAGEMENT_API_AUDIENCE",
+    "AUTH0_LEGACY_ISSUER",
+    "AUTH0_IDENTITY_LINK_CLAIMS",
+  ]) {
+    assert.equal(retired in backend, false);
+  }
 });
 
 test("resource journal is private, redacted, and retains exact recovery on cleanup failure", async () => {

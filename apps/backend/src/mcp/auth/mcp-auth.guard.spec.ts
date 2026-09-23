@@ -5,19 +5,26 @@ import { AuthService } from '@/modules/auth/auth.service';
 
 describe('McpAuthGuard', () => {
   const configValues: Record<string, unknown> = {
-    'auth.auth0.domain': 'example.us.auth0.com',
     'auth.auth0.issuer': 'https://example.us.auth0.com/',
     'auth.auth0.audience': 'https://context-router-api',
+    'auth.auth0.jwksUri': 'https://example.us.auth0.com/.well-known/jwks.json',
     'mcp.oauth.resource': 'https://context-router-api',
     'mcp.oauth.serverUrl': 'http://localhost:3001',
   };
 
-  const createGuard = (authService: Partial<AuthService> = {}) => {
+  const createGuard = (
+    authService: Partial<AuthService> = {},
+    identityResolver: { resolve?: jest.Mock } = {},
+  ) => {
     const configService = {
       get: jest.fn((key: string) => configValues[key]),
     } as unknown as ConfigService;
 
-    return new McpAuthGuard(configService, authService as AuthService);
+    return new McpAuthGuard(
+      configService,
+      authService as AuthService,
+      identityResolver as never,
+    );
   };
 
   const createContext = (headers: Record<string, string> = {}) => {
@@ -68,18 +75,15 @@ describe('McpAuthGuard', () => {
   });
 
   it('keeps runtime verification causes out of logs and OAuth responses', async () => {
-    const authService = {
-      validateAndSyncUser: jest
-        .fn()
-        .mockRejectedValue(new Error('identity-cause-canary')),
+    const identityResolver = {
+      resolve: jest.fn().mockRejectedValue(new Error('identity-cause-canary')),
     };
-    const guard = createGuard(authService);
-    jest
-      .spyOn(guard as never, 'verifyToken' as never)
-      .mockResolvedValue({
-        sub: 'auth0|subject-canary',
-        scope: 'preferences:read',
-      } as never);
+    const guard = createGuard({}, identityResolver);
+    jest.spyOn(guard as never, 'verifyToken' as never).mockResolvedValue({
+      sub: 'auth0|subject-canary',
+      iss: 'https://example.us.auth0.com/',
+      scope: 'preferences:read',
+    } as never);
     const warn = jest.spyOn(Logger.prototype, 'warn');
     const { context, response } = createContext({
       authorization: 'Bearer token-canary',
@@ -100,5 +104,65 @@ describe('McpAuthGuard', () => {
       error: 'invalid_token',
       error_description: 'Invalid token',
     });
+  });
+
+  it('resolves a verified human subject through the provider-neutral boundary', async () => {
+    const identityResolver = {
+      resolve: jest.fn().mockResolvedValue({
+        userId: 'principal-1',
+        email: 'person@example.test',
+      }),
+    };
+    const authService = { findOrCreateM2MUser: jest.fn() };
+    const guard = createGuard(authService, identityResolver);
+    jest.spyOn(guard as never, 'verifyToken' as never).mockResolvedValue({
+      sub: 'auth0|human',
+      iss: 'https://example.us.auth0.com/',
+      email: 'person@example.test',
+      email_verified: true,
+      name: 'Ada',
+      azp: 'client-bucket-only',
+      scope: 'preferences:read',
+    } as never);
+    const { context } = createContext({ authorization: 'Bearer token' });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+
+    expect(identityResolver.resolve).toHaveBeenCalledWith({
+      key: {
+        provider: 'auth0',
+        issuer: 'https://example.us.auth0.com/',
+        subject: 'auth0|human',
+      },
+      profileHints: {
+        verifiedEmail: 'person@example.test',
+        displayName: 'Ada',
+      },
+    });
+    expect(authService.findOrCreateM2MUser).not.toHaveBeenCalled();
+  });
+
+  it('keeps an MCP client subject outside human identity resolution', async () => {
+    const identityResolver = { resolve: jest.fn() };
+    const authService = {
+      findOrCreateM2MUser: jest.fn().mockResolvedValue({
+        userId: 'm2m_hash',
+        email: 'hash@m2m.invalid',
+      }),
+    };
+    const guard = createGuard(authService, identityResolver);
+    jest.spyOn(guard as never, 'verifyToken' as never).mockResolvedValue({
+      sub: 'client@clients',
+      scope: 'preferences:read',
+    } as never);
+    const { context } = createContext({ authorization: 'Bearer token' });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(authService.findOrCreateM2MUser).toHaveBeenCalledWith({
+      provider: 'auth0',
+      issuer: 'https://example.us.auth0.com/',
+      subject: 'client@clients',
+    });
+    expect(identityResolver.resolve).not.toHaveBeenCalled();
   });
 });

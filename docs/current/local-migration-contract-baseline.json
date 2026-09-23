@@ -84,8 +84,8 @@
       ]
     },
     {
-      "id": "auth0-profile-copy",
-      "label": "First-login Auth0 claims copied into profile memory",
+      "id": "verified-profile-hints",
+      "label": "Verified provider profile hints seed non-authoritative profile memory",
       "disposition": "REPLACE",
       "contractClass": "observed-not-promised",
       "ownerSteps": [
@@ -93,12 +93,13 @@
         "08"
       ],
       "evidence": [
-        "apps/backend/src/modules/auth/auth.service.ts"
+        "apps/backend/src/modules/auth/verified-human-identity.resolver.ts",
+        "apps/backend/src/domains/shared/ports/verified-human-identity.ts"
       ]
     },
     {
-      "id": "hosted-main-identity-hardening",
-      "label": "Main-only hosted-baseline issuer and frozen historical-link admission; no hosted-v1-maintenance backport authorized",
+      "id": "provider-neutral-principal-identity",
+      "label": "Fresh provider-neutral principal identity keyed by provider, issuer, and subject",
       "disposition": "REPLACE",
       "contractClass": "observed-not-promised",
       "ownerSteps": [
@@ -106,9 +107,8 @@
       ],
       "evidence": [
         "apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql",
-        "apps/backend/src/modules/auth/hosted-identity-audit.ts",
-        "apps/backend/src/modules/auth/hosted-identity-admission.service.ts",
-        "docs/useful/HOSTED_IDENTITY_MIGRATION.md",
+        "apps/backend/src/modules/auth/verified-human-identity.resolver.ts",
+        "apps/backend/src/domains/shared/ports/verified-human-identity.ts",
         "docs/plans/active/local-migration/decision-log.md"
       ]
     },
@@ -621,52 +621,13 @@
       ]
     },
     {
-      "id": "auth0-management",
-      "sources": [
-        {
-          "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
-          "fingerprints": [
-            "new ManagementClient({",
-            "this.managementClient.users.get(auth0UserId)",
-            "this.managementClient.users.update("
-          ]
-        }
-      ],
-      "destination": "AUTH0_DOMAIN management API",
-      "payload": "identity profile and metadata",
-      "defaultRuntime": true,
-      "disposition": "REMOVE",
-      "ownerSteps": [
-        "03"
-      ]
-    },
-    {
-      "id": "auth0-authentication-client",
-      "sources": [
-        {
-          "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
-          "fingerprints": [
-            "new AuthenticationClient({",
-            "getAuthClient(): AuthenticationClient"
-          ]
-        }
-      ],
-      "destination": "AUTH0_DOMAIN authentication API",
-      "payload": "client credentials and authentication requests made by callers of the exposed SDK client",
-      "defaultRuntime": true,
-      "disposition": "REMOVE",
-      "ownerSteps": [
-        "03"
-      ]
-    },
-    {
       "id": "auth0-jwks",
       "sources": [
         {
           "path": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
           "fingerprints": [
             "passportJwtSecret({",
-            "jwksUri: `https://${auth0Domain}/.well-known/jwks.json`"
+            "const jwksUri = configService.get<string>('auth.auth0.jwksUri')"
           ]
         },
         {
@@ -677,7 +638,7 @@
           ]
         }
       ],
-      "destination": "AUTH0_DOMAIN JWKS",
+      "destination": "configured hosted issuer JWKS",
       "payload": "key retrieval metadata",
       "defaultRuntime": true,
       "disposition": "REPLACE",
@@ -728,7 +689,6 @@
       "defaultRuntime": true,
       "disposition": "REMOVE",
       "ownerSteps": [
-        "03",
         "08"
       ]
     },
@@ -1100,39 +1060,6 @@
       "disposition": "RETAIN",
       "ownerSteps": [
         "06"
-      ]
-    },
-    {
-      "id": "auth0-test-token-scripts",
-      "sources": [
-        {
-          "path": "get-test-token.sh",
-          "fingerprints": [
-            "https://${AUTH0_DOMAIN}/oauth/token",
-            "client_secret"
-          ]
-        },
-        {
-          "path": "test-graphql.sh",
-          "fingerprints": [
-            "https://${AUTH0_DOMAIN}/oauth/token",
-            "grant_type"
-          ]
-        },
-        {
-          "path": "test-vertex-ai.sh",
-          "fingerprints": [
-            "TOKEN=$(./get-test-token.sh)",
-            "Authorization: Bearer $TOKEN"
-          ]
-        }
-      ],
-      "destination": "AUTH0_DOMAIN OAuth token endpoint",
-      "payload": "client ID, client secret, audience, and returned bearer token",
-      "defaultRuntime": false,
-      "disposition": "REMOVE",
-      "ownerSteps": [
-        "03"
       ]
     },
     {
@@ -2729,12 +2656,6 @@
       "reference": "/api/preferences/analysis"
     },
     {
-      "path": "get-test-token.sh",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/graphql"
-    },
-    {
       "path": "README.md",
       "contract": "http",
       "kind": "route",
@@ -2922,13 +2843,6 @@
     }
   ],
   "outboundSinkInventory": [
-    {
-      "path": "apps/backend/src/infrastructure/auth0/auth0.service.ts",
-      "sinks": {
-        "auth0-authentication": 1,
-        "auth0-management": 1
-      }
-    },
     {
       "path": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
       "sinks": {
@@ -3185,12 +3099,6 @@
       }
     },
     {
-      "path": "get-test-token.sh",
-      "sinks": {
-        "curl": 1
-      }
-    },
-    {
       "path": "scripts/check-toolchain.mjs",
       "sinks": {
         "exec-file": 1
@@ -3264,7 +3172,7 @@
     {
       "path": "test-graphql.sh",
       "sinks": {
-        "curl": 5
+        "curl": 4
       }
     },
     {

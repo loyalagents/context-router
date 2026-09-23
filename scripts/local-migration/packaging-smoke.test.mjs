@@ -394,11 +394,7 @@ test("packaging tools force copied pnpm imports and staged Node disables global 
   );
   assert.equal(environment.npm_config_package_import_method, "copy");
   assert.equal(environment.npm_config_offline, "true");
-  assert.equal(
-    environment.AUTH0_CLIENT_SECRET,
-    "synthetic-migration-gate-secret",
-  );
-  assert.notEqual(environment.AUTH0_CLIENT_SECRET, "must-not-pass-through");
+  assert.equal("AUTH0_CLIENT_SECRET" in environment, false);
   assert.deepEqual(
     packaging.buildPackagedNodeArgv("/private/stage/server.js"),
     ["--no-global-search-paths", "/private/stage/server.js"],
@@ -1116,12 +1112,9 @@ test("packaged runtime environment is strict, private, loopback, and supports MC
   assert.equal(fallback.APP_HOST, "127.0.0.1");
   assert.equal(fallback.AUTH0_SECRET, "synthetic-session-secret");
   assert.equal(fallback.AUTH0_ISSUER, "https://127.0.0.1:4443/");
-  assert.equal(fallback.AUTH0_LEGACY_ISSUER, fallback.AUTH0_ISSUER);
-  assert.equal(
-    fallback.AUTH0_IDENTITY_LINK_CLAIMS,
-    '{"version":1,"dispositions":[]}',
-  );
   assert.equal(fallback.AUTH0_AUDIENCE, "urn:synthetic");
+  assert.equal("AUTH0_LEGACY_ISSUER" in fallback, false);
+  assert.equal("AUTH0_IDENTITY_LINK_CLAIMS" in fallback, false);
   assert.equal(fallback.NODE_EXTRA_CA_CERTS, "/private/secrets/ca.crt");
   assert.equal("MCP_RESOURCE" in fallback, false);
   assert.equal("MCP_HTTP_ALLOWED_ORIGINS" in fallback, false);

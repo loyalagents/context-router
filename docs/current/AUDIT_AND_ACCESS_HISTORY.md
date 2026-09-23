@@ -68,7 +68,7 @@ It is distinct from `sourceType`. For example, a user can accept an inferred
 suggestion: the resulting value remains `INFERRED`, while `lastModifiedBy`
 identifies the user action. Normal preference-service active and suggested
 mutations populate the fields. Rejected tombstones, rows that predate the
-feature, and profile rows inserted directly by best-effort auth sync can return
+feature, and profile rows inserted directly from verified identity hints can return
 `null`.
 
 The dashboard uses this attribution for labels such as the current user,

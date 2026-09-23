@@ -17,18 +17,12 @@ dotenv.config({ path: envPath });
 process.env.AUTH0_MCP_CLAUDE_CLIENT_ID ??= 'test-claude-client';
 process.env.AUTH0_MCP_CODEX_CLIENT_ID ??= 'test-codex-client';
 process.env.AUTH0_MCP_FALLBACK_CLIENT_ID ??= 'test-fallback-client';
-process.env.AUTH0_MCP_PUBLIC_CLIENT_ID ??= process.env.AUTH0_MCP_FALLBACK_CLIENT_ID;
+process.env.AUTH0_MCP_PUBLIC_CLIENT_ID ??=
+  process.env.AUTH0_MCP_FALLBACK_CLIENT_ID;
 
-// Deterministic hosted human-auth policy for integration/e2e composition.
-process.env.AUTH0_DOMAIN ??= 'test-tenant.auth0.invalid';
+// Deterministic hosted human-auth verifier for integration/e2e composition.
 process.env.AUTH0_ISSUER ??= 'https://test-tenant.auth0.invalid/';
-process.env.AUTH0_LEGACY_ISSUER ??= process.env.AUTH0_ISSUER;
-process.env.AUTH0_IDENTITY_LINK_CLAIMS ??=
-  '{"version":1,"dispositions":[]}';
 process.env.AUTH0_AUDIENCE ??= 'https://context-router.test';
-process.env.AUTH0_CLIENT_ID ??= 'test-backend-client';
-process.env.AUTH0_CLIENT_SECRET ??= 'test-backend-secret';
-process.env.AUTH0_SYNC_STRATEGY ??= 'ON_LOGIN';
 
 // Verify critical env vars are loaded
 if (process.env.NODE_ENV !== 'test') {

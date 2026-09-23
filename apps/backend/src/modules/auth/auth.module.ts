@@ -6,8 +6,7 @@ import { AuthResolver } from './auth.resolver';
 import { UserModule } from '@modules/user/user.module';
 import { ExternalIdentityModule } from '@modules/external-identity/external-identity.module';
 import { HUMAN_AUTH_STRATEGY } from '../../domains/shared/ports/human-auth.constants';
-import { HostedIdentityRepository } from './hosted-identity.repository';
-import { HostedIdentityAdmissionService } from './hosted-identity-admission.service';
+import { VerifiedHumanIdentityResolver } from './verified-human-identity.resolver';
 
 @Module({
   imports: [
@@ -17,11 +16,10 @@ import { HostedIdentityAdmissionService } from './hosted-identity-admission.serv
   ],
   providers: [
     JwtStrategy,
-    HostedIdentityRepository,
-    HostedIdentityAdmissionService,
+    VerifiedHumanIdentityResolver,
     AuthService,
     AuthResolver,
   ],
-  exports: [AuthService],
+  exports: [AuthService, VerifiedHumanIdentityResolver],
 })
 export class AuthModule {}

@@ -31,16 +31,13 @@ function read(relativePath: string): string {
 }
 
 function repositorySourceFiles(): string[] {
-  return execFileSync(
-    'git',
-    ['ls-files', '-co', '--exclude-standard', '-z'],
-    {
-      cwd: repositoryRoot,
-      encoding: 'utf8',
-    },
-  )
+  return execFileSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], {
+    cwd: repositoryRoot,
+    encoding: 'utf8',
+  })
     .split('\0')
     .filter(Boolean)
+    .filter((path) => existsSync(join(repositoryRoot, path)))
     .filter((path) => /\.[cm]?[jt]sx?$/.test(path))
     .filter(
       (path) =>
@@ -245,6 +242,23 @@ describe('runtime resource and package closure contract', () => {
     expect(lockfile).toMatch(
       /apps\/backend:[\s\S]*?'@google-cloud\/vertexai':[\s\S]*?specifier: \^1\.10\.0/,
     );
+  });
+
+  it('keeps the Auth0 server SDK outside the backend package closure', () => {
+    const backendPackage = JSON.parse(read('apps/backend/package.json'));
+    const lockfile = read('pnpm-lock.yaml');
+    const auth0ImportPattern =
+      /(?:from\s+|import\s*\(\s*|require\s*\(\s*|import\s+)['"]auth0(?:\/[^'"]*)?['"]/;
+
+    expect(backendPackage.dependencies?.auth0).toBeUndefined();
+    expect(backendPackage.optionalDependencies?.auth0).toBeUndefined();
+    expect(backendPackage.peerDependencies?.auth0).toBeUndefined();
+    expect(
+      repositorySourceFiles().filter((path) =>
+        auth0ImportPattern.test(read(path)),
+      ),
+    ).toEqual([]);
+    expect(lockfile).not.toMatch(/auth0@5\.1\.0|auth0-legacy/);
   });
 
   it('restricts the deploy packlist and explicitly copies the raw catalog asset', () => {

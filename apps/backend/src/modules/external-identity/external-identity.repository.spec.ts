@@ -1,128 +1,82 @@
-import { ExternalIdentityRepository } from "./external-identity.repository";
-import { IDENTITY_LINK_CLAIM_METADATA_KEY } from "../auth/hosted-identity-policy";
+import { ExternalIdentityRepository } from './external-identity.repository';
 
-describe("ExternalIdentityRepository", () => {
-  const identity = {
-    id: "identity-1",
-    userId: "user-1",
-    provider: "auth0",
-    issuer: "https://tenant.auth0.com/",
-    providerUserId: "auth0|one",
-    metadata: null,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-  };
-
+describe('ExternalIdentityRepository', () => {
   function createRepository() {
-    const transactionIdentity = {
-      findUnique: jest.fn().mockResolvedValue(identity),
-      update: jest.fn().mockResolvedValue(identity),
-      delete: jest.fn().mockResolvedValue(identity),
-    };
     const prisma = {
       externalIdentity: {
-        findUnique: jest.fn().mockResolvedValue(identity),
-        findMany: jest.fn().mockResolvedValue([identity]),
-        create: jest.fn().mockResolvedValue(identity),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
-      $transaction: jest.fn(async (callback) =>
-        callback({ externalIdentity: transactionIdentity }),
-      ),
     };
     return {
       repository: new ExternalIdentityRepository(prisma as never),
       prisma,
-      transactionIdentity,
     };
   }
 
-  it("looks up the exact provider, issuer, and subject tuple", async () => {
+  it('looks up only by the exact provider, issuer, and subject', async () => {
     const { repository, prisma } = createRepository();
+    prisma.externalIdentity.findUnique.mockResolvedValue(null);
 
     await expect(
       repository.findByProviderAndUserId(
-        "auth0",
-        "https://tenant.auth0.com/",
-        "auth0|one",
+        'example-idp',
+        'urn:example:tenant',
+        'opaque-subject',
       ),
-    ).resolves.toEqual(identity);
+    ).resolves.toBeNull();
 
     expect(prisma.externalIdentity.findUnique).toHaveBeenCalledWith({
       where: {
         provider_issuer_providerUserId: {
-          provider: "auth0",
-          issuer: "https://tenant.auth0.com/",
-          providerUserId: "auth0|one",
+          provider: 'example-idp',
+          issuer: 'urn:example:tenant',
+          providerUserId: 'opaque-subject',
         },
       },
     });
   });
 
-  it("requires issuer on every generic create", async () => {
+  it('passes non-authoritative metadata through without provider policy', async () => {
     const { repository, prisma } = createRepository();
+    prisma.externalIdentity.create.mockResolvedValue({ id: 'identity-1' });
 
     await repository.create({
-      userId: "user-1",
-      provider: "auth0",
-      issuer: "https://tenant.auth0.com/",
-      providerUserId: "auth0|one",
+      userId: 'principal-1',
+      provider: 'example-idp',
+      issuer: 'urn:example:tenant',
+      providerUserId: 'opaque-subject',
+      metadata: { display: 'hint-only' },
     });
 
     expect(prisma.externalIdentity.create).toHaveBeenCalledWith({
       data: {
-        userId: "user-1",
-        provider: "auth0",
-        issuer: "https://tenant.auth0.com/",
-        providerUserId: "auth0|one",
-        metadata: undefined,
+        userId: 'principal-1',
+        provider: 'example-idp',
+        issuer: 'urn:example:tenant',
+        providerUserId: 'opaque-subject',
+        metadata: { display: 'hint-only' },
       },
     });
   });
 
-  it("rejects the reserved link marker in generic create or metadata update", async () => {
+  it('updates and deletes ordinary metadata rows directly', async () => {
     const { repository, prisma } = createRepository();
-    const protectedMetadata = {
-      [IDENTITY_LINK_CLAIM_METADATA_KEY]: { version: 1 },
-    };
+    prisma.externalIdentity.update.mockResolvedValue({ id: 'identity-1' });
+    prisma.externalIdentity.delete.mockResolvedValue({ id: 'identity-1' });
 
-    await expect(
-      repository.create({
-        userId: "user-1",
-        provider: "auth0",
-        issuer: "https://tenant.auth0.com/",
-        providerUserId: "auth0|one",
-        metadata: protectedMetadata,
-      }),
-    ).rejects.toThrow("Protected identity link metadata");
-    await expect(
-      repository.update("identity-1", { metadata: protectedMetadata }),
-    ).rejects.toThrow("Protected identity link metadata");
+    await repository.update('identity-1', { metadata: { display: 'new' } });
+    await repository.delete('identity-1');
 
-    expect(prisma.externalIdentity.create).not.toHaveBeenCalled();
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  it("refuses generic update and unlink for an identity carrying the link marker", async () => {
-    const { repository, transactionIdentity } = createRepository();
-    transactionIdentity.findUnique.mockResolvedValue({
-      ...identity,
-      metadata: {
-        [IDENTITY_LINK_CLAIM_METADATA_KEY]: {
-          version: 1,
-          rowDigest: "row",
-          identityDigest: "identity",
-        },
-      },
+    expect(prisma.externalIdentity.update).toHaveBeenCalledWith({
+      where: { id: 'identity-1' },
+      data: { metadata: { display: 'new' } },
     });
-
-    await expect(
-      repository.update("identity-1", { metadata: { safe: true } }),
-    ).rejects.toThrow("Protected identity link metadata");
-    await expect(repository.delete("identity-1")).rejects.toThrow(
-      "Protected identity link metadata",
-    );
-
-    expect(transactionIdentity.update).not.toHaveBeenCalled();
-    expect(transactionIdentity.delete).not.toHaveBeenCalled();
+    expect(prisma.externalIdentity.delete).toHaveBeenCalledWith({
+      where: { id: 'identity-1' },
+    });
   });
 });

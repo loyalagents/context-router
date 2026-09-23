@@ -15,7 +15,7 @@ datasource db {
 
 model User {
   userId             String               @id @default(uuid()) @map("user_id")
-  email              String               @unique
+  email              String
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   externalIdentities ExternalIdentity[]

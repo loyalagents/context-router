@@ -17,7 +17,6 @@ import {
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
-import { Auth0Module } from './infrastructure/auth0/auth0.module';
 import { HostedModelAdapterModule } from './composition/hosted-model-adapter.module';
 
 // Modules
@@ -76,7 +75,6 @@ export class AppModule {
         }),
 
         PrismaModule,
-        Auth0Module,
         HostedModelAdapterModule,
 
         AuthModule,

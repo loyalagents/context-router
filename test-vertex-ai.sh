@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Test script for Vertex AI integration
-# Usage: ./test-vertex-ai.sh [YOUR_AUTH0_TOKEN]
+# Usage: ./test-vertex-ai.sh [BEARER_TOKEN]
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -9,18 +9,11 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Get token from argument or use existing one
-if [ -n "$1" ]; then
-  TOKEN="$1"
-else
-  echo -e "${BLUE}No token provided. Attempting to get token from get-test-token.sh...${NC}"
-  if [ -f "./get-test-token.sh" ]; then
-    TOKEN=$(./get-test-token.sh)
-  else
-    echo -e "${RED}Error: No token provided and get-test-token.sh not found${NC}"
-    echo "Usage: ./test-vertex-ai.sh [YOUR_AUTH0_TOKEN]"
-    exit 1
-  fi
+TOKEN="${1:-${CONTEXT_ROUTER_BEARER_TOKEN:-}}"
+if [ -z "$TOKEN" ]; then
+  echo -e "${RED}Error: provide a bearer token as the first argument or CONTEXT_ROUTER_BEARER_TOKEN.${NC}"
+  echo "Usage: ./test-vertex-ai.sh [BEARER_TOKEN]"
+  exit 1
 fi
 
 echo -e "${BLUE}Testing Vertex AI GraphQL endpoint...${NC}\n"

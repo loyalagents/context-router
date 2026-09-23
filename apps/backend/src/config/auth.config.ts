@@ -1,52 +1,64 @@
-import { registerAs } from "@nestjs/config";
-import {
-  parseHostedIssuerConfiguration,
-  parseIdentityLinkClaims,
-} from "../modules/auth/hosted-identity-policy";
+import { registerAs } from '@nestjs/config';
 
-function parseHostedAudience(value: unknown): string {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error("Invalid hosted audience configuration");
+const MAX_CONFIGURATION_BYTES = 2048;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
+
+function invalidConfiguration(): never {
+  throw new Error('Invalid hosted auth configuration');
+}
+
+function parseBoundedValue(value: unknown): string {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value !== value.trim() ||
+    Buffer.byteLength(value, 'utf8') > MAX_CONFIGURATION_BYTES ||
+    CONTROL_CHARACTER_PATTERN.test(value)
+  ) {
+    return invalidConfiguration();
   }
   return value;
+}
+
+function parseCanonicalIssuer(value: unknown): string {
+  const issuer = parseBoundedValue(value);
+  let parsed: URL;
+  try {
+    parsed = new URL(issuer);
+  } catch {
+    return invalidConfiguration();
+  }
+  if (
+    parsed.protocol !== 'https:' ||
+    parsed.username !== '' ||
+    parsed.password !== '' ||
+    parsed.search !== '' ||
+    parsed.hash !== '' ||
+    parsed.pathname !== '/' ||
+    parsed.toString() !== issuer
+  ) {
+    return invalidConfiguration();
+  }
+  return issuer;
 }
 
 export function createAuthConfiguration(
   environment: NodeJS.ProcessEnv = process.env,
 ) {
-  const issuerConfiguration = parseHostedIssuerConfiguration({
-    issuer: environment.AUTH0_ISSUER,
-    domain: environment.AUTH0_DOMAIN,
-    legacyIssuer: environment.AUTH0_LEGACY_ISSUER,
-  });
-  const identityLinkClaims = parseIdentityLinkClaims(
-    environment.AUTH0_IDENTITY_LINK_CLAIMS,
-  );
-  const audience = parseHostedAudience(environment.AUTH0_AUDIENCE);
+  const issuer = parseCanonicalIssuer(environment.AUTH0_ISSUER);
+  const audience = parseBoundedValue(environment.AUTH0_AUDIENCE);
 
   return {
     auth0: {
-      domain: issuerConfiguration.domain,
       audience,
-      issuer: issuerConfiguration.issuer,
-      legacyIssuer: issuerConfiguration.legacyIssuer,
-      clientId: environment.AUTH0_CLIENT_ID,
-      clientSecret: environment.AUTH0_CLIENT_SECRET,
-      managementApiAudience:
-        environment.AUTH0_MANAGEMENT_API_AUDIENCE ||
-        `https://${issuerConfiguration.domain}/api/v2/`,
-      identityLinkClaims,
+      issuer,
+      jwksUri: new URL('.well-known/jwks.json', issuer).toString(),
     },
-    jwt: {
-      secret: environment.JWT_SECRET,
-      expiresIn: environment.JWT_EXPIRES_IN || "1h",
-    },
-    syncStrategy: environment.AUTH0_SYNC_STRATEGY || "ON_LOGIN",
   };
 }
 
 export function authConfigLoader(environment: NodeJS.ProcessEnv) {
-  return registerAs("auth", () => createAuthConfiguration(environment));
+  return registerAs('auth', () => createAuthConfiguration(environment));
 }
 
-export default registerAs("auth", () => createAuthConfiguration());
+export default registerAs('auth', () => createAuthConfiguration());

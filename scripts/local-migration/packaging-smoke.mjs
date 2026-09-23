@@ -536,8 +536,6 @@ export function buildPackagedRuntimeEnvironment(
     DATABASE_URL: databaseUrl,
     AUTH0_DOMAIN: auth.domain,
     AUTH0_ISSUER: auth.issuer,
-    AUTH0_LEGACY_ISSUER: auth.issuer,
-    AUTH0_IDENTITY_LINK_CLAIMS: '{"version":1,"dispositions":[]}',
     AUTH0_AUDIENCE: auth.audience,
     AUTH0_CLIENT_ID: auth.clientId,
     AUTH0_CLIENT_SECRET: auth.clientSecret,
@@ -1550,6 +1548,22 @@ async function collectNativeEvidence(
   const sourceNextRequire = createRequire(sourceRequire.resolve("next/package.json"));
   const closure = {};
   const stageBackendReal = await realpath(stageBackend);
+  const backendManifest = JSON.parse(
+    await readFile(path.join(stageBackend, "package.json"), "utf8"),
+  );
+  if (
+    backendManifest.dependencies?.auth0 !== undefined ||
+    backendManifest.optionalDependencies?.auth0 !== undefined ||
+    backendManifest.peerDependencies?.auth0 !== undefined
+  ) {
+    throw new Error("staged backend manifest retained the Auth0 server SDK");
+  }
+  try {
+    backendRequire.resolve("auth0");
+    throw new Error("staged backend unexpectedly resolved the Auth0 server SDK");
+  } catch (error) {
+    if (error?.code !== "MODULE_NOT_FOUND") throw error;
+  }
   for (const packageName of ["@google-cloud/vertexai", "@prisma/client", "pg"]) {
     const resolved = await realpath(backendRequire.resolve(packageName));
     if (!pathIsWithin(stageBackendReal, resolved)) {
@@ -1613,8 +1627,22 @@ async function collectNativeEvidence(
   } catch (error) {
     throw new Error(`staged target-native sharp package failed to load: ${error.message}`);
   }
+  const auth0Resolved = webRequire.resolve("@auth0/nextjs-auth0/server");
+  const auth0Manifest = await packageManifestFromResolved(
+    auth0Resolved,
+    "@auth0/nextjs-auth0",
+  );
+  await assertPackageResolutionWithinRoot(
+    stagedWebRoot,
+    auth0Resolved,
+    auth0Manifest.path,
+    "@auth0/nextjs-auth0",
+  );
   return {
     backendDependencyClosure: closure,
+    webDependencyClosure: {
+      "@auth0/nextjs-auth0": auth0Manifest.manifest.version,
+    },
     swc: loadedSwc,
     sharp,
   };
@@ -1710,6 +1738,7 @@ async function assembleAndSealStage({
     if (
       manifest &&
       (manifest.name === "next" ||
+        manifest.name === "@auth0/nextjs-auth0" ||
         manifest.name === "sharp" ||
         manifest.name?.startsWith("@next/swc-") ||
         manifest.name?.startsWith("@img/"))
