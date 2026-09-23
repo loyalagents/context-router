@@ -18,6 +18,7 @@ import path from "node:path";
 
 import {
   combineFailures,
+  hasLiveProcessGroupMembers,
   runCommand,
 } from "./gate-runner.mjs";
 import {
@@ -833,21 +834,10 @@ function terminateProcessGroup(child, signalName) {
   }
 }
 
-function processGroupExists(pid) {
-  try {
-    process.kill(-pid, 0);
-    return true;
-  } catch (error) {
-    if (error?.code === "ESRCH") return false;
-    if (error?.code === "EPERM") return true;
-    throw fixedError("local identity child process group could not be inspected");
-  }
-}
-
 async function waitForProcessGroupExit(pid, timeoutMs = 5_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (!processGroupExists(pid)) return;
+    if (!(await hasLiveProcessGroupMembers(pid))) return;
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   throw fixedError("local identity child process group did not exit");

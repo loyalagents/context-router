@@ -62,8 +62,11 @@ Before this directory was created, `HEAD`, local `main`, `origin/main`, and
 both merge bases resolved to the Step 02 merge SHA; history was complete and
 non-shallow; the worktree and new branch were clean; and no other writer owned
 the identity, composition, generated-contract, lockfile, or gate hotspots. Two
-unrelated branches mention `.github/workflows/ci.yml`, so Step 03 does not own
-or edit that file without a new coordination record.
+unrelated branches mention `.github/workflows/ci.yml`. For the user-approved CI
+follow-up, `/root` owns only the PostgreSQL service-image selection in that
+file and the dedicated workflow. A fresh worktree check found no uncommitted
+workflow edits in those branches. Their path-filter and evaluation work stays
+outside this correction; a human must reconcile any later overlapping landing.
 
 The activation `pnpm migration:gate`, bound to the exact Step 02 merge SHA,
 passed all 12 manifest phases in 461,692 ms using Node 24.21.0, pnpm 10.25.0,

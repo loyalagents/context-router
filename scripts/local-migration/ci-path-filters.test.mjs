@@ -71,3 +71,17 @@ test("the dedicated migration gate runs on every pull request to main", async ()
   assert.equal("paths" in pullRequest, false);
   assert.equal("paths-ignore" in pullRequest, false);
 });
+
+test("CI provisions the PostgreSQL image required by offline TLS fixtures", async () => {
+  for (const [workflowPath, job] of [
+    [ciPath, "backend-tests"],
+    [dedicatedPath, "local-migration-baseline"],
+  ]) {
+    const workflow = parse(await readFile(workflowPath, "utf8"));
+    assert.equal(
+      workflow.jobs[job].services.postgres.image,
+      "postgres:15-alpine",
+      `${job} must preload the image used with --pull=never`,
+    );
+  }
+});

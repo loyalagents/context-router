@@ -37,6 +37,7 @@ import {
   withCleanupStack,
 } from "./restart-smoke.mjs";
 import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.mjs";
+import { hasLiveProcessGroupMembers, isProcessLive } from "./gate-runner.mjs";
 import {
   activateJournaledNodeChild,
   assertStateBytesUnchanged,
@@ -260,16 +261,18 @@ test(
             timeoutMs: 1_000,
           },
         ),
-        /listener inspection timed out/,
+        (error) => {
+          assert.match(error.message, /listener inspection timed out/);
+          assert.doesNotMatch(error.message, /reap timed out|process group did not exit/);
+          return true;
+        },
       );
       const pids = JSON.parse(await readFile(marker, "utf8"));
       assert.equal(pids.length, 2);
       for (const pid of pids) {
-        assert.throws(
-          () => process.kill(pid, 0),
-          (error) => error?.code === "ESRCH",
-        );
+        assert.equal(await isProcessLive(pid), false);
       }
+      assert.equal(await hasLiveProcessGroupMembers(pids[0]), false);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -420,7 +423,7 @@ test("journaled local identity children cannot run outside durable PID ownership
       identity: { operation: "descendant" },
     });
     await descendant.result;
-    assert.doesNotThrow(() => process.kill(-descendantPid, 0));
+    assert.equal(await hasLiveProcessGroupMembers(descendantPid), true);
     assert.deepEqual(
       await terminateAndReapJournaledNodeChild(
         descendant,
@@ -428,10 +431,7 @@ test("journaled local identity children cannot run outside durable PID ownership
       ),
       [],
     );
-    assert.throws(
-      () => process.kill(-descendantPid, 0),
-      (error) => error?.code === "ESRCH",
-    );
+    assert.equal(await hasLiveProcessGroupMembers(descendantPid), false);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
