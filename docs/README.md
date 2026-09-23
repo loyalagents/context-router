@@ -23,3 +23,8 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
 - Sanitize brittle or sensitive values. Do not commit passwords, raw client IDs, fixed IPs, or environment-specific secrets into repo docs.
 - Delete superseded docs instead of building a large archive inside the repo. Git history is the archive.
 - Put new design work in `docs/plans/active/` only while it is still relevant. Once shipped, either delete it or distill the lasting parts into `docs/current/`.
+
+## Useful Runbooks
+
+- [Local identity administration](useful/LOCAL_IDENTITY_ADMIN.md) — initialize,
+  rotate, and perform terminate-and-reap break-glass recovery.

@@ -609,13 +609,21 @@
             "if (!options.databaseUrl)",
             "adapter: new PrismaPg(new Pool({ connectionString: options.databaseUrl }), {"
           ]
+        },
+        {
+          "path": "apps/backend/src/infrastructure/prisma/local-prisma-client-options.ts",
+          "fingerprints": [
+            "buildLocalPrismaClientOptions(",
+            "adapter: new PrismaPg(new Pool(poolConfig), {"
+          ]
         }
       ],
-      "destination": "DATABASE_URL",
+      "destination": "configured PostgreSQL connection or local pool",
       "payload": "all durable application state and queries",
       "defaultRuntime": true,
       "disposition": "REPLACE",
       "ownerSteps": [
+        "03",
         "04",
         "05"
       ]
@@ -2843,6 +2851,12 @@
     }
   ],
   "outboundSinkInventory": [
+    {
+      "path": "apps/backend/src/infrastructure/prisma/local-prisma-client-options.ts",
+      "sinks": {
+        "postgresql": 1
+      }
+    },
     {
       "path": "apps/backend/src/infrastructure/prisma/prisma-client-options.ts",
       "sinks": {

@@ -28,6 +28,7 @@ import {
   copyWorkspaceFiles,
   runCommand,
 } from "./gate-runner.mjs";
+import { assertNoStageAncestorNodeModules } from "./packaging-smoke.mjs";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -180,26 +181,6 @@ async function recursivelyList(root, prefix = "") {
     }
   }
   return result.sort();
-}
-
-async function assertNoStageAncestorNodeModules(stageBackend, privateRoot) {
-  const canonicalStageBackend = await realpath(stageBackend);
-  const canonicalPrivateRoot = await realpath(privateRoot);
-  let current = path.dirname(canonicalStageBackend);
-  let foundPrivateRoot = false;
-  while (true) {
-    const candidate = path.join(current, "node_modules");
-    const info = await lstat(candidate).catch((error) => {
-      if (error.code === "ENOENT") return null;
-      throw error;
-    });
-    assert.equal(info, null, `stage ancestor owns node_modules: ${current}`);
-    if (current === canonicalPrivateRoot) foundPrivateRoot = true;
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  assert.equal(foundPrivateRoot, true, "private root must be a stage ancestor");
 }
 
 async function assertPrivateDirectory(directory) {
