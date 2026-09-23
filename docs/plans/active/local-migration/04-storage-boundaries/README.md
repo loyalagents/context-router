@@ -9,6 +9,7 @@
 - Planning/implementation owner and sole repository writer: `/root/storage_writer`
 - Change classification: `local-only`; `hosted-v1-maintenance` is unchanged
 - Intended implementation: one PR with five internal testable checkpoints
+- Implementation PR and final evidence: [#163](https://github.com/loyalagents/context-router/pull/163)
 - Supported modes: retained `hosted-baseline` and explicit non-listening `local-identity-preview`, with PostgreSQL as the reference adapter
 - Last updated: 2026-09-23
 

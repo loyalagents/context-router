@@ -11,7 +11,7 @@
 - Depends on: human-merged Step 03 PR [#162](https://github.com/loyalagents/context-router/pull/162), merge `1b35c7c513b01a183bb740f0596273baf7620a10`
 - Risk profile: sensitive / quality-first because transaction ownership, persisted identity, concurrency, and crash recovery must survive a cross-cutting refactor
 - Plan reviewers: fresh independent architecture/scope, persistence/recovery, security/privacy, compatibility/consumers, and test/gate reviewers; approved on draft A
-- Implementation PR: one PR; number pending
+- Implementation PR: [#163](https://github.com/loyalagents/context-router/pull/163), the single Step 04 implementation PR
 - Intended PR count: one, with five internal testable checkpoints
 - Supported modes after merge: retained `hosted-baseline` and explicit non-listening `local-identity-preview`, both backed by the PostgreSQL reference adapter
 - Last updated: 2026-09-23
@@ -251,7 +251,7 @@ The post-approval changes only record verdicts and activation status; they do no
 
 Final review impact assessment: subsequent closeout edits record these verdicts, the actual PR reference and validation provenance only. They do not change production code, tests, registry semantics, supported modes, dependencies or gate inputs other than documentation. All five named final-review dimensions therefore carry forward from `01d5bd44551f89b8c675a3735a5c0361c1b006af`; final documentation links and the complete aggregate gate still run on the clean final candidate. Any later substantive change requires the affected reviewer recheck and renewed evidence. Fresh origin/main verification after implementation still equals the planning base.
 
-The implementation PR is the durable closeout evidence index: it records the final branch head, local gate source/base and all twelve phase outcomes, standard CI and dedicated migration-gate run links, actual workflow source revision (including any synthetic merge commit), cleanup and platform limits. Gate evidence is never relabelled from an earlier candidate. Keeping that final-head report in the PR avoids a post-validation repository evidence commit invalidating its own claimed head. Human review and merge remain required; Step 04 is not marked merged and Steps 05/06 remain inactive.
+[PR #163](https://github.com/loyalagents/context-router/pull/163) is the durable closeout evidence index: it records the final branch head, local gate source/base and all twelve phase outcomes, standard CI and dedicated migration-gate run links, actual workflow source revision (including any synthetic merge commit), cleanup and platform limits. Gate evidence is never relabelled from an earlier candidate. Keeping that final-head report in the PR avoids a post-validation repository evidence commit invalidating its own claimed head. Human review and merge remain required; Step 04 is not marked merged and Steps 05/06 remain inactive.
 
 ## Checkpoint Evidence
 
