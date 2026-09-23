@@ -9,9 +9,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { getFormFillConfig } from '../../../config/form-fill.config';
+import type { FormFillConfig } from '../../../config/form-fill.config';
 import { FormFillService } from './form-fill.service';
 import {
   FormFillFieldPolicies,
@@ -23,18 +24,27 @@ import {
 @UseGuards(JwtAuthGuard)
 export class FormFillController {
   private readonly logger = new Logger(FormFillController.name);
-  private readonly config = getFormFillConfig();
+  private readonly config: Pick<
+    FormFillConfig,
+    'allowedMimeTypes' | 'maxFileSizeBytes'
+  >;
 
-  constructor(private readonly formFillService: FormFillService) {}
+  constructor(
+    private readonly formFillService: FormFillService,
+    configService: ConfigService,
+  ) {
+    this.config = {
+      allowedMimeTypes: configService.getOrThrow<string[]>(
+        'formFill.allowedMimeTypes',
+      ),
+      maxFileSizeBytes: configService.getOrThrow<number>(
+        'formFill.maxFileSizeBytes',
+      ),
+    };
+  }
 
   @Post('pdf')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: getFormFillConfig().maxFileSizeBytes,
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file'))
   async fillPdf(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
@@ -61,9 +71,7 @@ export class FormFillController {
       throw new BadRequestException('User ID not found in request');
     }
 
-    this.logger.log(
-      `Filling form for user ${userId}: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`,
-    );
+    this.logger.log('Filling an authenticated PDF upload');
 
     return this.formFillService.fillPdfForm(
       userId,

@@ -8,11 +8,12 @@ import {
   Request,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { DocumentAnalysisService } from './document-analysis.service';
 import { DocumentAnalysisResult } from './dto/document-analysis-result.dto';
-import { getDocumentUploadConfig } from '../../../config/document-upload.config';
+import type { DocumentUploadConfig } from '../../../config/document-upload.config';
 
 // TODO: Implement rate limiting per user to prevent abuse and control Vertex AI costs
 
@@ -20,20 +21,27 @@ import { getDocumentUploadConfig } from '../../../config/document-upload.config'
 @UseGuards(JwtAuthGuard)
 export class DocumentAnalysisController {
   private readonly logger = new Logger(DocumentAnalysisController.name);
-  private readonly config = getDocumentUploadConfig();
+  private readonly config: Pick<
+    DocumentUploadConfig,
+    'allowedMimeTypes' | 'maxFileSizeBytes'
+  >;
 
   constructor(
     private readonly documentAnalysisService: DocumentAnalysisService,
-  ) {}
+    configService: ConfigService,
+  ) {
+    this.config = {
+      allowedMimeTypes: configService.getOrThrow<string[]>(
+        'documentUpload.allowedMimeTypes',
+      ),
+      maxFileSizeBytes: configService.getOrThrow<number>(
+        'documentUpload.maxFileSizeBytes',
+      ),
+    };
+  }
 
   @Post('analysis')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: getDocumentUploadConfig().maxFileSizeBytes,
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file'))
   async analyzeDocument(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
@@ -61,9 +69,7 @@ export class DocumentAnalysisController {
       throw new BadRequestException('User ID not found in request');
     }
 
-    this.logger.log(
-      `Analyzing document for user ${userId}: ${file.originalname} (${file.mimetype}, ${file.size} bytes)`,
-    );
+    this.logger.log('Analyzing an authenticated document upload');
 
     return this.documentAnalysisService.analyzeDocument(
       userId,

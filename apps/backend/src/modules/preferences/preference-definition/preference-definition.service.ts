@@ -60,7 +60,7 @@ export class PreferenceDefinitionService {
       );
     }
 
-    this.logger.log(`Creating user preference definition: ${input.slug} for user ${userId}`);
+    this.logger.log('Creating an authenticated preference definition');
 
     const created = await this.prisma.$transaction(async (tx) => {
       const createdDefinition = await this.defRepo.create(
@@ -113,7 +113,9 @@ export class PreferenceDefinitionService {
   ) {
     const def = await this.defRepo.getDefinitionById(id);
     if (!def) {
-      throw new NotFoundException(`Preference definition with id "${id}" not found`);
+      throw new NotFoundException(
+        `Preference definition with id "${id}" not found`,
+      );
     }
 
     if (def.ownerUserId !== userId) {
@@ -122,7 +124,7 @@ export class PreferenceDefinitionService {
       );
     }
 
-    this.logger.log(`Updating preference definition: ${id}`);
+    this.logger.log('Updating an authenticated preference definition');
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const updatedDefinition = await this.defRepo.update(
@@ -173,7 +175,9 @@ export class PreferenceDefinitionService {
   ) {
     const def = await this.defRepo.getDefinitionById(id);
     if (!def) {
-      throw new NotFoundException(`Preference definition with id "${id}" not found`);
+      throw new NotFoundException(
+        `Preference definition with id "${id}" not found`,
+      );
     }
 
     if (def.ownerUserId !== userId) {
@@ -182,7 +186,7 @@ export class PreferenceDefinitionService {
       );
     }
 
-    this.logger.log(`Archiving preference definition: ${id}`);
+    this.logger.log('Archiving an authenticated preference definition');
     return this.prisma.$transaction(async (tx) => {
       const archivedDefinition = await this.defRepo.archive(id, tx);
 
@@ -198,7 +202,8 @@ export class PreferenceDefinitionService {
           origin: _context.origin,
           correlationId: _context.correlationId,
           beforeState: buildPreferenceDefinitionAuditSnapshot(def),
-          afterState: buildPreferenceDefinitionAuditSnapshot(archivedDefinition),
+          afterState:
+            buildPreferenceDefinitionAuditSnapshot(archivedDefinition),
         },
         tx,
       );

@@ -33,18 +33,20 @@ export class DocumentAnalysisService {
   ): Promise<DocumentAnalysisResult> {
     const analysisId = randomUUID();
 
-    this.logger.log(
-      `Starting document analysis ${analysisId} for user ${userId}`,
-    );
+    this.logger.log('Starting authenticated document analysis');
 
     try {
-      const { suggestions, filteredSuggestions, documentSummary, filteredCount } =
-        await this.preferenceExtractionService.extractPreferences(
-          userId,
-          fileBuffer,
-          mimeType,
-          filename,
-        );
+      const {
+        suggestions,
+        filteredSuggestions,
+        documentSummary,
+        filteredCount,
+      } = await this.preferenceExtractionService.extractPreferences(
+        userId,
+        fileBuffer,
+        mimeType,
+        filename,
+      );
 
       // Prefix stable extraction IDs with the analysisId without reindexing.
       const suggestionsWithIds = suggestions.map((s) => ({
@@ -60,7 +62,7 @@ export class DocumentAnalysisService {
 
       if (suggestionsWithIds.length === 0) {
         this.logger.log(
-          `Analysis ${analysisId} completed with no matches found (filtered: ${filteredCount})`,
+          `Document analysis completed with no matches (filtered: ${filteredCount})`,
         );
         return {
           analysisId,
@@ -74,7 +76,7 @@ export class DocumentAnalysisService {
       }
 
       this.logger.log(
-        `Analysis ${analysisId} completed with ${suggestionsWithIds.length} suggestions (filtered: ${filteredCount})`,
+        `Document analysis completed with ${suggestionsWithIds.length} suggestions (filtered: ${filteredCount})`,
       );
 
       return {
@@ -87,7 +89,7 @@ export class DocumentAnalysisService {
         filteredCount,
       };
     } catch (error) {
-      this.logger.error(`Analysis ${analysisId} failed`, error);
+      this.logger.error('Document analysis failed');
 
       // Distinguish between parse errors and AI service errors
       if (error instanceof Error) {

@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 
 import {
+  type OpenLocalIdentityState,
   type LocalIdentityFileHandle,
   type LocalIdentityFileSystem,
   LocalIdentityFileStore,
@@ -37,6 +38,25 @@ import {
 
 const token = (fill: number) => Buffer.alloc(32, fill).toString('base64url');
 const TARGET_ID = token(1);
+
+function readyState(
+  generation = 1,
+  credential = token(3),
+): OpenLocalIdentityState {
+  const state = {
+    schemaVersion: 1 as const,
+    databaseTargetId: TARGET_ID,
+    principalId: token(2),
+    credential,
+    generation,
+  };
+  const bytes = encodeLocalIdentityState(state);
+  return {
+    state,
+    bytes,
+    digest: digestLocalIdentityState(bytes),
+  };
+}
 
 async function fixture(): Promise<{
   parent: string;
@@ -506,6 +526,87 @@ const ROTATION_CRASH_CASES: Array<{
 ];
 
 describe('LocalIdentityStateService', () => {
+  it('verifies one unchanged canonical state while the database session is held', async () => {
+    const events: string[] = [];
+    const ready = readyState();
+    const openReadyState = jest.fn(async () => {
+      events.push('open');
+      return ready;
+    });
+    const session = {
+      verify: jest.fn(async (_state, afterValidation) => {
+        events.push('verify');
+        await afterValidation?.();
+      }),
+      release: jest.fn(async () => {
+        events.push('release');
+      }),
+    };
+    const service = new LocalIdentityStateService({
+      fileStore: { openReadyState } as never,
+      repository: {
+        acquire: jest.fn(async () => {
+          events.push('acquire');
+          return session as never;
+        }),
+      },
+    });
+
+    await expect(service.verifyReadyState()).resolves.toBe(ready);
+    expect(events).toEqual(['acquire', 'open', 'verify', 'open', 'release']);
+    expect(session.verify).toHaveBeenCalledWith(
+      ready.state,
+      expect.any(Function),
+    );
+    expect(session.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a state change during database verification with a fixed diagnostic', async () => {
+    const first = readyState();
+    const second = readyState(2, token(4));
+    const session = {
+      verify: jest.fn(async (_state, afterValidation) => afterValidation?.()),
+      release: jest.fn(async () => undefined),
+    };
+    const service = new LocalIdentityStateService({
+      fileStore: {
+        openReadyState: jest
+          .fn()
+          .mockResolvedValueOnce(first)
+          .mockResolvedValueOnce(second),
+      } as never,
+      repository: {
+        acquire: jest.fn(async () => session as never),
+      },
+    });
+
+    await expect(service.verifyReadyState()).rejects.toThrow(
+      'Local identity state changed during verification',
+    );
+    expect(session.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases the database session when ready-state verification fails', async () => {
+    const cause = new Error('database-password-canary');
+    const session = {
+      verify: jest.fn(async () => {
+        throw cause;
+      }),
+      release: jest.fn(async () => undefined),
+    };
+    const openReadyState = jest.fn(async () => readyState());
+    const service = new LocalIdentityStateService({
+      fileStore: { openReadyState } as never,
+      repository: {
+        acquire: jest.fn(async () => session as never),
+      },
+    });
+
+    await expect(service.verifyReadyState()).rejects.toBe(cause);
+    expect(openReadyState).toHaveBeenCalledTimes(1);
+    expect(session.release).toHaveBeenCalledTimes(1);
+  });
+
   it.each(INITIALIZE_CRASH_CASES)(
     'converges after an initialize crash at $boundary',
     async ({ boundary, shape, retainsOriginalPrincipal }) => {

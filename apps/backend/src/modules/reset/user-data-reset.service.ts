@@ -36,7 +36,7 @@ export class UserDataResetService {
       );
     }
 
-    this.logger.log(`Resetting user data for ${userId} with mode ${mode}`);
+    this.logger.log(`Resetting authenticated user data with mode ${mode}`);
 
     return this.prisma.$transaction(async (tx) => {
       const preferencesDeleted = await tx.preference.deleteMany({
@@ -71,10 +71,11 @@ export class UserDataResetService {
       }
 
       if (mode !== ResetMemoryMode.MEMORY_ONLY) {
-        preferenceAuditEventsDeleted =
-          await tx.preferenceAuditEvent.deleteMany({
+        preferenceAuditEventsDeleted = await tx.preferenceAuditEvent.deleteMany(
+          {
             where: { userId },
-          });
+          },
+        );
 
         mcpAccessEventsDeleted = await tx.mcpAccessEvent.deleteMany({
           where: { userId },

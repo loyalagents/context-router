@@ -179,9 +179,12 @@ export function createMcpConfiguration(
   };
 }
 
-export function mcpConfigLoader(configuration: RuntimeConfiguration) {
+export function mcpConfigLoader(
+  configuration: RuntimeConfiguration,
+  environment: RuntimeEnvironment,
+) {
   return registerAs('mcp', () =>
-    createMcpConfiguration(process.env, configuration.corsOrigins),
+    createMcpConfiguration(environment, configuration.corsOrigins),
   );
 }
 

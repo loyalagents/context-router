@@ -145,6 +145,19 @@ test("ephemeral test token accepts an explicit bounded scope set", () => {
   assert.equal(payload.scope, "preferences:read preferences:write");
 });
 
+test("restart persistence is verified by opaque principal rather than legacy email", async () => {
+  const source = await readFile(
+    new URL("./restart-smoke.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /SELECT user_id FROM users WHERE user_id = \$1/u,
+  );
+  assert.doesNotMatch(source, /@clients@m2m\.local/u);
+});
+
 test("TLS fixture removes OpenSSL serial and key material and keeps only a private CA", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "context-router-tls-fixture-"));
   const secrets = path.join(root, "secrets");

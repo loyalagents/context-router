@@ -49,19 +49,31 @@ describe('VertexAiResolver', () => {
     const resolver = await compileResolver();
     port.generateText.mockResolvedValue('generated response');
 
-    await expect(resolver.askVertexAI('hello')).resolves.toBe(
+    await expect(resolver.askVertexAI('prompt-secret-canary')).resolves.toBe(
       'generated response',
     );
     expect(port.generateText).toHaveBeenCalledTimes(1);
-    expect(port.generateText).toHaveBeenCalledWith('hello');
+    expect(port.generateText).toHaveBeenCalledWith('prompt-secret-canary');
+    expect(Logger.prototype.log).toHaveBeenCalledWith(
+      'Processing authenticated text-generation request',
+    );
+    expect(
+      JSON.stringify((Logger.prototype.log as jest.Mock).mock.calls),
+    ).not.toContain('prompt-secret-canary');
   });
 
   it('preserves the sanitized public error when the port fails', async () => {
     const resolver = await compileResolver();
-    port.generateText.mockRejectedValue(new Error('provider secret'));
+    port.generateText.mockRejectedValue(new Error('provider-secret-canary'));
 
     await expect(resolver.askVertexAI('hello')).rejects.toThrow(
       'Failed to generate response from Vertex AI. Please try again later.',
     );
+    expect(Logger.prototype.error).toHaveBeenCalledWith(
+      'Text generation request failed',
+    );
+    expect(
+      JSON.stringify((Logger.prototype.error as jest.Mock).mock.calls),
+    ).not.toContain('provider-secret-canary');
   });
 });

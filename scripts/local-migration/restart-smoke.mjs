@@ -1203,8 +1203,8 @@ async function probeGeneration(options) {
     const principalRows = await queryDatabase(
       repositoryRoot,
       databaseUrl,
-      "SELECT user_id FROM users WHERE email = $1",
-      [`${clientIds.claude}@clients@m2m.local`],
+      "SELECT user_id FROM users WHERE user_id = $1",
+      [principal.userId],
       { signal },
     );
     assert.deepEqual(principalRows, [{ user_id: principal.userId }]);

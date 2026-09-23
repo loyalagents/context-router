@@ -2,10 +2,13 @@ import { readFileSync } from "fs";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { resolve } from "path";
+import dns = require("node:dns");
+import { Socket } from "net";
 import {
   GRAPHQL_SCHEMA_FIXTURE_PATH,
   GRAPHQL_SCHEMA_STALE_MESSAGE,
   buildApplicationGraphqlSchemaSdl,
+  buildLocalApplicationGraphqlSchemaSdl,
   checkGraphqlSchemaFixture,
   createGraphqlSchemaBuildEnvironment,
   writeGraphqlSchemaFixture,
@@ -62,6 +65,26 @@ describe("GraphQL schema fixture tool", () => {
     expect(GRAPHQL_SCHEMA_FIXTURE_PATH).toBe(
       resolve(__dirname, "..", "..", "src", "schema.gql"),
     );
+  });
+
+  it("builds the local application schema byte-for-byte equal to hosted and tracked SDL", async () => {
+    const hosted = await buildApplicationGraphqlSchemaSdl();
+    const local = await buildLocalApplicationGraphqlSchemaSdl();
+
+    expect(local).toBe(hosted);
+    expect(local).toBe(trackedSchema);
+    expect(local).toContain("mcpAccessHistory");
+  });
+
+  it("initializes the local schema composition without DNS or socket I/O", async () => {
+    const lookup = jest.spyOn(dns, "lookup");
+    const connect = jest.spyOn(Socket.prototype, "connect");
+
+    await expect(buildLocalApplicationGraphqlSchemaSdl()).resolves.toBe(
+      trackedSchema,
+    );
+    expect(lookup).not.toHaveBeenCalled();
+    expect(connect).not.toHaveBeenCalled();
   });
 
   it("checks without changing a stale fixture and reports the supported producer", async () => {

@@ -1,13 +1,46 @@
 #!/usr/bin/env node
 
-import { clearLocalIdentityAmbientDriverSelection } from './config/local-identity.config';
+type RunPreview = () => Promise<number>;
+type RunAdmin = (argv: readonly string[]) => Promise<number>;
 
-export async function main(argv: readonly string[] = process.argv.slice(2)) {
-  clearLocalIdentityAmbientDriverSelection();
+export interface LocalIdentityEntrypointDependencies {
+  loadPreview?: () => Promise<RunPreview>;
+  loadAdmin?: () => Promise<RunAdmin>;
+}
+
+async function loadPreview(): Promise<RunPreview> {
+  const [{ createLocalIdentityConfiguration }, { runLocalIdentityPreview }] =
+    await Promise.all([
+      import('./config/local-identity.config'),
+      import('./bootstrap/local-identity-preview'),
+    ]);
+  return () =>
+    runLocalIdentityPreview({
+      configuration: createLocalIdentityConfiguration(),
+    });
+}
+
+async function loadAdmin(): Promise<RunAdmin> {
   const { runLocalIdentityAdminCli } = await import(
     './modules/auth/local-identity-admin.cli'
   );
-  return runLocalIdentityAdminCli({ argv });
+  return (argv) => runLocalIdentityAdminCli({ argv });
+}
+
+export async function main(
+  argv: readonly string[] = process.argv.slice(2),
+  dependencies: LocalIdentityEntrypointDependencies = {},
+) {
+  const { clearLocalIdentityAmbientDriverSelection } = await import(
+    './config/local-identity.config'
+  );
+  clearLocalIdentityAmbientDriverSelection();
+  if (argv.length === 1 && argv[0] === 'preview') {
+    const runPreview = await (dependencies.loadPreview ?? loadPreview)();
+    return runPreview();
+  }
+  const runAdmin = await (dependencies.loadAdmin ?? loadAdmin)();
+  return runAdmin(argv);
 }
 
 export async function runLocalIdentityEntrypoint(

@@ -79,4 +79,31 @@ describe('human authentication composition contract', () => {
     expect(passport._strategy(HUMAN_AUTH_STRATEGY)).toBe(strategy);
     passport.unuse(HUMAN_AUTH_STRATEGY);
   });
+
+  it('binds local human authentication without importing hosted identity providers', () => {
+    const localStrategy = readSource(
+      'modules/auth/strategies/local-identity.strategy.ts',
+    );
+    const localAuthModule = readSource('modules/auth/local-auth.module.ts');
+
+    expect(localStrategy).toContain('HUMAN_AUTH_STRATEGY');
+    expect(localStrategy).toMatch(
+      /PassportStrategy\([\s\S]*HUMAN_AUTH_STRATEGY/,
+    );
+    expect(localStrategy).toContain('timingSafeEqual');
+    expect(localAuthModule).toMatch(
+      /PassportModule\.register\(\{\s*defaultStrategy:\s*HUMAN_AUTH_STRATEGY\s*\}\)/,
+    );
+    expect(localAuthModule).toContain('LocalIdentityStrategy');
+    expect(localAuthModule).toContain('AuthResolver');
+    for (const forbidden of [
+      "from './auth.module'",
+      'JwtStrategy',
+      'VerifiedHumanIdentityResolver',
+      'ExternalIdentityModule',
+      'McpModule',
+    ]) {
+      expect(localAuthModule).not.toContain(forbidden);
+    }
+  });
 });

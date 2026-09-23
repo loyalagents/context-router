@@ -452,6 +452,7 @@ function startCapturedProcess(options: {
     stdout: string;
     stderr: string;
   }>;
+  readOutput: () => { stdout: string; stderr: string };
 } {
   const child = spawn(options.executable, options.args, {
     cwd: options.cwd,
@@ -486,7 +487,32 @@ function startCapturedProcess(options: {
       resolveResult({ code, signal, stdout, stderr });
     });
   });
-  return { child, result };
+  return {
+    child,
+    result,
+    readOutput: () => ({ stdout, stderr }),
+  };
+}
+
+async function waitForCapturedStdout(
+  captured: ReturnType<typeof startCapturedProcess>,
+  expected: string,
+): Promise<void> {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    const output = captured.readOutput();
+    if (output.stdout === expected) return;
+    if (
+      !expected.startsWith(output.stdout) ||
+      output.stderr.length > 0 ||
+      captured.child.exitCode !== null ||
+      captured.child.signalCode !== null
+    ) {
+      throw new Error('Local identity preview failed before readiness');
+    }
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 25));
+  }
+  throw new Error('Local identity preview readiness timed out');
 }
 
 async function waitForCandidate(root: string): Promise<string> {
@@ -1200,8 +1226,7 @@ describe('local identity direct-TLS repository', () => {
           'Local identity database state conflict',
         );
 
-        const artifactsAfter =
-          await readLocalIdentityArtifacts(recoveryRoot);
+        const artifactsAfter = await readLocalIdentityArtifacts(recoveryRoot);
         expect(
           sameLocalIdentityArtifacts(artifactsAfter, artifactsBefore),
         ).toBe(true);
@@ -1493,12 +1518,15 @@ describe('local identity direct-TLS repository', () => {
       for (const relative of [
         'dist/local-identity.js',
         'dist/local-identity.js.map',
+        'dist/bootstrap/local-identity-preview.js',
+        'dist/composition/local-application.module.js',
         'dist/config/local-identity.config.js',
         'dist/modules/auth/local-identity-admin.cli.js',
         'dist/modules/auth/local-identity-filesystem.js',
         'dist/modules/auth/local-identity.repository.js',
         'dist/modules/auth/local-identity-state.codec.js',
         'dist/modules/auth/local-identity-state.service.js',
+        'dist/modules/auth/strategies/local-identity.strategy.js',
       ]) {
         const content = await readFile(join(deployedBackend, relative), 'utf8');
         expect(content.includes(repositoryRoot)).toBe(false);
@@ -1567,6 +1595,8 @@ describe('local identity direct-TLS repository', () => {
           status: 'ok',
           generation,
         })}\n`;
+      const previewReadiness =
+        '{"type":"context-router.local-identity.preview.ready","version":1}\n';
       const compiledArguments = (command: string) => [
         '--no-global-search-paths',
         compiledEntrypoint,
@@ -1844,6 +1874,118 @@ if (mode === "audit") {
         expect(
           JSON.stringify(firstDatabaseRows).includes(firstCandidate.credential),
         ).toBe(false);
+
+        const bindingClient = createLocalIdentityDatabaseClient({
+          ...configuration.clientConfig,
+          application_name: 'context-router-local-identity-preview-binding',
+        });
+        await bindingClient.connect();
+        try {
+          await bindingClient.query(
+            `INSERT INTO public.external_identities
+              (id, user_id, provider, issuer, provider_user_id, updated_at)
+             VALUES
+              ($1, $2, 'auth0', 'https://tenant.example.test/', 'subject-one', NOW()),
+              ($3, $2, 'second-idp', 'https://issuer.example.test/', 'subject-two', NOW())`,
+            [randomUUID(), firstCandidate.principalId, randomUUID()],
+          );
+        } finally {
+          await bindingClient.end();
+        }
+
+        const runPackagedPreview = async (
+          signal: 'SIGINT' | 'SIGTERM',
+          expectedExitCode: number,
+        ) => {
+          const canonicalBefore = await readFile(
+            join(firstProcessRoot, 'identity.json'),
+          );
+          const preview = startCapturedProcess({
+            executable: process.execPath,
+            args: compiledArguments('preview'),
+            cwd: hostileCwd,
+            env: cliEnvironment(firstProcessRoot),
+          });
+          spawnedChildren.push(preview.child);
+          await waitForCapturedStdout(preview, previewReadiness);
+          expect(preview.child.exitCode).toBeNull();
+          expect(preview.child.signalCode).toBeNull();
+          expect(preview.readOutput()).toEqual({
+            stdout: previewReadiness,
+            stderr: '',
+          });
+          expect(preview.child.kill(signal)).toBe(true);
+          await expect(preview.result).resolves.toEqual({
+            code: expectedExitCode,
+            signal: null,
+            stdout: previewReadiness,
+            stderr: '',
+          });
+          expect(
+            (await readFile(join(firstProcessRoot, 'identity.json'))).equals(
+              canonicalBefore,
+            ),
+          ).toBe(true);
+          expect(await readdir(firstProcessRoot)).toEqual(['identity.json']);
+        };
+
+        await runPackagedPreview('SIGTERM', 143);
+        const rotation = await capture(
+          process.execPath,
+          compiledArguments('rotate'),
+          {
+            cwd: hostileCwd,
+            env: cliEnvironment(firstProcessRoot),
+            timeout: 30_000,
+          },
+        );
+        expect(rotation).toEqual({
+          ok: true,
+          stdout: successOutput('rotate', 2),
+          stderr: '',
+        });
+        const rotatedState = decodeLocalIdentityState(
+          await readFile(join(firstProcessRoot, 'identity.json')),
+        );
+        expect(rotatedState).toMatchObject({
+          principalId: firstCandidate.principalId,
+          generation: 2,
+        });
+        expect(rotatedState.credential).not.toBe(firstCandidate.credential);
+        await runPackagedPreview('SIGINT', 130);
+
+        const providerBindings = createLocalIdentityDatabaseClient({
+          ...configuration.clientConfig,
+          application_name: 'context-router-local-identity-preview-inspection',
+        });
+        await providerBindings.connect();
+        try {
+          await expect(
+            providerBindings.query(
+              `SELECT provider, issuer, provider_user_id, user_id
+                 FROM public.external_identities
+                ORDER BY provider`,
+            ),
+          ).resolves.toMatchObject({
+            rows: [
+              {
+                provider: 'auth0',
+                issuer: 'https://tenant.example.test/',
+                provider_user_id: 'subject-one',
+                user_id: firstCandidate.principalId,
+              },
+              {
+                provider: 'second-idp',
+                issuer: 'https://issuer.example.test/',
+                provider_user_id: 'subject-two',
+                user_id: firstCandidate.principalId,
+              },
+            ],
+            rowCount: 2,
+          });
+        } finally {
+          await providerBindings.end();
+        }
       } finally {
         if (!processBlockerClosed) {
           const cleanupFailures: unknown[] = [];
@@ -2818,15 +2960,14 @@ fsp.rename = async function (...args) {
           const beforeLoss =
             await readOptionalLocalIdentityArtifacts(boundaryRoot);
           const expectedReadyBytes =
-            scenario.generation === null ||
-            scenario.boundary === 'root.mkdir'
+            scenario.generation === null || scenario.boundary === 'root.mkdir'
               ? undefined
               : beforeLoss?.find((artifact) =>
-                    scenario.command === 'rotate'
-                      ? artifact.name === 'identity.json'
-                      : artifact.name === 'identity.json' ||
-                        artifact.name.startsWith('identity.pending-'),
-                  )?.bytes;
+                  scenario.command === 'rotate'
+                    ? artifact.name === 'identity.json'
+                    : artifact.name === 'identity.json' ||
+                      artifact.name.startsWith('identity.pending-'),
+                )?.bytes;
           if (
             scenario.generation !== null &&
             scenario.boundary !== 'root.mkdir'
@@ -2898,9 +3039,7 @@ fsp.rename = async function (...args) {
             if (expectedReadyBytes) {
               expect(readyBytes.equals(expectedReadyBytes)).toBe(true);
             }
-            const ready = decodeLocalIdentityState(
-              readyBytes,
-            );
+            const ready = decodeLocalIdentityState(readyBytes);
             expect(ready.generation).toBe(scenario.generation);
             await expect(
               readIdentityRows(configuration.clientConfig),

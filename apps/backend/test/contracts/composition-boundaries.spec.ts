@@ -170,10 +170,11 @@ describe('model composition boundaries', () => {
       .map(repoRelative);
     if (
       legacyTransportImporters.length !== 1 ||
-      legacyTransportImporters[0] !== 'src/app.module.ts'
+      legacyTransportImporters[0] !==
+        'src/composition/application-features.module.ts'
     ) {
       violations.push(
-        `AppModule must be the sole legacy GraphQL transport importer; found ${JSON.stringify(legacyTransportImporters)}`,
+        `ApplicationFeaturesModule must be the sole legacy GraphQL transport importer; found ${JSON.stringify(legacyTransportImporters)}`,
       );
     }
 
@@ -256,6 +257,7 @@ describe('model composition boundaries', () => {
       'src/infrastructure/vertex-ai/vertex-ai-structured.service.spec.ts',
       'src/infrastructure/vertex-ai/vertex-ai.service.ts',
       'test/integration/vertex-ai-structured.spec.ts',
+      'test/contracts/local-identity-application.spec.ts',
     ]);
     const vertexSdkImportPattern =
       /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"]@google-cloud\/vertexai(?:\/[^'"]*)?['"]/;

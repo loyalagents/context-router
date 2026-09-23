@@ -1,6 +1,44 @@
-import { runLocalIdentityEntrypoint } from './local-identity';
+import { main, runLocalIdentityEntrypoint } from './local-identity';
 
 describe('local identity process entrypoint', () => {
+  it('routes only the exact preview command to the lazy preview runner', async () => {
+    const preview = jest.fn().mockResolvedValue(143);
+    const admin = jest.fn().mockResolvedValue(2);
+    const loadPreview = jest.fn(async () => preview);
+    const loadAdmin = jest.fn(async () => admin);
+
+    await expect(main(['preview'], { loadPreview, loadAdmin })).resolves.toBe(
+      143,
+    );
+    expect(loadPreview).toHaveBeenCalledTimes(1);
+    expect(preview).toHaveBeenCalledTimes(1);
+    expect(loadAdmin).not.toHaveBeenCalled();
+    expect(admin).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['initialize'],
+    ['recover-initialize'],
+    ['rotate'],
+    ['recover-rotation'],
+    ['preview', 'extra'],
+    [],
+  ])(
+    'routes non-preview argv %p to the four-verb admin parser',
+    async (...argv) => {
+      const preview = jest.fn().mockResolvedValue(0);
+      const admin = jest.fn().mockResolvedValue(2);
+      const loadPreview = jest.fn(async () => preview);
+      const loadAdmin = jest.fn(async () => admin);
+
+      await expect(main(argv, { loadPreview, loadAdmin })).resolves.toBe(2);
+      expect(loadPreview).not.toHaveBeenCalled();
+      expect(preview).not.toHaveBeenCalled();
+      expect(loadAdmin).toHaveBeenCalledTimes(1);
+      expect(admin).toHaveBeenCalledWith(argv);
+    },
+  );
+
   it('maps loader and other top-level failures to one fixed diagnostic', async () => {
     const canaries = [
       '/absolute/source/path',

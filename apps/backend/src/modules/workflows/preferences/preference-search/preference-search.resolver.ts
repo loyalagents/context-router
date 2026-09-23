@@ -24,7 +24,7 @@ export class PreferenceSearchResolver {
     @CurrentUser() user: User,
     @Args('input') input: SmartPreferenceSearchInput,
   ): Promise<SmartPreferenceSearchResult> {
-    const maxResults = this.configService.get<number>(
+    const maxResults = this.configService.getOrThrow<number>(
       'mcp.tools.preferences.maxSearchResults',
     );
 

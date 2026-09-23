@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { PreferenceDefinition as PrismaPreferenceDefinition } from '@infrastructure/prisma/prisma-models';
 import { z } from 'zod';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
@@ -10,7 +11,6 @@ import {
   FilteredSuggestion,
   FilterReason,
 } from './dto/preference-suggestion.dto';
-import { getDocumentUploadConfig } from '../../../config/document-upload.config';
 import { PreferenceDefinitionRepository } from '../preference-definition/preference-definition.repository';
 import { PreferenceSchemaSnapshotService } from '../preference-definition/preference-schema-snapshot.service';
 import { buildDuplicateConsolidationPrompt } from './duplicate-consolidation.prompt';
@@ -63,7 +63,7 @@ const TEXT_LIKE_MIME_TYPES_FOR_AI_FILE_INPUT = new Set([
 @Injectable()
 export class PreferenceExtractionService {
   private readonly logger = new Logger(PreferenceExtractionService.name);
-  private readonly config = getDocumentUploadConfig();
+  private readonly maxSuggestions: number;
 
   constructor(
     @Inject(AI_STRUCTURED_OUTPUT_PORT)
@@ -71,7 +71,12 @@ export class PreferenceExtractionService {
     private readonly preferenceService: PreferenceService,
     private readonly defRepo: PreferenceDefinitionRepository,
     private readonly snapshotService: PreferenceSchemaSnapshotService,
-  ) {}
+    configService: ConfigService,
+  ) {
+    this.maxSuggestions = configService.getOrThrow<number>(
+      'documentUpload.maxSuggestions',
+    );
+  }
 
   async extractPreferences(
     userId: string,
@@ -98,13 +103,11 @@ export class PreferenceExtractionService {
       userId,
     );
 
-    this.logger.log(`Calling AI for preference extraction from ${filename}`);
+    this.logger.log('Calling the configured preference-extraction model');
 
     const aiFileMimeType = this.normalizeMimeTypeForAiFileInput(mimeType);
     if (aiFileMimeType !== mimeType) {
-      this.logger.debug(
-        `Normalizing MIME type ${mimeType} to ${aiFileMimeType} for AI file extraction`,
-      );
+      this.logger.debug('Normalizing a text-like model file input');
     }
 
     // Call the AI with the file — port handles fence stripping, JSON parsing, Zod validation
@@ -163,7 +166,7 @@ Task:
 - If a fact's only evidence is absence/status text, emit no suggestion for that slug. Do not store status text such as "pending", "not provided", or "to be completed" as newValue.
 - Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note. Do not use workflow or task prose to fill unrelated durable memory notes.
 - newValue must be the durable fact itself. sourceSnippet must quote the text containing the actual value, not just a label, comment, placeholder, or status note.
-- Return at most ${this.config.maxSuggestions} suggestions, prioritizing higher-confidence items.
+- Return at most ${this.maxSuggestions} suggestions, prioritizing higher-confidence items.
 - Use ONLY slugs from the schema above. Invalid slugs will be rejected.
 - If a preference already exists with the same value, do not include it.
 - For UPDATE operations, include the oldValue from current preferences. If a current preference has a non-empty value, only suggest a replacement when the attached document clearly contains the replacement value for the same fact. Current preferences are context, not evidence.
@@ -191,11 +194,12 @@ If no preferences can be extracted, return:
 }`;
   }
 
-  private transformAiResult(
-    aiResult: AiResponseSchemaType,
-  ): { suggestions: PreferenceSuggestion[]; documentSummary: string } {
+  private transformAiResult(aiResult: AiResponseSchemaType): {
+    suggestions: PreferenceSuggestion[];
+    documentSummary: string;
+  } {
     const suggestions: PreferenceSuggestion[] = aiResult.suggestions
-      .slice(0, this.config.maxSuggestions)
+      .slice(0, this.maxSuggestions)
       .map((s: AiSuggestionSchemaType, index: number) => {
         return {
           id: `candidate:${index}`,
@@ -250,14 +254,7 @@ If no preferences can be extracted, return:
     filteredCount: number;
   }> {
     this.logger.debug(
-      `Raw AI suggestions (${parsed.suggestions.length}): ${JSON.stringify(
-        parsed.suggestions.map((s) => ({
-          slug: s.slug,
-          operation: s.operation,
-          newValue: s.newValue,
-          confidence: s.confidence,
-        })),
-      )}`,
+      `Validating ${parsed.suggestions.length} model preference suggestions`,
     );
 
     // Build a lookup map for current preferences
@@ -317,7 +314,7 @@ If no preferences can be extracted, return:
       }
 
       this.logger.log(
-        `[DUPLICATE_GROUP_DETECTED] slug=${slug} candidateCount=${group.length}`,
+        `[DUPLICATE_GROUP_DETECTED] candidateCount=${group.length}`,
       );
 
       try {
@@ -348,7 +345,7 @@ If no preferences can be extracted, return:
         if (normalizedConsolidated.kind === 'accepted') {
           validatedSuggestions.push(normalizedConsolidated.suggestion);
           this.logger.log(
-            `[DUPLICATE_GROUP_CONSOLIDATED] slug=${slug} candidateCount=${group.length}`,
+            `[DUPLICATE_GROUP_CONSOLIDATED] candidateCount=${group.length}`,
           );
           continue;
         }
@@ -360,13 +357,11 @@ If no preferences can be extracted, return:
           ),
         );
         this.logger.log(
-          `[DUPLICATE_GROUP_NO_CHANGE] slug=${slug} candidateCount=${group.length}`,
+          `[DUPLICATE_GROUP_NO_CHANGE] candidateCount=${group.length}`,
         );
-      } catch (error) {
-        const reason =
-          error instanceof Error ? error.message : 'unknown consolidation error';
+      } catch {
         this.logger.warn(
-          `[DUPLICATE_GROUP_FALLBACK_FIRST] slug=${slug} candidateCount=${group.length} reason=${reason}`,
+          `[DUPLICATE_GROUP_FALLBACK_FIRST] candidateCount=${group.length}`,
         );
 
         this.pushNormalizationResult(
@@ -375,12 +370,14 @@ If no preferences can be extracted, return:
           filteredSuggestions,
         );
         filteredSuggestions.push(
-          ...group.slice(1).map((candidate) =>
-            this.buildDuplicateAuditSuggestion(
-              candidate,
-              `Retained first valid candidate for ${slug}; this duplicate was not applied`,
+          ...group
+            .slice(1)
+            .map((candidate) =>
+              this.buildDuplicateAuditSuggestion(
+                candidate,
+                `Retained first valid candidate for ${slug}; this duplicate was not applied`,
+              ),
             ),
-          ),
         );
       }
     }
@@ -406,9 +403,7 @@ If no preferences can be extracted, return:
 
     if (!suggestion.slug || suggestion.newValue === undefined) {
       const details = `slug: ${suggestion.slug}, newValue: ${suggestion.newValue}`;
-      this.logger.warn(
-        `Filtered suggestion: missing required field(s) - ${details}`,
-      );
+      this.logger.warn('Filtered a suggestion with missing required fields');
       return {
         ...suggestion,
         id: `filtered:invalid:${originalIndex}`,
@@ -423,7 +418,7 @@ If no preferences can be extracted, return:
       definitionCache,
     );
     if (!definition) {
-      this.logger.warn(`Filtered suggestion: unknown slug "${suggestion.slug}"`);
+      this.logger.warn('Filtered a suggestion with an unknown slug');
       return {
         ...suggestion,
         id: `filtered:invalid:${originalIndex}`,
@@ -449,9 +444,7 @@ If no preferences can be extracted, return:
       : PreferenceOperation.CREATE;
 
     if (normalizedSuggestion.operation !== expectedOperation) {
-      this.logger.warn(
-        `Corrected operation for ${normalizedSuggestion.slug}: AI said ${normalizedSuggestion.operation}, but DB says ${expectedOperation}`,
-      );
+      this.logger.warn('Corrected a model-supplied preference operation');
       normalizedSuggestion.operation = expectedOperation;
       wasCorrected = true;
     }
@@ -463,9 +456,7 @@ If no preferences can be extracted, return:
         JSON.stringify(actualOldValue) === JSON.stringify(aiOldValue);
 
       if (!oldValueMatches) {
-        this.logger.warn(
-          `Corrected oldValue for ${normalizedSuggestion.slug}: AI said ${JSON.stringify(aiOldValue)}, actual is ${JSON.stringify(actualOldValue)}`,
-        );
+        this.logger.warn('Corrected a model-supplied prior preference value');
         normalizedSuggestion.oldValue = actualOldValue;
         wasCorrected = true;
       }
@@ -473,9 +464,7 @@ If no preferences can be extracted, return:
       normalizedSuggestion.oldValue !== undefined &&
       normalizedSuggestion.oldValue !== null
     ) {
-      this.logger.warn(
-        `Corrected oldValue for ${normalizedSuggestion.slug}: removed oldValue for CREATE operation`,
-      );
+      this.logger.warn('Removed a prior value from a create suggestion');
       normalizedSuggestion.oldValue = undefined;
       wasCorrected = true;
     }
@@ -485,9 +474,7 @@ If no preferences can be extracted, return:
       JSON.stringify(existingValue) ===
         JSON.stringify(normalizedSuggestion.newValue)
     ) {
-      this.logger.warn(
-        `Filtered suggestion: ${normalizedSuggestion.slug} newValue matches existing value (no change)`,
-      );
+      this.logger.warn('Filtered a preference suggestion with no change');
       return {
         kind: 'filtered',
         suggestion: {
@@ -547,7 +534,9 @@ If no preferences can be extracted, return:
       await this.aiStructuredService.generateStructured(
         consolidationPrompt,
         schema,
-        { operationName: `preferenceExtraction.duplicateConsolidation.${slug}` },
+        {
+          operationName: `preferenceExtraction.duplicateConsolidation.${slug}`,
+        },
       );
 
     return {
@@ -638,7 +627,7 @@ If no preferences can be extracted, return:
       slug,
       onEvent: (event) => {
         this.logger.debug(
-          `Canonicalized preference suggestion value for ${event.slug}: ${event.kind}`,
+          `Canonicalized a preference suggestion value: ${event.kind}`,
         );
       },
     });

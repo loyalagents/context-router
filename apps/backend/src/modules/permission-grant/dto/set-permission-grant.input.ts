@@ -4,7 +4,7 @@ import {
   GrantAction,
   GrantEffect,
 } from '@infrastructure/prisma/generated-client';
-import { MANAGED_MCP_CLIENT_KEYS } from '@/mcp/types/mcp-authorization.types';
+import { MANAGED_MCP_CLIENT_KEYS } from '../permission-grant.constants';
 import { PERMISSION_GRANT_TARGET_PATTERN } from '../permission-grant.service';
 
 @InputType()

@@ -1,7 +1,21 @@
 import { registerAs } from '@nestjs/config';
 
-export default registerAs('graphql', () => ({
-  playground: process.env.GRAPHQL_PLAYGROUND === 'true',
-  debug: process.env.GRAPHQL_DEBUG === 'true',
-  introspection: process.env.NODE_ENV !== 'production',
-}));
+export interface GraphqlConfiguration {
+  playground: boolean;
+  debug: boolean;
+  introspection: boolean;
+}
+
+export function createGraphqlConfiguration(
+  environment: NodeJS.ProcessEnv,
+): GraphqlConfiguration {
+  return {
+    playground: environment.GRAPHQL_PLAYGROUND === 'true',
+    debug: environment.GRAPHQL_DEBUG === 'true',
+    introspection: environment.NODE_ENV !== 'production',
+  };
+}
+
+export function graphqlConfigLoader(environment: NodeJS.ProcessEnv) {
+  return registerAs('graphql', () => createGraphqlConfiguration(environment));
+}

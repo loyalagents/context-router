@@ -68,6 +68,28 @@ export class LocalIdentityStateService {
     return this.fileStore.openReadyState();
   }
 
+  async verifyReadyState(): Promise<OpenLocalIdentityState> {
+    return this.withSession(async (session) => {
+      const before = await this.fileStore.openReadyState();
+      let after: OpenLocalIdentityState | undefined;
+      await session.verify(before.state, async () => {
+        const current = await this.fileStore.openReadyState();
+        if (
+          current.digest !== before.digest ||
+          current.bytes.byteLength !== before.bytes.byteLength ||
+          !timingSafeEqual(current.bytes, before.bytes)
+        ) {
+          throw new Error('Local identity state changed during verification');
+        }
+        after = current;
+      });
+      if (!after) {
+        throw new Error('Local identity state changed during verification');
+      }
+      return after;
+    });
+  }
+
   async initialize(): Promise<OpenLocalIdentityState> {
     return this.withSession(async (session) => {
       const lease = await this.prepareRoot(session, true);

@@ -3,10 +3,14 @@ import "reflect-metadata";
 import type { INestApplication } from "@nestjs/common";
 import { GraphQLSchemaHost } from "@nestjs/graphql";
 import { Test, type TestingModule } from "@nestjs/testing";
+import passport from "passport";
 import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 import { AppModule } from "../src/app.module";
+import { LocalApplicationModule } from "../src/composition/local-application.module";
+import type { LocalIdentityConfiguration } from "../src/config/local-identity.config";
 import { resolveRuntimeConfiguration } from "../src/config/runtime-config";
+import { HUMAN_AUTH_STRATEGY } from "../src/domains/shared/ports/human-auth.constants";
 import { PrismaService } from "../src/infrastructure/prisma/prisma.service";
 import { VertexAiStructuredService } from "../src/infrastructure/vertex-ai/vertex-ai-structured.service";
 import { VertexAiService } from "../src/infrastructure/vertex-ai/vertex-ai.service";
@@ -101,12 +105,95 @@ export async function buildApplicationGraphqlSchemaSdl(): Promise<string> {
       }
     }
   } finally {
+    passport.unuse(HUMAN_AUTH_STRATEGY);
     process.env = inheritedEnvironment;
   }
 
   throwSchemaBuildFailures(primaryError, cleanupError);
   if (schema === undefined) {
     throw new Error("GraphQL schema generation returned no schema");
+  }
+  return schema;
+}
+
+function createLocalSchemaConfiguration(): LocalIdentityConfiguration {
+  const connection = {
+    host: "127.0.0.1",
+    port: 1,
+    database: "schema_fixture",
+    user: "schema-fixture",
+    password: "database-password-canary",
+    ssl: { rejectUnauthorized: true, ca: "tls-ca-canary" },
+  };
+  return {
+    stateRoot: "/private/context-router-local-schema-fixture",
+    databaseTargetId: Buffer.alloc(32, 0x41).toString("base64url"),
+    database: {
+      protocol: "postgresql:",
+      host: "127.0.0.1",
+      port: 1,
+      database: "schema_fixture",
+      schema: "public",
+    },
+    clientConfig: { ...connection },
+    poolConfig: { ...connection },
+  };
+}
+
+export async function buildLocalApplicationGraphqlSchemaSdl(): Promise<string> {
+  const inheritedEnvironment = process.env;
+  let testingModule: TestingModule | undefined;
+  let application: INestApplication | undefined;
+  let schema: string | undefined;
+  let primaryError: unknown;
+  let cleanupError: unknown;
+
+  process.env = {
+    NODE_ENV: "development-canary",
+    ENABLE_DEMO_RESET: "true",
+    GRAPHQL_PLAYGROUND: "true",
+    GRAPHQL_DEBUG: "true",
+    AUTH0_ISSUER: "https://auth0-secret-canary.invalid/",
+    AUTH0_AUDIENCE: "auth0-audience-canary",
+    GCP_PROJECT_ID: "cloud-project-canary",
+    DOC_UPLOAD_MAX_BYTES: "1",
+    FORM_FILL_MAX_BYTES: "1",
+    "app.isDevelopment": "true",
+    "mcp.tools.preferences.maxSearchResults": "1",
+  };
+  try {
+    try {
+      const moduleBuilder = Test.createTestingModule({
+        imports: [
+          LocalApplicationModule.register(createLocalSchemaConfiguration()),
+        ],
+      });
+      moduleBuilder.overrideProvider(PrismaService).useValue({});
+
+      testingModule = await moduleBuilder.compile();
+      application = testingModule.createNestApplication({ logger: false });
+      await application.init();
+      schema = serializeGraphqlSchema(
+        application.get(GraphQLSchemaHost).schema,
+      );
+    } catch (error) {
+      primaryError = error;
+    } finally {
+      try {
+        if (application) await application.close();
+        else if (testingModule) await testingModule.close();
+      } catch (error) {
+        cleanupError = error;
+      }
+    }
+  } finally {
+    passport.unuse(HUMAN_AUTH_STRATEGY);
+    process.env = inheritedEnvironment;
+  }
+
+  throwSchemaBuildFailures(primaryError, cleanupError);
+  if (schema === undefined) {
+    throw new Error("Local GraphQL schema generation returned no schema");
   }
   return schema;
 }
