@@ -99,13 +99,18 @@ function capture(
   });
 }
 
-async function waitForPostgres(containerName: string): Promise<void> {
+async function waitForPostgres(
+  containerName: string,
+  commands = { run, capture },
+): Promise<void> {
   const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
     try {
-      await run(
+      await commands.run(
         'docker',
-        ['exec', containerName, 'pg_isready', '-U', 'postgres'],
+        // The image starts a socket-only bootstrap server before the final
+        // server. Only TCP readiness is useful to our host-side TLS clients.
+        ['exec', containerName, 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres'],
         {
           timeout: 5_000,
           failureMessage:
@@ -114,14 +119,14 @@ async function waitForPostgres(containerName: string): Promise<void> {
       );
       return;
     } catch {
-      const status = await capture('docker', [
+      const status = await commands.capture('docker', [
         'inspect',
         '--format',
         '{{.State.Running}}',
         containerName,
       ]);
       if (status.ok && status.stdout.trim() !== 'true') {
-        const logs = await capture('docker', ['logs', containerName]);
+        const logs = await commands.capture('docker', ['logs', containerName]);
         throw new Error(
           `Local identity TLS fixture exited: ${`${logs.stdout}${logs.stderr}`.slice(-2_000)}`,
         );
@@ -912,6 +917,30 @@ async function installCommitBarrier(
 }
 
 describe('local identity direct-TLS repository', () => {
+  it('waits past socket-only bootstrap until the TCP server is ready', async () => {
+    let tcpProbes = 0;
+    const probe = jest.fn(async (_executable: string, args: string[]) => {
+      // The entrypoint's temporary server accepts Unix-socket connections
+      // before initialization finishes, but does not listen on TCP.
+      if (!args.includes('-h')) return;
+      tcpProbes += 1;
+      if (tcpProbes === 1) throw new Error('TCP server not ready');
+    });
+    const inspect = jest.fn(async () => ({
+      stdout: 'true\n', stderr: '', ok: true,
+    }));
+
+    await waitForPostgres('bootstrap-fixture', { run: probe, capture: inspect });
+
+    expect(tcpProbes).toBe(2);
+    expect(probe).toHaveBeenLastCalledWith(
+      'docker',
+      ['exec', 'bootstrap-fixture', 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres'],
+      expect.any(Object),
+    );
+    expect(inspect).toHaveBeenCalledTimes(1);
+  });
+
   it('uses TLS inside PostgreSQL, serializes dedicated sessions, and supports the explicit Prisma pool', async () => {
     const created = await mkdtemp(join(tmpdir(), 'local-identity-tls-'));
     await chmod(created, 0o700);
