@@ -1,6 +1,6 @@
 # Step 04: Storage Boundaries
 
-- Status: implementation checkpoints 1–4 complete; final review and aggregate validation pending
+- Status: implementation complete; fresh final reviews approved; exact-head validation and human review tracked in the implementation PR
 - Program step: `04-storage-boundaries`
 - Target branch: `main`
 - Working branch: `codex/local-migration-04-storage-boundaries`
@@ -26,6 +26,6 @@ Read [orchestration](../orchestration.md), [decision log](../decision-log.md), [
 
 Fresh independent architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved draft A without blockers. Findings and approvals bind to reviewed areas/revisions in the plan. After approval, the sole writer implements tests first, checkpoint by checkpoint, and obtains fresh final full-diff review plus exact-base local and final-head remote evidence.
 
-The implementation and targeted checkpoint evidence are recorded in the [plan](plan.md#checkpoint-evidence). The enduring contracts are in [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md). Remaining closeout work is fresh complete-diff review, exact-base twelve-phase validation, one implementation PR and final-head remote checks.
+The implementation and targeted checkpoint evidence are recorded in the [plan](plan.md#checkpoint-evidence). The enduring contracts are in [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md). Fresh complete-diff architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved candidate `01d5bd44551f89b8c675a3735a5c0361c1b006af` without actionable findings. The implementation PR records final-head local/remote validation and remains subject to human review and merge.
 
 Step 04 is the only primary step. Steps 05 and 06 remain inactive. No SQLite/database cutover, local model, MCP/browser/UI cutover, installer, LAN mode, historical-data migration, public-contract removal, or generic repository framework belongs here. There is no standalone planning/closeout PR and no automatic merge.

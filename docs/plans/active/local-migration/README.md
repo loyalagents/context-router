@@ -5,7 +5,7 @@
 - Step 04 planning base: `311f5a09b9b1ee5d43717296fbb49e7d45feda5e`; clean-base activation gate passed all twelve phases before activation edits
 - Coordinator: `/root`, repository-read-only
 - Outcome owner and sole repository writer: `/root/storage_writer` on `codex/local-migration-04-storage-boundaries`
-- Concrete next action: implement the independently approved Step 04 plan checkpoint by checkpoint and prepare one validated PR for human review
+- Concrete next action: review Step 04's exact-head local/remote evidence and implementation PR; human review and merge remain required
 - Review date: 2026-10-07 or Step 04 plan approval, whichever comes first
 - Last reviewed: 2026-09-23
 
@@ -19,9 +19,9 @@ and overlap candidates. This is execution strategy, not step activation or an
 approved implementation plan. General guidance lives in
 [`AGENT_WORKFLOW.md`](../../../useful/AGENT_WORKFLOW.md).
 
-## Plan, Implement, And Review Step 04
+## Review Step 04
 
-1. Follow the Step 04 [README](04-storage-boundaries/README.md) and [plan](04-storage-boundaries/plan.md). Product implementation waits for fresh independent plan approval.
+1. Follow the Step 04 [README](04-storage-boundaries/README.md) and [plan](04-storage-boundaries/plan.md). Its plan and complete implementation diff have independent approval; exact-head aggregate evidence is recorded with the PR.
 2. Bind activation and final aggregate validation to the full recorded planning base. Preserve the Step 03 [plan](03-local-identity/plan.md) because its exact recovery contract remains required.
 3. Keep one PR and `/root/storage_writer` as the sole writer. The coordinator and review agents remain read-only; checkpoints are internal validation milestones.
 4. Extract storage and transaction behavior with PostgreSQL as the working reference adapter, preserve hosted/local preview modes and public contracts, and remove production seed sample users.

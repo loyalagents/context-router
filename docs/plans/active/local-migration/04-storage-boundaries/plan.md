@@ -1,6 +1,6 @@
 # Step 04: Storage Boundaries
 
-- Document status: implementation checkpoints 1–4 complete; final full-diff review and aggregate validation pending
+- Document status: implementation complete and independently approved; final-head aggregate evidence tracked with the implementation PR
 - Program step: `04-storage-boundaries`
 - Target branch: `main`
 - Planning base commit: `311f5a09b9b1ee5d43717296fbb49e7d45feda5e`
@@ -42,6 +42,9 @@ Historical documents do not override landed code. Step 03's full recovery plan r
 | `/root/architecture_review` | Fresh architecture/scope review | GPT-6 Astra Extra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only review |
 | `/root/persistence_review` | Fresh persistence/recovery and security/privacy review | GPT-6 Astra Extra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only review |
 | `/root/compatibility_review` | Fresh compatibility/consumers and tests/gate review | GPT-6 Astra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only review |
+| `/root/final_architecture_review` | Fresh complete-diff architecture/scope review | GPT-6 Astra Extra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only final review, approved |
+| `/root/final_persistence_review` | Fresh complete-diff persistence/recovery and security/privacy review | GPT-6 Astra Extra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only final review, approved |
+| `/root/final_compatibility_review` | Fresh complete-diff compatibility/consumers and tests/gate review | GPT-6 Astra High | Explicit supported request runtime-accepted; serving internals not independently exposed | Read-only final review, approved |
 
 No effort downgrade is inferred from a prompt. Mechanical work remains on the configured sole writer unless the runtime supports an explicitly verified change; no second writer or ownership churn is created to change tiers.
 
@@ -240,8 +243,15 @@ Approvals bind to named contracts/areas and the reviewed revision. A substantive
 | Draft A `6970d8fe532b87ec4c0f141725a742ebcff917859f88c417036f94e07e0e19be` | `/root/persistence_review` / Security/privacy | Approved security and privacy; no blocking findings | Approved |
 | Draft A `6970d8fe532b87ec4c0f141725a742ebcff917859f88c417036f94e07e0e19be` | `/root/compatibility_review` / Compatibility/consumers | Approved compatibility and consumers; no blocking findings | Approved |
 | Draft A `6970d8fe532b87ec4c0f141725a742ebcff917859f88c417036f94e07e0e19be` | `/root/compatibility_review` / Tests/gate | Approved tests and gate evidence; no blocking findings | Approved |
+| Base `311f5a09b9b1ee5d43717296fbb49e7d45feda5e` through candidate `01d5bd44551f89b8c675a3735a5c0361c1b006af` | `/root/final_architecture_review` / Architecture/scope | Complete implementation and canonical docs reviewed; no actionable findings | Approved |
+| Same complete base-to-candidate diff | `/root/final_persistence_review` / Persistence/recovery and security/privacy | Transaction failure/ownership, identity/reset and held recovery reviewed; no actionable findings | Both dimensions approved |
+| Same complete base-to-candidate diff | `/root/final_compatibility_review` / Compatibility/consumers and tests/gate | Public fixtures byte-identical; retained assertions and meaningful new failpoint evidence; all suites discovered without phase changes | Both dimensions approved |
 
 The post-approval changes only record verdicts and activation status; they do not alter substantive draft A contracts. All named review coverage is carried forward. Application callback failures retain their own identity/semantics; provider-origin failures alone undergo adapter normalization. The latter clarifies the existing separation rather than authorizing a new behavior.
+
+Final review impact assessment: subsequent closeout edits record these verdicts, the actual PR reference and validation provenance only. They do not change production code, tests, registry semantics, supported modes, dependencies or gate inputs other than documentation. All five named final-review dimensions therefore carry forward from `01d5bd44551f89b8c675a3735a5c0361c1b006af`; final documentation links and the complete aggregate gate still run on the clean final candidate. Any later substantive change requires the affected reviewer recheck and renewed evidence. Fresh origin/main verification after implementation still equals the planning base.
+
+The implementation PR is the durable closeout evidence index: it records the final branch head, local gate source/base and all twelve phase outcomes, standard CI and dedicated migration-gate run links, actual workflow source revision (including any synthetic merge commit), cleanup and platform limits. Gate evidence is never relabelled from an earlier candidate. Keeping that final-head report in the PR avoids a post-validation repository evidence commit invalidating its own claimed head. Human review and merge remain required; Step 04 is not marked merged and Steps 05/06 remain inactive.
 
 ## Checkpoint Evidence
 
