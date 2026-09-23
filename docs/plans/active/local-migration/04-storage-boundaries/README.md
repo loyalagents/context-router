@@ -1,6 +1,6 @@
 # Step 04: Storage Boundaries
 
-- Status: implementation complete; fresh final reviews approved; exact-head validation and human review tracked in the implementation PR
+- Status: complete — human-merged through PR #163 at `3426dc556fea88d94a360329e7c685bc9acc155e`
 - Program step: `04-storage-boundaries`
 - Target branch: `main`
 - Working branch: `codex/local-migration-04-storage-boundaries`
@@ -27,6 +27,6 @@ Read [orchestration](../orchestration.md), [decision log](../decision-log.md), [
 
 Fresh independent architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved draft A without blockers. Findings and approvals bind to reviewed areas/revisions in the plan. After approval, the sole writer implements tests first, checkpoint by checkpoint, and obtains fresh final full-diff review plus exact-base local and final-head remote evidence.
 
-The implementation and targeted checkpoint evidence are recorded in the [plan](plan.md#checkpoint-evidence). The enduring contracts are in [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md). Fresh complete-diff architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved candidate `01d5bd44551f89b8c675a3735a5c0361c1b006af` without actionable findings. The implementation PR records final-head local/remote validation and remains subject to human review and merge.
+The implementation and targeted checkpoint evidence are recorded in the [plan](plan.md#checkpoint-evidence). The enduring contracts are in [storage boundaries](../../../../current/STORAGE_BOUNDARIES.md). Fresh complete-diff architecture/scope, persistence/recovery, security/privacy, compatibility/consumers and tests/gate reviews approved candidate `01d5bd44551f89b8c675a3735a5c0361c1b006af` without actionable findings. The implementation PR records final-head local/remote validation. A human merged final head `c83bea0add7039cad814567e05d79f4f8b275aba` at `3426dc556fea88d94a360329e7c685bc9acc155e` on 2026-09-23 after standard CI [35928247258](https://github.com/loyalagents/context-router/actions/runs/35928247258) and dedicated migration gate [35928247421](https://github.com/loyalagents/context-router/actions/runs/35928247421) succeeded. These facts were freshly reverified during Step 05 activation.
 
-Step 04 is the only primary step. Steps 05 and 06 remain inactive. No SQLite/database cutover, local model, MCP/browser/UI cutover, installer, LAN mode, historical-data migration, public-contract removal, or generic repository framework belongs here. There is no standalone planning/closeout PR and no automatic merge.
+Step 04 is complete. [Step 05](../05-local-database-runtime/README.md) is now the sole active primary step after its clean-base gate; Step 06 remains inactive. This retained plan records Step 04 implementation history and supplies required storage/recovery contracts to Step 05. No SQLite/database cutover, local model, MCP/browser/UI cutover, installer, LAN mode, historical-data migration, public-contract removal, or generic repository framework belongs here. There is no standalone planning/closeout PR and no automatic merge.
