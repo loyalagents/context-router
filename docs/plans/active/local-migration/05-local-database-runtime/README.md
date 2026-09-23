@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Status: active planning; initial revision A requires independent approval before executable feasibility
+- Status: active planning; initial revision B requires independent approval before executable feasibility
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
