@@ -5,6 +5,80 @@ import { storageDependencyViolations } from "./storage-dependency-check";
 
 describe("storage dependency graph", () => {
   it.each([
+    "import { createRequire } from 'node:module'; const load = createRequire(__filename); load('pg');",
+    "import { createRequire as makeLoader } from 'module'; const load = makeLoader(__filename); load('pg');",
+    "import * as moduleApi from 'node:module'; const load = moduleApi.createRequire(__filename); load('pg');",
+    "import * as moduleApi from 'module'; const load = (moduleApi)['createRequire'](__filename); load('pg');",
+    "import moduleApi from 'module'; const load = moduleApi['createRequire'](__filename); load('pg');",
+    "import moduleApi = require('module'); const load = moduleApi.createRequire(__filename); load('pg');",
+    "const { createRequire: makeLoader } = require('node:module'); const load = makeLoader(__filename); load('pg');",
+    "const moduleApi = require('module'); const load = moduleApi.createRequire(__filename); load('pg');",
+    "const moduleApi = module.require('node:module'); const { createRequire } = moduleApi; const load = createRequire(__filename); load('pg');",
+    "const makeLoader = require('node:module')['createRequire']; const load = makeLoader(__filename); load('pg');",
+    "const load = require('module').createRequire(__filename); load('pg');",
+    "const { createRequire } = await import('node:module'); const load = createRequire(__filename); load('pg');",
+    "const load = (await import('module')).createRequire(__filename); load('pg');",
+    "export { createRequire as makeLoader } from 'node:module';",
+    "export * from 'module';",
+    "export * as moduleApi from 'node:module';",
+  ])(
+    "rejects obtaining or exporting a createRequire loader through %s",
+    (source) => {
+      expect(
+        storageDependencyViolations(
+          ["/src/application.ts"],
+          () => source,
+          () => undefined,
+        ),
+      ).toEqual(["/src/application.ts -> createRequire capability"]);
+    },
+  );
+
+  it.each([
+    "import type { Missing } from './does-not-exist';",
+    "export { Missing } from '../does-not-exist';",
+    "type Missing = import('./does-not-exist').Missing;",
+    "const missing = require('./does-not-exist');",
+    "const missing = module.require('../does-not-exist');",
+    "const missing = import('/src/does-not-exist');",
+    "import type { Missing } from '@configured/missing';",
+    "export type { Missing } from '@exact';",
+    "import Missing = require('@feature/missing/model');",
+    "const missing = import('@configured/missing');",
+  ])("rejects unresolved internal edges through %s", (source) => {
+    expect(
+      storageDependencyViolations(
+        ["/src/application.ts"],
+        () => source,
+        () => undefined,
+        ["@configured/*", "@exact", "@feature/*/model"],
+      ),
+    ).toEqual([expect.stringContaining("unresolved internal import:")]);
+  });
+
+  it.each([
+    "import { isBuiltin } from 'node:module'; isBuiltin('fs');",
+    "import * as moduleApi from 'module'; moduleApi.isBuiltin('fs');",
+    "const { isBuiltin } = require('node:module'); isBuiltin('fs');",
+    "export { isBuiltin as checkBuiltin } from 'module';",
+    "export * from 'node:fs';",
+    "import { readFile } from 'node:fs/promises';",
+    "import { Injectable } from '@nestjs/common';",
+    "import { unrelated } from '@exact/package';",
+    "import { unrelated } from '@feature/package/other';",
+    "import { unrelated } from '@feature/model';",
+  ])("retains ordinary external and builtin edges through %s", (source) => {
+    expect(
+      storageDependencyViolations(
+        ["/src/application.ts"],
+        () => source,
+        () => undefined,
+        ["@configured/*", "@exact", "@feature/*/model"],
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
     "import type { Client } from 'pg';",
     "export { PrismaClient } from '@prisma/client';",
     "export type { Row } from './generated/prisma/client';",
@@ -85,6 +159,7 @@ describe("storage dependency graph", () => {
         (name, from) =>
           ts.resolveModuleName(name, from, config.options, ts.sys)
             .resolvedModule?.resolvedFileName,
+        Object.keys(config.options.paths ?? {}),
       ),
     ).toEqual([]);
   });

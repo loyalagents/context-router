@@ -18,11 +18,9 @@ import { PrismaModule } from "@infrastructure/prisma/prisma.module";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import { PreferenceRepository } from "@modules/preferences/preference/preference.repository";
 import { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
-import { PreferenceAuditService } from "@modules/preferences/audit/preference-audit.service";
 import { StorageUnitOfWork } from "@/domains/shared/storage/storage-unit-of-work";
 import { PostgresPreferenceRepository } from "./postgres-preference.repository";
 import { PostgresPreferenceDefinitionRepository } from "./postgres-preference-definition.repository";
-import { PostgresPreferenceAuditService } from "./postgres-preference-audit.service";
 import { PostgresStorageUnitOfWork } from "./postgres-unit-of-work";
 
 const providers = [
@@ -77,12 +75,6 @@ const providers = [
     inject: [PrismaService],
     useFactory: (client: PrismaService) =>
       new PostgresPreferenceDefinitionRepository(client),
-  },
-  {
-    provide: PreferenceAuditService,
-    inject: [PrismaService],
-    useFactory: (client: PrismaService) =>
-      new PostgresPreferenceAuditService(client),
   },
   {
     provide: StorageUnitOfWork,
