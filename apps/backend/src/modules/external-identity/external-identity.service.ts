@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { ExternalIdentity } from "@infrastructure/prisma/prisma-models";
+import type { ExternalIdentity } from "@/domains/shared/storage/storage-types";
 import { ExternalIdentityRepository } from "./external-identity.repository";
 
 @Injectable()

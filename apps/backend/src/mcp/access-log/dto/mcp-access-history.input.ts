@@ -9,7 +9,7 @@ import {
 import {
   McpAccessOutcome,
   McpAccessSurface,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 @InputType()
 export class McpAccessHistoryInput {

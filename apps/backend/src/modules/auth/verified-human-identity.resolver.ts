@@ -5,7 +5,7 @@ import {
   Prisma,
   SourceType,
 } from '@infrastructure/prisma/generated-client';
-import type { User } from '@infrastructure/prisma/prisma-models';
+import type { User } from "@/domains/shared/storage/storage-types";
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import type {
   VerifiedHumanIdentityAssertion,

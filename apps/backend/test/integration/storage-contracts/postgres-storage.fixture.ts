@@ -1,11 +1,12 @@
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../../../src/infrastructure/prisma/prisma.service";
-import { PreferenceRepository } from "../../../src/modules/preferences/preference/preference.repository";
+import { PostgresPreferenceRepository as PreferenceRepository } from '@/infrastructure/storage/postgres/postgres-preference.repository';
 import { PreferenceService } from "../../../src/modules/preferences/preference/preference.service";
-import { PreferenceDefinitionRepository } from "../../../src/modules/preferences/preference-definition/preference-definition.repository";
+import { PostgresPreferenceDefinitionRepository as PreferenceDefinitionRepository } from '@/infrastructure/storage/postgres/postgres-preference-definition.repository';
 import { PreferenceDefinitionService } from "../../../src/modules/preferences/preference-definition/preference-definition.service";
-import { PreferenceAuditService } from "../../../src/modules/preferences/audit/preference-audit.service";
+import { PostgresPreferenceAuditService as PreferenceAuditService } from '@/infrastructure/storage/postgres/postgres-preference-audit.service';
 import { PreferenceAuditQueryService } from "../../../src/modules/preferences/audit/preference-audit-query.service";
 import { McpAccessLogService } from "../../../src/mcp/access-log/mcp-access-log.service";
 import { McpAccessLogQueryService } from "../../../src/mcp/access-log/mcp-access-log-query.service";
@@ -54,19 +55,17 @@ export async function postgresStorageFixture(): Promise<StorageContractFixture> 
     },
   }) as unknown as PrismaService;
   const definitions = new PreferenceDefinitionRepository(prisma);
-  const preferences = new PreferenceRepository(prisma, definitions);
+  const preferences = new PreferenceRepository(prisma);
   const audit = new PreferenceAuditService(prisma);
   const service = new PreferenceService(
     preferences,
     new LocationService(new LocationRepository(prisma)),
     definitions,
-    prisma,
-    audit,
+    new PostgresStorageUnitOfWork(prisma),
   );
   const definitionService = new PreferenceDefinitionService(
     definitions,
-    prisma,
-    audit,
+    new PostgresStorageUnitOfWork(prisma),
   );
   const reset = new UserDataResetService(
     prisma,

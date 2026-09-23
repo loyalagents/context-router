@@ -1,7 +1,7 @@
 import { DynamicModule, Global, Module } from "@nestjs/common";
 
 import type { LocalIdentityConfiguration } from "../config/local-identity.config";
-import { PrismaModule } from "../infrastructure/prisma/prisma.module";
+import { PostgresStorageModule } from "../infrastructure/storage/postgres/postgres-storage.module";
 import { LocalIdentityFileStore } from "../modules/auth/local-identity-filesystem";
 
 @Global()
@@ -11,7 +11,7 @@ export class LocalIdentityInfrastructureModule {
     return {
       module: LocalIdentityInfrastructureModule,
       global: true,
-      imports: [PrismaModule.registerLocal(configuration.poolConfig)],
+      imports: [PostgresStorageModule.registerLocal(configuration.poolConfig)],
       providers: [
         {
           provide: LocalIdentityFileStore,

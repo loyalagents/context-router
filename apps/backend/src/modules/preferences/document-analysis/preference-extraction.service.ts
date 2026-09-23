@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { PreferenceDefinition as PrismaPreferenceDefinition } from '@infrastructure/prisma/prisma-models';
+import type { PreferenceDefinition as StoredPreferenceDefinition } from "@/domains/shared/storage/storage-types";
 import { z } from 'zod';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
 import { AI_STRUCTURED_OUTPUT_PORT } from '../../../domains/shared/ports/ai.tokens';
@@ -258,7 +258,7 @@ If no preferences can be extracted, return:
     );
 
     // Build a lookup map for current preferences
-    const definitionCache = new Map<string, PrismaPreferenceDefinition>();
+    const definitionCache = new Map<string, StoredPreferenceDefinition>();
     const preferenceMap = new Map<string, any>();
     for (const pref of currentPreferences) {
       preferenceMap.set(
@@ -397,7 +397,7 @@ If no preferences can be extracted, return:
   private async prefilterSuggestion(
     suggestion: PreferenceSuggestion,
     userId: string,
-    definitionCache: Map<string, PrismaPreferenceDefinition>,
+    definitionCache: Map<string, StoredPreferenceDefinition>,
   ): Promise<FilteredSuggestion | null> {
     const originalIndex = this.getOriginalIndex(suggestion.id);
 
@@ -593,8 +593,8 @@ If no preferences can be extracted, return:
   private async getDefinitionForSlug(
     slug: string,
     userId: string,
-    definitionCache: Map<string, PrismaPreferenceDefinition>,
-  ): Promise<PrismaPreferenceDefinition | null> {
+    definitionCache: Map<string, StoredPreferenceDefinition>,
+  ): Promise<StoredPreferenceDefinition | null> {
     const cached = definitionCache.get(slug);
     if (cached) {
       return cached;
@@ -612,7 +612,7 @@ If no preferences can be extracted, return:
     slug: string,
     value: unknown,
     userId: string,
-    definitionCache: Map<string, PrismaPreferenceDefinition>,
+    definitionCache: Map<string, StoredPreferenceDefinition>,
   ): Promise<unknown> {
     const definition = await this.getDefinitionForSlug(
       slug,
@@ -636,7 +636,7 @@ If no preferences can be extracted, return:
   private async canonicalizeSuggestionValues(
     suggestion: PreferenceSuggestion,
     userId: string,
-    definitionCache: Map<string, PrismaPreferenceDefinition>,
+    definitionCache: Map<string, StoredPreferenceDefinition>,
   ): Promise<PreferenceSuggestion> {
     return {
       ...suggestion,

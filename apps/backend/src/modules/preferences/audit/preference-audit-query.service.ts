@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
-import type { PreferenceAuditEvent as PrismaPreferenceAuditEvent } from '@infrastructure/prisma/prisma-models';
+import type { PreferenceAuditEvent as StoredPreferenceAuditEvent } from "@/domains/shared/storage/storage-types";
 import { Prisma } from '@infrastructure/prisma/generated-client';
 import { PreferenceAuditHistoryInput } from './dto/preference-audit-history.input';
 
@@ -10,7 +10,7 @@ interface AuditCursorPayload {
 }
 
 export interface PreferenceAuditHistoryPage {
-  items: PrismaPreferenceAuditEvent[];
+  items: StoredPreferenceAuditEvent[];
   nextCursor: string | null;
   hasNextPage: boolean;
 }
@@ -84,7 +84,7 @@ export class PreferenceAuditQueryService {
     };
   }
 
-  private encodeCursor(event: Pick<PrismaPreferenceAuditEvent, 'occurredAt' | 'id'>): string {
+  private encodeCursor(event: Pick<StoredPreferenceAuditEvent, 'occurredAt' | 'id'>): string {
     return Buffer.from(
       JSON.stringify({
         occurredAt: event.occurredAt.toISOString(),

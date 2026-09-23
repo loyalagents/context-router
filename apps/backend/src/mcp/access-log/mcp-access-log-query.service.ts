@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
-import type { McpAccessEvent as PrismaMcpAccessEvent } from '@infrastructure/prisma/prisma-models';
+import type { McpAccessEvent as StoredMcpAccessEvent } from "@/domains/shared/storage/storage-types";
 import { Prisma } from '@infrastructure/prisma/generated-client';
 import { McpAccessHistoryInput } from './dto/mcp-access-history.input';
 
@@ -10,7 +10,7 @@ interface McpAccessCursorPayload {
 }
 
 export interface McpAccessHistoryPage {
-  items: PrismaMcpAccessEvent[];
+  items: StoredMcpAccessEvent[];
   nextCursor: string | null;
   hasNextPage: boolean;
 }
@@ -83,7 +83,7 @@ export class McpAccessLogQueryService {
   }
 
   private encodeCursor(
-    event: Pick<PrismaMcpAccessEvent, 'occurredAt' | 'id'>,
+    event: Pick<StoredMcpAccessEvent, 'occurredAt' | 'id'>,
   ): string {
     return Buffer.from(
       JSON.stringify({

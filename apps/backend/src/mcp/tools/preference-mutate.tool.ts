@@ -15,7 +15,7 @@ import {
   PreferenceScope,
   PreferenceValueType,
   SourceType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { PreferenceService } from '@modules/preferences/preference/preference.service';
 import { PreferenceDefinitionService } from '@modules/preferences/preference-definition/preference-definition.service';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';

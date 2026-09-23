@@ -5,7 +5,7 @@ import {
   AuditEventType,
   AuditOrigin,
   AuditTargetType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 registerEnumType(AuditTargetType, {
   name: 'AuditTargetType',

@@ -9,7 +9,7 @@ import {
   buildPreferenceAuditSnapshot,
   buildPreferenceDefinitionAuditSnapshot,
 } from "../../src/modules/preferences/audit/snapshot-builders";
-import { PreferenceAuditService } from "../../src/modules/preferences/audit/preference-audit.service";
+import { PostgresPreferenceAuditService as PreferenceAuditService } from '@/infrastructure/storage/postgres/postgres-preference-audit.service';
 import { getPrismaClient } from "../setup/test-db";
 
 describe("PreferenceAuditService (integration)", () => {

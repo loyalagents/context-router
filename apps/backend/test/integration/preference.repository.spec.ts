@@ -5,8 +5,8 @@
  * contextKey = "GLOBAL" for global prefs, "LOCATION:<locationId>" for location-scoped.
  * EnrichedPreference.slug is derived from the joined definition record.
  */
-import { PreferenceRepository } from "../../src/modules/preferences/preference/preference.repository";
-import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
+import { PostgresPreferenceRepository as PreferenceRepository } from '@/infrastructure/storage/postgres/postgres-preference.repository';
+import { PostgresPreferenceDefinitionRepository as PreferenceDefinitionRepository } from '@/infrastructure/storage/postgres/postgres-preference-definition.repository';
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { getPrismaClient } from "../setup/test-db";
 import {
@@ -47,7 +47,7 @@ describe("PreferenceRepository (integration)", () => {
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
     defRepo = new PreferenceDefinitionRepository(prisma);
-    repository = new PreferenceRepository(prisma, defRepo);
+    repository = new PreferenceRepository(prisma);
   });
 
   beforeEach(async () => {

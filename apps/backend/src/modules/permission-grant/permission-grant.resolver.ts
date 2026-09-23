@@ -3,7 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User } from '@modules/user/models/user.model';
-import { GrantAction } from '@infrastructure/prisma/generated-client';
+import { GrantAction } from '@/domains/shared/storage/storage-types';
 import { SetPermissionGrantInput } from './dto/set-permission-grant.input';
 import { PermissionGrantModel } from './models/permission-grant.model';
 import { PermissionGrantRepository } from './permission-grant.repository';

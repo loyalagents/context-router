@@ -14,7 +14,7 @@ import {
 } from './config/runtime-config';
 
 // Infrastructure
-import { PrismaModule } from './infrastructure/prisma/prisma.module';
+import { PostgresStorageModule } from './infrastructure/storage/postgres/postgres-storage.module';
 import { HostedModelAdapterModule } from './composition/hosted-model-adapter.module';
 import { ApplicationFeaturesModule } from './composition/application-features.module';
 import { createGraphqlApiModule } from './composition/graphql-api.module';
@@ -48,7 +48,7 @@ export class AppModule {
 
         createGraphqlApiModule(),
 
-        PrismaModule.registerHosted(),
+        PostgresStorageModule.registerHosted(),
         HostedModelAdapterModule,
 
         AuthModule,

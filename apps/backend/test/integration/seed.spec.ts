@@ -13,7 +13,7 @@ import { PREFERENCE_CATALOG } from "../../src/config/preferences.catalog";
 import { getPrismaClient, resetDb } from "../setup/test-db";
 import { PrismaClient } from "../../src/infrastructure/prisma/generated-client";
 import catalogBaseline from "../contracts/fixtures/preference-catalog.v1.json";
-import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
+import { PostgresPreferenceDefinitionRepository as PreferenceDefinitionRepository } from '@/infrastructure/storage/postgres/postgres-preference-definition.repository';
 
 const CATALOG_COUNT = Object.keys(PREFERENCE_CATALOG).length;
 

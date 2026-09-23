@@ -3,7 +3,7 @@ import { GraphQLJSON } from 'graphql-type-json';
 import {
   McpAccessOutcome,
   McpAccessSurface,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 registerEnumType(McpAccessSurface, {
   name: 'McpAccessSurface',

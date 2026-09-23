@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   GrantAction,
   GrantEffect,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 
 @Injectable()

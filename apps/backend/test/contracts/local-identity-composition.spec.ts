@@ -66,7 +66,7 @@ describe("local identity application composition contract", () => {
     );
     const model = read("composition/local-model-adapter.module.ts");
 
-    expect(infrastructure).toContain("PrismaModule.registerLocal");
+    expect(infrastructure).toContain("PostgresStorageModule.registerLocal");
     expect(infrastructure).toContain("LocalIdentityFileStore");
     expect(infrastructure).not.toContain("LocalIdentityRepository");
     expect(infrastructure).not.toContain("LocalIdentityStateService");

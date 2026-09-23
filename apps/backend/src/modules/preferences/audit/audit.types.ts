@@ -3,9 +3,9 @@ import {
   AuditEventType,
   AuditOrigin,
   AuditTargetType,
-  Prisma,
+  JsonInput,
   SourceType,
-} from "@infrastructure/prisma/generated-client";
+} from "@/domains/shared/storage/storage-types";
 
 export interface AuditEventInput {
   userId: string;
@@ -17,9 +17,9 @@ export interface AuditEventInput {
   actorClientKey?: string;
   origin: AuditOrigin;
   correlationId: string;
-  beforeState?: Prisma.InputJsonValue | null;
-  afterState?: Prisma.InputJsonValue | null;
-  metadata?: Prisma.InputJsonValue | null;
+  beforeState?: JsonInput | null;
+  afterState?: JsonInput | null;
+  metadata?: JsonInput | null;
 }
 
 export interface MutationContext {

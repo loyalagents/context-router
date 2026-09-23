@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import type { User } from '@infrastructure/prisma/prisma-models';
+import type { User } from "@/domains/shared/storage/storage-types";
 import { UserRepository } from './user.repository';
 import { CreateUserInput } from './dto/create-user.input';
 

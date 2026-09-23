@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   GrantAction,
   GrantEffect,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { PermissionGrantRepository } from './permission-grant.repository';
 import { MANAGED_MCP_CLIENT_KEYS } from './permission-grant.constants';
 
