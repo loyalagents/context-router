@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { AccessHistoryStorage } from '@/domains/shared/storage/history-storage';
 import { McpAccessEventInput } from './access-log.types';
 
 @Injectable()
 export class McpAccessLogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly storage: AccessHistoryStorage) {}
 
   async record(event: McpAccessEventInput): Promise<void> {
     const operationName = event.operationName.trim();
@@ -21,8 +21,7 @@ export class McpAccessLogService {
       throw new Error('MCP access event correlationId is required');
     }
 
-    await this.prisma.mcpAccessEvent.create({
-      data: {
+    await this.storage.append({
         userId: event.userId,
         clientKey,
         surface: event.surface,
@@ -33,7 +32,6 @@ export class McpAccessLogService {
         requestMetadata: event.requestMetadata ?? undefined,
         responseMetadata: event.responseMetadata ?? undefined,
         errorMetadata: event.errorMetadata ?? undefined,
-      },
     });
   }
 }

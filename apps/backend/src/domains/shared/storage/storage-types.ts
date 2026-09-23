@@ -229,3 +229,14 @@ export interface McpAccessEvent {
   responseMetadata: JsonValue | null;
   errorMetadata: JsonValue | null;
 }
+
+export interface PermissionGrant {
+  id: string;
+  userId: string;
+  clientKey: string;
+  target: string;
+  action: GrantAction;
+  effect: GrantEffect;
+  createdAt: Date;
+  updatedAt: Date;
+}

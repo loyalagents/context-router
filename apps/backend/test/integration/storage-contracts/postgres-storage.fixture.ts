@@ -1,3 +1,5 @@
+import { PostgresAccessHistoryStorage } from '@/infrastructure/storage/postgres/postgres-access-history-storage';
+import { PostgresAuditHistoryStorage } from '@/infrastructure/storage/postgres/postgres-audit-history-storage';
 import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "node:crypto";
@@ -10,10 +12,10 @@ import { PostgresPreferenceAuditService as PreferenceAuditService } from '@/infr
 import { PreferenceAuditQueryService } from "../../../src/modules/preferences/audit/preference-audit-query.service";
 import { McpAccessLogService } from "../../../src/mcp/access-log/mcp-access-log.service";
 import { McpAccessLogQueryService } from "../../../src/mcp/access-log/mcp-access-log-query.service";
-import { LocationRepository } from "../../../src/modules/preferences/location/location.repository";
+import { PostgresLocationRepository as LocationRepository } from '@/infrastructure/storage/postgres/postgres-location.repository';
 import { LocationService } from "../../../src/modules/preferences/location/location.service";
 import { UserDataResetService } from "../../../src/modules/reset/user-data-reset.service";
-import { PermissionGrantRepository } from "../../../src/modules/permission-grant/permission-grant.repository";
+import { PostgresPermissionGrantRepository as PermissionGrantRepository } from '@/infrastructure/storage/postgres/postgres-permission-grant.repository';
 import { ResetMemoryMode } from "../../../src/modules/reset/models/reset-memory-mode.enum";
 import { getPrismaClient } from "../../setup/test-db";
 import type { MutationContext } from "../../../src/modules/preferences/audit/audit.types";
@@ -68,7 +70,7 @@ export async function postgresStorageFixture(): Promise<StorageContractFixture> 
     new PostgresStorageUnitOfWork(prisma),
   );
   const reset = new UserDataResetService(
-    prisma,
+    new PostgresStorageUnitOfWork(prisma),
     new ConfigService({ app: { enableDemoReset: true } }),
   );
   const user = await db.user.create({
@@ -410,7 +412,7 @@ export async function postgresStorageFixture(): Promise<StorageContractFixture> 
         ...context,
         metadata,
       });
-      await new McpAccessLogService(prisma).record({
+      await new McpAccessLogService(new PostgresAccessHistoryStorage(prisma)).record({
         userId,
         clientKey: " client ",
         surface: "TOOLS_CALL",
@@ -479,7 +481,7 @@ export async function postgresStorageFixture(): Promise<StorageContractFixture> 
         userId,
         expectedIds: ["history-2", "history-1", "history-0"],
         audit: (after) =>
-          new PreferenceAuditQueryService(prisma).getHistory(userId, {
+          new PreferenceAuditQueryService(new PostgresAuditHistoryStorage(prisma)).getHistory(userId, {
             first: 2,
             after,
             subjectSlug: " contract. ",
@@ -492,7 +494,7 @@ export async function postgresStorageFixture(): Promise<StorageContractFixture> 
             occurredTo: at,
           }),
         access: (after) =>
-          new McpAccessLogQueryService(prisma).getHistory(userId, {
+          new McpAccessLogQueryService(new PostgresAccessHistoryStorage(prisma)).getHistory(userId, {
             first: 2,
             after,
             clientKey: " client ",

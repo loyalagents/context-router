@@ -9,7 +9,7 @@ export function storageDependencyViolations(
   const failures: string[] = [];
   const visited = new Set<string>();
   const forbidden = (value: string) =>
-    /(?:^pg(?:\/|$)|^@prisma\/|(?:^|\/)generated\/prisma(?:\/|$)|(?:^|\/)infrastructure\/(?:prisma|storage)(?:\/|$))/.test(
+    /(?:^pg(?:-|\/|$)|^@prisma\/|\/node_modules\/(?:pg(?:-|\/|$)|@types\/pg(?:\/|$)|@prisma\/)|(?:^|\/)generated\/prisma(?:\/|$)|(?:^|\/)infrastructure\/(?:prisma|storage)(?:\/|$))/.test(
       value,
     );
   const visit = (file: string, trail: string[]) => {
@@ -55,11 +55,22 @@ export function storageDependencyViolations(
         ts.isCallExpression(node) &&
         (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
           (ts.isIdentifier(node.expression) &&
-            node.expression.text === "require")) &&
-        node.arguments.length === 1 &&
-        ts.isStringLiteralLike(node.arguments[0])
-      )
-        edge(node.arguments[0].text);
+            node.expression.text === "require") ||
+          (ts.isPropertyAccessExpression(node.expression) &&
+            ts.isIdentifier(node.expression.expression) &&
+            node.expression.expression.text === "module" &&
+            node.expression.name.text === "require"))
+      ) {
+        if (
+          node.arguments.length === 1 &&
+          ts.isStringLiteralLike(node.arguments[0])
+        )
+          edge(node.arguments[0].text);
+        else
+          failures.push(
+            [...trail, file, "uninspectable module loader"].join(" -> "),
+          );
+      }
       ts.forEachChild(node, walk);
     };
     walk(source);

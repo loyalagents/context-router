@@ -1,5 +1,5 @@
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
-import { PermissionGrantRepository } from '../../src/modules/permission-grant/permission-grant.repository';
+import { PostgresPermissionGrantRepository as PermissionGrantRepository } from '@/infrastructure/storage/postgres/postgres-permission-grant.repository';
 import { getPrismaClient } from '../setup/test-db';
 
 describe('PermissionGrantRepository (integration)', () => {

@@ -4,7 +4,7 @@ import request from 'supertest';
 import { createTestApp, createTestUser, TestUser } from '../setup/test-app';
 import { getPrismaClient } from '../setup/test-db';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
-import { PermissionGrantRepository } from '../../src/modules/permission-grant/permission-grant.repository';
+import { PostgresPermissionGrantRepository as PermissionGrantRepository } from '@/infrastructure/storage/postgres/postgres-permission-grant.repository';
 import { PreferenceService } from '../../src/modules/preferences/preference/preference.service';
 import { PreferenceDefinitionService } from '../../src/modules/preferences/preference-definition/preference-definition.service';
 import {

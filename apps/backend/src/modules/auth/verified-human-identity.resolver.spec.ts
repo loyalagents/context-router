@@ -1,3 +1,5 @@
+import { PostgresIdentityStorage } from '@/infrastructure/storage/postgres/postgres-identity-storage';
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import { Logger } from '@nestjs/common';
 import {
   PreferenceStatus,
@@ -51,7 +53,7 @@ describe('VerifiedHumanIdentityResolver', () => {
     };
 
     return {
-      resolver: new VerifiedHumanIdentityResolver(prisma as never),
+      resolver: new VerifiedHumanIdentityResolver(new PostgresStorageUnitOfWork(prisma as never), new PostgresIdentityStorage(prisma as never)),
       prisma,
       transaction,
     };

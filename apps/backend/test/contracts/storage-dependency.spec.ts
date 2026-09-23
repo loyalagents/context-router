@@ -9,6 +9,9 @@ describe("storage dependency graph", () => {
     "export { PrismaClient } from '@prisma/client';",
     "export type { Row } from './generated/prisma/client';",
     "const driver = require('pg');",
+    "const driver = module.require('pg');",
+    "const driver = require('p' + 'g');",
+    "const driver = import(providerName);",
     "const driver = import('@prisma/adapter-pg');",
     "type Driver = import('pg').Client;",
     "import { Hidden } from '@alias/barrel';",
@@ -31,6 +34,20 @@ describe("storage dependency graph", () => {
     expect(failures).toHaveLength(1);
   });
 
+  it.each([
+    "/repo/node_modules/pg/lib/index.js",
+    "/repo/node_modules/@types/pg/index.d.ts",
+    "/repo/node_modules/@prisma/client/index.d.ts",
+  ])("classifies an aliased external provider before pruning %s", (target) => {
+    expect(
+      storageDependencyViolations(
+        ["/src/application.ts"],
+        () => "import type { Hidden } from '@alias/provider';",
+        () => target,
+      ),
+    ).toHaveLength(1);
+  });
+
   it("keeps owned data and mutation ports independent through every imported type", () => {
     const backend = resolve(__dirname, "../..");
     const configFile = ts.readConfigFile(
@@ -50,6 +67,16 @@ describe("storage dependency graph", () => {
       "modules/preferences/preference-definition/preference-definition.repository.ts",
       "modules/preferences/audit/preference-audit.service.ts",
       "modules/preferences/audit/snapshot-builders.ts",
+      "modules/user/user.repository.ts",
+      "modules/external-identity/external-identity.repository.ts",
+      "modules/permission-grant/permission-grant.repository.ts",
+      "modules/preferences/location/location.repository.ts",
+      "modules/auth/auth.service.ts",
+      "modules/auth/verified-human-identity.resolver.ts",
+      "modules/reset/user-data-reset.service.ts",
+      "modules/preferences/audit/preference-audit-query.service.ts",
+      "mcp/access-log/mcp-access-log.service.ts",
+      "mcp/access-log/mcp-access-log-query.service.ts",
     ].map((file) => resolve(backend, "src", file));
     expect(
       storageDependencyViolations(

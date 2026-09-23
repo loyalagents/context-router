@@ -6,14 +6,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import {
-  AuditActorType,
-  AuditEventType,
-  AuditOrigin,
-  AuditTargetType,
-  Prisma,
-} from '@infrastructure/prisma/generated-client';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { StorageUnitOfWork } from '@/domains/shared/storage/storage-unit-of-work';
+import type { ResetStorage } from '@/domains/shared/storage/reset-storage';
 import { ResetMemoryMode } from './models/reset-memory-mode.enum';
 import { ResetMyMemoryPayload } from './models/reset-my-memory-payload.model';
 
@@ -22,7 +16,7 @@ export class UserDataResetService {
   private readonly logger = new Logger(UserDataResetService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly unitOfWork: StorageUnitOfWork,
     private readonly configService: ConfigService,
   ) {}
 
@@ -38,83 +32,26 @@ export class UserDataResetService {
 
     this.logger.log(`Resetting authenticated user data with mode ${mode}`);
 
-    return this.prisma.$transaction(async (tx) => {
-      const preferencesDeleted = await tx.preference.deleteMany({
-        where: { userId },
-      });
-
-      let preferenceAuditEventsDeleted = { count: 0 };
-      let mcpAccessEventsDeleted = { count: 0 };
-      let preferenceDefinitionsDeleted = { count: 0 };
-      let locationsDeleted = { count: 0 };
-      let permissionGrantsDeleted = { count: 0 };
-
+    return this.unitOfWork.run(async ({ reset }) => {
+      const preferencesDeleted = await reset.deletePreferences(userId);
+      let preferenceAuditEventsDeleted = 0;
+      let mcpAccessEventsDeleted = 0;
+      let preferenceDefinitionsDeleted = 0;
+      let locationsDeleted = 0;
+      let permissionGrantsDeleted = 0;
       if (mode === ResetMemoryMode.MEMORY_ONLY) {
-        await tx.preferenceAuditEvent.create({
-          data: {
-            userId,
-            subjectSlug: '*',
-            targetType: AuditTargetType.PREFERENCE,
-            targetId: userId,
-            eventType: AuditEventType.PREFERENCES_RESET,
-            actorType: AuditActorType.USER,
-            origin: AuditOrigin.GRAPHQL,
-            correlationId: randomUUID(),
-            beforeState: null,
-            afterState: null,
-            metadata: {
-              mode,
-              preferencesDeleted: preferencesDeleted.count,
-            },
-          },
-        });
+        await reset.appendMemoryResetAudit(userId, mode, preferencesDeleted, randomUUID());
       }
-
       if (mode !== ResetMemoryMode.MEMORY_ONLY) {
-        preferenceAuditEventsDeleted = await tx.preferenceAuditEvent.deleteMany(
-          {
-            where: { userId },
-          },
-        );
-
-        mcpAccessEventsDeleted = await tx.mcpAccessEvent.deleteMany({
-          where: { userId },
-        });
-
-        const userDefinitionIds = await this.getUserDefinitionIds(tx, userId);
-        await this.assertNoCrossUserDefinitionReferences(
-          tx,
-          userId,
-          userDefinitionIds,
-        );
-
-        if (userDefinitionIds.length > 0) {
-          preferenceDefinitionsDeleted =
-            await tx.preferenceDefinition.deleteMany({
-              where: { id: { in: userDefinitionIds } },
-            });
-        }
-
-        locationsDeleted = await tx.location.deleteMany({
-          where: { userId },
-        });
+        preferenceAuditEventsDeleted = await reset.deleteAuditEvents(userId);
+        mcpAccessEventsDeleted = await reset.deleteAccessEvents(userId);
+        const userDefinitionIds = await reset.findOwnedDefinitionIds(userId);
+        await this.assertNoCrossUserDefinitionReferences(reset, userId, userDefinitionIds);
+        if (userDefinitionIds.length > 0) preferenceDefinitionsDeleted = await reset.deleteDefinitions(userDefinitionIds);
+        locationsDeleted = await reset.deleteLocations(userId);
       }
-
-      if (mode === ResetMemoryMode.FULL_USER_DATA) {
-        permissionGrantsDeleted = await tx.permissionGrant.deleteMany({
-          where: { userId },
-        });
-      }
-
-      return {
-        mode,
-        preferencesDeleted: preferencesDeleted.count,
-        preferenceDefinitionsDeleted: preferenceDefinitionsDeleted.count,
-        locationsDeleted: locationsDeleted.count,
-        preferenceAuditEventsDeleted: preferenceAuditEventsDeleted.count,
-        mcpAccessEventsDeleted: mcpAccessEventsDeleted.count,
-        permissionGrantsDeleted: permissionGrantsDeleted.count,
-      };
+      if (mode === ResetMemoryMode.FULL_USER_DATA) permissionGrantsDeleted = await reset.deleteGrants(userId);
+      return { mode, preferencesDeleted, preferenceDefinitionsDeleted, locationsDeleted, preferenceAuditEventsDeleted, mcpAccessEventsDeleted, permissionGrantsDeleted };
     });
   }
 
@@ -122,45 +59,10 @@ export class UserDataResetService {
     return this.configService.get<boolean>('app.enableDemoReset') === true;
   }
 
-  private async getUserDefinitionIds(
-    tx: Prisma.TransactionClient,
-    userId: string,
-  ): Promise<string[]> {
-    const definitions = await tx.preferenceDefinition.findMany({
-      where: {
-        namespace: `USER:${userId}`,
-        ownerUserId: userId,
-      },
-      select: { id: true },
-    });
-
-    return definitions.map((definition) => definition.id);
-  }
-
-  private async assertNoCrossUserDefinitionReferences(
-    tx: Prisma.TransactionClient,
-    userId: string,
-    definitionIds: string[],
-  ): Promise<void> {
-    if (definitionIds.length === 0) {
-      return;
-    }
-
-    const crossUserReference = await tx.preference.findFirst({
-      where: {
-        definitionId: { in: definitionIds },
-        userId: { not: userId },
-      },
-      select: {
-        userId: true,
-        definitionId: true,
-      },
-    });
-
-    if (crossUserReference) {
-      throw new ConflictException(
-        'Cannot reset user-owned preference definitions because at least one is referenced by another user.',
-      );
+  private async assertNoCrossUserDefinitionReferences(storage: ResetStorage, userId: string, definitionIds: string[]): Promise<void> {
+    if (definitionIds.length === 0) return;
+    if (await storage.hasForeignDefinitionReference(userId, definitionIds)) {
+      throw new ConflictException('Cannot reset user-owned preference definitions because at least one is referenced by another user.');
     }
   }
 }

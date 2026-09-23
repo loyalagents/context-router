@@ -1,3 +1,5 @@
+import { PostgresIdentityStorage } from "./postgres-identity-storage";
+import { PostgresResetStorage } from "./postgres-reset-storage";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@infrastructure/prisma/prisma.service";
 import { StorageScopeExpiredError } from "@/domains/shared/storage/storage-errors";
@@ -48,6 +50,24 @@ export class PostgresStorageUnitOfWork implements StorageUnitOfWork {
             return Object.freeze(closed);
           };
           const scope: StorageScope = Object.freeze({
+            identity: guard(new PostgresIdentityStorage(client), [
+              "findExact",
+              "createPrincipal",
+              "createVerifiedBinding",
+              "upsertM2MPrincipal",
+              "countBindings",
+            ]),
+            reset: guard(new PostgresResetStorage(client), [
+              "deletePreferences",
+              "appendMemoryResetAudit",
+              "deleteAuditEvents",
+              "deleteAccessEvents",
+              "findOwnedDefinitionIds",
+              "hasForeignDefinitionReference",
+              "deleteDefinitions",
+              "deleteLocations",
+              "deleteGrants",
+            ]),
             preferences: guard(new PostgresPreferenceRepository(client), [
               "upsertActive",
               "upsertSuggested",

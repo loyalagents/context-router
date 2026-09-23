@@ -1,3 +1,17 @@
+import { UserRepository } from "@/modules/user/user.repository";
+import { PostgresUserRepository } from "./postgres-user.repository";
+import { ExternalIdentityRepository } from "@/modules/external-identity/external-identity.repository";
+import { PostgresExternalIdentityRepository } from "./postgres-external-identity.repository";
+import { PermissionGrantRepository } from "@/modules/permission-grant/permission-grant.repository";
+import { PostgresPermissionGrantRepository } from "./postgres-permission-grant.repository";
+import { LocationRepository } from "@/modules/preferences/location/location.repository";
+import { PostgresLocationRepository } from "./postgres-location.repository";
+import { IdentityStorage } from "@/domains/shared/storage/identity-storage";
+import { PostgresIdentityStorage } from "./postgres-identity-storage";
+import { AuditHistoryStorage } from "@/domains/shared/storage/history-storage";
+import { PostgresAuditHistoryStorage } from "./postgres-audit-history-storage";
+import { AccessHistoryStorage } from "@/domains/shared/storage/history-storage";
+import { PostgresAccessHistoryStorage } from "./postgres-access-history-storage";
 import { DynamicModule, Global, Module } from "@nestjs/common";
 import type { PoolConfig } from "pg";
 import { PrismaModule } from "@infrastructure/prisma/prisma.module";
@@ -12,6 +26,46 @@ import { PostgresPreferenceAuditService } from "./postgres-preference-audit.serv
 import { PostgresStorageUnitOfWork } from "./postgres-unit-of-work";
 
 const providers = [
+  {
+    provide: UserRepository,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) => new PostgresUserRepository(client),
+  },
+  {
+    provide: ExternalIdentityRepository,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) =>
+      new PostgresExternalIdentityRepository(client),
+  },
+  {
+    provide: PermissionGrantRepository,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) =>
+      new PostgresPermissionGrantRepository(client),
+  },
+  {
+    provide: LocationRepository,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) =>
+      new PostgresLocationRepository(client),
+  },
+  {
+    provide: IdentityStorage,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) => new PostgresIdentityStorage(client),
+  },
+  {
+    provide: AuditHistoryStorage,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) =>
+      new PostgresAuditHistoryStorage(client),
+  },
+  {
+    provide: AccessHistoryStorage,
+    inject: [PrismaService],
+    useFactory: (client: PrismaService) =>
+      new PostgresAccessHistoryStorage(client),
+  },
   {
     provide: PreferenceRepository,
     inject: [PrismaService],

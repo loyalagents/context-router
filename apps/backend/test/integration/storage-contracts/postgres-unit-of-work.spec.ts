@@ -46,6 +46,7 @@ describe("PostgreSQL transaction capability ownership", () => {
       for (const facet of Object.values(scope)) {
         expect(Object.isFrozen(facet)).toBe(true);
         expect(Reflect.get(facet, "prisma")).toBeUndefined();
+        expect(Reflect.get(facet, "client")).toBeUndefined();
         expect(Reflect.get(facet, "$transaction")).toBeUndefined();
       }
       const preference = await write(scope, userId, definitionId);
@@ -71,6 +72,8 @@ describe("PostgreSQL transaction capability ownership", () => {
     await expect(captured.audit.record({} as never)).rejects.toBeInstanceOf(
       StorageScopeExpiredError,
     );
+    await expect(captured.identity.findExact({} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.reset.deletePreferences(userId)).rejects.toBeInstanceOf(StorageScopeExpiredError);
     expect(await db.preference.count()).toBe(1);
   });
 

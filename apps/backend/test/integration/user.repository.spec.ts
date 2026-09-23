@@ -4,7 +4,7 @@
  * Tests the UserRepository against a real test database.
  * Database is reset between tests via the global beforeEach hook.
  */
-import { UserRepository } from '../../src/modules/user/user.repository';
+import { PostgresUserRepository as UserRepository } from '@/infrastructure/storage/postgres/postgres-user.repository';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from '../setup/test-db';
 
