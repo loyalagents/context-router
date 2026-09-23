@@ -10,7 +10,7 @@ import {
   AuditActorType,
   AuditOrigin,
   SourceType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 @Resolver()
 @UseGuards(GqlAuthGuard)

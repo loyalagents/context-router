@@ -1,3 +1,4 @@
+import { PostgresAuditHistoryStorage } from '@/infrastructure/storage/postgres/postgres-audit-history-storage';
 import {
   AuditActorType,
   AuditEventType,
@@ -16,7 +17,7 @@ describe("PreferenceAuditQueryService (integration)", () => {
 
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
-    queryService = new PreferenceAuditQueryService(prisma);
+    queryService = new PreferenceAuditQueryService(new PostgresAuditHistoryStorage(prisma));
   });
 
   beforeEach(async () => {

@@ -1,7 +1,7 @@
 /**
  * Test-only catalog seed entry point used by the local-migration restart smoke.
- * Unlike the normal seed command, this deliberately does not create sample
- * users or print database records.
+ * Uses the production catalog helper with explicit fixture data; neither
+ * entrypoint creates sample users or prints database records.
  */
 import { PrismaClient } from '../src/infrastructure/prisma/generated-client';
 import { buildPrismaClientOptions } from '../src/infrastructure/prisma/prisma-client-options';

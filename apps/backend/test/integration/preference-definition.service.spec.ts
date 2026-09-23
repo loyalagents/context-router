@@ -1,5 +1,6 @@
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import { PreferenceDefinitionService } from "../../src/modules/preferences/preference-definition/preference-definition.service";
-import { PreferenceDefinitionRepository } from "../../src/modules/preferences/preference-definition/preference-definition.repository";
+import { PostgresPreferenceDefinitionRepository as PreferenceDefinitionRepository } from '@/infrastructure/storage/postgres/postgres-preference-definition.repository';
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { getPrismaClient } from "../setup/test-db";
 import {
@@ -34,7 +35,12 @@ describe("PreferenceDefinitionService (integration)", () => {
       record: jest.fn().mockRejectedValue(new Error("audit write failed")),
     } as unknown as PreferenceAuditService;
 
-    const service = new PreferenceDefinitionService(defRepo, prisma, auditService);
+    const realUnit = new PostgresStorageUnitOfWork(prisma);
+    const unit = {
+      run: <T>(operation: Parameters<typeof realUnit.run<T>>[0]) => realUnit.run((scope) => operation({ ...scope, audit: auditService })),
+      serializable: realUnit.serializable.bind(realUnit),
+    };
+    const service = new PreferenceDefinitionService(defRepo, unit);
 
     await expect(
       service.create(

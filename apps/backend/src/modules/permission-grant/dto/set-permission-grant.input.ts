@@ -3,7 +3,7 @@ import { IsEnum, IsIn, IsNotEmpty, IsString, Matches } from 'class-validator';
 import {
   GrantAction,
   GrantEffect,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { MANAGED_MCP_CLIENT_KEYS } from '../permission-grant.constants';
 import { PERMISSION_GRANT_TARGET_PATTERN } from '../permission-grant.service';
 

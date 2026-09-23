@@ -22,9 +22,9 @@ import { createLocalIdentityConfiguration } from '../../src/config/local-identit
 import { buildLocalPrismaClientOptions } from '../../src/infrastructure/prisma/local-prisma-client-options';
 import {
   type LocalIdentityDatabaseClient,
-  LocalIdentityRepository,
+  PostgresLocalIdentityCoordination as LocalIdentityRepository,
   createLocalIdentityDatabaseClient,
-} from '../../src/modules/auth/local-identity.repository';
+} from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
 import {
   type LocalIdentityFileSystem,
   LocalIdentityFileStore,
@@ -1648,7 +1648,7 @@ describe('local identity direct-TLS repository', () => {
         'dist/config/local-identity.config.js',
         'dist/modules/auth/local-identity-admin.cli.js',
         'dist/modules/auth/local-identity-filesystem.js',
-        'dist/modules/auth/local-identity.repository.js',
+        'dist/infrastructure/storage/postgres/postgres-local-identity-coordination.js',
         'dist/modules/auth/local-identity-state.codec.js',
         'dist/modules/auth/local-identity-state.service.js',
         'dist/modules/auth/strategies/local-identity.strategy.js',

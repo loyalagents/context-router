@@ -4,7 +4,7 @@
  * Tests the repository against a real test database.
  * Global beforeEach (jest.after-env.ts) resets DB and seeds GLOBAL definitions.
  */
-import { PreferenceDefinitionRepository } from '../../src/modules/preferences/preference-definition/preference-definition.repository';
+import { PostgresPreferenceDefinitionRepository as PreferenceDefinitionRepository } from '@/infrastructure/storage/postgres/postgres-preference-definition.repository';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from '../setup/test-db';
 

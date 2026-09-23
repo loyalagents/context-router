@@ -5,13 +5,13 @@ import {
 import {
   McpAccessOutcome,
   McpAccessSurface,
-  Prisma,
-} from '@infrastructure/prisma/generated-client';
+  JsonInput,
+} from '@/domains/shared/storage/storage-types';
 
 export interface McpAccessLogMetadata {
-  requestMetadata?: Prisma.InputJsonValue | null;
-  responseMetadata?: Prisma.InputJsonValue | null;
-  errorMetadata?: Prisma.InputJsonValue | null;
+  requestMetadata?: JsonInput | null;
+  responseMetadata?: JsonInput | null;
+  errorMetadata?: JsonInput | null;
 }
 
 export interface McpToolExecutionResult {

@@ -2,7 +2,7 @@ import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
   GrantAction,
   GrantEffect,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 registerEnumType(GrantAction, {
   name: 'GrantAction',

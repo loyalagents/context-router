@@ -1,4 +1,4 @@
-import { ExternalIdentityRepository } from './external-identity.repository';
+import { PostgresExternalIdentityRepository as ExternalIdentityRepository } from '@/infrastructure/storage/postgres/postgres-external-identity.repository';
 
 describe('ExternalIdentityRepository', () => {
   function createRepository() {

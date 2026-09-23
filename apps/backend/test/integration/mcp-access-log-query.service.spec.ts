@@ -1,3 +1,4 @@
+import { PostgresAccessHistoryStorage } from '@/infrastructure/storage/postgres/postgres-access-history-storage';
 import {
   McpAccessOutcome,
   McpAccessSurface,
@@ -14,7 +15,7 @@ describe('McpAccessLogQueryService (integration)', () => {
 
   beforeAll(async () => {
     prisma = getPrismaClient() as unknown as PrismaService;
-    queryService = new McpAccessLogQueryService(prisma);
+    queryService = new McpAccessLogQueryService(new PostgresAccessHistoryStorage(prisma));
   });
 
   beforeEach(async () => {

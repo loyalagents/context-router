@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { INestApplication } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { GraphQLSchemaHost } from "@nestjs/graphql";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host";
@@ -272,20 +273,32 @@ describe("real local identity application composition", () => {
     );
   });
 
-  it("keeps identity bytes unchanged across a memory reset", async () => {
-    const before = await readFile(statePath);
-    const response = await executeGraphql(
-      "mutation { resetMyMemory(mode: MEMORY_ONLY) { mode preferencesDeleted } }",
-      INITIAL_CREDENTIAL,
-    );
-
-    expect(response).toMatchObject({
-      data: {
-        resetMyMemory: { mode: "MEMORY_ONLY", preferencesDeleted: 2 },
-      },
-    });
-    await expect(readFile(statePath)).resolves.toEqual(before);
-  });
+  it.each(["MEMORY_ONLY", "DEMO_DATA", "FULL_USER_DATA"])(
+    "keeps identity bytes unchanged across %s reset",
+    async (mode) => {
+      const before = await readFile(statePath);
+      const config = application.get(ConfigService);
+      const get = config.get.bind(config);
+      // Advanced reset is opt-in; exercise its identity invariant without changing local defaults.
+      const enabled = jest
+        .spyOn(config, "get")
+        .mockImplementation((key: string, ...args: unknown[]) =>
+          key === "app.enableDemoReset" ? true : get(key, ...args),
+        );
+      try {
+        const response = await executeGraphql(
+          `mutation { resetMyMemory(mode: ${mode}) { mode preferencesDeleted } }`,
+          INITIAL_CREDENTIAL,
+        );
+        expect(response).toMatchObject({
+          data: { resetMyMemory: { mode, preferencesDeleted: 2 } },
+        });
+        await expect(readFile(statePath)).resolves.toEqual(before);
+      } finally {
+        enabled.mockRestore();
+      }
+    },
+  );
 
   it("binds the local unavailable model and excludes hosted/MCP providers", async () => {
     const response = await executeGraphql(

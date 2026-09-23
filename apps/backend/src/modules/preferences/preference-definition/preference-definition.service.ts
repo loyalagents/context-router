@@ -6,17 +6,16 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import { StorageUnitOfWork } from "@/domains/shared/storage/storage-unit-of-work";
 import {
   AuditEventType,
   AuditTargetType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { PreferenceDefinitionRepository } from './preference-definition.repository';
 import { CreatePreferenceDefinitionInput } from './dto/create-preference-definition.input';
 import { UpdatePreferenceDefinitionInput } from './dto/update-preference-definition.input';
 import { validateSlugFormat } from '../preference/preference.validation';
 import { MutationContext } from '../audit/audit.types';
-import { PreferenceAuditService } from '../audit/preference-audit.service';
 import { buildPreferenceDefinitionAuditSnapshot } from '../audit/snapshot-builders';
 
 @Injectable()
@@ -25,8 +24,7 @@ export class PreferenceDefinitionService {
 
   constructor(
     private defRepo: PreferenceDefinitionRepository,
-    private prisma: PrismaService,
-    private preferenceAuditService: PreferenceAuditService,
+    private unitOfWork: StorageUnitOfWork,
   ) {}
 
   /**
@@ -62,8 +60,8 @@ export class PreferenceDefinitionService {
 
     this.logger.log('Creating an authenticated preference definition');
 
-    const created = await this.prisma.$transaction(async (tx) => {
-      const createdDefinition = await this.defRepo.create(
+    const created = await this.unitOfWork.run(async (tx) => {
+      const createdDefinition = await tx.definitions.create(
         {
           slug: input.slug,
           displayName: input.displayName,
@@ -74,11 +72,9 @@ export class PreferenceDefinitionService {
           isSensitive: input.isSensitive,
           isCore: input.isCore,
           ownerUserId: userId,
-        },
-        tx,
-      );
+        });
 
-      await this.preferenceAuditService.record(
+      await tx.audit.record(
         {
           userId,
           subjectSlug: createdDefinition.slug,
@@ -91,9 +87,7 @@ export class PreferenceDefinitionService {
           correlationId: _context.correlationId,
           beforeState: null,
           afterState: buildPreferenceDefinitionAuditSnapshot(createdDefinition),
-        },
-        tx,
-      );
+        });
 
       return createdDefinition;
     });
@@ -126,8 +120,8 @@ export class PreferenceDefinitionService {
 
     this.logger.log('Updating an authenticated preference definition');
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const updatedDefinition = await this.defRepo.update(
+    const updated = await this.unitOfWork.run(async (tx) => {
+      const updatedDefinition = await tx.definitions.update(
         id,
         {
           displayName: input.displayName,
@@ -137,11 +131,9 @@ export class PreferenceDefinitionService {
           options: input.options,
           isSensitive: input.isSensitive,
           isCore: input.isCore,
-        },
-        tx,
-      );
+        });
 
-      await this.preferenceAuditService.record(
+      await tx.audit.record(
         {
           userId,
           subjectSlug: updatedDefinition.slug,
@@ -154,9 +146,7 @@ export class PreferenceDefinitionService {
           correlationId: _context.correlationId,
           beforeState: buildPreferenceDefinitionAuditSnapshot(def),
           afterState: buildPreferenceDefinitionAuditSnapshot(updatedDefinition),
-        },
-        tx,
-      );
+        });
 
       return updatedDefinition;
     });
@@ -187,10 +177,10 @@ export class PreferenceDefinitionService {
     }
 
     this.logger.log('Archiving an authenticated preference definition');
-    return this.prisma.$transaction(async (tx) => {
-      const archivedDefinition = await this.defRepo.archive(id, tx);
+    return this.unitOfWork.run(async (tx) => {
+      const archivedDefinition = await tx.definitions.archive(id);
 
-      await this.preferenceAuditService.record(
+      await tx.audit.record(
         {
           userId,
           subjectSlug: archivedDefinition.slug,
@@ -204,9 +194,7 @@ export class PreferenceDefinitionService {
           beforeState: buildPreferenceDefinitionAuditSnapshot(def),
           afterState:
             buildPreferenceDefinitionAuditSnapshot(archivedDefinition),
-        },
-        tx,
-      );
+        });
 
       return archivedDefinition;
     });

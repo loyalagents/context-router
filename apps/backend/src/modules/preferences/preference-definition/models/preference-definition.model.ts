@@ -3,7 +3,7 @@ import { GraphQLJSON } from "graphql-type-json";
 import {
   PreferenceValueType,
   PreferenceScope,
-} from "@infrastructure/prisma/generated-client";
+} from "@/domains/shared/storage/storage-types";
 
 registerEnumType(PreferenceValueType, {
   name: "PreferenceValueType",

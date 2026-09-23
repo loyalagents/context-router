@@ -22,7 +22,7 @@ import { McpAccessLogMetadata } from './access-log/access-log.types';
 import {
   McpAccessOutcome,
   McpAccessSurface,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 const MCP_SERVER_INSTRUCTIONS =
   'Available tools vary by permissions. Use searchPreferences for known slugs/categories or all active preferences. Use smartSearchPreferences to map a natural-language task to relevant preference slugs. Use listPreferenceSlugs for schema discovery only. Use listPermissionGrants when grants may hide results. schema://graphql is for API introspection only.';

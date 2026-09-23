@@ -3,7 +3,7 @@ import {
   AuditEventType,
   AuditOrigin,
   AuditTargetType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import {
   IsInt,
   IsOptional,

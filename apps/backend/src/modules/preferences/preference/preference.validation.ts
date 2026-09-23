@@ -1,7 +1,7 @@
 import {
   PreferenceValueType,
   PreferenceScope,
-} from "@infrastructure/prisma/generated-client";
+} from "@/domains/shared/storage/storage-types";
 
 // Slug format validation regex
 const SLUG_REGEX = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/;

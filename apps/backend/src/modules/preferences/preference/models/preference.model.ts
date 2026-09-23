@@ -3,7 +3,7 @@ import { GraphQLJSON } from 'graphql-type-json';
 import {
   AuditActorType,
   AuditOrigin,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 
 // Register enums for GraphQL
 export enum PreferenceStatus {

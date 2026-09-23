@@ -1,4 +1,7 @@
-import { Prisma } from "@infrastructure/prisma/generated-client";
+import type {
+  JsonInput,
+  JsonValue,
+} from "@/domains/shared/storage/storage-types";
 
 type TimestampLike = Date | string;
 
@@ -11,11 +14,11 @@ interface PreferenceAuditSnapshotInput {
   description?: string;
   contextKey: string;
   locationId: string | null;
-  value: unknown;
+  value: JsonValue;
   status: string;
   sourceType: string;
   confidence: number | null;
-  evidence: unknown | null;
+  evidence: JsonValue | null;
   lastModifiedBy?: {
     actorType: string;
     actorClientKey?: string | null;
@@ -33,7 +36,7 @@ interface PreferenceDefinitionAuditSnapshotInput {
   description: string;
   valueType: string;
   scope: string;
-  options: unknown | null;
+  options: JsonValue | null;
   isSensitive: boolean;
   isCore: boolean;
   archivedAt: TimestampLike | null;
@@ -52,7 +55,7 @@ function serializeTimestamp(value: TimestampLike | null): string | null {
 
 export function buildPreferenceAuditSnapshot(
   preference: PreferenceAuditSnapshotInput,
-): Prisma.InputJsonObject {
+): { [key: string]: JsonInput } {
   return {
     id: preference.id,
     userId: preference.userId,
@@ -60,18 +63,13 @@ export function buildPreferenceAuditSnapshot(
     slug: preference.slug,
     contextKey: preference.contextKey,
     locationId: preference.locationId,
-    value: preference.value as Prisma.InputJsonValue,
+    value: preference.value,
     status: preference.status,
     sourceType: preference.sourceType,
     confidence: preference.confidence,
-    evidence:
-      preference.evidence == null
-        ? null
-        : (preference.evidence as Prisma.InputJsonValue),
+    evidence: preference.evidence == null ? null : preference.evidence,
     lastModifiedBy:
-      preference.lastModifiedBy == null
-        ? null
-        : (preference.lastModifiedBy as Prisma.InputJsonObject),
+      preference.lastModifiedBy == null ? null : preference.lastModifiedBy,
     createdAt: serializeTimestamp(preference.createdAt),
     updatedAt: serializeTimestamp(preference.updatedAt),
   };
@@ -79,7 +77,7 @@ export function buildPreferenceAuditSnapshot(
 
 export function buildPreferenceDefinitionAuditSnapshot(
   definition: PreferenceDefinitionAuditSnapshotInput,
-): Prisma.InputJsonObject {
+): { [key: string]: JsonInput } {
   return {
     id: definition.id,
     namespace: definition.namespace,
@@ -88,10 +86,7 @@ export function buildPreferenceDefinitionAuditSnapshot(
     description: definition.description,
     valueType: definition.valueType,
     scope: definition.scope,
-    options:
-      definition.options == null
-        ? null
-        : (definition.options as Prisma.InputJsonValue),
+    options: definition.options == null ? null : definition.options,
     isSensitive: definition.isSensitive,
     isCore: definition.isCore,
     archivedAt: serializeTimestamp(definition.archivedAt),

@@ -14,7 +14,7 @@ import {
   AuditActorType,
   AuditOrigin,
   SourceType,
-} from '@infrastructure/prisma/generated-client';
+} from '@/domains/shared/storage/storage-types';
 import { MutationContext } from '../audit/audit.types';
 
 @Resolver(() => PreferenceDefinitionModel)

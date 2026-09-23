@@ -1,12 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  PreferenceStatus,
-  Prisma,
-  SourceType,
-} from '@infrastructure/prisma/generated-client';
-import type { User } from '@infrastructure/prisma/prisma-models';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import type { User } from "@/domains/shared/storage/storage-types";
+import { StorageUnitOfWork } from '@/domains/shared/storage/storage-unit-of-work';
+import { IdentityStorage, type IdentityTransaction } from '@/domains/shared/storage/identity-storage';
+import { StorageConflictError } from '@/domains/shared/storage/storage-errors';
 import type {
   VerifiedHumanIdentityAssertion,
   VerifiedHumanIdentityProfileHints,
@@ -21,7 +18,7 @@ const MAX_SUBJECT_BYTES = 1024;
 const PROVIDER_PATTERN = /^[a-z][a-z0-9-]*$/;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 
-type TransactionClient = Prisma.TransactionClient;
+
 
 interface Resolution {
   created: boolean;
@@ -109,16 +106,15 @@ export function validateVerifiedHumanIdentityAssertion(
 export class VerifiedHumanIdentityResolver {
   private readonly logger = new Logger(VerifiedHumanIdentityResolver.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly unitOfWork: StorageUnitOfWork, private readonly identity: IdentityStorage) {}
 
   async resolve(assertion: VerifiedHumanIdentityAssertion): Promise<User> {
     const verified = validateVerifiedHumanIdentityAssertion(assertion);
 
     for (let attempt = 1; attempt <= SERIALIZABLE_ATTEMPTS; attempt += 1) {
       try {
-        const resolution = await this.prisma.$transaction(
-          (transaction) => this.resolveInTransaction(transaction, verified),
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        const resolution = await this.unitOfWork.serializable(
+          ({ identity }) => this.resolveInTransaction(identity, verified),
         );
         if (resolution.created) {
           await this.seedInitialProfileMemory(
@@ -151,43 +147,18 @@ export class VerifiedHumanIdentityResolver {
   }
 
   private async resolveInTransaction(
-    transaction: TransactionClient,
+    transaction: IdentityTransaction,
     assertion: VerifiedHumanIdentityAssertion,
   ): Promise<Resolution> {
-    const { provider, issuer, subject } = assertion.key;
-    const existing = await transaction.externalIdentity.findUnique({
-      where: {
-        provider_issuer_providerUserId: {
-          provider,
-          issuer,
-          providerUserId: subject,
-        },
-      },
-      include: { user: true },
-    });
+    const existing = await transaction.findExact(assertion.key);
     if (existing) {
       this.logger.debug('Resolved an exact verified human identity');
-      return { created: false, user: existing.user };
+      return { created: false, user: existing };
     }
 
     const userId = randomUUID();
-    const user = await transaction.user.create({
-      data: {
-        userId,
-        email:
-          assertion.profileHints?.verifiedEmail ??
-          createSyntheticPrincipalEmail(userId),
-      },
-    });
-    await transaction.externalIdentity.create({
-      data: {
-        userId,
-        provider,
-        issuer,
-        providerUserId: subject,
-        metadata: Prisma.JsonNull,
-      },
-    });
+    const user = await transaction.createPrincipal(userId, assertion.profileHints?.verifiedEmail ?? createSyntheticPrincipalEmail(userId));
+    await transaction.createVerifiedBinding(userId, assertion.key);
     this.logger.log('Created a verified human principal');
     return { created: true, user };
   }
@@ -195,44 +166,15 @@ export class VerifiedHumanIdentityResolver {
   private async findExact(
     assertion: VerifiedHumanIdentityAssertion,
   ): Promise<User | null> {
-    const { provider, issuer, subject } = assertion.key;
-    const identity = await this.prisma.externalIdentity.findUnique({
-      where: {
-        provider_issuer_providerUserId: {
-          provider,
-          issuer,
-          providerUserId: subject,
-        },
-      },
-      include: { user: true },
-    });
-    return identity?.user ?? null;
+    return this.identity.findExact(assertion.key);
   }
 
   private isUniqueConflict(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      (error as { code?: string }).code === 'P2002'
-    );
+    return error instanceof StorageConflictError && error.kind === 'unique';
   }
 
   private isRetryableConflict(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null) {
-      return false;
-    }
-    const candidate = error as {
-      code?: string;
-      cause?: { code?: string };
-      meta?: { code?: string };
-    };
-    return (
-      candidate.code === 'P2002' ||
-      candidate.code === 'P2034' ||
-      candidate.code === '40001' ||
-      candidate.cause?.code === '40001' ||
-      candidate.meta?.code === '40001'
-    );
+    return error instanceof StorageConflictError;
   }
 
   private async seedInitialProfileMemory(
@@ -250,14 +192,7 @@ export class VerifiedHumanIdentityResolver {
     }
 
     try {
-      const definitions = await this.prisma.preferenceDefinition.findMany({
-        where: {
-          namespace: 'GLOBAL',
-          slug: { in: values.map(({ slug }) => slug) },
-          archivedAt: null,
-        },
-        select: { id: true, slug: true },
-      });
+      const definitions = await this.identity.findInitialProfileDefinitions(values.map(({ slug }) => slug));
       const definitionBySlug = new Map(
         definitions.map((definition) => [definition.slug, definition.id]),
       );
@@ -267,31 +202,11 @@ export class VerifiedHumanIdentityResolver {
         if (!definitionId || value === undefined) {
           continue;
         }
-        const existing = await this.prisma.preference.findFirst({
-          where: {
-            userId,
-            contextKey: 'GLOBAL',
-            definitionId,
-            status: PreferenceStatus.ACTIVE,
-          },
-          select: { id: true },
-        });
+        const existing = await this.identity.hasInitialProfileValue(userId, definitionId);
         if (existing) {
           continue;
         }
-        await this.prisma.preference.create({
-          data: {
-            userId,
-            locationId: null,
-            contextKey: 'GLOBAL',
-            definitionId,
-            value,
-            status: PreferenceStatus.ACTIVE,
-            sourceType: SourceType.IMPORTED,
-            confidence: null,
-            evidence: { source: 'verified_identity' },
-          },
-        });
+        await this.identity.createInitialProfileValue(userId, definitionId, value);
       }
     } catch {
       this.logger.warn('Could not seed initial profile preferences');

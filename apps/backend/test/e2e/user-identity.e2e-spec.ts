@@ -1,3 +1,5 @@
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
+import { PostgresIdentityStorage } from '@/infrastructure/storage/postgres/postgres-identity-storage';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
@@ -73,9 +75,8 @@ describe('User Identity GraphQL API (e2e)', () => {
   });
 
   it('keeps me principals distinct when verified account email matches', async () => {
-    const resolver = new VerifiedHumanIdentityResolver(
-      getPrismaClient() as unknown as PrismaService,
-    );
+    const client = getPrismaClient() as unknown as PrismaService;
+    const resolver = new VerifiedHumanIdentityResolver(new PostgresStorageUnitOfWork(client), new PostgresIdentityStorage(client));
     const profileHints = { verifiedEmail: 'shared-account@example.test' };
     const first = await resolver.resolve({
       key: {

@@ -1,3 +1,5 @@
+import { PostgresIdentityStorage } from '@/infrastructure/storage/postgres/postgres-identity-storage';
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import type { PrismaClient } from '@infrastructure/prisma/generated-client';
 import { PrismaService } from '@infrastructure/prisma/prisma.service';
 import { AuthService } from '@modules/auth/auth.service';
@@ -19,8 +21,8 @@ describe('provider-neutral identity persistence (integration)', () => {
   beforeAll(() => {
     prisma = getPrismaClient();
     prismaService = prisma as unknown as PrismaService;
-    resolver = new VerifiedHumanIdentityResolver(prismaService);
-    authService = new AuthService({} as UserService, prismaService);
+    resolver = new VerifiedHumanIdentityResolver(new PostgresStorageUnitOfWork(prismaService), new PostgresIdentityStorage(prismaService));
+    authService = new AuthService({} as UserService, new PostgresStorageUnitOfWork(prismaService));
   });
 
   describe('verified human identities', () => {

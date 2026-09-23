@@ -1,4 +1,4 @@
-import { PreferenceValueType } from "@infrastructure/prisma/generated-client";
+import { PreferenceValueType } from "@/domains/shared/storage/storage-types";
 
 type PreferenceValueTypeDefinition = {
   valueType: PreferenceValueType;

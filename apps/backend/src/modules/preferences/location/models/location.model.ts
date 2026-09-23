@@ -1,9 +1,9 @@
 import { ObjectType, Field, ID, registerEnumType } from "@nestjs/graphql";
-import { LocationType as PrismaLocationType } from "@infrastructure/prisma/generated-client";
+import { LocationType as StoredLocationType } from "@/domains/shared/storage/storage-types";
 
-// Re-export Prisma's enum for consistency
-export const LocationType = PrismaLocationType;
-export type LocationType = PrismaLocationType;
+// Re-export the application-owned enum for transport registration
+export const LocationType = StoredLocationType;
+export type LocationType = StoredLocationType;
 
 registerEnumType(LocationType, {
   name: "LocationType",

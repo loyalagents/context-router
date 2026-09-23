@@ -1,8 +1,7 @@
 # Step 03: Local Identity
 
-- Status: implemented in PR
-  [#162](https://github.com/loyalagents/context-router/pull/162); external-review
-  follow-up validation and final-head evidence recorded in the PR before human merge
+- Status: complete — human-merged through PR [#162](https://github.com/loyalagents/context-router/pull/162) at `1b35c7c513b01a183bb740f0596273baf7620a10` on 2026-09-23
+- Final tested head: `cfe3b63786e729e60fd6f954c172db86487bebd4`; standard CI [35899268852](https://github.com/loyalagents/context-router/actions/runs/35899268852) and dedicated migration gate [35899268881](https://github.com/loyalagents/context-router/actions/runs/35899268881) verified successful on that head
 - Program step: `03-local-identity`
 - Target branch: `main`
 - Planning and implementation branch:
@@ -18,8 +17,7 @@
 - Supported modes after merge: the existing hosted application and an explicit,
   non-listening `local-identity-preview`; neither is selected by missing
   configuration
-- Implementation PR: one PR from the branch above, prepared for human review;
-  no automatic merge
+- Implementation PR: [#162](https://github.com/loyalagents/context-router/pull/162), human-merged; its detailed plan remains required by Step 04 recovery work
 - Last updated: 2026-09-23
 
 ## Outcome
@@ -130,11 +128,10 @@ The historical-user implementation was corrected with normal follow-up commits
 rather than rewritten or force-pushed. All five checkpoints are complete on the
 same branch. Fresh architecture/scope and security/lifecycle reviewers approved
 the final base-to-HEAD corrections, and the exact-base local 12-phase migration
-gate passed on 2026-09-23. Final pushed-head standard CI and the dedicated
-migration workflow are recorded in the PR before landing. A human owns merge.
+gate passed on 2026-09-23. Final pushed-head standard CI and the dedicated migration workflow both passed on the exact head recorded above, and a human merged PR #162. Step 04 is now the sole active migration step.
 
 The user-authorized R1 external-review follow-up makes optional profile values
 best-effort while retaining strict identity authority, documents hosted API-token
 email setup and first-creation semantics, and freezes public CA test fixtures.
 Its affected independent review and exact-head gate/CI evidence supplement the
-earlier approvals; see the R1 section of the plan and the PR for final results.
+earlier approvals; see the R1 section of the retained plan and the final-head CI evidence above. The plan preserves historical review detail rather than rewriting its earlier checkpoints as new evidence.

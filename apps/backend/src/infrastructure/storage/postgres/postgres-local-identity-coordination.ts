@@ -1,10 +1,11 @@
+import type { LocalIdentityCoordination, LocalIdentitySession } from '@/domains/shared/storage/local-identity-coordination';
 import { Client, type ClientConfig, type QueryResultRow } from 'pg';
 
-import { createSyntheticPrincipalEmail } from './principal-identity';
+import { createSyntheticPrincipalEmail } from '@modules/auth/principal-identity';
 import {
   type LocalIdentityState,
   encodeLocalIdentityState,
-} from './local-identity-state.codec';
+} from '@modules/auth/local-identity-state.codec';
 
 export const LOCAL_IDENTITY_ADVISORY_KEY = [36_541_118, 1_879_950_420] as const;
 export const LOCAL_IDENTITY_ADVISORY_LOCK_SQL =
@@ -163,7 +164,7 @@ async function bounded<T>(options: {
   }
 }
 
-export class LocalIdentityRepository {
+export class PostgresLocalIdentityCoordination implements LocalIdentityCoordination {
   private readonly clientConfig: ClientConfig;
   private readonly clientFactory: LocalIdentityClientFactory;
   private readonly deadlineMs: number;
@@ -251,7 +252,7 @@ interface ExternalIdentityRow extends QueryResultRow {
   user_id: string;
 }
 
-export class LocalIdentityDatabaseSession {
+export class LocalIdentityDatabaseSession implements LocalIdentitySession {
   private active = true;
   private destroyed = false;
   private transactionOpen = false;

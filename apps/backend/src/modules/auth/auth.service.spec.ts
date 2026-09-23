@@ -1,3 +1,4 @@
+import { PostgresStorageUnitOfWork } from '@/infrastructure/storage/postgres/postgres-unit-of-work';
 import { AuthService } from './auth.service';
 import {
   createM2MCompatibilityEmail,
@@ -30,7 +31,7 @@ describe('AuthService', () => {
         .mockImplementation(async (operation) => operation(transaction)),
     };
     return {
-      service: new AuthService(userService as never, prisma as never),
+      service: new AuthService(userService as never, new PostgresStorageUnitOfWork(prisma as never)),
       userService,
       prisma,
       transaction,

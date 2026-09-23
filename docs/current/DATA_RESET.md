@@ -39,10 +39,13 @@ email claim, or audit/backfill path.
 The local preview does not expose an account-deletion surface. Step 09 owns an
 explicit destructive local-identity reset and its backup/recovery policy.
 
-Every mode runs in one Prisma transaction and deletes preferences before owned
+Every mode runs in one application-owned unit of work, implemented by a
+PostgreSQL transaction, and deletes preferences before owned
 definitions. Before an advanced reset deletes definitions, it checks for a
 reference from another user's preference. A cross-user reference raises a
 conflict and rolls back the entire reset, including preference deletion.
+The [storage boundary](STORAGE_BOUNDARIES.md) retains default isolation and
+single-attempt execution, including late-failure rollback.
 
 The advanced modes intentionally trade auditability for a clean demo state.
 Callers must not describe them as leaving a durable record of the destructive

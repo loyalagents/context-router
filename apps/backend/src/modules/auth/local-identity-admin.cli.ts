@@ -1,7 +1,7 @@
 import { createLocalIdentityConfiguration } from '@config/local-identity.config';
 
 import { LocalIdentityFileStore } from './local-identity-filesystem';
-import { LocalIdentityRepository } from './local-identity.repository';
+import { PostgresLocalIdentityCoordination } from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
 import type { OpenLocalIdentityState } from './local-identity-filesystem';
 import { LocalIdentityStateService } from './local-identity-state.service';
 
@@ -32,7 +32,7 @@ export function createLocalIdentityAdminService(): LocalIdentityStateService {
       stateRoot: configuration.stateRoot,
       databaseTargetId: configuration.databaseTargetId,
     }),
-    repository: new LocalIdentityRepository({
+    repository: new PostgresLocalIdentityCoordination({
       clientConfig: configuration.clientConfig,
     }),
   });

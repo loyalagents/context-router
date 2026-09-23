@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Prisma } from '@infrastructure/prisma/generated-client';
-import type { User } from '@infrastructure/prisma/prisma-models';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
+import type { User } from "@/domains/shared/storage/storage-types";
+import { StorageUnitOfWork } from '@/domains/shared/storage/storage-unit-of-work';
+import { StorageConflictError } from '@/domains/shared/storage/storage-errors';
 import { UserService } from '@modules/user/user.service';
 import {
   createM2MCompatibilityEmail,
@@ -17,7 +17,7 @@ export class AuthService {
 
   constructor(
     private readonly userService: UserService,
-    private readonly prisma: PrismaService,
+    private readonly unitOfWork: StorageUnitOfWork,
   ) {}
 
   async getCurrentUser(userId: string): Promise<User> {
@@ -34,20 +34,11 @@ export class AuthService {
     for (let attempt = 1; attempt <= M2M_SERIALIZABLE_ATTEMPTS; attempt += 1) {
       let result: { user: User; identityCount: number };
       try {
-        result = await this.prisma.$transaction(
-          async (transaction) => {
-            const user = await transaction.user.upsert({
-              where: { userId },
-              create: { userId, email },
-              update: {},
-            });
-            const identityCount = await transaction.externalIdentity.count({
-              where: { userId },
-            });
-            return { user, identityCount };
-          },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-        );
+        result = await this.unitOfWork.serializable(async ({ identity }) => {
+          const user = await identity.upsertM2MPrincipal(userId, email);
+          const identityCount = await identity.countBindings(userId);
+          return { user, identityCount };
+        });
       } catch (error) {
         if (
           attempt < M2M_SERIALIZABLE_ATTEMPTS &&
@@ -72,20 +63,6 @@ export class AuthService {
   }
 
   private isRetryableConflict(error: unknown): boolean {
-    if (typeof error !== 'object' || error === null) {
-      return false;
-    }
-    const candidate = error as {
-      code?: string;
-      cause?: { code?: string };
-      meta?: { code?: string };
-    };
-    return (
-      candidate.code === 'P2002' ||
-      candidate.code === 'P2034' ||
-      candidate.code === '40001' ||
-      candidate.cause?.code === '40001' ||
-      candidate.meta?.code === '40001'
-    );
+    return error instanceof StorageConflictError;
   }
 }

@@ -6,7 +6,7 @@ import type { Request } from "express";
 import passport from "passport";
 
 import { HUMAN_AUTH_STRATEGY } from "../../../domains/shared/ports/human-auth.constants";
-import type { User } from "../../../infrastructure/prisma/prisma-models";
+import type { User } from "@/domains/shared/storage/storage-types";
 import { UserService } from "../../user/user.service";
 import { LocalIdentityFileStore } from "../local-identity-filesystem";
 

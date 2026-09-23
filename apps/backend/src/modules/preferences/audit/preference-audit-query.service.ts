@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@infrastructure/prisma/prisma.service';
-import type { PreferenceAuditEvent as PrismaPreferenceAuditEvent } from '@infrastructure/prisma/prisma-models';
-import { Prisma } from '@infrastructure/prisma/generated-client';
+import { AuditHistoryStorage } from '@/domains/shared/storage/history-storage';
+import type { PreferenceAuditEvent as StoredPreferenceAuditEvent } from "@/domains/shared/storage/storage-types";
 import { PreferenceAuditHistoryInput } from './dto/preference-audit-history.input';
 
 interface AuditCursorPayload {
@@ -10,14 +9,14 @@ interface AuditCursorPayload {
 }
 
 export interface PreferenceAuditHistoryPage {
-  items: PrismaPreferenceAuditEvent[];
+  items: StoredPreferenceAuditEvent[];
   nextCursor: string | null;
   hasNextPage: boolean;
 }
 
 @Injectable()
 export class PreferenceAuditQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly storage: AuditHistoryStorage) {}
 
   async getHistory(
     userId: string,
@@ -27,48 +26,7 @@ export class PreferenceAuditQueryService {
     const cursor = input.after ? this.decodeCursor(input.after) : null;
     const subjectSlugPrefix = input.subjectSlug?.trim();
 
-    const where: Prisma.PreferenceAuditEventWhereInput = {
-      userId,
-      ...(subjectSlugPrefix
-        ? {
-            subjectSlug: {
-              startsWith: subjectSlugPrefix,
-            },
-          }
-        : {}),
-      ...(input.eventType ? { eventType: input.eventType } : {}),
-      ...(input.targetType ? { targetType: input.targetType } : {}),
-      ...(input.origin ? { origin: input.origin } : {}),
-      ...(input.actorClientKey ? { actorClientKey: input.actorClientKey } : {}),
-      ...(input.correlationId ? { correlationId: input.correlationId } : {}),
-      ...(input.occurredFrom || input.occurredTo
-        ? {
-            occurredAt: {
-              ...(input.occurredFrom ? { gte: input.occurredFrom } : {}),
-              ...(input.occurredTo ? { lte: input.occurredTo } : {}),
-            },
-          }
-        : {}),
-      ...(cursor
-        ? {
-            OR: [
-              { occurredAt: { lt: cursor.occurredAt } },
-              {
-                AND: [
-                  { occurredAt: cursor.occurredAt },
-                  { id: { lt: cursor.id } },
-                ],
-              },
-            ],
-          }
-        : {}),
-    };
-
-    const rows = await this.prisma.preferenceAuditEvent.findMany({
-      where,
-      orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-      take: first + 1,
-    });
+    const rows = await this.storage.findPage(userId, { subjectSlug: subjectSlugPrefix, eventType: input.eventType, targetType: input.targetType, origin: input.origin, actorClientKey: input.actorClientKey, correlationId: input.correlationId, occurredFrom: input.occurredFrom, occurredTo: input.occurredTo }, cursor, first + 1);
 
     const hasNextPage = rows.length > first;
     const items = hasNextPage ? rows.slice(0, first) : rows;
@@ -84,7 +42,7 @@ export class PreferenceAuditQueryService {
     };
   }
 
-  private encodeCursor(event: Pick<PrismaPreferenceAuditEvent, 'occurredAt' | 'id'>): string {
+  private encodeCursor(event: Pick<StoredPreferenceAuditEvent, 'occurredAt' | 'id'>): string {
     return Buffer.from(
       JSON.stringify({
         occurredAt: event.occurredAt.toISOString(),
