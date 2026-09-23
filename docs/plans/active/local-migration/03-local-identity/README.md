@@ -1,6 +1,7 @@
 # Step 03: Local Identity
 
-- Status: active; plan independently approved; implementation in progress
+- Status: active; materially revised plan approved after renewed independent
+  review; implementation resumed
 - Program step: `03-local-identity`
 - Target branch: `main`
 - Planning and implementation branch:
@@ -10,9 +11,9 @@
   at `6b420ed24e9dd344af8990c9045832990ae1b5ec`
 - Planning owner, implementation owner, and sole repository writer: `/root`
 - Change classification: `local-only` main-line migration work. The retained
-  hosted-baseline adapter on `main` is hardened only for the new principal
-  boundary; `hosted-v1-maintenance` is intentionally unchanged and no backport
-  or production-remediation claim is authorized
+  hosted-baseline adapter on `main` is reduced to one provider adapter over the
+  new principal boundary; `hosted-v1-maintenance` is intentionally unchanged
+  and no backport or production-remediation claim is authorized
 - Supported modes after merge: the existing hosted application and an explicit,
   non-listening `local-identity-preview`; neither is selected by missing
   configuration
@@ -22,14 +23,23 @@
 ## Outcome
 
 Introduce one stable, opaque human principal boundary and an executable
-single-user local implementation without weakening hosted authentication or
-conflating a person with an MCP client. The local preview persists its principal
-and independent credential under an explicitly supplied private state root,
-uses PostgreSQL only as this step's temporary application-state adapter, and
+single-user local implementation without conflating a person with email, a
+provider credential, or an MCP client. A narrow verified-identity assertion
+makes Auth0 one edge adapter and allows another provider to use the same exact
+`provider + issuer + subject` resolver without changing core services or the
+schema. Existing users are intentionally not migrated: main-line upgrade
+fixtures delete user-owned data rather than add legacy issuer sentinels,
+email-link manifests, admission scans, or backup/re-forward machinery.
+
+The local preview persists its authoritative principal and independent
+credential under an explicitly supplied private state root. A durable root
+operation and complete candidate precede database mutation, and explicit
+recovery resolves empty/exact commit state before canonical ready publication.
+It uses PostgreSQL only as this step's temporary application-state adapter and
 starts without human Auth0 configuration or any network listener. Existing
 hosted GraphQL, REST, web, MCP, OAuth/DCR, tool, resource, grant, restart, and
-packaging behavior remains supported on `main`. This PR does not change or
-remediate the deployed hosted-v1 maintenance line.
+packaging shapes remain supported for fresh main-line state. This PR does not
+change or remediate the deployed hosted-v1 maintenance line.
 
 The detailed and test-first implementation contract is in
 [`plan.md`](plan.md). It is deliberately one PR with five internal checkpoints.
@@ -85,13 +95,11 @@ was used.
 
 ## Scope Guardrails
 
-Step 03 owns only the narrow human-principal seam, main-line hosted-baseline
-identity hardening,
-the drained-writer audit and frozen link-or-deny dispositions required before
-any verified-email binding to a historical account,
-the private local identity state/credential, an explicit non-listening local
-preview, its real process/restart evidence, and corresponding registry,
-gate, and documentation changes.
+Step 03 owns only the narrow human-principal/provider-adapter seam, exact
+issuer-aware external-identity key, intentional fresh-data transition, private
+local identity state/credential, explicit non-listening local preview, real
+process/restart evidence, and corresponding registry, gate, and documentation
+changes. Email is profile data only; there is no historical-account claim path.
 
 It does not implement SQLite, a generic repository layer, a local model, local
 MCP authentication or transport, browser sessions or UI cutover, LAN access,
@@ -105,16 +113,17 @@ keychain, backup, destructive identity reset, and installation policy.
 ## Review And Landing
 
 Read-only discovery covered architecture/provider leakage, contracts and
-consumers, tests/recovery/gate implications, and security/privacy. Fresh
-read-only reviewers independently approved architecture/scope,
-testing/recovery, compatibility/consumers, and security/privacy before product
-implementation. Their findings and dispositions are recorded in the plan.
-Material changes to the principal model, state protocol, issuer migration,
-network reachability, public contracts, or supported-mode/gate shape return the
-affected dimensions to fresh review.
+consumers, tests/recovery/gate implications, and security/privacy. The original
+review approvals are superseded where they assumed historical-user migration or
+the journaled candidate protocol. The user's explicit fresh-data clarification
+triggered a material plan revision back to LM-002 and LM-007. Fresh read-only
+architecture, persistence/recovery, compatibility, and security reviews
+approved the same substantive plan checksum `1416604905 48917`. Findings and
+dispositions are recorded in the plan.
 
-After plan approval, commit this activation checkpoint, open one draft PR using
-the local-migration template, and continue on the same branch. After
-implementation, fresh reviewers compare the complete base-to-HEAD diff with
-the approved plan. Final local and remote evidence must be recorded before the
-PR is marked ready for human review. A human owns merge.
+The activation checkpoint and draft PR already exist. The pushed historical-
+user implementation will be corrected with a normal follow-up commit rather
+than rewritten or force-pushed. Implementation continues on the same branch.
+Fresh reviewers compare the complete base-to-HEAD
+diff with the revised plan, and final local/remote evidence must be recorded
+before the PR is marked ready for human review. A human owns merge.

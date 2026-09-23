@@ -205,39 +205,46 @@ step plan that resolves them.
 
 ### LM-015: Stable human principal and local identity preview
 
-- Status: Accepted — Step 03 plan independently approved; implementation
-  evidence pending
-- Decision: `User.userId` remains the provider-neutral human principal. Hosted
-  external identity is keyed by provider, verified issuer, and subject. Email
-  and display attributes are not ongoing authentication or authorization;
-  exceptionally, an eligible verified email may serve as one-time historical-
-  account binding evidence only when the exact user/email/issuer/subject tuple
-  also matches a frozen operator-reviewed link disposition from the complete
-  drained-writer audit. Every eligible historical row must instead be explicitly
-  denied when that binding is not accepted. A fresh local installation
+- Status: Accepted — materially revised Step 03 plan approved by renewed
+  architecture, persistence/recovery, compatibility, and security review
+- Decision: `User.userId` remains the provider-neutral human principal. A
+  verified provider edge emits one narrow assertion, and external identity is
+  keyed exactly by provider, canonical issuer, and subject. Email and display
+  attributes are never authentication, authorization, lookup, or implicit
+  account-linking inputs. Existing users are not migrated: in accordance with
+  LM-002, an upgraded main-line PostgreSQL fixture deletes user-owned data
+  before installing the required issuer key rather than backfilling a sentinel
+  or preserving/linking historical accounts. A fresh local installation
   generates an independent opaque principal and credential in versioned private
-  state under an explicit absolute root. Step 03 exposes that implementation as
-  a non-listening initialized Nest application preview that calls `init()` but
-  never `listen()`; local MCP credentials and browser sessions remain separate
-  later-step concerns.
+  state under an explicit absolute root. A durable root operation and complete
+  candidate precede database mutation; explicit recovery resolves empty/exact
+  commit state before canonical ready publication. Step 03 exposes that
+  implementation as a non-listening initialized Nest application preview that
+  calls `init()` but never `listen()`; local MCP credentials and browser
+  sessions remain separate later-step concerns.
 - Product-line disposition: this is `local-only` main-line migration work.
-  Issuer/link hardening applies only to `main`'s retained hosted-baseline adapter
-  as a prerequisite for the new boundary. `hosted-v1-maintenance` is unchanged;
-  Step 03 is not a production remediation and authorizes no backport or cherry-
-  pick. A future hosted-production fix requires a separate maintenance decision.
-- Consequence: Steps 04–08 use the stable principal rather than email, Auth0
+  Auth0 remains only one edge adapter for fresh main-line state.
+  `hosted-v1-maintenance` is unchanged; Step 03 is not a production remediation
+  and authorizes no backport or cherry-pick. A future hosted-production fix
+  requires a separate maintenance decision.
+- Consequence: Steps 04–08 use the stable principal rather than email, provider
   subject suffixes, MCP client keys, machine identity, paths, or database row
-  order. Steps 04–05 must preserve the state-to-database binding and
-  crash-safe recovery fencing when they replace Step 03's narrow temporary
-  PostgreSQL advisory-session mechanism. Step 07 must add a distinct local MCP client-auth path, Step 08 must add
-  a browser/session exchange without exposing the file credential, and Step 09
-  owns final data-directory, keychain/process isolation, backup, and destructive
-  identity-reset policy. A reachable local listener is not authorized by this
-  decision and must add Host/Origin/CSRF/DNS-rebinding evidence before support.
-  The operator-approved hosted tuple is deliberate one-time binding authority;
-  an erroneous approval can misbind an account, removing its configuration does
-  not unlink a consumed identity, and recovery requires stopped writers plus the
-  verified full-backup rule or a separately reviewed exact repair.
+  order. `User.email` remains non-null account/profile data but loses uniqueness
+  and all identity authority, so distinct exact provider keys may expose the
+  same verified email without merging. A new provider verifies its credential
+  and emits the same assertion;
+  generic resolution and storage do not add a provider switch. The backend
+  Auth0 Management/Authentication SDK clients are removed; the retained hosted
+  adapter uses verified JWT claims and JWKS only. Different exact
+  keys create different principals unless a later explicit link flow starts
+  from an already-authenticated principal. Steps 04–05 must preserve the
+  durable operation/candidate, empty/exact recovery, and advisory-session
+  fencing contracts when replacing the temporary PostgreSQL adapter. Step 07
+  adds distinct local MCP client auth;
+  Step 08 adds a browser/session exchange without exposing the file credential;
+  Step 09 owns final paths, keychain/process isolation, backup, and destructive
+  identity reset. A reachable local listener remains unauthorized without
+  Host/Origin/CSRF/DNS-rebinding evidence.
 
 ## Deferred Decisions And Owning Steps
 
