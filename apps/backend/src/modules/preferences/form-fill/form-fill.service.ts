@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { AiStructuredOutputPort } from '../../../domains/shared/ports/ai-structured-output.port';
 import { AI_STRUCTURED_OUTPUT_PORT } from '../../../domains/shared/ports/ai.tokens';
-import { getFormFillConfig } from '../../../config/form-fill.config';
 import { PreferenceService } from '../preference/preference.service';
 import { PdfFieldExtractorService } from './pdf-field-extractor.service';
 import { FormFillPromptBuilderService } from './form-fill-prompt-builder.service';
@@ -27,7 +27,7 @@ type FormFillFailureStage =
 @Injectable()
 export class FormFillService {
   private readonly logger = new Logger(FormFillService.name);
-  private readonly config = getFormFillConfig();
+  private readonly confidenceThreshold: number;
 
   constructor(
     @Inject(AI_STRUCTURED_OUTPUT_PORT)
@@ -37,7 +37,12 @@ export class FormFillService {
     private readonly promptBuilder: FormFillPromptBuilderService,
     private readonly validator: FormFillValidatorService,
     private readonly pdfFiller: PdfFieldFillerService,
-  ) {}
+    configService: ConfigService,
+  ) {
+    this.confidenceThreshold = configService.getOrThrow<number>(
+      'formFill.confidenceThreshold',
+    );
+  }
 
   async fillPdfForm(
     userId: string,
@@ -48,9 +53,7 @@ export class FormFillService {
     const fillId = randomUUID();
     const outputFilename = this.outputFilename(filename);
 
-    this.logger.log(
-      `Starting form fill ${fillId} for user ${userId}: ${filename}`,
-    );
+    this.logger.log('Starting authenticated form fill');
 
     let stage: FormFillFailureStage = 'field_extraction';
 
@@ -98,7 +101,7 @@ export class FormFillService {
         aiResult.fillActions,
         extracted.fields,
         new Set(preferences.map((preference) => preference.slug)),
-        this.config.confidenceThreshold,
+        this.confidenceThreshold,
         {
           fieldPolicies,
           activePreferenceValues: new Map(
@@ -134,7 +137,7 @@ export class FormFillService {
           : 'partial';
 
       this.logger.log(
-        `Form fill ${fillId} completed with status ${status}: ${summary.filledCount} filled, ${summary.skippedCount} skipped`,
+        `Form fill completed with status ${status}: ${summary.filledCount} filled, ${summary.skippedCount} skipped`,
       );
 
       return {
@@ -146,39 +149,25 @@ export class FormFillService {
         filledPdfBase64: filledPdf.toString('base64'),
         summary,
       };
-    } catch (error) {
-      this.logger.error(`Form fill ${fillId} failed`, error);
-      return this.emptyResponse(
-        fillId,
-        'failed',
-        filename,
-        outputFilename,
-        [
-          'Form fill failed. Please try again.',
-          this.failureWarning(stage, error),
-        ],
-      );
+    } catch {
+      this.logger.error(`Form fill failed during ${stage}`);
+      return this.emptyResponse(fillId, 'failed', filename, outputFilename, [
+        'Form fill failed. Please try again.',
+        this.failureWarning(stage),
+      ]);
     }
   }
 
-  private failureWarning(stage: FormFillFailureStage, error: unknown): string {
-    return `Form fill failed during ${stage}: ${this.sanitizeFailureMessage(error)}`;
-  }
-
-  private sanitizeFailureMessage(error: unknown): string {
-    const rawMessage =
-      error instanceof Error
-        ? error.message
-        : typeof error === 'string'
-          ? error
-          : 'unknown error';
-    const compact = rawMessage.replace(/\s+/g, ' ').trim();
-    return compact.length > 0 ? compact.slice(0, 500) : 'unknown error';
+  private failureWarning(stage: FormFillFailureStage): string {
+    return `Form fill failed during ${stage}`;
   }
 
   private emptyResponse(
     fillId: string,
-    status: Extract<FormFillStatus, 'no_fillable_fields' | 'unsupported_format' | 'failed'>,
+    status: Extract<
+      FormFillStatus,
+      'no_fillable_fields' | 'unsupported_format' | 'failed'
+    >,
     originalFilename: string,
     outputFilename: string,
     warnings: string[],

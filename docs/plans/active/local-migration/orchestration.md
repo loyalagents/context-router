@@ -1,35 +1,33 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Current step: `02-composition-boundaries` — PR 02E staged packaging
-  feasibility is active after PR 02D runtime resources and production package
-  closure [#160](https://github.com/loyalagents/context-router/pull/160) was
-  human-merged at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`
-  after final-head standard CI run
-  [35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
+- Current step: `03-local-identity` — Step 02 PR
+  [#161](https://github.com/loyalagents/context-router/pull/161) was
+  human-merged at `6b420ed24e9dd344af8990c9045832990ae1b5ec`
+  from final tested head `00e4240564b3b63997d63cc581c6e52fbba0f613`
+  after standard CI run
+  [35318582335](https://github.com/loyalagents/context-router/actions/runs/35318582335)
   and dedicated LMBG run
-  [35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476)
-  passed. PR 02E is activated from that exact SHA;
-  its exact-base activation LMBG passed and its bounded plan clarifications are
-  independently approved; implementation, the 244-test local-migration suite,
-  the original three correction reviews and both final CI-correction review
-  rounds, the 167.223-second final-tree direct packaging smoke, and the
-  454.088-second exact-base 12-phase LMBG are complete;
-  final-head standard and dedicated remote validation remain pending
+  [35318582309](https://github.com/loyalagents/context-router/actions/runs/35318582309)
+  passed. Step 03 exact-base activation and 12-phase LMBG passed. The user then
+  clarified that existing users may be wiped and future-provider compatibility
+  takes priority; four renewed review dimensions approved the materially
+  revised one-PR plan. All five checkpoints are implemented and the exact-base
+  local closeout gate passed in PR
+  [#162](https://github.com/loyalagents/context-router/pull/162)
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-packaging-smoke`
-- Concrete next action: commit/push PR 02E, run final-head standard and dedicated
-  remote CI, and resolve any final-head review findings; leave
-  landing to a human and keep dependent Step 03/06 work inactive until PR 02E
-  is human-merged or an explicit non-overlap is approved
-- Review date: 2026-10-15 or the PR 02E human landing decision, whichever comes
+  `codex/local-migration-03-local-identity`
+- Concrete next action: verify final pushed-head standard CI and the dedicated
+  migration workflow for PR #162; leave landing to a human and keep dependent
+  Steps 04/05/06/07/08 inactive
+- Review date: 2026-10-16 or the Step 03 human landing decision, whichever comes
   first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-18
+- Last reviewed: 2026-09-23
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -150,9 +148,11 @@ rather than encode storage, identity, or model behavior themselves.
   the reviewed target. They become the supported install/build/LMBG/package
   contract only when PR 02B atomically aligns every version source and the full
   exact-runtime gate passes; Step 01 runtime evidence governs until then.
-- Step 03 keeps a stable human principal separate from MCP client identity and
-  grants. It must resolve the current email-centered user shape, local credential
-  storage, and stability across restarts instead of merely bypassing Auth0.
+- Step 03 keeps a stable human principal separate from provider credentials,
+  email/profile attributes, and MCP client identity/grants. It adds one verified
+  provider assertion so Auth0 and future providers remain edge adapters, and it
+  must resolve local credential storage and restart stability rather than merely
+  bypassing Auth0. Existing hosted users are not migrated, per LM-002.
 - Step 04 defines transaction/unit-of-work behavior as well as repository ports.
   Its contract suite preserves atomic audit writes, uniqueness and archival
   rules, location precedence, ordering, cascades, concurrent updates, and seed
@@ -185,6 +185,12 @@ rather than encode storage, identity, or model behavior themselves.
   `local-only`, `hosted-only`, or `shared`.
 - Shared fixes are cherry-picked deliberately. Do not merge either long-lived
   branch wholesale into the other.
+- Step 03's provider-neutral assertion, required issuer key, and destructive
+  fresh-data transition are explicit main-line migration evolution, not a
+  deployed hosted-v1 production fix. The work is `local-only`, leaves
+  `hosted-v1-maintenance` unchanged, migrates no historical account, and
+  authorizes no backport. Any future production remediation must originate from
+  a separate hosted-maintenance decision and branch.
 - Do not copy local-database schema changes into the hosted PostgreSQL migration
   history, or hosted PostgreSQL migrations into the local line, without an
   explicit plan.
@@ -280,10 +286,10 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | --- | --- | --- | --- |
 | `00-document-consolidation` | Complete — [#153](https://github.com/loyalagents/context-router/pull/153), [#154](https://github.com/loyalagents/context-router/pull/154), [#155](https://github.com/loyalagents/context-router/pull/155) | Classified legacy plans, moved durable knowledge and unfinished outcomes to canonical owners, removed obsolete planning material, and made strict repository-link validation the documentation gate. | Hosted branch/tag preservation |
 | `01-contract-baseline-and-product-scope` | Complete — [PR #156](https://github.com/loyalagents/context-router/pull/156) merged at `ff9d8bce6f1b5b28752ab1582e47947f131eff8c` — [plan](01-contract-baseline-and-product-scope/plan.md) | Classify every current capability as retain, replace, remove, or defer with observable acceptance tests; baseline public transports, identity, persistence, AI, orchestrator/eval, seed, and outbound-network behavior. Establish a named aggregate migration gate and clean-restart smoke. | Step 00 complete |
-| `02-composition-boundaries` | Plan approved; PR 02A [#157](https://github.com/loyalagents/context-router/pull/157) merged at `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B [#158](https://github.com/loyalagents/context-router/pull/158) merged at `5a8b640a883dd33d42239d3a74e827cc17ffaae3`; PR 02C [#159](https://github.com/loyalagents/context-router/pull/159) merged at `143515dac687ffbca989a315edaa89e794a04db3`; PR 02D [#160](https://github.com/loyalagents/context-router/pull/160) merged at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`; PR 02E is active on `codex/local-migration-02-packaging-smoke` from that exact merge SHA with implementation, the 244-test suite, fresh correction reviews, the 167.223-second final-tree direct packaging smoke, and the 454.088-second exact-base aggregate gate complete; final-head remote evidence and human landing are pending — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
-| `03-local-identity` | Not started | Introduce a stable provider-neutral human principal, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 |
-| `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green. | Steps 01-03 |
-| `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and make restart/recovery explicit. | Step 04 |
+| `02-composition-boundaries` | Complete — PR 02A [#157](https://github.com/loyalagents/context-router/pull/157), PR 02B [#158](https://github.com/loyalagents/context-router/pull/158), PR 02C [#159](https://github.com/loyalagents/context-router/pull/159), PR 02D [#160](https://github.com/loyalagents/context-router/pull/160), and PR 02E [#161](https://github.com/loyalagents/context-router/pull/161); final merge `6b420ed24e9dd344af8990c9045832990ae1b5ec` — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
+| `03-local-identity` | Implemented and locally validated in PR [#162](https://github.com/loyalagents/context-router/pull/162) from exact Step 02 merge `6b420ed24e9dd344af8990c9045832990ae1b5ec`; final pushed-head remote evidence and human landing remain — [plan](03-local-identity/plan.md) | Introduce a stable provider-neutral human principal and verified-provider assertion, intentionally start from fresh user data, preserve distinct MCP client/grant identity, and add a safe single-user local implementation. | Step 02 complete |
+| `04-storage-boundaries` | Not started | Move persistence and transaction/unit-of-work semantics behind explicit behavioral contracts while the current adapter remains green, including Step 03's durable operation/candidate, empty/exact recovery, and fencing semantics. | Steps 01-03 |
+| `05-local-database-runtime` | Not started | Validate the provisional SQLite direction, implement the selected fresh local database adapter, pass storage contracts, and replace Step 03's temporary PostgreSQL advisory-session coordination with equivalent restart/recovery semantics. | Step 04 |
 | `06-local-model` | Not started | Add local model capability discovery, execution, timeout, and error behavior behind provider-neutral ports. | Step 02; may overlap Steps 04-05 |
 | `07-local-mcp` | Not started | Connect non-AI local MCP flows and local authorization to the core; capability-gate AI-backed tools until Step 06. | Steps 03 and 05; Step 06 for AI tools |
 | `08-local-ui` | Not started | Run useful non-AI UI flows without Auth0 or hosted services; capability-gate AI-backed pages until Step 06. | Steps 03 and 05; may overlap Steps 06-07 |
@@ -293,11 +299,11 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-Step 02 PR 02E is the sole primary migration checkpoint and `/root` is its sole
-writer. Read-only discovery/review may run in parallel. Step 03 and Step 06 stay
-inactive until PR 02E is human-merged unless a later explicit activation records
-non-overlapping files and decisions. The interface-evolution track may run only
-when it does not alter the active staged-packaging subset, a baselined contract,
+Step 03 is the sole primary migration checkpoint and `/root` is its sole writer.
+Read-only discovery/review may run in parallel. Steps 04, 05, 07, and 08 remain
+inactive until Step 03 is human-merged. Step 06 also remains inactive absent a
+separately reviewed non-overlap and ownership agreement. The interface-evolution
+track may run only when it does not alter an affected identity/public contract
 or a shared file.
 Visual-only UI work and new evaluation fixtures are otherwise safe only with an
 explicit non-overlapping owner.
@@ -305,6 +311,7 @@ explicit non-overlapping owner.
 Coordinate or serialize changes to these hotspots:
 
 - `.github/workflows/ci.yml`
+- `.github/workflows/local-migration-baseline.yml`
 - `pnpm-lock.yaml`
 - `apps/backend/src/app.module.ts`
 - `apps/backend/src/main.ts`

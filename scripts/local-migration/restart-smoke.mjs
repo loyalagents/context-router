@@ -45,6 +45,7 @@ import {
   prepareTestAdministration,
   queryDatabase,
 } from "./test-database.mjs";
+import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
 import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -541,7 +542,6 @@ export function buildSmokeBackendEnvironment({
   jwksPort,
   caCertificate,
   clientIds,
-  clientSecret,
 }) {
   const allowed = [
     "PATH",
@@ -571,12 +571,8 @@ export function buildSmokeBackendEnvironment({
     DATABASE_URL: databaseUrl,
     GRAPHQL_PLAYGROUND: "false",
     GRAPHQL_DEBUG: "false",
-    AUTH0_DOMAIN: `127.0.0.1:${jwksPort}`,
     AUTH0_ISSUER: issuer,
     AUTH0_AUDIENCE: audience,
-    AUTH0_CLIENT_ID: "hosted-baseline-smoke-app",
-    AUTH0_CLIENT_SECRET: clientSecret,
-    AUTH0_MANAGEMENT_API_AUDIENCE: `${issuer}api/v2/`,
     MCP_SERVER_URL: serverUrl,
     MCP_RESOURCE: `${serverUrl}/mcp`,
     AUTH0_MCP_CLAUDE_CLIENT_ID: clientIds.claude,
@@ -914,7 +910,6 @@ async function probeGeneration(options) {
     signingPrivateKey,
     kid,
     clientIds,
-    clientSecret,
     caCertificate,
     rawCatalog,
     contract,
@@ -978,10 +973,9 @@ async function probeGeneration(options) {
         jwksPort: jwks.port,
         caCertificate,
         clientIds,
-        clientSecret,
       }),
       logPath: path.join(diagnosticsDirectory, `backend-generation-${generation}.log`),
-      canaries: [token, issuer.replace(/\/$/, ""), clientSecret, ...smokeCanaries],
+      canaries: [token, issuer.replace(/\/$/, ""), ...smokeCanaries],
       signal,
     });
   } catch (error) {
@@ -1210,8 +1204,8 @@ async function probeGeneration(options) {
     const principalRows = await queryDatabase(
       repositoryRoot,
       databaseUrl,
-      "SELECT user_id FROM users WHERE email = $1",
-      [`${clientIds.claude}@clients@m2m.local`],
+      "SELECT user_id FROM users WHERE user_id = $1",
+      [principal.userId],
       { signal },
     );
     assert.deepEqual(principalRows, [{ user_id: principal.userId }]);
@@ -1559,8 +1553,6 @@ export async function runRestartSmoke({
         codex: `migration-smoke-codex-${randomBytes(8).toString("hex")}`,
         fallback: `migration-smoke-fallback-${randomBytes(8).toString("hex")}`,
       };
-      const clientSecret = `synthetic-${randomBytes(16).toString("hex")}`;
-      journal.addCanary(clientSecret);
       const [rawCatalog, contract, httpContract] = await Promise.all([
         readFile(path.join(repositoryRoot, "apps/backend/src/config/preferences.catalog.json"), "utf8").then(JSON.parse),
         readFile(path.join(repositoryRoot, "apps/backend/test/contracts/fixtures/mcp-contract-baseline.json"), "utf8").then(JSON.parse),
@@ -1579,7 +1571,6 @@ export async function runRestartSmoke({
         signingPrivateKey: signingKeys.privateKey,
         kid,
         clientIds,
-        clientSecret,
         caCertificate: tls.caCertificate,
         rawCatalog,
         contract,
@@ -1619,6 +1610,62 @@ export async function runRestartSmoke({
         true,
         "OIDC/JWKS fixture received an unexpected request",
       );
+      const hostileLocalCwd = path.join(secretDirectory, "hostile-local-cwd");
+      await mkdir(hostileLocalCwd, { mode: 0o700 });
+      await writeFile(
+        path.join(hostileLocalCwd, ".env"),
+        "DATABASE_URL=postgresql://hostile:hostile@203.0.113.9:5432/hostile\nAUTH0_ISSUER=https://hostile.invalid/\n",
+        { mode: 0o600 },
+      );
+      const localIdentity = await runLocalIdentitySmoke({
+        repositoryRoot,
+        entrypoint: path.join(
+          repositoryRoot,
+          "apps/backend/dist/local-identity.js",
+        ),
+        cwd: hostileLocalCwd,
+        home: path.join(secretDirectory, "local-identity-home"),
+        temporaryDirectory: path.join(secretDirectory, "local-identity-tmp"),
+        stateParent: secretDirectory,
+        tlsParent: secretDirectory,
+        caPem: await readFile(tls.caCertificate, "utf8"),
+        serverKey: tls.key,
+        serverCertificate: tls.certificate,
+        diagnosticsDirectory: diagnostics,
+        journal,
+        canaries: smokeCanaries,
+        environment,
+        signal,
+        migrateDatabase: async (localDatabaseUrl) => {
+          await runCommand(
+            [
+              "pnpm",
+              "--filter",
+              "backend",
+              "exec",
+              "prisma",
+              "migrate",
+              "deploy",
+            ],
+            {
+              cwd: repositoryRoot,
+              env: buildSmokeToolEnvironment(
+                environment,
+                localDatabaseUrl,
+                runtimeHome,
+                runtimeCorepack,
+              ),
+              timeoutMs: 120_000,
+              logPath: path.join(
+                diagnostics,
+                "local-identity-migrations.log",
+              ),
+              canaries: smokeCanaries,
+              signal,
+            },
+          );
+        },
+      });
       return {
         databaseName: database.databaseName,
         administrationSource: administration.source,
@@ -1627,6 +1674,7 @@ export async function runRestartSmoke({
           { number: 2, port: second.port, principalStable: true, catalogCount: second.catalog.length },
         ],
         jwksFetches: jwksHits.length,
+        localIdentity,
         elapsedMs: Date.now() - startedAt,
       };
     });

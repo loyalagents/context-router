@@ -1,8 +1,4 @@
-import {
-  Args,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject, Logger, UseGuards } from '@nestjs/common';
 import { AiTextGeneratorPort } from '../../domains/shared/ports/ai-text-generator.port';
 import { AI_TEXT_GENERATOR_PORT } from '../../domains/shared/ports/ai.tokens';
@@ -20,17 +16,18 @@ export class VertexAiResolver {
 
   @Query(() => String, {
     name: 'askVertexAI',
-    description: 'Send a text prompt to Vertex AI and receive a generated response',
+    description:
+      'Send a text prompt to Vertex AI and receive a generated response',
   })
   async askVertexAI(
     @Args('message', { type: () => String }) message: string,
   ): Promise<string> {
     try {
-      this.logger.log(`Received query with message: ${message.substring(0, 50)}...`);
+      this.logger.log('Processing authenticated text-generation request');
       const response = await this.textGenerator.generateText(message);
       return response;
-    } catch (error) {
-      this.logger.error('Failed to generate text from Vertex AI', error);
+    } catch {
+      this.logger.error('Text generation request failed');
       throw new Error(
         'Failed to generate response from Vertex AI. Please try again later.',
       );

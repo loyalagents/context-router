@@ -1,49 +1,41 @@
 # Local-First Migration
 
 - Status: active program index
-- Current step: `02-composition-boundaries` — PR 02E staged packaging
-  feasibility is active after PR 02D runtime resources and production package
-  closure [#160](https://github.com/loyalagents/context-router/pull/160) was
-  human-merged at `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf`
-  after final-head standard CI run
-  [35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
-  and dedicated LMBG run
-  [35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476)
-  passed. PR 02E is activated from that exact SHA on
-  `codex/local-migration-02-packaging-smoke`; its exact-base activation gate
-  passed, the bounded plan clarifications are independently approved, and
-  implementation, the 244-test local-migration suite, the original three
-  correction reviews and both final CI-correction review rounds, the
-  167.223-second final-tree direct packaging smoke, and the 454.088-second
-  exact-base 12-phase LMBG are complete; final-head standard
-  and dedicated remote validation remain pending
+- Current step: `03-local-identity` — activated from the human-merged Step 02
+  PR [#161](https://github.com/loyalagents/context-router/pull/161) SHA
+  `6b420ed24e9dd344af8990c9045832990ae1b5ec`; activation preflight and the
+  exact-base 12-phase LMBG passed. The user then confirmed existing users may be
+  wiped and prioritized future-provider compatibility; four renewed review
+  dimensions approved the materially revised detailed plan. All five
+  checkpoints are implemented and the exact-base local closeout gate passed in
+  PR [#162](https://github.com/loyalagents/context-router/pull/162)
 - Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-packaging-smoke`
-- Concrete next action: commit/push PR 02E, run final-head standard and dedicated
-  remote CI, and resolve any final-head review findings; leave
-  landing to a human and keep dependent Step 03/06 work inactive until PR 02E
-  is human-merged or an explicit non-overlap is approved
-- Review date: 2026-10-15 or the PR 02E human landing decision, whichever comes
+  `codex/local-migration-03-local-identity`
+- Concrete next action: verify final pushed-head standard CI and the dedicated
+  migration workflow for PR #162, then leave review and landing to a human
+- Review date: 2026-10-16 or the Step 03 human landing decision, whichever comes
   first
-- Last reviewed: 2026-09-18
+- Last reviewed: 2026-09-23
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
 
-## Implement And Review Step 02 PR 02E
+## Plan, Implement, And Review Step 03
 
-1. Follow the independently approved Step 02
-   [`plan.md`](02-composition-boundaries/plan.md) and its five-PR landing order.
-2. Preserve the exact PR 02D merge base
-   `9c54f98fd9ef4ac2bc39d5b4c12d1b91a266f2cf` for PR 02E and bind every local
-   aggregate run to that base.
-3. Keep PR 02E limited to target-native staged backend/web artifacts, the
-   bounded production lifecycle smoke, and its atomic LMBG/CI evidence. Do not
-   enter local identity, storage, model, UI shell, installer, final platform,
-   or zero-egress policy.
-4. Require final-head local and remote evidence plus resolved fresh read-only
-   review, and leave landing to a human.
+1. Follow the Step 03 [`README.md`](03-local-identity/README.md) and approved
+   revised [`plan.md`](03-local-identity/plan.md).
+2. Preserve the exact Step 02 merge base
+   `6b420ed24e9dd344af8990c9045832990ae1b5ec` and bind activation/final aggregate
+   runs to it.
+3. Keep one PR and one sole writer. Review agents remain read-only; the five
+   checkpoints are internal validation milestones.
+4. Preserve hosted HTTP/web/MCP shapes for fresh main-line state while removing
+   historical-user migration, adding the provider-neutral assertion, and adding
+   only the explicit non-listening local-identity preview. Do not enter storage/
+   model/MCP/UI/installer/LAN work owned by later steps.
+5. Require final-head local and remote evidence plus resolved fresh review, and
+   leave landing to a human.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

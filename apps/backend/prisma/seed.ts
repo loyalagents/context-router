@@ -90,17 +90,19 @@ async function main() {
 
   // Create sample users
   const user1 = await prisma.user.upsert({
-    where: { email: "john.doe@example.com" },
+    where: { userId: "2f37ad7a-18c1-4d7b-99a7-b02f39de867a" },
     update: {},
     create: {
+      userId: "2f37ad7a-18c1-4d7b-99a7-b02f39de867a",
       email: "john.doe@example.com",
     },
   });
 
   const user2 = await prisma.user.upsert({
-    where: { email: "jane.smith@example.com" },
+    where: { userId: "8a139263-7a47-4bf5-80ae-2f936e2d7acc" },
     update: {},
     create: {
+      userId: "8a139263-7a47-4bf5-80ae-2f936e2d7acc",
       email: "jane.smith@example.com",
     },
   });

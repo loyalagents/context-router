@@ -10,10 +10,7 @@ import {
   PDFTextField,
 } from 'pdf-lib';
 import request from 'supertest';
-import {
-  createTestApp,
-  createTestUser,
-} from '../setup/test-app';
+import { createTestApp, createTestUser } from '../setup/test-app';
 import {
   disconnectPrisma,
   resetDb,
@@ -58,7 +55,10 @@ async function main() {
       mockVertexAi: {
         generateText: async () => 'Eval runner mock text response',
         generateTextWithFile: async () =>
-          JSON.stringify({ suggestions: [], documentSummary: 'Eval runner mock' }),
+          JSON.stringify({
+            suggestions: [],
+            documentSummary: 'Eval runner mock',
+          }),
       },
       mockStructuredAi: {
         generateStructured: async () => ({ fillActions: input.fillActions }),
@@ -66,18 +66,6 @@ async function main() {
           suggestions: [],
           documentSummary: 'Eval runner mock',
         }),
-      },
-      mockAuth0: {
-        getUserInfo: async () => ({
-          data: {
-            user_id: `auth0|eval-${input.scenario.scenarioId}`,
-            email: `${input.scenario.scenarioId}@eval.example.test`,
-            name: 'Eval Runner',
-          },
-        }),
-        updateUserMetadata: async () => ({}),
-        getManagementClient: () => undefined,
-        getAuthClient: () => undefined,
       },
     });
 
@@ -182,7 +170,9 @@ async function readFilledPdfFields(base64: string) {
     } else if (field instanceof PDFOptionList) {
       fields[name] = { selected: field.getSelected() };
     } else if (field instanceof PDFRadioGroup) {
-      fields[name] = { selected: field.getSelected() ? [field.getSelected()] : [] };
+      fields[name] = {
+        selected: field.getSelected() ? [field.getSelected()] : [],
+      };
     } else {
       fields[name] = {};
     }

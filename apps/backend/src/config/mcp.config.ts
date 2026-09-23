@@ -11,7 +11,7 @@ export function createMcpConfiguration(
   environment: RuntimeEnvironment = process.env,
   defaultAllowedOrigins: string[] = resolveCorsOrigins(environment),
 ) {
-  const auth0Domain = environment.AUTH0_DOMAIN;
+  const auth0Issuer = environment.AUTH0_ISSUER;
   const auth0Audience = environment.AUTH0_AUDIENCE;
   const serverUrl = environment.MCP_SERVER_URL;
   const httpPath = environment.MCP_HTTP_PATH || '/mcp';
@@ -24,8 +24,8 @@ export function createMcpConfiguration(
       ? new URL(normalizedHttpPath, serverUrl).toString()
       : auth0Audience);
 
-  const authorizationEndpoint = auth0Domain
-    ? new URL(`https://${auth0Domain}/authorize`)
+  const authorizationEndpoint = auth0Issuer
+    ? new URL('authorize', auth0Issuer)
     : undefined;
   if (authorizationEndpoint && auth0Audience) {
     authorizationEndpoint.searchParams.set('audience', auth0Audience);
@@ -145,15 +145,14 @@ export function createMcpConfiguration(
       // This must be the actual URL where the server is accessible, not the Auth0 audience
       serverUrl,
 
-      // Auth0 endpoints (derived from AUTH0_DOMAIN)
+      // The canonical issuer owns all hosted OAuth/JWKS endpoints.
       auth0: {
-        domain: auth0Domain,
         authorizationEndpoint: authorizationEndpoint?.toString(),
-        tokenEndpoint: auth0Domain
-          ? `https://${auth0Domain}/oauth/token`
+        tokenEndpoint: auth0Issuer
+          ? new URL('oauth/token', auth0Issuer).toString()
           : undefined,
-        jwksUri: auth0Domain
-          ? `https://${auth0Domain}/.well-known/jwks.json`
+        jwksUri: auth0Issuer
+          ? new URL('.well-known/jwks.json', auth0Issuer).toString()
           : undefined,
       },
 
@@ -180,9 +179,12 @@ export function createMcpConfiguration(
   };
 }
 
-export function mcpConfigLoader(configuration: RuntimeConfiguration) {
+export function mcpConfigLoader(
+  configuration: RuntimeConfiguration,
+  environment: RuntimeEnvironment,
+) {
   return registerAs('mcp', () =>
-    createMcpConfiguration(process.env, configuration.corsOrigins),
+    createMcpConfiguration(environment, configuration.corsOrigins),
   );
 }
 

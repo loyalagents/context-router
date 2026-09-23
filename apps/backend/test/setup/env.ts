@@ -17,7 +17,12 @@ dotenv.config({ path: envPath });
 process.env.AUTH0_MCP_CLAUDE_CLIENT_ID ??= 'test-claude-client';
 process.env.AUTH0_MCP_CODEX_CLIENT_ID ??= 'test-codex-client';
 process.env.AUTH0_MCP_FALLBACK_CLIENT_ID ??= 'test-fallback-client';
-process.env.AUTH0_MCP_PUBLIC_CLIENT_ID ??= process.env.AUTH0_MCP_FALLBACK_CLIENT_ID;
+process.env.AUTH0_MCP_PUBLIC_CLIENT_ID ??=
+  process.env.AUTH0_MCP_FALLBACK_CLIENT_ID;
+
+// Deterministic hosted human-auth verifier for integration/e2e composition.
+process.env.AUTH0_ISSUER ??= 'https://test-tenant.auth0.invalid/';
+process.env.AUTH0_AUDIENCE ??= 'https://context-router.test';
 
 // Verify critical env vars are loaded
 if (process.env.NODE_ENV !== 'test') {

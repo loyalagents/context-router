@@ -65,6 +65,7 @@ import {
   dropIsolatedTestDatabase,
   prepareTestAdministration,
 } from "./test-database.mjs";
+import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
 import {
   assertCatalogState,
   createSignedTestToken,
@@ -79,6 +80,7 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const defaultRepositoryRoot = path.resolve(scriptDirectory, "../..");
 const execFileAsync = promisify(execFile);
 const backendEntrypointRelative = "dist/main.js";
+const localIdentityEntrypointRelative = "dist/local-identity.js";
 const expectedCatalogCount = 19;
 const packagingAudience = "urn:context-router:packaging-smoke";
 const aggregateGateWorkspaceMarkerRelativePath = path.join(
@@ -342,6 +344,29 @@ export async function assertNoSharedRegularFiles(
     });
     if (reference) await inspectReference(reference);
   }
+}
+
+export async function assertNoStageAncestorNodeModules(
+  stageBackend,
+  privateRoot,
+) {
+  const canonicalStageBackend = await realpath(stageBackend);
+  const canonicalPrivateRoot = await realpath(privateRoot);
+  let current = path.dirname(canonicalStageBackend);
+  let foundPrivateRoot = false;
+  while (true) {
+    const candidate = path.join(current, "node_modules");
+    const info = await lstat(candidate).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    assert.equal(info, null, `stage ancestor owns node_modules: ${current}`);
+    if (current === canonicalPrivateRoot) foundPrivateRoot = true;
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  assert.equal(foundPrivateRoot, true, "private root must be a stage ancestor");
 }
 
 async function sealPayloadDirectory(directory) {
@@ -1542,12 +1567,43 @@ async function collectNativeEvidence(
   webEntrypoint,
   stagedWebRoot,
 ) {
+  const sourceWebManifest = JSON.parse(
+    await readFile(path.join(sourceRoot, "apps/web/package.json"), "utf8"),
+  );
+  const stagedWebManifest = JSON.parse(
+    await readFile(path.join(stagedWebRoot, "apps/web/package.json"), "utf8"),
+  );
+  const sourceWebAuth0Dependency =
+    sourceWebManifest.dependencies?.["@auth0/nextjs-auth0"];
+  if (
+    typeof sourceWebAuth0Dependency !== "string" ||
+    stagedWebManifest.dependencies?.["@auth0/nextjs-auth0"] !==
+      sourceWebAuth0Dependency
+  ) {
+    throw new Error("staged web manifest did not retain its Auth0 dependency");
+  }
   const sourceRequire = createRequire(path.join(sourceRoot, "apps/web/package.json"));
   const backendRequire = createRequire(path.join(stageBackend, "package.json"));
   const webRequire = createRequire(webEntrypoint);
   const sourceNextRequire = createRequire(sourceRequire.resolve("next/package.json"));
   const closure = {};
   const stageBackendReal = await realpath(stageBackend);
+  const backendManifest = JSON.parse(
+    await readFile(path.join(stageBackend, "package.json"), "utf8"),
+  );
+  if (
+    backendManifest.dependencies?.auth0 !== undefined ||
+    backendManifest.optionalDependencies?.auth0 !== undefined ||
+    backendManifest.peerDependencies?.auth0 !== undefined
+  ) {
+    throw new Error("staged backend manifest retained the Auth0 server SDK");
+  }
+  try {
+    backendRequire.resolve("auth0");
+    throw new Error("staged backend unexpectedly resolved the Auth0 server SDK");
+  } catch (error) {
+    if (error?.code !== "MODULE_NOT_FOUND") throw error;
+  }
   for (const packageName of ["@google-cloud/vertexai", "@prisma/client", "pg"]) {
     const resolved = await realpath(backendRequire.resolve(packageName));
     if (!pathIsWithin(stageBackendReal, resolved)) {
@@ -1613,6 +1669,9 @@ async function collectNativeEvidence(
   }
   return {
     backendDependencyClosure: closure,
+    webManifestDependencies: {
+      "@auth0/nextjs-auth0": sourceWebAuth0Dependency,
+    },
     swc: loadedSwc,
     sharp,
   };
@@ -1687,6 +1746,10 @@ async function assembleAndSealStage({
     path.join(stageBackend, backendEntrypointRelative),
     "staged backend entrypoint",
   );
+  await assertRegularFile(
+    path.join(stageBackend, localIdentityEntrypointRelative),
+    "staged local identity entrypoint",
+  );
   await assertRegularFile(layout.serverEntrypoint, "staged web entrypoint");
   await assertRegularFile(
     path.join(stageBackend, "dist/config/preferences.catalog.json"),
@@ -1708,6 +1771,7 @@ async function assembleAndSealStage({
     if (
       manifest &&
       (manifest.name === "next" ||
+        manifest.name === "@auth0/nextjs-auth0" ||
         manifest.name === "sharp" ||
         manifest.name?.startsWith("@next/swc-") ||
         manifest.name?.startsWith("@img/"))
@@ -1754,6 +1818,7 @@ async function assembleAndSealStage({
     pnpm: EXPECTED_PNPM_VERSION,
     appRelativePath: layout.appRelativePath,
     backendEntrypoint: `backend/${backendEntrypointRelative}`,
+    localIdentityEntrypoint: `backend/${localIdentityEntrypointRelative}`,
     webEntrypoint: normalizedRelative(stageRoot, layout.serverEntrypoint),
     publicPresent: Boolean(publicInfo),
     buildTimePublicUrls: {
@@ -1771,7 +1836,17 @@ async function assembleAndSealStage({
       stageTreeSha256: sealed.stageTreeSha256,
     },
   );
-  return { stageRoot, stageBackend, layout, sealed, native };
+  return {
+    stageRoot,
+    stageBackend,
+    layout,
+    sealed,
+    native,
+    localIdentityEntrypoint: path.join(
+      stageBackend,
+      localIdentityEntrypointRelative,
+    ),
+  };
 }
 
 function expandedCanaries(canaries) {
@@ -3798,28 +3873,36 @@ async function runPackagingSmokeWithPrivateUmask({
       databaseUrl: database.databaseUrl,
       proxyOrigin: proxy.origin,
     });
-    await runCommand(
-      assertApprovedPackagingChildCommand(
-        "database-migrate",
-        [
-          "pnpm",
-          "--filter",
-          "backend",
-          "exec",
-          "prisma",
-          "migrate",
-          "deploy",
-        ],
-      ),
-      {
-        cwd: context.sourceRoot,
-        env: databaseToolEnvironment,
-        timeoutMs: 120_000,
-        logPath: path.join(diagnostics, "database-migrate.log"),
-        canaries: expandedCanaries(canaries),
-        signal,
-      },
-    );
+    const migrateDatabase = (databaseUrl, logName) =>
+      runCommand(
+        assertApprovedPackagingChildCommand(
+          "database-migrate",
+          [
+            "pnpm",
+            "--filter",
+            "backend",
+            "exec",
+            "prisma",
+            "migrate",
+            "deploy",
+          ],
+        ),
+        {
+          cwd: context.sourceRoot,
+          env: strictToolEnvironment(environment, {
+            home: toolHome,
+            corepackHome: context.corepackHome,
+            storeRoot: context.storeRoot,
+            databaseUrl,
+            proxyOrigin: proxy.origin,
+          }),
+          timeoutMs: 120_000,
+          logPath: path.join(diagnostics, logName),
+          canaries: expandedCanaries(canaries),
+          signal,
+        },
+      );
+    await migrateDatabase(database.databaseUrl, "database-migrate.log");
     const seedCatalog = (attempt) =>
       runCommand(
         assertApprovedPackagingChildCommand(
@@ -3977,6 +4060,29 @@ async function runPackagingSmokeWithPrivateUmask({
     const isolationFailures = generations.flatMap(
       (generation) => generation.isolationFailures,
     );
+    const localIdentity = await runLocalIdentitySmoke({
+      repositoryRoot: context.sourceRoot,
+      entrypoint: stage.localIdentityEntrypoint,
+      cwd: hostileCwd,
+      home: path.join(runtimeRoot, "local-identity-home"),
+      temporaryDirectory: path.join(runtimeRoot, "local-identity-tmp"),
+      stateParent: secretDirectory,
+      tlsParent: secretDirectory,
+      caPem: await readFile(tls.caCertificate, "utf8"),
+      serverKey: tls.key,
+      serverCertificate: tls.certificate,
+      diagnosticsDirectory: diagnostics,
+      journal,
+      canaries,
+      environment,
+      signal,
+      migrateDatabase: (localDatabaseUrl) =>
+        migrateDatabase(
+          localDatabaseUrl,
+          "local-identity-database-migrate.log",
+        ),
+      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+    });
     await verifySealedStage(stage.stageRoot, stage.sealed);
     await assertCallerIntegrity(sourceSnapshot, { signal });
     assert.equal(
@@ -4002,6 +4108,7 @@ async function runPackagingSmokeWithPrivateUmask({
       partialStart,
       startupSignals,
       orphanRegression,
+      localIdentity,
       seedRuns: 2,
       networkIsolationFailures: isolationFailures,
       generations: generations.map((generation) => ({

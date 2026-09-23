@@ -20,7 +20,7 @@ export class LocationService {
    * Note: Consider using upsert if you want to update existing locations with same type+label.
    */
   async create(userId: string, data: CreateLocationInput): Promise<Location> {
-    this.logger.log(`Creating location for user ${userId}: ${data.type}`);
+    this.logger.log('Creating an authenticated location');
     return this.locationRepository.create(userId, data);
   }
 
@@ -33,14 +33,12 @@ export class LocationService {
    * update the existing HOME location rather than creating duplicates.
    */
   async upsert(userId: string, data: CreateLocationInput): Promise<Location> {
-    this.logger.log(
-      `Upserting location for user ${userId}: ${data.type} - ${data.label}`,
-    );
+    this.logger.log('Upserting an authenticated location');
     return this.locationRepository.upsert(userId, data);
   }
 
   async findAll(userId: string): Promise<Location[]> {
-    this.logger.log(`Fetching all locations for user: ${userId}`);
+    this.logger.log('Fetching authenticated locations');
     return this.locationRepository.findAll(userId);
   }
 
@@ -63,7 +61,7 @@ export class LocationService {
     userId: string,
     type: LocationType,
   ): Promise<Location[]> {
-    this.logger.log(`Fetching ${type} locations for user: ${userId}`);
+    this.logger.log('Fetching authenticated locations by type');
     return this.locationRepository.findByUserIdAndType(userId, type);
   }
 
@@ -75,7 +73,7 @@ export class LocationService {
     // Verify ownership first
     await this.findOne(locationId, userId);
 
-    this.logger.log(`Updating location ${locationId} for user: ${userId}`);
+    this.logger.log('Updating an authenticated location');
     return this.locationRepository.update(locationId, data);
   }
 
@@ -83,7 +81,7 @@ export class LocationService {
     // Verify ownership first
     await this.findOne(locationId, userId);
 
-    this.logger.log(`Deleting location ${locationId} for user: ${userId}`);
+    this.logger.log('Deleting an authenticated location');
     return this.locationRepository.delete(locationId);
   }
 

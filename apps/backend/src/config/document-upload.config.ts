@@ -6,7 +6,7 @@ export interface DocumentUploadConfig {
   maxSuggestions: number;
 }
 
-const ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES = [
+export const ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES = [
   'text/plain',
   'text/markdown',
   'application/json',
@@ -18,23 +18,24 @@ const ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES = [
   'application/x-yaml',
 ];
 
-export default registerAs(
-  'documentUpload',
-  (): DocumentUploadConfig => ({
+export function createDocumentUploadConfiguration(
+  environment: NodeJS.ProcessEnv,
+): DocumentUploadConfig {
+  return {
     maxFileSizeBytes: parseInt(
-      process.env.DOC_UPLOAD_MAX_BYTES || '10485760', // 10MB default
+      environment.DOC_UPLOAD_MAX_BYTES || '10485760', // 10MB default
       10,
     ),
-    allowedMimeTypes: ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES,
-    maxSuggestions: parseInt(process.env.DOC_UPLOAD_MAX_SUGGESTIONS || '25', 10),
-  }),
-);
+    allowedMimeTypes: [...ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES],
+    maxSuggestions: parseInt(
+      environment.DOC_UPLOAD_MAX_SUGGESTIONS || '25',
+      10,
+    ),
+  };
+}
 
-export const getDocumentUploadConfig = (): DocumentUploadConfig => ({
-  maxFileSizeBytes: parseInt(
-    process.env.DOC_UPLOAD_MAX_BYTES || '10485760',
-    10,
-  ),
-  allowedMimeTypes: ALLOWED_DOCUMENT_UPLOAD_MIME_TYPES,
-  maxSuggestions: parseInt(process.env.DOC_UPLOAD_MAX_SUGGESTIONS || '25', 10),
-});
+export function documentUploadConfigLoader(environment: NodeJS.ProcessEnv) {
+  return registerAs('documentUpload', () =>
+    createDocumentUploadConfiguration(environment),
+  );
+}

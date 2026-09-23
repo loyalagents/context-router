@@ -7,8 +7,8 @@ import { ConfigService } from "@nestjs/config";
 import type { AddressInfo } from "node:net";
 import request from "supertest";
 import contract from "../contracts/fixtures/http-contracts.v1.json";
-import { getDocumentUploadConfig } from "../../src/config/document-upload.config";
-import { getFormFillConfig } from "../../src/config/form-fill.config";
+import { createDocumentUploadConfiguration } from "../../src/config/document-upload.config";
+import { createFormFillConfiguration } from "../../src/config/form-fill.config";
 import { createTestApp, createTestUser } from "../setup/test-app";
 import { DcrRateLimitGuard } from "../../src/mcp/auth/dcr-rate-limit.guard";
 import { DcrShimController } from "../../src/mcp/auth/dcr-shim.controller";
@@ -108,11 +108,11 @@ describe("Hosted HTTP public contract baseline (e2e)", () => {
   });
 
   it("pins upload limits, MIME sets, multipart errors, and field-policy parsing", async () => {
-    expect(getDocumentUploadConfig()).toMatchObject({
+    expect(createDocumentUploadConfiguration(process.env)).toMatchObject({
       maxFileSizeBytes: contract.routes.documentAnalysis.maxFileSizeBytes,
       allowedMimeTypes: contract.routes.documentAnalysis.allowedMimeTypes,
     });
-    expect(getFormFillConfig()).toMatchObject({
+    expect(createFormFillConfiguration(process.env)).toMatchObject({
       maxFileSizeBytes: contract.routes.formFill.maxFileSizeBytes,
       allowedMimeTypes: contract.routes.formFill.allowedMimeTypes,
     });

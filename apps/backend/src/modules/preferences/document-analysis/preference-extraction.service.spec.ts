@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
 import { PreferenceExtractionService } from "./preference-extraction.service";
 import { PreferenceService } from "../preference/preference.service";
@@ -100,9 +101,7 @@ describe("PreferenceExtractionService", () => {
         .mockImplementation((slug: string) =>
           Promise.resolve(mockDefinitions.has(slug)),
         ),
-      getAll: jest
-        .fn()
-        .mockResolvedValue(Array.from(mockDefinitions.values())),
+      getAll: jest.fn().mockResolvedValue(Array.from(mockDefinitions.values())),
       getSlugsByCategory: jest.fn(),
       getAllCategories: jest.fn(),
       findSimilarSlugs: jest.fn(),
@@ -146,6 +145,15 @@ describe("PreferenceExtractionService", () => {
         {
           provide: PreferenceSchemaSnapshotService,
           useValue: mockSnapshotService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            getOrThrow: jest.fn((key: string) => {
+              if (key === "documentUpload.maxSuggestions") return 25;
+              throw new Error("unexpected configuration key");
+            }),
+          },
         },
       ],
     }).compile();
@@ -300,9 +308,9 @@ describe("PreferenceExtractionService", () => {
             }),
           ]),
         );
-        expect(mockAiStructuredService.generateStructured).toHaveBeenCalledTimes(
-          1,
-        );
+        expect(
+          mockAiStructuredService.generateStructured,
+        ).toHaveBeenCalledTimes(1);
       });
 
       it("should preserve a later duplicate when the first would become no-change", async () => {
@@ -514,7 +522,9 @@ describe("PreferenceExtractionService", () => {
             }),
           ]),
         );
-        expect(mockAiStructuredService.generateStructured).not.toHaveBeenCalled();
+        expect(
+          mockAiStructuredService.generateStructured,
+        ).not.toHaveBeenCalled();
       });
     });
 
@@ -1084,11 +1094,7 @@ describe("PreferenceExtractionService", () => {
         );
       });
 
-      it.each([
-        "application/yaml",
-        "text/yaml",
-        "application/x-yaml",
-      ])(
+      it.each(["application/yaml", "text/yaml", "application/x-yaml"])(
         "should normalize YAML MIME %s to text/plain before AI file extraction",
         async (mimeType) => {
           mockPreferenceService.getActivePreferences.mockResolvedValue([]);

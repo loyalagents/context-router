@@ -7,9 +7,14 @@
   `apps/backend/test/e2e/mcp.e2e-spec.ts`,
   `apps/backend/test/e2e/permission-grants.e2e-spec.ts`, and
   `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 ## Components
+
+This document describes the hosted MCP transport. The Step 03
+`local-identity-preview` excludes `McpModule`, OAuth/DCR, and every HTTP/MCP
+listener. Its private human bearer is a separate credential and never
+authenticates an MCP client; Step 07 owns local MCP identity and transport.
 
 - `McpController` handles HTTP JSON-RPC requests.
 - `McpAuthGuard` validates Auth0 JWTs and emits OAuth challenges and metadata.

@@ -17,6 +17,8 @@ import {
   SourceType,
 } from '../../src/infrastructure/prisma/generated-client';
 
+const TEST_AUTH0_ISSUER = 'https://test-tenant.auth0.invalid/';
+
 describe('Demo Memory Reset GraphQL API (e2e)', () => {
   let app: INestApplication;
   let disabledApp: INestApplication;
@@ -85,17 +87,18 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
   }
 
   async function seedResetData(user: TestUser, slugSuffix: string) {
-    const [foodDefinition, toneDefinition, profileDefinition] = await Promise.all([
-      prisma.preferenceDefinition.findFirstOrThrow({
-        where: { namespace: 'GLOBAL', slug: 'food.dietary_restrictions' },
-      }),
-      prisma.preferenceDefinition.findFirstOrThrow({
-        where: { namespace: 'GLOBAL', slug: 'system.response_tone' },
-      }),
-      prisma.preferenceDefinition.findFirstOrThrow({
-        where: { namespace: 'GLOBAL', slug: 'profile.full_name' },
-      }),
-    ]);
+    const [foodDefinition, toneDefinition, profileDefinition] =
+      await Promise.all([
+        prisma.preferenceDefinition.findFirstOrThrow({
+          where: { namespace: 'GLOBAL', slug: 'food.dietary_restrictions' },
+        }),
+        prisma.preferenceDefinition.findFirstOrThrow({
+          where: { namespace: 'GLOBAL', slug: 'system.response_tone' },
+        }),
+        prisma.preferenceDefinition.findFirstOrThrow({
+          where: { namespace: 'GLOBAL', slug: 'profile.full_name' },
+        }),
+      ]);
 
     const location = await prisma.location.create({
       data: {
@@ -430,12 +433,15 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
     '%s preserves the current user and external identity rows',
     async (mode) => {
       await seedResetData(testUser, `identity_${mode.toLowerCase()}`);
-      await prisma.externalIdentity.create({
+      const subject = `auth0|${mode.toLowerCase()}-reset-user`;
+      const metadata = { source: 'reset-test' };
+      const identity = await prisma.externalIdentity.create({
         data: {
           userId: testUser.userId,
           provider: 'auth0',
-          providerUserId: `auth0|${mode.toLowerCase()}-reset-user`,
-          metadata: { source: 'reset-test' },
+          issuer: TEST_AUTH0_ISSUER,
+          providerUserId: subject,
+          metadata,
         },
       });
 
@@ -448,6 +454,15 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
         users: 1,
         externalIdentities: 1,
       });
+      await expect(
+        prisma.externalIdentity.findUniqueOrThrow({
+          where: { id: identity.id },
+        }),
+      ).resolves.toMatchObject({
+        issuer: TEST_AUTH0_ISSUER,
+        providerUserId: subject,
+        metadata,
+      });
     },
   );
 
@@ -457,6 +472,7 @@ describe('Demo Memory Reset GraphQL API (e2e)', () => {
       data: {
         userId: testUser.userId,
         provider: 'auth0',
+        issuer: TEST_AUTH0_ISSUER,
         providerUserId: 'auth0|memory-only-reset-user',
         metadata: { source: 'reset-test' },
       },

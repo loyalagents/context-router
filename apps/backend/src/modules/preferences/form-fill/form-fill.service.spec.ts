@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { FormFillService } from './form-fill.service';
 
 describe('FormFillService', () => {
@@ -10,6 +11,8 @@ describe('FormFillService', () => {
   let pdfFiller: { fillPdf: jest.Mock };
 
   beforeEach(() => {
+    jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
     aiStructuredService = {
       generateStructured: jest.fn(),
     };
@@ -36,7 +39,17 @@ describe('FormFillService', () => {
       promptBuilder as any,
       validator as any,
       pdfFiller as any,
+      {
+        getOrThrow: jest.fn((key: string) => {
+          if (key === 'formFill.confidenceThreshold') return 0.75;
+          throw new Error('unexpected configuration key');
+        }),
+      } as any,
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('returns success with a non-null filled PDF artifact', async () => {
@@ -370,7 +383,9 @@ describe('FormFillService', () => {
     });
     preferenceService.getActivePreferences.mockResolvedValue([]);
     promptBuilder.buildPrompt.mockReturnValue('prompt');
-    aiStructuredService.generateStructured.mockResolvedValue({ fillActions: [] });
+    aiStructuredService.generateStructured.mockResolvedValue({
+      fillActions: [],
+    });
     validator.validate.mockReturnValue({
       validActions: [],
       filledFields: [],
@@ -541,10 +556,17 @@ describe('FormFillService', () => {
         skippedCount: 0,
         warnings: [
           'Form fill failed. Please try again.',
-          'Form fill failed during field_extraction: bad pdf',
+          'Form fill failed during field_extraction',
         ],
       },
     });
+    const logs = JSON.stringify([
+      ...(Logger.prototype.log as jest.Mock).mock.calls,
+      ...(Logger.prototype.error as jest.Mock).mock.calls,
+    ]);
+    for (const canary of ['user-1', 'bad.pdf', 'bad pdf']) {
+      expect(logs).not.toContain(canary);
+    }
   });
 
   it('returns failed with pdf_fill detail when PDF writing fails', async () => {
@@ -602,7 +624,9 @@ describe('FormFillService', () => {
       validationEvents: [],
     });
     pdfFiller.fillPdf.mockRejectedValue(
-      new Error('Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6'),
+      new Error(
+        'Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6',
+      ),
     );
 
     const result = await service.fillPdfForm(
@@ -615,7 +639,7 @@ describe('FormFillService', () => {
     expect(result.filledPdfBase64).toBeNull();
     expect(result.summary.warnings).toEqual([
       'Form fill failed. Please try again.',
-      'Form fill failed during pdf_fill: Failed to apply SET_TEXT to PDF field "ZIP Code": text length 42 exceeds PDF field maxLength 6',
+      'Form fill failed during pdf_fill',
     ]);
   });
 });

@@ -1222,28 +1222,251 @@ function assertPackagedSmokeSuccessResources(state) {
   }
 }
 
-export async function assertPackagedSmokeLifecycleEvidence(
+const LOCAL_IDENTITY_SMOKE_SUCCESS_RESOURCES = Object.freeze([
+  [
+    "local-identity-postgres",
+    "local-identity-tls-postgres-container",
+    "removed",
+  ],
+  [
+    "local-identity-state",
+    "local-identity-private-state",
+    "removed",
+  ],
+  [
+    "local-identity-admin-1",
+    "local-identity-admin-process",
+    "exited",
+  ],
+  [
+    "local-identity-admin-2",
+    "local-identity-admin-process",
+    "exited",
+  ],
+  [
+    "local-identity-admin-3",
+    "local-identity-admin-process",
+    "exited",
+  ],
+  [
+    "local-identity-admin-4",
+    "local-identity-admin-process",
+    "exited",
+  ],
+  [
+    "local-identity-preview-1",
+    "local-identity-preview-process",
+    "exited",
+  ],
+  [
+    "local-identity-preview-2",
+    "local-identity-preview-process",
+    "exited",
+  ],
+]);
+
+function assertLocalIdentitySmokeSuccessResources(state, smokeLabel) {
+  const hasExactKeys = (value, keys) =>
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    JSON.stringify(Object.keys(value).sort()) ===
+      JSON.stringify([...keys].sort());
+  const expectedLocalResources = new Map(
+    LOCAL_IDENTITY_SMOKE_SUCCESS_RESOURCES.map(([id, type]) => [id, type]),
+  );
+  const localResourceTypes = new Set(expectedLocalResources.values());
+  const observedLocalResources = state.resources.filter(
+    (resource) =>
+      resource.id?.startsWith("local-identity-") ||
+      localResourceTypes.has(resource.type),
+  );
+  if (
+    observedLocalResources.length !== expectedLocalResources.size ||
+    observedLocalResources.some(
+      (resource) => expectedLocalResources.get(resource.id) !== resource.type,
+    )
+  ) {
+    throw new Error(
+      `${smokeLabel} successful lifecycle must contain exactly the approved local-identity resource set`,
+    );
+  }
+  const selected = new Map();
+  for (const [id, type, cleanupStatus] of
+    LOCAL_IDENTITY_SMOKE_SUCCESS_RESOURCES) {
+    const matches = state.resources.filter(
+      (resource) => resource.id === id && resource.type === type,
+    );
+    if (matches.length !== 1) {
+      throw new Error(
+        `${smokeLabel} successful lifecycle must contain exactly one ${id} (${type}) resource`,
+      );
+    }
+    const resource = matches[0];
+    if (resource.owned !== true || resource.cleanup?.status !== cleanupStatus) {
+      throw new Error(
+        `${smokeLabel} ${id} must be owned and finish with cleanup ${cleanupStatus}`,
+      );
+    }
+    selected.set(id, resource);
+  }
+  const postgres = selected.get("local-identity-postgres");
+  if (
+    postgres.identity?.fixture !== "fresh-native-tls-database" ||
+    postgres.identity?.tls !== true ||
+    postgres.identity?.loopback !== true ||
+    postgres.identity?.tlsOnly !== true ||
+    postgres.identity?.plaintextRejected !== true
+  ) {
+    throw new Error(
+      `${smokeLabel} local-identity-postgres is missing native loopback TLS evidence`,
+    );
+  }
+  const postgresRecovery = postgres.recovery;
+  let dockerHostIsOwnedUnixSocket = false;
+  try {
+    const dockerHost = new URL(postgresRecovery?.environment?.DOCKER_HOST);
+    dockerHostIsOwnedUnixSocket =
+      dockerHost.protocol === "unix:" &&
+      path.isAbsolute(decodeURIComponent(dockerHost.pathname));
+  } catch {
+    dockerHostIsOwnedUnixSocket = false;
+  }
+  if (
+    !hasExactKeys(postgresRecovery, [
+      "environment",
+      "inspectCommand",
+      "instruction",
+      "requiredLabel",
+    ]) ||
+    !hasExactKeys(postgresRecovery.environment, ["DOCKER_HOST"]) ||
+    !dockerHostIsOwnedUnixSocket ||
+    !Array.isArray(postgresRecovery.inspectCommand) ||
+    postgresRecovery.inspectCommand.length !== 4 ||
+    postgresRecovery.inspectCommand[0] !== "docker" ||
+    postgresRecovery.inspectCommand[1] !== "container" ||
+    postgresRecovery.inspectCommand[2] !== "inspect" ||
+    !/^lmid-pg-[a-f0-9]{24}$/u.test(
+      postgresRecovery.inspectCommand[3] ?? "",
+    ) ||
+    !/^context-router\.local-identity-smoke-owner=[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(
+      postgresRecovery.requiredLabel ?? "",
+    ) ||
+    postgresRecovery.instruction !==
+      "Verify the ownership label and remove only the inspected immutable container ID."
+  ) {
+    throw new Error(
+      `${smokeLabel} local-identity-postgres has incomplete scoped recovery evidence`,
+    );
+  }
+  const stateResource = selected.get("local-identity-state");
+  if (
+    stateResource.identity?.initialized !== true ||
+    stateResource.identity?.generation !== 2 ||
+    stateResource.identity?.principalStable !== true ||
+    stateResource.identity?.credentialRotated !== true ||
+    stateResource.identity?.recoveryStable !== true ||
+    stateResource.identity?.providerBindings !== 2
+  ) {
+    throw new Error(
+      `${smokeLabel} local-identity-state is missing stable recovery, rotation, or provider-binding evidence`,
+    );
+  }
+  const stateRecovery = stateResource.recovery;
+  if (
+    !hasExactKeys(stateRecovery, ["instruction", "stateRoot"]) ||
+    !path.isAbsolute(stateRecovery.stateRoot ?? "") ||
+    path.resolve(stateRecovery.stateRoot) !== stateRecovery.stateRoot ||
+    path.basename(stateRecovery.stateRoot) !== "local-identity-state" ||
+    stateRecovery.instruction !==
+      "Remove only this exact private state root after every recorded child process group exits."
+  ) {
+    throw new Error(
+      `${smokeLabel} local-identity-state has incomplete exact-root recovery evidence`,
+    );
+  }
+  const assertProcessRecovery = (resource, id) => {
+    const recovery = resource.recovery;
+    if (
+      !hasExactKeys(recovery, ["instruction", "processGroupId"]) ||
+      recovery.processGroupId !== resource.identity?.pid ||
+      recovery.instruction !==
+        "Verify the recorded child PID, then terminate and reap only the process group with that exact numeric ID."
+    ) {
+      throw new Error(
+        `${smokeLabel} ${id} has incomplete PID-bound process-group recovery evidence`,
+      );
+    }
+  };
+  for (const [number, expected] of [
+    [1, { operation: "initialize", generation: 1 }],
+    [2, { operation: "recover-initialize", generation: 1 }],
+    [3, { operation: "rotate", generation: 2 }],
+    [4, { operation: "recover-rotation", generation: 2 }],
+  ]) {
+    const admin = selected.get(`local-identity-admin-${number}`);
+    const identity = admin.identity ?? {};
+    if (
+      identity.operation !== expected.operation ||
+      identity.generation !== expected.generation ||
+      !Number.isSafeInteger(identity.pid) ||
+      identity.pid < 1 ||
+      identity.exitCode !== 0 ||
+      identity.childSignal !== null
+    ) {
+      throw new Error(
+        `${smokeLabel} local-identity-admin-${number} has incomplete operation, generation, or exit evidence`,
+      );
+    }
+    assertProcessRecovery(admin, `local-identity-admin-${number}`);
+  }
+  for (const [number, expected] of [
+    [1, { generation: 1, requestedSignal: "SIGTERM", exitCode: 143 }],
+    [2, { generation: 2, requestedSignal: "SIGINT", exitCode: 130 }],
+  ]) {
+    const preview = selected.get(`local-identity-preview-${number}`);
+    const identity = preview.identity ?? {};
+    if (
+      identity.generation !== expected.generation ||
+      identity.requestedSignal !== expected.requestedSignal ||
+      identity.expectedExitCode !== expected.exitCode ||
+      identity.exitCode !== expected.exitCode ||
+      identity.childSignal !== null ||
+      !Number.isSafeInteger(identity.pid) ||
+      identity.pid < 1 ||
+      identity.readinessVersion !== 1 ||
+      identity.listenerCount !== 0
+    ) {
+      throw new Error(
+        `${smokeLabel} local-identity-preview-${number} has incomplete readiness, listener, or signal-exit evidence`,
+      );
+    }
+    assertProcessRecovery(preview, `local-identity-preview-${number}`);
+  }
+}
+
+async function readSmokeLifecycleEvidence(
   diagnosticsDirectory,
-  { commandSucceeded = false } = {},
+  smokeLabel,
 ) {
   if (!path.isAbsolute(diagnosticsDirectory)) {
-    throw new Error("packaged smoke diagnostics path must be absolute");
+    throw new Error(`${smokeLabel} diagnostics path must be absolute`);
   }
   const requestedDiagnostics = path.resolve(diagnosticsDirectory);
   const requestedInfo = await lstat(requestedDiagnostics);
   if (!requestedInfo.isDirectory() || requestedInfo.isSymbolicLink()) {
-    throw new Error("packaged smoke diagnostics path is not a real directory");
+    throw new Error(`${smokeLabel} diagnostics path is not a real directory`);
   }
   const canonicalDiagnostics = await realpath(requestedDiagnostics);
   const diagnosticsInfo = await lstat(canonicalDiagnostics);
   if (!diagnosticsInfo.isDirectory() || diagnosticsInfo.isSymbolicLink()) {
-    throw new Error("packaged smoke diagnostics path is not a real directory");
+    throw new Error(`${smokeLabel} diagnostics path is not a real directory`);
   }
   if (
     requestedInfo.dev !== diagnosticsInfo.dev ||
     requestedInfo.ino !== diagnosticsInfo.ino
   ) {
-    throw new Error("packaged smoke diagnostics path changed identity");
+    throw new Error(`${smokeLabel} diagnostics path changed identity`);
   }
   const journalPath = path.join(
     canonicalDiagnostics,
@@ -1251,16 +1474,16 @@ export async function assertPackagedSmokeLifecycleEvidence(
   );
   const journalInfo = await lstat(journalPath);
   if (!journalInfo.isFile() || journalInfo.isSymbolicLink()) {
-    throw new Error("packaged smoke lifecycle journal is not a regular file");
+    throw new Error(`${smokeLabel} lifecycle journal is not a regular file`);
   }
   if (process.platform !== "win32" && (journalInfo.mode & 0o777) !== 0o600) {
-    throw new Error("packaged smoke lifecycle journal must use mode 0600");
+    throw new Error(`${smokeLabel} lifecycle journal must use mode 0600`);
   }
   let state;
   try {
     state = JSON.parse(await readFile(journalPath, "utf8"));
   } catch (error) {
-    throw new Error("packaged smoke lifecycle journal is not valid JSON", {
+    throw new Error(`${smokeLabel} lifecycle journal is not valid JSON`, {
       cause: error,
     });
   }
@@ -1269,23 +1492,59 @@ export async function assertPackagedSmokeLifecycleEvidence(
   } catch (error) {
     const recovery = incompleteLifecycleRecovery(state);
     throw new Error(
-      `packaged smoke lifecycle evidence is incomplete: ${error.message}; ` +
+      `${smokeLabel} lifecycle evidence is incomplete: ${error.message}; ` +
         `status=${state?.status ?? "missing"}; resources=${JSON.stringify(recovery)}`,
       { cause: error },
     );
   }
-  if (commandSucceeded && state.status !== "passed") {
-    throw new Error(
-      `packaged smoke exited successfully but lifecycle status was ${state.status}`,
-    );
-  }
-  if (commandSucceeded) assertPackagedSmokeSuccessResources(state);
   return state;
 }
 
-export async function executePackagedSmokeCommand({
+export async function assertRestartSmokeLifecycleEvidence(
+  diagnosticsDirectory,
+  { commandSucceeded = false } = {},
+) {
+  const smokeLabel = "restart smoke";
+  const state = await readSmokeLifecycleEvidence(
+    diagnosticsDirectory,
+    smokeLabel,
+  );
+  if (commandSucceeded && state.status !== "passed") {
+    throw new Error(
+      `${smokeLabel} exited successfully but lifecycle status was ${state.status}`,
+    );
+  }
+  if (commandSucceeded) {
+    assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+  }
+  return state;
+}
+
+export async function assertPackagedSmokeLifecycleEvidence(
+  diagnosticsDirectory,
+  { commandSucceeded = false } = {},
+) {
+  const smokeLabel = "packaged smoke";
+  const state = await readSmokeLifecycleEvidence(
+    diagnosticsDirectory,
+    smokeLabel,
+  );
+  if (commandSucceeded && state.status !== "passed") {
+    throw new Error(
+      `${smokeLabel} exited successfully but lifecycle status was ${state.status}`,
+    );
+  }
+  if (commandSucceeded) {
+    assertPackagedSmokeSuccessResources(state);
+    assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+  }
+  return state;
+}
+
+export async function executeSmokeCommand({
   executeCommand,
   validateLifecycle,
+  label = "smoke",
 }) {
   let result;
   let commandError;
@@ -1303,17 +1562,32 @@ export async function executePackagedSmokeCommand({
   const combined = combineFailures(
     commandError,
     [lifecycleError],
-    "packaged smoke command and lifecycle evidence",
+    `${label} command and lifecycle evidence`,
   );
   if (combined) throw combined;
   return result;
 }
 
+export async function executePackagedSmokeCommand(options) {
+  return executeSmokeCommand({ ...options, label: "packaged smoke" });
+}
+
 export async function executeGatePhaseCommand({
   phase,
   executeCommand,
+  validateRestartLifecycle,
   validatePackagedLifecycle,
 }) {
+  if (phase.kind === "restart-smoke") {
+    if (typeof validateRestartLifecycle !== "function") {
+      throw new Error("restart smoke phase requires lifecycle validation");
+    }
+    return executeSmokeCommand({
+      executeCommand,
+      validateLifecycle: validateRestartLifecycle,
+      label: "restart smoke",
+    });
+  }
   if (phase.kind !== "packaged-smoke") return executeCommand();
   if (typeof validatePackagedLifecycle !== "function") {
     throw new Error("packaged smoke phase requires lifecycle validation");
@@ -1523,6 +1797,11 @@ async function executeFullGate({
         const commandResult = await executeGatePhaseCommand({
           phase,
           executeCommand,
+          validateRestartLifecycle: ({ commandSucceeded }) =>
+            assertRestartSmokeLifecycleEvidence(
+              phaseEnvironment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
+              { commandSucceeded },
+            ),
           validatePackagedLifecycle: ({ commandSucceeded }) =>
             assertPackagedSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR,
@@ -1711,13 +1990,22 @@ async function executeSmokeOnly({
     diagnosticsDirectory,
     "restart-smoke",
   );
-  await runCommand([process.execPath, "scripts/local-migration/restart-smoke.mjs"], {
-    cwd: workspace,
-    env: environment,
-    timeoutMs: 600_000,
-    logPath: path.join(diagnosticsDirectory, "restart-smoke-command.log"),
-    signal,
-    terminationGraceMs: RESTART_SMOKE_TERMINATION_GRACE_MS,
+  await executeSmokeCommand({
+    label: "restart smoke",
+    executeCommand: () =>
+      runCommand([process.execPath, "scripts/local-migration/restart-smoke.mjs"], {
+        cwd: workspace,
+        env: environment,
+        timeoutMs: 600_000,
+        logPath: path.join(diagnosticsDirectory, "restart-smoke-command.log"),
+        signal,
+        terminationGraceMs: RESTART_SMOKE_TERMINATION_GRACE_MS,
+      }),
+    validateLifecycle: ({ commandSucceeded }) =>
+      assertRestartSmokeLifecycleEvidence(
+        environment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
+        { commandSucceeded },
+      ),
   });
   return { status: "passed", mode: "smoke-only" };
 }

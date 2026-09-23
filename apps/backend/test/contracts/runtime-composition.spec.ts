@@ -35,11 +35,15 @@ describe("runtime composition contract", () => {
 
   it("loads configuration before dynamic application construction without cwd env search", () => {
     const appModule = read("apps/backend/src/app.module.ts");
+    const graphqlModule = read(
+      "apps/backend/src/composition/graphql-api.module.ts",
+    );
     const bootstrap = read("apps/backend/src/bootstrap/hosted-bootstrap.ts");
 
     expect(appModule).toContain("ignoreEnvFile: true");
-    expect(appModule).toContain("GraphQLModule.forRootAsync");
-    expect(appModule).toContain("ConfigService");
+    expect(appModule).toContain("createGraphqlApiModule");
+    expect(graphqlModule).toContain("GraphQLModule.forRootAsync");
+    expect(graphqlModule).toContain("ConfigService");
     expect(appModule).not.toMatch(/process\.env|envFilePath/);
     expect(bootstrap).toContain("loadRuntimeConfiguration");
     expect(bootstrap).toContain("abortOnError: false");
@@ -93,6 +97,9 @@ describe("runtime composition contract", () => {
 
   it("owns the runtime schema in memory without caller-cwd filesystem access", () => {
     const appModule = read("apps/backend/src/app.module.ts");
+    const graphqlModule = read(
+      "apps/backend/src/composition/graphql-api.module.ts",
+    );
     const schemaResource = read(
       "apps/backend/src/mcp/resources/schema.resource.ts",
     );
@@ -103,7 +110,8 @@ describe("runtime composition contract", () => {
       "apps/backend/test/contracts/mcp-contract-collector.ts",
     );
 
-    expect(appModule).toMatch(/autoSchemaFile:\s*true/);
+    expect(appModule).toContain("createGraphqlApiModule");
+    expect(graphqlModule).toMatch(/autoSchemaFile:\s*true/);
     expect(appModule).not.toMatch(/process\.cwd|schema\.gql/);
     expect(schemaResource).not.toMatch(
       /process\.cwd|schema\.gql|readFile|from ["']fs|from ["']path/,

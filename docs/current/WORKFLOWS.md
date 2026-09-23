@@ -7,7 +7,7 @@
   `apps/backend/src/mcp/tools/smart-search.tool.ts`,
   `apps/backend/test/e2e/workflows.e2e-spec.ts`, and
   `apps/backend/test/e2e/smart-search-graphql.e2e-spec.ts`
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 ## What Exists
 
@@ -25,6 +25,11 @@ Supporting pieces:
 - `PreferenceSchemaSnapshotService` for prompt-ready schema snapshots
 - `WorkflowStepRecorder` for per-step timing and summaries
 - `WorkflowsModule` for wiring workflows into the backend
+
+These usable AI surfaces belong to the hosted composition. The Step 03 local
+identity preview binds both AI ports to a fixed unavailable adapter that makes
+no model call, and it has no listener. That preview proves composition only;
+Step 06 owns a usable local model runtime.
 
 ## Execution Pattern
 
@@ -94,4 +99,6 @@ Use the existing workflows as the template:
 
 - Workflow outputs still use some repository-flavored shapes, especially for matched preference rows.
 - The current prompt-building path depends on the schema snapshot service rather than a more generic request-object abstraction.
-- The only structured AI implementation today is Vertex AI.
+- Vertex AI is the only usable hosted structured-AI provider today. The local
+  identity preview deliberately binds both AI ports to a fixed unavailable
+  adapter and performs no model I/O.

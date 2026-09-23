@@ -26,9 +26,7 @@ export class DocumentAnalysisResolver {
     input: ApplyPreferenceSuggestionInput[],
     @CurrentUser() user: { userId: string },
   ): Promise<Preference[]> {
-    this.logger.log(
-      `Applying ${input.length} suggestions from analysis ${analysisId} for user ${user.userId}`,
-    );
+    this.logger.log(`Applying ${input.length} authenticated suggestions`);
 
     const results: Preference[] = [];
 
@@ -56,24 +54,17 @@ export class DocumentAnalysisResolver {
               },
             );
             preference = result as unknown as Preference;
-            this.logger.log(
-              `${suggestion.operation === PreferenceOperation.CREATE ? 'Created' : 'Updated'} preference ${suggestion.slug}`,
-            );
+            this.logger.log('Applied one authenticated preference suggestion');
             break;
 
           default:
-            this.logger.warn(
-              `Unknown operation ${suggestion.operation} for suggestion ${suggestion.suggestionId}`,
-            );
+            this.logger.warn('Rejected an unknown suggestion operation');
             continue;
         }
 
         results.push(preference);
-      } catch (error) {
-        this.logger.error(
-          `Failed to apply suggestion ${suggestion.suggestionId}: ${error.message}`,
-          error.stack,
-        );
+      } catch {
+        this.logger.error('Failed to apply one preference suggestion');
         // Continue with other suggestions even if one fails
       }
     }

@@ -224,7 +224,7 @@ export class PreferenceDefinitionRepository {
       },
     });
 
-    this.logger.log(`Created definition: ${namespace}/${data.slug}`);
+    this.logger.log('Created a preference definition row');
     return created;
   }
 
@@ -276,7 +276,7 @@ export class PreferenceDefinitionRepository {
       where: { id },
       data: { archivedAt: new Date() },
     });
-    this.logger.log(`Archived definition: ${id}`);
+    this.logger.log('Archived a preference definition row');
     return archived;
   }
 }

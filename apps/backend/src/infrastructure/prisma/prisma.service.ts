@@ -1,12 +1,24 @@
 import {
+  Inject,
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
   Logger,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { PrismaClient } from "./generated-client";
-import { buildPrismaClientOptions } from "./prisma-client-options";
+import { Prisma, PrismaClient } from "./generated-client";
+
+type DirectPrismaClientOptions = Extract<
+  Prisma.PrismaClientOptions,
+  { adapter: unknown }
+>;
+
+export const PRISMA_SERVICE_CONFIGURATION =
+  "context-router.prisma-service-configuration";
+
+export interface PrismaServiceConfiguration {
+  clientOptions: DirectPrismaClientOptions;
+  nodeEnvironment: string;
+}
 
 @Injectable()
 export class PrismaService
@@ -16,24 +28,21 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
   private readonly nodeEnvironment: string;
 
-  constructor(configService: ConfigService) {
-    super(
-      buildPrismaClientOptions({
-        databaseUrl: configService.getOrThrow<string>("DATABASE_URL"),
-        log: ["query", "info", "warn", "error"],
-      }),
-    );
-    this.nodeEnvironment =
-      configService.get<string>("app.nodeEnv") ?? "development";
+  constructor(
+    @Inject(PRISMA_SERVICE_CONFIGURATION)
+    configuration: PrismaServiceConfiguration,
+  ) {
+    super(configuration.clientOptions);
+    this.nodeEnvironment = configuration.nodeEnvironment;
   }
 
   async onModuleInit() {
     try {
       await this.$connect();
       this.logger.log("Database connection established");
-    } catch (error) {
-      this.logger.error("Failed to connect to database", error);
-      throw error;
+    } catch {
+      this.logger.error("Failed to connect to database");
+      throw new Error("Database connection failed");
     }
   }
 

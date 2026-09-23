@@ -3,31 +3,12 @@
 echo "Testing GraphQL API..."
 echo ""
 
-# Get auth token first
-source apps/backend/.env
-
-echo "Getting auth token..."
-RESPONSE=$(curl -s --request POST \
-  --url "https://${AUTH0_DOMAIN}/oauth/token" \
-  --header 'content-type: application/json' \
-  --data "{
-    \"client_id\":\"${AUTH0_CLIENT_ID}\",
-    \"client_secret\":\"${AUTH0_CLIENT_SECRET}\",
-    \"audience\":\"${AUTH0_AUDIENCE}\",
-    \"grant_type\":\"client_credentials\"
-  }")
-
-TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
-
-if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
-  echo "Failed to get token!"
-  echo "Response:"
-  echo "$RESPONSE" | jq '.'
+TOKEN="${1:-${CONTEXT_ROUTER_BEARER_TOKEN:-}}"
+if [ -z "$TOKEN" ]; then
+  echo "Error: provide a bearer token as the first argument or CONTEXT_ROUTER_BEARER_TOKEN."
+  echo "Usage: ./test-graphql.sh <BEARER_TOKEN>"
   exit 1
 fi
-
-echo "✓ Token retrieved successfully!"
-echo ""
 
 echo "1. Testing health endpoint:"
 echo "$ curl -s http://localhost:3000/health"

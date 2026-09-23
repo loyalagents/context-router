@@ -89,7 +89,10 @@ export class PreferenceService {
    */
   private validateValueForDefinition(
     slug: string,
-    definition: { valueType: PrismaPreferenceDefinition["valueType"]; options?: unknown },
+    definition: {
+      valueType: PrismaPreferenceDefinition["valueType"];
+      options?: unknown;
+    },
     value: any,
   ): void {
     const validation = validateValue(definition, value);
@@ -127,9 +130,7 @@ export class PreferenceService {
     return canonicalizePreferenceValue(definition, value, {
       slug,
       onEvent: (event) => {
-        this.logger.debug(
-          `Canonicalized preference value for ${event.slug}: ${event.kind}`,
-        );
+        this.logger.debug(`Canonicalized a preference value: ${event.kind}`);
       },
     });
   }
@@ -155,7 +156,10 @@ export class PreferenceService {
     input: SetPreferenceInput,
     context: MutationContext,
   ): Promise<EnrichedPreference> {
-    const definition = await this.resolveAndValidateDefinition(input.slug, userId);
+    const definition = await this.resolveAndValidateDefinition(
+      input.slug,
+      userId,
+    );
     const normalizedValue = this.canonicalizeValue(
       input.slug,
       definition,
@@ -169,9 +173,7 @@ export class PreferenceService {
       await this.locationService.findOne(input.locationId, userId);
     }
 
-    this.logger.log(
-      `Setting ACTIVE preference for user ${userId}: ${input.slug}`,
-    );
+    this.logger.log("Setting an authenticated active preference");
 
     const write = await this.prisma.$transaction((tx) =>
       this.preferenceRepository
@@ -225,7 +227,10 @@ export class PreferenceService {
     input: SuggestPreferenceInput,
     context: MutationContext,
   ): Promise<EnrichedPreference | null> {
-    const definition = await this.resolveAndValidateDefinition(input.slug, userId);
+    const definition = await this.resolveAndValidateDefinition(
+      input.slug,
+      userId,
+    );
     const normalizedValue = this.canonicalizeValue(
       input.slug,
       definition,
@@ -253,15 +258,11 @@ export class PreferenceService {
     );
 
     if (hasRejected) {
-      this.logger.log(
-        `Suggestion skipped for user ${userId}: ${input.slug} was previously rejected`,
-      );
+      this.logger.log("Skipped a previously rejected preference suggestion");
       return null; // No-op: user previously rejected this preference
     }
 
-    this.logger.log(
-      `Creating SUGGESTED preference for user ${userId}: ${input.slug}`,
-    );
+    this.logger.log("Creating an authenticated preference suggestion");
 
     const write = await this.prisma.$transaction((tx) =>
       this.preferenceRepository
@@ -315,7 +316,7 @@ export class PreferenceService {
     locationId?: string,
   ): Promise<EnrichedPreference[]> {
     this.logger.log(
-      `Fetching ACTIVE preferences for user ${userId}, location: ${locationId ?? "global only"}`,
+      `Fetching authenticated active preferences (${locationId ? "location" : "global"})`,
     );
 
     if (locationId) {
@@ -342,7 +343,7 @@ export class PreferenceService {
     locationId?: string,
   ): Promise<EnrichedPreference[]> {
     this.logger.log(
-      `Fetching SUGGESTED preferences for user ${userId}, location: ${locationId ?? "global only"}`,
+      `Fetching authenticated preference suggestions (${locationId ? "location" : "global"})`,
     );
 
     if (locationId) {
@@ -389,9 +390,7 @@ export class PreferenceService {
       );
     }
 
-    this.logger.log(
-      `Accepting suggestion ${id} for user ${userId}: ${suggestion.slug}`,
-    );
+    this.logger.log("Accepting an authenticated preference suggestion");
 
     const normalizedValue = await this.canonicalizeValueByDefinitionId(
       suggestion.definitionId,
@@ -474,9 +473,7 @@ export class PreferenceService {
       );
     }
 
-    this.logger.log(
-      `Rejecting suggestion ${id} for user ${userId}: ${suggestion.slug}`,
-    );
+    this.logger.log("Rejecting an authenticated preference suggestion");
 
     const normalizedValue = await this.canonicalizeValueByDefinitionId(
       suggestion.definitionId,
@@ -487,16 +484,16 @@ export class PreferenceService {
     await this.prisma.$transaction(async (tx) => {
       await this.preferenceRepository
         .upsertRejected(
-        userId,
-        suggestion.definitionId,
-        normalizedValue,
-        suggestion.locationId,
-        {
-          sourceType: suggestion.sourceType,
-          confidence: suggestion.confidence,
-          evidence: suggestion.evidence,
-        },
-        tx,
+          userId,
+          suggestion.definitionId,
+          normalizedValue,
+          suggestion.locationId,
+          {
+            sourceType: suggestion.sourceType,
+            confidence: suggestion.confidence,
+            evidence: suggestion.evidence,
+          },
+          tx,
         )
         .then(async (rejectedWrite) => {
           await this.preferenceAuditService.record(
@@ -547,7 +544,7 @@ export class PreferenceService {
       throw new ForbiddenException("You can only delete your own preferences");
     }
 
-    this.logger.log(`Deleting preference ${id} for user ${userId}`);
+    this.logger.log("Deleting an authenticated preference");
     return this.prisma.$transaction(async (tx) => {
       const deleted = await this.preferenceRepository.delete(id, tx);
 

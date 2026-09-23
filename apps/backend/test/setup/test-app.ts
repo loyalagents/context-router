@@ -4,7 +4,6 @@
  * Creates a NestJS test application with:
  * - Auth guards bypassed (injects test user into context)
  * - Model ports mocked
- * - Auth0Service mocked
  * - ValidationPipe applied globally
  *
  * Usage pattern (Option 5 - fixtures in beforeEach):
@@ -32,7 +31,6 @@ import {
   AI_STRUCTURED_OUTPUT_PORT,
   AI_TEXT_GENERATOR_PORT,
 } from '../../src/domains/shared/ports/ai.tokens';
-import { Auth0Service } from '../../src/infrastructure/auth0/auth0.service';
 import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
 import { getPrismaClient } from './test-db';
 
@@ -87,22 +85,6 @@ export const createMockStructuredAiService = () => ({
   }),
 });
 
-/**
- * Mock implementation of Auth0Service.
- */
-export const createMockAuth0Service = () => ({
-  getUserInfo: jest.fn().mockResolvedValue({
-    data: {
-      user_id: 'auth0|test-user-id',
-      email: 'test@example.com',
-      name: 'Test User',
-    },
-  }),
-  updateUserMetadata: jest.fn().mockResolvedValue({}),
-  getManagementClient: jest.fn(),
-  getAuthClient: jest.fn(),
-});
-
 export interface MockVertexAiService {
   generateText: (...args: any[]) => any;
   generateTextWithFile: (...args: any[]) => any;
@@ -111,13 +93,6 @@ export interface MockVertexAiService {
 export interface MockStructuredAiService {
   generateStructured: (...args: any[]) => any;
   generateStructuredWithFile: (...args: any[]) => any;
-}
-
-export interface MockAuth0Service {
-  getUserInfo: (...args: any[]) => any;
-  updateUserMetadata: (...args: any[]) => any;
-  getManagementClient: (...args: any[]) => any;
-  getAuthClient: (...args: any[]) => any;
 }
 
 @Module({})
@@ -142,22 +117,19 @@ type DefaultMockVertexAiService = ReturnType<typeof createMockVertexAiService>;
 type DefaultMockStructuredAiService = ReturnType<
   typeof createMockStructuredAiService
 >;
-type DefaultMockAuth0Service = ReturnType<typeof createMockAuth0Service>;
 
 /**
  * Options for createTestApp
  */
 export interface CreateTestAppOptions<
   TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
-  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
-  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+  TStructuredAi extends
+    MockStructuredAiService = DefaultMockStructuredAiService,
 > {
   /** Custom mock for VertexAiService */
   mockVertexAi?: TVertexAi;
   /** Custom mock for AiStructuredOutputPort */
   mockStructuredAi?: TStructuredAi;
-  /** Custom mock for Auth0Service */
-  mockAuth0?: TAuth0;
   /** Whether to override GraphQL/JWT auth guards with the test user injector */
   overrideGraphqlAuthGuards?: boolean;
   /** Startup value for the demo-only reset modes. */
@@ -166,8 +138,8 @@ export interface CreateTestAppOptions<
 
 interface CreateTestAppResult<
   TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
-  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
-  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+  TStructuredAi extends
+    MockStructuredAiService = DefaultMockStructuredAiService,
 > {
   app: INestApplication;
   module: TestingModule;
@@ -176,7 +148,6 @@ interface CreateTestAppResult<
   mocks: {
     vertexAi: TVertexAi;
     structuredAi: TStructuredAi;
-    auth0: TAuth0;
   };
 }
 
@@ -329,28 +300,20 @@ export async function createTestUser(): Promise<TestUser> {
 export function createTestApp(): Promise<CreateTestAppResult>;
 export function createTestApp<
   TVertexAi extends MockVertexAiService = DefaultMockVertexAiService,
-  TStructuredAi extends MockStructuredAiService = DefaultMockStructuredAiService,
-  TAuth0 extends MockAuth0Service = DefaultMockAuth0Service,
+  TStructuredAi extends
+    MockStructuredAiService = DefaultMockStructuredAiService,
 >(
-  options: CreateTestAppOptions<TVertexAi, TStructuredAi, TAuth0>,
-): Promise<CreateTestAppResult<TVertexAi, TStructuredAi, TAuth0>>;
+  options: CreateTestAppOptions<TVertexAi, TStructuredAi>,
+): Promise<CreateTestAppResult<TVertexAi, TStructuredAi>>;
 export async function createTestApp(
   options: CreateTestAppOptions<
     MockVertexAiService,
-    MockStructuredAiService,
-    MockAuth0Service
+    MockStructuredAiService
   > = {},
-): Promise<
-  CreateTestAppResult<
-    MockVertexAiService,
-    MockStructuredAiService,
-    MockAuth0Service
-  >
-> {
+): Promise<CreateTestAppResult<MockVertexAiService, MockStructuredAiService>> {
   const mockVertexAi = options.mockVertexAi || createMockVertexAiService();
   const mockStructuredAi =
     options.mockStructuredAi || createMockStructuredAiService();
-  const mockAuth0 = options.mockAuth0 || createMockAuth0Service();
   const overrideGraphqlAuthGuards = options.overrideGraphqlAuthGuards ?? true;
   const environment = {
     ...process.env,
@@ -386,9 +349,6 @@ export async function createTestApp(
   }
   moduleBuilder.overrideGuard(McpAuthGuard).useValue(mcpMockAuthGuard);
 
-  // Override external services
-  moduleBuilder.overrideProvider(Auth0Service).useValue(mockAuth0);
-
   // Use test database PrismaClient
   moduleBuilder.overrideProvider(PrismaService).useValue(getPrismaClient());
 
@@ -415,7 +375,6 @@ export async function createTestApp(
     mocks: {
       vertexAi: mockVertexAi,
       structuredAi: mockStructuredAi,
-      auth0: mockAuth0,
     },
   };
 }

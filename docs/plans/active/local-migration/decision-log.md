@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-16
+- Last reviewed: 2026-09-22
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -203,12 +203,55 @@ step plan that resolves them.
   the orchestration document. This observation closes the external PR 02B gate
   but is not required merge evidence.
 
+### LM-015: Stable human principal and local identity preview
+
+- Status: Accepted — materially revised Step 03 plan approved by renewed
+  architecture, persistence/recovery, compatibility, and security review
+- Decision: `User.userId` remains the provider-neutral human principal. A
+  verified provider edge emits one narrow assertion, and external identity is
+  keyed exactly by provider, canonical issuer, and subject. Email and display
+  attributes are never authentication, authorization, lookup, or implicit
+  account-linking inputs. Existing users are not migrated: in accordance with
+  LM-002, an upgraded main-line PostgreSQL fixture deletes user-owned data
+  before installing the required issuer key rather than backfilling a sentinel
+  or preserving/linking historical accounts. A fresh local installation
+  generates an independent opaque principal and credential in versioned private
+  state under an explicit absolute root. A durable root operation and complete
+  candidate precede database mutation; explicit recovery resolves empty/exact
+  commit state before canonical ready publication. Step 03 exposes that
+  implementation as a non-listening initialized Nest application preview that
+  calls `init()` but never `listen()`; local MCP credentials and browser
+  sessions remain separate later-step concerns.
+- Product-line disposition: this is `local-only` main-line migration work.
+  Auth0 remains only one edge adapter for fresh main-line state.
+  `hosted-v1-maintenance` is unchanged; Step 03 is not a production remediation
+  and authorizes no backport or cherry-pick. A future hosted-production fix
+  requires a separate maintenance decision.
+- Consequence: Steps 04–08 use the stable principal rather than email, provider
+  subject suffixes, MCP client keys, machine identity, paths, or database row
+  order. `User.email` remains non-null account/profile data but loses uniqueness
+  and all identity authority, so distinct exact provider keys may expose the
+  same verified email without merging. A new provider verifies its credential
+  and emits the same assertion;
+  generic resolution and storage do not add a provider switch. The backend
+  Auth0 Management/Authentication SDK clients are removed; the retained hosted
+  adapter uses verified JWT claims and JWKS only. Different exact
+  keys create different principals unless a later explicit link flow starts
+  from an already-authenticated principal. Steps 04–05 must preserve the
+  durable operation/candidate, empty/exact recovery, and advisory-session
+  fencing contracts when replacing the temporary PostgreSQL adapter. Step 07
+  adds distinct local MCP client auth;
+  Step 08 adds a browser/session exchange without exposing the file credential;
+  Step 09 owns final paths, keychain/process isolation, backup, and destructive
+  identity reset. A reachable local listener remains unauthorized without
+  Host/Origin/CSRF/DNS-rebinding evidence.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |
 | --- | --- |
 | Supported operating systems, process topology, signing, and distribution constraints | `02-composition-boundaries` and `09-installation-and-packaging` |
-| Stable local principal ID, display/email behavior, and credential storage | `03-local-identity` |
+| Final platform credential protection, keychain/process isolation, and destructive identity reset | `09-installation-and-packaging` |
 | Local database choice; if SQLite is confirmed, its library and schema/bootstrap mechanism | `05-local-database-runtime` |
 | Local model runtime, supported capabilities, and download policy | `06-local-model` |
 | Exact offline guarantee before and after model assets are installed | `06-local-model` and `09-installation-and-packaging` |

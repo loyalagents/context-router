@@ -133,13 +133,153 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
       /schemaVersion must be 1/,
     );
 
-    const completed = (id, type, cleanup, identity = {}) => ({
+    const completed = (id, type, cleanup, identity = {}, recovery) => ({
       id,
       type,
+      owned: true,
       status: "acquired",
       identity,
+      ...(recovery === undefined ? {} : { recovery }),
       cleanup: { status: cleanup },
     });
+    const localIdentityProcessRecovery = (pid) => ({
+      processGroupId: pid,
+      instruction:
+        "Verify the recorded child PID, then terminate and reap only the process group with that exact numeric ID.",
+    });
+    const localIdentityStateRoot = path.join(
+      diagnostics,
+      "local-identity-state",
+    );
+    const localIdentityResources = [
+      completed(
+        "local-identity-postgres",
+        "local-identity-tls-postgres-container",
+        "removed",
+        {
+          fixture: "fresh-native-tls-database",
+          tls: true,
+          loopback: true,
+          tlsOnly: true,
+          plaintextRejected: true,
+        },
+        {
+          inspectCommand: [
+            "docker",
+            "container",
+            "inspect",
+            "lmid-pg-0123456789abcdef01234567",
+          ],
+          environment: { DOCKER_HOST: "unix:///var/run/docker.sock" },
+          requiredLabel:
+            "context-router.local-identity-smoke-owner=01234567-89ab-4def-8123-456789abcdef",
+          instruction:
+            "Verify the ownership label and remove only the inspected immutable container ID.",
+        },
+      ),
+      completed(
+        "local-identity-state",
+        "local-identity-private-state",
+        "removed",
+        {
+          initialized: true,
+          generation: 2,
+          principalStable: true,
+          credentialRotated: true,
+          recoveryStable: true,
+          providerBindings: 2,
+        },
+        {
+          stateRoot: localIdentityStateRoot,
+          instruction:
+            "Remove only this exact private state root after every recorded child process group exits.",
+        },
+      ),
+      completed(
+        "local-identity-admin-1",
+        "local-identity-admin-process",
+        "exited",
+        {
+          operation: "initialize",
+          generation: 1,
+          pid: 4201,
+          exitCode: 0,
+          childSignal: null,
+        },
+        localIdentityProcessRecovery(4201),
+      ),
+      completed(
+        "local-identity-admin-2",
+        "local-identity-admin-process",
+        "exited",
+        {
+          operation: "recover-initialize",
+          generation: 1,
+          pid: 4202,
+          exitCode: 0,
+          childSignal: null,
+        },
+        localIdentityProcessRecovery(4202),
+      ),
+      completed(
+        "local-identity-admin-3",
+        "local-identity-admin-process",
+        "exited",
+        {
+          operation: "rotate",
+          generation: 2,
+          pid: 4203,
+          exitCode: 0,
+          childSignal: null,
+        },
+        localIdentityProcessRecovery(4203),
+      ),
+      completed(
+        "local-identity-admin-4",
+        "local-identity-admin-process",
+        "exited",
+        {
+          operation: "recover-rotation",
+          generation: 2,
+          pid: 4204,
+          exitCode: 0,
+          childSignal: null,
+        },
+        localIdentityProcessRecovery(4204),
+      ),
+      completed(
+        "local-identity-preview-1",
+        "local-identity-preview-process",
+        "exited",
+        {
+          generation: 1,
+          pid: 4301,
+          requestedSignal: "SIGTERM",
+          expectedExitCode: 143,
+          exitCode: 143,
+          childSignal: null,
+          readinessVersion: 1,
+          listenerCount: 0,
+        },
+        localIdentityProcessRecovery(4301),
+      ),
+      completed(
+        "local-identity-preview-2",
+        "local-identity-preview-process",
+        "exited",
+        {
+          generation: 2,
+          pid: 4302,
+          requestedSignal: "SIGINT",
+          expectedExitCode: 130,
+          exitCode: 130,
+          childSignal: null,
+          readinessVersion: 1,
+          listenerCount: 0,
+        },
+        localIdentityProcessRecovery(4302),
+      ),
+    ];
     await writeFile(
       journalPath,
       `${JSON.stringify({
@@ -185,6 +325,7 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
             "exited",
             { generation: 2, pid: 4245 },
           ),
+          ...localIdentityResources,
         ],
       })}\n`,
       { mode: 0o600 },
@@ -197,6 +338,9 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
         }),
     });
     assert.equal(result.outputTail, "smoke exited zero");
+    await gate.assertRestartSmokeLifecycleEvidence(diagnostics, {
+      commandSucceeded: true,
+    });
 
     const dispatchEvents = [];
     const dispatched = await gate.executeGatePhaseCommand({
@@ -211,6 +355,26 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
     });
     assert.equal(dispatched.outputTail, "dispatched");
     assert.deepEqual(dispatchEvents, ["command", "lifecycle:true"]);
+    const restartEvents = [];
+    const restartDispatched = await gate.executeGatePhaseCommand({
+      phase: { kind: "restart-smoke" },
+      executeCommand: async () => {
+        restartEvents.push("command");
+        return { outputTail: "restart-dispatched" };
+      },
+      validateRestartLifecycle: async ({ commandSucceeded }) => {
+        restartEvents.push(`lifecycle:${commandSucceeded}`);
+      },
+    });
+    assert.equal(restartDispatched.outputTail, "restart-dispatched");
+    assert.deepEqual(restartEvents, ["command", "lifecycle:true"]);
+    await assert.rejects(
+      gate.executeGatePhaseCommand({
+        phase: { kind: "restart-smoke" },
+        executeCommand: async () => ({ outputTail: "unvalidated" }),
+      }),
+      /requires lifecycle validation/,
+    );
     await assert.rejects(
       gate.executeGatePhaseCommand({
         phase: { kind: "packaged-smoke" },
@@ -250,6 +414,201 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
         return true;
       },
     );
+
+    const validLifecycle = JSON.parse(await readFile(journalPath, "utf8"));
+    const invalidLocalEvidence = [
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-postgres",
+        ).type = "wrong-postgres-type";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-state",
+        ).cleanup.status = "closed";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-state",
+        ).identity.providerBindings = 1;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-state",
+        ).identity.initialized = false;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-admin-3",
+        ).identity.operation = "initialize";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-admin-2",
+        ).identity.pid = null;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-admin-4",
+        ).identity.childSignal = "SIGTERM";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-admin-1",
+        ).identity.generation = 2;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-admin-2",
+        ).identity.exitCode = 1;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-1",
+        ).identity.exitCode = 0;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-2",
+        ).identity.childSignal = "SIGINT";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-1",
+        ).identity.generation = 2;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-1",
+        ).identity.pid = null;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-1",
+        ).identity.requestedSignal = "SIGINT";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-2",
+        ).identity.expectedExitCode = 143;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-2",
+        ).identity.readinessVersion = 2;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-preview-2",
+        ).identity.listenerCount = 1;
+      },
+      (state) => {
+        delete state.resources.find(
+          (resource) => resource.id === "local-identity-postgres",
+        ).recovery;
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-postgres",
+        ).recovery.environment.DOCKER_HOST = "tcp://127.0.0.1:2375";
+      },
+      (state) => {
+        const inspectCommand = state.resources.find(
+          (resource) => resource.id === "local-identity-postgres",
+        ).recovery.inspectCommand;
+        inspectCommand[inspectCommand.length - 1] = "unowned-container";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-postgres",
+        ).recovery.requiredLabel = "wrong-owner=true";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-state",
+        ).recovery.stateRoot = "relative/state";
+      },
+      (state) => {
+        state.resources.find(
+          (resource) => resource.id === "local-identity-state",
+        ).recovery.instruction = "remove it";
+      },
+      ...[
+        "local-identity-admin-1",
+        "local-identity-admin-2",
+        "local-identity-admin-3",
+        "local-identity-admin-4",
+        "local-identity-preview-1",
+        "local-identity-preview-2",
+      ].map(
+        (id) => (state) => {
+          const resource = state.resources.find(
+            (candidate) => candidate.id === id,
+          );
+          resource.recovery.processGroupId = resource.identity.pid + 1;
+        },
+      ),
+      (state) => {
+        state.resources.push(
+          completed(
+            "local-identity-admin-5",
+            "local-identity-admin-process",
+            "exited",
+            {
+              operation: "initialize",
+              generation: 1,
+              pid: 4205,
+              exitCode: 0,
+              childSignal: null,
+            },
+          ),
+        );
+      },
+      (state) => {
+        state.resources.push(
+          completed(
+            "local-identity-rogue",
+            "rogue-type",
+            "removed",
+          ),
+        );
+      },
+      (state) => {
+        state.resources.push(
+          completed(
+            "local-identity-preview-3",
+            "local-identity-preview-process",
+            "exited",
+            {
+              generation: 3,
+              pid: 4303,
+              requestedSignal: "SIGTERM",
+              expectedExitCode: 143,
+              exitCode: 143,
+              childSignal: null,
+              readinessVersion: 1,
+              listenerCount: 0,
+            },
+          ),
+        );
+      },
+    ];
+    for (const mutate of invalidLocalEvidence) {
+      const invalid = structuredClone(validLifecycle);
+      mutate(invalid);
+      await writeFile(journalPath, `${JSON.stringify(invalid)}\n`, {
+        mode: 0o600,
+      });
+      await assert.rejects(
+        gate.assertRestartSmokeLifecycleEvidence(diagnostics, {
+          commandSucceeded: true,
+        }),
+        /local-identity/,
+      );
+    }
+    await writeFile(journalPath, `${JSON.stringify(validLifecycle)}\n`, {
+      mode: 0o600,
+    });
 
     if (process.platform !== "win32") {
       await chmod(journalPath, 0o644);
@@ -475,7 +834,30 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
       successorModes: [],
       requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"],
     },
+    {
+      id: "local-identity-preview",
+      status: "active",
+      successorModes: [],
+      requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"],
+    },
   ]);
+  const dualModePhases = new Set([
+    "contract-baseline",
+    "documentation",
+    "backend-unit-build",
+    "backend-database",
+    "restart-smoke",
+    "packaged-composition-smoke",
+    "repository-integrity",
+  ]);
+  for (const phase of manifest.phases) {
+    assert.deepEqual(
+      phase.modes,
+      dualModePhases.has(phase.id)
+        ? ["hosted-baseline", "local-identity-preview"]
+        : ["hosted-baseline"],
+    );
+  }
   assert.deepEqual(
     manifest.phases.map((phase) => phase.commands.map((command) => command.argv)),
     [
@@ -685,7 +1067,7 @@ test("packaged smoke and final integrity retain their exact reviewed transition 
       candidate.phases[10].evidenceClasses = ["build", "restart"];
     },
     (candidate) => {
-      candidate.phases[10].modes = ["hosted-baseline", "future-mode"];
+      candidate.phases[10].modes.push("future-mode");
     },
     (candidate) => {
       candidate.phases[11].predecessors = ["restart-smoke"];
@@ -767,6 +1149,23 @@ test("the outer gate grants restart smoke more time than its cumulative cleanup 
 
 test("active phase timeouts retain the reviewed global gate windows", () => {
   const active = manifest.phases.filter(({ status }) => status === "active");
+  assert.deepEqual(
+    active.map(({ timeoutMs }) => timeoutMs),
+    [
+      120_000,
+      120_000,
+      600_000,
+      900_000,
+      300_000,
+      300_000,
+      600_000,
+      600_000,
+      300_000,
+      600_000,
+      900_000,
+      300_000,
+    ],
+  );
   assert.equal(
     active.reduce((sum, phase) => sum + phase.timeoutMs, 0),
     94 * 60_000,

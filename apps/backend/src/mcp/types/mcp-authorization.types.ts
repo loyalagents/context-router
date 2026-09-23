@@ -1,26 +1,27 @@
+export {
+  MANAGED_MCP_CLIENT_KEYS,
+  type ManagedMcpClientKey,
+} from "../../modules/permission-grant/permission-grant.constants";
+
 export const MCP_CLIENT_KEYS = [
-  'claude',
-  'codex',
-  'fallback',
-  'unknown',
+  "claude",
+  "codex",
+  "fallback",
+  "unknown",
 ] as const;
 
 export type McpClientKey = (typeof MCP_CLIENT_KEYS)[number];
 
-export const MANAGED_MCP_CLIENT_KEYS = ['claude', 'codex', 'fallback'] as const;
-
-export type ManagedMcpClientKey = (typeof MANAGED_MCP_CLIENT_KEYS)[number];
-
 export interface McpAccess {
-  resource: 'preferences';
-  action: 'read' | 'suggest' | 'write' | 'define';
+  resource: "preferences";
+  action: "read" | "suggest" | "write" | "define";
 }
 
 export const MCP_CAPABILITIES = [
-  'preferences:read',
-  'preferences:suggest',
-  'preferences:write',
-  'preferences:define',
+  "preferences:read",
+  "preferences:suggest",
+  "preferences:write",
+  "preferences:define",
 ] as const;
 
 export type McpCapability = (typeof MCP_CAPABILITIES)[number];
@@ -37,7 +38,7 @@ export interface McpTargetRuleMatcher {
 }
 
 export interface McpTargetRule {
-  effect: 'allow' | 'deny';
+  effect: "allow" | "deny";
   capability: McpCapability;
   matcher: McpTargetRuleMatcher;
 }

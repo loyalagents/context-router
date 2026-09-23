@@ -3,8 +3,8 @@ import {
   GrantAction,
   GrantEffect,
 } from '@infrastructure/prisma/generated-client';
-import { MANAGED_MCP_CLIENT_KEYS } from '@/mcp/types/mcp-authorization.types';
 import { PermissionGrantRepository } from './permission-grant.repository';
+import { MANAGED_MCP_CLIENT_KEYS } from './permission-grant.constants';
 
 export type PermissionGrantDecision = 'allow' | 'deny' | 'no-grant';
 type PermissionGrantActionInput =

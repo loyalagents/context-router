@@ -43,16 +43,17 @@ describe('UserRepository (integration)', () => {
       expect(user1.userId).not.toBe(user2.userId);
     });
 
-    it('should fail when creating user with duplicate email', async () => {
-      await repository.create({
+    it('should create distinct principals with the same account email', async () => {
+      const first = await repository.create({
         email: 'duplicate@example.com',
       });
 
-      await expect(
-        repository.create({
-          email: 'duplicate@example.com',
-        }),
-      ).rejects.toThrow();
+      const second = await repository.create({
+        email: 'duplicate@example.com',
+      });
+
+      expect(second.userId).not.toBe(first.userId);
+      expect(second.email).toBe(first.email);
     });
   });
 
@@ -100,34 +101,6 @@ describe('UserRepository (integration)', () => {
     it('should return null for non-existent userId', async () => {
       const found = await repository.findOne('non-existent-id');
       expect(found).toBeNull();
-    });
-  });
-
-  describe('findByEmail', () => {
-    it('should return user by email', async () => {
-      await repository.create({
-        email: 'findbyemail@example.com',
-      });
-
-      const found = await repository.findByEmail('findbyemail@example.com');
-
-      expect(found).toBeDefined();
-      expect(found!.email).toBe('findbyemail@example.com');
-    });
-
-    it('should return null for non-existent email', async () => {
-      const found = await repository.findByEmail('nonexistent@example.com');
-      expect(found).toBeNull();
-    });
-
-    it('should be case-sensitive for email lookup', async () => {
-      await repository.create({
-        email: 'Case@Example.com',
-      });
-
-      // Different case should not match (depending on DB collation)
-      const found = await repository.findByEmail('Case@Example.com');
-      expect(found).toBeDefined();
     });
   });
 

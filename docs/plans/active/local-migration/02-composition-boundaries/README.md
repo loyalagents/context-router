@@ -1,6 +1,6 @@
 # Step 02: Composition Boundaries
 
-- Status: plan approved; PR 02A
+- Status: complete; PR 02A
   [#157](https://github.com/loyalagents/context-router/pull/157) merged at
   `5a2fc8a09e9091d16160caea258d678293a1e2b3`; PR 02B
   [#158](https://github.com/loyalagents/context-router/pull/158) merged at
@@ -13,22 +13,21 @@
   [35197826400](https://github.com/loyalagents/context-router/actions/runs/35197826400)
   and dedicated LMBG run
   [35197826476](https://github.com/loyalagents/context-router/actions/runs/35197826476)
-  passed. PR 02E is activated from that exact merge SHA; its activation LMBG
-  passed; its implementation, 244-test local-migration suite, the original
-  three correction reviews and both final CI-correction review rounds, the
-  167.223-second final-tree direct packaging smoke, and the 454.088-second
-  exact-base 12-phase LMBG are complete; final-head standard
-  and dedicated remote validation remain pending
-- Outcome owner and sole writer: `/root` on
-  `codex/local-migration-02-packaging-smoke` for PR 02E only
+  passed. PR 02E [#161](https://github.com/loyalagents/context-router/pull/161)
+  was human-merged at `6b420ed24e9dd344af8990c9045832990ae1b5ec`
+  from final tested head `00e4240564b3b63997d63cc581c6e52fbba0f613`;
+  standard CI run
+  [35318582335](https://github.com/loyalagents/context-router/actions/runs/35318582335)
+  and dedicated LMBG run
+  [35318582309](https://github.com/loyalagents/context-router/actions/runs/35318582309)
+  passed
+- Outcome owner and sole writer: `/root` for the completed Step 02 sequence
 - Outcome: explicit composition roots for identity, persistence, model, and
   platform edges, plus an evidence-backed runtime/toolchain contract and early
   packaging feasibility smoke, without changing hosted behavior
-- Concrete next action: commit/push PR 02E, run final-head standard and dedicated
-  remote CI, and resolve any final-head review findings; leave
-  landing to a human
-- Review date: 2026-10-15 or the PR 02E human landing decision, whichever comes
-  first
+- Concrete next action: retain this plan as dependency evidence while Step 03
+  implements local identity from the exact Step 02 merge
+- Review date: when a downstream step no longer depends on this retained plan
 - Depends on: merged Step 01 contract baseline and a passing
   `pnpm migration:gate` on its exact planning base
 - Supported mode during planning: the existing hosted
@@ -47,15 +46,12 @@ startup, shutdown, and clean restart. The plan must preserve all Step 01
 contracts and keep the currently hosted composition runnable after every merged
 checkpoint.
 
-The independently reviewed [`plan.md`](plan.md) defines five serial PRs. PRs
-02A–02D are merged and only 02E is active on the current branch. Its exact base,
-activation gate, owner, and fresh read-only reviewers are recorded in the plan.
-The bounded 02E implementation and 244-test local-migration suite are complete,
-fresh read-only Linux packaging, gate-journal, and allowlist/test/docs
-correction reviews plus both final CI-correction review rounds have no remaining
-findings, the 167.223-second final-tree
-direct packaging smoke passed, and the exact-base 12-phase aggregate gate
-passed in 454.088 seconds with phase 11 at 180.580 seconds. This does not
+The independently reviewed [`plan.md`](plan.md) defines five serial PRs. All
+five were human-merged, ending with PR #161 at the exact SHA above. The bounded
+02E implementation and 244-test local-migration suite, fresh read-only reviews,
+167.223-second final-tree direct packaging smoke, 454.088-second exact-base
+12-phase aggregate gate, final-head standard CI, and dedicated remote LMBG all
+passed. This does not
 authorize a local identity, database, model, UI shell, installer, final OS
 claim, or default listener change.
 

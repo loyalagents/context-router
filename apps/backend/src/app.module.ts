@@ -1,15 +1,13 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ConfigModule } from '@nestjs/config';
 
 // Config
 import { appConfigLoader } from './config/app.config';
-import graphqlConfig from './config/graphql.config';
-import authConfig from './config/auth.config';
+import { graphqlConfigLoader } from './config/graphql.config';
+import { authConfigLoader } from './config/auth.config';
 import { mcpConfigLoader } from './config/mcp.config';
-import documentUploadConfig from './config/document-upload.config';
-import formFillConfig from './config/form-fill.config';
+import { documentUploadConfigLoader } from './config/document-upload.config';
+import { formFillConfigLoader } from './config/form-fill.config';
 import {
   runtimeConfigLoader,
   type RuntimeConfiguration,
@@ -17,19 +15,13 @@ import {
 
 // Infrastructure
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
-import { Auth0Module } from './infrastructure/auth0/auth0.module';
 import { HostedModelAdapterModule } from './composition/hosted-model-adapter.module';
+import { ApplicationFeaturesModule } from './composition/application-features.module';
+import { createGraphqlApiModule } from './composition/graphql-api.module';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
-import { HealthModule } from './modules/health/health.module';
-import { PreferencesModule } from './modules/preferences/preferences.module';
-import { PermissionGrantModule } from './modules/permission-grant/permission-grant.module';
 import { McpModule } from './mcp/mcp.module';
-import { VertexAiModule } from './modules/vertex-ai/vertex-ai.module';
-import { ResetModule } from './modules/reset/reset.module';
-import { WorkflowsModule } from './modules/workflows/workflows.module';
 
 @Module({})
 export class AppModule {
@@ -46,48 +38,22 @@ export class AppModule {
           load: [
             runtimeConfigLoader(configuration),
             appConfigLoader(configuration, environment),
-            graphqlConfig,
-            authConfig,
-            mcpConfigLoader(configuration),
-            documentUploadConfig,
-            formFillConfig,
+            graphqlConfigLoader(environment),
+            authConfigLoader(environment),
+            mcpConfigLoader(configuration, environment),
+            documentUploadConfigLoader(environment),
+            formFillConfigLoader(environment),
           ],
         }),
 
-        GraphQLModule.forRootAsync<ApolloDriverConfig>({
-          driver: ApolloDriver,
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            autoSchemaFile: true,
-            sortSchema: true,
-            playground: configService.get<boolean>('graphql.playground'),
-            introspection: configService.get<boolean>('graphql.introspection'),
-            context: ({ req }) => ({ req }),
-            formatError: (error) => ({
-              message: error.message,
-              extensions: {
-                code: error.extensions?.code,
-                stacktrace: configService.get<boolean>('app.isDevelopment')
-                  ? error.extensions?.stacktrace
-                  : undefined,
-              },
-            }),
-          }),
-        }),
+        createGraphqlApiModule(),
 
-        PrismaModule,
-        Auth0Module,
+        PrismaModule.registerHosted(),
         HostedModelAdapterModule,
 
         AuthModule,
-        UserModule,
-        HealthModule,
-        PreferencesModule,
-        PermissionGrantModule,
+        ApplicationFeaturesModule,
         McpModule,
-        VertexAiModule,
-        WorkflowsModule,
-        ResetModule,
       ],
     };
   }

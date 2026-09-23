@@ -3,9 +3,14 @@
 - Status: useful
 - Read when: connecting Codex, Claude, or another MCP client to local or remote MCP
 - Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/config/mcp.config.ts`, `apps/backend/src/mcp/auth/mcp-client-registry.service.ts`
-- Last reviewed: 2026-05-03
+- Last reviewed: 2026-09-22
 
 ## Copy/Paste Summary
+
+Here, "local" means the retained hosted-baseline backend running on a
+development machine. It does not mean the Step 03 `local-identity-preview`,
+which has no listener, excludes `McpModule`, and never accepts its human bearer
+as an MCP credential.
 
 Use these commands to add the backend as an MCP server. The server name convention is:
 

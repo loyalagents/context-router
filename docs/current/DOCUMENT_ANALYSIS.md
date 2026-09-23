@@ -7,7 +7,7 @@
   `apps/backend/src/modules/preferences/document-analysis/**`,
   `apps/backend/test/e2e/document-analysis.e2e-spec.ts`, and the dashboard
   preference suggestion components
-- Last reviewed: 2026-09-14
+- Last reviewed: 2026-09-22
 
 Document analysis proposes preference changes from an uploaded document. It is
 separate from form fill: this path sends the uploaded document to the configured
@@ -27,6 +27,11 @@ active preference values. JSON and YAML uploads are sent to that provider as
 `text/plain` because its inline-file interface rejects their original MIME
 types. In-memory application handling does not mean the document stays local or
 that the model provider has no retention policy.
+
+This describes the hosted composition. The Step 03 local identity preview
+binds the AI ports to a fixed unavailable adapter that performs no model I/O,
+and the preview has no listener. It is composition evidence, not a usable local
+document-analysis surface; Step 06 owns the local model implementation.
 
 The first model response is Zod-validated and capped at
 `DOC_UPLOAD_MAX_SUGGESTIONS`, which defaults to 25.

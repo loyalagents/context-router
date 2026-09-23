@@ -28,6 +28,7 @@ import {
   copyWorkspaceFiles,
   runCommand,
 } from "./gate-runner.mjs";
+import { assertNoStageAncestorNodeModules } from "./packaging-smoke.mjs";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -57,6 +58,11 @@ function callerStatus() {
 }
 
 function disposableSourceFiles() {
+  const deleted = new Set(
+    gitOutput(["ls-files", "--deleted", "-z"])
+      .split("\0")
+      .filter(Boolean),
+  );
   const output = gitOutput([
     "ls-files",
     "-co",
@@ -74,6 +80,7 @@ function disposableSourceFiles() {
   return output
     .split("\0")
     .filter(Boolean)
+    .filter((relativePath) => !deleted.has(relativePath))
     .filter((relativePath) => !relativePath.includes("/node_modules/"))
     .filter((relativePath) => !relativePath.includes("/dist/"))
     .filter(
@@ -174,26 +181,6 @@ async function recursivelyList(root, prefix = "") {
     }
   }
   return result.sort();
-}
-
-async function assertNoStageAncestorNodeModules(stageBackend, privateRoot) {
-  const canonicalStageBackend = await realpath(stageBackend);
-  const canonicalPrivateRoot = await realpath(privateRoot);
-  let current = path.dirname(canonicalStageBackend);
-  let foundPrivateRoot = false;
-  while (true) {
-    const candidate = path.join(current, "node_modules");
-    const info = await lstat(candidate).catch((error) => {
-      if (error.code === "ENOENT") return null;
-      throw error;
-    });
-    assert.equal(info, null, `stage ancestor owns node_modules: ${current}`);
-    if (current === canonicalPrivateRoot) foundPrivateRoot = true;
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  assert.equal(foundPrivateRoot, true, "private root must be a stage ancestor");
 }
 
 async function assertPrivateDirectory(directory) {
@@ -297,6 +284,7 @@ test("built backend resources and production dependencies are cwd-independent an
       workspace,
       lockfile,
       appModule,
+      graphqlApiModule,
       schemaResource,
     ] = await Promise.all(
       [
@@ -305,6 +293,7 @@ test("built backend resources and production dependencies are cwd-independent an
         "pnpm-workspace.yaml",
         "pnpm-lock.yaml",
         "apps/backend/src/app.module.ts",
+        "apps/backend/src/composition/graphql-api.module.ts",
         "apps/backend/src/mcp/resources/schema.resource.ts",
       ].map((relativePath) =>
         readFile(path.join(repositoryRoot, relativePath), "utf8"),
@@ -330,8 +319,13 @@ test("built backend resources and production dependencies are cwd-independent an
       lockfile,
       /^settings:\n(?:  .+\n)*  injectWorkspacePackages: true$/m,
     );
-    assert.match(appModule, /autoSchemaFile:\s*true/);
+    assert.match(appModule, /createGraphqlApiModule\(\)/);
     assert.doesNotMatch(appModule, /process\.cwd\(\)|schema\.gql/);
+    assert.match(graphqlApiModule, /autoSchemaFile:\s*true/);
+    assert.doesNotMatch(
+      graphqlApiModule,
+      /process\.cwd\(\)|schema\.gql/,
+    );
     assert.doesNotMatch(
       schemaResource,
       /process\.cwd\(\)|readFile|schema\.gql/,

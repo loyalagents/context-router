@@ -7,29 +7,23 @@ export interface FormFillConfig {
   confidenceThreshold: number;
 }
 
-const ALLOWED_FORM_FILL_MIME_TYPES = ['application/pdf'];
+export const ALLOWED_FORM_FILL_MIME_TYPES = ['application/pdf'];
 
-export default registerAs(
-  'formFill',
-  (): FormFillConfig => ({
+export function createFormFillConfiguration(
+  environment: NodeJS.ProcessEnv,
+): FormFillConfig {
+  return {
     maxFileSizeBytes: parseInt(
-      process.env.FORM_FILL_MAX_BYTES || '10485760',
+      environment.FORM_FILL_MAX_BYTES || '10485760',
       10,
     ),
-    allowedMimeTypes: ALLOWED_FORM_FILL_MIME_TYPES,
+    allowedMimeTypes: [...ALLOWED_FORM_FILL_MIME_TYPES],
     confidenceThreshold: parseFloat(
-      process.env.FORM_FILL_CONFIDENCE_THRESHOLD || '0.75',
+      environment.FORM_FILL_CONFIDENCE_THRESHOLD || '0.75',
     ),
-  }),
-);
+  };
+}
 
-export const getFormFillConfig = (): FormFillConfig => ({
-  maxFileSizeBytes: parseInt(
-    process.env.FORM_FILL_MAX_BYTES || '10485760',
-    10,
-  ),
-  allowedMimeTypes: ALLOWED_FORM_FILL_MIME_TYPES,
-  confidenceThreshold: parseFloat(
-    process.env.FORM_FILL_CONFIDENCE_THRESHOLD || '0.75',
-  ),
-});
+export function formFillConfigLoader(environment: NodeJS.ProcessEnv) {
+  return registerAs('formFill', () => createFormFillConfiguration(environment));
+}

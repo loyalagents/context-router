@@ -1270,7 +1270,10 @@ const OUTBOUND_SINK_PATTERNS = [
   ["subprocess-wrapper", /(?<!function\s)\b(?:runCommand|commandRunner)\s*\(/g],
   ["exec-file", /\bexecFile(?:Async)?\s*\(/g],
   ["dns-lookup", /\bdns\.lookup\s*\(/g],
-  ["postgresql-client", /new\s+\(pgFor\([^)]*\)\.Client\)\s*\(/g],
+  [
+    "postgresql-client",
+    /(?:new\s+\(pgFor\([^)]*\)\.Client\)\s*\(|new\s+Client\s*\(\s*configuration\s*\))/g,
+  ],
   ["vertex-ai", /new\s+VertexAI\s*\(/g],
   ["auth0-management", /new\s+ManagementClient\s*\(/g],
   ["auth0-authentication", /new\s+AuthenticationClient\s*\(/g],
@@ -1473,8 +1476,29 @@ export function validateBaselineDocument(document) {
   if (!Number.isInteger(document.version) || document.version < 1) {
     errors.push("registry version must be a positive integer");
   }
-  if (typeof document.supportedMode !== "string" || !document.supportedMode) {
-    errors.push("registry supportedMode must be a non-empty string");
+  if (document.version === 1) {
+    if (typeof document.supportedMode !== "string" || !document.supportedMode) {
+      errors.push("version-one registry supportedMode must be a non-empty string");
+    }
+    if (Object.hasOwn(document, "supportedModes")) {
+      errors.push("version-one registry must not use supportedModes");
+    }
+  } else {
+    if (
+      !Array.isArray(document.supportedModes) ||
+      !document.supportedModes.length ||
+      document.supportedModes.some(
+        (mode) => typeof mode !== "string" || !mode.trim(),
+      ) ||
+      new Set(document.supportedModes).size !== document.supportedModes.length
+    ) {
+      errors.push(
+        "registry supportedModes must be a non-empty array of unique strings",
+      );
+    }
+    if (Object.hasOwn(document, "supportedMode")) {
+      errors.push("version-two registry must use supportedModes, not supportedMode");
+    }
   }
   if (!Array.isArray(document.capabilities))
     errors.push("capabilities must be an array");
@@ -1715,15 +1739,20 @@ export function validateBaselineDocument(document) {
 }
 
 export function validateRegistryMode(registry, gateManifest) {
-  const activeModes = new Set(
-    (gateManifest.supportedModes ?? [])
+  const activeModes = (gateManifest.supportedModes ?? [])
       .filter((mode) => mode?.status === "active")
-      .map((mode) => mode.id),
-  );
-  return activeModes.has(registry.supportedMode)
+      .map((mode) => mode.id);
+  if (registry.version === 1) {
+    return activeModes.includes(registry.supportedMode)
+      ? []
+      : [
+          `registry supportedMode ${JSON.stringify(registry.supportedMode)} must name an active gate mode`,
+        ];
+  }
+  return jsonEqual(registry.supportedModes, activeModes)
     ? []
     : [
-        `registry supportedMode ${JSON.stringify(registry.supportedMode)} must name an active gate mode`,
+        `registry supportedModes ${JSON.stringify(registry.supportedModes)} must exactly name the active gate modes ${JSON.stringify(activeModes)}`,
       ];
 }
 
@@ -2898,7 +2927,6 @@ const CONTRACT_REFERENCE_ROOTS = [
   "docs/plans/active/local-migration/step-template.md",
   "docs/plans/active/local-migration/tracks",
   "docs/useful",
-  "get-test-token.sh",
   "test-auth.sh",
   "test-document-upload.sh",
   "test-graphql.sh",
@@ -2914,7 +2942,6 @@ const OUTBOUND_SINK_ROOTS = [
   "apps/local-orchestrator/scripts",
   "examples/eval/scripts",
   "examples/eval-harbor/scripts",
-  "get-test-token.sh",
   "test-auth.sh",
   "test-document-upload.sh",
   "test-graphql.sh",

@@ -12,7 +12,18 @@ describe('FormFillController', () => {
         status: 'success',
       }),
     };
-    controller = new FormFillController(service as any);
+    controller = new FormFillController(
+      service as any,
+      {
+        getOrThrow: jest.fn((key: string) => {
+          const values = {
+            'formFill.maxFileSizeBytes': 10 * 1024 * 1024,
+            'formFill.allowedMimeTypes': ['application/pdf'],
+          } as const;
+          return values[key as keyof typeof values];
+        }),
+      } as any,
+    );
   });
 
   it('rejects missing uploads', async () => {

@@ -64,9 +64,6 @@ importers:
       '@prisma/client':
         specifier: ^7.4.2
         version: 7.4.2(prisma@7.4.2(@types/react@19.2.6)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(typescript@5.9.3))(typescript@5.9.3)
-      auth0:
-        specifier: ^5.1.0
-        version: 5.1.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -2568,14 +2565,6 @@ packages:
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-
-  auth0@4.37.0:
-    resolution: {integrity: sha512-+TqJRxh4QvbD4TQIYx1ak2vanykQkG/nIZLuR6o8LoQj425gjVG3tFuUbbOeh/nCpP1rnvU0CCV1ChZHYXLU/A==}
-    engines: {node: '>=18'}
-
-  auth0@5.1.0:
-    resolution: {integrity: sha512-khNFOffqekb7Anypp0DHRPjQDxdwc1TDLxIdSzB2Sh+gy9c88euzy2MdNcAhpdkE85E/oQgj2bNftj0OE1SX5Q==}
-    engines: {node: ^20.19.0 || ^22.12.0 || ^24.0.0}
 
   auto-bind@4.0.0:
     resolution: {integrity: sha512-Hdw8qdNiqdJ8LqT0iK0sVzkFbzg6fhnQqqfWhBDxcHZvU75+B+ayzTy8x+k5Ix0Y92XOhOUlx74ps+bA6BeYMQ==}
@@ -6086,10 +6075,6 @@ packages:
     resolution: {integrity: sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==}
     hasBin: true
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
-
   uuid@13.0.0:
     resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
     hasBin: true
@@ -9136,18 +9121,6 @@ snapshots:
       retry: 0.13.1
 
   asynckit@0.4.0: {}
-
-  auth0@4.37.0:
-    dependencies:
-      jose: 4.15.9
-      undici-types: 6.21.0
-      uuid: 9.0.1
-
-  auth0@5.1.0:
-    dependencies:
-      auth0-legacy: auth0@4.37.0
-      jose: 4.15.9
-      uuid: 11.1.0
 
   auto-bind@4.0.0: {}
 
@@ -13330,8 +13303,6 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@11.0.3: {}
-
-  uuid@11.1.0: {}
 
   uuid@13.0.0: {}
 

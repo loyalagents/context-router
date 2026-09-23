@@ -394,11 +394,7 @@ test("packaging tools force copied pnpm imports and staged Node disables global 
   );
   assert.equal(environment.npm_config_package_import_method, "copy");
   assert.equal(environment.npm_config_offline, "true");
-  assert.equal(
-    environment.AUTH0_CLIENT_SECRET,
-    "synthetic-migration-gate-secret",
-  );
-  assert.notEqual(environment.AUTH0_CLIENT_SECRET, "must-not-pass-through");
+  assert.equal("AUTH0_CLIENT_SECRET" in environment, false);
   assert.deepEqual(
     packaging.buildPackagedNodeArgv("/private/stage/server.js"),
     ["--no-global-search-paths", "/private/stage/server.js"],
@@ -494,6 +490,38 @@ test("every packaging subprocess has materializer policy or a reviewed helper ce
     assert.ok(
       administrationSource.includes(fragment),
       `missing reviewed Docker helper command fragment: ${fragment}`,
+    );
+  }
+
+  const localIdentitySource = await readFile(
+    path.join(repositoryRoot, "scripts/local-migration/local-identity-smoke.mjs"),
+    "utf8",
+  );
+  assert.match(
+    localIdentitySource,
+    /import \{ spawn \} from "node:child_process";/,
+  );
+  assert.equal(
+    [...localIdentitySource.matchAll(/\bspawn\s*\(/g)].length,
+    1,
+    "the local identity helper must retain one reviewed process launcher",
+  );
+  assert.equal(
+    [...localIdentitySource.matchAll(/\bcommandRunner\s*\(/g)].length,
+    6,
+    "the local identity helper Docker command census changed",
+  );
+  for (const fragment of [
+    '"context",\n        "inspect",',
+    '"image", "inspect", image',
+    '"run",',
+    '"container",\n          "inspect",',
+    '"exec",\n            "--user",',
+    '"rm", "--force", containerId',
+  ]) {
+    assert.ok(
+      localIdentitySource.includes(fragment),
+      `missing reviewed local identity Docker command fragment: ${fragment}`,
     );
   }
 });
@@ -1115,6 +1143,10 @@ test("packaged runtime environment is strict, private, loopback, and supports MC
   assert.equal(fallback.MCP_SERVER_URL, "http://127.0.0.1:41001");
   assert.equal(fallback.APP_HOST, "127.0.0.1");
   assert.equal(fallback.AUTH0_SECRET, "synthetic-session-secret");
+  assert.equal(fallback.AUTH0_ISSUER, "https://127.0.0.1:4443/");
+  assert.equal(fallback.AUTH0_AUDIENCE, "urn:synthetic");
+  assert.equal("AUTH0_LEGACY_ISSUER" in fallback, false);
+  assert.equal("AUTH0_IDENTITY_LINK_CLAIMS" in fallback, false);
   assert.equal(fallback.NODE_EXTRA_CA_CERTS, "/private/secrets/ca.crt");
   assert.equal("MCP_RESOURCE" in fallback, false);
   assert.equal("MCP_HTTP_ALLOWED_ORIGINS" in fallback, false);

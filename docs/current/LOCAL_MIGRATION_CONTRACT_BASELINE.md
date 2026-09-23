@@ -2,15 +2,17 @@
 
 This document is the human-readable companion to the versioned
 [`local-migration-contract-baseline.json`](local-migration-contract-baseline.json)
-registry. The registry and its referenced fixtures are the executable baseline
-for migration Step 01. They describe the hosted product at planning base
-`9b56d38fde927d4e643af89ba45665a439613939`; they do not declare the hosted
-implementation to be the target local architecture.
+registry. The version-two registry and its referenced fixtures are the
+executable baseline. They retain the hosted product characterized at planning
+base `9b56d38fde927d4e643af89ba45665a439613939` and now name two explicit modes:
+`hosted-baseline` and `local-identity-preview`.
 
-The supported composition remains the NestJS backend and Next.js web app backed
-by PostgreSQL, Auth0, and Vertex AI. Step 01 adds characterization and validation
-plus an opt-in `APP_HOST` test setting. Leaving that setting unset preserves the
-existing listener call shape.
+`hosted-baseline` remains the NestJS backend and Next.js web app backed by
+PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` is an opt-in,
+non-listening backend composition with a private local principal and bearer,
+the temporary Step 03 PostgreSQL adapter, and a fixed unavailable model adapter.
+The database itself is an explicit operator-supplied loopback TLS target;
+missing configuration never selects one mode as a fallback for the other.
 
 ## How To Read The Baseline
 
@@ -32,7 +34,7 @@ Contract class is independent of disposition:
   accident or unsafe behavior into a permanent promise.
 - `planned-removal` remains present only through its compatibility window.
 
-The registry currently contains 39 decisions: 18 retain, 7 replace, 10 remove,
+The registry currently contains 40 decisions: 18 retain, 8 replace, 10 remove,
 and 4 defer. The detailed rationale, evidence path, owner, external callback
 allowlists, outbound inventory, and exact consumer map live in the JSON registry.
 The checker regenerates an exact census of public-route/tool/resource references
@@ -146,8 +148,14 @@ not promoted.
 
 ## Outbound And Trust Boundaries
 
-Normal hosted operation can contact PostgreSQL, Auth0 Management/JWKS endpoints,
-Google Vertex and credential endpoints, and the configured web/backend origin.
+Normal hosted operation can contact PostgreSQL, the configured hosted issuer's
+JWKS endpoint, Google Vertex and credential endpoints, and the configured
+web/backend origin. The backend no longer embeds Auth0 Management or
+Authentication SDK clients.
+The local identity preview contacts only literal `127.0.0.1` PostgreSQL over
+direct verified TLS. It performs no Auth0/JWKS, Vertex/model, web, or MCP
+transport call and opens no network listener. Its private bearer authenticates
+only the in-process local human guard; it is not an MCP or browser credential.
 Opt-in tooling can additionally contact an arbitrary orchestrator backend,
 spawn commands with inherited environment, and invoke hosted model/evaluation
 providers. The exact data classes, default status, disposition, and owner are
@@ -157,24 +165,36 @@ Important observed boundaries include:
 
 - raw document bytes and memory values can be sent to Vertex, including on a
   structured retry;
-- Auth0 human identity and MCP client identity are currently conflated for M2M
-  tokens, and email linking does not require a verified assertion;
+- hosted M2M compatibility tokens still materialize synthetic account rows, but
+  those rows cannot carry a human `ExternalIdentity` binding;
+- human principals resolve only by exact `(provider, issuer, subject)` identity;
+  verified email is a non-authoritative profile hint and may be shared by
+  multiple principals;
 - the default backend listener is not code-confined to loopback;
 - MCP Origin checks do not cover the entire browser trust boundary, and proxy
   headers are trusted for DCR rate limiting;
 - rejected DCR requests currently log the complete untrusted redirect-URI
   array, including any query strings; Step 07 must replace that with redacted
   origin/class/outcome logging before local transport ships;
-- provider prompt prefixes, extracted old/new preference values, identity
-  subjects/emails, and upload filenames/user IDs can enter current logs; Steps
-  06, 08, and 09 own centralized value-aware redaction and safe logging before
-  those paths become local-product surfaces;
+- provider prompt prefixes, extracted old/new preference values, and upload
+  filenames/user IDs can enter untouched current logs; the Step 03 hosted
+  identity, Auth0, user, Prisma, JWT, and MCP-auth paths use fixed diagnostics,
+  while Steps 06, 08, and 09 still own centralized value-aware redaction before
+  the remaining paths become local-product surfaces;
 - audit snapshots contain values, while sensitivity masking is derived from the
   live catalog; and
 - the authenticated web debug route renders a complete bearer token.
 
 These facts motivate later replacements and removals. They are not claims that
 unsafe behavior must be preserved.
+
+Step 03's identity boundary stores the exact provider, canonical issuer, and
+subject as ongoing authentication authority. Auth0 remains only the current
+JWT/JWKS claim adapter, so another verified provider can feed the same resolver.
+New principals use a unique non-routable `.invalid` compatibility email when no
+verified email exists, and account email is deliberately non-unique. The Step 03
+migration is a fresh-data transition: it locks the identity tables, deletes all
+user-owned data, and installs the required provider-neutral keys atomically.
 
 ## Package Scope
 
@@ -192,17 +212,29 @@ unsafe behavior must be preserved.
 later migration checkpoints. Its lifecycle is checked into
 [`gate-phases.json`](../../scripts/local-migration/gate-phases.json) and validated
 against a strict schema plus semantic ownership, predecessor, retirement, and
-supported-mode rules. Every supported mode must retain an active clean-restart
-smoke. Each mode records active/retired status and at most one successor; a
-retired mode must name exactly one active successor, and a later step adds
-replacement evidence before retiring a hosted-only phase. The version-one
-command allowlist remains intentionally hosted-specific and must be reviewed
-and expanded atomically with the first successor-mode phase set.
+supported-mode rules. Both modes share `contract-baseline`, `documentation`,
+`backend-unit-build`, `backend-database`, `restart-smoke`,
+`packaged-composition-smoke`, and `repository-integrity`.
+`local-orchestrator`, evaluation, web-production, and Harbor phases remain
+hosted-only. Phase IDs, order, commands, timeouts, and workflow budgets are
+unchanged. Every supported mode must retain active contract, build, state,
+restart, and integrity evidence. Each mode records active/retired status and at
+most one successor; a retired mode must name exactly one active successor. The
+command allowlist pins the exact two-mode matrix and rejects added modes,
+phases, or command substitutions.
 The aggregate runner requires a verified merge-base comparison for every
 contract-baseline phase command and fails if the bound artifact directory is
 missing. Direct checker runs remain useful for current-tree validation and
 report `baseComparison=skipped`; aggregate runs report
 `baseComparison=performed` so the comparison cannot disappear silently.
+
+The Step 03 restart and sealed-package evidence starts the compiled local
+preview twice around a credential rotation, preserves one principal and its
+provider bindings, exercises both clean recovery entrypoints, proves fixed
+SIGTERM/SIGINT exits and zero listeners, and leaves the canonical state bytes
+unchanged across each preview run. The packaged run uses the relocated sealed
+backend with a hostile working directory and environment; its journal owns and
+cleans the exact TLS database fixture, private state root, and child processes.
 
 The repository toolchain contract is exact Node.js 24.21.0 and pnpm 10.25.0.
 The tracked `.nvmrc`, strict root engine/package-manager metadata, standard and

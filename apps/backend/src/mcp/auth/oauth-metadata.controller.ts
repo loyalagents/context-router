@@ -119,9 +119,7 @@ export class OAuthMetadataController {
     const jwksUri = this.configService.get<string>('mcp.oauth.auth0.jwksUri');
 
     if (!authorizationEndpoint || !tokenEndpoint) {
-      this.logger.error(
-        'AUTH0_DOMAIN not configured - OAuth metadata endpoint will return incomplete data',
-      );
+      this.logger.error('Hosted OAuth issuer endpoints are not configured');
     }
 
     if (!serverUrl) {

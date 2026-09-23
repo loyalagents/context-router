@@ -64,6 +64,19 @@ const APPROVED_HOSTED_COMMANDS = new Map([
   ["packaged-composition-smoke", [["node", "scripts/local-migration/packaging-smoke.mjs"]]],
   ["repository-integrity", [["node", "scripts/local-migration/check-generated-integrity.mjs"]]],
 ]);
+const APPROVED_SUPPORTED_MODES = [
+  "hosted-baseline",
+  "local-identity-preview",
+];
+const APPROVED_LOCAL_IDENTITY_PHASES = new Set([
+  "contract-baseline",
+  "documentation",
+  "backend-unit-build",
+  "backend-database",
+  "restart-smoke",
+  "packaged-composition-smoke",
+  "repository-integrity",
+]);
 const TERMINAL_LINUX_PROCESS_STATES = new Set(["Z", "X", "x"]);
 
 function escapeRegExp(value) {
@@ -545,8 +558,8 @@ export function validatePhaseManifest(
       if (phase.ownerStep !== "02") errors.push("packaged smoke must be owned by Step 02");
       if (phase.timeoutMs !== 900_000) errors.push("packaged smoke must use the approved 900000ms timeout");
       if (phase.terminationGraceMs !== 180_000) errors.push("packaged smoke must use the approved 180000ms termination grace");
-      if (!jsonArrayEqual(phase.modes, ["hosted-baseline"])) {
-        errors.push("packaged smoke must use exactly the hosted-baseline mode");
+      if (!jsonArrayEqual(phase.modes, APPROVED_SUPPORTED_MODES)) {
+        errors.push("packaged smoke must use exactly the approved dual-mode matrix");
       }
       if (!jsonArrayEqual(phase.predecessors, ["restart-smoke"])) {
         errors.push("packaged smoke must immediately follow restart-smoke");
@@ -747,8 +760,10 @@ export async function loadAcceptedDecisionEvidence(repositoryRoot, manifest) {
 export function validateApprovedPhaseCommands(manifest) {
   const errors = [];
   const supportedModeIds = (manifest.supportedModes ?? []).map((mode) => mode?.id);
-  if (!jsonArrayEqual(supportedModeIds, ["hosted-baseline"])) {
-    errors.push("version-one command policy supports exactly hosted-baseline");
+  if (!jsonArrayEqual(supportedModeIds, APPROVED_SUPPORTED_MODES)) {
+    errors.push(
+      "command policy supports exactly hosted-baseline and local-identity-preview",
+    );
   }
   const activePhases = (manifest.phases ?? []).filter(
     (phase) => phase.status === "active",
@@ -764,11 +779,30 @@ export function validateApprovedPhaseCommands(manifest) {
   if (!jsonArrayEqual(activePhases.map((phase) => phase.id), hostedIds)) {
     errors.push("active phase exists outside the approved hosted-baseline command policy");
   }
+  const localIdentityIds = activePhases
+    .filter((phase) => phase.modes?.includes("local-identity-preview"))
+    .map((phase) => phase.id);
+  if (
+    !jsonArrayEqual(
+      localIdentityIds,
+      [...APPROVED_LOCAL_IDENTITY_PHASES],
+    )
+  ) {
+    errors.push(
+      "local-identity-preview phase set/order differs from the approved command policy",
+    );
+  }
   for (const phase of hostedPhases) {
     const actual = (phase.commands ?? []).map((command) => command.argv);
     const expected = APPROVED_HOSTED_COMMANDS.get(phase.id);
     if (!expected || !jsonArrayEqual(actual, expected)) {
       errors.push(`phase ${phase.id} command matrix differs from approved policy`);
+    }
+    const expectedModes = APPROVED_LOCAL_IDENTITY_PHASES.has(phase.id)
+      ? APPROVED_SUPPORTED_MODES
+      : ["hosted-baseline"];
+    if (!jsonArrayEqual(phase.modes, expectedModes)) {
+      errors.push(`phase ${phase.id} mode matrix differs from approved policy`);
     }
   }
   for (const phase of manifest.phases ?? []) {
@@ -990,11 +1024,8 @@ export function buildIsolatedGateEnvironment(
     MCP_STDIO_ENABLED: "false",
     MCP_TOOLS_PREFERENCES_ENABLED: "true",
     MCP_RESOURCES_SCHEMA_ENABLED: "true",
-    AUTH0_DOMAIN: "migration-gate.invalid",
     AUTH0_ISSUER: "https://migration-gate.invalid/",
     AUTH0_AUDIENCE: "urn:context-router:migration-gate",
-    AUTH0_CLIENT_ID: "migration-gate-client",
-    AUTH0_CLIENT_SECRET: "synthetic-migration-gate-secret",
     AUTH0_MCP_CLAUDE_CLIENT_ID: "migration-gate-claude",
     AUTH0_MCP_CODEX_CLIENT_ID: "migration-gate-codex",
     AUTH0_MCP_FALLBACK_CLIENT_ID: "migration-gate-fallback",
@@ -1398,8 +1429,12 @@ export async function runPhaseSequence(
       for (let skipped = index + 1; skipped < results.length; skipped += 1) {
         results[skipped].status = "skipped";
       }
+      const outputTail = typeof error?.outputTail === "string"
+        ? redactSecrets(error.outputTail).slice(-16_384)
+        : "";
       const wrapped = new Error(
-        `phase ${phase.id} failed: ${redactSecrets(error?.message ?? error)}`,
+        `phase ${phase.id} failed: ${redactSecrets(error?.message ?? error)}` +
+          (outputTail ? `\nSanitized command output (tail):\n${outputTail}` : ""),
         { cause: error },
       );
       wrapped.phase = phase.id;

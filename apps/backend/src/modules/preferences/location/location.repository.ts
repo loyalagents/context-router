@@ -10,11 +10,8 @@ export class LocationRepository {
 
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    userId: string,
-    data: CreateLocationInput,
-  ): Promise<Location> {
-    this.logger.log(`Creating location for user: ${userId}`);
+  async create(userId: string, data: CreateLocationInput): Promise<Location> {
+    this.logger.log('Creating a location row');
     return this.prisma.location.create({
       data: {
         userId,
@@ -33,13 +30,8 @@ export class LocationRepository {
    * This prevents duplicate locations and handles race conditions gracefully.
    * Useful for "update my HOME address" type operations.
    */
-  async upsert(
-    userId: string,
-    data: CreateLocationInput,
-  ): Promise<Location> {
-    this.logger.log(
-      `Upserting location for user: ${userId}, type: ${data.type}, label: ${data.label}`,
-    );
+  async upsert(userId: string, data: CreateLocationInput): Promise<Location> {
+    this.logger.log('Upserting a location row');
 
     // Find existing location with same type and label
     const existing = await this.prisma.location.findFirst({
@@ -66,7 +58,7 @@ export class LocationRepository {
   }
 
   async findAll(userId: string): Promise<Location[]> {
-    this.logger.log(`Fetching all locations for user: ${userId}`);
+    this.logger.log('Fetching location rows');
     return this.prisma.location.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -74,7 +66,7 @@ export class LocationRepository {
   }
 
   async findOne(locationId: string): Promise<Location | null> {
-    this.logger.log(`Fetching location: ${locationId}`);
+    this.logger.log('Fetching one location row');
     return this.prisma.location.findUnique({
       where: { locationId },
     });
@@ -84,7 +76,7 @@ export class LocationRepository {
     userId: string,
     type: LocationType,
   ): Promise<Location[]> {
-    this.logger.log(`Fetching ${type} locations for user: ${userId}`);
+    this.logger.log('Fetching location rows by type');
     return this.prisma.location.findMany({
       where: {
         userId,
@@ -98,7 +90,7 @@ export class LocationRepository {
     locationId: string,
     data: UpdateLocationInput,
   ): Promise<Location> {
-    this.logger.log(`Updating location: ${locationId}`);
+    this.logger.log('Updating a location row');
     return this.prisma.location.update({
       where: { locationId },
       data: {
@@ -110,7 +102,7 @@ export class LocationRepository {
   }
 
   async delete(locationId: string): Promise<Location> {
-    this.logger.log(`Deleting location: ${locationId}`);
+    this.logger.log('Deleting a location row');
     return this.prisma.location.delete({
       where: { locationId },
     });

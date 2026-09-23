@@ -37,6 +37,19 @@ import {
   withCleanupStack,
 } from "./restart-smoke.mjs";
 import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.mjs";
+import { hasLiveProcessGroupMembers, isProcessLive } from "./gate-runner.mjs";
+import {
+  activateJournaledNodeChild,
+  assertStateBytesUnchanged,
+  buildListenerInspectionEnvironment,
+  buildLocalIdentitySmokeEnvironment,
+  captureUtility,
+  createGatedNodeChild,
+  decodeSmokeIdentityState,
+  listeningSocketInodesFromProc,
+  parseLocalIdentityPreviewReadiness,
+  terminateAndReapJournaledNodeChild,
+} from "./local-identity-smoke.mjs";
 
 async function waitForFile(filePath, timeoutMs = 2_000) {
   const deadline = Date.now() + timeoutMs;
@@ -143,6 +156,332 @@ test("ephemeral test token accepts an explicit bounded scope set", () => {
     Buffer.from(token.split(".")[1], "base64url").toString(),
   );
   assert.equal(payload.scope, "preferences:read preferences:write");
+});
+
+test("restart persistence is verified by opaque principal rather than legacy email", async () => {
+  const source = await readFile(
+    new URL("./restart-smoke.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /SELECT user_id FROM users WHERE user_id = \$1/u,
+  );
+  assert.doesNotMatch(source, /@clients@m2m\.local/u);
+});
+
+test("restart and packaging phases both execute the shared local identity smoke", async () => {
+  const [restartSource, packagingSource] = await Promise.all([
+    readFile(new URL("./restart-smoke.mjs", import.meta.url), "utf8"),
+    readFile(new URL("./packaging-smoke.mjs", import.meta.url), "utf8"),
+  ]);
+  for (const source of [restartSource, packagingSource]) {
+    assert.match(source, /await runLocalIdentitySmoke\(\{/u);
+  }
+});
+
+test("local identity smoke environment is explicit and ignores hostile provider inputs", () => {
+  const environment = buildLocalIdentitySmokeEnvironment(
+    {
+      PATH: "/bin",
+      LANG: "C",
+      HOME: "/caller",
+      AUTH0_ISSUER: "https://hostile.invalid/",
+      GCP_PROJECT_ID: "hostile-cloud",
+      NODE_PG_FORCE_NATIVE: "1",
+    },
+    {
+      home: "/owned/home",
+      temporaryDirectory: "/owned/tmp",
+      stateRoot: "/owned/state",
+      databaseUrl: "postgresql://user:secret@127.0.0.1:5432/local",
+      caPem: "fixture-ca",
+    },
+  );
+  assert.deepEqual(environment, {
+    PATH: "/bin",
+    LANG: "C",
+    HOME: "/owned/home",
+    TMPDIR: "/owned/tmp",
+    TMP: "/owned/tmp",
+    TEMP: "/owned/tmp",
+    NODE_ENV: "production",
+    LOCAL_IDENTITY_STATE_ROOT: "/owned/state",
+    DATABASE_URL: "postgresql://user:secret@127.0.0.1:5432/local",
+    LOCAL_DATABASE_TLS_CA_PEM: "fixture-ca",
+    AUTH0_ISSUER: "local-smoke-auth0-canary.invalid",
+    GCP_PROJECT_ID: "local-smoke-cloud-canary",
+    NODE_PG_FORCE_NATIVE: "1",
+    PGBINARY: "1",
+  });
+});
+
+test("listener inspection receives no local identity credentials", () => {
+  assert.deepEqual(
+    buildListenerInspectionEnvironment({
+      PATH: "/hostile/bin",
+      LANG: "C",
+      LC_ALL: "C",
+      TZ: "UTC",
+      DATABASE_URL: "postgresql://user:secret@127.0.0.1/local",
+      LOCAL_DATABASE_TLS_CA_PEM: "secret-ca",
+      LOCAL_IDENTITY_STATE_ROOT: "/secret/state",
+      AUTH0_ISSUER: "https://secret.invalid/",
+    }),
+    { LANG: "C", LC_ALL: "C", TZ: "UTC" },
+  );
+});
+
+test(
+  "listener inspection timeout reaps its process group and captured streams",
+  { skip: process.platform === "win32" },
+  async () => {
+    const root = await mkdtemp(
+      path.join(os.tmpdir(), "context-router-listener-inspection-"),
+    );
+    const marker = path.join(root, "pids.json");
+    try {
+      await assert.rejects(
+        captureUtility(
+          process.execPath,
+          [
+            "--eval",
+            [
+              'const { spawn } = require("node:child_process");',
+              'const { writeFileSync } = require("node:fs");',
+              'const child = spawn(process.execPath, ["--eval", "setInterval(() => {}, 1000)"], { stdio: "ignore" });',
+              "writeFileSync(process.env.CAPTURE_MARKER, JSON.stringify([process.pid, child.pid]));",
+              "setInterval(() => {}, 1000);",
+            ].join("\n"),
+          ],
+          {
+            cwd: root,
+            env: { ...process.env, CAPTURE_MARKER: marker },
+            timeoutMs: 1_000,
+          },
+        ),
+        (error) => {
+          assert.match(error.message, /listener inspection timed out/);
+          assert.doesNotMatch(error.message, /reap timed out|process group did not exit/);
+          return true;
+        },
+      );
+      const pids = JSON.parse(await readFile(marker, "utf8"));
+      assert.equal(pids.length, 2);
+      for (const pid of pids) {
+        assert.equal(await isProcessLive(pid), false);
+      }
+      assert.equal(await hasLiveProcessGroupMembers(pids[0]), false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
+
+test("journaled local identity children cannot run outside durable PID ownership", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "context-router-local-child-"));
+  const target = path.join(root, "target.cjs");
+  const marker = path.join(root, "loaded.txt");
+  await writeFile(
+    target,
+    [
+      'const { writeFileSync } = require("node:fs");',
+      'const { spawn } = require("node:child_process");',
+      "module.exports.runLocalIdentityEntrypoint = async ({ argv }) => {",
+      "  writeFileSync(process.env.GATE_MARKER, argv[0]);",
+      '  if (argv[0] === "hang") await new Promise(() => {});',
+      '  if (argv[0] === "trailing") setImmediate(() => process.stdout.write("trailing\\n"));',
+      '  if (argv[0] === "descendant") {',
+      '    const child = spawn(process.execPath, ["--eval", "setInterval(() => {}, 1000)"], { stdio: "ignore" });',
+      "    child.unref();",
+      "  }",
+      "  return 0;",
+      "};",
+      "",
+    ].join("\n"),
+    { mode: 0o600 },
+  );
+  const createHandle = (operation) =>
+    createGatedNodeChild({
+      entrypoint: target,
+      operation,
+      cwd: root,
+      env: { ...process.env, GATE_MARKER: marker },
+    });
+  const assertMarkerMissing = async () => {
+    await assert.rejects(access(marker), { code: "ENOENT" });
+  };
+  const assertPidGone = (pid) => {
+    assert.throws(
+      () => process.kill(pid, 0),
+      (error) => error?.code === "ESRCH",
+    );
+  };
+
+  try {
+    const events = [];
+    const success = createHandle("success");
+    const successPid = success.child.pid;
+    await assertMarkerMissing();
+    await activateJournaledNodeChild({
+      handle: success,
+      journal: {
+        async acquired(id, update) {
+          events.push([id, update.identity.pid, update.recovery]);
+        },
+      },
+      resourceId: "admin",
+      identity: { operation: "success" },
+    });
+    assert.deepEqual(events, [
+      [
+        "admin",
+        successPid,
+        {
+          processGroupId: successPid,
+          instruction:
+            "Verify the recorded child PID, then terminate and reap only the process group with that exact numeric ID.",
+        },
+      ],
+    ]);
+    const successResult = await success.result;
+    assert.deepEqual(
+      { code: successResult.code, signal: successResult.signal },
+      { code: 0, signal: null },
+    );
+    assert.equal(await readFile(marker, "utf8"), "success");
+    assertPidGone(successPid);
+    await rm(marker);
+
+    const trailing = createHandle("trailing");
+    await activateJournaledNodeChild({
+      handle: trailing,
+      journal: { acquired: async () => undefined },
+      resourceId: "admin-trailing",
+      identity: { operation: "trailing" },
+    });
+    const trailingResult = await trailing.result;
+    assert.equal(trailingResult.stdout, "trailing\n");
+    assert.equal(trailingResult.stderr, "");
+    await rm(marker);
+
+    const beforeRelease = createHandle("success");
+    const beforeReleasePid = beforeRelease.child.pid;
+    await beforeRelease.ready;
+    beforeRelease.child.disconnect();
+    const beforeReleaseResult = await beforeRelease.result;
+    assert.equal(beforeReleaseResult.code, 70);
+    await assertMarkerMissing();
+    assertPidGone(beforeReleasePid);
+
+    const afterRelease = createHandle("hang");
+    const afterReleasePid = afterRelease.child.pid;
+    await activateJournaledNodeChild({
+      handle: afterRelease,
+      journal: { acquired: async () => undefined },
+      resourceId: "preview",
+      identity: { generation: 1 },
+    });
+    await waitForFile(marker);
+    afterRelease.child.disconnect();
+    const afterReleaseResult = await afterRelease.result;
+    assert.equal(afterReleaseResult.code, 70);
+    assertPidGone(afterReleasePid);
+    await rm(marker);
+
+    for (const failure of ["journal", "release"]) {
+      const handle = createHandle("success");
+      const pid = handle.child.pid;
+      await assert.rejects(
+        activateJournaledNodeChild({
+          handle,
+          journal: {
+            acquired: async () => {
+              if (failure === "journal") throw new Error("journal failed");
+            },
+          },
+          resourceId: "admin",
+          identity: { operation: "success" },
+          ...(failure === "release"
+            ? { releaseChild: async () => { throw new Error("release failed"); } }
+            : {}),
+        }),
+        new RegExp(`${failure} failed`),
+      );
+      await handle.result;
+      await assertMarkerMissing();
+      assertPidGone(pid);
+    }
+
+    const descendant = createHandle("descendant");
+    const descendantPid = descendant.child.pid;
+    await activateJournaledNodeChild({
+      handle: descendant,
+      journal: { acquired: async () => undefined },
+      resourceId: "admin-descendant",
+      identity: { operation: "descendant" },
+    });
+    await descendant.result;
+    assert.equal(await hasLiveProcessGroupMembers(descendantPid), true);
+    assert.deepEqual(
+      await terminateAndReapJournaledNodeChild(
+        descendant,
+        "descendant fixture",
+      ),
+      [],
+    );
+    assert.equal(await hasLiveProcessGroupMembers(descendantPid), false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("local identity smoke accepts only canonical state and fixed preview readiness", () => {
+  const tokens = [1, 2, 3].map((value) =>
+    Buffer.alloc(32, value).toString("base64url"),
+  );
+  const state = {
+    schemaVersion: 1,
+    databaseTargetId: tokens[0],
+    principalId: tokens[1],
+    credential: tokens[2],
+    generation: 1,
+  };
+  assert.deepEqual(
+    decodeSmokeIdentityState(Buffer.from(`${JSON.stringify(state)}\n`)),
+    state,
+  );
+  assert.throws(
+    () => decodeSmokeIdentityState(Buffer.from(`${JSON.stringify({ ...state, extra: true })}\n`)),
+    /canonical local identity state/,
+  );
+  assert.equal(
+    parseLocalIdentityPreviewReadiness(
+      '{"type":"context-router.local-identity.preview.ready","version":1}',
+    ),
+    true,
+  );
+  assert.throws(
+    () => parseLocalIdentityPreviewReadiness('{"type":"other","version":1}'),
+    /preview readiness/,
+  );
+  assert.doesNotThrow(() =>
+    assertStateBytesUnchanged(Buffer.from("same"), Buffer.from("same")),
+  );
+  assert.throws(
+    () => assertStateBytesUnchanged(Buffer.from("before"), Buffer.from("after")),
+    /recovery changed identity state/,
+  );
+});
+
+test("Linux listener parsing returns only TCP LISTEN socket inodes", () => {
+  const table = [
+    "  sl  local_address rem_address st tx_queue rx_queue tr tm->when retrnsmt uid timeout inode",
+    "   0: 0100007F:0BB8 00000000:0000 0A 00000000:00000000 00:00000000 00000000  501 0 12345",
+    "   1: 0100007F:1538 0100007F:C001 01 00000000:00000000 00:00000000 00000000  501 0 67890",
+  ].join("\n");
+  assert.deepEqual([...listeningSocketInodesFromProc([table])], ["12345"]);
 });
 
 test("TLS fixture removes OpenSSL serial and key material and keeps only a private CA", async () => {
@@ -340,11 +679,25 @@ test("smoke environments replace hostile caller homes and disable package downlo
     jwksPort: 4443,
     caCertificate: "/smoke/ca.pem",
     clientIds: { claude: "a", codex: "b", fallback: "c" },
-    clientSecret: "synthetic-secret",
   });
   assert.equal(backend.HOME, "/smoke/home");
   assert.equal(backend.XDG_CONFIG_HOME, "/smoke/home/.config");
   assert.equal(backend.PNPM_HOME, undefined);
+  assert.equal(backend.AUTH0_ISSUER, "https://127.0.0.1:4443/");
+  assert.equal(
+    backend.AUTH0_AUDIENCE,
+    "urn:context-router:hosted-baseline-smoke",
+  );
+  for (const retired of [
+    "AUTH0_DOMAIN",
+    "AUTH0_CLIENT_ID",
+    "AUTH0_CLIENT_SECRET",
+    "AUTH0_MANAGEMENT_API_AUDIENCE",
+    "AUTH0_LEGACY_ISSUER",
+    "AUTH0_IDENTITY_LINK_CLAIMS",
+  ]) {
+    assert.equal(retired in backend, false);
+  }
 });
 
 test("resource journal is private, redacted, and retains exact recovery on cleanup failure", async () => {

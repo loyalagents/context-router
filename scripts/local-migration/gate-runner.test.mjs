@@ -432,6 +432,17 @@ test("gate environment isolates package-manager state and disables Corepack netw
   assert.equal(environment.PNPM_HOME, undefined);
   assert.equal(environment.XDG_CONFIG_HOME, "/disposable/home/.config");
   assert.equal(environment.XDG_CACHE_HOME, "/disposable/home/.cache");
+  assert.equal(environment.AUTH0_ISSUER, "https://migration-gate.invalid/");
+  assert.equal(environment.AUTH0_AUDIENCE, "urn:context-router:migration-gate");
+  for (const retired of [
+    "AUTH0_DOMAIN",
+    "AUTH0_CLIENT_ID",
+    "AUTH0_CLIENT_SECRET",
+    "AUTH0_LEGACY_ISSUER",
+    "AUTH0_IDENTITY_LINK_CLAIMS",
+  ]) {
+    assert.equal(retired in environment, false);
+  }
 });
 
 test("disposable Git commands ignore global templates and hooks", async () => {
@@ -833,7 +844,7 @@ test("decision replacement evidence resolves only exact accepted repository reco
   }
 });
 
-test("approved command policy rejects active phases outside the sole version-one mode", async () => {
+test("approved command policy rejects modes and phases outside the exact dual-mode matrix", async () => {
   const manifest = JSON.parse(
     await readFile(
       new URL("./gate-phases.json", import.meta.url),
@@ -857,7 +868,7 @@ test("approved command policy rejects active phases outside the sole version-one
     predecessors: [injected.phases.at(-1).id],
   });
   const errors = validateApprovedPhaseCommands(injected);
-  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline")));
+  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline and local-identity-preview")));
   assert.ok(errors.some((error) => error.includes("outside the approved")));
 });
 
@@ -913,6 +924,24 @@ test("phase runner is ordered, fail-fast, sanitized, and always invokes cleanup"
   );
   assert.deepEqual(calls, ["one", "two"]);
   assert.equal(cleanups, 1);
+});
+
+test("phase failures preserve bounded, redacted command diagnostics", async () => {
+  const failure = new Error("command exited 1");
+  failure.outputTail = `${"old-output\n".repeat(2000)}\nTLS fixture failed\nAuthorization: Bearer diagnostic-secret\n`;
+  await assert.rejects(
+    runPhaseSequence([{ id: "integration", commands: [{}] }], {
+      execute: async () => { throw failure; },
+    }),
+    (error) => {
+      assert.match(error.message, /phase integration failed: command exited 1/);
+      assert.match(error.message, /TLS fixture failed/);
+      assert.doesNotMatch(error.message, /diagnostic-secret/);
+      assert.ok(error.message.length < 17_000);
+      assert.equal(error.cause, failure);
+      return true;
+    },
+  );
 });
 
 test("phase runner reports failed/skipped states and preserves cleanup failure", async () => {
