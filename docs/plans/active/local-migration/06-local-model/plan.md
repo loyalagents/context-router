@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment C CP1 stopped after both candidates failed quality; amendment D proposed pending review/user decision; no production selection/integration approval
+- Document status: amendment C CP1 stopped after both candidates failed quality; amendment D independently reviewed, user decision pending; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -253,7 +253,7 @@ Only report Step 06 complete when selected configuration and actual app behavior
 
 ## Proposed Amendment D: Bounded Prompt Framing Experiment
 
-Status: proposed, not approved for execution. The complete C configuration failed the frozen extraction gate for both 4B and 9B. This triggers CP1's rule: “Both failures stop selection and require a decision/reviewed revised experiment.” No selection or integration proceeds until the next decision. The [feasibility record](feasibility.md#selection-stop-both-frozen-candidates-fail) binds observations to exact receipts and source revisions.
+Status: independently reviewed proposal, not approved for execution. The complete C configuration failed the frozen extraction gate for both 4B and 9B. This triggers CP1's rule: “Both failures stop selection and require a decision/reviewed revised experiment.” No selection or integration proceeds until the next decision. The [feasibility record](feasibility.md#selection-stop-both-frozen-candidates-fail) binds observations to exact receipts and source revisions.
 
 The proposed next experiment uses the already acquired pinned 9B/runtime on the same Mac. It adds exactly one constant system message before the existing user message in native `/apply-template`; the existing application prompts, schemas, document bytes, user-message encoding, validators, runtime flags, context/output budgets and all acceptance thresholds stay fixed. Catalog values, preferences, application prompts and attached text remain in the user message; none is promoted into the system message. No new download, product adapter, capability expansion or lifecycle work is included.
 
@@ -273,3 +273,5 @@ Also freeze two new extraction controls before measurement, three repetitions ea
 All six additional controls must return valid actual-Zod results with exact expected validated units and zero critical violations. They use the existing extraction consumer and the same fixed envelope, budgets and offline boundary. Together this bounds D to 54 quality trials, plus deterministic preparation checks; infrastructure failures remain recorded and may be corrected/re-reviewed without changing the oracle. Another model-quality failure stops this experiment and requires a new decision. Passing it still does not select a production configuration: all remaining CP1 cancellation/schema/parser/resource evidence and independent selection approval remain required before CP2.
 
 Decision requested after affected independent review: approve this bounded 9B experiment, or leave Step 06 paused. Existing asset/download/location consent remains valid; this request concerns the changed experiment after failed selection evidence. The single cohesive PR remains the intended outcome; no planning/setup/testing/closeout PR is created.
+
+Proposal review at `f2a7068b033ef9073f9574d185f86dc3498ae65c`: `/root/plan_architecture` (Astra Extra High), `/root/plan_compatibility` (Astra High) and `/root/plan_safety` (Astra Extra High) independently approved D's architecture/scope, evaluation/compatibility and safety respectively, solely as a concrete proposal for the required user decision. No blocker remains in that proposal; execution/selection/CP2 remain unauthorized. Launch settings were accepted; underlying serving internals remain unverified. All were read-only. They require byte-exact message-role/order tests and a frozen new manifest before inference, and carry forward all unchanged CP1/final gates. The two added cases are targeted regression controls designed after observing C, not a blind holdout; passing them does not establish general prompt-injection resistance.

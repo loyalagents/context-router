@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "file": "quality-4b-first.json",
+      "testedRevision": "c907b8f9917dc4ada5ad05ffc897a9699bfaf5d6",
+      "sha256": "9fb18ea02fe17f12f36cc6d29c1c9ec94e94d9832610379e147a289e243ef85c",
+      "disposition": "complete; extraction utility and absent-value negatives failed; later accounting fixes independently found inapplicable"
+    },
+    {
+      "file": "quality-9b-first.json",
+      "testedRevision": "2e04f1e50c9bfd08bd070982a50b191a9795a698",
+      "sha256": "d8f8756c8859f2bd63653192121f079b8ea61d98c2111615b20c7a47db37aecf",
+      "disposition": "incomplete; active-poll timeout latched transport; retained failures; not candidate utility qualification"
+    },
+    {
+      "file": "quality-9b-complete.json",
+      "testedRevision": "e987e15637851f58a98c3c773e3b5be944b295f3",
+      "sha256": "236bf64f21d563a0de9e20834c62acbceb30302388a3a181602b298777be8302",
+      "disposition": "complete; extraction recall failed; selection stopped"
+    }
+  ],
+  "originalManifestJsonDigest": "a3b8b625757f98c7d574df7522cf3f627fcd2fb6b885765c19b4e810712e5d33",
+  "canonicalScorerManifestDigest": "35ea1d822dbb7d32619c384f00da9e26b69cebc37598f36c92413ecf3ae6424a"
+}
