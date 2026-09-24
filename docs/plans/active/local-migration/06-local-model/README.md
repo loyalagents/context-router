@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; amendment C independently approved for bounded feasibility; asset/target consent recorded; CP1 executing
+- Status: active primary step; CP1 selection paused after both candidates failed quality; revised experiment pending review and user decision
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -15,4 +15,4 @@ The [plan](plan.md), including transport amendment C, has independent architectu
 
 Existing no-model previews remain supported throughout. No product code or model assets have changed at activation. Final live and deterministic evidence, fresh complete-diff review, final local gate and final pushed-head CI remain required before the single PR is ready for human review. Do not merge automatically or activate another step.
 
-The [feasibility record](feasibility.md) tracks deterministic probe progress and the blocking non-streaming cancellation finding. The runtime and 4B files are downloaded and hash-verified; no model has been selected.
+The [feasibility record](feasibility.md#selection-stop-both-frozen-candidates-fail) retains both completed quality runs and the incomplete first 9B transport run. Both completed candidates missed the 90% extraction-recall requirement; 4B also failed absent-value negatives. Runtime, 4B and 9B assets are hash-verified outside Git. No model is selected, no production integration is authorized, and no PR is ready. The [proposed amendment D](plan.md#proposed-amendment-d-bounded-prompt-framing-experiment) makes the next requested decision concrete while preserving all original evidence and thresholds.
