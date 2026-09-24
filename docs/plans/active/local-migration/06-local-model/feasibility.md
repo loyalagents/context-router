@@ -1,6 +1,6 @@
 # Step 06 Feasibility Progress
 
-- Status: incomplete; no candidate selected and no production integration authorized
+- Status: selection paused after both candidates failed quality; reviewed amendment D awaits user decision; no production integration authorized
 - Owner and sole writer: `/root`; investigators/reviewers remain read-only
 - Base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -11,7 +11,7 @@
 
 The [plan](plan.md) records the passing clean-base activation and independent B approval for bounded CP1. The original ten preparation documents still match the retained [manifest](evidence/preparation-manifest.json); original workspace remains untouched. Exact activation and transfer receipts are retained beside that manifest.
 
-The user has approved the pinned runtime and 4B model, optional 9B only if useful, temporary storage under `/private/tmp/context-router-step06-assets`, and initial qualification on the observed M1 Max/64 GiB/macOS 15.1.1. No further initial consent is pending. Lower hardware/other OS versions remain unqualified. Proposed assets are the MIT llama.cpp b11146 macOS arm64 archive (11,189,714 bytes) from GitHub and Apache-2.0 Unsloth Qwen3.5 Q4_K_M GGUF from Hugging Face: 4B (2,740,937,888 bytes), optionally 9B (5,680,522,464 bytes). The plan binds exact revisions and SHA-256. Proposed destination is `/private/tmp/context-router-step06-assets`; no shared/global cache or install. The approved runtime archive and 4B weights have now been downloaded and verified against the exact pinned byte counts and SHA-256; see the retained receipts. The archive passed contained-entry validation before extraction. `llama-server --version` reports `0.5.0-dev`, build 11146, commit `7fe450e19`, AppleClang 21/Darwin arm64. No model inference process has started yet; 9B remains undownloaded. Lower-memory Macs, other OS versions and native Windows/Linux are unqualified.
+The user has approved the pinned runtime and 4B model, optional 9B only if useful, temporary storage under `/private/tmp/context-router-step06-assets`, and initial qualification on the observed M1 Max/64 GiB/macOS 15.1.1. No further initial consent is pending. Lower hardware/other OS versions remain unqualified. Proposed assets are the MIT llama.cpp b11146 macOS arm64 archive (11,189,714 bytes) from GitHub and Apache-2.0 Unsloth Qwen3.5 Q4_K_M GGUF from Hugging Face: 4B (2,740,937,888 bytes), optionally 9B (5,680,522,464 bytes). The plan binds exact revisions and SHA-256. Proposed destination is `/private/tmp/context-router-step06-assets`; no shared/global cache or install. The approved runtime archive and 4B weights have now been downloaded and verified against the exact pinned byte counts and SHA-256; see the retained receipts. The archive passed contained-entry validation before extraction. `llama-server --version` reports `0.5.0-dev`, build 11146, commit `7fe450e19`, AppleClang 21/Darwin arm64. At this initial acquisition checkpoint, inference had not started and 9B was undownloaded. The later 9B receipt and all completed/failed runs are recorded below. Lower-memory Macs, other OS versions and native Windows/Linux are unqualified.
 
 The user has confirmed temporary asset storage under `/private/tmp/context-router-step06-assets` for now, with durable storage to be decided later. This directory is outside both the original repository and the dedicated worktree; model weights and runtime binaries are not repository inputs and will not be staged or committed. The user subsequently confirmed the recommended download selection and initial Mac target.
 
@@ -25,7 +25,7 @@ Tests preceded implementation: initial missing-module red, then eight passing te
 node --test scripts/local-migration/local-model-quality.test.mjs
 ```
 
-Affected independent re-review at `5bcc84feda9c5eb7b0e51d1cc0648b080bc1cf1e` approved the corrected scorer with both findings resolved. These are harness self-tests only. No real task corpus, expected answers, prompt/schema hashes or model score has yet been frozen/measured; no acceptance claim follows from synthetic scorer inputs. The full live harness and source/package/parser qualification remain to be implemented and validated.
+Affected independent re-review at `5bcc84feda9c5eb7b0e51d1cc0648b080bc1cf1e` approved the corrected scorer with both findings resolved. These are harness self-tests only. At that component checkpoint, no real task corpus, expected answers, prompt/schema hashes or model score had yet been frozen/measured; no acceptance claim follows from synthetic scorer inputs. Later sections record the frozen corpus and failed model measurements. The full live harness and source/package/parser qualification remain to be implemented and validated.
 
 ## Blocking Source Finding And Proposed Amendment
 
@@ -41,7 +41,7 @@ Amendment C has independent architecture, compatibility/tests and safety approva
 
 ## Consented Acquisition And Probe Transport
 
-Retained [runtime receipt](evidence/runtime-receipt.json) and [4B receipt](evidence/model-4b-receipt.json) bind acquired bytes. Assets remain outside Git in the approved private temporary directory. No 9B download or inference run has occurred.
+Retained [runtime receipt](evidence/runtime-receipt.json) and [4B receipt](evidence/model-4b-receipt.json) bind acquired bytes. Assets remain outside Git in the approved private temporary directory. This paragraph records the initial acquisition stage; subsequent 9B acquisition and live runs are retained below.
 
 Tests-first development added seven SSE framing tests and ten real-loopback TLS/admission/cancellation tests. Both suites passed on Node 24.21.0 after fixing the private-agent trust configuration: Node intentionally disables pooling for per-request identity callbacks, so the immutable certificate pin belongs on the private Agent. Tests cover never-sent abort, delayed admission/stale IDs, zero queue, witnessed settlement and capacity reuse, late cancellation, dropped connections, auth failure, control replacement, wrong certificate/IP SAN before HTTP receipt, deadline and pre-abort status exclusion. These remain deterministic probe evidence, not live native cancellation qualification. Initial sandbox loopback-listen denial exposed missing setup-failure cleanup registration; hooks now register before listen and close the client/server before removing credentials. The ten owned abandoned setup roots were verified and removed; local receipt is `/private/tmp/step06-evidence/tls-fixture-cleanup.json`.
 
