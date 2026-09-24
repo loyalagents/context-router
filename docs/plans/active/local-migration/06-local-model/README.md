@@ -24,3 +24,5 @@ The first native prefill-cancellation trial failed the unchanged recovery deadli
 The user explicitly approved F (“yes you can test this”). Continue its bounded smaller-batch experiment after affected implementation review; quality deferral E remains accepted. Production selection/integration remain gated on the results and remaining qualification.
 
 F ran once and failed client capacity recovery despite observed native early release. Its stop condition is active; no conditional quality run or integration proceeded. See the [F result](plan.md#f-result-native-release-observed-capacity-recovery-failed).
+
+[Proposed G](plan.md#proposed-amendment-g-fix-cancellation-verification) addresses a plausible verification timeout while retaining the total five-second limit. It is under affected review for the user decision; the observed F failure remains retained and no new execution is authorized.
