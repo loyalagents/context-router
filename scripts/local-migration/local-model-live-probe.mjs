@@ -7,6 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { withNative } from './fixtures/local-model-feasibility/native.mjs';
 import { spawnOwned } from './fixtures/local-model-feasibility/process.mjs';
 import { auditCancellationLog } from './fixtures/local-model-feasibility/cancellation-audit.mjs';
+import { auditEarlyBoundaryLog } from './fixtures/local-model-feasibility/early-boundary.mjs';
 const assets = '/private/tmp/context-router-step06-assets';
 const evidence = '/private/tmp/step06-evidence';
 const candidate = process.argv[3] ?? '4b';
@@ -20,7 +21,7 @@ for await (const chunk of createReadStream(model)) hash.update(chunk);
 if (hash.digest('hex') !== pinned.sha256) throw new Error('Model asset hash mismatch');
 const profile = '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))';
 const mode = process.argv[2] ?? 'smoke';
-if (!['smoke', 'quality', 'cancellation', 'schemas'].includes(mode)) throw new Error('Unknown probe mode');
+if (!['smoke', 'quality', 'cancellation', 'schemas', 'early-abort', 'early-disconnect'].includes(mode)) throw new Error('Unknown probe mode');
 const testedRevision = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 if (execFileSync('/usr/bin/git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()) throw new Error('Commit probe inputs before live measurement');
 const run = `native-${candidate}-${mode}-${Date.now()}`;
@@ -58,6 +59,10 @@ try {
   if (mode === 'cancellation') {
     receipt.nativeCancellationAudit = auditCancellationLog(diagnostics, receipt.worker);
     receipt.passed &&= receipt.nativeCancellationAudit.passed;
+  }
+  if (['early-abort', 'early-disconnect'].includes(mode)) {
+    receipt.earlyNativeAudit = auditEarlyBoundaryLog(diagnostics, receipt.worker);
+    receipt.passed &&= receipt.earlyNativeAudit.passed;
   }
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
 await writeFile(join(evidence, `${run}.json`), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx', mode: 0o600 });

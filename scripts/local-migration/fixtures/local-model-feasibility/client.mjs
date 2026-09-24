@@ -117,10 +117,11 @@ export class ProbeClient {
   }
 
   async #execute(prompt, { signal, deadline = performance.now() + 120000, schema,
-    onProgress = () => {}, onTerminalObservation = () => {}, maxTokens = 2048 } = {}) {
+    onProgress = () => {}, onTerminalObservation = () => {}, onWriteFinished = () => {}, faultAfterWrite, maxTokens = 2048 } = {}) {
     if (this.#state === 'unavailable') throw failure();
     if (this.#state !== 'ready') throw failure('busy');
     if (signal?.aborted) throw failure('cancelled');
+    if (faultAfterWrite !== undefined && faultAfterWrite !== 'disconnect') throw failure('input limit');
     const effectiveDeadline = Math.min(deadline, performance.now() + 120000);
     const remaining = effectiveDeadline - performance.now();
     if (!Number.isFinite(remaining) || remaining <= 0) throw failure('deadline');
@@ -138,7 +139,7 @@ export class ProbeClient {
     const control = agent(this.#configuration); const inference = agent(this.#configuration);
     const controller = new AbortController();
     const decoder = new CompletionStream({ onProgress, onTerminalObservation });
-    let controlSocket; let controlLost = false; let dispatched = false; let request;
+    let controlSocket; let controlLost = false; let dispatched = false; let request; let headersObserved = false;
     let settlementEnd; let settlementTimer;
     let abortKind; let active = true; let pollTimer; let controlRequests = 0;
     let pendingStatus = Promise.resolve();
@@ -242,6 +243,7 @@ export class ProbeClient {
       schedulePoll();
       const result = await new Promise((resolve, reject) => {
         request = https.request(options(this.#configuration, '/completion', body, inference), (response) => {
+          headersObserved = true;
           if (response.statusCode !== 200 || !/^text\/event-stream(?:;|$)/i.test(response.headers['content-type'] || '')) {
             startSettlement(); request.destroy(failure('invalid response')); return;
           }
@@ -260,6 +262,16 @@ export class ProbeClient {
         inferenceClosed = new Promise((resolve) => request.once('close', resolve));
         request.on('socket', trackSocket);
         request.on('error', () => { startSettlement(); reject(failure(abortKind || 'unavailable')); });
+        // CP1 observation/fault injection only. Local write completion is not server admission.
+        request.once('finish', () => {
+          if (!active || abortKind || request.destroyed) return;
+          try {
+            onWriteFinished({ writeFinished: true, headersObserved, admitted: decoder.witnessed });
+            if (faultAfterWrite === 'disconnect' && !request.destroyed) {
+              startSettlement(); request.destroy(failure());
+            }
+          } catch { startSettlement(); request.destroy(failure()); }
+        });
         checkBudget();
         dispatched = true;
         request.end(body);

@@ -38,6 +38,8 @@ async function fixture(t, completion, { ip, statusTimeoutMs = 100, settleMs = 18
   });
   const state = { requests: [], processing: false, foreignId: 42, statusFailure: false, completions: 0,
     statusHook: null, controlSockets: new Set() };
+  let completionReceived;
+  state.completionReceived = new Promise((resolve) => { completionReceived = resolve; });
   server = https.createServer({ key: credentials.key, cert: credentials.cert }, async (req, res) => {
     state.requests.push(req.url);
     if (req.headers.authorization !== `Bearer ${credentials.apiKey}`) { res.writeHead(401).end('{}'); return; }
@@ -49,7 +51,9 @@ async function fixture(t, completion, { ip, statusTimeoutMs = 100, settleMs = 18
       res.end(JSON.stringify([{ id: 0, id_task: state.foreignId, is_processing: state.processing }]));
     } else if (req.url === '/completion') {
       state.completions++;
-      for await (const _ of req) { /* bounded synthetic request fixture */ }
+      completionReceived();
+      try { for await (const _ of req) { /* bounded synthetic request fixture */ } }
+      catch { return; } // An early client disconnect may interrupt the owned fixture's body reader.
       await completion(req, res, state);
     } else { res.writeHead(404).end('{}'); }
   });
@@ -58,6 +62,48 @@ async function fixture(t, completion, { ip, statusTimeoutMs = 100, settleMs = 18
     pollMs: 20, settleMs, statusTimeoutMs });
   return { client, state, credentials, server };
 }
+
+for (const mode of ['caller-abort', 'injected-disconnect', 'hook-throw']) {
+  test(`${mode} at request-write completion preserves the pre-witness unavailable latch`, async (t) => {
+    const { client, state } = await fixture(t, async () => {});
+    const abort = new AbortController(); const observed = [];
+    await assert.rejects(client.complete('synthetic', { signal: abort.signal,
+      faultAfterWrite: mode === 'injected-disconnect' ? 'disconnect' : undefined,
+      onWriteFinished: (value) => {
+        observed.push(value);
+        if (mode === 'caller-abort') abort.abort();
+        if (mode === 'hook-throw') throw new Error('PRIVATE_HOOK_ERROR');
+      },
+    }), mode === 'caller-abort' ? /^Error: Local model cancelled$/ : /^Error: Local model unavailable$/);
+    await client.settled();
+    assert.deepEqual(observed, [{ writeFinished: true, headersObserved: false, admitted: false }]);
+    assert.equal(client.state, 'unavailable');
+    // Write completion precedes peer receipt; first await this fixture's initial request.
+    await Promise.race([state.completionReceived, delay(1000).then(() => assert.fail('fixture did not receive its initial request'))]);
+    const before = client.controlEvidence; const requests = [...state.requests];
+    await assert.rejects(client.complete('second'), /^Error: Local model unavailable$/);
+    await delay(10);
+    assert.deepEqual(client.controlEvidence, before);
+    assert.deepEqual(state.requests, requests);
+    assert.equal(JSON.stringify(observed).includes('PRIVATE'), false);
+  });
+}
+
+test('write observation is one-shot even when an admitted response follows immediately', async (t) => {
+  const { client } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission); send(res, chunk); send(res, terminal); res.end();
+  });
+  const observed = [];
+  assert.equal((await client.complete('synthetic', { onWriteFinished: (value) => observed.push(value) })).text, 'ok');
+  await client.close();
+  assert.deepEqual(observed, [{ writeFinished: true, headersObserved: false, admitted: false }]);
+});
+
+test('unsupported injected faults reject before HTTP or callbacks', async (t) => {
+  const { client, state } = await fixture(t, async () => assert.fail('must not dispatch'));
+  await assert.rejects(client.complete('synthetic', { faultAfterWrite: 'other', onWriteFinished: () => assert.fail('must not observe') }));
+  assert.deepEqual(state.requests, []);
+});
 
 test('never-sent abort causes no I/O and successful calls reuse capacity', async (t) => {
   const { client, state } = await fixture(t, async (_, res) => {

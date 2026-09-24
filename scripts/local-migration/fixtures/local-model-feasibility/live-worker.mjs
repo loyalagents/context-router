@@ -5,6 +5,7 @@ import { renderForCompletion } from './protocol.mjs';
 import { runQuality } from './live-quality.mjs';
 import { runCancellationMatrix } from './cancellation-matrix.mjs';
 import { runSchemaProbes } from './schema-probes.mjs';
+import { runEarlyBoundary } from './early-boundary.mjs';
 const input = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const { configuration } = input;
 const client = new ProbeClient(configuration);
@@ -20,6 +21,8 @@ try {
     receipt = { ...receipt, ...cancellation };
   } else if (input.mode === 'schemas') {
     receipt = { ...receipt, ...await runSchemaProbes(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) }) };
+  } else if (['early-abort', 'early-disconnect'].includes(input.mode)) {
+    receipt = { ...receipt, ...await runEarlyBoundary(configuration, client, input.mode) };
   } else {
   const start = performance.now();
   const rendered = await renderForCompletion(configuration,
