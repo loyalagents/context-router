@@ -291,6 +291,7 @@ test("web support cancellation closes Next again after delayed preparation creat
   let prepared = false;
   let closed = false;
   let closeCalls = 0;
+  const preparationCanFinish = Promise.withResolvers();
   try {
     await assert.rejects(
       runWebSupportSmoke({
@@ -300,7 +301,7 @@ test("web support cancellation closes Next again after delayed preparation creat
         nextFactory: () => ({
           async prepare() {
             controller.abort(new Error("cancelled before delayed prepare"));
-            await new Promise((resolve) => setTimeout(resolve, 20));
+            await preparationCanFinish.promise;
             prepared = true;
           },
           getRequestHandler() {
@@ -308,6 +309,10 @@ test("web support cancellation closes Next again after delayed preparation creat
           },
           async close() {
             closeCalls += 1;
+            if (closeCalls === 1) {
+              assert.equal(prepared, false);
+              preparationCanFinish.resolve();
+            }
             if (prepared) closed = true;
           },
         }),
@@ -329,6 +334,7 @@ test("web support cancellation closes Next again after delayed preparation creat
       "closed",
     );
   } finally {
+    preparationCanFinish.resolve();
     await rm(diagnostics, { recursive: true, force: true });
   }
 });
