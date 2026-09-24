@@ -155,3 +155,10 @@ Early-boundary tests preceded the hook and driver. Five TLS assertions failed ag
 
 
 Early-boundary safety review at `f37f2b5f7ae96a3df763267a37b41805459ee835` approved the hook/driver and carried forward unaffected transport/cleanup/G/schema coverage, but blocked the native audit: malformed lifecycle prefixes/labels and empty logs could be treated as no observed launch. Regression cases reproduced this before the fix. The audit now identifies lifecycle candidates broadly, rejects nonconforming pinned records and requires nonempty valid native framing; startup-only zero-launch evidence remains supported. Four affected tests pass, including malformed prefixes/labels, empty and incomplete logs. A retained real native startup-log segment also parses as zero observed launches. Affected re-review precedes execution.
+
+
+## Early-Write Uncertainty Results
+
+Safety approved the corrected early-case audit and both fixed experiments at `85eda113d8664f77d1cec6e4ed2aa53f4f4bb16e`, carrying forward the approved hook/driver, G settlement, schema, TLS and exact-process cleanup. Each case then ran once in its separate owned runtime scope on that exact clean revision. Both PASSED: local write completion preceded any response header or admission witness; caller abort returned cancelled and injected inference disconnect returned unavailable; both permanently latched unavailable and rejected reuse without new control evidence or a second write callback. No partial result was returned. Native task releases were observed, but no capacity recovery was inferred from them or from disposal.
+
+See the [caller-abort receipt](evidence/early-abort-9b.json), [transport-loss receipt](evidence/early-disconnect-9b.json) and [source/hash index](evidence/early-boundary-run-index.json). Both retained the fixed native audit, network-negative controls, normal sampled pressure, sentinel absence and exact owned runtime/worker cleanup. These characterize post-write/pre-witness uncertainty; the separate G result qualifies witnessed cancellation. All ten original preparation files were rehashed and remain unchanged in the original workspace.
