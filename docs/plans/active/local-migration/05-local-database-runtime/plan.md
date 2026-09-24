@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Document status: initial plan, revision C; independent review and coordinator approval required before executable feasibility
+- Document status: CP1 feasibility complete; proposed selection awaits affected independent review before full adapters
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Planning base commit: `3426dc556fea88d94a360329e7c685bc9acc155e`
@@ -178,9 +178,11 @@ The validation copy has one owner, is never published as product data, and is cl
 
 Each root repository operation or UoW owns its own connection; no root call can join another callback's transaction. Root multi-statement behavior preserves the port's characterized semantics. UoW uses explicit `BEGIN IMMEDIATE`, awaits the application callback, expires all frozen method-only facets, then executes `COMMIT`. Both run and serializable paths are one attempt; SQLite's single-writer serializable transactions can serve both without changing application policy. No nested callback reuse, implicit root fallback or provider types cross the boundary.
 
-Ordinary SQLite calls may be synchronous within that owned connection with a short explicit busy timeout (candidate 250ms). This is a contention bound, not a total disk-I/O deadline; no same-thread timer is claimed to interrupt native SQLite. Simultaneous same-process/cross-process work uses separate connections, and a contending caller may fail. Map only provider-origin primary/extended UNIQUE/PRIMARY KEY codes to unique conflicts and BUSY/LOCKED transaction contention to serialization conflicts where the whole failed attempt has been rolled back; corruption, I/O, constraints and unknown errors are fixed unavailable failures. No SQL, path, values or raw cause is exposed. Provider-like caller rejection objects and `NaN` retain exact identity.
+Ordinary SQLite calls may be synchronous within that owned connection. CP1 proposes explicit busy timeout zero and exactly one `setImmediate` yield before each single native UoW attempt; the initial 250ms candidate delayed same-thread timers and immediate attempt scheduling exhausted the unchanged identity retry budget. This is scheduling, not an adapter retry or mutex. No total disk-I/O deadline or arbitrary-call fairness is claimed. Simultaneous same-process/cross-process work uses separate connections, and a contending caller may fail. Map only provider-origin primary/extended UNIQUE/PRIMARY KEY codes to unique conflicts and BUSY/LOCKED transaction contention to serialization conflicts where the whole failed attempt has been rolled back; corruption, I/O, constraints and unknown errors are fixed unavailable failures. No SQL, path, values or raw cause is exposed. Provider-like caller rejection objects and `NaN` retain exact identity.
 
 Preserve field-specific JSON/omission, date precision, namespace precedence, archive reuse, location/global/all distinction, definition-ID merge, suggestion union, current-user filters, inclusive history dates/cursors and reset counts/order/rollback. Grant order explicitly follows READ, SUGGEST, WRITE, DEFINE. Characterize PostgreSQL audit-prefix case and wildcard behavior during feasibility; do not silently use SQLite's case-insensitive LIKE or invent a public semantic change.
+
+CP1's actual reference probe confirms case-sensitive LIKE pattern semantics on `prefix + '%'`, including wildcards/backslash. The proposed private deterministic/direct-only iterative SQL predicate preserves that behavior before cursor/order/limit without SQLite LIKE case drift, GLOB's pattern-length limit, RegExp backtracking or public DTO changes. See the exact [feasibility/selection record](feasibility.md) for representative tests, observed physical-null/no-op behavior, engine evidence and remaining implementation limits.
 
 ### Held identity ownership and bounded worker
 
@@ -265,7 +267,8 @@ Approvals bind to revision plus named contracts/areas. Resolve all blocking init
 | Initial A, same frozen revision | `/root/plan_persistence`, persistence/recovery/security/privacy | B1 blocked unspecified admission/PRAGMA ordering and hot-journal authority; B2 blocked unreachable bootstrap recovery. Revision B adds ordered admission and explicit intrinsic-replay limits/tests plus named pre-acquire command and exhaustive bootstrap outcomes | Blocked A; B review pending |
 | Initial B, `31847d36`, plan SHA-256 `cd0fe9b67084334da855f88d60becf3e2fac77f5aba3acb7e05c608eda231401` | `/root/plan_architecture` and fresh `/root/plan_compatibility` | Architecture/maintainability/packaging/scope and compatibility/consumers/tests/gate approved bounded feasibility; unaffected A architecture coverage explicitly carried forward | Approved for CP1 only in named areas |
 | Initial B, same frozen revision | Fresh `/root/plan_persistence_b` | B1/B2 resolved; B3 blocks embedded off-root super-journal references before logical admission. Revision C adds bounded journal-only pre-open rejection, pinned-source coverage, real-reference negative/control proof and explicit failure gate | Blocked B; C review pending |
-| Initial C | Affected persistence/security review; unaffected B architecture/compatibility carry-forward | No feasibility code has run | Not yet approved |
+| Initial C, `b90e1ae45fa6b8dc85f9298d1d511b297535c82a`, plan SHA-256 `ae2cbb90987a7eeca87a4570a5e2c83539aece3d19e788b4d5e442c46f230893` | `/root/plan_persistence_b` | Full B..C delta verified; B3 resolved at planning level; B1/B2 and unaffected persistence/recovery/security/privacy approval explicitly carried forward | Approved for bounded CP1 only |
+| Initial C, same frozen revision | `/root`, coordinator | Verified hash/delta; B architecture/maintainability/packaging/scope and compatibility/consumer/test/gate approvals carry forward because C only strengthens admission and CP1 proof | CP1 authorized before any executable probe; selected LM-003/LM-015 review still required before adapters |
 
 ## Parallel Work And Conflict Surfaces
 

@@ -43,6 +43,14 @@ step plan that resolves them.
   backup mechanism before implementation.
 - Consequence: application code must depend on storage behavior rather than
   Prisma/PostgreSQL-specific types or query semantics.
+- Step 05 CP1 proposed selection (affected review pending): Node 24.21.0 built-in
+  `node:sqlite` / SQLite 3.53.4, fresh versioned compiled schema plus random logical
+  target, closed-stage bootstrap and explicit recovery, DELETE/FULL journals,
+  owned one-attempt connections with busy timeout zero and one pre-BEGIN
+  scheduling yield, and quiescent matching-pair backup/new-root restore. The
+  [feasibility record](05-local-database-runtime/feasibility.md) binds the exact
+  evidence, admission limits and compatibility rules. This proposal does not
+  yet authorize full adapter implementation or mark LM-003 Accepted.
 
 ### LM-004: No cloud sync in the initial local product
 
@@ -245,6 +253,18 @@ step plan that resolves them.
   Step 09 owns final paths, keychain/process isolation, backup, and destructive
   identity reset. A reachable local listener remains unauthorized without
   Host/Origin/CSRF/DNS-rebinding evidence.
+- Step 05 mechanism proposal (affected review pending): preserve the durable
+  operation/candidate, empty/exact reconciliation, terminal ownership and
+  terminate-AND-reap recovery contract using a worker-owned main SQLite
+  connection retaining an actual EXCLUSIVE lock across COMMIT and filesystem
+  publication/cleanup. Parent watchdog failure and actual native release remain
+  distinct; no reconnect/takeover follows timeout. PostgreSQL advisory ownership
+  remains the explicit reference mode. Database instance identity is persisted
+  metadata, independent of movable paths/inodes. The
+  [CP1 record](05-local-database-runtime/feasibility.md) documents proposed
+  bootstrap/journal and matching-pair backup mechanisms without changing the
+  stable principal or credential protocol. Existing LM-015 acceptance does not
+  stand in for approval of this new mechanism.
 
 ### LM-016: Risk-weighted agent execution and bounded PR sequencing
 

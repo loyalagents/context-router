@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Status: active planning; initial revision C requires independent approval before executable feasibility
+- Status: CP1 feasibility complete; affected selection review pending before full adapters
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
@@ -24,5 +24,7 @@ Before any activation/product edits, the exact-base full migration gate passed a
 Read [orchestration](../orchestration.md), [decisions](../decision-log.md), [agent execution](../agent-execution.md), [workflow](../../../../useful/AGENT_WORKFLOW.md) and the exact [required reading](plan.md#required-reading). Retain the complete Step 04 plan and Step 03 recovery/R1 plan while these contracts are needed.
 
 The [initial plan](plan.md) first establishes the durable-state/failure model, then proposes one bounded node:sqlite feasibility candidate. Fresh independent plan reviews and coordinator approval precede executable feasibility. Successful feasibility requires a recorded database/library/bootstrap/transaction/backup decision and affected review before full adapter work. Implementation then proceeds tests first without a generic permission pause, followed by fresh complete-diff reviews and exact final-head evidence.
+
+The [CP1 feasibility and proposed selection](feasibility.md) records the exact runtime, file/process/backup probes and PostgreSQL characterization. LM-003/LM-015 mechanism additions remain proposals until affected independent selection review passes.
 
 Step 05 is the sole active primary step. No local model, MCP/browser/UI cutover, installer, LAN service, historical importer, cloud sync, automatic merge or Step 06 activation belongs here.
