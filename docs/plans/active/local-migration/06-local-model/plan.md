@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: draft B; affected independent reviews pending; no feasibility or implementation approval yet
+- Document status: plan B approved for bounded CP1 only; production selection and integration not approved
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -208,10 +208,12 @@ CP1 approval is not candidate selection; selection approval is not implementatio
 | Revision | Reviewer / areas | Findings and disposition | Verdict |
 | --- | --- | --- | --- |
 | A, `02ba0de454c4d13feff35c79d01d2cf0b7bf96b4`, plan SHA-256 `a8ab25b6630b8dbb2e88ba2aeaa7dc5e0ae572d22249f0ab30444d4a36495753` | `/root/plan_architecture`, architecture/maintainability/composition/parser scope/retained modes/step boundaries | No blockers; single admission owner must cover both aliases, file preparation, retries and settlement | Approved for bounded CP1 only |
-| Same A | `/root/plan_compatibility`, consumers/contracts/evaluation/tests | B1: aggregate utility could hide a failed task family. B requires per-family thresholds, negative cases and frozen scoring units/error/empty handling. Unchanged schema/MIME/AcroForm/deadline/hosted/mock/registry/evidence coverage approved for CP1 | A blocked; affected B review pending |
-| Same A | `/root/plan_safety`, privacy/credentials/cancellation/process | B2: generic idle can race before task admission. B adds dispatch/witness states, request-specific settlement gate, permanent unknown latch and adversarial admission/transport tests; production selection cannot use unqualified idle | A blocked; affected B review pending |
+| Same A | `/root/plan_compatibility`, consumers/contracts/evaluation/tests | B1: aggregate utility could hide a failed task family. B requires per-family thresholds, negative cases and frozen scoring units/error/empty handling. Unchanged schema/MIME/AcroForm/deadline/hosted/mock/registry/evidence coverage approved for CP1 | A blocked; resolved and approved in B |
+| Same A | `/root/plan_safety`, privacy/credentials/cancellation/process | B2: generic idle can race before task admission. B adds dispatch/witness states, request-specific settlement gate, permanent unknown latch and adversarial admission/transport tests; production selection cannot use unqualified idle | A blocked; resolved and approved in B |
 
-B changes acceptance scoring and cancellation evidence/state requirements, plus names the accepted reviewer launches and distinguishes deterministic harness work from pending consented live work. Architecture scope, identity/storage, interfaces, file capabilities, endpoint/credentials and final gates are unchanged. Renew affected compatibility and safety reviews; request architecture delta confirmation rather than silently broadening approval.
+B changes acceptance scoring and cancellation evidence/state requirements, plus names the accepted reviewer launches and distinguishes deterministic harness work from pending consented live work. Architecture scope, identity/storage, interfaces, file capabilities, endpoint/credentials and final gates are unchanged.
+
+All three reviewers independently approved B at `f747b86de4f985605c4fda9d3a01f103838f330c`, plan SHA-256 `d18309950dcf71bf1284e7b03d97ad529c9fd5d593f7f764fb1a8af351604b41`, for bounded CP1 only. `/root/plan_compatibility` confirmed B1 resolved and approved affected quality/contracts/tests while explicitly carrying forward actual schemas, MIME/AcroForm, deadlines, hosted/mocks, registry and deterministic/live/package/CI evidence. `/root/plan_safety` confirmed B2 resolved at the planning level and approved affected cancellation requirements while explicitly carrying forward endpoint/TLS, credential, privacy, parser, ownership/offline and resource criteria. `/root/plan_architecture` confirmed approval carries forward for the B delta and unchanged architecture/scope/maintainability/retained modes. All were read-only at their configured High/Extra High roles; no reviewer tests, processes, downloads or writes. This approval authorizes deterministic harness development; live execution still requires user asset consent and target confirmation. No runtime selection or production adapter is approved.
 
 ## Parallel Work And Conflict Surfaces
 
