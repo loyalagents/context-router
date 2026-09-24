@@ -6,6 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { execFileSync } from 'node:child_process';
 import { withNative } from './fixtures/local-model-feasibility/native.mjs';
 import { spawnOwned } from './fixtures/local-model-feasibility/process.mjs';
+import { auditCancellationLog } from './fixtures/local-model-feasibility/cancellation-audit.mjs';
 const assets = '/private/tmp/context-router-step06-assets';
 const evidence = '/private/tmp/step06-evidence';
 const candidate = process.argv[3] ?? '4b';
@@ -50,9 +51,15 @@ try {
         if (reaped) await rm(root, { recursive: true, force: true });
       }
     });
-  if ((await readFile(logPath)).includes(Buffer.from('STEP06_PRIVATE_SENTINEL'))) throw new Error('Native sentinel log violation');
-  receipt = { ...receipt, ...result, ownedChildStoppedAndReaped: true, sentinelAbsentFromRuntimeLog: true };
-} catch (error) { receipt.failure = error.message; }
+  receipt = { ...receipt, ...result, ownedChildStoppedAndReaped: true };
+  const diagnostics = await readFile(logPath);
+  if (diagnostics.includes(Buffer.from('STEP06_PRIVATE_SENTINEL'))) throw new Error('Native sentinel log violation');
+  receipt.sentinelAbsentFromRuntimeLog = true;
+  if (mode === 'cancellation') {
+    receipt.nativeCancellationAudit = auditCancellationLog(diagnostics, receipt.worker);
+    receipt.passed &&= receipt.nativeCancellationAudit.passed;
+  }
+} catch (error) { receipt.passed = false; receipt.failure = error.message; }
 await writeFile(join(evidence, `${run}.json`), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
 console.log(JSON.stringify({ run, passed: receipt.passed, failure: receipt.failure, families: receipt.worker?.score?.families, memoryPassed: receipt.memoryPassed, receiptPath: join(evidence, `${run}.json`) }));
 process.exitCode = receipt.passed ? 0 : 1;

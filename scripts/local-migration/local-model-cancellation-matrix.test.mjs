@@ -48,3 +48,19 @@ test('failed warm baseline blocks inference trials and does not qualify a timing
   assert.equal(result.trials.length, 6);
   assert.ok(result.trials.every((entry) => entry.notRun && !entry.passed));
 });
+
+test('long inference retains the absolute deadline established before preparation', async (t) => {
+  let now = performance.now(); let preparationDeadline; let inferenceDeadline; let inferenceRemaining;
+  t.mock.method(performance, 'now', () => now);
+  const client = { state: 'ready', settled: async () => {}, complete: async (_prompt, options) => {
+    if (options.schema) return { text: '{"answer":"ok"}' };
+    inferenceDeadline = options.deadline; inferenceRemaining = options.deadline - now;
+    client.state = 'unavailable'; throw new Error('Local model unavailable');
+  } };
+  await runCancellationMatrix({}, client, { render: async (configuration, prompt, file, deadline) => {
+    if (prompt.includes('Record 0000:')) { preparationDeadline = deadline; now += 500; }
+    return render(configuration, prompt, file, deadline);
+  } });
+  assert.equal(inferenceDeadline, preparationDeadline);
+  assert.equal(inferenceRemaining, 119500);
+});

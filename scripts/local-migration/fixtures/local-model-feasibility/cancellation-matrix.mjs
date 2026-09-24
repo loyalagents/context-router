@@ -36,7 +36,7 @@ export async function runCancellationMatrix(configuration, client, { render = re
       const prepared = await render(configuration, longPrompt, undefined, start + 120000);
       if (prepared.inputTokens < 4096 || prepared.inputTokens > 12000) throw new Error('Cancellation prefill size invalid');
       const trial = await cancellationTrial({ client, phase: phases[index], prompt: prepared.prompt,
-        followup: short, baselineP95Ms });
+        followup: short, baselineP95Ms, deadline: start + 120000 });
       trials[index] = { ...trials[index], ...trial, inputTokens: prepared.inputTokens };
       onProgress({ stage: 'cancellation', ...trials[index] });
       if (!trial.passed) break;
