@@ -6,7 +6,7 @@ const render = async (_configuration, prompt) => ({ prompt, inputTokens: prompt.
 
 test('matrix requires five baseline calls, three witnessed cancellations per phase and six actual followups', async () => {
   let calls = 0; let cancellations = 0;
-  const client = { state: 'ready', settled: async () => {}, complete: async (_prompt, options) => {
+  const client = { state: 'ready', get controlEvidence() { return { state: this.state, overflow: false, records: [{ phase: 'readiness', sequence: 1, event: 'idle', elapsedMs: 0, remainingMs: 100 }] }; }, settled: async () => {}, complete: async (_prompt, options) => {
     calls++;
     if (options.schema) return { text: '{"answer":"ok"}', inputTokens: 64, outputTokens: 6 };
     cancellations++;
@@ -26,7 +26,7 @@ test('matrix requires five baseline calls, three witnessed cancellations per pha
 
 test('unknown settlement retains a failed matrix without further preparation, inference or omitted trial records', async () => {
   let calls = 0; let renders = 0;
-  const client = { state: 'ready', settled: async () => {}, complete: async (_prompt, options) => {
+  const client = { state: 'ready', get controlEvidence() { return { state: this.state, overflow: false, records: [{ phase: 'readiness', sequence: 1, event: 'idle', elapsedMs: 0, remainingMs: 100 }] }; }, settled: async () => {}, complete: async (_prompt, options) => {
     calls++;
     if (options.schema) return { text: '{"answer":"ok"}' };
     options.onProgress({ admitted: true, processed: 0, total: 8000, decoded: 0 });
@@ -41,7 +41,7 @@ test('unknown settlement retains a failed matrix without further preparation, in
 
 test('failed warm baseline blocks inference trials and does not qualify a timing baseline', async () => {
   let calls = 0;
-  const client = { state: 'ready', settled: async () => {}, complete: async () => { calls++; return { text: '{"answer":"incorrect"}' }; } };
+  const client = { state: 'ready', get controlEvidence() { return { state: this.state, overflow: false, records: [{ phase: 'readiness', sequence: 1, event: 'idle', elapsedMs: 0, remainingMs: 100 }] }; }, settled: async () => {}, complete: async () => { calls++; return { text: '{"answer":"incorrect"}' }; } };
   const result = await runCancellationMatrix({}, client, { render });
   assert.equal(result.passed, false); assert.equal(calls, 1);
   assert.equal(result.baselineP95Ms, null);
@@ -52,7 +52,7 @@ test('failed warm baseline blocks inference trials and does not qualify a timing
 test('long inference retains the absolute deadline established before preparation', async (t) => {
   let now = performance.now(); let preparationDeadline; let inferenceDeadline; let inferenceRemaining;
   t.mock.method(performance, 'now', () => now);
-  const client = { state: 'ready', settled: async () => {}, complete: async (_prompt, options) => {
+  const client = { state: 'ready', get controlEvidence() { return { state: this.state, overflow: false, records: [{ phase: 'readiness', sequence: 1, event: 'idle', elapsedMs: 0, remainingMs: 100 }] }; }, settled: async () => {}, complete: async (_prompt, options) => {
     if (options.schema) return { text: '{"answer":"ok"}' };
     inferenceDeadline = options.deadline; inferenceRemaining = options.deadline - now;
     client.state = 'unavailable'; throw new Error('Local model unavailable');
@@ -63,4 +63,20 @@ test('long inference retains the absolute deadline established before preparatio
   } });
   assert.equal(inferenceDeadline, preparationDeadline);
   assert.equal(inferenceRemaining, 119500);
+});
+
+test('missing or overflowed control evidence prevents cancellation qualification', async () => {
+  for (const controlEvidence of [undefined, { state: 'ready', records: [], overflow: true }]) {
+    let calls = 0;
+    const client = { state: 'ready', controlEvidence, settled: async () => {}, complete: async (_prompt, options) => {
+      calls++;
+      if (options.schema) return { text: '{"answer":"ok"}' };
+      options.onProgress({ processed: 2048, total: 8000, decoded: 0 });
+      if (!options.signal.aborted) options.onProgress({ processed: 8000, total: 8000, decoded: 8 });
+      throw new Error('Local model cancelled');
+    } };
+    const result = await runCancellationMatrix({}, client, { render });
+    assert.equal(result.passed, false);
+    assert.equal(calls, 1);
+  }
 });

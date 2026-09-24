@@ -13,7 +13,7 @@ const terminal = { index: 0, stop: true, content: '', tokens_predicted: 2, token
   stop_type: 'eos', truncated: false };
 const send = (response, value) => response.write(`data: ${JSON.stringify(value)}\n\n`);
 
-async function fixture(t, completion, { ip, statusTimeoutMs = 100 } = {}) {
+async function fixture(t, completion, { ip, statusTimeoutMs = 100, settleMs = 180 } = {}) {
   const credentials = await createTlsFixture({ ip });
   let server; let client;
   t.after(async () => {
@@ -40,7 +40,7 @@ async function fixture(t, completion, { ip, statusTimeoutMs = 100 } = {}) {
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   client = new ProbeClient({ port: server.address().port, certificate: credentials.cert, apiKey: credentials.apiKey,
-    pollMs: 20, settleMs: 180, statusTimeoutMs });
+    pollMs: 20, settleMs, statusTimeoutMs });
   return { client, state, credentials, server };
 }
 
@@ -221,7 +221,7 @@ test('successful terminal result survives intentional cleanup of an outstanding 
   assert.equal(statuses, 2);
 });
 
-test('active control polling uses its readiness budget while cancellation polling stays short', async (t) => {
+test('active control polling uses its full readiness budget', async (t) => {
   let completionResponse;
   const { client, state } = await fixture(t, async (_, res) => {
     completionResponse = res;
@@ -267,3 +267,91 @@ for (const responseKind of ['http-error', 'malformed-frame', 'truncated-frame'])
     assert.equal(state.completions, 1);
   });
 }
+
+test('fresh idle response beyond 500ms recovers within the original settlement deadline', async (t) => {
+  const abort = new AbortController();
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  }, { statusTimeoutMs: 1500, settleMs: 1200 });
+  let count = 0;
+  state.statusHook = async (_req, res) => {
+    if (++count === 1) return false;
+    await delay(650);
+    res.end(JSON.stringify([{ id: 0, is_processing: false }])); return true;
+  };
+  await assert.rejects(client.complete('synthetic', { signal: abort.signal,
+    onProgress: (event) => { if (event.admitted) abort.abort(); } }), /Local model cancelled/);
+  await client.settled();
+  assert.equal(client.state, 'ready');
+  assert.equal(state.controlSockets.size, 1);
+  assert.equal(count, 2);
+});
+
+test('event-loop delay after abort cannot restart the settlement deadline', async (t) => {
+  const abort = new AbortController();
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  });
+  let now = performance.now(); t.mock.method(performance, 'now', () => now);
+  await assert.rejects(client.complete('synthetic', { signal: abort.signal,
+    onProgress: (event) => { if (event.admitted) { abort.abort(); now += 200; } } }), /Local model cancelled/);
+  await client.settled();
+  assert.equal(client.state, 'unavailable');
+  assert.equal(state.requests.filter((path) => path === '/slots').length, 1);
+});
+
+test('a late post-abort idle response cannot publish readiness before its overdue timer fires', async (t) => {
+  const abort = new AbortController();
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  });
+  let now = performance.now(); t.mock.method(performance, 'now', () => now);
+  let count = 0;
+  state.statusHook = async (_req, res) => {
+    if (++count === 1) return false;
+    now += 200; res.end(JSON.stringify([{ id: 0, is_processing: false }])); return true;
+  };
+  await assert.rejects(client.complete('synthetic', { signal: abort.signal,
+    onProgress: (event) => { if (event.admitted) abort.abort(); } }), /Local model cancelled/);
+  await client.settled();
+  assert.equal(client.state, 'unavailable');
+  assert.equal(state.controlSockets.size, 1);
+});
+
+test('pre-abort poll drainage consumes the original settlement window and never becomes its witness', async (t) => {
+  const abort = new AbortController();
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  }, { statusTimeoutMs: 1500, settleMs: 180 });
+  let count = 0;
+  state.statusHook = async (_req, res) => {
+    if (++count !== 2) return false;
+    abort.abort(); await delay(650);
+    res.end(JSON.stringify([{ id: 0, is_processing: false }])); return true;
+  };
+  const started = performance.now();
+  await assert.rejects(client.complete('synthetic', { signal: abort.signal }), /Local model cancelled/);
+  await client.settled();
+  assert.equal(client.state, 'unavailable');
+  assert.equal(count, 2);
+  assert.ok(performance.now() - started < 500, 'drain must be bounded by settlement, not the old request timeout');
+});
+
+test('control evidence distinguishes a settlement timeout without retaining response or credential data', async (t) => {
+  const abort = new AbortController();
+  const { client, state, credentials } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  }, { statusTimeoutMs: 50, settleMs: 180 });
+  let count = 0;
+  state.statusHook = async () => ++count !== 1;
+  await assert.rejects(client.complete('PRIVATE_PROMPT', { signal: abort.signal,
+    onProgress: (event) => { if (event.admitted) abort.abort(); } }));
+  await client.settled();
+  const evidence = client.controlEvidence;
+  assert.equal(evidence.state, 'unavailable');
+  assert.equal(evidence.overflow, false);
+  assert.ok(evidence.records.some((record) => record.phase === 'settlement' && record.event === 'timeout'));
+  assert.ok(evidence.records.some((record) => record.event === 'close'));
+  const encoded = JSON.stringify(evidence);
+  for (const secret of ['PRIVATE_PROMPT', credentials.apiKey, '/slots', 'authorization']) assert.ok(!encoded.includes(secret));
+});

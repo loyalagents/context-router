@@ -3,6 +3,7 @@ import tls from 'node:tls';
 import { X509Certificate } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { CompletionStream } from './stream.mjs';
+import { createControlEvidence } from './control-evidence.mjs';
 
 const failure = (kind = 'unavailable') => new Error(`Local model ${kind}`);
 const paths = new Set(['/health', '/props', '/models', '/slots', '/apply-template', '/tokenize', '/completion']);
@@ -32,42 +33,43 @@ function options(configuration, path, body, connectionAgent, key = configuration
 
 // Exported only for the owned CP1 runner's fixed readiness/template/token probes.
 export function probeJson(configuration, path, data, { connectionAgent = false, expectedSocket,
-  onSocket = () => {}, signal, timeoutMs = 5000, key = configuration.apiKey, expectedStatus = 200 } = {}) {
+  onSocket = () => {}, onFailure = () => {}, signal, timeoutMs = 5000, key = configuration.apiKey, expectedStatus = 200 } = {}) {
   if (![200, 401].includes(expectedStatus)) return Promise.reject(failure());
   const body = data === undefined ? undefined : JSON.stringify(data);
   if (body && Buffer.byteLength(body) > 256 * 1024) return Promise.reject(failure('input limit'));
   return new Promise((resolve, reject) => {
     if (signal?.aborted) { reject(failure('cancelled')); return; }
-    let timer;
+    let timer; let fault; let reported = false;
+    const rejectFixed = () => { if (!reported) { reported = true; onFailure(fault ?? 'transport'); } reject(failure()); };
     const request = https.request(options(configuration, path, body, connectionAgent, key), (response) => {
       const socket = request.socket;
-      if (expectedSocket && socket !== expectedSocket) { request.destroy(failure()); return; }
-      if (socket.remoteAddress !== '127.0.0.1' || socket.remotePort !== configuration.port) { request.destroy(failure()); return; }
+      if (expectedSocket && socket !== expectedSocket) { fault ??= 'continuity'; request.destroy(failure()); return; }
+      if (socket.remoteAddress !== '127.0.0.1' || socket.remotePort !== configuration.port) { fault ??= 'continuity'; request.destroy(failure()); return; }
       const chunks = []; let bytes = 0;
       response.on('data', (chunk) => {
         bytes += chunk.length;
-        if (bytes > 256 * 1024) request.destroy(failure('invalid response'));
+        if (bytes > 256 * 1024) { fault ??= 'invalid'; request.destroy(failure('invalid response')); }
         else chunks.push(chunk);
       });
-      response.on('error', () => reject(failure()));
+      response.on('error', rejectFixed);
       response.on('end', () => {
         try {
-          if (response.statusCode !== expectedStatus) throw failure();
+          if (response.statusCode !== expectedStatus) { fault ??= 'http'; throw failure(); }
           const value = expectedStatus === 200
             ? JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks))) : null;
           resolve({ value, socket, status: response.statusCode });
-        } catch { reject(failure()); }
+        } catch { fault ??= 'invalid'; rejectFixed(); }
       });
     });
     request.on('socket', (socket) => {
-      if (expectedSocket && socket !== expectedSocket) request.destroy(failure());
+      if (expectedSocket && socket !== expectedSocket) { fault ??= 'continuity'; request.destroy(failure()); }
       else onSocket(socket);
     });
-    const abort = () => request.destroy(failure('cancelled'));
+    const abort = () => { fault ??= 'aborted'; request.destroy(failure('cancelled')); };
     signal?.addEventListener('abort', abort, { once: true });
-    request.on('error', () => reject(failure()));
+    request.on('error', rejectFixed);
     request.on('close', () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); });
-    timer = setTimeout(() => request.destroy(failure()), timeoutMs);
+    timer = setTimeout(() => { fault ??= 'timeout'; request.destroy(failure()); }, timeoutMs);
     request.end(body);
   });
 }
@@ -89,12 +91,14 @@ export class ProbeClient {
   #pollMs;
   #settleMs;
   #statusTimeoutMs;
+  #evidence = createControlEvidence();
 
   constructor({ port, certificate, apiKey, pollMs = 2000, settleMs = 5000, statusTimeoutMs = 5000 }) {
     this.#configuration = { port, certificate, apiKey };
     this.#pollMs = pollMs; this.#settleMs = settleMs; this.#statusTimeoutMs = statusTimeoutMs;
   }
   get state() { return this.#closing ? 'unavailable' : this.#state; }
+  get controlEvidence() { return this.#evidence.snapshot(this.state); }
   async settled() { await this.#settlement; }
   async close() {
     this.#closing = true;
@@ -129,11 +133,13 @@ export class ProbeClient {
       ...(schema ? { json_schema: schema } : {}) });
     if (Buffer.byteLength(body) > 256 * 1024) throw failure('input limit');
 
+    this.#evidence = createControlEvidence(); const evidence = this.#evidence;
     this.#state = 'active';
     const control = agent(this.#configuration); const inference = agent(this.#configuration);
     const controller = new AbortController();
     const decoder = new CompletionStream({ onProgress });
     let controlSocket; let controlLost = false; let dispatched = false; let request;
+    let settlementEnd; let settlementTimer;
     let abortKind; let active = true; let pollTimer; let controlRequests = 0;
     let pendingStatus = Promise.resolve();
     const socketClosures = []; const trackedSockets = new Set();
@@ -148,15 +154,26 @@ export class ProbeClient {
     };
     const ready = () => { this.#state = this.#closing ? 'unavailable' : 'ready'; };
     const cleanup = () => cleanupPromise ??= (async () => {
-      active = false; clearTimeout(pollTimer); clearTimeout(deadlineTimer);
+      active = false; clearTimeout(pollTimer); clearTimeout(deadlineTimer); clearTimeout(settlementTimer);
       signal?.removeEventListener('abort', externalAbort);
       control.destroy(); inference.destroy(); this.#abort = undefined;
       await inferenceClosed;
       await Promise.all(socketClosures);
       cleaned = true;
     })();
+    const startSettlement = () => {
+      if (settlementEnd !== undefined || !active) return;
+      settlementEnd = performance.now() + this.#settleMs;
+      evidence.record('settlement', controlRequests, 'start', this.#settleMs);
+      settlementTimer = setTimeout(() => {
+        if (!active) return;
+        evidence.record('settlement', controlRequests, 'deadline', 0);
+        controlLost = true; control.destroy(); request?.destroy(failure(abortKind || 'unavailable'));
+      }, Math.max(0, settlementEnd - performance.now()));
+    };
     const abort = (kind) => {
       if (abortKind || !active) return;
+      startSettlement();
       abortKind = kind; controller.abort(); request?.destroy(failure(kind));
     };
     const externalAbort = () => abort('cancelled');
@@ -173,25 +190,42 @@ export class ProbeClient {
     signal?.addEventListener('abort', externalAbort, { once: true });
     const deadlineTimer = setTimeout(() => abort('deadline'), Math.max(0, effectiveDeadline - performance.now()));
     const status = async (duringSettlement = false, preserveAtAbort = false) => {
-      if (++controlRequests > 90 || controlLost) throw failure();
-      const result = await probeJson(this.#configuration, '/slots', undefined, {
-        connectionAgent: control, expectedSocket: controlSocket,
-        signal: duringSettlement || preserveAtAbort ? undefined : controller.signal,
-        timeoutMs: duringSettlement ? Math.min(500, this.#statusTimeoutMs) : this.#statusTimeoutMs,
-        onSocket: (socket) => {
-          trackSocket(socket);
-          if (!controlSocket) {
-            controlSocket = socket;
-            socket.once('close', () => {
-              if (!active) return;
-              controlLost = true;
-              if (dispatched) abort('unavailable');
-            });
-          }
-        },
-      });
-      if (controlLost || result.socket !== controlSocket) throw failure();
-      return idle(result.value);
+      if (controlLost || controlRequests >= 90) throw failure();
+      const phase = duringSettlement ? 'settlement' : dispatched ? 'active' : 'readiness';
+      const budget = duringSettlement ? settlementEnd - performance.now() : this.#statusTimeoutMs;
+      if (!Number.isFinite(budget) || budget <= 0) throw failure();
+      const sequence = ++controlRequests; let fault = 'transport';
+      evidence.record(phase, sequence, 'dispatch', budget);
+      try {
+        const result = await probeJson(this.#configuration, '/slots', undefined, {
+          connectionAgent: control, expectedSocket: controlSocket,
+          signal: duringSettlement || preserveAtAbort ? undefined : controller.signal,
+          timeoutMs: Math.min(budget, this.#statusTimeoutMs),
+          onFailure: (reason) => { fault = reason; },
+          onSocket: (socket) => {
+            trackSocket(socket);
+            if (!controlSocket) {
+              controlSocket = socket;
+              socket.once('close', () => {
+                evidence.record(active ? 'control' : 'cleanup', controlRequests, 'close', Math.max(0, (settlementEnd ?? performance.now()) - performance.now()));
+                if (!active) return;
+                controlLost = true;
+                if (dispatched) abort('unavailable');
+              });
+            }
+          },
+        });
+        if (controlLost || result.socket !== controlSocket) { fault = 'continuity'; throw failure(); }
+        if (duringSettlement && performance.now() >= settlementEnd) { fault = 'deadline'; throw failure(); }
+        let available;
+        try { available = idle(result.value); } catch { fault = 'invalid'; throw failure(); }
+        evidence.record(phase, sequence, available ? 'idle' : 'busy', duringSettlement ? Math.max(0, settlementEnd - performance.now()) : this.#statusTimeoutMs);
+        return available;
+      } catch (error) {
+        if (active && dispatched) startSettlement();
+        evidence.record(active ? phase : 'cleanup', sequence, fault, Math.max(0, (settlementEnd ?? performance.now()) - performance.now()));
+        throw error;
+      }
     };
     const schedulePoll = () => {
       pollTimer = setTimeout(() => {
@@ -209,23 +243,23 @@ export class ProbeClient {
       const result = await new Promise((resolve, reject) => {
         request = https.request(options(this.#configuration, '/completion', body, inference), (response) => {
           if (response.statusCode !== 200 || !/^text\/event-stream(?:;|$)/i.test(response.headers['content-type'] || '')) {
-            request.destroy(failure('invalid response')); return;
+            startSettlement(); request.destroy(failure('invalid response')); return;
           }
           response.on('data', (bytes) => {
             try { decoder.push(bytes); }
-            catch { request.destroy(failure('invalid response')); }
+            catch { startSettlement(); request.destroy(failure('invalid response')); }
           });
-          response.on('error', () => reject(failure(abortKind || 'unavailable')));
+          response.on('error', () => { startSettlement(); reject(failure(abortKind || 'unavailable')); });
           response.on('end', () => {
             try {
               checkBudget();
               resolve(decoder.finish());
-            } catch { reject(failure(abortKind || 'invalid response')); }
+            } catch { startSettlement(); reject(failure(abortKind || 'invalid response')); }
           });
         });
         inferenceClosed = new Promise((resolve) => request.once('close', resolve));
         request.on('socket', trackSocket);
-        request.on('error', () => reject(failure(abortKind || 'unavailable')));
+        request.on('error', () => { startSettlement(); reject(failure(abortKind || 'unavailable')); });
         checkBudget();
         dispatched = true;
         request.end(body);
@@ -236,6 +270,7 @@ export class ProbeClient {
       ready();
       return result;
     } catch (error) {
+      startSettlement();
       clearTimeout(pollTimer); clearTimeout(deadlineTimer);
       signal?.removeEventListener('abort', externalAbort);
       request?.destroy();
@@ -243,16 +278,17 @@ export class ProbeClient {
       else if (!decoder.witnessed || controlLost) { this.#state = 'unavailable'; await cleanup(); }
       else {
         this.#state = 'cancel-pending';
-        const settlementEnd = performance.now() + this.#settleMs;
         this.#settlement = (async () => {
           try {
             await pendingStatus;
             while (!controlLost && performance.now() < settlementEnd) {
               if (await status(true)) {
                 if (performance.now() >= settlementEnd || controlLost) throw failure();
+                await cleanup();
+                if (performance.now() >= settlementEnd || controlLost) throw failure();
                 ready(); return;
               }
-              await delay(Math.min(250, this.#pollMs));
+              await delay(Math.min(250, this.#pollMs, Math.max(0, settlementEnd - performance.now())));
             }
             throw failure();
           } catch { this.#state = 'unavailable'; }

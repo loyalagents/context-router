@@ -1,6 +1,6 @@
 # Step 06 Feasibility Progress
 
-- Status: 9B accuracy deferral approved; first native cancellation failed; smaller-batch experiment failed capacity recovery; paused for next decision; no production integration authorized
+- Status: 9B accuracy deferral approved; first native cancellation failed; G verification correction approved by user; deterministic fixes pass; affected implementation review precedes the single native retest; no production integration authorized
 - Owner and sole writer: `/root`; investigators/reviewers remain read-only
 - Base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -115,3 +115,10 @@ The runtime and worker were stopped/reaped through their retained exact handles 
 Read-only diagnosis identified a plausible control-path cause: the 500-ms settlement-status timeout destroys the retained control socket and latches unavailable even before the total five-second window expires. The native task-60 reader cancellation is consistent with this, but does not prove the request type or timeout cause. [Proposed G](plan.md#proposed-amendment-g-fix-cancellation-verification) bounds the next decision: reproduce and fix that per-request budget in deterministic tests, retain fixed control-state diagnostics, review, then one unchanged batch-512 native matrix. No further run or implementation is authorized yet.
 
 All three affected reviewers approved G at `28d56bf3593402c89e391be9301ba03cbd4dd1f3` as the concrete next user decision, with no new execution or selection approval. The F implementation's 16 targeted native/cancellation tests passed after the new batch assertion first failed; original client/matrix/audit coverage carries forward unchanged. Markdown links and diff whitespace pass. All ten original preparation files were rehashed unchanged, and a read-only process census found no remaining owned runtime. The dedicated branch is preserved; product integration, final local/CI gates and the single review-ready PR remain outstanding.
+
+
+## Verification Correction G
+
+The user explicitly approved G (“yes”). Root added tests before implementation: the 650-ms fresh idle response failed against the old 500-ms cap; an event-loop delay restarted settlement incorrectly; and draining an old status request exceeded the shorter settlement window. The fix anchors one absolute deadline at first abort/failure, bounds outstanding drainage with an expiry timer on exact owned sockets, uses only remaining time for fresh status, checks late responses and post-cleanup expiry, and publishes readiness after cleanup. No old response or reconnected socket can qualify settlement.
+
+Counter-only diagnostics are bounded to 128 records/16 KiB per operation and seventeen operations per passing matrix. Fixed labels/counters exclude raw bodies, credentials, certificate data, model data and exceptions. Cancellation traces are captured before followup; short-call traces are retained independently. Missing/overflowed trace evidence fails qualification. All 42 affected tests pass; existing quality fixtures, C framing, batch512 runtime flags and all total acceptance limits are unchanged. Affected implementation review precedes the single authorized native retest. The historical F cause remains unproven until the new live evidence distinguishes outcomes.

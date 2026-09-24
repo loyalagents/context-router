@@ -1,3 +1,4 @@
+import { completeControlEvidence } from './control-evidence.mjs';
 export async function cancellationTrial({ client, phase, prompt, controller = new AbortController(), followup, baselineP95Ms,
   deadline = performance.now() + 120000 }) {
   if (!['prefill', 'decode'].includes(phase)) throw new Error('Unknown cancellation phase');
@@ -24,7 +25,8 @@ export async function cancellationTrial({ client, phase, prompt, controller = ne
   const result = { phase, witnessed: abortAt !== undefined, cancelled, state: client.state,
     clientReturnMs: abortAt === undefined ? null : returnedAt - abortAt,
     settledMs: abortAt === undefined ? null : settledAt - abortAt, witness: witness ?? null,
-    terminalObserved, observationOverflow, observations, passed: false };
+    terminalObserved, observationOverflow, observations, controlEvidence: client.controlEvidence, passed: false };
+  if (!completeControlEvidence(result.controlEvidence)) return { ...result, failure: 'Cancellation control evidence failed' };
   if (!result.witnessed || !cancelled || terminalObserved || observationOverflow || client.state !== 'ready') return result;
   try { result.followupMs = await followup(); }
   catch { return { ...result, failure: 'Cancellation followup failed' }; }
