@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: draft A; no feasibility or implementation approval yet
+- Document status: draft B; affected independent reviews pending; no feasibility or implementation approval yet
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -33,9 +33,9 @@ All agents except `/root` are read-only, including plans/docs/Git/PR. No reviewe
 | `/root/consumer_discovery` | Ports, schemas, MIME, consumers, parser/hosted limits | `gpt-6-astra` / High | Explicit launch accepted |
 | `/root/runtime_discovery` | Hardware, official artifacts, fixture inventory | `gpt-6-astra` / High | Explicit launch accepted |
 | `/root/safety_discovery` | Credentials, endpoint trust, cancellation, process/offline proof | `gpt-6-astra` / Extra High | Explicit launch accepted |
-| Fresh plan/selection architecture reviewer | Boundary, maintainability and scope | Astra Extra High | To be named/configured |
-| Fresh plan/selection compatibility reviewer | Consumer, schema, evaluation, gate coverage | Astra High | To be named/configured |
-| Fresh plan/selection safety reviewer | Privacy, credentials, cancellation/process ownership | Astra Extra High | To be named/configured |
+| `/root/plan_architecture` | Boundary, maintainability and scope | `gpt-6-astra` / Extra High | Explicit launch accepted |
+| `/root/plan_compatibility` | Consumer, schema, evaluation, gate coverage | `gpt-6-astra` / High | Explicit launch accepted |
+| `/root/plan_safety` | Privacy, credentials, cancellation/process ownership | `gpt-6-astra` / Extra High | Explicit launch accepted |
 | Fresh final reviewers | Complete base-to-candidate diff in those same areas | High routine; Extra High consequential | Separate final launches required |
 
 ## Entry Criteria And Activation Evidence
@@ -110,7 +110,7 @@ Candidate context 16,384 tokens, at most 12,000 fully rendered input tokens and 
 
 Structured calls convert actual Zod v4 input schemas with documented unrepresentable/preprocess handling. Grammar is a generation aid; final Zod parse and application checks are authoritative. No prose-fence repair or partial-output salvage silently makes malformed/truncated local responses successful. Probe every real schema shape before selection, including null preprocessing/defaults and arbitrary JSON facts.
 
-Only non-streaming inference is planned. No conversation/session/resumption headers, slot-save/restore, prompt caching on disk or auto-download paths. Client abort destroys the owned HTTP request/socket. Native cancellation may await completion of one decode/prefill batch; qualification must establish stopped computation and freed serving capacity, not merely client rejection. After an abort, state transitions active → cancel-pending; the caller may receive its fixed cancellation error promptly but admission remains closed. Poll authenticated `/slots` for at most 5 seconds, projecting only fixed numeric/bool task/slot/progress fields with slot debug disabled. Only observed idle restores ready; timeout, wrong auth or ambiguous status latches unavailable until explicit authenticated configuration/idle revalidation. Never kill/restart a user-owned runtime or claim it was unloaded. Source batch-boundary behavior, stopped task progress and a successful same-process follow-up establish capacity reuse; slot idle is not direct GPU telemetry.
+Only non-streaming inference is planned. No conversation/session/resumption headers, slot-save/restore, prompt caching on disk or auto-download paths. Client abort destroys the owned HTTP request/socket. Native cancellation may await completion of one decode/prefill batch; qualification must establish stopped computation and freed serving capacity, not merely client rejection. Track never-dispatched, dispatched-unwitnessed and witnessed-active task states. An operation aborted before any dispatch releases admission without network work. After dispatch, cancellation/deadline/socket/protocol failure enters cancel-pending; the caller receives a fixed error promptly but admission stays closed. A first idle `/slots` result is NOT a fence: request parsing/tokenization/task posting may happen later, and slot inspection has priority. Only a reviewed request-specific settlement predicate proving that the identified request cannot start or continue later may restore ready. Project only allowlisted numeric/bool task/slot/progress fields with debug disabled; stale or foreign IDs cannot identify our task. Poll at most 5 seconds. Dispatched-unwitnessed, ambiguous, overdue or wrong-auth observations latch unavailable; ordinary status/config refresh cannot clear it. CP1 must qualify the exact predicate for the pinned non-streaming path. If it cannot, production selection blocks pending renewed review of a minimal non-resumable transport or explicit safe reset contract. Never kill/restart a user-owned runtime or claim it was unloaded. In CP1 only, the harness may terminate AND reap its own disposable runtime and create a new one after an unknown latch, but that is cleanup/recovery, never passing cancellation/capacity evidence. Source batch-boundary behavior, stopped identified-task progress and a successful same-process follow-up establish capacity reuse; generic slot idle is not direct GPU telemetry.
 
 ### Endpoint, credential and process authority
 
@@ -136,7 +136,7 @@ Pinned [runtime API](https://github.com/ggml-org/llama.cpp/blob/7fe450e19305b828
 
 ### CP1: Bounded feasibility and affected selection review
 
-Independent plan architecture/scope, compatibility/tests and safety approval precedes executable probes. Approval initially authorizes CP1 only. Asset consent and Mac-target answer remain separate required user gates. Build a checked-in bounded probe and deterministic harness tests before live use; behavior-neutral exports of actual private schemas for probing are permitted. No production adapter or composition cutover yet.
+Independent plan architecture/scope, compatibility/tests and safety approval precedes executable probes. Approval initially authorizes CP1 only. Asset consent and Mac-target answer remain separate required gates before live execution. After plan approval, deterministic harness development may proceed while those answers are pending; it acquires no runtime/model assets. Build a checked-in bounded probe and deterministic harness tests before live use; behavior-neutral exports of actual private schemas for probing are permitted. No production adapter or composition cutover yet.
 
 Acquire only consented exact assets under `/private/tmp/context-router-step06-assets`, one model loaded at a time. Check published byte counts and SHA-256 before execution, archive entries before extraction, binary version/source, license/provenance, template hash and non-thinking rendering. Do not infer conversion's original checkpoint revision from the current model card. Start with 4B; 9B is a consented challenger only if useful.
 
@@ -148,7 +148,9 @@ Pinned candidates:
 | Qwen3.5-4B-Q4_K_M.gguf | unsloth/Qwen3.5-4B-GGUF `e87f176479d0855a907a41277aca2f8ee7a09523` | 2,740,937,888 | `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` |
 | Qwen3.5-9B-Q4_K_M.gguf | unsloth/Qwen3.5-9B-GGUF `3885219b6810b007914f3a7950a8d1b469d598a5` | 5,680,522,464 | `03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8` |
 
-Use repository synthetic Elena/Samir/Maya documents and actual prompts/schemas, plus focused missing cases. Freeze the fixture/expected-answer manifest before live measurement: 16 cases (six extraction, four search, two consolidation, four form actions), three repetitions each candidate. Separate JSON parse, Zod validity, domain acceptance and expected fact/action metrics. No hosted judge/provider. Include absent/null facts, stale conflicts, another person's decoy, malicious instructions, protected definitions, inaccessible/hallucinated slugs and conflicting form choices. Run at least one actual extraction duplicate-consolidation chain and actual editable-PDF fill through the application after CP2.
+Use repository synthetic Elena/Samir/Maya documents and actual prompts/schemas, plus focused missing cases. Freeze the fixture/expected-answer/scoring manifest before live measurement: 16 cases (six extraction, four search, two consolidation, four form actions), three repetitions each candidate. Separate JSON parse, Zod validity, domain acceptance and expected fact/action metrics. No hosted judge/provider. Include absent/null facts, stale conflicts, another person's decoy, malicious instructions, protected definitions, inaccessible/hallucinated slugs and conflicting form choices. Run at least one actual extraction duplicate-consolidation chain and actual editable-PDF fill through the application after CP2.
+
+Each family contains at least one positive and one negative case. Freeze expected units and normalization before the first model result: extraction uses `(slug, canonical value)` facts; search uses slug sets; consolidation uses normalized unordered slug groups plus action/recommended-slug expectation; form actions use field/action/value/source-slug expectations. Ignore free-text explanation wording for semantic matching. Preserve distinctions such as identifiers with leading zeros and scalar versus array values; use existing domain canonicalization only, never post-hoc fuzzy matching. Missing expected units are false negatives, unexpected units false positives, and failed/invalid/timeout responses receive all expected false negatives plus a failed-case record. A valid empty answer passes a negative case only if no unexpected units/actions exist; empty denominators are recorded as not applicable and cannot replace positive-case evidence. Score initial model proposals and validated application results separately; apply utility thresholds to the validated result for EACH family, alongside zero accepted critical violations and explicit negative-case correctness. Report all retries/failures and per-case/per-family results; never exclude failed cases or let high-volume extraction offset another family.
 
 Predeclared acceptance:
 
@@ -156,13 +158,15 @@ Predeclared acceptance:
 | --- | --- |
 | Structure | All final quality responses parse and satisfy actual Zod; initial failures/retries reported, never excluded |
 | Safety/correctness | Zero accepted ownership contamination, unsupported sensitive inference, authorization expansion or prohibited form action; domain checks remain authoritative |
-| Utility | At least 90% expected fact/action recall and 95% precision overall, with per-task metrics and all cases reported |
+| Utility | At least 90% expected fact/action recall and 95% precision in EACH task family, all negative cases correct, and overall metrics reported; fixed scoring/normalization rules above |
 | Latency | Warm one-call p95 at most 60s; no call above 120s; cold ready at most 120s; complete workflow at most 180s |
 | Memory | Process footprint at most 12 GiB (4B), 18 GiB (9B), normal system pressure/no OOM; record engine allocations, footprint and swap delta; RSS alone is insufficient |
-| Cancellation | Three witnessed prefill and three decode aborts on the supported non-streaming path; client returns within 1s, slot/computation releases within 5s, immediate short follow-up within warm baseline p95 + 5s; no restart/kill workaround |
+| Cancellation | Three witnessed prefill and three decode aborts on the supported path; client returns within 1s, request-specific settled-task/computation evidence within 5s, immediate short follow-up within warm baseline p95 + 5s on the same runtime. Also characterize early post-dispatch abort/transport loss; unknown settlement must latch, never reopen from generic idle. No restart/kill workaround counts as success |
 | Offline/privacy | Per-process network denial on owned runtime/client/parser, explicit allowed-loopback positive control and permission-denied DNS/nonloopback/other-port negative controls, synthetic sentinel/key absent from bounded logs; no change to host network |
 | Errors/bounds | Missing runtime/model/key, wrong auth, saturation, context/output overflow, malformed/truncated output and unsupported file are bounded explicit failures; no hosted fallback or silent truncation |
 | PDF | Text fixtures, embedded/non-Latin subset, encrypted/malformed/empty/over-limit negatives, actual timeout/abort and subsequent capacity reuse; source and relocated parser closure |
+
+Before live cancellation, deterministic harness barrier tests must prove idle-before-admission, stale/foreign task IDs, dropped connection, delayed cancellation and status/auth failure cannot release an uncertain operation or start a second prompt. Include never-sent abort as a distinct safe no-I/O case. Live evidence includes early cancellation before task admission as well as witnessed prefill/decode.
 
 Use a temporary sandbox-exec profile on this Mac only for isolated evidence, after its allow/deny controls and Metal compatibility pass. It is deprecated and is not a product dependency or blanket offline guarantee. If it cannot prove native-runtime denial, record that blocker rather than disabling user networking. Logs stay private and bounded; engine info counters/slot projections and latency witness actual prefill/decode state without recording request bodies. No TRACE/DEBUG, prompt-log or raw HTTP diagnostics.
 
@@ -199,7 +203,15 @@ Create one migration-template PR, initially draft if necessary to establish its 
 
 ## Independent Review And Evidence
 
-No approvals yet. Record revision plus named review dimensions and dispositions here. CP1 approval is not candidate selection; selection approval is not implementation completion. Fresh full-diff final review and final local/remote gates remain required even after targeted checks pass.
+CP1 approval is not candidate selection; selection approval is not implementation completion. Fresh full-diff final review and final local/remote gates remain required even after targeted checks pass.
+
+| Revision | Reviewer / areas | Findings and disposition | Verdict |
+| --- | --- | --- | --- |
+| A, `02ba0de454c4d13feff35c79d01d2cf0b7bf96b4`, plan SHA-256 `a8ab25b6630b8dbb2e88ba2aeaa7dc5e0ae572d22249f0ab30444d4a36495753` | `/root/plan_architecture`, architecture/maintainability/composition/parser scope/retained modes/step boundaries | No blockers; single admission owner must cover both aliases, file preparation, retries and settlement | Approved for bounded CP1 only |
+| Same A | `/root/plan_compatibility`, consumers/contracts/evaluation/tests | B1: aggregate utility could hide a failed task family. B requires per-family thresholds, negative cases and frozen scoring units/error/empty handling. Unchanged schema/MIME/AcroForm/deadline/hosted/mock/registry/evidence coverage approved for CP1 | A blocked; affected B review pending |
+| Same A | `/root/plan_safety`, privacy/credentials/cancellation/process | B2: generic idle can race before task admission. B adds dispatch/witness states, request-specific settlement gate, permanent unknown latch and adversarial admission/transport tests; production selection cannot use unqualified idle | A blocked; affected B review pending |
+
+B changes acceptance scoring and cancellation evidence/state requirements, plus names the accepted reviewer launches and distinguishes deterministic harness work from pending consented live work. Architecture scope, identity/storage, interfaces, file capabilities, endpoint/credentials and final gates are unchanged. Renew affected compatibility and safety reviews; request architecture delta confirmation rather than silently broadening approval.
 
 ## Parallel Work And Conflict Surfaces
 
