@@ -193,6 +193,9 @@ import {
   realpath,
   writeFile,
   readdir,
+  readFile,
+  symlink,
+  lstat,
   rm,
 } from "node:fs/promises";
 import os from "node:os";
@@ -200,6 +203,92 @@ import path from "node:path";
 import { createResourceLifecycleJournal } from "./gate-runner.mjs";
 import { runLocalDatabaseSmoke } from "./local-database-smoke.mjs";
 import { terminateAndReapJournaledNodeChild } from "./local-identity-smoke.mjs";
+test("SQLite smoke rejects an unavailable parent with a fixed error before acquisition", async (t) => {
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "sqlite-smoke-unavailable-parent-")),
+  );
+  t.after(() => rm(root, { recursive: true }));
+  let acquisitions = 0;
+  await assert.rejects(
+    runLocalDatabaseSmoke({
+      stateParent: path.join(root, "private-path-canary"),
+      journal: {
+        acquiring() {
+          acquisitions++;
+        },
+      },
+    }),
+    (error) =>
+      error.message === "Local database smoke state parent unavailable",
+  );
+  assert.equal(acquisitions, 0);
+  assert.deepEqual(await readdir(root), []);
+});
+test("SQLite smoke resolves its owned parent alias before child configuration and cleanup ownership", async (t) => {
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "sqlite-smoke-parent-alias-")),
+  );
+  let removed = false;
+  t.after(async () => {
+    if (removed) await rm(root, { recursive: true });
+  });
+  const parent = path.join(root, "owned-parent");
+  const alias = path.join(root, "parent-alias");
+  const diagnostics = path.join(root, "diagnostics");
+  await mkdir(parent, { mode: 0o700 });
+  await mkdir(diagnostics, { mode: 0o700 });
+  await symlink(parent, alias, "dir");
+  await writeFile(path.join(parent, "preserved-sibling"), "unchanged", {
+    mode: 0o600,
+  });
+  const entrypoint = path.join(root, "entry.cjs");
+  await writeFile(
+    entrypoint,
+    `exports.runLocalIdentityEntrypoint=async()=>{
+      require('node:fs').writeFileSync(require('node:path').join(process.env.HOME,'observed.json'),JSON.stringify({databaseRoot:process.env.LOCAL_DATABASE_ROOT,stateRoot:process.env.LOCAL_IDENTITY_STATE_ROOT}),{mode:0o600});
+      process.stdout.write('fixture fixed-output failure');
+    };\n`,
+    { mode: 0o600 },
+  );
+  const journal = await createResourceLifecycleJournal(diagnostics);
+  await assert.rejects(
+    runLocalDatabaseSmoke({
+      entrypoint,
+      cwd: root,
+      home: path.join(root, "home"),
+      temporaryDirectory: path.join(root, "tmp"),
+      stateParent: alias,
+      journal,
+    }),
+    /Local database smoke child fixed output contract failed/,
+  );
+  const state = journal.state.resources.find(
+    ({ id }) => id === "local-database-state",
+  );
+  const child = journal.state.resources.find(
+    ({ id }) => id === "local-database-admin-1",
+  );
+  removed =
+    state.cleanup.status === "removed" && child.cleanup.status === "exited";
+  assert.equal(removed, true);
+  assert.throws(() => process.kill(child.identity.pid, 0), { code: "ESRCH" });
+  const observed = JSON.parse(
+    await readFile(path.join(root, "home", "observed.json"), "utf8"),
+  );
+  assert.equal(path.dirname(state.identity.root), parent);
+  for (const key of ["databaseRoot", "stateRoot"]) {
+    assert.equal(observed[key], state.identity[key]);
+    assert.equal(state.recovery[key], state.identity[key]);
+    assert.equal(path.dirname(observed[key]), state.identity.root);
+  }
+  assert.equal(state.recovery.root, state.identity.root);
+  assert.deepEqual(await readdir(parent), ["preserved-sibling"]);
+  assert.equal(
+    await readFile(path.join(parent, "preserved-sibling"), "utf8"),
+    "unchanged",
+  );
+  assert.equal((await lstat(alias)).isSymbolicLink(), true);
+});
 for (const mode of [
   "fixed-output-failure",
   "cancel-owned-child",

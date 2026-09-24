@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, readdir, lstat, rm } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  readdir,
+  lstat,
+  realpath,
+  rm,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { combineFailures, hasLiveProcessGroupMembers } from "./gate-runner.mjs";
@@ -141,7 +148,14 @@ export async function runLocalDatabaseSmoke({
   verifyArtifact = async () => {},
   terminateChild = terminateAndReapJournaledNodeChild,
 }) {
-  const root = path.join(stateParent, `local-database-${randomUUID()}`),
+  let canonicalParent;
+  try {
+    // The outer smoke owns this existing parent; runtime roots must use its canonical path.
+    canonicalParent = await realpath(stateParent);
+  } catch {
+    throw failure("state parent unavailable");
+  }
+  const root = path.join(canonicalParent, `local-database-${randomUUID()}`),
     databaseRoot = path.join(root, "data"),
     stateRoot = path.join(root, "identity");
   const env = buildLocalDatabaseSmokeEnvironment(environment, {
