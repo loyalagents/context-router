@@ -23,7 +23,7 @@ const logPath = join(evidence, `${run}.log`);
 let receipt = { run, timestamp: new Date().toISOString(), model: 'Qwen3.5-4B-Q4_K_M', result: 'failed' };
 try {
   const result = await withNative({ binary: join(assets, 'runtime/llama-b11146/llama-server'), model, logPath,
-    sandboxProfile: '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "127.0.0.1:PORT"))(allow network-outbound (remote tcp "127.0.0.1:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))' },
+    sandboxProfile: '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))' },
     async ({ metadata, args }) => ({ ...metadata, args }));
   receipt = { ...receipt, result: 'passed', ...result, ownedChildStoppedAndReaped: true };
 } catch (error) { receipt.failure = error.message; process.exitCode = 1; }
